@@ -4,6 +4,7 @@ import itertools
 import random
 
 from evidence_transcript import canonical
+from mysql_physical_text_admission import negative as mysql_text_negative
 from server_cases import SCHEMAS
 
 INITIAL = {"target": [[2, 3, 4], [2, 3, 4], [None, 0, 7]],
@@ -81,12 +82,13 @@ def negatives(engine, tag):
     yield case(engine, tag, ["id", "delta"], [["1"]]), "must match the target width"
     yield case(engine, tag, ["id", "id"], [["1", "2"]]), "cannot repeat a column name"
     generated = f"CREATE TABLE {schema}.ir_insert_restricted (k INTEGER, n INTEGER GENERATED ALWAYS AS (k) STORED)"
-    if tag == "mysql-5.6.51":
-        generated = f"CREATE TABLE {schema}.ir_insert_restricted (k INTEGER, n TEXT)"
-    restricted = f"INSERT INTO {schema}.ir_insert_restricted (n) VALUES (1)"
     generated_diagnostic = {"mysql": "generated", "postgres": "cannot insert a non-DEFAULT value"}
-    yield {"dialect": engine, "release": tag, "declarations": [generated], "sql": restricted}, (
-        "writable signed 32-bit integer" if tag == "mysql-5.6.51" else generated_diagnostic[engine])
+    boundary = generated_diagnostic[engine]
+    if tag == "mysql-5.6.51":
+        text_type, boundary = mysql_text_negative()
+        generated = f"CREATE TABLE {schema}.ir_insert_restricted (k INTEGER, n {text_type})"
+    restricted = f"INSERT INTO {schema}.ir_insert_restricted (n) VALUES (1)"
+    yield {"dialect": engine, "release": tag, "declarations": [generated], "sql": restricted}, boundary
     yield {"dialect": engine, "release": tag, "declarations": declarations(engine),
            "sql": f"INSERT INTO {schema}.ir_insert_target (unknown_column) VALUES (1)"}, "unknown_column"
     yield case(engine, tag, ["id"], [["2147483648"]]), "outside the signed 32-bit range"

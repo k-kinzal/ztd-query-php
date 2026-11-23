@@ -3,6 +3,7 @@
 from itertools import product
 from random import Random
 
+from mysql_physical_text_admission import negative as mysql_text_negative
 from run import require
 from postgres_physical_text_admission import negative as postgres_text_negative
 from server_cases import NAMES, SCHEMAS, observation
@@ -142,7 +143,7 @@ def negatives(engine, tag):
     base = {"dialect": engine, "release": tag, "declarations": declarations(engine)}
     yield {**base, "sql": f"SELECT * FROM {schema}.unregistered_source"}, "unregistered_source"
     yield {**base, "sql": f"SELECT absent.* FROM {schema}.ir_join_accounts"}, "absent"
-    kind, boundary = postgres_text_negative("wildcard") if engine == "postgres" else ("TEXT", "signed 32-bit integer")
+    kind, boundary = postgres_text_negative("wildcard") if engine == "postgres" else mysql_text_negative()
     yield {**base, "declarations": [f"CREATE TABLE {schema}.wrong_shape (payload {kind})"],
            "sql": f"SELECT * FROM {schema}.wrong_shape"}, boundary
 

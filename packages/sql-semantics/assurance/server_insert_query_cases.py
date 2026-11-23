@@ -5,6 +5,7 @@ from itertools import product
 from random import Random
 
 from evidence_transcript import canonical
+from mysql_physical_text_admission import negative as mysql_text_negative
 from run import TOOL, digest, require
 from server_cases import SCHEMAS
 from server_compound_cases import leaf, without_profiles
@@ -109,8 +110,9 @@ def negatives(engine, tag):
     yield {"dialect": engine, "release": tag, "sql": f"INSERT INTO {schema}.ir_insert_target (unknown_column) SELECT 1 AS p0",
            "declarations": sql_declarations(engine)}, "unknown_column"
     if engine == "mysql":
+        text_type, boundary = mysql_text_negative()
         yield {"dialect": engine, "release": tag, "sql": f"INSERT INTO {schema}.ir_insert_text (delta) SELECT 1 AS p0",
-               "declarations": [f"CREATE TABLE {schema}.ir_insert_text (delta TEXT)"]}, "writable signed 32-bit integer"
+               "declarations": [f"CREATE TABLE {schema}.ir_insert_text (delta {text_type})"]}, boundary
     if engine == "postgres":
         contract = TOOL / "postgres-query-write-admission-v1.json"
         require(digest(contract) == "7d4965e16c5fdb36d2d56918bd36e5f683b18b3439dcc8e229219401b8a817ff",

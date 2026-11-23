@@ -1,0 +1,22 @@
+{
+  "revision": "SemanticsIR/mysql-physical-text-admission-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "constructors": {},
+  "existingRoles": ["From/Varchar", "Select", "Mutation/Delete", "Mutation/Insert", "Mutation/InsertQuery"],
+  "extends": ["mysql-varchar-slots-v2.json", "mysql-varchar-insert-v2.json", "server-delete-v2.json", "server-insert-v1.json", "server-insert-query-v2.json", "wildcard-projection-v2.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "negative": {
+    "declaredType": "TEXT",
+    "exception": "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction",
+    "message": "The text slot requires an ordinary native VARCHAR with a character length.",
+    "reason": "A TEXT declaration cannot establish the supported length-bearing native VARCHAR role. It cannot supply that role to a complete projection, predicate or write destination."
+  },
+  "assessment": "Keep the same SQL, declarations, releases, positions, counts, finite bounds and required faults. The typed boundary replaces the old signed-only diagnostic for these four existing TEXT negatives. The generated-column witnesses on later releases remain identical.",
+  "counterexamples": {
+    "candidate": "22d77b96fb879b9f48c928ab031eb184940b35c0",
+    "requests": ["DELETE WHERE id = 1 from a TEXT id", "MySQL 5.6 INSERT into a TEXT destination", "INSERT SELECT into a TEXT destination", "SELECT * from a one-column TEXT declaration"],
+    "evidence": "Preserve the native schedule's original refusal and its counterexample for each affected run. A repeat must reject at the exact typed construction boundary and complete all remaining registered checks."
+  },
+  "trust": ["Independent negative witness from the declared native field type", "Sealed verifier contract and candidate identity"]
+}

@@ -4,6 +4,7 @@ import itertools
 import json
 import random
 
+from mysql_physical_text_admission import negative as mysql_text_negative
 from run import require
 from postgres_physical_text_admission import negative as postgres_text_negative
 from server_cases import SCHEMAS
@@ -110,7 +111,7 @@ def negatives(dialect, tag):
     yield case(dialect, tag, ["comparison", "=", literal(0), ["slot", 2]]), "must belong to its target"
     yield case(dialect, tag, ["logic", "NOT", ["null-test", False, ["slot", 0, 1]], None]), "must belong to its target"
     yield {"dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation}", "declarations": []}, "resolved, complete base table"
-    kind, boundary = postgres_text_negative("delete") if dialect == "postgres" else ("TEXT", "signed 32-bit integer")
+    kind, boundary = postgres_text_negative("delete") if dialect == "postgres" else mysql_text_negative()
     yield {
         "dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation} WHERE id = 1",
         "declarations": [f"CREATE TABLE {relation} (id {kind}, delta INTEGER)"],
