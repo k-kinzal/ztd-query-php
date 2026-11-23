@@ -19,6 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation as ParsedComparison;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperation as ParsedLogical;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperator;
@@ -88,6 +89,9 @@ final class PredicateLowering
         $operand = $condition->operand;
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
+        }
+        if ($operand instanceof ParsedColumn) {
+            return new NullTest($binding->field($operand), $condition->negated);
         }
         $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
             ? $this->lowerValue($operand, $binding, $catalogFirst)

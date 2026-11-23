@@ -127,13 +127,21 @@ final class JoinBinding
      */
     public function reference(Scalar $scalar): ColumnReference
     {
-        $resolution = $this->operation->facts->scalar($scalar)->resolution;
-        Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
-
-        $field = $this->resolved($resolution);
+        $field = $this->field($scalar);
         Check::input($field instanceof ColumnReference, 'The operand requires an int4 input slot.');
 
         return $field;
+    }
+
+    /**
+     * Binds a scalar field to its exact occurrence and native column role.
+     */
+    public function field(Scalar $scalar): ColumnReference|TextColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($scalar)->resolution;
+        Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
+
+        return $this->resolved($resolution);
     }
 
     /**

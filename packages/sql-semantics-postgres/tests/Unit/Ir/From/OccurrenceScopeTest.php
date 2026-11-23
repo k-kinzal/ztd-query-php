@@ -53,13 +53,13 @@ final class OccurrenceScopeTest extends TestCase
         self::assertFalse($scope->hasSlot($derived, 1));
         self::assertFalse($scope->hasSlot(null, 0));
     }
-    public function testProjectedColumnRejectsTheWrongNativeKind(): void
+    public function testColumnRejectsTheWrongNativeKind(): void
     {
         $table = new TableSource(new Identifier('public'), new Identifier('messages'), [new Identifier('label')], false, [ColumnKind::Text]);
         $scope = new OccurrenceScope();
-        $scope->projectedColumn(new TextColumnReference(0), [$table]);
+        $scope->column(new TextColumnReference(0), [$table]);
         $this->expectExceptionMessage('Column slot must belong to the SELECT source.');
 
-        $scope->projectedColumn(new ColumnReference(0), [$table]);
+        $scope->column(new ColumnReference(0), [$table]);
     }
 }

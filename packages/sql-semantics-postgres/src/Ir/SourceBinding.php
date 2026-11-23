@@ -74,13 +74,21 @@ final class SourceBinding
      */
     public function reference(Scalar $expression): ColumnReference
     {
-        $resolution = $this->operation->facts->scalar($expression)->resolution;
-        Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
-
-        $field = $this->resolved($resolution);
+        $field = $this->field($expression);
         Check::input($field instanceof ColumnReference, 'The operand requires an int4 input slot.');
 
         return $field;
+    }
+
+    /**
+     * Binds a scalar field to its exact occurrence and native column role.
+     */
+    public function field(Scalar $expression): ColumnReference|TextColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($expression)->resolution;
+        Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
+
+        return $this->resolved($resolution);
     }
 
     /**

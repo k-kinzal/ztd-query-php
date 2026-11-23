@@ -220,6 +220,10 @@ def inventory(root):
                 "a_expr: a_expr TYPECAST Typename", "b_expr: b_expr TYPECAST Typename",
                 "func_expr_common_subexpr: CAST ( a_expr AS Typename )",
             )})
+            for rule in ("a_expr", "b_expr"):
+                for alternative in rules.get(rule, ()):
+                    if alternative.endswith((" IS NULL_P", " IS NOT NULL_P")):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-text-null-tests-v1.json")
             for rule in ("columnref", "target_el"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "postgres-typed-columns-v2.json")

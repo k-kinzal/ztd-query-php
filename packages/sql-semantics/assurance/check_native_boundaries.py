@@ -196,12 +196,16 @@ def faults(engine):
         Fault("allow-argumentless-sum", "Aggregation/Aggregate::__construct",
               "$operator === AggregateOperator::Count && !$distinct", "!$distinct"),
         Fault("ignore-aggregate-scope", "Aggregation/GroupedSelect::__construct",
-              "$value->argument === null || isset($source->columns[$value->argument->slot]),", "true,"),
+              "$value->argument === null || $source->columnKind($value->argument->slot) === ColumnKind::Int4" if engine == "postgres"
+              else "$value->argument === null || isset($source->columns[$value->argument->slot]),", "true" if engine == "postgres" else "true,"),
         Fault("ignore-unjoined-result-key", "Aggregation/GroupedSelect::__construct",
               "$value->occurrence === 0 && isset($members[$value->slot]),", "true,"),
         Fault("ignore-negative-ordinal", "ColumnReference::__construct", "$occurrence >= 0,", "true,"),
         Fault("reverse-join-occurrences", "From/Join::inputs", "array_merge($left, $right)", "array_merge($right, $left)"),
-        Fault("ignore-join-scope", "From/OccurrenceScope::checkTree", "$this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot)", "true"),
+        Fault("ignore-join-scope", "From/OccurrenceScope::checkTree",
+              "$this->column($operand, $inputs, $invalidSlot);" if engine == "postgres"
+              else "$this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot)",
+              "" if engine == "postgres" else "true"),
         Fault("allow-computed-derived-slot", "From/DerivedSource::__construct",
               "$column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference,", "true,"),
         Fault("ignore-derived-binding-identity", "From/DerivedBinding::resolved",
@@ -276,7 +280,7 @@ def faults(engine):
         shared.append(Fault("accept-unknown-comparison-pair", "Predicate/IntegerRangeLowering::lower",
                             "$knownSubject || ($knownLower && $knownUpper)", "true"))
         shared.append(Fault("admit-invisible-pg-write-slot", "Mutation/Insert/Destination::__construct",
-                            "$column->occurrence === 0 && isset($relation->columns[$column->slot]),", "true,"))
+                            "$column->occurrence === 0 && $relation->columnKind($column->slot) === ColumnKind::Int4", "true"))
         shared.append(Fault("admit-duplicate-pg-write-slot", "Mutation/Insert/Destination::__construct",
                             "!isset($seen[$column->slot]),", "true,"))
         shared.append(Fault("skip-insert-return-layout", "Mutation/Insert::__construct",
@@ -299,6 +303,9 @@ def faults(engine):
                             "$pending[] = [$arm->result, $height + 1];", ""))
         shared.append(Fault("allow-foreign-int4-operator", "ExpressionLowering::binary",
                             "($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],", "true,"))
+        shared.append(Fault("allow-postgres-text-presence-on-integer-slot", "From/OccurrenceScope::column",
+                            "$input instanceof TableSource && $input->columnKind($column->slot) === ColumnKind::Text",
+                            "$input instanceof TableSource"))
         shared.append(Fault("skip-postgres-column-kind-width", "TableSource::__construct",
                             "$kinds === [] || count($kinds) === count($names),", "true,"))
         shared.append(Fault("allow-postgres-integer-on-text-slot", "From/OccurrenceScope::hasSlot",
@@ -480,7 +487,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "postgres-join-binding-v3.json", "postgres-query-boundaries-v8.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v2.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v28.json", "value-primitives.json")},
+                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "postgres-join-binding-v3.json", "postgres-query-boundaries-v9.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v2.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v28.json", "value-primitives.json")},
         "faultPlan": {"path": plan_path.name, "sha256": digest(plan_path)},
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},

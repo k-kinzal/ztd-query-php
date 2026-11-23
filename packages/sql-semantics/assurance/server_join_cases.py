@@ -6,7 +6,7 @@ import random
 from run import require
 from server_cases import CHILD_ROWS, NAMES, ROWS, SCHEMAS, evaluate, observation, validate_width
 from server_delete_cases import OPERATORS, literal
-from server_truth_model import admits
+from server_truth_model import admits, predicate_value
 
 DATA = {"accounts": ROWS, "independent": [(3, 15), (2, 11), (2, 11), (None, 31)], "empty": []}
 NAMES_BY_TABLE = {"accounts": "ir_join_accounts", "independent": "ir_join_independent", "empty": "ir_join_empty"}
@@ -202,6 +202,8 @@ def value(expression, row, dialect):
             if truth(condition, row, dialect):
                 return value(result, row, dialect)
         return None if otherwise is None else value(otherwise, row, dialect)
+    if role == "null-test":
+        return predicate_value(expression, lambda operand: value(operand, row, dialect))
     if role != "operation":
         return evaluate(expression, None, dialect)
     _, symbol, left, right = expression
@@ -252,7 +254,7 @@ def rows(source, dialect, derived_rows=None, table_rows=None):
 def expected(item, table_rows=None):
     dialect = item["dialect"]
     default = "int4" if dialect == "postgres" else "LONGLONG"
-    metadata = {"boolean": "bool", "null": "text", "text-slot": "text"} if dialect == "postgres" else {"slot": "LONG", "null": "NULL"}
+    metadata = {"boolean": "bool", "null": "text", "text-slot": "text", "null-test": "bool"} if dialect == "postgres" else {"slot": "LONG", "null": "NULL"}
     fields = [[name, metadata.get(expr[0], default)] for expr, name in item["columns"]]
     observed = [[value(expr, row, dialect) for expr, _ in item["columns"]] for row in rows(item["source"], dialect, table_rows=table_rows)
                 if truth(item["where"], row, dialect)]

@@ -15,6 +15,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctnessLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRangeLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTestLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -29,6 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Between as Pa
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\DistinctTest as ParsedDistinctness;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\BooleanTest as ParsedTruthTest;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest as ParsedNullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral as ParsedBoolean;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
@@ -54,7 +57,7 @@ final class ExpressionLowering
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
         bool $simpleOutput = false,
-    ): Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|TextLiteral|WideIntegerLiteral {
+    ): Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextLiteral|WideIntegerLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
@@ -70,6 +73,7 @@ final class ExpressionLowering
             $expression instanceof Cast => (new BuiltinCastLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedDistinctness => (new IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof ParsedNullTest => (new PredicateLowering())->nullTest($expression, $binding, $catalogFirst),
             $expression instanceof ParsedTruthTest => (new TruthTestLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof Constant && $expression->value instanceof StringConstant && $simpleOutput => new TextLiteral($expression->value->value),

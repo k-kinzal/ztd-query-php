@@ -106,7 +106,7 @@ if ($dialect === 'postgres') {
     $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = $methods[$distinctness] = ['__construct'];
     array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest);
     sort($properties[$caseArm]['condition']);
-    array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest);
+    array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest, 'Predicate\\NullTest');
     $properties['Arithmetic']['left'][] = $integerCase;
     $properties['Arithmetic']['right'][] = $integerCase;
     $properties['ResultColumn']['expression'][] = $integerCase;
@@ -515,7 +515,7 @@ if ($dialect !== 'sqlite') {
     ];
     $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
-        array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerDistinctness', 'Predicate\\TruthTest');
+        array_push($properties['Predicate\\NullTest']['operand'], 'From\\TextColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\TruthTest');
     }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];

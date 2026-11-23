@@ -67,7 +67,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -76,6 +76,7 @@ final class SelectSql
             $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
             $expression instanceof IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
+            $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),
             $expression instanceof TruthTest => $this->truthTest($expression, $source, $offset, $qualify),
             $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',
             $expression instanceof WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',
@@ -190,7 +191,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TruthTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TruthTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);

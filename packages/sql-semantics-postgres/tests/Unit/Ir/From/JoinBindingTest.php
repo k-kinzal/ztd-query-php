@@ -13,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
+use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -28,6 +29,24 @@ use SqlSemantics\Testing\PostgreSql\Inspection;
 #[Medium]
 final class JoinBindingTest extends TestCase
 {
+    public function testFieldIdentifiesTheNativeTextOccurrence(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (label pg_catalog.text)');
+        $operation = $inspection->inspect('SELECT a.label FROM public.t b CROSS JOIN public.t a', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $target = $operation->statement->targets[0];
+        self::assertInstanceOf(ExpressionTarget::class, $target);
+        $binding = JoinBinding::bind($operation->binding(), $operation->statement->from, true);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $field = $binding->field($target->expression);
+
+        self::assertInstanceOf(TextColumnReference::class, $field);
+        self::assertSame(0, $field->slot);
+        self::assertSame(1, $field->occurrence);
+    }
+
     public function testReferenceKeepsSelfJoinOccurrencesSeparate(): void
     {
         $semantics = new Inspection();

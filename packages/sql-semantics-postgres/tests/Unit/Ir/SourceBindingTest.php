@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
@@ -20,6 +21,23 @@ use SqlSemantics\Testing\PostgreSql\Inspection;
 #[Medium]
 final class SourceBindingTest extends TestCase
 {
+    public function testFieldIdentifiesTheNativeTextOccurrence(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (label pg_catalog.text)');
+        $operation = $inspection->inspect('SELECT label FROM public.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $target = $operation->statement->targets[0];
+        self::assertInstanceOf(ExpressionTarget::class, $target);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+
+        $field = $binding->field($target->expression);
+
+        self::assertInstanceOf(TextColumnReference::class, $field);
+        self::assertSame(0, $field->slot);
+        self::assertSame(0, $field->occurrence);
+    }
+
     public function testMergedHeadingPreservesOrderAndCaseWithoutImplicitFields(): void
     {
         $inspection = new Inspection();

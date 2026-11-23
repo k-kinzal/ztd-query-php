@@ -49,7 +49,7 @@ final class SelectBounds
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
-                if ($expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof TruthTest) {
+                if ($expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof NullTest || $expression instanceof TruthTest) {
                     $nodes = $scope->checkTree($expression, $inputs, 'A tested predicate slot must belong to the SELECT source.', $height, $nodes);
                     continue;
                 }
@@ -65,7 +65,7 @@ final class SelectBounds
                     continue;
                 }
                 match (true) {
-                    $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $scope->projectedColumn($expression, $inputs),
+                    $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $scope->column($expression, $inputs),
                     $expression instanceof BuiltinCast => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
                     $expression instanceof Parameter => $positions[$expression->position] = ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),

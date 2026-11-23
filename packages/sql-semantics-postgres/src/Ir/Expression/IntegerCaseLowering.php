@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Expression;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
-use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -74,7 +70,7 @@ final class IntegerCaseLowering
             }
         }
         $result = (new ExpressionLowering())->lower($expression, $binding, $catalogFirst);
-        Check::input(!$result instanceof BooleanLiteral && !$result instanceof BuiltinCast && !$result instanceof IntegerRange && !$result instanceof IntegerDistinctness && !$result instanceof TruthTest && !$result instanceof WideIntegerLiteral && !$result instanceof TextLiteral, 'An int4 CASE arm requires a signed integer or NULL.');
+        Check::input($result instanceof Arithmetic || $result instanceof ColumnReference || $result instanceof IntegerCase || $result instanceof IntegerLiteral || $result instanceof NullLiteral, 'An int4 CASE arm requires a signed integer or NULL.');
 
         return $result;
     }
