@@ -1,0 +1,107 @@
+{
+  "revision": "SemanticsIR/postgres-create-view-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Persistent ordinary PostgreSQL VIEW in the pinned native UTF-8 profiles.",
+  "extends": ["postgres-drop-view-v1.json", "postgres-external-source-kinds-v1.json", "postgres-values-v3.json"],
+  "additionalPublicRoots": ["Schema/View/CreateView"],
+  "constructors": {
+    "CreateView": {
+      "type": "Schema/View/CreateView",
+      "role": "A persistent ordinary view declaration with exact output identities and catalog policies.",
+      "structure": "An absolute view name, checked SELECT or VALUES, nonempty effective heading, replacement flag, optional security barrier and invoker flags and the write check policy.",
+      "conditions": "Require an exact width, distinct case-sensitive PostgreSQL names, supported unbounded body with no parameters and a persistent source if any. Apply CHECK OPTION only to a simple base-table projection. Reject direct self-reference and temporary schema identities.",
+      "meaning": "Declare the named view with a live query, ordered heading and native read and write settings. Replacement preserves the object's native identity and validates the existing heading at evaluation.",
+      "sql": "Publish the actual resolved heading and source, explicit policy options if supplied, and the native CHECK OPTION clause."
+    },
+    "ViewCheckOption": {
+      "type": "Schema/View/ViewCheckOption",
+      "role": "The write visibility policy of a PostgreSQL view.",
+      "structure": "Absent, LOCAL or CASCADED.",
+      "conditions": "An explicit policy requires the checked simple base-table view role.",
+      "meaning": "Determine whether the view's own filter, and any filters inherited under the native cascade rule, are enforced on writes.",
+      "sql": "Omit an absent policy and emit WITH LOCAL CHECK OPTION or WITH CASCADED CHECK OPTION for an explicit policy."
+    }
+  },
+  "existingRoles": ["Schema/View/ViewName", "Rows/Values/ValuesQuery", "Select", "Identifier", "TableSource", "ResultColumn", "Binding/Parameter"],
+  "structure": "An immutable declaration combines a live query, full catalog heading, qualified identity and native security and replacement policy.",
+  "conditions": "Admit persistent ordinary views with independently valid standalone VALUES or a checked plain SELECT with no source or one resolved persistent base source. Keep the admitted default, explicit true and explicit false security options. Accept a partial output aliases list in analysis by completing it with resolved heading names. Disallow parameters, recursive and temporary views, self references, duplicate column names and unsupported definition placements.",
+  "meaning": "Create or replace a live ordinary view with stable output identities and data types. Native catalog collisions and an incompatible replacement are state-dependent errors. Explicit write checks constrain inserts or updates through a simple updatable view. A rollback reverses the catalog and data effects.",
+  "sql": "Use the absolute view identity and full quoted heading, replay the parameter-free body, preserve whether each security flag was specified, and emit the selected check policy.",
+  "observations": [
+    "Native view kind, output names, order, type OIDs and data rows before and after a base update",
+    "Catalog option presence and typed settings including explicit false",
+    "Exact status and SQLSTATE for new, colliding and incompatible replacement",
+    "Runtime view write acceptance or rejection of a row excluded by the predicate, with its actual base-table effect",
+    "Same-name view in an independent schema, transaction status and restored catalog and data after rollback"
+  ],
+  "finite": {
+    "policy": ["require-new", "replace"],
+    "fixture": ["absent", "existing"],
+    "body": ["base-all", "base-filtered", "values"],
+    "securityBarrier": ["omitted", "enabled", "disabled"],
+    "securityInvoker": ["omitted", "enabled", "disabled"],
+    "identities": 108,
+    "completeness": "Read replacement, body role and both option operands from the loaded graph. Verify each independent catalog fixture and exhaust the declared Cartesian product."
+  },
+  "analysis": [
+    "Simple declaration with inferred heading",
+    "Declaration with a partially supplied heading",
+    "Declaration with both security flags including explicit false",
+    "Live view defined over a typed null and duplicate VALUES",
+    "Native unqualified CHECK OPTION resolved as CASCADED",
+    "LOCAL CHECK OPTION through a filtered base projection",
+    "ALTER-free replacement of a compatible existing definition",
+    "Incompatible replacement retains the existing declaration"
+  ],
+  "writeProbes": ["Base filter with absent, LOCAL and CASCADED write policy"],
+  "negative": [
+    "Empty heading",
+    "Heading width differs from the body",
+    "Repeated effective column name",
+    "A projected native parameter",
+    "An inapplicable check option on a VALUES definition",
+    "A temporary analyzed declaration",
+    "An unknown option"
+  ],
+  "exploration": {
+    "seeds": [2063, 12251, 43669],
+    "casesPerSeed": 16,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary the definition graph, column positions, body filtering, literal shape, security options, fixture collisions, and eligible write-check policies."
+  },
+  "faults": [
+    "Substitute another absolute view identity",
+    "Change the effective heading order",
+    "Erase the replacement decision",
+    "Drop the security-invoker option",
+    "Drop the write check clause",
+    "Admit a repeated effective column name"
+  ],
+  "evidence": {
+    "P01": "Retain resolved view and source identities, native body roles, column positions and clause choices.",
+    "P02": "Reject invalid persistent scope, headings, parameter placement and check-policy combinations.",
+    "P03": "Store only native view meaning and a checked query, independent of parse facts.",
+    "P04": "Combine query meaning, effective heading and fixed catalog policies.",
+    "P05": "Use detached ordered immutable headings and checked child values.",
+    "P06": "Emit a complete native declaration whose reads and write checks agree with the typed value.",
+    "Q01": "Check distinct boundary reductions and the fixed invalid cases.",
+    "Q02": "Exhaust the direct finite domain and accept independently authored examples.",
+    "Q03": "Use the independent fixture evaluator for view creation, replacement, live reads and writes.",
+    "Q04": "Compare actual native metadata, preserved rows, exact SQLSTATE and transaction effects.",
+    "Q05": "Connect direct and analyzed clauses to exact distributed PHP and native observations."
+  },
+  "open": [
+    "Recursive, temporary and materialized view declaration roles",
+    "General joins, CTEs, compound, grouped and bounded view definitions",
+    "Definer privileges, grants and security barrier behavior with user-defined functions",
+    "Updatable views over another view and possible trigger or rule interactions"
+  ],
+  "trust": ["Truthful static model of the persistent input relation and execution profile", "Independent typed catalog and transactional observer", "Reviewed source and native fixtures"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createview.html",
+    "https://www.postgresql.org/docs/17/sql-createview.html"
+  ]
+}
