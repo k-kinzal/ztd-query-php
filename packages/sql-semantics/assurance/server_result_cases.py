@@ -135,9 +135,12 @@ def expected(item):
     rows = base["rows"]
     if item["distinct"]:
         rows = list({canonical(row): row for row in rows}.values())
-    sorting = item["orderBy"]
+    return result_window(base["fields"], rows, item["orderBy"], item["limit"])
+
+
+def result_window(fields, rows, sorting, bounds):
     ordered = sorted(rows, key=lambda row: key(row, sorting))
-    upper, offset = item["limit"] or (None, 0)
+    upper, offset = bounds or (None, 0)
     start, stop = offset, offset + upper if upper is not None else len(ordered)
     bands = []
     index = 0
@@ -147,7 +150,7 @@ def expected(item):
         selected = max(0, min(end, stop) - max(index, start))
         bands.append({"multiplicity": selected, "members": members})
         index = end
-    return {"fields": base["fields"], "total": sum(band["multiplicity"] for band in bands), "bands": bands}
+    return {"fields": fields, "total": sum(band["multiplicity"] for band in bands), "bands": bands}
 
 
 def match(prediction, actual, sql):

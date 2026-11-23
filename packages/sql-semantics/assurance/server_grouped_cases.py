@@ -26,6 +26,7 @@ def aggregate(operator, argument=None, distinct=False):
 def case(engine, release, source, keys, columns, where=None):
     return {"dialect": engine, "release": release, "grouped": {
         "source": source, "keys": keys, "columns": columns, "where": where,
+        **({"orderBy": [], "limit": None} if engine == "postgres" else {}),
     }}
 
 

@@ -10,6 +10,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Limit;
+use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Order;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
@@ -47,10 +49,16 @@ final class GroupedSelect implements SemanticsIR
     public readonly array $columns;
 
     /**
+     * @var list<Order> The checked grouped output positions in precedence order.
+     */
+    public readonly array $orderBy;
+
+    /**
      * Checks the projected and grouped fields under the same absolute input layout.
      *
      * @param list<ColumnReference> $keys The ordered key tuple
      * @param non-empty-list<GroupColumn> $columns The named output fields
+     * @param list<Order> $orderBy The ordered output keys
      */
     public function __construct(
         public readonly TableSource $source,
@@ -58,6 +66,8 @@ final class GroupedSelect implements SemanticsIR
         array $columns,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
+        array $orderBy = [],
+        public readonly ?Limit $limit = null,
     ) {
         $grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');
         $results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);
@@ -76,8 +86,14 @@ final class GroupedSelect implements SemanticsIR
             }
         }
         (new OccurrenceScope())->predicate($where, [$source]);
+        $keysInOrder = Check::listOf($orderBy, Order::class, 'A grouped SELECT needs an owned list of output order keys.');
+        Check::input(count($keysInOrder) <= 1024, 'A grouped SELECT can have at most 1024 order keys.');
+        foreach ($keysInOrder as $key) {
+            Check::input(is_int($key->target) && $key->target <= count($results), 'A grouped order key must select a projected position.');
+        }
         $this->keys = $grouping;
         $this->columns = $results;
+        $this->orderBy = $keysInOrder;
     }
 
     /**

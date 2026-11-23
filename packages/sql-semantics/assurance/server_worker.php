@@ -209,13 +209,8 @@ function constructMySqlColumnType(array|string $input): object
     );
 }
 
-function constructSelect(string $platform, array $input): SemanticsIR
+function constructResultOptions(string $namespace, array $input, string $dialect): array
 {
-    $namespace = $platform . 'Ir\\';
-    $identifier = $namespace . 'Identifier';
-    $column = $namespace . 'ResultColumn';
-    $select = $namespace . 'Select';
-    $release = $platform . 'Model\\Contract\\GrammarRelease';
     $order = $namespace . 'Ordering\\Order';
     $limit = $namespace . 'Ordering\\Limit';
     $keys = [];
@@ -225,9 +220,20 @@ function constructSelect(string $platform, array $input): SemanticsIR
             continue;
         }
         $target = is_array($raw[0]) ? constructOperand($namespace, $raw[0]) : $raw[0];
-        $keys[] = new $order($target, $raw[1], ...($input['dialect'] === 'postgres' ? [$raw[2]] : []));
+        $keys[] = new $order($target, $raw[1], ...($dialect === 'postgres' ? [$raw[2]] : []));
     }
     $bound = $input['limit'] ?? null;
+    return [$keys, $bound === null ? null : new $limit($bound[0], $bound[1])];
+}
+
+function constructSelect(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $identifier = $namespace . 'Identifier';
+    $column = $namespace . 'ResultColumn';
+    $select = $namespace . 'Select';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    [$keys, $bound] = constructResultOptions($namespace, $input, $input['dialect']);
     $from = $input['source'] === null ? null : constructSource($platform, $input['source'], $input['dialect']);
     foreach ($input['columns'] as [$expr, $name]) {
         $columns[] = new $column(constructOperand($namespace, $expr), new $identifier($name));
@@ -240,7 +246,7 @@ function constructSelect(string $platform, array $input): SemanticsIR
         constructPredicate($namespace, $input['where'] ?? null),
         $input['distinct'] ?? false,
         $keys,
-        $bound === null ? null : new $limit($bound[0], $bound[1]),
+        $bound,
     );
 }
 
@@ -441,6 +447,7 @@ function constructGrouped(string $platform, array $input): SemanticsIR
         $columns,
         $release::from($input['release']),
         constructPredicate($namespace, $grouped['where']),
+        ...($input['dialect'] === 'postgres' ? constructResultOptions($namespace, $grouped, 'postgres') : []),
     );
 }
 
@@ -461,6 +468,10 @@ function observeGrouped(string $namespace, object $query, string $dialect): arra
             'source' => observeSource($query->source, $dialect, $namespace), 'columns' => $columns,
             'keys' => array_map(static fn ($key): array => observeOperand($namespace, $key), $query->keys),
             'where' => observePredicate($namespace, $query->where),
+            ...($dialect === 'postgres' ? [
+                'orderBy' => array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $query->orderBy),
+                'limit' => $query->limit === null ? null : [$query->limit->count, $query->limit->offset],
+            ] : []),
         ],
     ];
 }

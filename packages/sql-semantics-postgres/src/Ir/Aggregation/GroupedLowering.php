@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Aggregation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
@@ -66,6 +67,9 @@ final class GroupedLowering
         $source = $binding->source();
         Check::input($source !== null && $columns !== [], 'A grouped SELECT needs one resolved input and at least one named result.');
 
-        return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where);
+        $result = new ResultLowering();
+        $order = $result->orders($operation, $statement, null, [], $aggregate->catalogFirst);
+
+        return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where, $order, $result->limit($statement->options?->limit));
     }
 }

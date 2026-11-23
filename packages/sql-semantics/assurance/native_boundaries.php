@@ -84,6 +84,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-source-order-boundaries-v2.json', 'd73ff098a2ea63b93a9af435895495a1a6d510f189c142d1385fc8daa01816b6'],
             ['postgres-signed-write-widths-boundaries-v1.json', '2c46b9338761c773015c9fd8ae43038678b787cd75ac1307682cdca8c3750297'],
             ['postgres-signed-comparison-widths-boundaries-v1.json', 'b63a75d5bd191d9f5f29c8edba5ddec0e6c1f883439d330d930b036643892080'],
+            ['postgres-grouped-result-order-boundaries-v1.json', 'bea8a88bd761a870b6f9cac2d9af79dafb9bd0f1f4c2305ff8bef86e3daf5198'],
         ],
         'sqlite' => [],
     };
@@ -178,7 +179,7 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\Ir\\SelectBounds;' . "\n";
         if ($dialect === 'postgres') {
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
-            foreach (['Statement\\Constraint\\Column\\DefaultExpression', 'Statement\\Constraint\\Column\\NotNull', 'Statement\\Constraint\\Column\\NullAllowed',
+            foreach (['Ir\\Aggregation\\GroupedSelect', 'Ir\\Aggregation\\GroupedKeys', 'Ir\\Aggregation\\GroupColumn', 'Ir\\Aggregation\\AggregateBinding', 'Model\\Statement\\Scalar', 'Statement\\Invocation\\FunctionCall as ParsedAggregate', 'Statement\\Query\\ExpressionTarget as Target', 'Statement\\Constraint\\Column\\DefaultExpression', 'Statement\\Constraint\\Column\\NotNull', 'Statement\\Constraint\\Column\\NullAllowed',
                 'Statement\\Table\\Element\\ColumnDefinition', 'Statement\\Table\\Element\\ListedColumns', 'Statement\\Table\\Persistence',
                 'Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
                 'Ir\\ColumnReference as IrColumnReference', 'Ir\\From\\BooleanColumnReference', 'Ir\\From\\WideIntegerColumnReference', 'Ir\\Expression\\BooleanInput', 'Ir\\From\\ProjectionLowering', 'Model\\Statement\\Reference\\Column\\AliasTarget', 'Statement\\Query\\SortItem', 'Statement\\Query\\SortDirection', 'Statement\\Query\\NullsOrder', 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',

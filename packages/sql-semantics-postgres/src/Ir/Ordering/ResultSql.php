@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Ordering;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 
@@ -17,7 +18,7 @@ final class ResultSql
     /**
      * Returns the SQL suffix of the checked query result.
      */
-    public function render(Select $select, SelectSql $sqlPrinter): string
+    public function render(Select|GroupedSelect $select, SelectSql $sqlPrinter): string
     {
         $terms = [];
         foreach ($select->orderBy as $key) {

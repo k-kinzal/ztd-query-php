@@ -27,9 +27,8 @@ final class GroupedKeys
         Check::input(
             $statement->having === null && $statement->windows === [] && $statement->distinct === null
                 && $statement->into === null && $statement->groupQuantifier === null
-                && ($statement->options->order ?? []) === [] && $statement->options?->limit === null
                 && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),
-            'The grouped projection requires an ordinary unbounded GROUP BY without result modifiers.',
+            'The grouped projection requires an ordinary GROUP BY and checked result clauses.',
         );
         $keys = [];
         foreach ($statement->groupBy as $key) {

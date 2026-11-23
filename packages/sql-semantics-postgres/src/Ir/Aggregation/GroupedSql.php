@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Aggregation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 
 /**
@@ -40,6 +41,8 @@ final class GroupedSql
             $keys[] = $renderer->expression($key, $query->source);
         }
 
-        return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));
+        $sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);
+
+        return $sql . (new ResultSql())->render($query, $renderer);
     }
 }

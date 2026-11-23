@@ -43,10 +43,10 @@ final class ResultLowering
     /**
      * Resolves all checked order keys in precedence order.
      *
-     * @param non-empty-list<ResultColumn> $results The completed output columns
+     * @param list<ResultColumn> $results The complete SELECT projection when input expressions can sort
      * @return list<Order>
      */
-    public function orders(BoundStatement $operation, ParsedSelect $query, SourceBinding|JoinBinding $binding, array $results, bool $catalogFirst): array
+    public function orders(BoundStatement $operation, ParsedSelect $query, SourceBinding|JoinBinding|null $binding, array $results, bool $catalogFirst): array
     {
         $fields = $operation->facts->query($query)->fields();
         Check::input($fields !== null, 'ORDER BY requires a closed result layout.');
@@ -66,10 +66,10 @@ final class ResultLowering
     /**
      * Resolves the exact result position or input expression.
      *
-     * @param non-empty-list<ResultColumn> $results The completed output columns
+     * @param list<ResultColumn> $results The complete SELECT projection when input expressions can sort
      * @throws InvalidConstruction When a source key cannot belong to a DISTINCT projection
      */
-    public function target(SortItem $key, BoundStatement $operation, Fields $fields, SourceBinding|JoinBinding $binding, array $results, bool $catalogFirst, bool $distinct): int|Arithmetic|BooleanColumnReference|BuiltinCast|CollatedText|ColumnReference|TextColumnReference|WideIntegerColumnReference
+    public function target(SortItem $key, BoundStatement $operation, Fields $fields, SourceBinding|JoinBinding|null $binding, array $results, bool $catalogFirst, bool $distinct): int|Arithmetic|BooleanColumnReference|BuiltinCast|CollatedText|ColumnReference|TextColumnReference|WideIntegerColumnReference
     {
         $resolution = $operation->facts->scalar($key->expression)->resolution;
         if ($resolution instanceof AliasTarget) {
@@ -78,6 +78,7 @@ final class ResultLowering
 
             return $position + 1;
         }
+        Check::input($binding !== null, 'A grouped ORDER BY needs a projected name or position.');
         if ($resolution instanceof ResolvedColumn) {
             $column = $binding->resolved($resolution);
 

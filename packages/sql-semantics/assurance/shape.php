@@ -516,6 +516,10 @@ if ($dialect !== 'sqlite') {
     }
     $conditions = [...$truthValues, 'null'];
     $properties['Aggregation\\GroupedSelect']['where'] = $conditions;
+    if ($dialect === 'postgres') {
+        $properties['Aggregation\\GroupedSelect']['orderBy'] = ['array'];
+        $properties['Aggregation\\GroupedSelect']['limit'] = ['?Ordering\\Limit'];
+    }
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
     $properties['Select']['where'] = $conditions;
     $properties['Select']['distinct'] = ['bool'];
@@ -916,9 +920,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v33.json';
+    $storagePath = __DIR__ . '/value-storage-v34.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'ea4733fd4df512ee09810df3c0a8cc82c3c988abf9fbafdfa65dc7e57b34d877',
+        hash_file('sha256', $storagePath) === '90ce5b97072f8312b23ed340474cf75a20f83f288aa5ecc085f6f36512a97847',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1081,7 +1085,7 @@ try {
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
-                    || ($dialect === 'postgres' && in_array($short, ['Ordering\\Order', 'Ordering\\ResultSql', 'Select'], true)
+                    || ($dialect === 'postgres' && in_array($short, ['Aggregation\\GroupedSelect', 'Ordering\\Order', 'Ordering\\ResultSql', 'Select'], true)
                         && $call->name->toString() === 'is_int')
                     || ($dialect === 'postgres' && $short === 'From\\DerivedSource' && $call->name->toString() === 'array_keys')
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),

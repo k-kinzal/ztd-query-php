@@ -268,6 +268,18 @@ function observePostgresOutputOrder(SqlSemantics\Platform\PostgreSql\Semantics $
 }
 
 
+function observePostgresGroupedBounds(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.group_bounds (id integer)']);
+    $group = $semantics->analyze(
+        'SELECT id AS owner, count(*) AS n FROM public.group_bounds GROUP BY id ORDER BY n DESC NULLS LAST, owner LIMIT 2 OFFSET 1',
+        $context,
+    );
+
+    return [$group::class, array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $group->orderBy),
+        [$group->limit->count, $group->limit->offset], $group->toString()];
+}
+
 function observePostgresSignedComparison(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
@@ -494,6 +506,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['outputOrder'] = observePostgresOutputOrder($semantics);
             $details['sourceOrder'] = observePostgresSourceOrder($semantics);
             $details['signedComparison'] = observePostgresSignedComparison($semantics);
+            $details['groupedBounds'] = observePostgresGroupedBounds($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

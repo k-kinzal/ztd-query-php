@@ -245,6 +245,8 @@ The [PostgreSQL signed write contract](postgres-signed-write-widths-v1.json) cov
 
 The [PostgreSQL signed comparison contract](postgres-signed-comparison-widths-v1.json) compares the native int4 and int8 overloads in output values, filters and joins. The oracle checks both input occurrences, result type IDs, bag multiplicity and nullable Boolean outcomes. Run `run_server_postgres_signed_comparison_widths.py` and `combine_server_postgres_signed_comparison_widths_evidence.py` on both pinned releases.
 
+The [PostgreSQL grouped order contract](postgres-grouped-result-order-v1.json) composes checked aggregate fields with ordinal sort keys and row bounds. The observer compares the complete typed fields and permitted selections within each tie band. Run `run_server_postgres_grouped_result_order.py` and `combine_server_postgres_grouped_result_order_evidence.py` on both pinned releases.
+
 The [PostgreSQL Boolean RETURNING contract](postgres-boolean-returning-v1.json) checks native Boolean and signed fields in four mutation roots. The observer compares affected-row count, exact positional types, returned values and physical rows before execution, after execution and after rollback. Run `run_server_postgres_boolean_returning.py` and `combine_server_postgres_boolean_returning_evidence.py` for both pinned releases.
 
 The [PostgreSQL Boolean write contract](postgres-boolean-writes-v1.json) checks native destinations for VALUES, INSERT SELECT and UPDATE. It compares assigned and untouched data, old-row swaps, native result type identifiers and the DISTINCT boundary for untyped NULL. Run the domain with `run_server_postgres_boolean_writes.py` and replay with `combine_server_postgres_boolean_writes_evidence.py` on both pinned releases.
