@@ -159,10 +159,11 @@ def inventory(root):
         raise ValueError("The required grammar inventory differs from the baseline revision")
     artifacts = {}
     for path, record in json.loads(requirements)["artifacts"].items():
+        mysql = "sql-semantics-mysql/resources/" in path
         postgres = "sql-semantics-postgres/resources/" in path
         rules = parse(root, path, record)
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
-        if "sql-semantics-mysql/resources/" in path:
+        if mysql:
             entry = "simple_statement" if "simple_statement" in rules else "statement"
             related = {alternative: ("server-delete-v2.json",) for alternative in rules.get("delete_stmt", [])}
             related.update({alternative: ("mysql-text-literal-v1.json",) for alternative in rules.get("text_literal", ())
@@ -229,7 +230,8 @@ def inventory(root):
             derived_varchar = (
                 *(alternative for alternative in rules.get("table_factor", ())
                   if "select_derived" in alternative or alternative == "table_factor: derived_table"),
-                "derived_table: table_subquery opt_table_alias opt_derived_column_list",
+                *(alternative for alternative in rules.get("derived_table", ())
+                  if alternative == "derived_table: table_subquery opt_table_alias opt_derived_column_list"),
             )
             for alternative in derived_varchar:
                 related[alternative] = (*related.get(alternative, ()), "mysql-derived-varchar-v1.json")
@@ -388,6 +390,8 @@ def inventory(root):
             for alternative in rules.get(rule, []):
                 if alternative in local_signatures or rule == "common_table_expr":
                     related[alternative] = (*related.get(alternative, ()), "server-local-projection-v4.json")
+                    if mysql:
+                        related[alternative] = (*related[alternative], "mysql-local-varchar-v1.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         for alternative in sorted(signatures):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()

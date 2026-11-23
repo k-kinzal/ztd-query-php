@@ -41,6 +41,7 @@ CONTRACTS = {
     "mysql-varchar-extrema-v1.json": "bb884261227a9eceaadd18e1a464aa5b64def2ae3f32ed0a013a2dee7e212a96",
     "mysql-varchar-extrema-v2.json": "a594302b5388ea5a82a95db7d02c382e674baf61ef5f70b532420a8ab621512e",
     "mysql-derived-varchar-v1.json": "e03ccc6eaff57ef5fb6b6cbd6a5e79b00676a4f1737182c33d714532e852fc25",
+    "mysql-local-varchar-v1.json": "3fa99fa56fce69b09f9096ef99407ce960e24fbfcdf5e2e6b7d7a99e4268f161",
     "mysql-varchar-inheritance-v2.json": "5bd0a3474cd47e20ec070aca435175f97941a2a40c96bb40d69612687f93d28d",
     "mysql-explicit-text-collation-v1.json": "2d68bc937da34126ae9d7ec99613c713f4ce7831657af06834d539d758a22a07",
     "postgres-int4-operators-v2.json": "977d858b305d7eb4d33f3061a70781c9dc3412a4280003016b0ae92910f52bfa",

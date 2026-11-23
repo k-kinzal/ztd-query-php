@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// Read the native integer type and unsigned flag on the isolated fixture connection.
+// Read native result metadata on the isolated fixture connection.
 if (($argv[1] ?? null) !== 'mysql' || PHP_INT_SIZE !== 8) {
     throw new RuntimeException('The signed cast observer needs a 64-bit MySQL fixture host.');
 }
@@ -49,7 +49,9 @@ function measureSignedCast(mysqli $db, array $input, bool &$reading): array
         }
         $fields = [];
         foreach ($result->fetch_fields() as $field) {
-            $fields[] = [$field->name, $field->type, ($field->flags & MYSQLI_UNSIGNED_FLAG) !== 0];
+            $fields[] = ($input['observeProtocolCollations'] ?? false) === true
+                ? [$field->name, $field->type, $field->charsetnr]
+                : [$field->name, $field->type, ($field->flags & MYSQLI_UNSIGNED_FLAG) !== 0];
         }
         $rows = $result->fetch_all(MYSQLI_NUM);
         $result->free();
