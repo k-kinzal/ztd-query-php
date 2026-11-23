@@ -145,7 +145,8 @@ def faults(engine, tag):
     if engine == "postgres":
         typed = leaf(engine, tag, [[["null"], "p0"]])
         typed["distinct"] = True
-        result.append(RenderFault("erase-assigned-int4-null", renderer, "\n                ? 'CAST(NULL AS pg_catalog.int4)'", "\n                ? 'NULL'",
+        result.append(RenderFault("erase-assigned-int4-null", renderer,
+                                  "? 'CAST(NULL AS pg_catalog.' . $assignment->written[$slot]->kind->value . ')'", "? 'NULL'",
                                   case(engine, tag, ["id"], typed), "server-insert-query-null-type"))
     return result
 
