@@ -288,6 +288,30 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $localView->query->source === $localView->query->joins[0]->source,
                 $localView->query->columns[0]->expression->source, $localView->query->columns[1]->expression->source,
                 substr_count($localView->toString(), 'WITH ')];
+            $inputs = $semantics->context([
+                'CREATE TABLE main.merge_left (Key TEXT COLLATE NOCASE)',
+                'CREATE TABLE main.merge_right (key TEXT COLLATE BINARY)',
+            ]);
+            $full = $semantics->analyze('CREATE VIEW merged_result AS SELECT Key, a.Key AS original, b.key AS other FROM merge_left a FULL JOIN merge_right b USING (key)', $inputs);
+            $right = $semantics->analyze('SELECT a.*, a.Key AS original FROM merge_left a RIGHT JOIN merge_right b USING (key)', $inputs);
+            if ($full::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $full->query::class !== $namespace . 'Ir\\Select'
+                || $full->query->columns[0]->expression::class !== $namespace . 'Ir\\Expression\\Nulls\\Coalesce'
+                || $right::class !== $namespace . 'Ir\\Select') {
+                throw new RuntimeException('Installed SQLite joins lost their resolved merge or result roles.');
+            }
+            $operands = [];
+            foreach ($full->query->columns[0]->expression->arguments as $argument) {
+                if ($argument->expression::class !== $namespace . 'Ir\\ColumnReference') {
+                    throw new RuntimeException('Installed SQLite FULL merge operand is not a resolved column.');
+                }
+                $operands[] = [$argument->expression->source, $argument->expression->slot];
+            }
+            $details['mergedJoins'] = [
+                $full->query->joins[0]->kind->value, array_column($full->columns, 'value'), $operands,
+                $right->joins[0]->kind->value,
+                array_map(static fn ($field) => [$field->name->value, $field->expression->source], $right->columns),
+            ];
         }
         if ($role === 'Schema\\DropView') {
             $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];
