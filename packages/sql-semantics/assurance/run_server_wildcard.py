@@ -25,6 +25,11 @@ def specifications():
     return {**specification, **specification["native"]}, profiles
 
 
+def analysis_finite_id(engine, reply, item, sql):
+    require(sql == item["wildcardSql"], "native-wildcard-input-mismatch", sql)
+    return finite_id(engine, reply, {**item, "wildcardSql": sql})
+
+
 def prepare(engine, db):
     if engine != "mysql":
         return prepare_join(engine, db)
