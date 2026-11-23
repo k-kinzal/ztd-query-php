@@ -268,7 +268,7 @@ def boundary(item, reply):
     if rejects(reply, item["boundary"]):
         return
     require(reply["status"] == "constructed", "postgres-values-mutant-response", reply)
-    raise Failure("postgres-values-invalid-published", {"observed": reply, "expected": item["boundary"]})
+    raise Failure("postgres-values-invalid-published", {"sql": reply["sql"], "observed": reply, "expected": item["boundary"]})
 
 
 def fault_probe(item, reply, db):
