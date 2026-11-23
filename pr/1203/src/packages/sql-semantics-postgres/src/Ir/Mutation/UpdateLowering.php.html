@@ -105,18 +105,21 @@
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>            <span class="tok-var">$operand</span> = <span class="tok-var">$operand</span>-&gt;<span class="tok-id">operand</span>;</span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        }</span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">if</span> (<span class="tok-var">$text</span> &amp;&amp; <span class="tok-var">$operand</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ParsedColumn</span>) {</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-kw">return</span> <span class="tok-var">$binding</span>-&gt;<span class="tok-id">field</span>(<span class="tok-var">$operand</span>);</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        }</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-var">$value</span> = (<span class="tok-kw">new</span> <span class="tok-id">ExpressionLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operand</span>, <span class="tok-var">$binding</span>, <span class="tok-var">$catalogFirst</span>, <span class="tok-var">$text</span>);</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ColumnReference</span> || <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">IntegerLiteral</span> || <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">NullLiteral</span> || <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">TextLiteral</span>,</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>            <span class="tok-str">&#039;An UPDATE assignee requires a checked native literal, NULL or a row reference.&#039;</span>,</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        );</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-kw">return</span> <span class="tok-var">$value</span>;</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    }</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>}</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-var">$field</span> = <span class="tok-var">$binding</span>-&gt;<span class="tok-id">field</span>(<span class="tok-var">$operand</span>);</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>            <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$field</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ColumnReference</span> || <span class="tok-var">$field</span> <span class="tok-kw">instanceof</span> <span class="tok-id">TextColumnReference</span>, <span class="tok-str">&#039;An UPDATE assignment requires a signed or text input field.&#039;</span>);</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-kw">return</span> <span class="tok-var">$field</span>;</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        }</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-var">$value</span> = (<span class="tok-kw">new</span> <span class="tok-id">ExpressionLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operand</span>, <span class="tok-var">$binding</span>, <span class="tok-var">$catalogFirst</span>, <span class="tok-var">$text</span>);</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ColumnReference</span> || <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">IntegerLiteral</span> || <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">NullLiteral</span> || <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">TextLiteral</span>,</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            <span class="tok-str">&#039;An UPDATE assignee requires a checked native literal, NULL or a row reference.&#039;</span>,</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        );</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-kw">return</span> <span class="tok-var">$value</span>;</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    }</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>}</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
