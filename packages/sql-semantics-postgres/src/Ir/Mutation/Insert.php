@@ -54,7 +54,7 @@ final class Insert implements SemanticsIR
             Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');
             foreach ($row->values as $index => $cell) {
                 Check::input(
-                    $cell->value === null || ($cell->value instanceof TextLiteral) === ($target->written[$index]->kind === ColumnKind::Text),
+                    !$cell->value instanceof TextLiteral || $target->written[$index]->kind === ColumnKind::Text,
                     'An inserted cell must match its target native kind.',
                 );
             }

@@ -35,7 +35,7 @@ function admittedTextMutation(string $sql): bool
     $table = $name('public') . '\\.' . $name('ir_text_changes');
     $alias = $name('(?:__ztd_source|r|s|ir_text_changes|ir_text_inputs)');
     $column = '(?:' . $alias . '\\.)?' . $name('(?:id|label|note)');
-    $number = '-?[0-9]{1,5}';
+    $number = '-?[0-9]{1,10}';
     $int4 = '(?:' . $number . '|CAST\\(' . $number . ' AS pg_catalog\\.int4\\))';
     $operand = '(?:' . $int4 . '|' . $column . ')';
     $operator = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';

@@ -35,7 +35,7 @@ final class UpdateAssignment
         $read = $value instanceof ColumnReference || $value instanceof TextColumnReference;
         Check::input(!$read || $value->occurrence === 0, 'An UPDATE read slot must belong to occurrence zero.');
         Check::input(
-            $value instanceof NullLiteral || ($target instanceof TextColumnReference) === ($value instanceof TextColumnReference || $value instanceof TextLiteral),
+            $target instanceof TextColumnReference || (!$value instanceof TextColumnReference && !$value instanceof TextLiteral),
             'An UPDATE assignment value must match its target native kind.',
         );
     }

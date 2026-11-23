@@ -49,6 +49,7 @@ def prepare(_, db):
         f"DELETE FROM public.{TABLE}; DELETE FROM public.{TABLE}",
         f"DELETE FROM public.{TABLE} RETURNING current_database()",
         f"INSERT INTO public.{TABLE} (id) SELECT 1 FROM public.{TABLE}",
+        f"INSERT INTO public.{TABLE} (label) VALUES (12345678901)",
         "UPDATE public.other_table SET id = 1",
     )
     return {"outside": [db.request({"sql": sql}) for sql in invalid],
@@ -57,7 +58,8 @@ def prepare(_, db):
 
 def check_preparation(_, environment, prepared):
     same(sorted_rows(INITIAL), sorted_rows(environment["initial"]))
-    same([{"status": "outside-observer-scope"}] * 4, prepared["outside"])
+    require(environment["int4TextCastOverrides"] == 0, "postgres-native-int4-text-cast-profile", environment)
+    same([{"status": "outside-observer-scope"}] * 5, prepared["outside"])
     same(observation({"status": "mutation", "count": 0, "columns": 1, "fields": [["label", "text"]],
                       "rows": [], "before": INITIAL, "after": INITIAL, "restored": INITIAL}), prepared["inactive"])
 
@@ -262,7 +264,9 @@ def expected(item):
             else:
                 changed = list(row)
                 for ref, term in item["assignments"]:
-                    changed[HEADING.index(address(ref, layout))] = evaluate(term, row)
+                    index = HEADING.index(address(ref, layout))
+                    value = evaluate(term, row)
+                    changed[index] = str(value) if COLUMN_TYPES[index] == "text" and isinstance(value, int) else value
                 affected.append(changed)
                 after.append(changed)
     positions = [HEADING.index(address(ref, layout)) for ref, _ in item["returning"]]

@@ -17,12 +17,12 @@ from server_join_cases import slot
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-text-update"
-CONTRACT = "daa9713ed75c28e5e5595b3a585bcd014310f763267bff170e4c5a83157ee7df"
+CONTRACT = "e94efc62c3ba1ace6febcc09d4c77f8eed8b753e23327f8ef2bba2bd545bb0b6"
 TEXT = ("", "it's different", "back\\slash", "line one\nline two", "多言語 α", "  ")
 
 
 def specifications():
-    path, profile = TOOL / "postgres-text-update-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "postgres-text-update-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "postgres-text-update-contract-mismatch")
     return json.loads(path.read_text()), {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
 
@@ -43,7 +43,10 @@ def text(value):
 
 def finite(tag, form, target, filter_):
     opposite = other(target)
-    operand = {"literal": text(""), "read": reference(opposite), "null": ["null"], "swap": reference(opposite)}[form]
+    operand = int4(int(form.removeprefix("int4:"))) if form.startswith("int4:") else {
+        "literal": text(""), "read": reference(opposite), "null": ["null"], "swap": reference(opposite),
+        "int4-read": reference("id"),
+    }[form]
     writes = [(target, operand)]
     if form == "swap":
         writes.append((opposite, reference(target)))
@@ -61,7 +64,8 @@ def finite_id(_, reply, _item):
     _, _, _, op, (where, assignments), _ = graph(reply)
     require(op == "update", "postgres-text-update-wrong-role", op)
     destination, value = assignments[0]
-    form = "swap" if len(assignments) == 2 else {"text": "literal", "text-slot": "read", "null": "null"}[value[0]]
+    form = "swap" if len(assignments) == 2 else {"text": "literal", "text-slot": "read", "null": "null",
+                                                "integer": f"int4:{value[-1]}", "slot": "int4-read"}[value[0]]
     if where is not None:
         require(where == ("null-test", True, ("text-slot", destination)),
                 "postgres-text-update-finite-filter", where)
@@ -81,11 +85,15 @@ def positives(tag):
     payload = "東京\nline"
     yield (f"UPDATE {table_name} SET label = CAST('{payload}' AS pg_catalog.text) RETURNING label, note, id",
            update(tag, [("label", text(payload))]))
+    yield (f"UPDATE {table_name} SET label = -2147483648 RETURNING label, note, id",
+           finite(tag, "int4:-2147483648", "label", "all"))
+    yield (f"UPDATE {table_name} AS r SET label = r.id, id = 9 RETURNING label, note, id",
+           update(tag, [("label", reference("id")), ("id", int4(9))]))
 
 
 def negatives(tag):
     mismatch = "An UPDATE assignment value must match its target native kind."
-    yield update(tag, [("label", int4(2))]), mismatch
+    yield update(tag, [("label", slot(1))]), "An UPDATE read slot must belong to the target."
     yield update(tag, [("id", text("not int4"))]), mismatch
     wrong_write = update(tag, [("label", text("value"))])
     wrong_write["assignments"][0][0] = ["text-slot", 0, 0]
@@ -97,9 +105,13 @@ def negatives(tag):
 
 def exploratory(tag, seed, count):
     rng = random.Random(seed)
-    for _ in range(count):
+    conversions = random.Random(seed + 1)
+    for index in range(count):
         target = rng.choice(("label", "note"))
-        assignments = [(target, rng.choice([reference(other(target)), ["null"], *(text(v) for v in TEXT)]))]
+        value = rng.choice([reference(other(target)), ["null"], *(text(v) for v in TEXT)])
+        if index % 6 == 0:
+            value = reference("id") if index % 12 == 0 else int4(conversions.randrange(-2147483648, 2147483648))
+        assignments = [(target, value)]
         if rng.getrandbits(1):
             assignments.append((other(target), rng.choice((reference(target), text(rng.choice(TEXT))))))
         if rng.getrandbits(1):
@@ -154,6 +166,8 @@ def sample_forms(forms, reply, *_):
             forms["literal/" + json.dumps(term[1], ensure_ascii=False)] += 1
         if term[0] == "text-slot" and term[1] in destinations:
             forms["read-write-overlap"] += 1
+        if destination != "id" and term[0] in {"integer", "slot"}:
+            forms["assignment/int4-to-text/" + term[0]] += 1
         if position == 0 and destination != "id":
             forms["text-first/" + destination] += 1
     forms[f"filter/{where is not None}"] += 1
@@ -163,7 +177,7 @@ def sample_forms(forms, reply, *_):
 def required_forms(*_):
     return {"destination/label", "destination/note", "operand/text", "operand/null", "operand/text-slot",
             "mixed-signed-write", "read-write-overlap", "text-first/label", "text-first/note",
-            "filter/True", "filter/False", "nonempty/True", "nonempty/False"} | {
+            "filter/True", "filter/False", "nonempty/True", "nonempty/False", "assignment/int4-to-text/integer", "assignment/int4-to-text/slot"} | {
         "literal/" + json.dumps(v, ensure_ascii=False) for v in TEXT
     }
 
@@ -195,6 +209,10 @@ def faults(_, tag):
         RenderFault("treat-empty-text-as-null", sql, "$expression instanceof TextLiteral => $expression->toString(),",
                     "$expression instanceof TextLiteral => $expression->value === '' ? 'NULL' : $expression->toString(),",
                     finite(tag, "literal", "label", "all"), "meaning-mismatch"),
+        RenderFault("substitute-int4-update-before-text-assignment", sql,
+                    "$expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',",
+                    "$expression instanceof IntegerLiteral => 'CAST(0 AS pg_catalog.int4)',",
+                    finite(tag, "int4:-27", "label", "all"), "meaning-mismatch"),
     ]
 
 

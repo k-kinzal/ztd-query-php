@@ -51,7 +51,6 @@ def prepare(engine, db):
 def check_preparation(engine, environment, prepared):
     check_mutation_preparation(engine, environment, prepared["mutation"])
     same(sorted_rows(ROWS), sorted_rows(environment["input"]))
-    require(environment["int4TextCastOverrides"] == 0, "postgres-text-insert-query-cast-profile", environment)
     require(len(prepared["guard"]) == 2 and all(result["observed"] == {"status": "outside-observer-scope"}
             for result in prepared["guard"]), "postgres-text-insert-query-observer-scope", prepared["guard"])
 

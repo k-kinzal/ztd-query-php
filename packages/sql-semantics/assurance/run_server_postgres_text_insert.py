@@ -17,7 +17,7 @@ from server_join_cases import slot
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-text-insert"
-CONTRACT = "cb7e8d8d41882b4df66b4bd36bc97d5e9eb6164ce267b8e988f88913697292f1"
+CONTRACT = "3fdc3cb62f73a95c63470c1713d6636f5e30b348ecaa370233a44646482539d5"
 LAYOUTS = {
     "text": ("label",), "integer-text": ("id", "label"), "text-integer": ("label", "id"),
     "two-text": ("note", "label"),
@@ -26,7 +26,7 @@ TEXT = ("", "text 'signed'", "line\nnext", "朝 α", "back\\slash", " ")
 
 
 def specifications():
-    path, profile = TOOL / "postgres-text-insert-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "postgres-text-insert-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "postgres-text-insert-contract-mismatch")
     return json.loads(path.read_text()), {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
 
@@ -40,7 +40,8 @@ def insert(tag, columns, values, returned=(("id", "id"), ("label", "label"), ("n
 
 def finite(tag, order, payload, multiplicity):
     columns = LAYOUTS[order]
-    value = {"empty": ["text", ""], "nonempty": ["text", "value 'α"], "null": None}[payload]
+    value = payload.removeprefix("int4:") if payload.startswith("int4:") else (
+        {"empty": ["text", ""], "nonempty": ["text", "value 'α"], "null": None}[payload])
     row = [value] if "id" not in columns else (["13", value] if columns[0] == "id" else [value, "13"])
     if order == "two-text":
         row += [["text", "other field"]]
@@ -60,7 +61,8 @@ def finite_id(_, response, _item):
     name = {layout: key for key, layout in LAYOUTS.items()}[tuple(columns)]
     index = next(i for i, column in enumerate(columns) if column != "id")
     cell = rows[0][index]
-    payload = "null" if cell is None else "empty" if cell == ["text", ""] else "nonempty"
+    payload = "null" if cell is None else f"int4:{cell}" if isinstance(cell, str) else (
+        "empty" if cell == ["text", ""] else "nonempty")
     return name, payload, "single" if len(rows) == 1 else "repeated"
 
 
@@ -74,12 +76,14 @@ def analyzed(tag):
            "RETURNING note AS sample, label AS other",
            insert(tag, ("note", "label"), [[["text", "朝"], None]], (("note", "sample"), ("label", "other"))))
     yield f"INSERT INTO {table} (id, label) VALUES (5, '') RETURNING *", insert(tag, ("id", "label"), [["5", ["text", ""]]])
+    yield (f"INSERT INTO {table} (label, id, note) VALUES (-2147483648, 5, 0) {tail}",
+           insert(tag, ("label", "id", "note"), [["-2147483648", "5", "0"]]))
 
 
 def negatives(tag):
     rejection = "An inserted cell must match its target native kind."
     yield insert(tag, ("id",), [[["text", "abc"]]]), rejection
-    yield insert(tag, ("label",), [["4"]]), rejection
+    yield insert(tag, ("label",), [["2147483648"]]), "Integer is outside the signed 32-bit range."
     wrong_kind = insert(tag, ("id",), [[["text", "abc"]]])
     wrong_kind["written"] = [["text-slot", 0, 0]]
     yield wrong_kind, "An INSERT write slot must belong to the target."
@@ -92,16 +96,19 @@ def negatives(tag):
 
 def exploratory(tag, seed, count):
     rng = random.Random(seed)
+    conversions = random.Random(seed + 1)
 
     def choose(column):
         if column == "id":
             return rng.choice((None, str(rng.randint(-30, 30))))
         return rng.choice((None, *(["text", payload] for payload in TEXT)))
 
-    for _ in range(count):
+    for index in range(count):
         columns = ["label", *rng.sample(("id", "note"), k=rng.randrange(3))]
         rng.shuffle(columns)
         values = [[choose(name) for name in columns] for _ in range(rng.randint(1, 4))]
+        if index % 6 == 0:
+            values[0][columns.index("label")] = str(conversions.randrange(-2147483648, 2147483648))
         if rng.getrandbits(1):
             values.append(values[0][:])
         returned = [(rng.choice(HEADING), rng.choice(("name", '値 " quoted', "other"))) for _ in range(rng.randint(1, 5))]
@@ -122,12 +129,13 @@ def requests(_, tag, spec):
         yield f"negative/{index}", item, None, {"exception": DIAGNOSTICS + "InvalidConstruction", "message": message}
 
 
-def explicit(cell):
+def explicit(cell, kind):
     if cell is None:
         return None
     if isinstance(cell, str):
-        return int(cell)
-    require(cell[0] == "text" and isinstance(cell[1], str), "postgres-text-insert-unknown-cell", cell)
+        value = int(cell)
+        return str(value) if kind == "text" else value
+    require(kind == "text" and cell[0] == "text" and isinstance(cell[1], str), "postgres-text-insert-unknown-cell", cell)
     return cell[1]
 
 
@@ -139,7 +147,7 @@ def expected(item):
     for values in item["rows"]:
         row = [None, *DEFAULTS]
         for index, cell in zip(columns, values):
-            row[index] = explicit(cell)
+            row[index] = explicit(cell, COLUMN_TYPES[index])
         new.append(row)
     return observation({
         "status": "mutation", "count": len(new), "columns": len(return_slots),
@@ -181,11 +189,13 @@ def sample_forms(forms, reply, *_):
                 forms["null/" + name] += 1
             elif isinstance(cell, list):
                 forms["text/" + json.dumps(cell[1], ensure_ascii=False)] += 1
+            elif name != "id":
+                forms["assignment/int4-to-text"] += 1
 
 
 def required_forms(*_):
     return {"written/label", "written/id,label", "written/label,id", "written/label,note", "written/note,label",
-            "write-reordered", "duplicate-return-label", "repeated-row", "null/id", "null/label", "null/note"} | {
+            "write-reordered", "duplicate-return-label", "repeated-row", "null/id", "null/label", "null/note", "assignment/int4-to-text"} | {
         "text/" + json.dumps(payload, ensure_ascii=False) for payload in TEXT
     }
 
@@ -217,6 +227,10 @@ def faults(_, tag):
         RenderFault("omit-repeated-text-row", path + "Insert.php", "$rows[] = $row->toString();",
                     "if ($rows === []) { $rows[] = $row->toString(); }", finite(tag, "text", "nonempty", "repeated"),
                     "meaning-mismatch"),
+        RenderFault("discard-int4-values-assignment", path + "InsertCell.php",
+                    "$this->value instanceof IntegerLiteral => 'CAST(' . $this->value->decimal . ' AS pg_catalog.int4)',",
+                    "$this->value instanceof IntegerLiteral => 'CAST(0 AS pg_catalog.int4)',",
+                    finite(tag, "text", "int4:-27", "single"), "meaning-mismatch"),
     ]
 
 
