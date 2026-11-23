@@ -1,0 +1,48 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-writes-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Pinned UTF-8 PostgreSQL with standard_conforming_strings on, pg_catalog first and stock native assignment casts.",
+  "extends": ["postgres-boolean-fields-v1.json", "postgres-boolean-returning-v1.json", "postgres-text-update-v2.json", "postgres-text-insert-query-v2.json"],
+  "constructors": {},
+  "existingRoles": ["Mutation/Insert", "Mutation/InsertCell", "Mutation/Insert/WriteSlot", "Mutation/Insert/Destination", "Mutation/InsertQuery", "Mutation/Update", "Mutation/UpdateAssignment", "From/BooleanColumnReference", "From/ColumnKind", "BooleanLiteral", "NullLiteral", "Expression/BuiltinCast"],
+  "structure": "A native Boolean destination is an explicit typed target role. VALUES cells contain TRUE, FALSE or NULL in that position. UPDATE also accepts a resolved Boolean old-row field. INSERT SELECT accepts Boolean field reads, Boolean literals, Boolean tests, builtin Boolean casts and NULL with the target context required below.",
+  "conditions": "Validate target occurrence, native type and unique writable position. The projection width and destination layout agree in order. Check each Boolean read against its own source. Reject Boolean and signed or text roles in unrelated destinations. A bare NULL resolves to Boolean in an ordinary SELECT assignment. DISTINCT resolves bare NULL to text and cannot write it to a Boolean field. A builtin Boolean cast supplies a typed NULL before DISTINCT.",
+  "meaning": "Write positional truth values with the original duplicate policy, SQL NULL and target defaults on omitted fields. UPDATE computes all assigned values from the old row, then RETURNING reads the new row. Query writes retain independently scoped Boolean field reads. INSERT and UPDATE use the owning table and preserve typed output and affected rows.",
+  "sql": "Render checked truth values as TRUE or FALSE and explicit NULL in VALUES or UPDATE. Render a planned query NULL or typed cast with pg_catalog.bool when required. Preserve independent source columns, DISTINCT policy and output and destination order.",
+  "observations": ["Exact native destination and source roles and positions", "Ordered RETURNING names and type identifiers, affected row count, Boolean values and NULL", "Full target row bags before, after and restored by rollback, and unchanged source rows", "Native type errors for incompatible assignments and DISTINCT untyped NULL"],
+  "finite": {
+    "values": {"fieldOrder": ["forward", "reversed"], "mode": ["single", "repeated"], "operands": ["true", "false", "null"], "identities": 36},
+    "query": {"fieldOrder": ["forward", "reversed"], "distinct": [false, true], "filter": ["all", "selected"], "identities": 8},
+    "update": {"target": ["enabled", "fallback"], "value": ["true", "false", "null", "old-other", "swap"], "filter": ["all", "selected"], "identities": 20},
+    "identities": 64,
+    "completeness": "Recover row width, operation and native slot order, typed values, duplicate policy, scoped old-row reads, and filter from the constructed graph. Require exactly one result for each fixed identity."
+  },
+  "analysis": ["Mixed native TRUE FALSE NULL values", "Repeated writes with reordered fields", "Two opposite old-row reads in one UPDATE", "A typed Boolean source copied in a different destination order", "DISTINCT on native Boolean rows", "Bare NULL assigned by ordinary INSERT SELECT", "Explicitly cast Boolean NULL assigned by DISTINCT INSERT SELECT", "Boolean tests in an INSERT SELECT result"],
+  "exploration": {
+    "seeds": [1289, 16067, 33071],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary VALUES list length, field order, old-row reference and swap, Boolean literal, NULL, source truth data, filter nesting, distinct, writes omitted and ordered returned fields."
+  },
+  "negative": ["Boolean literal in a signed value slot", "Signed literal in a Boolean VALUES slot", "Text literal in a Boolean VALUES slot", "Boolean update bound to a signed target", "Signed read in a Boolean UPDATE assignment", "Duplicate Boolean UPDATE destination", "Boolean source ordinal with the wrong declared kind", "A signed SELECT result assigned to a Boolean destination", "A DISTINCT SELECT with a bare NULL in a Boolean destination", "Parsed DISTINCT untyped NULL assignment", "Parsed explicitly typed text assigned to Boolean"],
+  "faults": ["Reverse a Boolean destination layout", "Replace TRUE by FALSE", "Discard one Boolean UPDATE assignment", "Read the already updated value during a swap", "Drop DISTINCT on a Boolean source"],
+  "evidence": {
+    "P01": "Close every write, source read and positional result over its exact typed scope.",
+    "P02": "Check destination, native kind, uniqueness and query compatibility when the parent is constructed.",
+    "P03": "Store typed operation and slot layout without SQL or analysis state.",
+    "P04": "Derive the effect and returned row layout from typed operands and ordered destinations.",
+    "P05": "Own readonly operands, slot layouts and lists.",
+    "P06": "Emit all checked write forms with their native type and row effects.",
+    "Q01": "Reject unrelated operand types and invalid role combinations at their owning boundary.",
+    "Q02": "Observe each finite identity and all analyzed forms on both pinned builds.",
+    "Q03": "Compare the relation produced by the source with all resulting target effects and RETURNING rows.",
+    "Q04": "Compare exact SQL observations against independent typed evaluation and measure the native invalid assignments separately.",
+    "Q05": "Tie the checked constructors and emitted forms to the actual shipped paths."
+  },
+  "open": ["Unknown string input conversion for Boolean DML", "Additional typed expressions and write conversion operators", "Conflict handlers, generated destinations, rules and trigger behaviors outside the selected ordinary table fixture"],
+  "trust": ["Pinned native SQL database and fixture", "Independently evaluated field maps and old-row snapshots", "Native Bool and signed comparison and assignment rules", "Loaded output and constructor build provenance"],
+  "sources": ["https://www.postgresql.org/docs/17/typeconv-query.html", "https://www.postgresql.org/docs/17/sql-update.html", "https://www.postgresql.org/docs/17/dml-returning.html"]
+}
