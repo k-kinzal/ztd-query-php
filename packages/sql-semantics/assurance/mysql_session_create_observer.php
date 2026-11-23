@@ -41,8 +41,13 @@ REGEX;
 
 function resetSessionCreate(PDO $catalog, PDO $owner, string $target, string $fixture, int $variant): void
 {
-    $catalog->exec('DROP VIEW IF EXISTS ' . CREATE_PRIMARY . ', ' . CREATE_DECOY);
-    $catalog->exec('DROP TABLE IF EXISTS ' . CREATE_PRIMARY . ', ' . CREATE_DECOY . ', ' . CREATE_MARKER);
+    foreach ([CREATE_PRIMARY, CREATE_DECOY] as $name) {
+        $definition = sessionCreateDefinition($catalog, $name);
+        if ($definition !== null) {
+            $catalog->exec((isset($definition['Create View']) ? 'DROP VIEW ' : 'DROP TABLE ') . $name);
+        }
+    }
+    $catalog->exec('DROP TABLE IF EXISTS ' . CREATE_MARKER);
     $catalog->exec('CREATE TABLE ' . CREATE_MARKER . ' (n INT) ENGINE=InnoDB');
     $catalog->exec('INSERT INTO ' . CREATE_MARKER . ' VALUES (0)');
     foreach ([CREATE_PRIMARY => 11, CREATE_DECOY => 41] as $name => $base) {
@@ -59,14 +64,22 @@ function resetSessionCreate(PDO $catalog, PDO $owner, string $target, string $fi
     }
 }
 
-function sessionCreateRelation(PDO $pdo, string $name): ?array
+function sessionCreateDefinition(PDO $pdo, string $name): ?array
 {
     try {
-        $definition = $pdo->query('SHOW CREATE TABLE ' . $name)->fetch(PDO::FETCH_ASSOC);
+        return $pdo->query('SHOW CREATE TABLE ' . $name)->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $error) {
         if ($error->errorInfo[0] !== '42S02' || $error->errorInfo[1] !== 1146) {
             throw $error;
         }
+        return null;
+    }
+}
+
+function sessionCreateRelation(PDO $pdo, string $name): ?array
+{
+    $definition = sessionCreateDefinition($pdo, $name);
+    if ($definition === null) {
         return null;
     }
     if (isset($definition['Create View'])) {
