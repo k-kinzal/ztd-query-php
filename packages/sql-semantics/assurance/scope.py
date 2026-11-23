@@ -64,6 +64,7 @@ CONTRACTS = {
     "server-result-v1.json": "e92fbdaddd2d0b7f29aff440f72bab31fa6065a93820b6ac4d57a431f313056c",
     "server-join-v2.json": "43bfd3ddd7271b70a61fb411e918a0a2acac55b2cd01bf5e7069baadb5f93747",
     "postgres-typed-columns-v2.json": "8454694fe46150d128c458feed1641860849c2a1a08c1ff53eaf938f714f6a7a",
+    "postgres-text-returning-v2.json": "252345f6bc001056f4545abdd72a0d5def31d059bea70d29638a042e0bada831",
     "postgres-derived-text-v1.json": "642645f03a2d0bee616130899a8e909d4ff0c45263d456ca619819d1923cbda1",
     "postgres-text-declarations-v2.json": "0ecdb3eed7e3e479112c81c0fc734723632f6d0a3a0f1744877f6a8fe6477da7",
     "postgres-text-null-tests-v1.json": "44beded1705fbf79c15ebfb252cce16faf6f9d38a771787b64b5956dd615955f",

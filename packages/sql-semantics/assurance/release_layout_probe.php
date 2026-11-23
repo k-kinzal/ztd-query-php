@@ -217,6 +217,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $reference->slot, $reference->occurrence, $joinedText->columns[0]->name->value,
                 str_starts_with($joinedText->toString(), 'SELECT "__ztd_source_1"."__ztd_c0" AS "label" FROM '),
             ];
+            $returning = $semantics->analyze(
+                'DELETE FROM public.typed_table WHERE FALSE RETURNING label AS removed, id',
+                $typedContext,
+            );
+            $details['typedReturning'] = array_map(
+                static fn ($field): array => [
+                    substr($field->reference::class, strlen($namespace . 'Ir\\')),
+                    $field->reference->slot,
+                    $field->name->value,
+                ],
+                $returning->returning,
+            );
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');

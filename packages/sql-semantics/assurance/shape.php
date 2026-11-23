@@ -499,7 +499,7 @@ if ($dialect !== 'sqlite') {
     ];
     if ($dialect === 'postgres') {
         $properties['Mutation\\Delete']['returning'] = ['array'];
-        $properties['Mutation\\ReturnedColumn'] = ['reference' => ['ColumnReference'], 'name' => ['Identifier']];
+        $properties['Mutation\\ReturnedColumn'] = ['reference' => ['ColumnReference', 'From\\TextColumnReference'], 'name' => ['Identifier']];
         $methods['Mutation\\ReturnedColumn'] = ['__construct'];
         array_push($internal, 'Mutation\\ReturningLayout', 'Mutation\\ReturningLowering', 'Mutation\\ReturningSql');
         array_push($pureCollaborators, 'Mutation\\ReturningLayout', 'Mutation\\ReturningSql');
