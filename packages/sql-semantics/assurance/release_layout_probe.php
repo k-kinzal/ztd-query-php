@@ -43,6 +43,21 @@ function observeEnum(string $name): array
     throw new RuntimeException('An installed enum accepts an unknown backing value.');
 }
 
+function observeMysqlHaving(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.having_rows (id INT, amount INT)']);
+    $query = $semantics->analyze(
+        'SELECT id, sum(amount) AS total FROM app.having_rows GROUP BY id HAVING total > 4294967292',
+        $context,
+    );
+    $shadow = $semantics->analyze('SELECT count(*) AS id FROM app.having_rows GROUP BY id HAVING id > 1', $context);
+    $condition = $query->having;
+
+    return [$condition::class, $condition->left === $query->columns[1]->value, $condition->left->operator->value,
+        $condition->right::class, $condition->right->decimal, $shadow->having->left::class, $shadow->having->left->slot,
+        $query->toString(), $shadow->toString()];
+}
+
 function observeMysqlWithAvailability(string $sql, object $definition, object $body): array
 {
     $rejections = [];
@@ -566,6 +581,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $legacyRelease->textCollation(), $text->release->textCollation()];
             $details['mysqlVarcharPublication'] = observeMysqlVarchar($semantics);
             $details['mysqlExternalViews'] = observeMysqlExternalViews($semantics);
+            $details['mysqlHaving'] = observeMysqlHaving($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';

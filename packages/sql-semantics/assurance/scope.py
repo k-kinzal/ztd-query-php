@@ -34,6 +34,7 @@ CONTRACTS = {
     "mysql-varchar-slots-v2.json": "3282a89029e03bbab4448271d03cfc292eb18947d3ff0295b245290bea0eb559",
     "mysql-external-views-v1.json": "24ca8bdc80df5f8358b4020de5fad7219da5a2c58d045f4ecb0ff45cd4a8b18d",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
+    "mysql-grouped-having-v2.json": "85cdba2d69bb1e59b56b4c734197cabd6dfc8434bf7b38bd88b877e35dd812a1",
     "mysql-physical-text-admission-v1.json": "1a03057e1f901d6e680ca329471a99fd7b8b169c39d19fd678cd145891a3b3e2",
     "mysql-physical-text-admission-v2.json": "2b3e592e2799f9f5a810d927c81a554eef8de52ebe370035f17947c7e6c22c25",
     "mysql-varchar-presence-v1.json": "c95df7be6ac93b7b423036791a4b967515d549f48002a342d67bcab4165c1e66",

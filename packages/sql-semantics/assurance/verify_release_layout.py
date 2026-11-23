@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v59.json"
-CONTRACT = "a5e134c964ea3449c894542353d9da3a7197fbe8fc10500a37620962e89d2d44"
+CONTRACT_NAME = "release-layout-v60.json"
+CONTRACT = "e986aa09b487edec95918f18fdf652b67fcfba0648998f523a5b5b821727ef62"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -255,6 +255,14 @@ def verify_probe(raw, catalog):
                 'FROM `app`.`external_rows` AS `__ztd_source`',
                 "A DELETE target must be a base table.",
             ], "installed-mysql-external-view-mismatch", item)
+            mysql_ir = r"SqlSemantics\Platform\MySql\Ir" + chr(92)
+            require(item.get("mysqlHaving") == [
+                mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
+                mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + "ColumnReference", 0,
+                'SELECT `__ztd_source`.`id` AS `id`, sum(`__ztd_source`.`amount`) AS `total` '
+                'FROM `app`.`having_rows` AS `__ztd_source` GROUP BY `__ztd_source`.`id` HAVING (sum(`__ztd_source`.`amount`) > 4294967292)',
+                'SELECT count(*) AS `id` FROM `app`.`having_rows` AS `__ztd_source` GROUP BY `__ztd_source`.`id` HAVING (`__ztd_source`.`id` > 1)',
+            ], "installed-mysql-having-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Mutation\\Delete"):
             require(item.get("booleanReturning") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True,

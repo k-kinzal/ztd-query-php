@@ -1,0 +1,222 @@
+{
+  "revision": "SemanticsIR/mysql-grouped-having-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect grouped operand identity, numeric scope and exact native HAVING emission to loaded PHP.",
+  "rules": {
+    "Aggregation/GroupedComparison::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ([$left, $right] as $operand) {",
+        "    Check::input(!$operand instanceof Aggregate || !$operand->argument instanceof TextColumnReference",
+        "        || $operand->operator === AggregateOperator::Count, 'A numeric HAVING comparison needs a numeric aggregate result.');",
+        "}"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) === ColumnKind::SignedInt, 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "$operands = [];",
+        "foreach ($results as $result) {",
+        "    $operands[] = $result->value;",
+        "}",
+        "if ($having instanceof GroupedComparison) {",
+        "    array_push($operands, $having->left, $having->right);",
+        "}",
+        "$scope = new OccurrenceScope();",
+        "foreach ($operands as $value) {",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } elseif ($value instanceof Aggregate && $value->argument instanceof TextColumnReference) {",
+        "        $scope->textColumn($value->argument, [$source]);",
+        "    } elseif ($value instanceof Aggregate) {",
+        "        Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) === ColumnKind::SignedInt, 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    $name = $result->name->value;",
+        "    Check::input(",
+        "        !$value instanceof ColumnReference || $name === ltrim($name, \" \\t\\r\\n\\v\\f\") || $source->columns[$value->slot]->value === $name,",
+        "        'An intrinsic MySQL grouped name must equal its physical input field.'",
+        "    );",
+        "}",
+        "$scope->predicate($where, [$source]);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "Aggregation/GroupedKeys::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(",
+        "    $statement->windows === [] && $statement->qualify === null",
+        "        && $statement->orderBy === [] && $statement->limit === null && $statement->procedure === null",
+        "        && $statement->locking === [] && $statement->into === null && $statement->late === null",
+        "        && ($statement->options === [] || $statement->options === [SelectOption::All]),",
+        "    'The grouped projection requires an ordinary unbounded GROUP BY without result modifiers.',",
+        ");",
+        "$keys = [];",
+        "Check::input($statement->groupBy?->modifier === null, 'A grouped projection requires simple grouping keys.');",
+        "foreach ($statement->groupBy->items ?? [] as $key) {",
+        "    Check::input($key->direction === null, 'A grouped projection requires simple grouping keys without a direction.');",
+        "    $keys[] = $binding->reference($key->expression);",
+        "}",
+        "",
+        "return $keys;"
+      ]
+    },
+    "Aggregation/GroupedLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'A grouped projection requires the native language profile.');",
+        "Check::input($profile->lexical->equals(new LexicalSettings()), 'A grouped projection requires default MySQL lexical settings.');",
+        "$binding = new SourceBinding($operation, $statement->from);",
+        "$aggregate = new AggregateBinding();",
+        "$keys = (new GroupedKeys())->lower($statement, $binding);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding);",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A grouped projection requires a resolved output shape.');",
+        "$columns = [];",
+        "$labels = new ProjectionLabel();",
+        "foreach ($statement->items as $index => $target) {",
+        "    Check::input($target instanceof Target, 'A grouped projection requires explicit result fields.');",
+        "    $field = $fields->at($index);",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'A grouped result must have a resolved name.');",
+        "    $value = $target->expression instanceof ParsedAggregate",
+        "        ? $aggregate->lower($target->expression, $binding)",
+        "        : $binding->reference($target->expression);",
+        "    $columns[] = new GroupColumn($value, $labels->lower($statement, $field, $name->value));",
+        "}",
+        "$having = (new HavingLowering())->lower($statement->having, $operation, $binding, $aggregate, $columns);",
+        "$source = $binding->source();",
+        "Check::input($source !== null, 'A grouped SELECT needs one resolved input and at least one named result.');",
+        "",
+        "return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where, $having);"
+      ]
+    },
+    "Aggregation/HavingLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($condition instanceof Grouped) {",
+        "    $condition = $condition->operand;",
+        "}",
+        "if ($condition === null) {",
+        "    return null;",
+        "}",
+        "if ($condition instanceof ParsedNull) {",
+        "    return new NullLiteral();",
+        "}",
+        "if ($condition instanceof ParsedBoolean) {",
+        "    return new BooleanLiteral($condition->value);",
+        "}",
+        "Check::input($condition instanceof ParsedComparison, 'HAVING needs a numeric group comparison, a Boolean constant or NULL.');",
+        "$operator = IntegerOperator::tryFrom($condition->operator->value);",
+        "Check::input($operator !== null, 'HAVING needs a supported numeric comparison operator.');",
+        "",
+        "return new GroupedComparison(",
+        "    $operator,",
+        "    $this->operand($condition->left, $operation, $binding, $aggregate, $columns),",
+        "    $this->operand($condition->right, $operation, $binding, $aggregate, $columns)",
+        ");"
+      ]
+    },
+    "Aggregation/HavingLowering::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($operand instanceof ParsedAggregate) {",
+        "    return $aggregate->lower($operand, $binding);",
+        "}",
+        "if ($operand instanceof ColumnUse) {",
+        "    $resolution = $operation->facts->scalar($operand)->resolution;",
+        "    if ($resolution instanceof AliasTarget) {",
+        "        $column = $columns[$resolution->field->position] ?? null;",
+        "        Check::input($column !== null, 'A HAVING alias needs an exact projected value.');",
+        "",
+        "        return $column->value;",
+        "    }",
+        "",
+        "    return $binding->reference($operand);",
+        "}",
+        "$value = (new ExpressionLowering())->lower($operand, $binding, true);",
+        "Check::input($value instanceof IntegerLiteral || $value instanceof RangeIntegerLiteral, 'A HAVING comparison needs a numeric group value or an integer literal.');",
+        "",
+        "return $value;"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $column) {",
+        "    $result = $this->operand($column->value, $query->source, $renderer);",
+        "    $name = $column->name->value;",
+        "    $items[] = $result . ($name === ltrim($name, \" \\t\\r\\n\\v\\f\") ? ' AS ' . $column->name->quoted() : '');",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->predicate($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key, $query->source);",
+        "}",
+        "",
+        "$sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);",
+        "if ($query->having instanceof GroupedComparison) {",
+        "    $left = $this->operand($query->having->left, $query->source, $renderer);",
+        "    $right = $this->operand($query->having->right, $query->source, $renderer);",
+        "    $sql .= ' HAVING (' . $left . ' ' . $query->having->operator->value . ' ' . $right . ')';",
+        "} elseif ($query->having !== null) {",
+        "    $sql .= ' HAVING ' . $renderer->expression($query->having, $query->source);",
+        "}",
+        "",
+        "return $sql;"
+      ]
+    },
+    "Aggregation/GroupedSql::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if (!$value instanceof Aggregate) {",
+        "    return $renderer->expression($value, $source);",
+        "}",
+        "$argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $source);",
+        "",
+        "return $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';"
+      ]
+    }
+  }
+}

@@ -499,9 +499,10 @@ function constructGrouped(string $platform, array $input): SemanticsIR
         $columns,
         $release::from($input['release']),
         constructPredicate($namespace, $grouped['where']),
-        ...($input['dialect'] === 'postgres' ? [
-            ...constructResultOptions($namespace, $grouped, 'postgres'), constructHaving($namespace, $grouped['having'] ?? null),
-        ] : []),
+        ...[
+            ...($input['dialect'] === 'postgres' ? constructResultOptions($namespace, $grouped, 'postgres') : []),
+            constructHaving($namespace, $grouped['having'] ?? null),
+        ],
     );
 }
 
@@ -557,8 +558,8 @@ function observeGrouped(string $namespace, object $query, string $dialect): arra
             ...($dialect === 'postgres' ? [
                 'orderBy' => array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $query->orderBy),
                 'limit' => $query->limit === null ? null : [$query->limit->count, $query->limit->offset],
-                ...($query->having === null ? [] : ['having' => observeHaving($namespace, $query->having)]),
             ] : []),
+            ...($query->having === null ? [] : ['having' => observeHaving($namespace, $query->having)]),
         ],
     ];
 }

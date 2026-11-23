@@ -296,7 +296,7 @@ def controls():
 
 def faults(_, tag):
     renderer = "sql-semantics-mysql/src/Ir/Aggregation/GroupedSql.php"
-    native = "$renderer->expression($value->argument, $query->source)"
+    native = "$renderer->expression($value->argument, $source)"
     distinct = finite(tag, "label", True, "global", "all")
     ordinary = finite(tag, "label", False, "global", "all")
     filtered_case = finite(tag, "label", True, "global", "empty")
@@ -304,7 +304,7 @@ def faults(_, tag):
         RenderFault("erase-varchar-count-distinct", renderer, "($value->distinct ? 'DISTINCT ' : '')", "''", distinct, "meaning-mismatch"),
         RenderFault("count-varchar-null-as-row", renderer, "$value->argument === null ? '*'", "$value->argument !== null ? '*'", ordinary, "meaning-mismatch"),
         RenderFault("read-alternate-varchar-count-field", renderer, native,
-                    "$renderer->expression(new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference(2), $query->source)",
+                    "$renderer->expression(new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference(2), $source)",
                     ordinary, "meaning-mismatch"),
         RenderFault("erase-varchar-count-case-distinction", renderer, native,
                     native + " . ' COLLATE utf8mb4_general_ci'", distinct, "meaning-mismatch"),

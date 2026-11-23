@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSql;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\SelectSql;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 
 #[CoversClass(GroupedSql::class)]
@@ -32,5 +33,12 @@ final class GroupedSqlTest extends TestCase
             'SELECT sum(DISTINCT `__ztd_source`.`amount`) AS `total` FROM `app`.`events` AS `__ztd_source` GROUP BY `__ztd_source`.`id`',
             (new GroupedSql())->render($query),
         );
+    }
+    public function testOperandRendersTheNativeAggregate(): void
+    {
+        $source = new TableSource(new Identifier('app'), new Identifier('events'), []);
+        $count = new Aggregate(AggregateOperator::Count);
+
+        self::assertSame('count(*)', (new GroupedSql())->operand($count, $source, new SelectSql()));
     }
 }

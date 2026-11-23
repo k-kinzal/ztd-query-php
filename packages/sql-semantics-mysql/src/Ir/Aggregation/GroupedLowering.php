@@ -49,6 +49,7 @@ final class GroupedLowering
         Check::input($profile->parameters === ParameterStyle::Native, 'A grouped projection requires the native language profile.');
         Check::input($profile->lexical->equals(new LexicalSettings()), 'A grouped projection requires default MySQL lexical settings.');
         $binding = new SourceBinding($operation, $statement->from);
+        $aggregate = new AggregateBinding();
         $keys = (new GroupedKeys())->lower($statement, $binding);
         $where = (new PredicateLowering())->lower($statement->where, $binding);
         $fields = $operation->facts->query($statement)->fields();
@@ -61,13 +62,14 @@ final class GroupedLowering
             $name = $field->name;
             Check::input($name !== null, 'A grouped result must have a resolved name.');
             $value = $target->expression instanceof ParsedAggregate
-                ? (new AggregateBinding())->lower($target->expression, $binding)
+                ? $aggregate->lower($target->expression, $binding)
                 : $binding->reference($target->expression);
             $columns[] = new GroupColumn($value, $labels->lower($statement, $field, $name->value));
         }
+        $having = (new HavingLowering())->lower($statement->having, $operation, $binding, $aggregate, $columns);
         $source = $binding->source();
         Check::input($source !== null, 'A grouped SELECT needs one resolved input and at least one named result.');
 
-        return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where);
+        return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where, $having);
     }
 }

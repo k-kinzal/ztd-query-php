@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Aggregation;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
+use SqlSemantics\Platform\MySql\Ir\TableSource;
 
 /**
  * Emits the checked native grouping roles in query clause order.
@@ -22,13 +25,7 @@ final class GroupedSql
         $renderer = new SelectSql();
         $items = [];
         foreach ($query->columns as $column) {
-            $value = $column->value;
-            if ($value instanceof ColumnReference) {
-                $result = $renderer->expression($value, $query->source);
-            } else {
-                $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);
-                $result = $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';
-            }
+            $result = $this->operand($column->value, $query->source, $renderer);
             $name = $column->name->value;
             $items[] = $result . ($name === ltrim($name, " \t\r\n\v\f") ? ' AS ' . $column->name->quoted() : '');
         }
@@ -41,6 +38,28 @@ final class GroupedSql
             $keys[] = $renderer->expression($key, $query->source);
         }
 
-        return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));
+        $sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);
+        if ($query->having instanceof GroupedComparison) {
+            $left = $this->operand($query->having->left, $query->source, $renderer);
+            $right = $this->operand($query->having->right, $query->source, $renderer);
+            $sql .= ' HAVING (' . $left . ' ' . $query->having->operator->value . ' ' . $right . ')';
+        } elseif ($query->having !== null) {
+            $sql .= ' HAVING ' . $renderer->expression($query->having, $query->source);
+        }
+
+        return $sql;
+    }
+
+    /**
+     * Emits a checked grouping field, numeric literal or aggregate.
+     */
+    public function operand(Aggregate|ColumnReference|IntegerLiteral|RangeIntegerLiteral $value, TableSource $source, SelectSql $renderer): string
+    {
+        if (!$value instanceof Aggregate) {
+            return $renderer->expression($value, $source);
+        }
+        $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $source);
+
+        return $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';
     }
 }

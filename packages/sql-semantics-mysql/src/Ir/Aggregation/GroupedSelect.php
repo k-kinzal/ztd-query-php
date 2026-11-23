@@ -56,6 +56,7 @@ final class GroupedSelect implements SemanticsIR
         array $columns,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        public readonly GroupedComparison|BooleanLiteral|NullLiteral|null $having = null,
     ) {
         $grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');
         $results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);
@@ -65,21 +66,30 @@ final class GroupedSelect implements SemanticsIR
             Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) === ColumnKind::SignedInt, 'Each grouping key must belong to its input.');
             $members[$key->slot] = true;
         }
-        $scope = new OccurrenceScope();
+        $operands = [];
         foreach ($results as $result) {
-            $value = $result->value;
+            $operands[] = $result->value;
+        }
+        if ($having instanceof GroupedComparison) {
+            array_push($operands, $having->left, $having->right);
+        }
+        $scope = new OccurrenceScope();
+        foreach ($operands as $value) {
             if ($value instanceof ColumnReference) {
                 Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');
-                $name = $result->name->value;
-                Check::input(
-                    $name === ltrim($name, " \t\r\n\v\f") || $source->columns[$value->slot]->value === $name,
-                    'An intrinsic MySQL grouped name must equal its physical input field.'
-                );
-            } elseif ($value->argument instanceof TextColumnReference) {
+            } elseif ($value instanceof Aggregate && $value->argument instanceof TextColumnReference) {
                 $scope->textColumn($value->argument, [$source]);
-            } else {
+            } elseif ($value instanceof Aggregate) {
                 Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) === ColumnKind::SignedInt, 'The aggregate slot must belong to the group input.');
             }
+        }
+        foreach ($results as $result) {
+            $value = $result->value;
+            $name = $result->name->value;
+            Check::input(
+                !$value instanceof ColumnReference || $name === ltrim($name, " \t\r\n\v\f") || $source->columns[$value->slot]->value === $name,
+                'An intrinsic MySQL grouped name must equal its physical input field.'
+            );
         }
         $scope->predicate($where, [$source]);
         $this->keys = $grouping;

@@ -265,14 +265,14 @@ def controls():
 
 def faults(_, tag):
     renderer = "sql-semantics-mysql/src/Ir/Aggregation/GroupedSql.php"
-    native = "$renderer->expression($value->argument, $query->source)"
+    native = "$renderer->expression($value->argument, $source)"
     result = "$value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')'"
     ordinary = finite(tag, "min", "label", False, "global", "all")
     empty = finite(tag, "min", "label", False, "global", "empty")
     return [
         RenderFault("exchange-varchar-min-with-max", renderer, "$value->operator->value . '('", "'max('", ordinary, "meaning-mismatch"),
         RenderFault("read-adjacent-varchar-extremum-field", renderer, native,
-                    "$renderer->expression(new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference(2), $query->source)",
+                    "$renderer->expression(new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference(2), $source)",
                     ordinary, "meaning-mismatch"),
         RenderFault("replace-varchar-extremum-null", renderer, result,
                     '"COALESCE(" . (' + result + ') . ", \'\')"', empty, "meaning-mismatch"),

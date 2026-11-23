@@ -25,7 +25,7 @@ final class GroupedKeys
     public function lower(Select $statement, SourceBinding $binding): array
     {
         Check::input(
-            $statement->having === null && $statement->windows === [] && $statement->qualify === null
+            $statement->windows === [] && $statement->qualify === null
                 && $statement->orderBy === [] && $statement->limit === null && $statement->procedure === null
                 && $statement->locking === [] && $statement->into === null && $statement->late === null
                 && ($statement->options === [] || $statement->options === [SelectOption::All]),
