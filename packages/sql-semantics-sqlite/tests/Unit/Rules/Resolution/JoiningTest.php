@@ -189,8 +189,9 @@ final class JoiningTest extends TestCase
         self::assertSame([Storage::Integer, Storage::Text], $value->slot->type->alternatives);
         self::assertSame(Nullability::Nullable, $value->slot->nullability);
         self::assertNull($value->declaration());
-        self::assertSame($leftRef, $value->merge?->left);
-        self::assertSame($rightRef, $value->merge?->right);
+        self::assertNotNull($value->merge);
+        self::assertSame($leftRef, $value->merge->left);
+        self::assertSame($rightRef, $value->merge->right);
     }
 
     public function testExtendsRepresentativeRequiresBothCandidatesToBeAbsent(): void

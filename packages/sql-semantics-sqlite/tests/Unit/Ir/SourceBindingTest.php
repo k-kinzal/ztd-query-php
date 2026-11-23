@@ -149,6 +149,22 @@ final class SourceBindingTest extends TestCase
         self::assertEquals(new ColumnReference(1, 4), $slots->localSlot($resolution, $names, 4));
     }
 
+    public function testScalarValueUsesTheCombinedFieldForAnUnqualifiedName(): void
+    {
+        $sqlite = new Inspection();
+        $left = $sqlite->inspect('CREATE TABLE a (key TEXT)');
+        $right = $sqlite->inspect('CREATE TABLE b (key INT)');
+        $operation = $sqlite->inspect('SELECT key FROM a FULL JOIN b USING (key)', [$left, $right]);
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $selected = $select->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $selected);
+
+        $binding = new SourceBinding($operation->binding(), $select->from);
+
+        self::assertInstanceOf(Coalesce::class, $binding->scalarValue($selected->expression));
+    }
+
     public function testValueResolvesBothOrderedInputsOfAMergedFullField(): void
     {
         $sqlite = new Inspection();

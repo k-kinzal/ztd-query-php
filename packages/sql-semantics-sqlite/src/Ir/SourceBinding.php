@@ -66,7 +66,18 @@ final class SourceBinding
      *
      * @throws InvalidConstruction When the expression has no local column binding
      */
-    public function reference(Scalar $expression): ColumnReference|Coalesce
+    public function reference(Scalar $expression): ColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($expression)->resolution;
+        Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
+
+        return $this->resolved($resolution);
+    }
+
+    /**
+     * Resolves a scalar name use, including a combined FULL join value.
+     */
+    public function scalarValue(Scalar $expression): ColumnReference|Coalesce
     {
         $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');

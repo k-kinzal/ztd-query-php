@@ -343,6 +343,14 @@
         "$resolution = $this->operation->facts->scalar($expression)->resolution;",
         "Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');",
         "",
+        "return $this->resolved($resolution);"
+      ]
+    },
+    "SourceBinding::scalarValue": {
+      "common": [
+        "$resolution = $this->operation->facts->scalar($expression)->resolution;",
+        "Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');",
+        "",
         "return $this->value($resolution);"
       ]
     }

@@ -107,7 +107,7 @@ final class ExpressionLowering
             $expression instanceof ParsedNull => new NullLiteral(),
             $expression instanceof BindParameter && $expression->prefix === ParameterPrefix::Question => new Parameter($expression->label),
             $expression instanceof TruthWord => $this->truthWord($expression, $binding),
-            $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
+            $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->scalarValue($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
         };
     }
@@ -224,7 +224,7 @@ final class ExpressionLowering
     {
         $truth = $binding->constantTruth($expression);
 
-        return $truth === null ? $binding->reference($expression) : new IntegerLiteral($truth ? '1' : '0');
+        return $truth === null ? $binding->scalarValue($expression) : new IntegerLiteral($truth ? '1' : '0');
     }
 
     /**

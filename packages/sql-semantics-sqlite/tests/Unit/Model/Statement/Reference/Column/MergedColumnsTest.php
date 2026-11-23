@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 #[Small]
 final class MergedColumnsTest extends TestCase
 {
-    public function testConstructionKeepsTheOrderedColumnOperands(): void
+    public function testTheLeftAndRightOperandsRemainOrdered(): void
     {
         $slot = new OutputSlot(new Name('key'), new Known(Storage::Integer), Nullability::NotNull);
         $left = new ResolvedColumn(new TableInput(new QualifiedName(new Name('a'))), $slot);
