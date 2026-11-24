@@ -17,8 +17,8 @@ use SqlSemantics\SemanticsIR;
  * @visibility public
  * @example Reading both operands of a definition copy
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $context = $semantics->context(['CREATE TABLE app.original (n INT)']);
- *     $value = $semantics->analyze('CREATE TEMPORARY TABLE app.scratch LIKE app.original', $context);
+ *     $declarations = $semantics->context(['CREATE TABLE app.original (n INT)']);
+ *     $value = $semantics->analyze('CREATE TEMPORARY TABLE app.scratch LIKE app.original', $declarations);
  *     [$value->destination->kind->value, $value->source->name->table->value] // => ['temporary-table', 'original']
  */
 final class CreateTableLike implements SemanticsIR
