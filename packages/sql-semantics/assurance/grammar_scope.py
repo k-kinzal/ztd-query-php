@@ -593,7 +593,7 @@ def inventory(root):
             for rule in ("CreateSchemaStmt", "RoleSpec", "CreateRoleStmt", "CreateUserStmt", "CreateGroupStmt", "OptSchemaEltList"):
                 for alternative in rules.get(rule, ()):
                     if rule != "OptSchemaEltList" or alternative == "OptSchemaEltList:":
-                        related[alternative] = (*related.get(alternative, ()), "postgres-create-schema-v3.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-create-schema-v4.json")
             for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "CreateStmt"):
                 for alternative in rules.get(rule, ()):
                     if rule == "CreateSchemaStmt" or alternative in {
@@ -617,7 +617,7 @@ def inventory(root):
                     if rule in ("CreateSchemaStmt", "CreateSeqStmt") or alternative in {
                         "schema_stmt: CreateSeqStmt", "schema_stmt: CreateStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
                     }:
-                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-sequences-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-sequences-v2.json")
             for rule in ("DropStmt", "drop_type_name", "any_name_list", "opt_drop_behavior"):
                 for alternative in rules.get(rule, ()):
                     if rule in ("any_name_list", "opt_drop_behavior") or alternative.startswith("DropStmt: DROP drop_type_name ") \

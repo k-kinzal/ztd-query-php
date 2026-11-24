@@ -20,8 +20,8 @@ from run_server_postgres_create_btree import observation, prepare
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-create-schema"
-CONTRACT_NAME = "postgres-create-schema-v3.json"
-CONTRACT = "914c73e7d4a64d9e12c035be63498c61485a8762949f42248830ab7c0ac78228"
+CONTRACT_NAME = "postgres-create-schema-v4.json"
+CONTRACT = "43be3791d0f01cc784f84975e844c032b8bd144c6b8fbcf6987b3e7bdb368d37"
 OBSERVER = "postgres_create_schema_observer.py"
 AXES = ("ownerCoordinates", "occupied", "guarded", "transactional")
 UNKNOWN_OWNER = refusal("A named schema owner requires a declared role.")
@@ -86,8 +86,8 @@ def refusals(tag):
     yield missing, None, UNKNOWN_OWNER
     reserved = trial(tag, "named/derived", False, True, False, variant="pg_checkpoint")
     yield direct(reserved), None, RESERVED_SCHEMA
-    members = {**analyzed(base), "sql": "CREATE SCHEMA owning_schema CREATE SEQUENCE unimplemented_member"}
-    yield members, None, refusal("CREATE SCHEMA elements require a checked namespace composition.")
+    members = {**analyzed(base), "sql": "CREATE SCHEMA owning_schema CREATE SEQUENCE public.misplaced_member"}
+    yield members, None, refusal("CREATE specifies a schema (public) different from the one being created (owning_schema)", "SemanticException")
     if tag == "pg-16.6":
         stock = trial(tag, "named/explicit", False, False, False, variant="pg_maintain")
         yield analyzed(stock), stock, UNKNOWN_OWNER

@@ -19,8 +19,8 @@ from run_server_postgres_create_schema import specifications as namespace_profil
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-schema-sequences"
-CONTRACT_NAME = "postgres-schema-sequences-v1.json"
-CONTRACT = "14c708ed9d25f22dcfbc08276aabc2db0168b8f42f8ed9c39f7295739a63e198"
+CONTRACT_NAME = "postgres-schema-sequences-v2.json"
+CONTRACT = "178d4cfa5c6ed2021ff3cd0c0f4f17dc6f8f9ed801b4c4444c8d01314ad1c493"
 OBSERVER = "postgres_schema_sequences_observer.py"
 AXES = ("authorization", "writtenOrder", "layouts", "sequenceStorage", "transactional")
 OWNERS = ("effective", "named")
@@ -77,12 +77,17 @@ def generated(tag, seed, count):
                     explicit=bool(rng.getrandbits(1)), policy=rng.choice(POLICIES))
 
 
-def edges(tag):
+def edges(tag, spec):
     earlier = trial(tag, "effective", "sequence-first", "independent", "permanent", False, width=1, kind="bigint")
     child = sequence_trial(tag, "bigint", 1, "default", "permanent")
     earlier.update(namespace="making", explicit="making", command="CREATE SCHEMA making CREATE SEQUENCE feed",
                    sequences=[{**child, "target": ["making", "feed"]}], members=[])
     yield "former-sequence-member-refusal", earlier
+    promoted = trial(tag, "effective", "sequence-first", "independent", "permanent", False, width=1, kind="bigint")
+    promoted.update(namespace="owning_schema", explicit="owning_schema", command=spec["requiredFormerRefusal"]["sql"],
+                    sequences=[{**child, "target": ["owning_schema", "unimplemented_member"]}], members=[])
+    same("CREATE SCHEMA owning_schema CREATE SEQUENCE unimplemented_member", sql(promoted))
+    yield "former-standalone-schema-refusal", promoted
     yield "quoted-derived-owner", trial(tag, "named", "table-first", "independent", "unlogged", True, quoted_name=True, derived=True)
     yield "guarded-table-written-first", trial(tag, "named", "table-first", "shared-name", "permanent", True, explicit=True)
     yield "occupied-containing-namespace", trial(tag, "effective", "sequence-first", "independent", "unlogged", True, occupied=True)
@@ -117,7 +122,7 @@ def requests(_, tag, spec):
         item = trial(tag, *key, coordinate=list(key))
         yield f"finite/{ordinal}", analyzed(item), item, None
         yield f"direct/{ordinal}", direct(item), item, None
-    for label, item in edges(tag):
+    for label, item in edges(tag, spec):
         yield f"edge/{label}", analyzed(item), item, None
     settings = spec["exploration"]
     for seed in settings["seeds"]:
