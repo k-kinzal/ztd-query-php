@@ -902,6 +902,24 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->mode->value, $result->toString(), $detached->toString(),
                 $absolute[0]->toString(), $absolute[1]->toString(),
             ];
+            $constraints = $semantics->context([
+                'CREATE TABLE public.indexed_items (id integer, CONSTRAINT saved_key PRIMARY KEY (id))',
+            ]);
+            $boundKey = $semantics->analyze('REINDEX INDEX saved_key', $constraints);
+            $key = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference(
+                $boundKey->target->schema, $boundKey->target->index, $boundKey->target->table,
+            );
+            $withKey = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex($key, $boundKey->mode, $boundKey->release);
+            $badDatabase = false;
+            try {
+                $semantics->analyze('REINDEX INDEX other.public.saved_key', $constraints);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $badDatabase = str_contains($error->getMessage(), 'requires a local schema and index');
+            }
+            $details['postgresReindexConstraintIndex'] = [
+                $boundKey->target::class === $key::class,
+                $boundKey->target->table->value, $boundKey->toString(), $withKey->toString(), $badDatabase,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {
             $ordinary = $semantics->analyze('DROP VIEW IF EXISTS public.removable RESTRICT', $context);

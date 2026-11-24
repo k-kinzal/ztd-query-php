@@ -29,6 +29,7 @@ def specifications():
     require(digest(path) == CONTRACT, "postgres-reindex-index-contract")
     spec = json.loads(path.read_text())
     require(spec["exploration"]["allowedExclusions"] == [], "postgres-reindex-index-exclusions")
+    spec["additionalPostgreSqlNegatives"] = ["Index selector qualified with another database"]
     return spec, {"postgres": drop_contract()[1]["postgres"]}
 
 
@@ -101,6 +102,7 @@ def negatives(version):
     yield {**request, "sql": 'REINDEX TABLE "fixture"."orders"'}, refusal("needs a named index")
     yield {**request, "sql": 'REINDEX (TABLESPACE pg_default) INDEX "fixture"."cover"'}, refusal("accepts only concurrency options")
     yield {**request, "sql": """REINDEX (CONCURRENTLY 'yes') INDEX "fixture"."cover\""""}, refusal("concurrently", "SemanticException")
+    yield {**request, "sql": 'REINDEX INDEX "other"."fixture"."cover"'}, refusal("requires a local schema and index")
 
 
 def check_value(item, response):
@@ -208,7 +210,7 @@ def faults(_, tag):
     ordinary = case(tag, "fixture", "ordinary", True, "absolute", "plain", True)
     concurrent = case(tag, "fixture", "keyword", True, "absolute", "unique", False)
     missing, reason = next(negatives(tag))
-    selector = "(new IndexTargetLowering())->resolve($context, $statement->object, false)"
+    selector = "(new IndexTargetLowering())->resolveRebuild($context, $statement->object)"
     fake = ('new IndexReference(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier("fixture"), '
             'new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier("missing"), '
             'new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier("orders"))')

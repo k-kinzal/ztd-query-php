@@ -293,6 +293,8 @@ The [PostgreSQL nullable Boolean index contract](postgres-index-boolean-values-v
 
 The [PostgreSQL index rebuild contract](postgres-reindex-index-v1.json) compares the resolved physical index and untouched namesakes in the same session. The observer records raw catalog identities and file nodes, index flags and layouts, rows, subsequent write behavior, and relation identity before and after rollback. Run `run_server_postgres_reindex_index.py` on both releases and replay with `combine_server_postgres_reindex_index_evidence.py`.
 
+The [PostgreSQL constraint-index rebuild contract](postgres-reindex-constraint-index-v1.json) checks the separately bound named key index and whether each preserved foreign key points to the current physical index. It probes primary, unique, NULL equality and deferrable enforcement. Run `run_server_postgres_reindex_constraint_index.py` on both releases and replay with `combine_server_postgres_reindex_constraint_index_evidence.py`.
+
 
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.

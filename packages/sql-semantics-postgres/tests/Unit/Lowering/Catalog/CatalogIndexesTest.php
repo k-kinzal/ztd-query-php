@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Lowering\Catalog\CatalogIndexes;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclarationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
@@ -27,7 +28,7 @@ final class CatalogIndexesTest extends TestCase
         self::assertTrue($context->indexNamespace->known(new Name('vacant')));
         self::assertCount(1, $context->indexNamespace->indexes);
         self::assertSame('item_key', $context->indexNamespace->indexes[0]->index->value);
-        self::assertFalse($context->indexNamespace->indexes[0]->ordinary);
+        self::assertSame(IndexDeclarationKind::KeyConstraint, $context->indexNamespace->indexes[0]->kind);
     }
 
     public function testAddIndexesLocatesTheIndexInTheOwningSchema(): void
@@ -41,7 +42,7 @@ final class CatalogIndexesTest extends TestCase
         self::assertCount(1, $context->indexNamespace->indexes);
         self::assertSame('app', $context->indexNamespace->indexes[0]->schema->value);
         self::assertSame('items', $context->indexNamespace->indexes[0]->table->value);
-        self::assertTrue($context->indexNamespace->indexes[0]->ordinary);
+        self::assertSame(IndexDeclarationKind::Ordinary, $context->indexNamespace->indexes[0]->kind);
     }
 
     public function testSnapshotCarriesAnOpaqueAutomaticNameInACompleteCatalog(): void

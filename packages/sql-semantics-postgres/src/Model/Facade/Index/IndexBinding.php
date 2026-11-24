@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 final class IndexBinding
 {
     /**
-     * Resolves one exact namespace coordinate and refuses wrong-kind or protected objects.
+     * Resolves one exact namespace coordinate and verifies its declared owner.
      */
     public function find(AnalysisContext $context, Name $schema, QualifiedName $name): ?IndexDeclaration
     {
@@ -36,7 +36,6 @@ final class IndexBinding
         Check::input(count($matches) <= 1, 'The index selector cannot resolve conflicting index declarations.');
         $index = $matches[0] ?? null;
         if ($index !== null) {
-            Check::input($index->ordinary, 'The selected index is protected in the ordinary index profile.');
             Check::input(count($context->declared(new QualifiedName($index->table), $index->schema)) === 1, 'The indexed relation must resolve without conflict.');
         }
 

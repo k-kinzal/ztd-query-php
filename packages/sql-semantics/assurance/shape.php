@@ -1064,8 +1064,11 @@ if ($dialect !== 'sqlite') {
         array_push($internal, 'Schema\\Index\\DropIndexLowering', 'Schema\\Index\\IndexTargetLowering', 'Schema\\Index\\ReindexIndexLowering');
         $reindex = 'Schema\\Index\\ReindexIndex';
         $rebuildMode = 'Schema\\Index\\IndexRebuildMode';
+        $constraintIndex = 'Schema\\Index\\ConstraintIndexReference';
         $roots[] = $reindex;
-        $properties[$reindex] = ['target' => [$indexReference], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindex] = ['target' => [$constraintIndex, $indexReference], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$constraintIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
+        $methods[$constraintIndex] = ['__construct', 'quoted'];
         $methods[$reindex] = ['__construct', 'profileId', 'toString'];
         $properties[$rebuildMode] = $methods[$rebuildMode] = [];
         $enumCases[$rebuildMode] = ['Standard' => 'standard', 'Concurrent' => 'concurrently'];
@@ -1462,7 +1465,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v6.json', 'ca75bd4bb3fc5457307c02315550653dfd3467fc0b30ae41b9bc64abaf1473e4', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v7.json', 'd760fd110daeb6da2e5f4f0b22ed2efdd12b6c3db1c3306f3d0fd974575016f2', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1882,10 +1885,17 @@ try {
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\IndexTargetLowering') {
                 $members = $class->getMethods();
-                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
-                    && $members[0]->name->toString() === 'resolve' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'],
-                    'Unexpected PostgreSQL index selector publication');
+                $returns = [
+                    'resolve' => ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'],
+                    'resolveRebuild' => ['Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\IndexReference'],
+                    'lookup' => ['?' . $platform . '\\Model\\Contract\\Index\\IndexDeclaration'],
+                ];
+                requireShape(count($members) === count($returns), 'Unexpected PostgreSQL index selector method count');
+                foreach ($members as $member) {
+                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === ($returns[$member->name->toString()] ?? []),
+                        'Unexpected PostgreSQL index selector publication');
+                }
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\ReindexIndexLowering') {
                 $members = $class->getMethods();
@@ -2012,7 +2022,8 @@ try {
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
-                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex'], true)
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference',
+                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
                 || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',

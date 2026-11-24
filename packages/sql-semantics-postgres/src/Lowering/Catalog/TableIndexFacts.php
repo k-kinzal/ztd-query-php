@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclarationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\ColumnPrimaryKey;
@@ -31,7 +32,7 @@ final class TableIndexFacts
      * Finds a definite constraint index and indicates whether other names remain unknown.
      * PostgreSQL can consolidate equivalent constraint indexes during creation.
      *
-     * @return array{Name|null, bool}
+     * @return array{Name|null, bool, IndexDeclarationKind|null}
      */
     public function collect(CreateTable $table): array
     {
@@ -47,18 +48,19 @@ final class TableIndexFacts
             $items = $element instanceof ColumnDefinition || $element instanceof ColumnOptions ? $element->qualifiers : [$element];
             foreach ($items as $item) {
                 if ($item instanceof ColumnPrimaryKey || $item instanceof ColumnUnique || $item instanceof TablePrimaryKey || $item instanceof TableUnique || $item instanceof Exclusion) {
-                    $constraints[] = $item->name;
+                    $constraints[] = [$item->name, $item instanceof Exclusion ? IndexDeclarationKind::ExclusionConstraint : IndexDeclarationKind::KeyConstraint];
                 }
                 if ($item instanceof Identity || $item instanceof IndexConstraint) {
                     $unknown = true;
                 }
             }
         }
-        if (count($constraints) > 1 || in_array(null, $constraints, true)) {
-            return [null, true];
+        if ($unknown || count($constraints) > 1 || ($constraints !== [] && $constraints[0][0] === null)) {
+            return [null, true, null];
         }
+        [$name, $kind] = $constraints[0] ?? [null, null];
 
-        return [$unknown ? null : ($constraints[0] ?? null), $unknown];
+        return [$name, false, $kind];
     }
 
     /**

@@ -1,0 +1,98 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-index-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Seal the requested rebuild and the absolute index selection in the installed PHP routes.",
+  "rules": {
+    "Schema/Index/ReindexIndex::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/ReindexIndex::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Index/ReindexIndex::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REINDEX INDEX ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Index/ReindexIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX INDEX requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index && $statement->object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\QualifiedName, 'A complete REINDEX needs a named index target.');",
+        "foreach ($statement->options as $option) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($option->option() === 'concurrently', 'A complete REINDEX INDEX accepts only concurrency options.');",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndex((new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexTargetLowering())->resolveRebuild($context, $statement->object), $statement->requestsConcurrentBuild() ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    },
+    "Schema/Index/IndexTargetLowering::resolveRebuild": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$match = $this->lookup($context, $name);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($match !== null, 'The index selector requires a declared index.');",
+        "$schema = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($match->schema->value);",
+        "$index = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($match->index->value);",
+        "$table = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($match->table->value);",
+        "return match ($match->kind) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::Ordinary => new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexReference($schema, $index, $table),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::KeyConstraint => new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ConstraintIndexReference($schema, $index, $table),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::Partitioned => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('This index rebuild requires a nonpartitioned index.'),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::ExclusionConstraint => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('This index rebuild requires an ordinary or a primary or unique constraint index.'),",
+        "};"
+      ]
+    },
+    "Schema/Index/ConstraintIndexReference::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::system($schema->value) && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A constraint index must belong to an application schema or pg_temp.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($index->value !== $table->value, 'A constraint index and its table must have distinct relation names.');"
+      ]
+    },
+    "Schema/Index/ConstraintIndexReference::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->index->quoted();"
+      ]
+    }
+  },
+  "revises": "postgres-reindex-index-boundaries-v1.json"
+}

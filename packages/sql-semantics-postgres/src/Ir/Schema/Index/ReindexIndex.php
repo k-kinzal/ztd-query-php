@@ -25,7 +25,7 @@ final class ReindexIndex implements SemanticsIR
      * Fixes the exact index, rebuild mode and PostgreSQL grammar profile.
      */
     public function __construct(
-        public readonly IndexReference $target,
+        public readonly IndexReference|ConstraintIndexReference $target,
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
     ) {

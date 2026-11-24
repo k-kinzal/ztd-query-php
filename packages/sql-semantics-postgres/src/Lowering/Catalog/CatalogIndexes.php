@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclaration;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclarationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -69,9 +70,11 @@ final class CatalogIndexes
             if ($item->partitioning !== null || $item->definition instanceof PartitionOf) {
                 $this->partitioned[$coordinates->key($namespace, $name)] = new QualifiedName($name, $namespace);
             }
-            [$constraint, $unknown] = (new TableIndexFacts())->collect($item);
-            if ($constraint !== null) {
-                $this->indexes[] = new IndexDeclaration($namespace, $constraint, $name, false);
+            [$constraint, $unknown, $kind] = (new TableIndexFacts())->collect($item);
+            if ($constraint !== null && $kind !== null) {
+                $owner = $coordinates->key($namespace, $name);
+                $kind = isset($this->partitioned[$owner]) ? IndexDeclarationKind::Partitioned : $kind;
+                $this->indexes[] = new IndexDeclaration($namespace, $constraint, $name, $kind);
             }
             if ($unknown) {
                 $this->opaque[] = $namespace;
@@ -108,7 +111,8 @@ final class CatalogIndexes
                 $this->opaque[] = $schema;
                 continue;
             }
-            $this->indexes[] = new IndexDeclaration($schema, $name, $table, !isset($this->partitioned[$key]));
+            $kind = isset($this->partitioned[$key]) ? IndexDeclarationKind::Partitioned : IndexDeclarationKind::Ordinary;
+            $this->indexes[] = new IndexDeclaration($schema, $name, $table, $kind);
         }
     }
 

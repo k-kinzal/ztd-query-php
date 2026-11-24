@@ -1103,7 +1103,10 @@ function constructPostgresReindex(array $input): \SqlSemantics\Platform\PostgreS
     $specification = $input['reindex'];
     [$schema, $index, $table] = $specification['target'];
     $name = \SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
-    $target = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference(new $name($schema), new $name($index), new $name($table));
+    $role = ($specification['constraintOwned'] ?? false)
+        ? \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference::class
+        : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference::class;
+    $target = new $role(new $name($schema), new $name($index), new $name($table));
 
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
         $target,
@@ -1117,7 +1120,11 @@ function observePostgresReindex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Inde
     $target = $value->target;
     return [
         'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-        'reindex' => ['target' => [$target->schema->value, $target->index->value, $target->table->value], 'mode' => $value->mode->value],
+        'reindex' => [
+            'target' => [$target->schema->value, $target->index->value, $target->table->value],
+            'mode' => $value->mode->value,
+            ...($target instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference ? ['constraintOwned' => true] : []),
+        ],
     ];
 }
 

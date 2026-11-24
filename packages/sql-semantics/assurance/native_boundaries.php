@@ -135,9 +135,9 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-create-table-as-boundaries-v1.json', '67906cdd1b60402f1d0145906b5a033ee0ae2a899b3777d80d5eed1db0235976'],
             ['postgres-table-rename-boundaries-v2.json', 'eb034cda577a7724f5e5b27f72736ca73038dea327c2cb395d7181aee37a3f68'],
             ['postgres-truncate-boundaries-v1.json', '99ebd669e0945794333bfe3ac886eefee1a2a272817e5b48cdd80f8f316d80a8'],
-            ['postgres-drop-index-boundaries-v2.json', 'f2c2b5a86b988dd6e63837778d754154bcaba7a52b0090892ebe0ff05eaab5fb'],
+            ['postgres-drop-index-boundaries-v3.json', 'e718bfa6ffe7788f9cd384861e8cd629faf2f5d0030bed5cf053757b689ce838'],
             ['postgres-create-btree-boundaries-v6.json', '07fedd537da3c81d4e66f375be586f3b869fadad4463d05d89f2d66b33f711c2'],
-            ['postgres-reindex-index-boundaries-v1.json', '9090d47dd914e327d6c180caf0ed05e15a3437914e1be02b57ba574e82d65256'],
+            ['postgres-reindex-index-boundaries-v2.json', '46cbe5135cc91941064cd7187f286ce191e842a1f36759d62f289e704ec64c00'],
         ],
         'sqlite' => [],
     };

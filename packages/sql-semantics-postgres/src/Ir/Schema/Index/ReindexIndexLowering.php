@@ -36,11 +36,8 @@ final class ReindexIndexLowering
         foreach ($statement->options as $option) {
             Check::input($option->option() === 'concurrently', 'A complete REINDEX INDEX accepts only concurrency options.');
         }
-        $target = (new IndexTargetLowering())->resolve($context, $statement->object, false);
-        Check::invariant($target instanceof IndexReference, 'A rebuild requires a resolved index.');
-
         return new ReindexIndex(
-            $target,
+            (new IndexTargetLowering())->resolveRebuild($context, $statement->object),
             $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
             $context->profile->grammar,
         );

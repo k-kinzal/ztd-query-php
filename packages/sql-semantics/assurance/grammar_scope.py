@@ -550,6 +550,8 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if alternative in rebuild:
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-index-v1.json")
+                        if rule != "opt_reindex_option_list":
+                            related[alternative] = (*related[alternative], "postgres-reindex-constraint-index-v1.json")
         if postgres:
             values_signatures = {
                 "simple_select: values_clause",

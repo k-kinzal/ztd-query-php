@@ -20,6 +20,12 @@ FIELDS = ("state", "ref", "ready")
 ORDERS = {"ASC NULLS LAST": 0, "DESC NULLS FIRST": 3}
 DECOY = [[99, 112, True]]
 PROBES = [[105, 20, True], [106, 20, False], [107, None, True]]
+CONSTRAINT_DDL = {
+    "primary": "PRIMARY KEY (ref)",
+    "unique": "UNIQUE (ref)",
+    "unique-nulls": "UNIQUE NULLS NOT DISTINCT (ref)",
+    "deferrable": "UNIQUE (ref) DEFERRABLE INITIALLY IMMEDIATE",
+}
 
 
 def case(tag, scope, form, active, spelling, policy, filtered, *, index="cover", table="orders",
@@ -58,12 +64,19 @@ def namespaces(item):
 
 
 def declarations(item):
-    scope, _, table = item["reindex"]["target"]
+    scope, index, table = item["reindex"]["target"]
     commands = ["CREATE SCHEMA fixture", "CREATE SCHEMA decoy"]
     for name in namespaces(item):
         keyword = "CREATE TEMP TABLE" if name == "pg_temp" else "CREATE TABLE"
-        commands.append(f"{keyword} {qualified(name, table)} (state integer, ref bigint, ready boolean)")
-        commands.append(fixture_index(item, name))
+        heading = "state integer, ref bigint, ready boolean"
+        if name == scope and "constraintPolicy" in item:
+            kind = item["constraintPolicy"]
+            commands.append(f"{keyword} {qualified(name, table)} ({heading}, CONSTRAINT {quoted(index)} {CONSTRAINT_DDL[kind]})")
+            if kind != "deferrable":
+                commands.append(f"{keyword} {qualified(name, 'children')} (value bigint REFERENCES {qualified(name, table)} (ref))")
+        else:
+            commands.append(f"{keyword} {qualified(name, table)} ({heading})")
+            commands.append(fixture_index(item, name))
     return commands
 
 
@@ -81,11 +94,13 @@ def index_metadata(item, schema):
     selected = schema == scope
     unique, nulls = POLICIES[item["policy"]] if selected else (False, False)
     positions = [position + 1 for position in item["covering"]] if selected else [1]
+    kind = item.get("constraintPolicy") if selected else None
     return {
         "namespace": schema, "index": name, "owner": table, "accessMethod": "btree",
         "unique": unique, "nullsNotDistinct": nulls, "valid": True, "ready": True, "live": True,
+        "primary": kind == "primary", "immediate": kind != "deferrable",
         "indexSlots": [2, *positions], "keyCount": 1, "orders": [ORDERS[item["order"]] if selected else 0],
-        "options": [f"fillfactor={item['fill'] if selected else 65}"],
+        "options": None if kind is not None else [f"fillfactor={item['fill'] if selected else 65}"],
         "predicate": "(ready IS NOT FALSE)" if selected and item["filtered"] else None,
     }
 
@@ -102,8 +117,16 @@ def expected(item):
     if active:
         end = {name: [False, False] for name in namespaces(item)}
     unique, nulls = POLICIES[item["policy"]]
-    probes = ["23505" if unique else "00000", "23505" if unique and not item["filtered"] else "00000",
-              "23505" if unique and nulls else "00000"] if success else None
+    probes = None
+    if success:
+        if "constraintPolicy" in item:
+            kind = item["constraintPolicy"]
+            probes = ["23505", {"primary": "23502", "unique-nulls": "23505"}.get(kind, "00000")]
+            if kind != "deferrable":
+                probes.append("23503")
+        else:
+            probes = ["23505" if unique else "00000", "23505" if unique and not item["filtered"] else "00000",
+                      "23505" if unique and nulls else "00000"]
     return {
         "status": "index-rebuild", "sqlState": "00000" if success else "25001", "command": "REINDEX" if success else None,
         "notices": [], "before": metadata, "during": metadata if success else None, "settled": metadata,

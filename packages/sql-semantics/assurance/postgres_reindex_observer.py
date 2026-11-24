@@ -14,6 +14,7 @@ INDEX = """SELECT pg_catalog.json_build_object(
     'namespace', n.nspname, 'index', c.relname, 'owner', r.relname, 'accessMethod', a.amname,
     'unique', i.indisunique, 'nullsNotDistinct', i.indnullsnotdistinct, 'valid', i.indisvalid,
     'ready', i.indisready, 'live', i.indislive, 'keyCount', i.indnkeyatts,
+    'primary', i.indisprimary, 'immediate', i.indimmediate,
     'indexSlots', i.indkey::text, 'orders', i.indoption::text, 'options', c.reloptions,
     'predicate', pg_catalog.pg_get_expr(i.indpred, i.indrelid, false))
 FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON c.oid=i.indexrelid
@@ -37,6 +38,9 @@ def initialize(db, trial):
     for schema in namespaces(trial):
         values = ", ".join("(" + ", ".join(map(literal, row)) + ")" for row in rows_for(trial, schema))
         commands.append(f"INSERT INTO {qualified(schema, table)} VALUES {values}")
+    if trial.get("constraintPolicy") in ("primary", "unique", "unique-nulls"):
+        scope = trial["reindex"]["target"][0]
+        commands.append(f"INSERT INTO {qualified(scope, 'children')} VALUES (20),(19)")
     commands.extend(["SET search_path=" + ", ".join(map(quoted, PATH)), "SET client_min_messages=notice"])
     db.execute(";".join(commands))
 
@@ -60,17 +64,47 @@ def snapshot(db, trial):
             for field in ("indexSlots", "orders"):
                 fields[field] = [int(value) for value in fields[field].split()]
         states[schema] = {"index": fields, "rows": decoded_rows(rows)}
+    if "constraintPolicy" in trial:
+        scope = trial["reindex"]["target"][0]
+        states[scope]["constraints"] = read_dependencies(db, trial, scope, table)
     return states
 
 
+def read_dependencies(db, trial, schema, table):
+    table_identity = data_literal(qualified(schema, table))
+    shaped = (
+        "SELECT pg_catalog.json_build_array(c.oid::text, c.contype, c.conindid::text, c.conrelid::text, "
+        "c.confrelid::text, c.condeferrable, c.condeferred, c.convalidated) FROM pg_catalog.pg_constraint c "
+    )
+    key = db.execute(shaped + f"WHERE c.conrelid=pg_catalog.to_regclass({table_identity}) AND c.contype IN ('p','u')")[0][0]
+    foreign, rows = None, None
+    if trial["constraintPolicy"] != "deferrable":
+        child = qualified(schema, "children")
+        foreign = db.execute(shaped + f"WHERE c.conrelid=pg_catalog.to_regclass({data_literal(child)}) AND c.contype='f'")[0][0]
+        rows = [int(row[0]) for row in db.execute(f"SELECT value FROM {child} ORDER BY value")]
+    return {"key": json.loads(key), "foreign": json.loads(foreign) if foreign is not None else None, "rows": rows}
+
+
+def probe_commands(trial):
+    scope, _, name = trial["reindex"]["target"]
+    table = qualified(scope, name)
+    if "constraintPolicy" in trial:
+        yield f"INSERT INTO {table} VALUES (105,20,TRUE)"
+        yield f"INSERT INTO {table} VALUES (106,NULL,TRUE),(107,NULL,FALSE)"
+        if trial["constraintPolicy"] != "deferrable":
+            yield f"INSERT INTO {qualified(scope, 'children')} VALUES (99)"
+        return
+    for row in PROBES:
+        values = ", ".join(map(literal, row))
+        yield f"INSERT INTO {table} VALUES ({values})"
+
+
 def write_probes(db, trial):
-    scope, _, table = trial["reindex"]["target"]
     active = trial["active"]
     outcomes = []
-    for row in PROBES:
+    for command in probe_commands(trial):
         db.execute("SAVEPOINT write_probe" if active else "BEGIN")
-        values = ", ".join(map(literal, row))
-        outcomes.append(db.run(f"INSERT INTO {qualified(scope, table)} VALUES ({values})")["sqlState"])
+        outcomes.append(db.run(command)["sqlState"])
         db.execute("ROLLBACK TO SAVEPOINT write_probe; RELEASE SAVEPOINT write_probe" if active else "ROLLBACK")
     return outcomes
 
