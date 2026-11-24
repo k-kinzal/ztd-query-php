@@ -151,11 +151,11 @@
 <span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>    }</span>
 <span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a></span>
 <span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a><span class="tok-com">     * Tells whether the statement requests a destination tablespace.</span></span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a><span class="tok-com">     * Answers the decoded value of the last validated destination option.</span></span>
 <span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">namesTablespace</span>(): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">tablespace</span>(): ?<span class="tok-id">string</span></span>
 <span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>    {</span>
-<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">OptionRules</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">options</span>, <span class="tok-str">&#039;tablespace&#039;</span>) !== <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">OptionRules</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">options</span>, <span class="tok-str">&#039;tablespace&#039;</span>)?-&gt;<span class="tok-id">text</span>();</span>
 <span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a>    }</span>
 <span class="src-line" id="L112" data-diff="same"><a class="ln" href="#L112">112</a></span>
 <span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>    <span class="tok-com">/**</span></span>
