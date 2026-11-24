@@ -1,0 +1,10 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Solution",
+  "theorem_names": [
+    "PostgreSqlReindex.quotedIdentifier",
+    "PostgreSqlReindex.commandRoundTrip"
+  ],
+  "definition_names": [],
+  "permitted_axioms": []
+}
