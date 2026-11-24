@@ -153,7 +153,8 @@ def check_phase(item, before, later, moved):
     chosen = item["reindex"]["target"][0]
     same(sorted((chosen, "decoy")), sorted(before))
     same(sorted(before), sorted(later))
-    for schema, observed in later.items():
+    for schema in (chosen, "decoy"):
+        observed = later[schema]
         first, last = before[schema]["index"], observed["index"]
         for numeric in ("oid", "file", "owner"):
             require(type(last[numeric]) == str and last[numeric].isdigit(), "postgres-reindex-exclusion-catalog-id", last)
