@@ -48,6 +48,8 @@ The database header pragmas `application_id`, `user_version`, `schema_version`, 
 
 `VACUUM` and `VACUUM INTO` return `Vacuum` with a resolved database and, where applicable, a source-free filename expression. SQLite skips rebuilding the temporary database and evaluating its filename. The IR retains any numbered slots and marker names that SQLite registers in that expression.
 
+`ATTACH` and `DETACH` return typed connection commands. A constant detachment name resolves against the analysis context. Numbered selector parameters keep their binding slots. The IR keeps the filename and key operands in order and carries no connection state.
+
 Connection inventory reads return `InventoryPragma` with an `InventoryKind` for databases, collations, compile options, functions, modules or active pragmas. The result reads the current connection registry. An explicit schema qualifier remains part of the operation, including native activation of the temporary database.
 
 A single INNER, CROSS, LEFT, RIGHT, or FULL join between two declared base tables can use USING or NATURAL. The IR resolves the comparison operands in left-to-right order and keeps both inputs addressable by qualified names. An unqualified merged name selects the right slot for RIGHT and the left slot for INNER, CROSS, and LEFT. FULL combines the left and right slots, keeping the first non-NULL value. SQLite also resolves USING and NATURAL in longer INNER, CROSS, and LEFT chains. Each equality refers to its actual earlier input, and each step retains its own right occurrence. The rendered SELECT uses explicit ON and projection clauses.

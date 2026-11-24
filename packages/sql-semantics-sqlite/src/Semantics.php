@@ -12,6 +12,9 @@ use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Attach;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\ConnectionLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Detach;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
@@ -68,6 +71,8 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\Sqlite\Model\Facade\Catalog;
 use SqlSemantics\Platform\Sqlite\Model\Facade\Splitter;
 use SqlSemantics\Platform\Sqlite\Model\Facade\StatementBinder;
+use SqlSemantics\Platform\Sqlite\Statement\Connection\Attach as ParsedAttach;
+use SqlSemantics\Platform\Sqlite\Statement\Connection\Detach as ParsedDetach;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze as ParsedAnalyze;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma as ParsedPragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex as ParsedReindex;
@@ -165,7 +170,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Transaction
+    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Attach|Detach|Transaction
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -188,6 +193,7 @@ final class Semantics implements Analyzer
             $statement instanceof AlterAddColumn => (new AddColumnLowering())->lower($operation, $statement),
             $statement instanceof AlterDropColumn => (new DropColumnLowering())->lower($operation, $statement),
             $statement instanceof ParsedAnalyze, $statement instanceof ParsedReindex, $statement instanceof ParsedPragma, $statement instanceof ParsedVacuum => (new MaintenanceLowering())->lower($operation, $statement),
+            $statement instanceof ParsedAttach, $statement instanceof ParsedDetach => (new ConnectionLowering())->lower($operation, $statement),
             default => (new TransactionLowering())->lower($statement),
         };
     }
@@ -197,7 +203,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Transaction>
+     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Attach|Detach|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

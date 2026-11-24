@@ -11,6 +11,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Attach;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\AttachmentName;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Detach;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\DetachTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
@@ -359,7 +363,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Attach|Detach|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -858,6 +862,43 @@ function observeInventoryPragma(InventoryPragma $value): array
     ];
 }
 
+function connectionName(array $raw): AttachmentName|Parameter
+{
+    $value = operand($raw);
+
+    return $value instanceof Parameter ? $value : new AttachmentName($value);
+}
+
+function directConnectionCommand(array $input): Attach|Detach
+{
+    $name = connectionName($input['nameOperand']);
+    if ($input['command'] === 'attach') {
+        $key = $input['keyOperand'] === null ? null : new ValueRow(array_map(operand(...), $input['keyOperand']));
+
+        return new Attach(new ValueRow(array_map(operand(...), $input['fileOperand'])), $name, $key);
+    }
+
+    return new Detach($name instanceof Parameter ? $name : new DetachTarget(new Identifier($input['resolved']), $name));
+}
+
+function observeConnectionCommand(Attach|Detach $value): array
+{
+    $name = $value instanceof Attach ? $value->name : ($value->target instanceof DetachTarget ? $value->target->name : $value->target);
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'connection-command',
+        'profile' => $value->profileId(),
+        'command' => $value instanceof Attach ? 'attach' : 'detach',
+        'nameOperand' => observeOperand($name instanceof AttachmentName ? $name->literal : $name),
+        'name' => $name instanceof AttachmentName ? $name->name->value : null,
+        'resolved' => $value instanceof Detach && $value->target instanceof DetachTarget ? $value->target->schema->value : null,
+        'fileOperand' => $value instanceof Attach ? array_map(observeOperand(...), $value->file->values) : null,
+        'keyOperand' => $value instanceof Attach && $value->key !== null ? array_map(observeOperand(...), $value->key->values) : null,
+        'sql' => $value->toString(),
+    ];
+}
+
 function directVacuum(array $input): Vacuum
 {
     $role = $input['destination'];
@@ -1180,6 +1221,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
                 InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
             ),
+            ($input['operation'] ?? null) === 'connection-command' => directConnectionCommand($input),
             ($input['operation'] ?? null) === 'vacuum' => directVacuum($input),
             ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
             ($input['operation'] ?? null) === 'integrity-audit' => directIntegrityAudit($input),
@@ -1211,6 +1253,9 @@ function runCase(array $input): array
     }
     if ($value instanceof InventoryPragma) {
         return observeInventoryPragma($value);
+    }
+    if ($value instanceof Attach || $value instanceof Detach) {
+        return observeConnectionCommand($value);
     }
     if ($value instanceof Vacuum) {
         return observeVacuum($value);

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v100.json"
-CONTRACT = "b526839f3c08449a924f5599ae2cc41ce3c91c99e251cdcbc8c653c7dc8e0535"
+CONTRACT_NAME = "release-layout-v101.json"
+CONTRACT = "d47a649f66473fe65ec24d3a9ddd80e26e3fc0646b98c5866cf6584b6b34ee2b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,14 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Connection\\Attach"):
+            expect = "ATTACH (?002) AS 'reports' KEY (?007)"
+            require(item.get("connectionAttach") == ["002", "reports", "007", expect] and item["sql"] == expect,
+                    "installed-sqlite-attach-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Connection\\Detach"):
+            expect = "DETACH 'ARChive'"
+            require(item.get("connectionDetach") == ["archive", "ARChive", expect, "005", "DETACH ?005"] and item["sql"] == expect,
+                    "installed-sqlite-detach-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Vacuum\\Vacuum"):
             expect = 'VACUUM "archive" INTO (?002)'
             require(item.get("vacuum") == [

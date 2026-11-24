@@ -33,6 +33,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-integrity-audit-boundaries-v2.json', 'e5f26cdfd45c337fab39a241a32720e8f3fe92da03d77e47ba34f2784530bbfb'],
             ['sqlite-header-pragmas-boundaries-v1.json', '0436a6d2d85f4c6b983fb91fb823cc2ad686e8df40e9fe0af1e07fe065c5da2a'],
             ['sqlite-vacuum-boundaries-v1.json', '58d3adeccb39cbc65fa0f7405f3bdddee134c0d0f0a56282101e90fe47fcb9c2'],
+            ['sqlite-connection-commands-boundaries-v1.json', '17c3712053a125b7204dd0c9d95f0b52ddcb0f36c15f7e43122c898c000b9d50'],
             ['sqlite-foreign-key-audit-boundaries-v1.json', '5bb678946a4c64f0af472a44d15418550166719cb920683f240fd3dd9991b085'],
             ['sqlite-index-metadata-boundaries-v1.json', '321a0506e38a0841cdefa822858153626c4c2697a529eb78530719b21d735dec'],
             ['sqlite-table-metadata-boundaries-v2.json', 'fbef9194763edebc3700e0b8e57294b477eb0f6cf1c84ead54022242554bd2e7'],
@@ -235,6 +236,9 @@ function checkNativeBoundaries(
             'Ir\\Maintenance\\Vacuum\\Vacuum', 'Ir\\Maintenance\\Vacuum\\VacuumDestination',
             'Ir\\Maintenance\\Vacuum\\VacuumRegistrations', 'Ir\\Maintenance\\Vacuum\\VacuumLowering',
             'Ir\\Expression\\Binding\\NumberedRegistrations', 'Statement\\Maintenance\\Vacuum as ParsedVacuum', 'Ir\\Rows\\ValueRow',
+            'Ir\\Connection\\Attach', 'Ir\\Connection\\AttachmentName', 'Ir\\Connection\\Detach',
+            'Ir\\Connection\\DetachTarget', 'Ir\\Connection\\ConnectionOperands', 'Ir\\Connection\\ConnectionLowering',
+            'Statement\\Connection\\Attach as ParsedAttach', 'Statement\\Connection\\Detach as ParsedDetach', 'Statement\\Connection\\NameOperand',
             'Ir\\Maintenance\\Metadata\\IndexMetadataLowering', 'Ir\\Maintenance\\Metadata\\EmptyIndexMetadata', 'Ir\\Maintenance\\IndexTarget',
             'Statement\\Maintenance\\Pragma', 'Statement\\Maintenance\\PragmaNumber',
             'Statement\\Maintenance\\Analyze as ParsedAnalyze', 'Statement\\Maintenance\\Reindex as ParsedReindex'] as $name) {

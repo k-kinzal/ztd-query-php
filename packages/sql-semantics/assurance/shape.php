@@ -491,6 +491,19 @@ if ($dialect === 'sqlite') {
     $roots[] = 'Maintenance\\Vacuum\\Vacuum';
     $internal[] = 'Maintenance\\Vacuum\\VacuumLowering';
     $internal[] = 'Expression\\Binding\\NumberedRegistrations';
+    $properties['Connection\\Attach'] = [
+        'file' => ['Rows\\ValueRow'], 'name' => ['Connection\\AttachmentName', 'Parameter'], 'key' => ['?Rows\\ValueRow'],
+    ];
+    $properties['Connection\\Detach'] = ['target' => ['Connection\\DetachTarget', 'Parameter']];
+    $properties['Connection\\AttachmentName'] = [
+        'literal' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral'], 'name' => ['Identifier'],
+    ];
+    $properties['Connection\\DetachTarget'] = ['name' => ['Connection\\AttachmentName'], 'schema' => ['Identifier']];
+    $methods['Connection\\Attach'] = $methods['Connection\\Detach'] = $methods['Select'];
+    $methods['Connection\\AttachmentName'] = ['__construct', 'toString'];
+    $methods['Connection\\DetachTarget'] = ['__construct'];
+    array_push($roots, 'Connection\\Attach', 'Connection\\Detach');
+    array_push($internal, 'Connection\\ConnectionOperands', 'Connection\\ConnectionLowering');
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1206,6 +1219,8 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Reindex,'
             . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Pragma,'
             . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Vacuum => (new \\' . $prefix . 'Maintenance\\MaintenanceLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Connection\\Attach,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Connection\\Detach => (new \\' . $prefix . 'Connection\\ConnectionLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -1271,6 +1286,7 @@ try {
             ['sqlite-analyze-statistics-binding-v4.json', '12a5200663460d1e044ad0f0befc7c580ca8da0dfd0d678bf4c9dea146075e1e', 'Analyze statistics binding'],
             ['sqlite-flag-pragmas-binding-v3.json', '22bc56b01907c3b3a4305b9b81c833d70aa1dfc9617d945ecb0f2d56641d9649', 'Flag pragma binding'],
             ['sqlite-folded-binding-sources-v10.json', 'b6fd88b517829551074b5b575b5d907988c378395fcd29568960fa6bcc3750db', 'Folded binding'],
+            ['sqlite-connection-commands-binding-v1.json', '4e048dce7881dd175ff0be0b027010a69e1b8c4d495e09f4d7329bfb7073aed9', 'Connection operand binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1489,6 +1505,18 @@ try {
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
             }
+            if ($short === 'Connection\\ConnectionLowering' || $short === 'Connection\\ConnectionOperands') {
+                $members = $class->getMethods();
+                $expected = $short === 'Connection\\ConnectionLowering'
+                    ? ['lower' => ['Connection\\Attach', 'Connection\\Detach']]
+                    : ['row' => ['Rows\\ValueRow'], 'name' => ['Connection\\AttachmentName', 'Parameter']];
+                requireShape(count($members) === count($expected), 'Unexpected SQLite connection route count');
+                foreach ($members as $member) {
+                    $method = $member->name->toString();
+                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === ($expected[$method] ?? null), 'Unexpected SQLite connection route');
+                }
+            }
             if ($short === 'Expression\\Binding\\NumberedRegistrations') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
@@ -1660,6 +1688,7 @@ try {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
+                    || ($dialect === 'sqlite' && $short === 'Connection\\AttachmentName' && $call->name->toString() === 'explode')
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')

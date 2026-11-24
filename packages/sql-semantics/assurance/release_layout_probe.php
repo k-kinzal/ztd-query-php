@@ -550,6 +550,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
         $queries['Maintenance\\Header\\HeaderPragma'] = 'PRAGMA metadata.user_version = -2147483648';
         $queries['Maintenance\\Vacuum\\Vacuum'] = 'VACUUM archive INTO ?002';
+        $queries['Connection\\Attach'] = 'ATTACH ?002 AS reports KEY ?007';
+        $queries['Connection\\Detach'] = "DETACH DATABASE 'ARChive'";
         $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
@@ -596,6 +598,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
             ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Connection\\Detach') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
@@ -1322,6 +1330,29 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Connection\\Attach') {
+            $file = $result->file->values[0];
+            $key = $result->key?->values[0];
+            if (!$file instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter
+                || !$result->name instanceof SqlSemantics\Platform\Sqlite\Ir\Connection\AttachmentName
+                || !$key instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter) {
+                throw new RuntimeException('The installed ATTACH lost its typed filename, name or key.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Connection\Attach($result->file, $result->name, $result->key);
+            $details['connectionAttach'] = [$file->label, $result->name->name->value, $key->label, $rebuilt->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Connection\\Detach') {
+            $target = $result->target;
+            $dynamic = $semantics->analyze('DETACH ?005', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Connection\DetachTarget
+                || !$dynamic instanceof SqlSemantics\Platform\Sqlite\Ir\Connection\Detach
+                || !$dynamic->target instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter) {
+                throw new RuntimeException('The installed DETACH lost the attachment identity or numbered selector.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Connection\Detach($target);
+            $details['connectionDetach'] = [$target->schema->value, $target->name->name->value, $rebuilt->toString(),
+                $dynamic->target->label, $dynamic->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
             $skipped = $semantics->analyze('VACUUM temp INTO (missing + ?011)', $activeContext);
