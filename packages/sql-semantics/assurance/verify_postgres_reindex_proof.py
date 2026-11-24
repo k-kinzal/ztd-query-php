@@ -85,7 +85,9 @@ def stage(folder, solution):
 
 def compare(folder, toolchain, challenge):
     active = json.loads((folder / "comparator.json").read_text())
-    active["external_kernels"] = {kernel: [str(toolchain / "bin" / kernel)] for kernel in EXTERNAL_KERNELS}
+    binaries = toolchain / "bin"
+    active["external_kernels"] = {kernel: [str(binaries / kernel)] for kernel in EXTERNAL_KERNELS}
+    active["external_kernels"]["lean4lean"] = ["/usr/bin/env", f"PATH={binaries}:/usr/bin:/bin", str(binaries / "lean4lean")]
     chosen = folder / "active-comparator.json"
     write_json(chosen, active)
     return measured(
