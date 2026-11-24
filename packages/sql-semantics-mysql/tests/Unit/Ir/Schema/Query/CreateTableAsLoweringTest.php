@@ -7,11 +7,13 @@ namespace Tests\Unit\Ir\Schema\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAsLowering;
+use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable as ParsedCreateTable;
@@ -34,6 +36,28 @@ final class CreateTableAsLoweringTest extends TestCase
         $term = $value->query->columns[0]->expression;
         self::assertInstanceOf(SignedCast::class, $term);
         self::assertInstanceOf(NullLiteral::class, $term->operand);
+    }
+
+    public function testLowerBindsQualifiedAndBareSpellingsToTheSameTemporaryInput(): void
+    {
+        $semantics = new Semantics();
+        $declarations = $semantics->context([
+            'CREATE TABLE app.accounts (id INT NOT NULL DEFAULT 9)',
+            'CREATE TEMPORARY TABLE app.accounts (id INT DEFAULT 11)',
+        ]);
+        $value = $semantics->analyze(
+            'CREATE TABLE app.copy AS SELECT id AS a, app.accounts.id AS b FROM app.accounts',
+            $declarations
+        );
+
+        self::assertInstanceOf(CreateTableAs::class, $value);
+        self::assertInstanceOf(TableSource::class, $value->query->source);
+        self::assertSame(ExternalRelationKind::TemporaryTable, $value->query->source->kind);
+        self::assertSame('id', $value->query->source->columns[0]->value);
+        $expressions = array_column($value->query->columns, 'expression');
+        self::assertContainsOnlyInstancesOf(ColumnReference::class, $expressions);
+        self::assertSame([0, 0], array_column($expressions, 'occurrence'));
+        self::assertSame([0, 0], array_column($expressions, 'slot'));
     }
 
     public function testAnalyzeAllRetainsTheDefaultAndExplicitDestinations(): void

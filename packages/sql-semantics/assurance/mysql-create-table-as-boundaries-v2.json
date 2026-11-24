@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Recheck the constructor admission for one resolved table input, signed slots and signed filter predicates. The existing SQL assembly and projection scope checks remain active.",
+  "rules": {
+    "Schema/Query/CreateTableAs::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $query->source;",
+        "Check::input(",
+        "    $source === null || ($source instanceof TableSource && $source->kind->isTable()),",
+        "    'CREATE TABLE AS requires a source-free projection or one resolved table.'",
+        ");",
+        "Check::input(count($query->columns) <= 128, 'CREATE TABLE AS can have at most 128 columns.');",
+        "$filter = $query->where;",
+        "Check::input(",
+        "    $filter === null || $filter instanceof BooleanLiteral || $filter instanceof NullLiteral",
+        "        || ($source !== null && ($filter instanceof IntegerComparison",
+        "            || ($filter instanceof NullTest && $filter->operand instanceof ColumnReference))),",
+        "    'CREATE TABLE AS requires a constant filter or a checked signed table predicate.'",
+        ");",
+        "",
+        "$seen = [];",
+        "foreach ($query->columns as $column) {",
+        "    Check::input(",
+        "        preg_match('/\\A[\\x01-\\x7f]{1,64}(?<! )\\z/D', $column->name->value) === 1,",
+        "        'CREATE TABLE AS requires ASCII column names of 1 to 64 characters without trailing spaces.'",
+        "    );",
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'CREATE TABLE AS cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "",
+        "    $expression = $column->expression;",
+        "    $term = $expression instanceof SignedCast ? $expression->operand : $expression;",
+        "    Check::input(",
+        "        $expression instanceof ColumnReference || $term instanceof BooleanLiteral || $term instanceof NullLiteral",
+        "            || ($term instanceof IntegerLiteral && $term->leadingZeroes === 0 && !$term->negativeZero),",
+        "        'CREATE TABLE AS requires a signed table slot, an unpadded integral or NULL literal, or its single signed cast.'",
+        "    );",
+        "}"
+      ]
+    }
+  }
+}

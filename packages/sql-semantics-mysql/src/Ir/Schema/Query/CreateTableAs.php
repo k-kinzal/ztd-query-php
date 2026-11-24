@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Query;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * Creates and populates a native table from a closed source-free projection.
+ * Creates and populates a native table from a checked native projection.
  *
  * @visibility public
  * @example Reading the projected column name in a temporary table declaration
@@ -36,11 +40,18 @@ final class CreateTableAs implements SemanticsIR
         public readonly Select $query,
         public readonly bool $ifNotExists = false,
     ) {
-        Check::input($query->source === null, 'CREATE TABLE AS requires a source-free projection.');
-        Check::input(count($query->columns) <= 128, 'CREATE TABLE AS can have at most 128 columns.');
+        $source = $query->source;
         Check::input(
-            $query->where === null || $query->where instanceof BooleanLiteral || $query->where instanceof NullLiteral,
-            'CREATE TABLE AS requires a constant boolean or NULL filter.'
+            $source === null || ($source instanceof TableSource && $source->kind->isTable()),
+            'CREATE TABLE AS requires a source-free projection or one resolved table.'
+        );
+        Check::input(count($query->columns) <= 128, 'CREATE TABLE AS can have at most 128 columns.');
+        $filter = $query->where;
+        Check::input(
+            $filter === null || $filter instanceof BooleanLiteral || $filter instanceof NullLiteral
+                || ($source !== null && ($filter instanceof IntegerComparison
+                    || ($filter instanceof NullTest && $filter->operand instanceof ColumnReference))),
+            'CREATE TABLE AS requires a constant filter or a checked signed table predicate.'
         );
 
         $seen = [];
@@ -56,9 +67,9 @@ final class CreateTableAs implements SemanticsIR
             $expression = $column->expression;
             $term = $expression instanceof SignedCast ? $expression->operand : $expression;
             Check::input(
-                $term instanceof BooleanLiteral || $term instanceof NullLiteral
+                $expression instanceof ColumnReference || $term instanceof BooleanLiteral || $term instanceof NullLiteral
                     || ($term instanceof IntegerLiteral && $term->leadingZeroes === 0 && !$term->negativeZero),
-                'CREATE TABLE AS requires unpadded integral or NULL literals and their single signed casts.'
+                'CREATE TABLE AS requires a signed table slot, an unpadded integral or NULL literal, or its single signed cast.'
             );
         }
     }

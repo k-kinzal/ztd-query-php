@@ -5,21 +5,32 @@ declare(strict_types=1);
 require __DIR__ . '/server_connection.php';
 require __DIR__ . '/mysql_varchar_write.php';
 require __DIR__ . '/mysql_table_effects.php';
+require __DIR__ . '/mysql_create_table_as_source_fixture.php';
 
 const CTAS_PRIMARY = 'ir_fixture.ir_create_target';
 const CTAS_DECOY = 'ir_ctas_decoy.ir_create_target';
 const CTAS_MARKER = 'ir_fixture.ir_ctas_marker';
 
-function admitMysqlCreateAs(string $sql): bool
+function admitMysqlCreateAs(string $sql, bool $withInput): bool
 {
     $schema = '(?:`(?:ir_fixture|ir_ctas_decoy)`|ir_fixture|ir_ctas_decoy)';
     $target = '(?:`ir_create_target`|ir_create_target)';
     $literal = '(?:-?[0-9]{1,10}|NULL|TRUE|FALSE)';
     $label = '(?:`(?:[a-zA-Z0-9_ ]|``){1,66}`|[a-zA-Z_][a-zA-Z0-9_]*)';
-    $field = '(?:' . $literal . '|CAST\(' . $literal . ' AS SIGNED\))(?: AS ' . $label . ')?';
+    $reference = '(?:(?:`[a-zA-Z_][a-zA-Z0-9_]*`|[a-zA-Z_][a-zA-Z0-9_]*)\.){0,2}(?:`[nm]`|[nm])';
+    $field = '(?:' . $literal . '|CAST\(' . $literal . ' AS SIGNED\)' . ($withInput ? '|' . $reference : '') . ')(?: AS ' . $label . ')?';
     $source = '(?: FROM (?:DUAL|\(SELECT 1 AS `__ztd_unit`\) AS `__ztd_single`))?';
+    $predicate = '(?:TRUE|FALSE|NULL)';
+    if ($withInput) {
+        $name = '(?:`(?:ir_ctas_source|ir_create_target|known)`|ir_ctas_source|ir_create_target|known)';
+        $source = ' FROM (?:' . $schema . '\.)?' . $name . '(?: AS ' . $label . ')?';
+        $integer = '(?:' . $reference . '|-?[0-9]{1,10})';
+        $comparison = $integer . ' (?:<=|>=|<>|!=|=|<|>) ' . $integer;
+        $null = $reference . ' IS (?:NOT )?NULL';
+        $predicate = '(?:TRUE|FALSE|NULL|' . $comparison . '|' . $null . '|\((?:' . $comparison . '|' . $null . ')\))';
+    }
     $query = 'SELECT (?:DISTINCT )?(?&field)(?:, ?(?&field)){0,127}' . $source
-        . '(?: WHERE (?:TRUE|FALSE|NULL))?(?: ORDER BY [0-9]{1,3}(?: ASC| DESC)?'
+        . '(?: WHERE ' . $predicate . ')?(?: ORDER BY [0-9]{1,3}(?: ASC| DESC)?'
         . '(?:, [0-9]{1,3}(?: ASC| DESC)?)*)?(?: LIMIT [0-9]{1,10}(?:(?: OFFSET |, ?)[0-9]{1,10})?)?';
 
     return preg_match('/(?(DEFINE)(?<field>' . $field . '))\ACREATE (?:TEMPORARY )?TABLE (?:IF NOT EXISTS )?(?:' . $schema . '\.)?' . $target
@@ -44,10 +55,10 @@ function resetMysqlCreateAs(PDO $catalog, PDO $owner, string $target, string $to
     }
 }
 
-function mysqlCreateAsState(PDO $owner, PDO $catalog): array
+function mysqlCreateAsState(PDO $owner, PDO $catalog, array $sourceLocations): array
 {
     $visible = $permanent = [];
-    foreach ([CTAS_PRIMARY, CTAS_DECOY] as $name) {
+    foreach (array_unique([CTAS_PRIMARY, CTAS_DECOY, ...$sourceLocations]) as $name) {
         $visible[$name] = observeMysqlFixtureTable($owner, $name);
         $permanent[$name] = observeMysqlFixtureTable($catalog, $name);
     }
@@ -60,32 +71,35 @@ function mysqlCreateAsState(PDO $owner, PDO $catalog): array
 function observeMysqlCreateAs(PDO $catalog, array $request): array
 {
     ['sql' => $sql, 'target' => $target, 'topology' => $topology, 'variant' => $variant] = $request;
-    if (!admitMysqlCreateAs($sql) || !in_array($target, [CTAS_PRIMARY, CTAS_DECOY], true)
+    $input = $request['sourceFixture'] ?? null;
+    if (!admitMysqlCreateAs($sql, $input !== null) || !in_array($target, [CTAS_PRIMARY, CTAS_DECOY], true)
+        || ($input !== null && !validMysqlCreateAsSource($input, $target, $topology))
         || !in_array($topology, ['absent', 'persistent', 'temporary', 'shadow'], true)
         || !is_int($variant) || $variant < 0 || $variant > 40) {
         return ['status' => 'outside-observer-scope'];
     }
     $owner = mysqlFixtureOwner();
     resetMysqlCreateAs($catalog, $owner, $target, $topology, $variant);
-    $initial = mysqlCreateAsState($owner, $catalog);
+    $sourceLocations = $input === null ? [] : seedMysqlCreateAsSources($catalog, $owner, $input, $variant);
+    $initial = mysqlCreateAsState($owner, $catalog, $sourceLocations);
     $owner->beginTransaction();
     $owner->exec('INSERT INTO ' . CTAS_MARKER . ' VALUES (7)');
     $effect = applyMysqlFixtureWrite($owner, $sql);
     $diagnostics = mysqlFixtureDiagnostics($owner);
     $owner->query('SELECT 1')->fetchColumn();
     $active = $owner->inTransaction();
-    $after = mysqlCreateAsState($owner, $catalog);
+    $after = mysqlCreateAsState($owner, $catalog, $sourceLocations);
     if ($active) {
         $owner->rollBack();
     } else {
         $owner->exec('ROLLBACK');
     }
-    $restored = mysqlCreateAsState($owner, $catalog);
+    $restored = mysqlCreateAsState($owner, $catalog, $sourceLocations);
     $owner = null;
 
     return ['status' => 'mysql-create-table-as', 'initial' => $initial, 'effect' => $effect, ...$diagnostics,
         'active' => $active, 'after' => $after, 'restored' => $restored,
-        'afterDisconnect' => mysqlCreateAsState(mysqlFixtureOwner(), $catalog)];
+        'afterDisconnect' => mysqlCreateAsState(mysqlFixtureOwner(), $catalog, $sourceLocations)];
 }
 
 if ($argv[1] !== 'mysql') {

@@ -471,6 +471,10 @@ def verify_probe(raw, catalog):
                     "SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast",
                     "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb",
                     create_as, create_as, True], "installed-mysql-create-table-as-mismatch", item)
+            source = ("CREATE TABLE `app`.`bound_probe` ENGINE=InnoDB AS SELECT `__ztd_source`.`id` AS `a`, "
+                      "`__ztd_source`.`id` AS `b` FROM `app`.`ctas_probe` AS `__ztd_source`")
+            require(item.get("mysqlCreateTableAsSource") == ["app", "ctas_probe", "temporary-table",
+                    [["a", 0, 0], ["b", 0, 0]], source], "installed-mysql-create-table-as-source-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Like\\CreateTableLike"):
             copy = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`copy_probe` LIKE `app`.`accounts`"
             require(item.get("mysqlCreateLike") == ["app", "copy_probe", "temporary-table", "app", "accounts",

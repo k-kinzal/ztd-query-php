@@ -6,14 +6,6 @@
     "mysql-create-table-as-integer-width-v1.json",
     "mysql-session-table-sources-v1.json"
   ],
-  "roles": [
-    "Schema/Query/CreateTableAs",
-    "Select",
-    "TableSource",
-    "ColumnReference",
-    "Predicate/IntegerComparison",
-    "Predicate/NullTest"
-  ],
   "profiles": [
     "mysql-5.6.51",
     "mysql-5.7.44",
@@ -122,5 +114,17 @@
   "open": [
     "Full VARCHAR and other inferred storage shapes, join and compound query operands, expression default options and full language coverage."
   ],
-  "calibrationSha256": "effadd5e493c40288a8b42d47636090b87e8e5a809afa70a6e2c1e4df50ce02b"
+  "calibrationSha256": "effadd5e493c40288a8b42d47636090b87e8e5a809afa70a6e2c1e4df50ce02b",
+  "dialects": [
+    "MySql"
+  ],
+  "existingRoles": [
+    "Schema/Query/CreateTableAs",
+    "Select",
+    "TableSource",
+    "ColumnReference",
+    "Predicate/IntegerComparison",
+    "Predicate/NullTest"
+  ],
+  "constructors": {}
 }

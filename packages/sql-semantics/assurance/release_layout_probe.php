@@ -686,6 +686,23 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlCreateTableAs'] = [$result->target->name->schema->value, $result->target->name->table->value,
                 $result->target->kind->value, $result->ifNotExists, array_column(array_column($result->query->columns, 'name'), 'value'),
                 $first->expression::class, $result->profileId(), $result->toString(), $direct->toString(), $rejected];
+            $from = $semantics->analyze(
+                'CREATE TABLE app.bound_probe AS SELECT id AS a, app.ctas_probe.id AS b FROM app.ctas_probe',
+                $semantics->context(['CREATE TABLE app.ctas_probe (id INT)', 'CREATE TEMPORARY TABLE app.ctas_probe (id INT NOT NULL)'])
+            );
+            if (!$from instanceof SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs
+                || !$from->query->source instanceof SqlSemantics\Platform\MySql\Ir\TableSource) {
+                throw new RuntimeException('The installed table creation lost its resolved input.');
+            }
+            $slots = [];
+            foreach ($from->query->columns as $column) {
+                if (!$column->expression instanceof SqlSemantics\Platform\MySql\Ir\ColumnReference) {
+                    throw new RuntimeException('The installed input lost its signed field role.');
+                }
+                $slots[] = [$column->name->value, $column->expression->occurrence, $column->expression->slot];
+            }
+            $details['mysqlCreateTableAsSource'] = [$from->query->source->schema->value, $from->query->source->table->value,
+                $from->query->source->kind->value, $slots, $from->toString()];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Like\\CreateTableLike') {
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->source, true);

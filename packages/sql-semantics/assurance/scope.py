@@ -40,6 +40,7 @@ CONTRACTS = {
     "mysql-session-create-table-v1.json": "d128967df8d5696561122f4064c976acc904293f4a301f5b8b432f3d4cdce79a",
     "mysql-create-like-v1.json": "0211e157e525a76943102e25042da8a860714b6c6e75c59fb0b529aab9439070",
     "mysql-create-table-as-v1.json": "a10a0af3b78e1307374fc41a20ace5c5639659e43197a7caa61b23d1a5d9bd95",
+    "mysql-create-table-as-source-v1.json": "9a04d8c983e9484e70279798569fd1d83ef5ac2ca55432fc261bfa4eb4fb0ffe",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
