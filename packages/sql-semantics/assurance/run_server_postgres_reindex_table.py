@@ -43,16 +43,26 @@ def finite_ids(_, spec, _tag):
     return coordinates
 
 
-def finite_id(_, response, item, request):
+def finite_id(_, response, item):
     coordinate = tuple(item["coordinate"])
     rebuilt = trial(item["release"], *coordinate, coordinate=item["coordinate"])
-    calibration = analyzed(rebuilt) if "sql" in request else rebuilt
-    require(canonical(calibration) == canonical(request) and response["reindexTable"] == rebuilt["reindexTable"],
+    require(response["reindexTable"] == rebuilt["reindexTable"],
             "postgres-reindex-table-finite-identity", coordinate)
     return coordinate
 
 
-direct_finite_id = analysis_finite_id = finite_id
+def direct_finite_id(engine, response, item, request):
+    coordinate = finite_id(engine, response, item)
+    rebuilt = trial(item["release"], *coordinate, coordinate=list(coordinate))
+    require(canonical(rebuilt) == canonical(request), "postgres-reindex-table-direct-input", coordinate)
+    return coordinate
+
+
+def analysis_finite_id(engine, response, item, sql):
+    coordinate = finite_id(engine, response, item)
+    rebuilt = trial(item["release"], *coordinate, coordinate=list(coordinate))
+    require(analyzed(rebuilt)["sql"] == sql, "postgres-reindex-table-analysis-input", coordinate)
+    return coordinate
 
 
 def generated(tag, seed, total):
