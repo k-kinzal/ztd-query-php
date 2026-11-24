@@ -598,6 +598,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Namespace\\ChangeSchemaOwner'] = 'ALTER SCHEMA "Tax.Reg" OWNER TO "Tax Owner"';
         $queries['Schema\\Sequence\\CreateSequence'] = 'CREATE UNLOGGED SEQUENCE IF NOT EXISTS public."Ticket.棚" AS smallint INCREMENT 2 START 3 RESTART 10 CACHE 2 CYCLE';
         $queries['Schema\\Sequence\\DropSequence'] = 'DROP SEQUENCE IF EXISTS ticket, pg_temp.ticket, public.absent, unknown CASCADE';
+        $queries['Schema\\Sequence\\Alter\\RenameSequence'] = 'ALTER SEQUENCE ticket RENAME TO "Next.Ticket"';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -618,7 +619,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     foreach ($queries as $role => $sql) {
         $activeContext = $context;
-        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\DropSequence') {
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\DropSequence', 'Schema\\Sequence\\Alter\\RenameSequence'], true)) {
             $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE TEMP SEQUENCE ticket']);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
@@ -936,10 +937,27 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->schema->value, $result->owner->value, $direct->toString(), $session->owner->name, $session->toString(), $refused,
             ];
         }
-        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\DropSequence') {
-            $target = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceDropTarget::class;
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\RenameSequence') {
             $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
-            $absence = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceDropPresence::MissingSequence;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('pg_temp'));
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequence(
+                $source, new $name('Next.Ticket'), release: $result->release,
+            );
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SEQUENCE pg_temp.ticket RENAME TO ticket', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A present sequence rename requires a distinct destination.';
+            }
+            $details['postgresRenameSequence'] = [
+                $result->source->schema?->value, $result->source->name->value, $result->source->presence->value,
+                $result->destination->value, $result == $direct, $direct->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\DropSequence') {
+            $target = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector::class;
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $absence = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePresence::MissingSequence;
             $selected = new $target(new $name('ticket'), new $name('pg_temp'));
             $qualified = new $target(new $name('absent'), new $name('public'), $absence);
             $bare = new $target(new $name('unknown'), null, $absence);
@@ -950,7 +968,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             try {
                 new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence([$bare]);
             } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
-                $refused = $error->getMessage() === 'An absent sequence removal target requires IF EXISTS.';
+                $refused = $error->getMessage() === 'An absent sequence selector requires IF EXISTS.';
             }
             $details['postgresDropSequence'] = [
                 array_map(static fn ($part) => [$part->schema?->value, $part->name->value, $part->presence->value], $result->targets),

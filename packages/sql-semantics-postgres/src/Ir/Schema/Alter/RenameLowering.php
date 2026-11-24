@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequence;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequenceLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -24,8 +26,11 @@ final class RenameLowering
     /**
      * Publishes the requested table or column name change.
      */
-    public function lower(BoundStatement $operation, Rename $statement): RenameTable|RenameColumn
+    public function lower(BoundStatement $operation, Rename $statement): RenameTable|RenameColumn|RenameSequence
     {
+        if ($statement->kind === ObjectKind::Sequence) {
+            return (new RenameSequenceLowering())->lower($operation, $statement);
+        }
         $context = $operation->context;
         Check::input(
             $context->profile->parameters === ParameterStyle::Native

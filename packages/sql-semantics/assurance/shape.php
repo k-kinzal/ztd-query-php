@@ -1120,8 +1120,8 @@ if ($dialect !== 'sqlite') {
         $properties[$sequenceOwnerKind] = $methods[$sequenceOwnerKind] = [];
         $enumCases[$sequenceOwnerKind] = ['BaseTable' => 'table', 'ForeignTable' => 'foreign', 'View' => 'view', 'PartitionedTable' => 'partitioned'];
         $sequenceDrop = $sequence . 'DropSequence';
-        $sequenceDropTarget = $sequence . 'SequenceDropTarget';
-        $sequenceDropPresence = $sequence . 'SequenceDropPresence';
+        $sequenceDropTarget = $sequence . 'SequenceSelector';
+        $sequenceDropPresence = $sequence . 'SequencePresence';
         $roots[] = $sequenceDrop;
         array_push($internal, $sequence . 'DropSequenceLowering', $sequence . 'SequenceTargetLowering');
         $properties[$sequenceDrop] = ['targets' => ['array'], 'ifExists' => ['bool'], 'cascade' => ['bool'],
@@ -1130,7 +1130,13 @@ if ($dialect !== 'sqlite') {
         $properties[$sequenceDropPresence] = $methods[$sequenceDropPresence] = [];
         $enumCases[$sequenceDropPresence] = ['Existing' => 'existing', 'MissingSequence' => 'missing-sequence', 'MissingNamespace' => 'missing-namespace'];
         $methods[$sequenceDrop] = ['__construct', 'profileId', 'toString'];
-        $methods[$sequenceDropTarget] = ['__construct', 'quoted'];
+        $methods[$sequenceDropTarget] = ['__construct', 'quoted', 'checkProfile'];
+        $sequenceRename = $sequence . 'Alter\\RenameSequence';
+        $roots[] = $sequenceRename;
+        $internal[] = $sequence . 'Alter\\RenameSequenceLowering';
+        $properties[$sequenceRename] = ['source' => [$sequenceDropTarget], 'destination' => ['Identifier'], 'ifExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$sequenceRename] = ['__construct', 'profileId', 'toString'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1636,9 +1642,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v62.json';
+    $storagePath = __DIR__ . '/value-storage-v63.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'e2c5335045b0b0d97d4b4435533167fcd7851d86e20105b97b8122c2d622cca9',
+        hash_file('sha256', $storagePath) === '9f9b0432bc0468d332a3be88aab9cacb320dfd0a8f9499dbd30178b102b00acb',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2054,7 +2060,9 @@ try {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable'],
+                    && types($members[0]->returnType, $prefix, $short) === [
+                        'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\Sequence\\Alter\\RenameSequence',
+                    ],
                     'Unexpected PostgreSQL rename publication');
             }
             if ($dialect === 'mysql' && $short === 'Schema\\Alter\\RelationChangeLowering') {
@@ -2074,7 +2082,7 @@ try {
                         'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
                         'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
                         'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\DropSchema', 'Schema\\Namespace\\RenameSchema',
-                        'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Sequence\\Alter\\RenameSequence', 'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {
@@ -2170,11 +2178,11 @@ try {
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema', 'Schema\\Sequence\\SequenceName',
-                    'Schema\\Sequence\\SequenceDropTarget', 'Schema\\Sequence\\Ownership\\SequenceOwner',
+                    'Schema\\Sequence\\SequenceSelector', 'Schema\\Sequence\\Ownership\\SequenceOwner',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
-                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\DropIndex', 'Schema\\Sequence\\DropSequence'], true)
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\DropIndex', 'Schema\\Sequence\\SequenceSelector'], true)
                     && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',
                     $platform . '\\Model\\Statement\\Identifier\\Name',

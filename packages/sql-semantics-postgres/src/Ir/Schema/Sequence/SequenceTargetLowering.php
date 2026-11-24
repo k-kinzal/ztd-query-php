@@ -23,7 +23,7 @@ final class SequenceTargetLowering
     /**
      * Resolves the first matching namespace or verifies an explicit absent role.
      */
-    public function lower(AnalysisContext $context, QualifiedName $written, bool $guard): SequenceDropTarget
+    public function lower(AnalysisContext $context, QualifiedName $written, bool $guard): SequenceSelector
     {
         Check::input(
             $written->catalog === null || $written->catalog->value === $context->currentDatabase?->value,
@@ -32,25 +32,25 @@ final class SequenceTargetLowering
         $name = new Identifier($written->name->value);
         foreach ($written->schema === null ? $context->searchPath : [$written->schema] as $schema) {
             if ($this->present($context, $schema, $written)) {
-                return new SequenceDropTarget($name, new Identifier($schema->value));
+                return new SequenceSelector($name, new Identifier($schema->value));
             }
             Check::input(
                 $context->complete && !$context->indexNamespace->hasUnknownNames($schema),
                 'A sequence selector cannot infer absence in an open relation namespace.'
             );
         }
-        Check::input($guard, 'An absent sequence removal target requires IF EXISTS.');
+        Check::input($guard, 'An absent sequence selector requires IF EXISTS.');
         $scope = $written->schema;
         if ($scope === null) {
-            return new SequenceDropTarget($name, null, SequenceDropPresence::MissingSequence);
+            return new SequenceSelector($name, null, SequencePresence::MissingSequence);
         }
         $exists = (new IndexBinding())->known($context, $scope);
         Check::input($scope->value !== 'pg_temp' || $exists, 'An absent temporary sequence requires a declared session namespace.');
 
-        return new SequenceDropTarget(
+        return new SequenceSelector(
             $name,
             new Identifier($scope->value),
-            $exists ? SequenceDropPresence::MissingSequence : SequenceDropPresence::MissingNamespace,
+            $exists ? SequencePresence::MissingSequence : SequencePresence::MissingNamespace,
         );
     }
 

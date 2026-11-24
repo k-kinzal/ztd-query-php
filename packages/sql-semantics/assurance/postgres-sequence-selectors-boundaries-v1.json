@@ -1,0 +1,225 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-selectors-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check shared selector binding, stock occupancy, the ordered removal and the closed rename.",
+  "rules": {
+    "Schema/Sequence/SequenceSelector::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema !== null || $presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::MissingSequence, 'A sequence selector requires an absolute namespace.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema === null || $schema->value !== 'pg_toast' && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A sequence selector cannot use a physical TOAST or temporary schema.');",
+        "if ($presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::MissingNamespace) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value !== 'pg_temp' && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::stock($schema->value), 'A missing sequence namespace must be an application namespace.');",
+        "}"
+      ]
+    },
+    "Schema/Sequence/SequenceSelector::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->schema === null ? '' : $this->schema->quoted() . '.') . $this->name->quoted();"
+      ]
+    },
+    "Schema/Sequence/SequenceSelector::checkProfile": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$namespace = $this->schema->value ?? 'pg_catalog';",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\StockIndexNames::contains($release, new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($namespace), new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($this->name->value)), 'A stock non-sequence relation cannot be a sequence target.');"
+      ]
+    },
+    "Schema/Sequence/DropSequence::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checked = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($targets, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceSelector::class, 'Sequence removal requires a nonempty list of checked selectors.', 1);",
+        "$seen = [];",
+        "$namespaces = [];",
+        "foreach ($checked as $target) {",
+        "    $presence = $target->presence;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing || $ifExists, 'An absent sequence selector requires IF EXISTS.');",
+        "    $namespace = $target->schema?->value;",
+        "    $target->checkProfile($release);",
+        "    $key = ($namespace ?? '') . \"\\x00\" . $target->name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]) || $seen[$key] === $presence, 'Sequence removal cannot disagree about a named target.');",
+        "    $seen[$key] = $presence;",
+        "    if ($namespace !== null) {",
+        "        $present = $presence !== \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::MissingNamespace;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($namespaces[$namespace]) || $namespaces[$namespace] === $present, 'Sequence removal cannot disagree about a named namespace.');",
+        "        $namespaces[$namespace] = $present;",
+        "    }",
+        "}",
+        "$this->targets = $checked;"
+      ]
+    },
+    "Schema/Sequence/DropSequence::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Sequence/DropSequence::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$pieces = [];",
+        "foreach ($this->targets as $target) {",
+        "    $pieces[] = $target->quoted();",
+        "}",
+        "return 'DROP SEQUENCE ' . ($this->ifExists ? 'IF EXISTS ' : '') . implode(', ', $pieces) . ($this->cascade ? ' CASCADE' : ' RESTRICT');"
+      ]
+    },
+    "Schema/Sequence/SequenceTargetLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($written->catalog === null || $written->catalog->value === $context->currentDatabase?->value, 'An explicit PostgreSQL catalog requires the matching current database.');",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($written->name->value);",
+        "foreach ($written->schema === null ? $context->searchPath : [$written->schema] as $schema) {",
+        "    if ($this->present($context, $schema, $written)) {",
+        "        return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceSelector($name, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value));",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->complete && !$context->indexNamespace->hasUnknownNames($schema), 'A sequence selector cannot infer absence in an open relation namespace.');",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($guard, 'An absent sequence selector requires IF EXISTS.');",
+        "$scope = $written->schema;",
+        "if ($scope === null) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceSelector($name, null, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::MissingSequence);",
+        "}",
+        "$exists = (new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding())->known($context, $scope);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($scope->value !== 'pg_temp' || $exists, 'An absent temporary sequence requires a declared session namespace.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceSelector($name, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($scope->value), $exists ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::MissingSequence : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::MissingNamespace);"
+      ]
+    },
+    "Schema/Sequence/SequenceTargetLowering::present": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\StockIndexNames::contains($context->profile->grammar, $schema, $written->name), 'The selected relation is not a sequence.');",
+        "foreach ($context->indexNamespace->indexes as $index) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($index->schema->value !== $schema->value || $index->index->value !== $written->name->value, 'The selected relation is not a sequence.');",
+        "}",
+        "$matches = $context->declared($written, $schema);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($matches) <= 1, 'A sequence selector cannot resolve conflicting declarations.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($matches === [] || $matches[0]->kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::Sequence, 'The selected relation is not a sequence.');",
+        "return $matches !== [];"
+      ]
+    },
+    "Schema/Sequence/DropSequenceLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'DROP SEQUENCE requires the native PostgreSQL namespace profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Sequence, 'Sequence removal requires DROP SEQUENCE.');",
+        "$resolver = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceTargetLowering();",
+        "$targets = [];",
+        "foreach ($statement->objects as $object) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName, 'Sequence removal requires a relation selector.');",
+        "    $name = $object->qualified();",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null, 'Sequence removal requires at most three name parts.');",
+        "    $targets[] = $resolver->lower($context, $name, $statement->ifExists);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\DropSequence($targets, $statement->ifExists, $statement->behavior === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior::Cascade, $context->profile->grammar);"
+      ]
+    },
+    "Schema/DropRelationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match ($statement->kind) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\DropIndexLowering())->lower($operation, $statement),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\DropSchemaLowering())->lower($operation, $statement),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Sequence => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\DropSequenceLowering())->lower($operation, $statement),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropTableLowering())->lower($operation, $statement),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::View, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::MaterializedView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\DropViewLowering())->lower($operation, $statement),",
+        "    default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The complete DROP requires a supported persistent relation kind.'),",
+        "};"
+      ]
+    },
+    "Schema/Alter/RenameLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Sequence) {",
+        "    return (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\RenameSequenceLowering())->lower($operation, $statement);",
+        "}",
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive && $context->columnNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'ALTER TABLE RENAME requires the native naming profile.');",
+        "$reference = $statement->object;",
+        "$member = $statement->member;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Table && $reference instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\RelationTarget && ($member === null || $member->part === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RenamedPart::Column), 'The checked rename needs a table or column operation.');",
+        "[$target, $table] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameTargetLowering())->lower($operation, $reference, $statement->ifExists);",
+        "$destination = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->newName->value);",
+        "$release = $context->profile->grammar;",
+        "if ($member === null) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameTable($target, $destination, $statement->ifExists, $release);",
+        "}",
+        "if ($table !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->complete && count($table->matchingColumns($member->name->value, \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive)) === 1 && $table->matchingColumns($destination->value, \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive) === [], 'A column rename requires a unique declared source column and an unused destination.');",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameColumn($target, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($member->name->value), $destination, $reference->relation->only, $statement->ifExists, $release);"
+      ]
+    },
+    "Schema/Sequence/Alter/RenameSequenceLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'ALTER SEQUENCE RENAME requires the native naming profile.');",
+        "$reference = $statement->object;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Sequence && $reference instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\RelationTarget && $statement->member === null, 'Sequence rename requires a whole sequence selector.');",
+        "$source = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceTargetLowering())->lower($context, $reference->relation->name, $statement->ifExists);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\RenameSequence($source, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->newName->value), $statement->ifExists, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Sequence/Alter/RenameSequence::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$source->checkProfile($release);",
+        "if ($source->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($source->name->value !== $destination->value, 'A present sequence rename requires a distinct destination.');",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($ifExists, 'An absent sequence selector requires IF EXISTS.');",
+        "}"
+      ]
+    },
+    "Schema/Sequence/Alter/RenameSequence::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Sequence/Alter/RenameSequence::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'ALTER SEQUENCE ' . ($this->ifExists ? 'IF EXISTS ' : '') . $this->source->quoted() . ' RENAME TO ' . $this->destination->quoted();"
+      ]
+    }
+  },
+  "revises": "postgres-drop-sequence-boundaries-v2.json"
+}

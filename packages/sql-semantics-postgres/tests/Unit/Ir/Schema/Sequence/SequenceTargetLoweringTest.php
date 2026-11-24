@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\AnalysisException;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceDropPresence;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePresence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceTargetLowering;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
@@ -21,8 +21,8 @@ final class SequenceTargetLoweringTest extends TestCase
         $drop = $semantics->analyze('DROP SEQUENCE IF EXISTS public.missing, unknown.missing', $semantics->context([]));
 
         self::assertInstanceOf(DropSequence::class, $drop);
-        self::assertSame(SequenceDropPresence::MissingSequence, $drop->targets[0]->presence);
-        self::assertSame(SequenceDropPresence::MissingNamespace, $drop->targets[1]->presence);
+        self::assertSame(SequencePresence::MissingSequence, $drop->targets[0]->presence);
+        self::assertSame(SequencePresence::MissingNamespace, $drop->targets[1]->presence);
     }
 
     public function testPresentStopsAtAStockRelation(): void

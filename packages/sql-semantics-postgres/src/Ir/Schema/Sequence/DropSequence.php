@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
-use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\StockIndexNames;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -16,7 +14,7 @@ use SqlSemantics\SemanticsIR;
  *
  * @visibility public
  * @example Removing a persistent sequence
- *     $target = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceDropTarget(new \SqlSemantics\Platform\PostgreSql\Ir\Identifier('ticket'), new \SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'));
+ *     $target = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new \SqlSemantics\Platform\PostgreSql\Ir\Identifier('ticket'), new \SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'));
  *     (new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence([$target]))->toString() // => 'DROP SEQUENCE "public"."ticket" RESTRICT'
  */
 final class DropSequence implements SemanticsIR
@@ -24,13 +22,13 @@ final class DropSequence implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<SequenceDropTarget> Exact native selector order
+     * @var non-empty-list<SequenceSelector> Exact native selector order
      */
     public readonly array $targets;
 
     /**
      * Copies and checks the resolved target roles before the removal can be used.
-     * @param list<SequenceDropTarget> $targets
+     * @param list<SequenceSelector> $targets
      */
     public function __construct(
         array $targets,
@@ -38,22 +36,19 @@ final class DropSequence implements SemanticsIR
         public readonly bool $cascade = false,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
     ) {
-        $checked = Check::listOf($targets, SequenceDropTarget::class, 'Sequence removal requires a nonempty list of checked selectors.', 1);
+        $checked = Check::listOf($targets, SequenceSelector::class, 'Sequence removal requires a nonempty list of checked selectors.', 1);
         $seen = [];
         $namespaces = [];
         foreach ($checked as $target) {
             $presence = $target->presence;
-            Check::input($presence === SequenceDropPresence::Existing || $ifExists, 'An absent sequence removal target requires IF EXISTS.');
+            Check::input($presence === SequencePresence::Existing || $ifExists, 'An absent sequence selector requires IF EXISTS.');
             $namespace = $target->schema?->value;
-            Check::input(
-                !StockIndexNames::contains($release, new Name($namespace ?? 'pg_catalog'), new Name($target->name->value)),
-                'A stock non-sequence relation cannot be a sequence removal target.'
-            );
+            $target->checkProfile($release);
             $key = ($namespace ?? '') . "\0" . $target->name->value;
             Check::input(!isset($seen[$key]) || $seen[$key] === $presence, 'Sequence removal cannot disagree about a named target.');
             $seen[$key] = $presence;
             if ($namespace !== null) {
-                $present = $presence !== SequenceDropPresence::MissingNamespace;
+                $present = $presence !== SequencePresence::MissingNamespace;
                 Check::input(
                     !isset($namespaces[$namespace]) || $namespaces[$namespace] === $present,
                     'Sequence removal cannot disagree about a named namespace.'

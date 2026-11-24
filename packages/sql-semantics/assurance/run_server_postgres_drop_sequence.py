@@ -19,13 +19,13 @@ from run_server_postgres_create_btree import check_preparation as check_libpq
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-drop-sequence"
-CONTRACT_NAME = "postgres-drop-sequence-v2.json"
-CONTRACT = "f38188b0bc46081ce844d9973cfc678d13b8aa5c6122720b51927de37fbd5226"
+CONTRACT_NAME = "postgres-drop-sequence-v3.json"
+CONTRACT = "dcf87dc6000d6cd99acb91edb79d618d3f8b62ef15e4bb2987383ce20231c924"
 STOCK_NAME = "postgres-drop-sequence-stock-v1.json"
 STOCK = "dcbf5a63db6b9156d42a69547f9595f885432531ec8fafaa89832652bb64bdb4"
 OBSERVER = "postgres_drop_sequence_observer.py"
 AXES = ("targetPlans", "guarded", "cascade", "transactional", "dependentDefault")
-ABSENT = refusal("An absent sequence removal target requires IF EXISTS.")
+ABSENT = refusal("An absent sequence selector requires IF EXISTS.")
 OPEN = refusal("A sequence selector cannot infer absence in an open relation namespace.")
 WRONG = refusal("The selected relation is not a sequence.")
 
@@ -145,7 +145,7 @@ def refusals(tag):
     for target in (["pg_catalog", "pg_class", "existing"], [None, "pg_class", "missing-sequence"]):
         wrong_role = direct(value)
         wrong_role["dropSequence"]["targets"] = [target]
-        yield wrong_role, None, refusal("A stock non-sequence relation cannot be a sequence removal target.")
+        yield wrong_role, None, refusal("A stock non-sequence relation cannot be a sequence target.")
 
 
 def requests(_, tag, spec):

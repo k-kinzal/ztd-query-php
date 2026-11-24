@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v133.json"
-CONTRACT = "37f96a30ff20f674043108e4e658f294eaef5bd58150905858417522fc2336e4"
+CONTRACT_NAME = "release-layout-v134.json"
+CONTRACT = "2ed305f8383f230b5b515ece5b811a4bc018fe437a3f14962e29c5da597fd8a7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -323,6 +323,10 @@ def verify_probe(raw, catalog):
             require(item.get("postgresChangeSchemaOwner") == [
                 "Tax.Reg", "Tax Owner", emitted, "Session", 'ALTER SCHEMA "Tax.Reg" OWNER TO SESSION_USER', True,
             ] and item["sql"] == emitted, "installed-postgres-schema-owner-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\Alter\\RenameSequence"):
+            emitted = 'ALTER SEQUENCE "pg_temp"."ticket" RENAME TO "Next.Ticket"'
+            require(item.get("postgresRenameSequence") == ["pg_temp", "ticket", "existing", "Next.Ticket", True, emitted, True]
+                    and item["sql"] == emitted, "installed-postgres-rename-sequence-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\DropSequence"):
             emitted = 'DROP SEQUENCE IF EXISTS "pg_temp"."ticket", "pg_temp"."ticket", "public"."absent", "unknown" CASCADE'
             targets = [["pg_temp", "ticket", "existing"], ["pg_temp", "ticket", "existing"],

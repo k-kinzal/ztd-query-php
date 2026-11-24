@@ -9,9 +9,9 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence;
  *
  * @visibility public
  * @example Choosing an existing sequence
- *     \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceDropPresence::Existing->value // => 'existing'
+ *     \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePresence::Existing->value // => 'existing'
  */
-enum SequenceDropPresence: string
+enum SequencePresence: string
 {
     case Existing = 'existing';
     case MissingSequence = 'missing-sequence';

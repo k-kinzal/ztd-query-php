@@ -50,6 +50,8 @@ A namespace with table or unowned sequence members has a static name and an ungu
 
 `DROP SEQUENCE` publishes `Ir\Schema\Sequence\DropSequence`. Declare persistent and session-local sequence names in the analysis context. The value preserves selector order, repeats, the guard and the dependency policy. An unqualified existing name resolves to the first matching namespace. Known absences use the guard and retain their native notice form.
 
+`ALTER SEQUENCE ... RENAME TO` uses the same resolved selector with one decoded destination name. PostgreSQL keeps the generator and its referring defaults under the existing relation identity. A guarded absent selector retains the native notice.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php
