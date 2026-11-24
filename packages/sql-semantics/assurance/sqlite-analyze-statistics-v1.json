@@ -1,0 +1,94 @@
+{
+  "revision": "SemanticsIR/sqlite-analyze-statistics-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2, UTF-8, native STAT1 without STAT4, analysis_limit=0, built-in collations, explicit attached-schema order.",
+  "scope": "ANALYZE all persistent databases, an explicitly resolved schema, all statistics for an absolute relation, or statistics for one absolute index.",
+  "additionalPublicRoots": ["Maintenance/Analyze"],
+  "constructors": {
+    "Maintenance/Analyze": {
+      "role": "Gather native SQLite planner statistics for the resolved external selector.",
+      "structure": "An explicit global selection represented by null, an absolute schema Identifier, a resolved RelationTarget or a resolved IndexTarget.",
+      "conditions": "Every required name resolves. The binder checks native schema-before-index-before-relation selection and the exact scope when a qualifier is written.",
+      "meaning": "Create the applicable native statistics table and replace or append entries according to SQLite's selector and distinct indexed prefixes. The global selection skips temp. An explicitly named temp schema remains selectable.",
+      "externalInterpretation": "Use the same declared schema, table and index definitions, collations, native statistics configuration and table population.",
+      "sql": "Emit ANALYZE alone, one quoted schema name, or the checked separately quoted absolute schema and object names.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/RelationTarget": {
+      "role": "The absolute native table or view and its relation kind.",
+      "structure": "Immutable schema and relation Identifier values and the concrete SQLite relation kind.",
+      "conditions": "Bind the exact named relation. Preserve the distinction between base-table statistics and a view that contributes no rows.",
+      "meaning": "A view can still cause the SQLite statistics table to be created. An ordinary table contributes the measured native statistics.",
+      "externalInterpretation": "Use the same native catalog relation and its data.",
+      "sql": "Emit both identifier components with native quoting.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/IndexTarget": {
+      "role": "The absolute SQLite index, including automatic constraint indexes, with its actual owner.",
+      "structure": "Immutable schema, index name and owner Identifier values.",
+      "conditions": "The named schema contains the stated index and owner under the same external interpretation.",
+      "meaning": "Refresh statistics for exactly that index. A WITHOUT ROWID primary index can use the table name in sqlite_stat1 despite its internal index name.",
+      "externalInterpretation": "The same SQLite index structure, storage role and datasource determine statistics.",
+      "sql": "Emit the separately quoted schema and index name. Use the owner as a semantic coordinate.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "An unqualified known schema name takes precedence over every index or relation. No-argument ANALYZE evaluates every attached schema except temp.",
+    "After selecting the applicable schema scope, find a matching native index before looking for any table or view. An explicit qualifier restricts the search to that named schema.",
+    "For an unqualified selector the first matching index or relation searches temp, main, then attached schemas. Refuse when an undisclosed namespace could contain a higher-priority candidate. A selected known schema remains valid independently of table catalog completeness.",
+    "An ordinary index statistic records indexed row count and the ceiling of average repeats for each indexed prefix. Compare SQLite native equality, explicitly including NULL, collation, partial membership and repeated values. A table with no indexes can contribute a NULL index name with its count.",
+    "A named WITHOUT ROWID primary-index ANALYZE deletes by the selected internal index name but stores a statistic under the table name. Repeated execution can append equal stat rows. Compare multiplicity and exact names.",
+    "Empty and view targets can create sqlite_stat1 without adding a data row. Refuse unknown named targets and qualifiers before a completed value exists."
+  ],
+  "observations": [
+    "Compare exact stat table existence, typed tbl and idx names and NULL, full ordered readings with duplicates, stat text, and native authorized schema and table choices.",
+    "Retain distinguishable stale statistics for all schemas. Compare the selected write scope, ordinary replacement, absence of accidental changes to another scope, repeated primary-index effects and rollback.",
+    "Compare write classification, observed result and parameter shapes, unchanged base table rows and explicit no-rows and view behavior."
+  ],
+  "finite": {
+    "targets": ["all", "schema-main", "schema-temp", "schema-attached", "main-table", "temp-table", "attached-table", "unqualified-index-priority", "main-index", "without-rowid-index", "ordinary-implicit-index", "no-index-table", "empty-table", "view"],
+    "history": ["fresh", "stale", "twice"],
+    "attachments": ["named", "empty-name"],
+    "identity": "All 84 target/prior-statistics/attachment choices, inferred from the published selector and observed schema state."
+  },
+  "exploration": {
+    "seeds": [14029, 57619, 60821],
+    "casesPerSeed": 30,
+    "timeoutSeconds": 360,
+    "allowedExclusions": [],
+    "domain": "Vary native target kinds, colliding namespaces, quoted identifiers, partial predicates, case-equivalent and NULL inputs, skewed indexed prefixes, and prior statistics."
+  },
+  "negative": [
+    "Missing target",
+    "Unknown qualifier",
+    "Potentially hidden higher-priority index in an open catalog",
+    "Potentially preceding table in an open namespace",
+    "Conflicting index or relation declarations",
+    "Opaque automatic-index namespace affecting selector precedence"
+  ],
+  "faults": [
+    "Ignore a schema name's priority",
+    "Choose the table before the index",
+    "Lose the selected qualifier",
+    "Gather all statistics for a named target",
+    "Gather a sibling index",
+    "Treat an unresolved selector as a global operation",
+    "Erase the actual owner coordinate"
+  ],
+  "open": [
+    "STAT4, nonzero analysis_limit, extension-specific indexes and custom collation statistics require additional language profiles and evidence."
+  ],
+  "trust": [
+    "Pinned native analyzer and STAT1 configuration.",
+    "Independent prefix-cardinality calculation and exact typed observations.",
+    "Closed selector construction, bound distribution and protected evidence generation."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "af7d7a7c2a6bf944e3bb2373d9965e1699ff936cd8e146e41ae90d7b617da0be",
+    "nativeCases": "b9b6e5d68951b4a700afcaaa496e256f71a150a43c902f30c215766bfb3a7017",
+    "engineRoutines": ["sqlite3Analyze", "analyzeDatabase", "analyzeTable", "analyzeOneTable", "openStatTable"]
+  }
+}
