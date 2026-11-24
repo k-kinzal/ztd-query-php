@@ -124,6 +124,7 @@ def checked_methods(guard, dialect, role):
             ("postgres", "Expression/BuiltinCast"),
             ("sqlite", "Schema/Index/CreateIndex"), ("sqlite", "Schema/Index/DropIndex"),
             ("sqlite", "Schema/Index/IndexReference"), ("sqlite", "Schema/Index/MissingIndex"),
+            ("sqlite", "Maintenance/Reindex"), ("sqlite", "Maintenance/ReindexRelation"), ("sqlite", "Maintenance/ReindexIndex"),
         } else {}),
     }
 

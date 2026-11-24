@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ir\Schema;
 
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\DropRelationLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropView;
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -13,9 +13,9 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
 /**
- * @covers \SqlSemantics\Platform\Sqlite\Ir\Schema\DropRelationLowering
+ * @covers \SqlSemantics\Platform\Sqlite\Ir\Schema\DropLowering
  */
-final class DropRelationLoweringTest extends TestCase
+final class DropLoweringTest extends TestCase
 {
     public function testLowerResolvesTheShadowingTable(): void
     {
@@ -27,7 +27,7 @@ final class DropRelationLoweringTest extends TestCase
         $operation = (new Inspection())->inspect('DROP TABLE records', $tables);
         self::assertInstanceOf(Drop::class, $operation->statement);
 
-        $drop = (new DropRelationLowering())->lower($operation->binding(), $operation->statement);
+        $drop = (new DropLowering())->lower($operation->binding(), $operation->statement);
 
         self::assertInstanceOf(DropTable::class, $drop);
         self::assertSame('temp', $drop->schema->value);

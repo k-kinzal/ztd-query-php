@@ -1,0 +1,114 @@
+{
+  "revision": "SemanticsIR/sqlite-reindex-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Close the native REINDEX role and output, verify builtin priority, native relation-before-index lookup, exact index owner, and refusal of unknown state.",
+  "rules": {
+    "Maintenance/Reindex::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Reindex::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Reindex::toString": {
+      "common": [
+        "return match (true) {",
+        "    $this->target === null => 'REINDEX',",
+        "    $this->target instanceof Collation => 'REINDEX ' . (new Identifier($this->target->value))->quoted(),",
+        "    $this->target instanceof ReindexRelation, $this->target instanceof ReindexIndex => 'REINDEX ' . $this->target->quoted(),",
+        "};"
+      ]
+    },
+    "Maintenance/ReindexIndex::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/ReindexIndex::quoted": {
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->name->quoted();"
+      ]
+    },
+    "Maintenance/ReindexRelation::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/ReindexRelation::quoted": {
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->name->quoted();"
+      ]
+    },
+    "Maintenance/ReindexLowering::lower": {
+      "common": [
+        "$target = $statement->target;",
+        "if ($target === null) {",
+        "    return new Reindex();",
+        "}",
+        "if ($target->schema === null) {",
+        "    $collation = Collation::tryFrom(strtr($target->name->value, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'));",
+        "    if ($collation !== null) {",
+        "        return new Reindex($collation);",
+        "    }",
+        "}",
+        "$context = $operation->context;",
+        "$scopes = $this->scopes($context, $target->schema);",
+        "$relation = $this->relation($context, $target, $scopes);",
+        "return new Reindex($relation ?? $this->index($context, $target->name, $scopes));"
+      ]
+    },
+    "Maintenance/ReindexLowering::scopes": {
+      "common": [
+        "$comparison = NameComparison::AsciiInsensitive;",
+        "$path = $context->searchPath;",
+        "Check::input($context->relationNames === $comparison && isset($path[1]) && $comparison->equal($path[0]->value, 'temp') && $comparison->equal($path[1]->value, 'main'), 'REINDEX requires SQLite comparison and schema search order.');",
+        "if ($schema === null) {",
+        "    return $path;",
+        "}",
+        "foreach ($path as $known) {",
+        "    if ($comparison->equal($known->value, $schema->value)) {",
+        "        return [$known];",
+        "    }",
+        "}",
+        "throw new InvalidConstruction('REINDEX requires a known schema qualifier.');"
+      ]
+    },
+    "Maintenance/ReindexLowering::relation": {
+      "common": [
+        "foreach ($scopes as $schema) {",
+        "    $matches = $context->declared($name, $schema);",
+        "    Check::input(count($matches) <= 1, 'Conflicting declared relations share the REINDEX coordinate.');",
+        "    if ($matches !== []) {",
+        "        $table = $matches[0];",
+        "        $kind = match ($table->kind) {",
+        "            RelationKind::BaseTable => ExternalRelationKind::BaseTable,",
+        "            RelationKind::View => ExternalRelationKind::View,",
+        "            RelationKind::ForeignTable, RelationKind::MaterializedView, RelationKind::Sequence => throw new InvalidConstruction('The REINDEX relation kind is outside the SQLite profile.'),",
+        "        };",
+        "        return new ReindexRelation(new Identifier($schema->value), new Identifier($table->name->name->value), $kind);",
+        "    }",
+        "    Check::input($name->schema !== null || $context->complete, 'Unqualified REINDEX cannot skip an open relation namespace.');",
+        "}",
+        "return null;"
+      ]
+    },
+    "Maintenance/ReindexLowering::index": {
+      "common": [
+        "$key = new Identifier($name->value);",
+        "foreach ($scopes as $schema) {",
+        "    $matches = $context->indexesAt($name, $schema);",
+        "    Check::input(count($matches) <= 1, 'Conflicting declared indexes share the REINDEX coordinate.');",
+        "    if ($matches !== []) {",
+        "        $target = $matches[0];",
+        "        return new ReindexIndex(new Identifier($target->schema->value), new Identifier($target->name->value), new Identifier($target->table->value));",
+        "    }",
+        "    Check::input(!str_starts_with($key->key(), 'sqlite_') || $context->knowsConstraintIndexes($schema), 'REINDEX cannot skip an opaque constraint index namespace.');",
+        "}",
+        "throw new InvalidConstruction('REINDEX requires a resolved collation, relation or index.');"
+      ]
+    }
+  }
+}

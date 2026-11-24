@@ -714,6 +714,8 @@ The index removal fixture compares the selected object and owner, catalog and st
 
 The constraint index fixture compares the native original and generated absence selectors. It records protected PRIMARY KEY and UNIQUE indexes, including WITHOUT ROWID storage, along with separate direct checks for each watched absence. Run \`run_sqlite_constraint_index_names.py\` using the SQLite fixture options. [SQLite constraint index contract](sqlite-constraint-index-names-v2.json)
 
+The REINDEX fixture compares the selected index coordinates and actual traversal order before and after rebuilding. Distinct outdated orders expose incorrect selections, and a unique-key fixture records a native failure and atomic rollback. Run \`run_sqlite_reindex.py\` with the SQLite fixture options. [SQLite REINDEX contract](sqlite-reindex-v1.json)
+
 ## SQLite literal defaults
 
 The [default record](sqlite-defaults-v4.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.

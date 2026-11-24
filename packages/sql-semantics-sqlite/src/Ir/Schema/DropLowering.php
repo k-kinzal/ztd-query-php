@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndexLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -16,24 +18,25 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind;
 
 /**
- * Resolves a table or view removal before the complete value is built.
+ * Resolves the native table, view and index removal roles.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
-final class DropRelationLowering
+final class DropLowering
 {
     /**
      * Constructs a removal once its schema and object kind are fixed.
      * @throws InvalidConstruction When the target does not resolve to the required kind
      */
-    public function lower(BoundStatement $operation, Drop $statement): DropTable|DropView
+    public function lower(BoundStatement $operation, Drop $statement): DropTable|DropView|DropIndex
     {
+        if ($statement->object === SchemaObjectKind::Index) {
+            return (new DropIndexLowering())->lower($operation, $statement);
+        }
         $kind = match ($statement->object) {
             SchemaObjectKind::Table => RelationKind::BaseTable,
             SchemaObjectKind::View => RelationKind::View,
-            SchemaObjectKind::Index, SchemaObjectKind::Trigger => throw new InvalidConstruction(
-                'The complete DROP requires the TABLE object kind or the VIEW object kind.',
-            ),
+            SchemaObjectKind::Trigger => throw new InvalidConstruction('This trigger removal has no complete SQLite representation.'),
         };
         $comparison = Comparison::AsciiInsensitive;
         $path = $operation->context->searchPath;

@@ -418,6 +418,13 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Index\\IndexReference'] = $methods['Schema\\Index\\MissingIndex'] = ['__construct', 'quoted'];
     $roots[] = 'Schema\\Index\\DropIndex';
     $internal[] = 'Schema\\Index\\DropIndexLowering';
+    $properties['Maintenance\\Reindex'] = ['target' => ['Collation', 'Maintenance\\ReindexIndex', 'Maintenance\\ReindexRelation', 'null']];
+    $properties['Maintenance\\ReindexRelation'] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'kind' => ['From\\ExternalRelationKind']];
+    $properties['Maintenance\\ReindexIndex'] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'table' => ['Identifier']];
+    $methods['Maintenance\\Reindex'] = $methods['Select'];
+    $methods['Maintenance\\ReindexRelation'] = $methods['Maintenance\\ReindexIndex'] = ['__construct', 'quoted'];
+    $roots[] = 'Maintenance\\Reindex';
+    $internal[] = 'Maintenance\\ReindexLowering';
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
@@ -505,7 +512,7 @@ if ($dialect === 'sqlite') {
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
-    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'From\\JoinKeyLowering', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropRelationLowering', 'Schema\\CreateTableLowering');
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'From\\JoinKeyLowering', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropLowering', 'Schema\\CreateTableLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
     $internal[] = 'Rows\\LocalInputs';
     $pureCollaborators[] = 'Rows\\LocalInputs';
@@ -1076,9 +1083,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertRows, $statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertSelect, $statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertDefaults => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop && $statement->object === \\'
-            . $platform . '\\Statement\\Schema\\SchemaObjectKind::Index => (new \\' . $prefix . 'Schema\\Index\\DropIndexLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropRelationLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateIndex => (new \\' . $prefix . 'Schema\\Index\\CreateIndexLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
@@ -1086,6 +1091,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterAddColumn => (new \\' . $prefix . 'Schema\\Alter\\AddColumnLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterDropColumn => (new \\' . $prefix . 'Schema\\Alter\\DropColumnLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Reindex => (new \\' . $prefix . 'Maintenance\\ReindexLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -1147,6 +1153,7 @@ try {
             ['sqlite-drop-column-binding-v4.json', '61cf124acd1c6c4a5a923f6721fdaf701d63b3a5f4f2665c2a8a3a643885f15c', 'Column removal binding'],
             ['sqlite-drop-index-binding-v3.json', 'e96dccf114b72f782c4c7eb8bf108629c442393a73689c008eb1fd09bce55d96', 'Index removal binding'],
             ['sqlite-constraint-index-binding-v1.json', '792ea111ed9e254c8f883e33ee6b33b2afa7d9fdd2317575e15864ae935ae63e', 'Constraint index binding'],
+            ['sqlite-reindex-binding-v1.json', 'e548d07c612d205fed69369e3d9223a30f653ae5b1edb4d5abee16c4406ec217', 'Reindex binding'],
             ['sqlite-folded-binding-sources-v8.json', '96f3f69296855ca2cf8b6047b4026cf8d9c6688c4dd94a8cb86139f5e20ef350', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
@@ -1325,6 +1332,7 @@ try {
                 'Schema\\Alter\\DropColumnLowering' => 'Schema\\Alter\\DropColumn',
                 'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
+                'Maintenance\\ReindexLowering' => 'Maintenance\\Reindex',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
@@ -1410,11 +1418,11 @@ try {
                     'Unexpected MySQL declaration default lowering shape'
                 );
             }
-            if ($dialect === 'sqlite' && $short === 'Schema\\DropRelationLowering') {
+            if ($dialect === 'sqlite' && $short === 'Schema\\DropLowering') {
                 $methodsByName = array_values(array_filter($class->getMethods(), static fn ($method) => $method->isPublic()));
                 requireShape(
                     count($methodsByName) === 1 && $methodsByName[0]->name->toString() === 'lower'
-                    && types($methodsByName[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\DropView'],
+                    && types($methodsByName[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\DropView', 'Schema\\Index\\DropIndex'],
                     'Unexpected SQLite relation removal publication shape'
                 );
             }
@@ -1425,6 +1433,7 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
+                    'Maintenance\\ReindexLowering' => ['lower', 'scopes', 'relation', 'index'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };

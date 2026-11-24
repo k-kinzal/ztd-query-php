@@ -59,6 +59,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-index-expression-spelling-evidence", "sqlite-index-expression-spelling-v1.json", 288, 378, 5, 6),
     Domain("semantics-ir-sqlite-drop-index-evidence", "sqlite-drop-index-v3.json", 264, 364, 10, 6),
     Domain("semantics-ir-sqlite-constraint-index-names-evidence", "sqlite-constraint-index-names-v2.json", 540, 874, 208, 6),
+    Domain("semantics-ir-sqlite-reindex-evidence", "sqlite-reindex-v1.json", 112, 207, 6, 7),
     Domain("semantics-ir-sqlite-drop-column-evidence", "sqlite-drop-column-v3.json", 1440, 1523, 20, 5),
     Domain("semantics-ir-sqlite-add-generated-column-evidence", "sqlite-add-generated-column-v1.json", 1152, 1231, 13, 6),
     Domain("semantics-ir-sqlite-generated-columns-evidence", "sqlite-generated-columns-v2.json", 96, 211, 8, 4),

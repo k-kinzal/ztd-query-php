@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v90.json"
-CONTRACT = "d6e16683ad84b0f92cce60bea0d41151b20c6b421b8b73f337fb01f508ea278f"
+CONTRACT_NAME = "release-layout-v91.json"
+CONTRACT = "5787985e53db7a035f558663cf63bfc4718d7214eba536efcd5259a83c5ee46a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,11 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Reindex"):
+            require(item.get("reindex") == [
+                "main", "names", "table", "NOCASE", 'REINDEX "NOCASE"', "accounts",
+                'REINDEX "temp"."names"', 'REINDEX "temp"."names"',
+            ] and item["sql"] == 'REINDEX "main"."names"', "installed-sqlite-reindex-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Index\\DropIndex"):
             require(item.get("dropIndex") == [
                 "temp", "tAg", "local_rows", 'DROP INDEX "temp"."tAg"', "", 'DROP INDEX IF EXISTS ""."later"',
