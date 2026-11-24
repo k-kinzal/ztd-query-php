@@ -28,7 +28,7 @@ final class DropIndexLowering
         $context = $operation->context;
         Check::input($statement->kind === ObjectKind::Index && $context->profile->parameters === ParameterStyle::Native
             && $context->relationNames === Comparison::Sensitive, 'DROP INDEX requires the native PostgreSQL index profile.');
-        $bindings = new DropIndexTargetLowering();
+        $bindings = new IndexTargetLowering();
         $targets = [];
         foreach ($statement->objects as $selector) {
             Check::input($selector instanceof DottedName && count($selector->parts) <= 2, 'DROP INDEX names a local index and optional schema.');

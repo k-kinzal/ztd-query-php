@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index;
+
+use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget;
+
+/**
+ * Resolves a native reindex request to one ordinary application or temporary index.
+ *
+ * @visibility SqlSemantics
+ */
+final class ReindexIndexLowering
+{
+    /**
+     * Binds the target and keeps the effective native concurrency request.
+     */
+    public function lower(BoundStatement $operation, Reindex $statement): ReindexIndex
+    {
+        $context = $operation->context;
+        Check::input(
+            $context->profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive,
+            'REINDEX INDEX requires the native PostgreSQL index profile.'
+        );
+        Check::input(
+            $statement->target === ReindexTarget::Index && $statement->object instanceof QualifiedName,
+            'A complete REINDEX needs a named index target.'
+        );
+        foreach ($statement->options as $option) {
+            Check::input($option->option() === 'concurrently', 'A complete REINDEX INDEX accepts only concurrency options.');
+        }
+        $target = (new IndexTargetLowering())->resolve($context, $statement->object, false);
+        Check::invariant($target instanceof IndexReference, 'A rebuild requires a resolved index.');
+
+        return new ReindexIndex(
+            $target,
+            $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
+            $context->profile->grammar,
+        );
+    }
+}

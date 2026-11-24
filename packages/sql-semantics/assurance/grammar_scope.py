@@ -541,6 +541,16 @@ def inventory(root):
                     if rule == "IndexStmt" or alternative in native_column_predicates:
                         related[alternative] = (*related.get(alternative, ()), "postgres-index-boolean-values-v1.json")
         if postgres:
+            rebuild = {
+                "ReindexStmt: REINDEX opt_reindex_option_list reindex_target_relation opt_concurrently qualified_name",
+                "reindex_target_relation: INDEX", "opt_reindex_option_list:",
+                "opt_reindex_option_list: ( utility_option_list )",
+            }
+            for rule in ("ReindexStmt", "reindex_target_relation", "opt_reindex_option_list"):
+                for alternative in rules.get(rule, ()):
+                    if alternative in rebuild:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-index-v1.json")
+        if postgres:
             values_signatures = {
                 "simple_select: values_clause",
                 "values_clause: VALUES ( expr_list )",

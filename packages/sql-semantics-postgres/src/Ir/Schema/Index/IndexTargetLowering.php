@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
  *
  * @visibility SqlSemantics
  */
-final class DropIndexTargetLowering
+final class IndexTargetLowering
 {
     /**
      * Answers the resolved index or typed absence for one target selector.
@@ -33,10 +33,10 @@ final class DropIndexTargetLowering
             Check::input(
                 !$context->indexNamespace->hasUnknownNames($schema)
                 && ($context->complete || IndexSchemas::system($schema->value)),
-                'DROP INDEX cannot infer absence in an open index namespace.',
+                'The index selector cannot infer absence in an open index namespace.',
             );
         }
-        Check::input($optional, 'DROP INDEX requires a declared index.');
+        Check::input($optional, 'The index selector requires a declared index.');
         $schema = $name->schema;
 
         return new MissingIndex(

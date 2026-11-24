@@ -1061,7 +1061,14 @@ if ($dialect !== 'sqlite') {
         $indexMissing = 'Schema\\Index\\MissingIndex';
         $indexMode = 'Schema\\Index\\IndexDropMode';
         $roots[] = $indexRemoval;
-        array_push($internal, 'Schema\\Index\\DropIndexLowering', 'Schema\\Index\\DropIndexTargetLowering');
+        array_push($internal, 'Schema\\Index\\DropIndexLowering', 'Schema\\Index\\IndexTargetLowering', 'Schema\\Index\\ReindexIndexLowering');
+        $reindex = 'Schema\\Index\\ReindexIndex';
+        $rebuildMode = 'Schema\\Index\\IndexRebuildMode';
+        $roots[] = $reindex;
+        $properties[$reindex] = ['target' => [$indexReference], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$reindex] = ['__construct', 'profileId', 'toString'];
+        $properties[$rebuildMode] = $methods[$rebuildMode] = [];
+        $enumCases[$rebuildMode] = ['Standard' => 'standard', 'Concurrent' => 'concurrently'];
         $properties[$indexRemoval] = ['targets' => ['array'], 'ifExists' => ['bool'], 'cascade' => ['bool'],
             'mode' => [$indexMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $properties[$indexReference] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
@@ -1346,7 +1353,7 @@ try {
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename, $statement instanceof \\'
-                . $platform . '\\Statement\\Table\\TruncateTable'
+                . $platform . '\\Statement\\Table\\TruncateTable, $statement instanceof \\' . $platform . '\\Statement\\Utility\\Maintenance\\Reindex'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
@@ -1455,7 +1462,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v5.json', '7f9b426efd4af14815a6563dac47731a0a8be867af9a7632df213b8f26909ac0', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v6.json', 'ca75bd4bb3fc5457307c02315550653dfd3467fc0b30ae41b9bc64abaf1473e4', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1873,12 +1880,19 @@ try {
                         'Unexpected PostgreSQL B-tree operand binding');
                 }
             }
-            if ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndexTargetLowering') {
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\IndexTargetLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'resolve' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'],
                     'Unexpected PostgreSQL index selector publication');
+            }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\ReindexIndexLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Index\\ReindexIndex'],
+                    'Unexpected PostgreSQL index rebuild publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\DropRelationLowering') {
                 $members = $class->getMethods();
@@ -1908,7 +1922,7 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
-                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Index\\ReindexIndex', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {

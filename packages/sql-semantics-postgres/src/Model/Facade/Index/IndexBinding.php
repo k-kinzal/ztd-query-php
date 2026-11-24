@@ -33,10 +33,10 @@ final class IndexBinding
             $context->declared($name, $schema) === [] && !StockIndexNames::contains($context->profile->grammar, $schema, $name->name),
             'The selected relation is not an ordinary index.',
         );
-        Check::input(count($matches) <= 1, 'DROP INDEX cannot resolve conflicting index declarations.');
+        Check::input(count($matches) <= 1, 'The index selector cannot resolve conflicting index declarations.');
         $index = $matches[0] ?? null;
         if ($index !== null) {
-            Check::input($index->ordinary, 'DROP INDEX cannot remove a protected index.');
+            Check::input($index->ordinary, 'The selected index is protected in the ordinary index profile.');
             Check::input(count($context->declared(new QualifiedName($index->table), $index->schema)) === 1, 'The indexed relation must resolve without conflict.');
         }
 

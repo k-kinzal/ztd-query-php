@@ -590,6 +590,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'PostgreSql') {
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
+        $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\Btree\\CreateIndex'] =
             'CREATE UNIQUE INDEX "new index" ON ledger (wide DESC NULLS LAST, value ASC NULLS FIRST) INCLUDE (ready, ready) NULLS NOT DISTINCT';
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
@@ -610,7 +611,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE INDEX existing ON public.ledger (value)',
             ]);
         }
-        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\DropIndex', 'Schema\\Index\\ReindexIndex'], true)) {
             $activeContext = $semantics->context([
                 'CREATE TABLE public.persistent_items (id integer)',
                 'CREATE INDEX removal ON public.persistent_items (id)',
@@ -886,6 +887,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $verified->targets[0]->schema->value, $verified->targets[0]->index->value, $verified->targets[0]->table->value,
                 $verified->targets[1]->schema->value, $verified->targets[1]->missingSchema, $verified->toString(),
                 $concurrent->mode->value, $concurrent->toString(), $rejected,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexIndex') {
+            $absolute = $semantics->analyzeAll(
+                'REINDEX (CONCURRENTLY ON, CONCURRENTLY OFF) INDEX public.removal; REINDEX INDEX removal;',
+                $activeContext,
+            );
+            $detached = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                $result->target, $result->mode, $result->release,
+            );
+            $details['postgresReindexIndex'] = [
+                $result->target->schema->value, $result->target->index->value, $result->target->table->value,
+                $result->mode->value, $result->toString(), $detached->toString(),
+                $absolute[0]->toString(), $absolute[1]->toString(),
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {

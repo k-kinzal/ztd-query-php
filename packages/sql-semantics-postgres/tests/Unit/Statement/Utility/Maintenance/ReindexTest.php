@@ -50,6 +50,18 @@ final class ReindexTest extends TestCase
         );
     }
 
+    public function testRequestsConcurrentBuildUsesOrderedOptionsAndKeywordPrecedence(): void
+    {
+        $semantics = new Inspection();
+        $standard = $semantics->diagnose('REINDEX (CONCURRENTLY TRUE, CONCURRENTLY FALSE) INDEX app.lookup')->statement;
+        $concurrent = $semantics->diagnose('REINDEX (CONCURRENTLY OFF) INDEX CONCURRENTLY app.lookup')->statement;
+
+        self::assertInstanceOf(Reindex::class, $standard);
+        self::assertInstanceOf(Reindex::class, $concurrent);
+        self::assertFalse($standard->requestsConcurrentBuild());
+        self::assertTrue($concurrent->requestsConcurrentBuild());
+    }
+
     public function testDeriveStatementReportsASequence(): void
     {
         $semantics = new Inspection();

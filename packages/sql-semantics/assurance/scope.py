@@ -111,6 +111,7 @@ CONTRACTS = {
     "postgres-boolean-index-predicate-v1.json": "b9f964d7e2d8b0102584a0ee0322140340942beea0efe9ddf97ef168da0474e5",
     "postgres-index-truth-tests-v1.json": "7c0995045b9c80f57461da353da10591ccf776d996e6d0bfded88a519fe662b2",
     "postgres-index-boolean-values-v1.json": "51a082173a7d404983a9ea5fb251ffceeb3b4e64f56c1a3960aa88ef2e93a374",
+    "postgres-reindex-index-v1.json": "961195c02b9dd75c7a3f8bc8b5a93d3922b01620ddb23ae0da219ecdc54cf237",
     "postgres-create-btree-v1.json": "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629",
     "postgres-drop-index-v1.json": "d26bab1348dec92d608759e02d68f184ee28461aadbaf015e836f911dced5faa",
     "postgres-drop-view-v1.json": "f38844b5c9ed143cbd9b46e344f721b384c5ce9a969ec85d08e6319e95e8cd4d",
@@ -228,7 +229,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "804c1125b758015ef37fb66304827f52e390a6a72c1d07261e77ebd5c709d5de"
+PUBLICATION = "90f4e29144e0ffa5f8ab865eb9754dc1a0b1daf1f44919290c804d7892db4235"
 
 
 def declared_constructors(dialects):
@@ -258,7 +259,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v66.json").read_bytes()
+    publication = (TOOL / "publication-v67.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

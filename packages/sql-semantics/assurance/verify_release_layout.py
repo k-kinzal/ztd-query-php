@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v115.json"
-CONTRACT = "69781272b00c72b99b297c2f08040a8116d6e4bc0f4ba6a180370d708f7447d1"
+CONTRACT_NAME = "release-layout-v116.json"
+CONTRACT = "622f1eff09bd85c7b87ebde6d7a9c53f2030d0445f45a616cbb585a10c04667a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -302,6 +302,12 @@ def verify_probe(raw, catalog):
                      ' WHERE (NOT ("ready"))')
             require(item.get("postgresIndexBooleanValue") == ["NOT", 2, field, field, True],
                     "installed-postgres-index-boolean-value-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\ReindexIndex"):
+            rebuilt = 'REINDEX INDEX CONCURRENTLY "pg_temp"."removal"'
+            require(item.get("postgresReindexIndex") == [
+                "pg_temp", "removal", "keyed", "concurrently", rebuilt, rebuilt,
+                'REINDEX INDEX "public"."removal"', 'REINDEX INDEX "pg_temp"."removal"',
+            ] and item["sql"] == rebuilt, "installed-postgres-reindex-index-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\DropIndex"):
             emitted = 'DROP INDEX IF EXISTS "pg_temp"."removal", "absent_namespace"."idx" CASCADE'
             require(item.get("postgresDropIndex") == ["pg_temp", "removal", "keyed", "absent_namespace", True, emitted,

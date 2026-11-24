@@ -111,7 +111,7 @@ def rejection(roles, guarded, cascade, concurrent):
         if kind == "wrong-kind":
             return boundary("selected relation is not an ordinary index")
         if kind == "protected":
-            return boundary("cannot remove a protected index")
+            return boundary("protected in the ordinary index profile")
         if kind == "missing" and not guarded:
             return boundary("requires a declared index")
     return None

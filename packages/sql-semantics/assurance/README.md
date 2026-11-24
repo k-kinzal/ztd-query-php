@@ -291,6 +291,9 @@ The [PostgreSQL index truth-test contract](postgres-index-truth-tests-v1.json) c
 
 The [PostgreSQL nullable Boolean index contract](postgres-index-boolean-values-v1.json) checks the exact true, false and unknown states of bare fields and their logical parents. It also checks the effects of `ON CONFLICT` for the fixed arbiter matrix, including callers that distinguish a bare field from `IS TRUE` even when both predicates select the same rows. Run `run_server_postgres_index_boolean_values.py` on both releases and replay with `combine_server_postgres_index_boolean_values_evidence.py`.
 
+The [PostgreSQL index rebuild contract](postgres-reindex-index-v1.json) compares the resolved physical index and untouched namesakes in the same session. The observer records raw catalog identities and file nodes, index flags and layouts, rows, subsequent write behavior, and relation identity before and after rollback. Run `run_server_postgres_reindex_index.py` on both releases and replay with `combine_server_postgres_reindex_index_evidence.py`.
+
+
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.
 

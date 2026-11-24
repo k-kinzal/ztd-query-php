@@ -29,10 +29,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  * or name, params) with the CONCURRENTLY word, which the server turns into
  * the option of that name. An index or a table is named by a relation name,
  * a schema by its name, and SYSTEM or DATABASE by the name of the current
- * database or by nothing. Facts: the table of REINDEX TABLE is resolved; an
- * index, a schema and a database are not part of a declaration context; a
- * table declared as another kind than a table or a materialized view is
- * reported (PG-RELATION-KIND-001).
+ * database or by nothing. REINDEX TABLE derives the table and reports
+ * relation kinds other than tables and materialized views
+ * (PG-RELATION-KIND-001). Complete REINDEX INDEX resolves its index at
+ * publication.
  * Diagnostics: an option REINDEX does not know; a value the option cannot
  * take; SYSTEM rebuilt concurrently, by the word or by the option.
  * Source: https://www.postgresql.org/docs/17/sql-reindex.html. Status: Implemented.
@@ -76,7 +76,7 @@ final class Reindex implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new OptionRules())->derive($derivation, 'REINDEX', $this->options);
-        if ($this->target === ReindexTarget::System && ($this->concurrently || (new OptionArguments())->enabled($this->options, 'concurrently', false))) {
+        if ($this->target === ReindexTarget::System && $this->requestsConcurrentBuild()) {
             $derivation->report(new UtilityProblem(UtilityProblemKind::SystemConcurrently));
         }
         if ($this->target === ReindexTarget::Table && $this->object instanceof QualifiedName) {
@@ -84,6 +84,14 @@ final class Reindex implements Statement
             $kind = $kinds->of($derivation->target($this, (new Targets())->resolve($derivation, $this->object)));
             $kinds->require($derivation, $kind, $this->object->name, [RelationKind::BaseTable, RelationKind::MaterializedView], KindRule::NotTableOrMaterializedView);
         }
+    }
+
+    /**
+     * Resolves the last option, with the final CONCURRENTLY keyword taking precedence.
+     */
+    public function requestsConcurrentBuild(): bool
+    {
+        return $this->concurrently || (new OptionArguments())->enabled($this->options, 'concurrently', false);
     }
 
     /**
