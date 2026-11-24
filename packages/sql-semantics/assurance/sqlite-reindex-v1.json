@@ -1,0 +1,95 @@
+{
+  "revision": "SemanticsIR/sqlite-reindex-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2, UTF-8, stock BINARY, NOCASE and RTRIM collation meanings, SQLite attachment search and rollback behavior.",
+  "scope": "REINDEX all indexes, a built-in collation, all indexes of a bound relation, or one bound index.",
+  "additionalPublicRoots": ["Maintenance/Reindex"],
+  "constructors": {
+    "Maintenance/Reindex": {
+      "role": "Rebuild the selected SQLite indexes under the active native collation definitions.",
+      "structure": "An explicit all-indexes selection represented by null, a closed builtin Collation, a ReindexRelation or a ReindexIndex.",
+      "conditions": "The selector's role is fixed before publication. Required named targets must resolve under native collation-before-relation-before-index precedence.",
+      "meaning": "Rebuild the selected external indexes. Include ordinary and implicit indexes, retain exact evaluation-time uniqueness failures and atomic effects.",
+      "externalInterpretation": "Run against the same external schema coordinates, index ownership and active collation definitions.",
+      "sql": "Emit REINDEX alone, a quoted builtin collation, or the checked absolute relation or index name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/ReindexRelation": {
+      "role": "Select all native indexes of an absolute resolved relation.",
+      "structure": "Schema and relation Identifier values with the actual outlined relation kind.",
+      "conditions": "The binder establishes one relation and its native schema. A relation with no rebuildable native indexes is a valid native operation.",
+      "meaning": "Recompute every index owned by the resolved relation. Views and other inert relations have a write-free native effect.",
+      "externalInterpretation": "Use the exact external owner in the same schema under the pinned engine and release conditions.",
+      "sql": "Quote schema and relation as separate identifier operands.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/ReindexIndex": {
+      "role": "Select one absolute SQLite index, including a protected implicit index.",
+      "structure": "Schema, index and owner Identifier values. The binding boundary identifies the exact index class when determining external identity.",
+      "conditions": "The binder establishes one actual index. Its owner is an ordinary valid relation. An implicit PRIMARY KEY index may reside in the table B-tree.",
+      "meaning": "Recompute the specified index only.",
+      "externalInterpretation": "Use the same exact index in SQLite's absolute namespace, with the same owner and active key/constraint definitions.",
+      "sql": "Quote the schema and index independently. Retain the owner as a bound coordinate.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "Without a selector, REINDEX rebuilds every index of every attached schema.",
+    "An unqualified registered built-in collation takes precedence over every relation and index name. It rebuilds only indexes matching that collation.",
+    "If the selector denotes a relation anywhere in the chosen scope, it takes precedence over an index in that scope. Only when every relevant relation coordinate has been checked can an index win.",
+    "Relations and indexes each search temp, main and attached schemas by native attachment order. A qualifier restricts scope and bypasses collation lookup. Resolve differently cased identifiers using SQLite's ASCII comparison.",
+    "A resolved relation with no native indexes still runs successfully without a data change. Missing objects, unknown qualifiers and unprovable static name precedence fail before publication.",
+    "Rebuilds can fail due to existing keys under the current native collation. On a uniqueness failure compare the concrete error and the database state retained by the failed statement."
+  ],
+  "observations": [
+    "Authorizer-visible rebuilding of exact absolute native indexes, including implicit ones and WITHOUT ROWID primary keys.",
+    "Index traversal order under active collations, using forced index readers and plans to retain the measured on-disk effect.",
+    "Statement read-only classification, evaluation errors, typed columns and values, unaffected tables and sibling indexes, and rollback.",
+    "Use previously built indexes whose key order differs from the pinned active collation. Construct state before the active profile, then switch only the test fixture's engine to the independent exact collation. Use a separate fixture where a unique index rebuild fails on case-equivalent data."
+  ],
+  "finite": {
+    "targets": ["all", "nocase", "rtrim", "binary", "main-table", "temp-table", "attached-table", "unqualified-table-priority", "temp-shadow-index", "qualify-collation-name-table", "without-rowid-index", "ordinary-implicit-index", "view-without-index", "table-without-index"],
+    "storage": ["consistent", "nocase-stale", "both-stale", "unique-conflict"],
+    "attachment": ["named", "empty-name"],
+    "identity": "All 112 exact target/storage/attachment combinations, measured from the constructed selector and native table and index observations."
+  },
+  "exploration": {
+    "seeds": [17263, 67307, 91499],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 360,
+    "allowedExclusions": [],
+    "domain": "Vary resolved scope, index roles, attached names, Unicode decoded names, stale layouts, collations, key uniqueness and data whose old and current sorts differ."
+  },
+  "negative": [
+    "Unknown named target",
+    "Unknown schema qualifier",
+    "Unknown preceding relation in an open schema search",
+    "Index cannot take precedence over a potentially undisclosed relation",
+    "Conflicting resolved relation declarations",
+    "Conflicting resolved index declarations"
+  ],
+  "faults": [
+    "Ignore a builtin collation name's precedence",
+    "Use an index before looking for a relation",
+    "Lose the selected schema",
+    "Rebuild all indexes for a named target",
+    "Rebuild the sibling index",
+    "Treat an unknown target as all indexes",
+    "Lose the resolved owner coordinate"
+  ],
+  "open": [
+    "Registration of user-supplied custom collations and extension-module index namespaces needs separate language profile and binding evidence."
+  ],
+  "trust": [
+    "Exact native resolver and index rebuild implementation.",
+    "Independent fixture key order, typed observations and known comparator discrepancies.",
+    "Absolute binding and protected candidate/observer separation."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "55a29709df342402f25e739759aa7ec3841c6f80269004eb5e96299906dfcaa5",
+    "nativeCases": "aa43352df9b577d8c0df67c7af9b8d983ed4b0afbaf4b697396accd65933c8e9",
+    "engineRoutines": ["sqlite3Reindex", "reindexDatabases", "reindexTable", "collationMatch", "sqlite3RefillIndex"]
+  }
+}
