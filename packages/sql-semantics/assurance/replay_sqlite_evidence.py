@@ -104,7 +104,7 @@ DOMAINS = {
     insert_input.CONTRACT_NAME: (insert_input, insert_input.FIXTURE),
     "sqlite-update-v1.json": (update, update.FIXTURE),
     update_returning.CONTRACT_NAME: (update_returning, update_returning.FIXTURE),
-    "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
+    "sqlite-drop-table-v2.json": (drop, drop.FIXTURE),
     drop_view.CONTRACT_NAME: (drop_view, drop_view.FIXTURE),
     "sqlite-create-table-v3.json": (create, create.FIXTURE),
     create_as.CONTRACT_NAME: (create_as, create_as.FIXTURE),

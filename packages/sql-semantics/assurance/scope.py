@@ -179,7 +179,7 @@ CONTRACTS = {
     "sqlite-create-view-local-v1.json": "eb0af4ed7ec9e543a9f1e45536cfcc24606abccb6629a551aba6533efad3c4a6",
     "sqlite-resolved-view-input-v2.json": "adea66f4c8d06b0eeb66d17aa0a5f1da015fde3fe49d2447e1928e36023cee78",
     "sqlite-drop-view-v1.json": "cbb70e7fe7d396931d6f1f591aa91e4e244f553df17410bce835cef96f356e73",
-    "sqlite-drop-table-v1.json": "622ae8a9601acc4c63f10e7151891dc6289062c9c3393ec78e6c6eb1a1fff0c2",
+    "sqlite-drop-table-v2.json": "d01835110d442bdae141762032ad0904ad3174615cc6047786d42f23a8497050",
     "sqlite-strict-tables-v2.json": "0c9786f6e227573ed745d43d8b1c320b128b5b3fa4b23b3f6f40842098284302",
     "sqlite-unique-keys-v1.json": "926f08200f9d461f38153c2a342632d1fa176e13877544bc83a077dd3a99a457",
     "sqlite-folded-checks-v1.json": "cb60008a2bfcb42854ec8b7ffb17f7be4eeae896460beb054c1f54928e931741",

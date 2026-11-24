@@ -640,7 +640,7 @@ The reference evaluator computes each effective assignment from the old row. The
 
 ## SQLite DROP TABLE effects
 
-Run the [DROP TABLE effect contract](sqlite-drop-table-v1.json) with the same engine:
+Run the [DROP TABLE effect contract](sqlite-drop-table-v2.json) with the same engine:
 
 ```sh
 drop_table_evidence=$(mktemp -d)/sqlite-drop-table-evidence

@@ -9,7 +9,7 @@ from run import Ledger, Worker, compare, require, write_json
 from run_sqlite_delete import typed_rows
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 
-CONTRACT = "622ae8a9601acc4c63f10e7151891dc6289062c9c3393ec78e6c6eb1a1fff0c2"
+CONTRACT = "d01835110d442bdae141762032ad0904ad3174615cc6047786d42f23a8497050"
 TABLES = ("ir_drop", "ir_drop_blocked", "ir_drop_absent")
 SCHEMAS = ("main", "temp")
 DECLARATIONS = [
@@ -162,7 +162,7 @@ def negatives():
     yield case("main", "SQLite_master", True), "reserved SQLite namespace"
     yield {"sql": "DROP TABLE unavailable", "declarations": []}, "requires a resolved ordinary table"
     yield {"sql": "DROP TABLE IF EXISTS unavailable", "declarations": DECLARATIONS}, "absent DROP TABLE target requires an explicit schema"
-    yield {"sql": "DROP INDEX ir_drop_lookup", "declarations": DECLARATIONS}, "requires the TABLE object kind"
+    yield {"sql": "DROP INDEX ir_drop_lookup", "declarations": DECLARATIONS}, "DROP INDEX requires a resolved index or a known guarded absence"
 
 
 def execute(args, specification, db, worker_factory=Worker):
@@ -226,4 +226,4 @@ def check_faults(args, db, runner=check_render_faults):
 
 
 if __name__ == "__main__":
-    run_domain("DROP TABLE", "sqlite-drop-table-v1.json", CONTRACT, FIXTURE, execute, check_faults)
+    run_domain("DROP TABLE", "sqlite-drop-table-v2.json", CONTRACT, FIXTURE, execute, check_faults)
