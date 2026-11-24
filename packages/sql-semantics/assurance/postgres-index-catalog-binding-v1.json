@@ -1,0 +1,61 @@
+{
+  "revision": "SemanticsIR/postgres-index-catalog-binding-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "profile": "Native numbered markers, UTF-8, standard-conforming strings and a supplied ordered search path.",
+  "constructors": {},
+  "existingRoles": [
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Index/DropIndex",
+    "Schema/Index/ReindexIndex",
+    "Schema/Index/ReindexTable",
+    "Schema/Index/Partition/ReindexPartitionTable",
+    "Schema/Index/IndexReference",
+    "Schema/Index/ConstraintIndexReference",
+    "Schema/Index/ExclusionIndexReference",
+    "Schema/Index/Partition/PartitionIndexReference"
+  ],
+  "scope": "Bind the optional explicit database in existing PostgreSQL CREATE INDEX owner, DROP INDEX selector, REINDEX INDEX selector and REINDEX TABLE owner positions. Preserve the preexisting index and owner roles.",
+  "structure": "Decode the catalog, schema and object separately. Compare the catalog to the declared current database before local lookup. Existing concrete values keep the schema, object and operation-specific role without storing the discarded qualifier or declaration environment.",
+  "conditions": "An explicit catalog requires a declared current database with the same case-sensitive decoded value. An explicit schema bypasses search path selection. Keep all admission and construction conditions for the selected index or owner. Reject any foreign catalog, including a quoted case-distinct spelling.",
+  "externalInterpretation": "Use the same database, complete statement-specific declarations, search path, table data and native profiles for authored and emitted SQL. The two schemas contain different indexed columns and rows behind the same table and index names.",
+  "observations": [
+    "Compare the concrete constructor profile, owner and selector coordinates, role and exact operand choices.",
+    "Check the native command status and SQLSTATE, ordered row values, native index owner, column positions, access method, primary or exclusion markers, index partition attachments and the persistence of the other schema's objects.",
+    "Check the exact physical index set rebuilt and logical catalog identity retained. PostgreSQL does not allocate a physical index file for a partitioned index parent.",
+    "Compare the same independently predicted observation for authored SQL and for emitted SQL. Check each typed refusal of a foreign catalog against the native authored cross-database error."
+  ],
+  "sql": "Emit a safely delimited absolute schema and object name. Qualification uses the local database selected by the declared external interpretation.",
+  "finite": {
+    "roles": ["create", "drop", "rebuild-index", "rebuild-owner", "rebuild-key", "rebuild-exclusion", "rebuild-partition-index", "rebuild-partition-owner"],
+    "spellings": ["schema-only", "quoted-current", "folded-current"],
+    "targets": ["front", "later"],
+    "bound": "Enumerate all 48 roles, spellings and explicit schema coordinates independently in each release. Each completed role already has direct-construction checks under its own contract."
+  },
+  "exploration": {
+    "seeds": [4259, 14917, 34763],
+    "casesPerSeed": 18,
+    "timeoutSecondsPerRelease": 120,
+    "allowedExclusions": [],
+    "structure": "Vary the role, schema, catalog spelling, decoded table and index spelling, selected indexed column and distinct fixture rows while retaining the independent shadow."
+  },
+  "negative": [
+    "One foreign catalog in each of the four positions",
+    "One qualifier equal only after case folding in each of the four positions",
+    "One explicit qualifier without a declared current database in each of the four positions"
+  ],
+  "faults": [
+    "Erase a mismatched catalog on the parsed relation path used by CREATE INDEX and REINDEX statements",
+    "Permit a mismatched catalog in the DROP INDEX resolution path",
+    "Render the schema of the independent decoy index instead of the resolved index schema"
+  ],
+  "open": [
+    "New access methods, concurrent combinations, missing-index admission and session behavior outside the existing concrete roles."
+  ],
+  "trust": [
+    "Pinned stock PostgreSQL catalogs and libpq",
+    "The checked binder retains each decoded part through the exact catalog guard and coordinates it with local resolution",
+    "Detached observations identify logical catalog state and physical file allocation separately"
+  ]
+}
