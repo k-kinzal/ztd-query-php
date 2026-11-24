@@ -82,8 +82,10 @@
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com"> * A string literal written as a term, under parentheses and at most one</span></span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com"> * COLLATE clause, is the name of an indexed column (LiteralColumn,</span></span>
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com"> * SQLITE-LITERAL-COLUMN-001); a plain string literal term is refused at</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com"> * construction. Indexes are not part of a declaration context: the statement</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com"> * provides no declaration, and whether the index name is free is not a fact.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">46</span><span class="tok-com"> * construction. Indexes are not part of a declaration context: the statement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">47</span><span class="tok-com"> * provides no declaration, and whether the index name is free is not a fact.</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com"> * construction. The catalog can register a bound index by its absolute index</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com"> * and owner names. The statement itself leaves the context unchanged.</span></span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com"> * Source: https://sqlite.org/lang_createindex.html, https://sqlite.org/partialindex.html,</span></span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a><span class="tok-com"> * https://sqlite.org/expridx.html. Status: Implemented.</span></span>
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com"> *</span></span>
