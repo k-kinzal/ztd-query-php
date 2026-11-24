@@ -207,12 +207,15 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         run_jobs(jobs, args, raw, logs, environment, receipt["executions"])
     except (Failure, OSError, ValueError, subprocess.SubprocessError) as error:
         receipt["failure"] = {"phase": phase, "type": type(error).__name__, "detail": str(error)}
+        if isinstance(error, subprocess.CalledProcessError):
+            receipt["failure"].update(exitCode=error.returncode, stdout=error.stdout, stderr=error.stderr)
         if container is None and phase == "container-launch":
             # The daemon may have assigned the known name before the client timed out.
             try:
                 container = docker("inspect", "--format", "{{.Id}}", launch_name)
             except subprocess.CalledProcessError as lookup:
-                if "No such object" not in lookup.stderr and "No such container" not in lookup.stderr:
+                lookup_error = lookup.stderr.casefold()
+                if "no such object:" not in lookup_error and "no such container:" not in lookup_error:
                     receipt["cleanupFailure"] = lookup.stderr
             except (OSError, subprocess.SubprocessError) as cleanup:
                 receipt["cleanupFailure"] = str(cleanup)
