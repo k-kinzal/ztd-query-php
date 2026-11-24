@@ -3,11 +3,13 @@
 from copy import deepcopy
 from itertools import product
 import json
+import os
 from random import Random
 import sys
 
+from native_postgres_fixture import ENV as FIXTURE_CONTAINER
 from postgres_create_btree_cases import refusal
-from postgres_create_sequence_cases import DATABASE, MODES, NUMBERS, POLICIES, STATUS, TYPES, analyzed, direct, expected, resolved, sql, trial
+from postgres_create_sequence_cases import DATABASE, MODES, POLICIES, STATUS, TYPES, analyzed, direct, expected, resolved, sql, trial
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_drop_table import specifications as drop_profiles
@@ -257,4 +259,5 @@ def faults(_, tag):
 
 
 if __name__ == "__main__":
+    require(FIXTURE_CONTAINER in os.environ, "postgres-create-sequence-disposable-service-required")
     main(sys.modules[__name__])

@@ -8,8 +8,8 @@ import time
 
 from run import TOOL, digest, require, write_json
 
-NAME = "native-postgres-fixture-isolation-v5.json"
-CONTRACT = "c552a1a1d75835d765a0e493d69dbf9b01eba8da29d1e99759d4889f5d0c591b"
+NAME = "native-postgres-fixture-isolation-v6.json"
+CONTRACT = "fbf599d3d5239decf326eb6efad3bceac464cda57831ecb94b5c1e0af0eeb4c6"
 ENV = "ZTD_IR_POSTGRES_FIXTURE_CONTAINER"
 IMAGES = {
     "16.6": "postgres@sha256:557fea37a744d5f4c8faab304b0a90858b53ab119735a88c131fd19dab802f36",
@@ -18,7 +18,7 @@ IMAGES = {
 DOMAINS = frozenset({
     "postgres_reindex_schema", "postgres_reindex_partition_table", "postgres_reindex_partition_index",
     "postgres_reindex_database", "postgres_reindex_verbose", "postgres_reindex_tablespace", "postgres_create_schema",
-    "postgres_schema_tables", "postgres_alter_schema",
+    "postgres_schema_tables", "postgres_alter_schema", "postgres_create_sequence",
 })
 PLACEMENT_DOMAIN = "postgres_reindex_tablespace"
 TABLESPACES = ("ir_reindex_left", '置き場."右"')
