@@ -1335,6 +1335,34 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $fresh === $rebuilt->indexes[0], $fresh->presence->value, $guarded->presence->value,
                 $indexBatch->toString(), $rebuilt->toString(), $mismatched,
             ];
+            $grantBatch = $semantics->analyze(
+                'CREATE SCHEMA "Policy Batch" AUTHORIZATION "Tax Owner"'
+                . ' GRANT USAGE ON SEQUENCE feed TO SESSION_USER, "PUBLIC" WITH GRANT OPTION GRANTED BY CURRENT_ROLE'
+                . ' CREATE SEQUENCE feed',
+                $semantics->context(['CREATE ROLE "Tax Owner"', 'CREATE ROLE "PUBLIC"', 'CREATE SEQUENCE public.feed']),
+            );
+            $grant = $grantBatch->grants[0];
+            $member = $grant;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $grantBatch->name, $grantBatch->owner, release: $grantBatch->release,
+                sequences: $grantBatch->sequences, grants: [&$member],
+            );
+            $member = null;
+            $missing = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $grantBatch->name, $grantBatch->owner, release: $grantBatch->release, grants: [$grant],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $missing = $error->getMessage() === 'A schema grant requires a preceding sequence at each named local target.';
+            }
+            $target = $grant->access->target->sequences[0];
+            $details['postgresSchemaSequenceGrants'] = [
+                $grantBatch->owner->value, $target->schema->value, $target->name->value, $grant->grantOption,
+                $grant->access->grantees[0]->toString(), $grant->access->grantees[1]->toString(),
+                $grant->access->grantor->reference(), $rebuilt->grants[0] === $grant,
+                $grantBatch->toString(), $rebuilt->toString(), $missing,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
             [$present, $absent] = $result->targets;

@@ -122,6 +122,7 @@ def edge_cases(tag):
 
 
 def check_value(item, reply):
+    same([], reply.get("schemaGrants"))
     same([], reply.get("schemaIndexes"))
     same([], reply.get("schemaTables"))
     same([], reply.get("schemaSequences"))

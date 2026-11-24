@@ -7,8 +7,10 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\Access\SchemaGrantOrder;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\Index\SchemaIndexOrder;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View\SchemaViewOrder;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
@@ -54,12 +56,18 @@ final class CreateSchema implements SemanticsIR
     public readonly array $indexes;
 
     /**
+     * @var list<GrantSequenceAccess> Checked sequence grants after index creation
+     */
+    public readonly array $grants;
+
+    /**
      * Fixes the namespace coordinate, owner, and duplicate handling.
      *
      * @param list<CreateTable> $tables
      * @param list<CreateSequence> $sequences
      * @param list<CreateView> $views
      * @param list<CreateIndex> $indexes
+     * @param list<GrantSequenceAccess> $grants
      */
     public function __construct(
         ?Identifier $name,
@@ -70,6 +78,7 @@ final class CreateSchema implements SemanticsIR
         array $sequences = [],
         array $views = [],
         array $indexes = [],
+        array $grants = [],
     ) {
         if ($owner instanceof Identifier) {
             Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');
@@ -81,14 +90,17 @@ final class CreateSchema implements SemanticsIR
         $checkedTables = Check::listOf($tables, CreateTable::class, 'Schema tables are an ordered list of checked table declarations.');
         $checkedViews = Check::listOf($views, CreateView::class, 'Schema views are an ordered list of checked view declarations.');
         $checkedIndexes = Check::listOf($indexes, CreateIndex::class, 'Schema indexes are an ordered list of checked index declarations.');
+        $checkedGrants = Check::listOf($grants, GrantSequenceAccess::class, 'Schema grants are an ordered list of checked sequence grants.');
         $occupied = SchemaRelationOrder::check($name, $ifNotExists, $release, $checkedSequences, $checkedTables);
         $occupied = SchemaViewOrder::check($name, $ifNotExists, $release, $occupied, $checkedViews);
         SchemaIndexOrder::check($name, $ifNotExists, $release, $occupied, $checkedIndexes);
+        SchemaGrantOrder::check($name, $owner, $ifNotExists, $release, $checkedSequences, $checkedGrants);
         $this->name = $name;
         $this->sequences = $checkedSequences;
         $this->tables = $checkedTables;
         $this->views = $checkedViews;
         $this->indexes = $checkedIndexes;
+        $this->grants = $checkedGrants;
     }
 
     /**
@@ -118,6 +130,9 @@ final class CreateSchema implements SemanticsIR
         }
         foreach ($this->indexes as $index) {
             $elements .= ' ' . $index->toString();
+        }
+        foreach ($this->grants as $grant) {
+            $elements .= ' ' . $grant->toString();
         }
 
         return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner . $elements;

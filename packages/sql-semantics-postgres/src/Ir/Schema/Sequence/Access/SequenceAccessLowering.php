@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaOwnerLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Revoke;
@@ -23,9 +23,8 @@ final class SequenceAccessLowering
     /**
      * Publishes a complete grant or revoke for the native sequence target.
      */
-    public function lower(BoundStatement $operation, Grant|Revoke $statement): GrantSequenceAccess|RevokeSequenceAccess
+    public function lower(AnalysisContext $context, Grant|Revoke $statement): GrantSequenceAccess|RevokeSequenceAccess
     {
-        $context = $operation->context;
         Check::input(
             $context->profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive,
             'Sequence privileges require the native naming profile.'

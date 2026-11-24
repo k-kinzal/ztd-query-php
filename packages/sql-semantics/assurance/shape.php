@@ -1071,10 +1071,11 @@ if ($dialect !== 'sqlite') {
         array_push($internal, 'Schema\\Namespace\\CreateSchemaLowering', 'Schema\\Namespace\\SchemaTableLowering',
             'Schema\\Namespace\\SchemaSequenceLowering', 'Schema\\Namespace\\SchemaRelationOrder',
             'Schema\\Namespace\\View\\SchemaViewLowering', 'Schema\\Namespace\\View\\SchemaViewOrder',
-            'Schema\\Namespace\\Index\\SchemaIndexLowering', 'Schema\\Namespace\\Index\\SchemaIndexOrder');
-        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\Index\\SchemaIndexOrder');
+            'Schema\\Namespace\\Index\\SchemaIndexLowering', 'Schema\\Namespace\\Index\\SchemaIndexOrder',
+            'Schema\\Namespace\\Access\\SchemaGrantLowering', 'Schema\\Namespace\\Access\\SchemaGrantOrder');
+        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\Index\\SchemaIndexOrder', 'Schema\\Namespace\\Access\\SchemaGrantOrder');
         $properties[$schemaCreation] = [
-            'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'], 'views' => ['array'], 'indexes' => ['array'],
+            'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'], 'views' => ['array'], 'indexes' => ['array'], 'grants' => ['array'],
             'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
         ];
@@ -1693,7 +1694,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v19.json', 'cd4e995c7c39f5ffe842bb09fe16854cb861e5161ce5209b13e8834a9d3dcf19', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v20.json', '3b51ebbb051d17ff0ddf49e9af1f6664e6ab1736f633cb472f7355d487e1bba6', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1743,9 +1744,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v69.json';
+    $storagePath = __DIR__ . '/value-storage-v70.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '75425cd6733c2872026ee13e6f6ddbd33835c90128157f2f539adbb5f41e77a7',
+        hash_file('sha256', $storagePath) === '36a77071a1c3dc3481412c113ec4738d2006542b0bb86e2e53cc0bf4eff7dd4f',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

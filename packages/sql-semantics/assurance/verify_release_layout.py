@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v142.json"
-CONTRACT = "c1101288d741db1c716a6de4797814fc091df5c68be81c11e8725d2eec2ae098"
+CONTRACT_NAME = "release-layout-v143.json"
+CONTRACT = "357ba54fe5ecafe2a4a4e4eec619b2157ab065090673fa73e745428577d1db2a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -428,6 +428,15 @@ def verify_probe(raw, catalog):
                 "Index Batch", "ledger", "picked", 1, "DESC NULLS FIRST", "int8", True, "vacant", "occupied",
                 indexes, indexes, True,
             ], "installed-postgres-schema-indexes-mismatch", item)
+            grants = ('CREATE SCHEMA "Policy Batch" AUTHORIZATION "Tax Owner"'
+                      ' CREATE SEQUENCE "Policy Batch"."feed" AS BIGINT INCREMENT BY 1 MINVALUE 1'
+                      ' MAXVALUE 9223372036854775807 START WITH 1 CACHE 1 NO CYCLE'
+                      ' GRANT USAGE ON SEQUENCE "Policy Batch"."feed" TO SESSION_USER, "PUBLIC"'
+                      ' WITH GRANT OPTION GRANTED BY CURRENT_USER')
+            require(item.get("postgresSchemaSequenceGrants") == [
+                "Tax Owner", "Policy Batch", "feed", True, "SESSION_USER", '"PUBLIC"', "CURRENT_USER", True,
+                grants, grants, True,
+            ], "installed-postgres-schema-sequence-grants-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\DropSchema"):
             emitted = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE'
             require(item.get("postgresDropSchema") == [

@@ -74,7 +74,7 @@ final class RelationChangeLowering
             $statement instanceof ParsedSetSchema => (new MoveSequenceLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterSequence => (new ReconfigureSequenceLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable => (new SequenceActionsLowering())->lower($operation, $statement),
-            $statement instanceof ParsedGrant, $statement instanceof ParsedRevoke => (new SequenceAccessLowering())->lower($operation, $statement),
+            $statement instanceof ParsedGrant, $statement instanceof ParsedRevoke => (new SequenceAccessLowering())->lower($operation->context, $statement),
             $statement instanceof ParsedAlterDefaultPrivileges => (new SequenceDefaultLowering())->lower($operation, $statement),
             $statement instanceof ParsedRename => (new RenameLowering())->lower($operation, $statement),
             $statement instanceof ParsedTruncateTable => (new TruncateLowering())->lower($operation, $statement),

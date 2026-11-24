@@ -134,6 +134,7 @@ def requests(_, tag, spec):
 
 
 def check_value(item, response):
+    same([], response.get("schemaGrants"))
     same([], response.get("schemaIndexes"))
     same([], response.get("schemaViews"))
     body = direct(item)["createSchema"]

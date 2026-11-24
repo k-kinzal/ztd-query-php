@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\Access\SchemaGrantLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\Index\SchemaIndexLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View\SchemaViewLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View\SchemaViewOrder;
@@ -43,7 +44,8 @@ final class CreateSchemaLowering
         $occupied = SchemaRelationOrder::check($resolved, $statement->ifNotExists, $release, $sequences, $tables);
         $occupied = SchemaViewOrder::check($resolved, $statement->ifNotExists, $release, $occupied, $views);
         $indexes = (new SchemaIndexLowering())->lower($operation, $statement, $resolved, $occupied);
+        $grants = (new SchemaGrantLowering())->lower($operation, $statement, $resolved, $indexes);
 
-        return new CreateSchema($name, $owner, $statement->ifNotExists, $release, $tables, $sequences, $views, $indexes);
+        return new CreateSchema($name, $owner, $statement->ifNotExists, $release, $tables, $sequences, $views, $indexes, $grants);
     }
 }

@@ -12,6 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\SchemaMemberScope;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable as ParsedCreateTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex as ParsedCreateIndex;
@@ -43,7 +44,7 @@ final class SchemaTableLowering
         $lowering = new CreateTableLowering();
         $scope = new SchemaMemberScope();
         foreach ($schema->elements as $element) {
-            if ($element instanceof ParsedCreateSequence || $element instanceof ParsedCreateView || $element instanceof ParsedCreateIndex) {
+            if ($element instanceof ParsedCreateSequence || $element instanceof ParsedCreateView || $element instanceof ParsedCreateIndex || $element instanceof Grant) {
                 continue;
             }
             Check::input($element instanceof ParsedCreateTable, 'CREATE SCHEMA elements require a checked namespace composition.');

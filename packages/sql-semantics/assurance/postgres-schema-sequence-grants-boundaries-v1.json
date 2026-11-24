@@ -1,0 +1,228 @@
+{
+  "revision": "SemanticsIR/postgres-schema-sequence-grants-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-schema-indexes-boundaries-v1.json",
+  "scope": "Close the nested sequence grant phase against actual prior relations, exact nominal and native role expressions and the authorized grant effect.",
+  "rules": {
+    "Schema/Namespace/CreateSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!str_starts_with($owner->value, 'pg_') || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\StockRoles::contains($release, $owner->value), 'The stock schema owner must exist in this release.');",
+        "    $name ??= $owner;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name === null || !str_starts_with($name->value, 'pg_'), 'A declared schema name cannot start with pg_.');",
+        "$checkedSequences = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($sequences, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\CreateSequence::class, 'Schema sequences are an ordered list of checked sequence declarations.');",
+        "$checkedTables = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($tables, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable::class, 'Schema tables are an ordered list of checked table declarations.');",
+        "$checkedViews = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($views, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateView::class, 'Schema views are an ordered list of checked view declarations.');",
+        "$checkedIndexes = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($indexes, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndex::class, 'Schema indexes are an ordered list of checked index declarations.');",
+        "$checkedGrants = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($grants, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\GrantSequenceAccess::class, 'Schema grants are an ordered list of checked sequence grants.');",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::check($name, $ifNotExists, $release, $checkedSequences, $checkedTables);",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewOrder::check($name, $ifNotExists, $release, $occupied, $checkedViews);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Index\\SchemaIndexOrder::check($name, $ifNotExists, $release, $occupied, $checkedIndexes);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Access\\SchemaGrantOrder::check($name, $owner, $ifNotExists, $release, $checkedSequences, $checkedGrants);",
+        "$this->name = $name;",
+        "$this->sequences = $checkedSequences;",
+        "$this->tables = $checkedTables;",
+        "$this->views = $checkedViews;",
+        "$this->indexes = $checkedIndexes;",
+        "$this->grants = $checkedGrants;"
+      ]
+    },
+    "Schema/Namespace/CreateSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$name = $this->name === null ? '' : $this->name->quoted() . ' ';",
+        "$owner = $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;",
+        "$elements = '';",
+        "foreach ($this->sequences as $sequence) {",
+        "    $elements .= ' ' . $sequence->toString();",
+        "}",
+        "foreach ($this->tables as $table) {",
+        "    $elements .= ' ' . $table->toString();",
+        "}",
+        "foreach ($this->views as $view) {",
+        "    $elements .= ' ' . $view->toString();",
+        "}",
+        "foreach ($this->indexes as $index) {",
+        "    $elements .= ' ' . $index->toString();",
+        "}",
+        "foreach ($this->grants as $grant) {",
+        "    $elements .= ' ' . $grant->toString();",
+        "}",
+        "return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner . $elements;"
+      ]
+    },
+    "Schema/Namespace/CreateSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
+        "$owner = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering())->lower($context, $statement->authorization);",
+        "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
+        "$resolved = $name ?? ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $owner : null);",
+        "$sequences = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSequenceLowering())->lower($context, $statement, $resolved);",
+        "$tables = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaTableLowering())->lower($context, $statement, $resolved);",
+        "$views = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewLowering())->lower($operation, $statement, $resolved);",
+        "$release = $context->profile->grammar;",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::check($resolved, $statement->ifNotExists, $release, $sequences, $tables);",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewOrder::check($resolved, $statement->ifNotExists, $release, $occupied, $views);",
+        "$indexes = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Index\\SchemaIndexLowering())->lower($operation, $statement, $resolved, $occupied);",
+        "$grants = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Access\\SchemaGrantLowering())->lower($operation, $statement, $resolved, $indexes);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $release, $tables, $sequences, $views, $indexes, $grants);"
+      ]
+    },
+    "Schema/Namespace/SchemaTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($schema->elements === []) {",
+        "    return [];",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema tables and sequences require an unguarded, statically named namespace.');",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($resolved->value);",
+        "$resolvedTables = [];",
+        "$provided = [];",
+        "$seen = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTableLowering();",
+        "$scope = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\SchemaMemberScope();",
+        "foreach ($schema->elements as $element) {",
+        "    if ($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\CreateSequence || $element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView || $element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateIndex || $element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant) {",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable, 'CREATE SCHEMA elements require a checked namespace composition.');",
+        "    $binding = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\BoundStatement($scope->bind($context, $name, $provided), $element);",
+        "    $table = $lowering->lower($binding, $element);",
+        "    $resolvedTables[] = $table;",
+        "    $coordinate = $table->target->table->value;",
+        "    if (!isset($seen[$coordinate])) {",
+        "        $seen[$coordinate] = true;",
+        "        array_push($provided, ...$binding->facts->declarations);",
+        "    }",
+        "}",
+        "return $resolvedTables;"
+      ]
+    },
+    "Schema/Namespace/Access/SchemaGrantOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($grants === []) {",
+        "    return;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && !$guard, 'Schema grants require an unguarded, statically named namespace.');",
+        "$local = [];",
+        "foreach ($sequences as $sequence) {",
+        "    $local[$sequence->name->name->value] = true;",
+        "}",
+        "foreach ($grants as $grant) {",
+        "    $access = $grant->access;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($access->release === $release, 'A schema grant must belong to its release.');",
+        "    $grantor = $access->grantor?->owner;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier || !$grantor instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier || $owner->value === $grantor->value, 'A named schema grantor must match its named schema owner.');",
+        "    if ($access->target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\NamedSequences) {",
+        "        foreach ($access->target->sequences as $sequence) {",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->schema?->value !== $name->value || isset($local[$sequence->name->value]), 'A schema grant requires a preceding sequence at each named local target.');",
+        "        }",
+        "    } elseif ($local !== [] && $grant->grantOption && $access->hasEffectiveRights()) {",
+        "        foreach ($access->target->schemas as $schema) {",
+        "            if ($schema->value === $name->value) {",
+        "                foreach ($access->grantees as $grantee) {",
+        "                    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($grantee->role !== \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\UniversalGrantee::Everyone, 'A populated schema grant requires individual grantees for grant options.');",
+        "                }",
+        "            }",
+        "        }",
+        "    }",
+        "}"
+      ]
+    },
+    "Schema/Namespace/Access/SchemaGrantLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$grants = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccessLowering();",
+        "$context = null;",
+        "foreach ($schema->elements as $element) {",
+        "    if (!$element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant) {",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema grants require an unguarded, statically named namespace.');",
+        "    if ($context === null) {",
+        "        $name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($resolved->value);",
+        "        $relations = [];",
+        "        foreach ($indexes as $index) {",
+        "            if ($index->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant) {",
+        "                $relations[] = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclaration($name, new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($index->name->value), new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($index->table->table->value), \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::Ordinary);",
+        "            }",
+        "        }",
+        "        $context = (new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\SchemaMemberScope())->bind($operation->context, $name, $operation->facts->declarations, $relations);",
+        "    }",
+        "    $grant = $lowering->lower($context, $element);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($grant instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\GrantSequenceAccess, 'Schema grants require sequence grant operands.');",
+        "    $grants[] = $grant;",
+        "}",
+        "return $grants;"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccessLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'Sequence privileges require the native naming profile.');",
+        "$target = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccessTargetLowering())->lower($context, $statement->target);",
+        "$owners = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering();",
+        "$grantor = $statement->grantor === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequencePrincipal($owners->lower($context, $statement->grantor));",
+        "$operands = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequencePrivilegeLowering();",
+        "$access = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccess($target, $operands->rights($statement->privileges), $operands->grantees($context, $statement->grantees), $grantor, $context->profile->grammar);",
+        "if ($statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\GrantSequenceAccess($access, $statement->grantOption);",
+        "}",
+        "$dependency = match ($statement->behavior) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior::Cascade => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceGrantDependency::Cascade,",
+        "    null, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior::Restrict => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceGrantDependency::Restrict,",
+        "};",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\RevokeSequenceAccess($access, $statement->grantOptionOnly, $dependency);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\ChangeOwner, $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename && $statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaAlterLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\SetSchema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\MoveSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\AlterSequence => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\ReconfigureSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequenceActionsLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant, $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Revoke => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccessLowering())->lower($operation->context, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\AlterDefaultPrivileges => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Defaults\\SequenceDefaultLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => match ($statement->target) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSchemaLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabaseLowering())->lower($operation, $statement),",
+        "    },",
+        "};"
+      ]
+    }
+  }
+}

@@ -630,6 +630,12 @@ def inventory(root):
                         "schema_stmt: IndexStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
                     }:
                         related[alternative] = (*related.get(alternative, ()), "postgres-schema-indexes-v1.json")
+            for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "GrantStmt"):
+                for alternative in rules.get(rule, ()):
+                    if rule in ("CreateSchemaStmt", "GrantStmt") or alternative in {
+                        "schema_stmt: GrantStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
+                    }:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-sequence-grants-v2.json")
             for rule in ("DropStmt", "drop_type_name", "any_name_list", "opt_drop_behavior"):
                 for alternative in rules.get(rule, ()):
                     if rule in ("any_name_list", "opt_drop_behavior") or alternative.startswith("DropStmt: DROP drop_type_name ") \
