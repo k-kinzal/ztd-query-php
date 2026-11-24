@@ -56,8 +56,9 @@ def simulated(outcomes, existing=False, domain_failure=False):
         connections.append("profile-verified")
         return {"status": "verified"}
 
-    def execute(jobs, _, _raw, _logs, _env, receipts):
+    def execute(jobs, _, _raw, _logs, _env, receipts, container):
         require(jobs == JOBS and connections == ["profile-verified"], "fixture-control-profile-gate")
+        require(container == "good-fixture", "fixture-control-execution-container", container)
         receipts.extend({"domain": scope, "runner": task, "outcome": "exited", "exitCode": 1 if domain_failure else 0}
                         for scope, task, _ in jobs)
 
