@@ -16,6 +16,7 @@ LABEL = "mysql-create-like"
 OBSERVER = "mysql_create_like_observer.php"
 CONTRACT_NAME = "mysql-create-like-v1.json"
 CONTRACT = "0211e157e525a76943102e25042da8a860714b6c6e75c59fb0b529aab9439070"
+OBSERVER_QUERIES = "49f174ba0179afd08a0c93ace3f250abda1398cbba584de9f753cddb33aa6b13"
 COMPLETE_SEEDS = True
 SOURCE, DESTINATION = "ir_slike_original", "ir_slike_copy"
 SCHEMAS = {"primary": "ir_fixture", "decoy": "ir_slike_decoy"}
@@ -30,7 +31,16 @@ INVALID = "mysql-create-like-invalid-published"
 def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "mysql-create-like-contract-mismatch")
-    return json.loads(path.read_text()), profiles()[1]
+    queries = TOOL / "mysql-create-like-observer-queries-v1.json"
+    require(digest(queries) == OBSERVER_QUERIES, "mysql-create-like-observer-queries-contract-mismatch")
+    specification = json.loads(path.read_text())
+    record = json.loads(queries.read_text())
+    observed = specification["exploration"]
+    require(record["semanticContract"] == CONTRACT_NAME and record["acceptance"]["finite"] == specification["finite"]["identities"]
+            and record["acceptance"]["timeoutSecondsPerRelease"] == observed["timeoutSecondsPerRelease"]
+            and record["acceptance"]["seedBudget"] == observed["casesPerSeed"] * len(observed["seeds"])
+            and record["acceptance"]["exclusions"] == observed["allowedExclusions"], "mysql-create-like-observer-schedule-mismatch")
+    return specification, profiles()[1]
 
 
 def case(tag, source, destination, sources, op, targets, optional, variant=0):

@@ -80,15 +80,16 @@ function observeLikeTable(PDO $pdo, string $name): ?array
     if ($definition === null) {
         return null;
     }
-    $relation = observeMysqlFixtureTable($pdo, $name);
     $ddl = $definition['Create Table'];
-    $fields = [];
-    foreach ($pdo->query('SHOW FULL COLUMNS FROM ' . $name)->fetchAll(PDO::FETCH_ASSOC) as $column) {
+    $columns = $pdo->query('SHOW FULL COLUMNS FROM ' . $name)->fetchAll(PDO::FETCH_ASSOC);
+    $relation = observeMysqlFixtureBaseTable($pdo, $name, $ddl, $columns);
+    $allocated = [];
+    foreach ($columns as $column) {
         if ($column['Extra'] === 'auto_increment') {
-            $fields[] = $column['Field'];
+            $allocated[] = $column['Field'];
         }
     }
-    $relation['allocatedColumns'] = $fields;
+    $relation['allocatedColumns'] = $allocated;
     $relation['foreignKeys'] = preg_match_all('/^  CONSTRAINT [^\n]* FOREIGN KEY /m', $ddl);
 
     return $relation;
