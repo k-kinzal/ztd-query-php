@@ -61,31 +61,39 @@
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest</span>;</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest</span>;</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest</span>;</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * One checked prefix operation with its scoped input.</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Preserving a unary plus on a read</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     $field = new \SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0);</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> *     $unary = new \SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression(\SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind::Plus, $field);</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> *     $unary-&gt;operand-&gt;slot // =&gt; 0</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">UnaryExpression</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>{</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * Stores the selected operation and its operand.</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">UnaryKind</span> <span class="tok-var">$kind</span>,</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Arithmetic</span>|<span class="tok-id">BetweenTest</span>|<span class="tok-id">BlobLiteral</span>|<span class="tok-id">CaseExpression</span>|<span class="tok-id">CastExpression</span>|<span class="tok-id">Coalesce</span>|<span class="tok-id">CollatedExpression</span>|<span class="tok-id">ColumnReference</span>|<span class="tok-id">Comparison</span>|<span class="tok-id">Concatenation</span>|<span class="tok-id">FoldedMembership</span>|<span class="tok-id">HexIntegerLiteral</span>|<span class="tok-id">IntegerLiteral</span>|<span class="tok-id">Logical</span>|<span class="tok-id">MembershipTest</span>|<span class="tok-id">NullLiteral</span>|<span class="tok-id">Parameter</span>|<span class="tok-id">PatternTest</span>|<span class="tok-id">RealLiteral</span>|<span class="tok-id">TextLiteral</span>|<span class="tok-id">TruthTest</span>|<span class="tok-id">self</span> <span class="tok-var">$operand</span>,</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    ) {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    }</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>}</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * One checked prefix operation with its scoped input.</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * @example Preserving a unary plus on a read</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> *     $field = new \SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0);</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> *     $unary = new \SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression(\SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind::Plus, $field);</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com"> *     $unary-&gt;operand-&gt;slot // =&gt; 0</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">UnaryExpression</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>{</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * Stores the selected operation and its operand.</span></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">UnaryKind</span> <span class="tok-var">$kind</span>,</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Arithmetic</span>|<span class="tok-id">BetweenTest</span>|<span class="tok-id">BlobLiteral</span>|<span class="tok-id">CaseExpression</span>|<span class="tok-id">CastExpression</span>|<span class="tok-id">Coalesce</span>|<span class="tok-id">CollatedExpression</span>|<span class="tok-id">ColumnReference</span>|<span class="tok-id">Comparison</span>|<span class="tok-id">Concatenation</span>|<span class="tok-id">FoldedMembership</span>|<span class="tok-id">HexIntegerLiteral</span>|<span class="tok-id">IntegerLiteral</span>|<span class="tok-id">Logical</span>|<span class="tok-id">MembershipTest</span>|<span class="tok-id">NullLiteral</span>|<span class="tok-id">Parameter</span>|<span class="tok-id">PatternTest</span>|<span class="tok-id">RealLiteral</span>|<span class="tok-id">TextLiteral</span>|<span class="tok-id">TruthTest</span>|<span class="tok-id">self</span> <span class="tok-var">$operand</span>,</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    ) {</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-kw">if</span> (<span class="tok-var">$kind</span> === <span class="tok-id">UnaryKind</span>::<span class="tok-id">Minus</span>) {</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>            <span class="tok-var">$literal</span> = <span class="tok-var">$operand</span>;</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>            <span class="tok-kw">while</span> (<span class="tok-var">$literal</span> <span class="tok-kw">instanceof</span> <span class="tok-id">self</span> &amp;&amp; <span class="tok-var">$literal</span>-&gt;<span class="tok-id">kind</span> === <span class="tok-id">UnaryKind</span>::<span class="tok-id">Plus</span>) {</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>                <span class="tok-var">$literal</span> = <span class="tok-var">$literal</span>-&gt;<span class="tok-id">operand</span>;</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>            }</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>            <span class="tok-id">Check</span>::<span class="tok-id">input</span>(!<span class="tok-var">$literal</span> <span class="tok-kw">instanceof</span> <span class="tok-id">HexIntegerLiteral</span> || <span class="tok-var">$literal</span>-&gt;<span class="tok-id">digits</span> !== <span class="tok-str">&#039;8000000000000000&#039;</span>, <span class="tok-str">&#039;The minimum hexadecimal INTEGER cannot be negated.&#039;</span>);</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>        }</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    }</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>}</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
