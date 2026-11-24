@@ -1,0 +1,60 @@
+{
+  "revision": "SemanticsIR/postgres-schema-tables-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "profile": "The native namespace declaration profile and the checked ordinary heap table profile at the same release.",
+  "constructors": {},
+  "existingRoles": ["Schema/Namespace/CreateSchema", "Schema/CreateTable", "Schema/TableColumn"],
+  "scope": "An atomic schema declaration with one or more checked ordinary heap table declarations. Preserve their order and allow guarded repeat members.",
+  "structure": "CreateSchema stores a detached ordered list of CreateTable children. CreateTable stores its absolute coordinates, checked ordered typed columns and local duplicate guard.",
+  "rules": [
+    "The containing schema has a static decoded name, either written or supplied by a named owner. It cannot be guarded when elements are present.",
+    "Every child creates a heap table in the same absolute namespace and with the same grammar release as the parent.",
+    "Within the table phase the native command retains order. A later duplicate requires that member's IF NOT EXISTS. The skipped declaration does not replace the earlier heading or defaults.",
+    "Unqualified declared member names bind to the containing namespace. An explicitly qualified declaration must resolve to that same namespace. No member or local default may require an unresolved static reference.",
+    "The owner determines the namespace and all newly created table owners. The entire operation succeeds or fails atomically."
+  ],
+  "sql": "Append each fully delimited CreateTable SQL form to its parent's declaration without semicolons. The parent retains its owner authorization, and each child retains its conditional, storage and ordered definitions.",
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "memberShapes": ["one", "independent", "reversed", "guarded-repeat"],
+    "owner": ["effective", "named"],
+    "qualification": ["written", "relative"],
+    "active": [false, true],
+    "bound": "32 independent cells each for analyzed and direct construction per release. Full positive coverage is separate from native and typed refusals."
+  },
+  "exploration": {
+    "seeds": [2957, 23167, 51949],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Vary member list length and order, repeated table identity, member guard, table and column roles, literal defaults, quote and UTF-8 names, owner, qualification and transaction timing."
+  },
+  "observations": [
+    "Owner role, decoded absolute name, child release, member order and duplicate guard before publication.",
+    "Namespace and table owner, relation kind, heap access method, ordered field names, native types, nullability and expression defaults.",
+    "Defaults exercised by inserts, including NULL and Unicode text. An unrelated table with the same local name stays unchanged.",
+    "Native exact duplicate diagnostic, atomic failure and rollback."
+  ],
+  "negative": [
+    "A direct guarded parent with table members",
+    "A child with another namespace or release",
+    "An unguarded duplicate table member",
+    "An implicit session-derived namespace with absolute child identities",
+    "An embedded element outside the checked table composition"
+  ],
+  "edges": [
+    "The standalone scope's previous refused ordinary table declaration becomes a positive comparison.",
+    "A quoted named owner supplies a static implicit namespace for a child.",
+    "An existing containing namespace causes a native duplicate error and leaves all existing relations unchanged."
+  ],
+  "faults": [
+    "Omit a complete child",
+    "Reverse member order with a guarded repeat and different headings",
+    "Move a child target into the decoy namespace"
+  ],
+  "open": ["Sequence, view, index, trigger, and GRANT phases. Schema-name computation from a session owner with subordinate elements."],
+  "trust": ["Native CREATE SCHEMA table phase", "The checked CreateTable role and independently evaluated native schema/catalog observations", "Exact publication and detached list checks"]
+}
