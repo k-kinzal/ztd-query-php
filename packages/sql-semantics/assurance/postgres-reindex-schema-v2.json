@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-schema-2",
+  "approval": "pending-human-review",
+  "revises": "postgres-reindex-schema-v1.json",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings and native parameters. A named application schema is a persistent local namespace.",
+  "scope": "Stand-alone REINDEX SCHEMA with the ordered concurrency flags and known selected application namespace. The native selection includes ordinary table and materialized-view indexes and their auxiliary TOAST indexes. In a partitioned layout the selected schema fixes each leaf's eligibility.",
+  "additionalPublicRoots": ["Schema/Index/Scope/ReindexSchema"],
+  "constructors": {
+    "Schema/Index/ReindexSchema": {
+      "type": "Schema/Index/Scope/ReindexSchema",
+      "role": "A complete rebuild that selects an explicitly identified persistent application schema.",
+      "structure": "One decoded schema identifier, the effective native rebuild-mode enum and one grammar release.",
+      "conditions": "The direct value admits application namespace identifiers in the selected profile. System scopes and temporary aliases have separate native rules. The analyzer requires a known persistent schema, rejects unsupported options and chooses the final concurrency request.",
+      "meaning": "Rebuild the eligible indexes physically owned by relations in the selected namespace. Owners elsewhere, including attached descendants in a different schema, remain unchanged. A schema rebuild is prohibited inside an active transaction in both modes.",
+      "sql": "Emit REINDEX SCHEMA followed by the effective optional CONCURRENTLY keyword and one quoted schema identifier.",
+      "externalInterpretation": "Use the same application namespace and relation catalog, eligible physical index definitions, release, modes and transaction state.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Schema/Index/IndexRebuildMode"],
+  "rules": [
+    "An empty eligible index set succeeds outside a transaction.",
+    "A standard rebuild changes each eligible storage file while retaining the index OID. A concurrent rebuild can replace the OID and physical file together.",
+    "Schema selection follows each physical owner's namespace. A partitioned parent in that namespace can have children in other namespaces. Auxiliary indexes follow their selected owner.",
+    "Native execution requires a top-level command even in standard mode. A transaction failure leaves both the selected namespace and the decoy unchanged.",
+    "The stock engine resolves a schema selector literally. The session alias pg_temp is not an application namespace for this operation."
+  ],
+  "observations": [
+    "Exact bound schema and mode, rendering, status, transaction state and notices.",
+    "The physical heap and index identity relations, named index attachment roles, selected and decoy typed rows, and native catalog layout across phases."
+  ],
+  "finite": {
+    "layouts": ["empty", "ordinary", "split-partitions", "materialized-view"],
+    "concurrently": [false, true],
+    "active": [false, true],
+    "spellings": ["unquoted", "quoted"],
+    "identity": "Consume all 32 coordinates through both direct construction and already bound SQL on each native release. Reconcile the observed schema, mode and the full native selection."
+  },
+  "exploration": {
+    "seeds": [443, 7807, 58613],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 360,
+    "allowedExclusions": [],
+    "domain": "Vary retained name quoting and dotted identifiers, ordered concurrency options, empty and populated effect sets, transaction state, visible and auxiliary indexes, partition ownership and distinct decoy data."
+  },
+  "negative": [
+    "Unknown persistent schema",
+    "Unknown schema in an open declaration set",
+    "Direct pg_temp alias",
+    "Direct numbered session namespace",
+    "Direct stock system namespace",
+    "Explicit tablespace option"
+  ],
+  "faults": [
+    "Rebuild the decoy namespace",
+    "Reduce the scope to one owner",
+    "Drop the effective concurrent mode and its index identity transition"
+  ],
+  "sources": ["https://www.postgresql.org/docs/16/sql-reindex.html", "https://www.postgresql.org/docs/17/sql-reindex.html"],
+  "trust": [
+    "Checked typed constructor and renderer, supplied catalog consistency, verified native physical identity observations, and immutable external replay schedule."
+  ],
+  "open": [
+    "Database and system-wide selectors, temporary numbered namespace references, tablespace, verbosity and invalid or exclusion-index observations remain distinct obligations."
+  ],
+  "calibration": {
+    "partitionAndSchemaQueryPack": "803292b1cf659e5846eea20bdb23ecfcf264fccc246294663b8aa279629d126b",
+    "partitionAndSchemaTransitions": "e8dbff2970a604551b107958ae45774b1206192b5cb26c68e478557e274ce6eb",
+    "standaloneAndTemporary": "955141a97999e59af0b85e751cd4ea0cf522da5d8f78a8bca429eb714b121b7a",
+    "emptyAndMaterialized": "1a32cf663c1079bdfe085cb7629536ea04c99649bebb0762c4adecc8de6601bb",
+    "16.6": {
+      "standalone": "0f5525f7da57db05d0f18a51e8e97354e17890f034d85bad08e4a60e6c9c36f2",
+      "materialized": "163ca7d1c42fcfe7398bf432c19191caad0f0e753283db667418c085c57e61cd"
+    },
+    "17.2": {
+      "standalone": "dafe789321f64e99205e691a8f69c5785b80a01980374018b0bcee636802bf22",
+      "materialized": "98b15c86a2969a12c83cef496ad04721a9083124f5f93e4c7a58bac0eed9897a"
+    }
+  }
+}
