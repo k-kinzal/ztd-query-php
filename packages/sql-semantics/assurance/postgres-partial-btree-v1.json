@@ -1,0 +1,147 @@
+{
+  "revision": "SemanticsIR/postgres-partial-btree-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-create-btree-v1.json",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "Stock PostgreSQL 16.6 and 17.2 native B-tree profile with an optional direct scalar NULL predicate.",
+  "scope": "Resolve one column of the indexed table as the predicate of a partial named B-tree. Include both native NULL-test polarities and bind unqualified, table-qualified and schema-qualified references.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Index/Btree/NullIndexPredicate": {
+      "role": "One partial-index membership test of a physical column's SQL NULL state.",
+      "structure": "A nonnegative physical slot in the indexed table and explicit IS NULL or IS NOT NULL polarity.",
+      "conditions": "The slot belongs to the selected owner. The parsed operand resolves to that exact declared scalar column and has no correlation or independent relation.",
+      "meaning": "An indexed row qualifies exactly when the chosen column's nullness matches the predicate. For a unique partial index the stored key is checked only for qualifying rows.",
+      "sql": "Emit the parent's resolved identifier with IS NULL or IS NOT NULL as a parenthesized WHERE condition.",
+      "externalInterpretation": "Same stock PostgreSQL 16.6 or 17.2, native UTF-8/default identifier and parameter settings, exact B-tree owner, its physical columns and the same runtime rows and session state.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "amendedConstructors": {
+    "Schema/Index/Btree/CreateIndex": "The scalar predicate is either absent or a checked NullIndexPredicate in the indexed table heading. All original conditions, list layout and profiles remain required."
+  },
+  "existingRoles": [
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Index/Btree/IndexKey",
+    "Schema/Index/Btree/IncludedColumn",
+    "Schema/Index/Btree/IndexOrder",
+    "Schema/Index/Btree/IndexPresence"
+  ],
+  "rules": [
+    "Binding discharges qualifier spelling in the immutable output. Use the same exact physical occurrence for its unqualified, table-qualified and schema-qualified native forms.",
+    "The filtered key layout compares only rows admitted by the true two-valued scalar NULL test. Key NULL equivalence remains a separate policy.",
+    "A concurrent build that encounters qualifying duplicates follows PostgreSQL's native invalid-index behavior. An ordinary failure leaves no new index."
+  ],
+  "observations": [
+    "Bound owner and predicate slot and polarity, index predicates, native flags and key coordinates, result SQLSTATE and unchanged table rows and constraints.",
+    "Successive writes sharing filtered and unfiltered keys, explicitly including NULL under each uniqueness policy, command notices, recorded rollback and invalid artifact state."
+  ],
+  "finite": {
+    "keys": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "selector": [
+      0,
+      1,
+      2
+    ],
+    "polarity": [
+      "null",
+      "not-null"
+    ],
+    "uniqueNullPolicies": [
+      [
+        false,
+        false
+      ],
+      [
+        false,
+        true
+      ],
+      [
+        true,
+        false
+      ],
+      [
+        true,
+        true
+      ]
+    ],
+    "authoredQualifiers": [
+      "unqualified",
+      "table",
+      "schema"
+    ],
+    "identity": "On each pinned release consume all 288 paired direct/analyzed coordinates with original and generated SQL and independent row-state comparison. The fixture gives 276 successful builds and 12 deterministic duplicate-key errors, each with the specified catalog and subsequent write effects."
+  },
+  "exploration": {
+    "seeds": [
+      10301,
+      47381,
+      85223
+    ],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": [],
+    "domain": "Vary NULL polarity, distinctness, independent row columns and NULL distributions, key repetition and order, included columns, temporary/persistent owner, concurrency and rollback."
+  },
+  "negative": [
+    "Negative predicate slot",
+    "Predicate slot outside the indexed table",
+    "Missing predicate column",
+    "Unrelated qualified relation",
+    "Row-valued NULL test outside the scalar role",
+    "Unresolved parameter in a predicate"
+  ],
+  "faults": [
+    "Drop the membership filter",
+    "Bind a different physical column",
+    "Invert predicate polarity",
+    "Admit out-of-range predicate slot"
+  ],
+  "calibration": {
+    "driver": "d59571d5402a72cb0d618012ee1f47bd7cf8d53cbf620fe718d17720e1e9f096",
+    "referenceComparison": "493c3178da1ac5f2b2c5aad220ab5276ca23ba2523cecda2e184c73c8720cdec",
+    "queryPack": "eead9dcfb88061302eaaa243109acf062771d102de1ef83cf52b736e9d583973",
+    "16.6": {
+      "stdout": "b691ac94d1d3b0b04069d70adce5931fe8078fc3fc43cefc4ce4ddc72796e947",
+      "stderr": "73d3a7ccc44b0519436d20b12ea90a1409e25907ec25add80b0f9b70754ce02f"
+    },
+    "17.2": {
+      "stdout": "a75d1db52e0dd2dc23a9df2fa2f6a237750744fdd4994e6c537ce7b32ce7252e",
+      "stderr": "b620b5ed19616a81c891013d95dede252d1467c84f32577bf986204bb2f5c356"
+    }
+  },
+  "trust": [
+    "Direct finite row predicate, ordered native catalog and write observer, pinned PostgreSQL runtime, and the checked owner-to-slot PHP lowering."
+  ],
+  "open": [
+    "Expression keys, row-valued predicates, other Boolean predicate trees, custom functions, collation-dependent predicate comparisons, and partitioned indexes remain in the fixed whole-language inventory."
+  ]
+}
