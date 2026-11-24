@@ -17,6 +17,7 @@ from uuid import uuid4
 
 from check_native_workflow import audit as audit_workflow
 from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, ENV as FIXTURE_CONTAINER, IMAGES as POSTGRES_IMAGES
+from native_postgres_fixture import STORAGE_CONTRACT, observe_storage, storage_option, verify_storage
 from native_schedule import NATIVE, SINGLE_ENGINE, release_subset
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION, check_profile
@@ -206,10 +207,13 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
     try:
         identity, arch = image_identity(image)
         receipt.update(imageIdentity=identity, architecture=arch)
-        flags = ["-e", "POSTGRES_PASSWORD=ir_fixture", "-e", "POSTGRES_DB=ir_fixture"] if engine == "postgres" else [
-            "--tmpfs", "/var/lib/mysql:rw,nosuid,size=1073741824,mode=0750", "-e", "MYSQL_ROOT_PASSWORD=ir_fixture",
-            "-e", "MYSQL_ROOT_HOST=%", "-e", "MYSQL_DATABASE=ir_fixture",
-        ]
+        flags = (
+            ["--tmpfs", storage_option(), "-e", "POSTGRES_PASSWORD=ir_fixture", "-e", "POSTGRES_DB=ir_fixture"]
+            if engine == "postgres" else [
+                "--tmpfs", "/var/lib/mysql:rw,nosuid,size=1073741824,mode=0750", "-e", "MYSQL_ROOT_PASSWORD=ir_fixture",
+                "-e", "MYSQL_ROOT_HOST=%", "-e", "MYSQL_DATABASE=ir_fixture",
+            ]
+        )
         port = fixture["port"]
         start = time.monotonic()
         deadline = start + FIXTURE_STARTUP_SECONDS
@@ -245,6 +249,12 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         require(local is not None, "native-launch-unexpected-port", address)
         external = int(local[1])
         ready(engine, external, deadline)
+        if engine == "postgres":
+            phase = "fixture-storage"
+            receipt["fixtureStorage"] = observe_storage(
+                lambda *argv: docker(*argv, timeout=startup_remaining(deadline)), container
+            )
+            verify_storage(receipt["fixtureStorage"], key)
         phase = "fixture-profile"
         environment = connection(engine, external)
         probe_log = logs / "fixture-probe.jsonl"
@@ -371,6 +381,7 @@ def main():
         "workflowRouteAudit": {"path": routes.name, "sha256": digest(routes)},
         "recursiveContractDigest": digest(recursive),
         "fixtureRecoveryContractDigest": PORT_RECOVERY,
+        "postgresStorageContractDigest": STORAGE_CONTRACT,
         "launcherDigest": digest(Path(__file__)),
         "rendererFaultSources": {"path": anchors.name, "digest": digest(anchors), "status": anchor_report["status"]},
         "omittedProfiles": sorted(profiles.keys() - selected),

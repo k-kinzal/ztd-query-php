@@ -5,7 +5,10 @@ import json
 import re
 from pathlib import Path
 
-from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, ENV as FIXTURE_CONTAINER, fixed_contract
+from native_postgres_fixture import (
+    DOMAINS as FIXTURE_DOMAINS, ENV as FIXTURE_CONTAINER, fixed_contract, fixed_storage, observe_storage,
+    storage_option, verify_storage,
+)
 from run import TOOL, digest, require
 from scope import CONTRACTS
 
@@ -91,7 +94,20 @@ def audit(workflow, plan):
     document = TOOL / CONTRACT_NAME
     require(digest(document) == CONTRACT, "native-workflow-contract-mismatch")
     fixed_contract()
-    authorized_steps = steps(workflow.read_text())
+    content = workflow.read_text()
+    option = storage_option()
+    declaration = "          ${{ matrix.engine == 'postgres' && '--tmpfs " + option + "' || '' }}"
+    database = re.search(r"(?ms)^    services:\n      database:\n(.*?)^    steps:\n", content)
+    require(database is not None and "        options: >-\n" + declaration + "\n" in database[1]
+            and content.count(option) == 1,
+            "native-workflow-postgres-fixture-storage")
+    authorized_steps = steps(content)
+    checks = [step for step in authorized_steps if "/check_native_workflow.py" in step]
+    require(len(checks) == 1 and field(checks[0], "if") is None
+            and field(checks[0], "ENGINE", 10) == "${{ matrix.engine }}"
+            and field(checks[0], "FIXTURE_CONTAINER", 10) == "${{ job.services.database.id }}"
+            and field(checks[0], "run") == f'python3 {WORKER}/check_native_workflow.py --service "$ENGINE" "$FIXTURE_CONTAINER"',
+            "native-workflow-fixture-observation")
     for ref, role in (("${{ github.workflow_sha }}", "trusted"), ("${{ inputs.candidate }}", "candidate")):
         checkouts = [step for step in authorized_steps if field(step, "path", 10) == role]
         require(len(checkouts) == 1 and field(checkouts[0], "ref", 10) == ref
@@ -130,20 +146,31 @@ def audit(workflow, plan):
                 {"domain": domain, "expected": sorted(profiles), "compared": compared, "preserved": preserved})
         routes[domain] = {"runner": runner, "output": out, "artifact": artifact, "profiles": [list(p) for p in compared],
                           **({"fixtureIsolation": isolation} if isolation else {})}
-    return {"contract": CONTRACT, "checker": digest(Path(__file__)), "workflow": digest(workflow), "routes": routes}
+    return {"contract": CONTRACT, "checker": digest(Path(__file__)), "workflow": digest(workflow),
+            "postgresFixtureStorage": fixed_storage(), "routes": routes}
 
 
 def main():
-    from run_native_matrix import release_fixtures, release_jobs
+    from run_native_matrix import docker, release_fixtures, release_jobs
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("workflow", nargs="?", type=Path, default=TOOL.parents[2] / WORKFLOW)
+    parser.add_argument("--service", nargs=2, metavar=("ENGINE", "CONTAINER"))
     args = parser.parse_args()
     fixtures = release_fixtures(args.workflow, TOOL / "server-projection-v1.json")
     recursive = TOOL / "server-recursive-series-v2.json"
     require(digest(recursive) == CONTRACTS[recursive.name], "native-launch-recursive-profile-digest")
     definition = json.loads(recursive.read_text())
-    print(json.dumps(audit(args.workflow, {profile: list(release_jobs(profile, definition)) for profile in fixtures}), sort_keys=True))
+    report = audit(args.workflow, {profile: list(release_jobs(profile, definition)) for profile in fixtures})
+    if args.service:
+        engine, container = args.service
+        require(engine in {"mysql", "postgres"} and re.fullmatch(r"[a-f0-9]{64}", container),
+                "native-workflow-service-identity")
+        if engine == "postgres":
+            observed = observe_storage(docker, container)
+            verify_storage(observed, "workflow/postgres")
+            report["observedPostgresFixtureStorage"] = observed
+    print(json.dumps(report, sort_keys=True))
 
 
 if __name__ == "__main__":

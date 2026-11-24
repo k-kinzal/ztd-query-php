@@ -76,6 +76,7 @@ jobs:
         ports:
           - ${{ matrix.port }}/tcp
         options: >-
+          ${{ matrix.engine == 'postgres' && '--tmpfs /var/lib/postgresql/data:rw,nosuid,size=1073741824,mode=0700' || '' }}
           --health-cmd "${{ matrix.engine == 'mysql' && 'mysqladmin ping -h 127.0.0.1 --silent' || 'pg_isready -h 127.0.0.1 -U postgres -d ir_fixture' }}"
           --health-interval 10s
           --health-start-period 40s
@@ -101,7 +102,9 @@ jobs:
       - name: Verify native runner and artifact routes
         env:
           PYTHONDONTWRITEBYTECODE: '1'
-        run: python3 trusted/packages/sql-semantics/assurance/check_native_workflow.py
+          ENGINE: ${{ matrix.engine }}
+          FIXTURE_CONTAINER: ${{ job.services.database.id }}
+        run: python3 trusted/packages/sql-semantics/assurance/check_native_workflow.py --service "$ENGINE" "$FIXTURE_CONTAINER"
       - name: Set up PHP for the observer
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:

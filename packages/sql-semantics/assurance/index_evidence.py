@@ -9,7 +9,7 @@ from os.path import relpath
 import re
 
 from compare_assurance_revisions import review
-from check_fixture_launch_recovery import CONTROL_CASES as NATIVE_FIXTURE_CONTROLS
+from check_fixture_launch_recovery import CONTROL_CASES as NATIVE_FIXTURE_CONTROLS, verify_storage_control
 from check_native_workflow import audit as audit_workflow
 from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import certificate
@@ -19,6 +19,7 @@ from formal_reindex_evidence import index_lexical_proof
 from grammar_scope import inventory as grammar_inventory
 from native_counterexample_reduction import CONTROL_RESULTS as NATIVE_REDUCTION_CONTROLS, DIGEST as NATIVE_REDUCTION_DIGEST
 from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, verify_link as verify_fixture
+from native_postgres_fixture import STORAGE_CONTRACT, STORAGE_NAME, verify_storage
 from native_schedule import NATIVE, SINGLE_ENGINE, release_subset, reports as native_reports
 from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
@@ -223,6 +224,7 @@ class Evidence:
                 and report["workflowDigest"] == digest(workflow)
                 and report["recursiveContractDigest"] == CONTRACTS[series.name] == digest(series)
                 and report["fixtureRecoveryContractDigest"] == PORT_RECOVERY == self.tools["native-fixture-port-recovery-v1.json"]
+                and report["postgresStorageContractDigest"] == STORAGE_CONTRACT == self.tools[STORAGE_NAME]
                 and report["launcherDigest"] == self.tools["run_native_matrix.py"],
                 "bundle-native-launch-identity", origin)
         self.checked(path.parent / "distribution.json", self.distribution)
@@ -258,6 +260,8 @@ class Evidence:
                         and result["architecture"] in {"amd64", "arm64"}
                         and 0 <= result["startupSeconds"] <= FIXTURE_STARTUP_SECONDS,
                         "bundle-native-launch-fixture-identity", key)
+                if profile[0] == "postgres":
+                    verify_storage(result.get("fixtureStorage"), key)
             else:
                 failed.append(key)
             for entry in result["executions"]:
@@ -510,6 +514,7 @@ def main():
             require(receipt["status"] == NATIVE_FIXTURE_CONTROLS[key]
                     and item["signal"] == f"native-fixture-{receipt['status']}", "bundle-native-fixture-control-status", key)
             verify_fixture_recovery(receipt, key)
+            verify_storage_control(key, receipt)
         selected = {item["case"]: item for item in cases if item["case"] in NATIVE_REDUCTION_CONTROLS}
         require(selected.keys() == NATIVE_REDUCTION_CONTROLS.keys(), "bundle-missing-native-reduction-controls")
         for name, item in selected.items():

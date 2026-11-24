@@ -10,6 +10,8 @@ from run import TOOL, digest, require, write_json
 
 NAME = "native-postgres-fixture-isolation-v10.json"
 CONTRACT = "e0d8ebe62b58ccdef713e3c925ec86ee4739d3308988f8c9ce7c86e52f626a2e"
+STORAGE_NAME = "native-postgres-fixture-storage-v1.json"
+STORAGE_CONTRACT = "fee0adc1f3a7a5568346e4b0ba0ce82bf2f552af58121404fdfc05d39a44aa35"
 ENV = "ZTD_IR_POSTGRES_FIXTURE_CONTAINER"
 IMAGES = {
     "16.6": "postgres@sha256:557fea37a744d5f4c8faab304b0a90858b53ab119735a88c131fd19dab802f36",
@@ -35,6 +37,29 @@ CENSUS = """SELECT current_database(), current_setting('server_version_num'),
   (SELECT count(*) FROM pg_catalog.pg_namespace WHERE nspname NOT IN ('pg_catalog','pg_toast','information_schema','public')),
   (SELECT count(*) FROM pg_catalog.pg_class WHERE oid>=16384 OR relnamespace='public'::pg_catalog.regnamespace),
   (SELECT count(*) FROM pg_catalog.pg_inherits)"""
+
+
+def fixed_storage():
+    path = TOOL / STORAGE_NAME
+    require(digest(path) == STORAGE_CONTRACT, "native-fixture-storage-contract")
+    definition = json.loads(path.read_text())
+    return {"contract": STORAGE_CONTRACT, "mount": definition["mount"], "filesystem": definition["filesystem"]}
+
+
+def storage_option():
+    (directory, options), = fixed_storage()["mount"].items()
+    return f"{directory}:{options}"
+
+
+def observe_storage(docker, container):
+    directory, = fixed_storage()["mount"]
+    configuration = docker("inspect", "--format", "{{json .HostConfig.Tmpfs}}", container)
+    filesystem = docker("exec", "--user", "postgres", container, "stat", "-f", "-c", "%T", directory)
+    return {"contract": STORAGE_CONTRACT, "mount": json.loads(configuration), "filesystem": filesystem}
+
+
+def verify_storage(record, key):
+    require(record == fixed_storage(), "native-fixture-storage-mismatch", {"fixture": key, "observed": record})
 
 
 def fixed_contract():
