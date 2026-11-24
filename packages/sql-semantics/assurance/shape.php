@@ -1028,16 +1028,23 @@ if ($dialect !== 'sqlite') {
         $btree = 'Schema\\Index\\Btree\\';
         $btreeCreate = $btree . 'CreateIndex';
         $roots[] = $btreeCreate;
-        array_push($internal, $btree . 'CreateIndexLowering', $btree . 'IndexTableLowering', $btree . 'IndexOperands', $btree . 'IndexPredicateLowering');
+        array_push($internal, $btree . 'CreateIndexLowering', $btree . 'IndexTableLowering', $btree . 'IndexOperands',
+            $btree . 'IndexPredicateLowering', $btree . 'IndexCondition');
+        $pureCollaborators[] = $btree . 'IndexCondition';
         $properties[$btreeCreate] = [
             'keys' => ['array'], 'included' => ['array'], 'table' => ['TableSource'], 'name' => ['Identifier'],
             'presence' => [$btree . 'IndexPresence'], 'ifNotExists' => ['bool'], 'unique' => ['bool'],
             'nullsNotDistinct' => ['bool'], 'concurrently' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
-            'predicate' => ['?' . $btree . 'NullIndexPredicate'],
+            'predicate' => [$btree . 'IndexBooleanPredicate', $btree . 'NullIndexPredicate', 'null'],
         ];
         $properties[$btree . 'IndexKey'] = ['slot' => ['int'], 'order' => [$btree . 'IndexOrder']];
         $properties[$btree . 'IncludedColumn'] = ['slot' => ['int']];
         $properties[$btree . 'NullIndexPredicate'] = ['slot' => ['int'], 'negated' => ['bool']];
+        $properties[$btree . 'IndexBooleanPredicate'] = [
+            'operator' => ['Predicate\\LogicalOperator'],
+            'left' => [$btree . 'IndexBooleanPredicate', $btree . 'NullIndexPredicate'],
+            'right' => [$btree . 'IndexBooleanPredicate', $btree . 'NullIndexPredicate', 'null'],
+        ];
         $properties[$btree . 'IndexOrder'] = $methods[$btree . 'IndexOrder'] = [];
         $properties[$btree . 'IndexPresence'] = $methods[$btree . 'IndexPresence'] = [];
         $enumCases[$btree . 'IndexPresence'] = ['Vacant' => 'vacant', 'Occupied' => 'occupied'];
@@ -1045,7 +1052,7 @@ if ($dialect !== 'sqlite') {
             'DescendingNullsFirst' => 'DESC NULLS FIRST', 'DescendingNullsLast' => 'DESC NULLS LAST'];
         $methods[$btreeCreate] = ['__construct', 'profileId', 'toString'];
         $methods[$btree . 'IndexKey'] = $methods[$btree . 'IncludedColumn'] = ['__construct'];
-        $methods[$btree . 'NullIndexPredicate'] = ['__construct'];
+        $methods[$btree . 'NullIndexPredicate'] = $methods[$btree . 'IndexBooleanPredicate'] = ['__construct'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1829,11 +1836,27 @@ try {
                     'Unexpected SQLite column addition publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexPredicateLowering') {
+                $family = ['Schema\\Index\\Btree\\IndexBooleanPredicate', 'Schema\\Index\\Btree\\NullIndexPredicate'];
+                $returns = ['lower' => [...$family, 'null'], 'node' => $family, 'column' => [$family[1]]];
                 $members = $class->getMethods();
-                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
-                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === ['?Schema\\Index\\Btree\\NullIndexPredicate'],
-                    'Unexpected PostgreSQL partial-index predicate publication');
+                requireShape(count($members) === count($returns), 'Unexpected PostgreSQL partial-index predicate method count');
+                foreach ($members as $member) {
+                    $method = $member->name->toString();
+                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === ($returns[$method] ?? []),
+                        'Unexpected PostgreSQL partial-index predicate publication');
+                }
+            }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexCondition') {
+                $returns = ['check' => 'void', 'sql' => 'string'];
+                $members = $class->getMethods();
+                requireShape(count($members) === count($returns), 'Unexpected PostgreSQL partial-index condition method count');
+                foreach ($members as $member) {
+                    $method = $member->name->toString();
+                    requireShape($member->isPublic() && $member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === [($returns[$method] ?? '')],
+                        'Unexpected PostgreSQL partial-index condition traversal');
+                }
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexOperands') {
                 $methodsByName = $class->getMethods();
@@ -1999,7 +2022,9 @@ try {
                     || ($dialect === 'postgres' && in_array($short, ['Aggregation\\GroupedSelect', 'Ordering\\Order', 'Ordering\\ResultSql', 'Select'], true)
                         && $call->name->toString() === 'is_int')
                     || ($dialect === 'postgres' && $short === 'From\\DerivedSource' && $call->name->toString() === 'array_keys')
-                    || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
+                    || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')
+                    || ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexCondition'
+                        && in_array($call->name->toString(), ['array_pop', 'is_string'], true))),
                 "Unexpected function in $short",
             );
         }

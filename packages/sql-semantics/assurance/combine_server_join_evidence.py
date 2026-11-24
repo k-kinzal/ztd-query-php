@@ -105,6 +105,14 @@ def check_faults(path, report, distribution, checkout, domain):
             before.splitlines(keepends=True), after.splitlines(keepends=True), f"a/{rule.path}", f"b/{rule.path}",
         ))
         witness = record["detail"]
+        structural = rule.request is not None and rule.request.get("constructionOnly") is True
+        if structural:
+            observed = record["mutantResponse"]
+            require(observed["status"] == "constructed" and observed["sql"] is None and witness == {
+                "expected": rule.item["boundary"], "observed": observed, "sql": None,
+            }, f"server-{label}-fault-construction-evidence", name)
+        else:
+            require(type(witness["sql"]) is str and bool(witness["sql"]), f"server-{label}-fault-sql-evidence", name)
         require(record == json.loads((folder / "result.json").read_text())
                 and record["control"] == "passed" and record["expected"] == record["observed"] == rule.signal
                 and record["file"] == rule.path and record["input"] == rule.item
@@ -112,8 +120,7 @@ def check_faults(path, report, distribution, checkout, domain):
                 and distribution[f"packages/{rule.path}"] == record["source"]
                 and record["source"] != record["mutation"] == digest(folder / rule.path)
                 and (folder / rule.path).read_text() == after
-                and (folder / "injected.diff").read_text() == delta
-                and type(witness["sql"]) is str and bool(witness["sql"]), f"server-{label}-fault-evidence", name)
+                and (folder / "injected.diff").read_text() == delta, f"server-{label}-fault-evidence", name)
         replay_fault = getattr(domain, "replay_fault", None)
         if replay_fault is not None:
             replay_fault(rule, record)

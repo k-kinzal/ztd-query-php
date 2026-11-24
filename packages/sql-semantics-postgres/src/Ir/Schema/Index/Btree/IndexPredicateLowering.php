@@ -4,38 +4,69 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperation;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperator;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Negation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 
 /**
- * Resolves the scalar predicate of a partial B-tree to an indexed column.
+ * Resolves a partial B-tree condition to logical nodes and physical column tests.
  *
  * @visibility SqlSemantics
  */
 final class IndexPredicateLowering
 {
     /**
-     * Finds the tested column by the exact declared owner and occurrence.
+     * Translates the optional parsed WHERE condition.
      *
      * @throws InvalidConstruction When the predicate does not use a physical column
      */
-    public function lower(BoundStatement $operation, CreateIndex $statement): ?NullIndexPredicate
+    public function lower(BoundStatement $operation, CreateIndex $statement): NullIndexPredicate|IndexBooleanPredicate|null
     {
-        $condition = $statement->where;
-        if ($condition === null) {
-            return null;
-        }
+        return $statement->where === null ? null : $this->node($operation, $statement, $statement->where);
+    }
+
+    /**
+     * Preserves the parsed operator, grouping and ordered operands.
+     * @throws InvalidConstruction When a terminal is outside the scalar NULL role
+     */
+    public function node(BoundStatement $operation, CreateIndex $statement, Scalar $condition): NullIndexPredicate|IndexBooleanPredicate
+    {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
         }
+        if ($condition instanceof BooleanOperation) {
+            $operator = match ($condition->operator) {
+                BooleanOperator::And => LogicalOperator::And,
+                BooleanOperator::Or => LogicalOperator::Or,
+            };
+
+            return new IndexBooleanPredicate($operator, $this->node($operation, $statement, $condition->left), $this->node($operation, $statement, $condition->right));
+        }
+        if ($condition instanceof Negation) {
+            return new IndexBooleanPredicate(LogicalOperator::Not, $this->node($operation, $statement, $condition->operand));
+        }
         Check::input($condition instanceof NullTest, 'A partial B-tree needs a direct scalar column NULL test.');
+
+        return $this->column($operation, $statement, $condition);
+    }
+
+    /**
+     * Finds the tested column by the exact declared owner and occurrence.
+     * @throws InvalidConstruction When the test does not use a physical column
+     */
+    public function column(BoundStatement $operation, CreateIndex $statement, NullTest $condition): NullIndexPredicate
+    {
         $operand = $condition->operand;
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;

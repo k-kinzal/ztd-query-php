@@ -157,18 +157,19 @@ def controls():
 
 def faults(_, tag):
     source = "sql-semantics-postgres/src/Ir/Schema/Index/Btree/CreateIndex.php"
+    condition = "sql-semantics-postgres/src/Ir/Schema/Index/Btree/IndexCondition.php"
     partial = build(tag, [(0, "ASC NULLS LAST")], 0, True, unique=True, nulls=True)
     mismatch = build(tag, [(1, "ASC NULLS LAST")], 1, False, unique=True)
     invalid, boundary = list(negatives(tag))[1]
     return [
-        RenderFault("postgres-partial-btree-drop-null-filter", source, "$this->predicate === null ? '' : ' WHERE ('",
-                    "true ? '' : ' WHERE ('", partial, "meaning-mismatch"),
-        RenderFault("postgres-partial-btree-other-null-column", source, "$this->table->columns[$this->predicate->slot]",
-                    "$this->table->columns[0]", mismatch, "meaning-mismatch"),
-        RenderFault("postgres-partial-btree-invert-null-condition", source, "$this->predicate->negated ? ' IS NOT NULL)'",
-                    "!$this->predicate->negated ? ' IS NOT NULL)'", partial, "meaning-mismatch"),
-        RenderFault("postgres-partial-btree-admit-absent-null-column", source,
-                    "$predicate === null || isset($table->columns[$predicate->slot])", "true",
+        RenderFault("postgres-partial-btree-drop-null-filter", source, "$this->predicate === null ? '' : IndexCondition::sql",
+                    "true ? '' : IndexCondition::sql", partial, "meaning-mismatch"),
+        RenderFault("postgres-partial-btree-other-null-column", condition, "$table->columns[$node->slot]->quoted()",
+                    "$table->columns[0]->quoted()", mismatch, "meaning-mismatch"),
+        RenderFault("postgres-partial-btree-invert-null-condition", condition, "$node->negated ? ' IS NOT NULL)'",
+                    "!$node->negated ? ' IS NOT NULL)'", partial, "meaning-mismatch"),
+        RenderFault("postgres-partial-btree-admit-absent-null-column", condition,
+                    "isset($table->columns[$node->slot])", "true",
                     {"boundary": boundary}, INVALID, {**invalid, "constructionOnly": True}),
     ]
 

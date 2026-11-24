@@ -32,11 +32,11 @@ def refusal(message, exception="InvalidConstruction"):
 
 def case(tag, keys, included=(), scope="persistent", occupied="vacant", *,
          guard=False, unique=False, nulls=False, concurrently=False, transaction=False, only=False,
-         name="idx", columns=HEADINGS, rows=ROWS, coordinate=None, predicate=None, probe_rows=(0, 2)):
+         name="idx", columns=HEADINGS, kinds=KINDS, rows=ROWS, coordinate=None, predicate=None, probe_rows=(0, 2)):
     return {
         "dialect": "postgres", "release": tag, "coordinate": coordinate,
         "createBtree": {
-            "table": [SCHEMAS[scope], SOURCE, list(columns), KINDS, only],
+            "table": [SCHEMAS[scope], SOURCE, list(columns), kinds, only],
             "name": name, "keys": [list(key) for key in keys], "included": list(included),
             "presence": "vacant" if occupied == "vacant" else "occupied",
             "ifNotExists": guard, "unique": unique, "nullsNotDistinct": nulls, "concurrently": concurrently,
@@ -63,6 +63,16 @@ def route_case(tag, scope, concurrently, transaction, guard, occupied):
                 guard=guard, concurrently=concurrently, transaction=transaction, coordinate=coordinate)
 
 
+def predicate_sql(predicate, field):
+    if len(predicate) == 2:
+        slot, negated = predicate
+        return "(" + field(slot) + (" IS NOT NULL)" if negated else " IS NULL)")
+    operator, left, right = predicate
+    if operator == "NOT":
+        return "(NOT " + predicate_sql(left, field) + ")"
+    return "(" + predicate_sql(left, field) + " " + operator + " " + predicate_sql(right, field) + ")"
+
+
 def sql(item, *, original=False, unqualified=False):
     index = item["createBtree"]
     schema, table, columns, _, only = index["table"]
@@ -80,19 +90,18 @@ def sql(item, *, original=False, unqualified=False):
     if original and coord and coord[0] == "key" and coord[-1][1] == "distinct":
         nulls = " NULLS DISTINCT"
 
-    predicate = index["predicate"]
-    where = ""
-    if predicate is not None:
-        slot, negated = predicate
+    def field(slot):
         spelling = coord[-1] if original and coord and coord[0] == "partial" else "unqualified"
+        if original:
+            spelling = item.get("predicateSpelling", {}).get(str(slot), spelling)
         if spelling == "schema":
-            operand = qualified(schema, table) + "." + quoted(columns[slot])
-        elif spelling == "table":
-            operand = qualified(table, columns[slot])
-        else:
-            operand = quoted(columns[slot])
-        where = " WHERE (" + operand + (" IS NOT NULL)" if negated else " IS NULL)")
+            return qualified(schema, table) + "." + quoted(columns[slot])
+        if spelling == "table":
+            return qualified(table, columns[slot])
+        return quoted(columns[slot])
 
+    predicate = index["predicate"]
+    where = "" if predicate is None else " WHERE " + predicate_sql(predicate, field)
     return words + quoted(index["name"]) + " ON " + target + " USING btree (" + ", ".join(keys) + ")" + include + nulls + where
 
 
@@ -121,13 +130,26 @@ def analyzed(item, *, unqualified=False):
             "schemaPath": PATH, "declarations": declarations(item)}
 
 
+def qualifies(predicate, row):
+    if predicate is None:
+        return True
+    if len(predicate) == 2:
+        slot, negated = predicate
+        return (row[slot] is not None) == negated
+    operator, left, right = predicate
+    if operator == "NOT":
+        return not qualifies(left, row)
+    if operator == "AND":
+        return all(qualifies(side, row) for side in (left, right))
+    require(operator == "OR", "postgres-btree-oracle-operator", predicate)
+    return any(qualifies(side, row) for side in (left, right))
+
+
 def conflicts(keys, rows, nulls_not_distinct, predicate):
     seen = set()
     for row in rows:
-        if predicate is not None:
-            slot, negated = predicate
-            if (row[slot] is not None) != negated:
-                continue
+        if not qualifies(predicate, row):
+            continue
         values = tuple(row[column] for column, _ in keys)
         if not nulls_not_distinct and None in values:
             continue
@@ -146,8 +168,12 @@ def index_record(item, valid=None, previous=False):
         keys, includes, unique, nulls = index["keys"], index["included"], index["unique"], index["nullsNotDistinct"]
 
     predicate = None if previous else index["predicate"]
+    observed = None
+    if predicate is not None:
+        observed = ([qualifies(predicate, row) for row in item["rows"]] if item.get("observeMembership")
+                    else [names[predicate[0]], predicate[1]])
     return {
-        "predicate": None if predicate is None else [names[predicate[0]], predicate[1]],
+        "predicate": observed,
         "schema": schema, "index": index["name"], "table": table, "accessMethod": "btree",
         "unique": unique, "nullsNotDistinct": nulls, "valid": valid, "ready": valid, "live": True,
         "keyCount": len(keys), "memberCount": len(keys) + len(includes),
@@ -201,13 +227,16 @@ def expected(item):
             else "00000"
             for position in item["probeRows"]
         ]
-    return {
+    result = {
         "status": "btree-creation", "sqlState": state, "command": "CREATE INDEX" if success else None, "notices": notices,
         "before": initial, "after": snapshot(item, created, active) if success or not active else None,
         "settled": initial if active else snapshot(item, created),
         "transactionAfter": ("active" if success else "failed") if active else "idle",
         "probe": probe,
     }
+    if item.get("observeMembership"):
+        result["membership"] = [qualifies(index["predicate"], row) for row in item["rows"]]
+    return result
 
 
 def binding_coordinates(item, actual):

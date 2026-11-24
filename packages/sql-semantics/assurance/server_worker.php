@@ -1000,6 +1000,38 @@ function observePostgresTruncate(object $value): array
         'truncateTable' => ['targets' => $targets, 'restart' => $value->restartIdentity, 'cascade' => $value->cascade]];
 }
 
+function constructPostgresIndexPredicate(?array $predicate): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate|null
+{
+    if ($predicate === null) {
+        return null;
+    }
+    if (is_int($predicate[0])) {
+        return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate($predicate[0], $predicate[1]);
+    }
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate(
+        \SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator::from($predicate[0]),
+        constructPostgresIndexPredicate($predicate[1]),
+        constructPostgresIndexPredicate($predicate[2]),
+    );
+}
+
+function observePostgresIndexPredicate(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate|null $predicate): ?array
+{
+    if ($predicate === null) {
+        return null;
+    }
+    if ($predicate instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate) {
+        return [$predicate->slot, $predicate->negated];
+    }
+
+    return [
+        $predicate->operator->value,
+        observePostgresIndexPredicate($predicate->left),
+        observePostgresIndexPredicate($predicate->right),
+    ];
+}
+
 function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex
 {
     $value = $input['createBtree'];
@@ -1022,13 +1054,12 @@ function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql
         $included[] = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IncludedColumn($slot);
     }
 
-    $predicate = $value['predicate'];
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
         $owner, new $identifier($value['name']), $keys, $included,
         \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence::from($value['presence']),
         $value['ifNotExists'], $value['unique'], $value['nullsNotDistinct'], $value['concurrently'],
         \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
-        $predicate === null ? null : new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate($predicate[0], $predicate[1]),
+        constructPostgresIndexPredicate($value['predicate']),
     );
 }
 
@@ -1044,7 +1075,7 @@ function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\
                 array_map(static fn ($kind) => $kind->value, $table->columnKinds), $table->only,
             ],
             'name' => $index->name->value,
-            'predicate' => $index->predicate === null ? null : [$index->predicate->slot, $index->predicate->negated],
+            'predicate' => observePostgresIndexPredicate($index->predicate),
             'keys' => array_map(static fn ($key) => [$key->slot, $key->order->value], $index->keys),
             'included' => array_map(static fn ($column) => $column->slot, $index->included),
             'presence' => $index->presence->value, 'ifNotExists' => $index->ifNotExists,
@@ -1369,6 +1400,16 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    } catch (TypeError $error) {
+        $frame = $error->getTrace()[0] ?? [];
+        $predicate = $input['createBtree']['predicate'] ?? null;
+        if (is_array($predicate) && count($predicate) === 3 && $predicate[1] === null
+            && ($frame['class'] ?? null) === SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate::class
+            && ($frame['function'] ?? null) === '__construct'
+            && str_contains($error->getMessage(), 'Argument #2 ($left) must be of type')) {
+            return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+        }
+        throw $error;
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

@@ -517,6 +517,16 @@ def inventory(root):
                     if rule == "IndexStmt" or any(alternative.endswith(suffix) for suffix in ("IS NULL_P", "IS NOT NULL_P", "ISNULL", "NOTNULL")):
                         related[alternative] = (*related.get(alternative, ()), "postgres-partial-btree-v1.json")
         if postgres:
+            boolean_filters = {
+                "where_clause: WHERE a_expr",
+                "a_expr: a_expr AND a_expr", "a_expr: a_expr OR a_expr",
+                "a_expr: NOT a_expr", "c_expr: ( a_expr ) opt_indirection",
+            }
+            for rule in ("IndexStmt", "where_clause", "a_expr", "c_expr"):
+                for alternative in rules.get(rule, ()):
+                    if rule == "IndexStmt" or alternative in boolean_filters:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-boolean-index-predicate-v1.json")
+        if postgres:
             values_signatures = {
                 "simple_select: values_clause",
                 "values_clause: VALUES ( expr_list )",

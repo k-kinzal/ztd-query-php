@@ -825,6 +825,23 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 release: $partial->release, predicate: $predicate,
             );
             $details['postgresPartialBtree'] = [$predicate->slot, $predicate->negated, $partial->toString(), $partialCopy->toString()];
+            $formula = $semantics->analyze(
+                'CREATE INDEX composite ON ledger (wide) WHERE NOT (ledger.value IS NULL OR public.ledger.ready IS NOT NULL)',
+                $activeContext,
+            );
+            $node = SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate::class;
+            $logical = SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator::class;
+            $leaf = SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate::class;
+            $detached = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $formula->table, $formula->name, $formula->keys, release: $formula->release,
+                predicate: new $node($logical::Not, new $node($logical::Or, new $leaf(0), new $leaf(2, true))),
+            );
+            $parsedPredicate = $formula->predicate;
+            $details['postgresBooleanIndexPredicate'] = [
+                $parsedPredicate->operator->value, $parsedPredicate->left->operator->value,
+                $parsedPredicate->left->left->slot, $parsedPredicate->left->right->slot,
+                $formula->toString(), $detached->toString(), $parsedPredicate == $detached->predicate,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
             [$target, $absence] = $result->targets;

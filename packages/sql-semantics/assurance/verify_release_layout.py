@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v112.json"
-CONTRACT = "2059fce37e5b635274bcdab227f4e31eba8ad32cd0bb889b131c4784ca954746"
+CONTRACT_NAME = "release-layout-v113.json"
+CONTRACT = "63690baa2848242f973f240ce95925a273c7fb0bf48df3bc408e862f849b70c2"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -290,6 +290,10 @@ def verify_probe(raw, catalog):
                        ' WHERE ("ready" IS NOT NULL)')
             require(item.get("postgresPartialBtree") == [2, True, partial, partial],
                     "installed-postgres-partial-btree-mismatch", item)
+            formula = ('CREATE INDEX "composite" ON "public"."ledger" USING btree ("wide" ASC NULLS LAST)'
+                       ' WHERE (NOT (("value" IS NULL) OR ("ready" IS NOT NULL)))')
+            require(item.get("postgresBooleanIndexPredicate") == ["NOT", "OR", 0, 2, formula, formula, True],
+                    "installed-postgres-boolean-index-predicate-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\DropIndex"):
             emitted = 'DROP INDEX IF EXISTS "pg_temp"."removal", "absent_namespace"."idx" CASCADE'
             require(item.get("postgresDropIndex") == ["pg_temp", "removal", "keyed", "absent_namespace", True, emitted,

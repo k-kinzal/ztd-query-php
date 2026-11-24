@@ -41,7 +41,13 @@ def data_literal(value):
     return "'" + value.replace("'", "''") + "'"
 
 
-def admit_sql(command, data):
+def admit_condition(expression, fields):
+    atom = rf"{fields} IS (?:NOT )?NULL"
+    token = rf"(?:{atom}|AND|OR|NOT|[()]| )"
+    return re.fullmatch(rf"{token}+", expression) is not None
+
+
+def admitted_command(command, data):
     trial = data["trial"]
     root = trial["createBtree"]
     _, table, columns, _, _ = root["table"]
@@ -52,10 +58,13 @@ def admit_sql(command, data):
     key_list = rf"\({atom}(?:, {atom}){{0,31}}\)"
     payload = rf"(?: INCLUDE \({heading}(?:, {heading}){{0,31}}\))?"
     field = rf"(?:{target}[.])?{heading}"
-    where = rf"(?: WHERE \({field} IS (?:NOT )?NULL\))?"
+    where = r"(?: WHERE (?P<condition>.+))?"
     pattern = rf"CREATE (?:UNIQUE )?INDEX (?:CONCURRENTLY )?(?:IF NOT EXISTS )?{ident} ON (?:ONLY )?{target} USING btree {key_list}{payload}(?: NULLS (?:NOT )?DISTINCT)?{where}"
 
-    return re.fullmatch(pattern, command) is not None
+    match = re.fullmatch(pattern, command)
+    if match is not None and (match["condition"] is None or admit_condition(match["condition"], field)):
+        return match
+    return None
 
 
 def chosen(item):
@@ -91,7 +100,22 @@ def observed_predicate(expression):
     return [name, form[2] is not None]
 
 
-def indexed(raw, scope):
+def native_membership(db, trial, expression):
+    _, _, columns, _, _ = trial["createBtree"]["table"]
+    if expression is None:
+        return [True] * len(trial["rows"])
+    fields = "(?:" + "|".join(re.escape(form) for name in columns for form in (quoted(name), name)
+                             if form.startswith('"') or re.fullmatch(r"[a-z_][a-z_0-9]*", form)) + ")"
+    require(admit_condition(expression, fields), "postgres-btree-native-predicate-form", expression)
+    table, _, order = chosen(trial)
+    raw = db.execute(f"SELECT pg_catalog.json_agg(({expression}) ORDER BY {order}) FROM {table}")[0][0]
+    membership = json.loads(raw)
+    require(len(membership) == len(trial["rows"]) and all(type(value) is bool for value in membership),
+            "postgres-btree-native-predicate-result", membership)
+    return membership
+
+
+def indexed(db, raw, trial, scope):
     if raw is None:
         return None
     row = json.loads(raw)
@@ -100,12 +124,16 @@ def indexed(raw, scope):
     positions, orders, collations = (list(map(int, value.split())) for value in row[7:10])
     method, schema, name, owner = row[10:14]
 
+    predicate = row[15]
+    if predicate is not None:
+        predicate = (native_membership(db, trial, predicate) if trial.get("observeMembership")
+                     else observed_predicate(predicate))
     return {
         "schema": "pg_temp" if scope == "pg_temp" and schema.startswith("pg_temp_") else schema,
         "index": name, "table": owner, "accessMethod": method, "unique": unique, "nullsNotDistinct": nulls,
         "valid": valid, "ready": ready, "live": live, "keyCount": key_count, "memberCount": member_count,
         "positions": positions, "classNames": json.loads(row[14]), "collations": collations, "orders": orders,
-        "predicate": observed_predicate(row[15]),
+        "predicate": predicate,
     }
 
 
@@ -139,7 +167,7 @@ def snapshot(db, trial):
     return {
         "owner": [scope, name, json.loads(heading)], "rows": decoded_rows(rows),
         "otherRows": None if decoy is None else decoded_rows(decoy), "marker": json.loads(marker),
-        "competitor": contestant, "index": indexed(catalog, scope),
+        "competitor": contestant, "index": indexed(db, catalog, trial, scope),
     }
 
 
@@ -156,11 +184,28 @@ def detect_conflict(db, trial):
     return findings
 
 
+def observe_membership(db, trial, condition):
+    """Use a disposable nonunique index to see membership even after a unique build refusal."""
+    table, _, order = chosen(trial)
+    scope = trial["createBtree"]["table"][0]
+    name = "ztd_ir_membership_witness"
+    where = " WHERE " + condition if condition is not None else ""
+    db.execute(f"BEGIN; CREATE INDEX {name} ON {table} ({order}){where}")
+    witness = qualified(scope, name)
+    expression = db.execute("SELECT pg_catalog.pg_get_expr(indpred, indrelid, false) FROM pg_catalog.pg_index "
+                            f"WHERE indexrelid=pg_catalog.to_regclass({data_literal(witness)})")[0][0]
+    result = native_membership(db, trial, expression)
+    db.execute("ROLLBACK")
+    return result
+
+
 def observe(db, data):
-    if not admit_sql(data["sql"], data):
+    match = admitted_command(data["sql"], data)
+    if match is None:
         return {"status": "outside-observer-scope"}
     trial = data["trial"]
     initialize(db, trial, data["path"])
+    membership = observe_membership(db, trial, match["condition"]) if trial.get("observeMembership") else None
     before = snapshot(db, trial)
     active = trial["transaction"]
     if active:
@@ -172,11 +217,14 @@ def observe(db, data):
     probe = detect_conflict(db, trial) if success else None
     if active:
         db.execute("ROLLBACK")
-    return {
+    observed = {
         "status": "btree-creation", "before": before, "after": after, "probe": probe,
         "settled": snapshot(db, trial), "transactionAfter": transaction,
         **{name: result[name] for name in ("sqlState", "command", "notices")},
     }
+    if membership is not None:
+        observed["membership"] = membership
+    return observed
 
 
 def main():
