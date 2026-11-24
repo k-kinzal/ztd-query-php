@@ -9,6 +9,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndexLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTableLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
@@ -17,6 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop as ParsedDrop;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Rename as ParsedRename;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\TruncateTable as ParsedTruncateTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex as ParsedReindex;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget;
 
 /**
  * Routes changes to a resolved persistent relation to their operation owners.
@@ -31,12 +34,14 @@ final class RelationChangeLowering
     public function lower(
         BoundStatement $operation,
         ParsedDrop|ParsedReindex|ParsedRename|ParsedTruncateTable $statement,
-    ): DropIndex|DropTable|DropView|ReindexIndex|RenameColumn|RenameTable|TruncateTable {
+    ): DropIndex|DropTable|DropView|ReindexIndex|ReindexTable|RenameColumn|RenameTable|TruncateTable {
         return match (true) {
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedRename => (new RenameLowering())->lower($operation, $statement),
             $statement instanceof ParsedTruncateTable => (new TruncateLowering())->lower($operation, $statement),
-            $statement instanceof ParsedReindex => (new ReindexIndexLowering())->lower($operation, $statement),
+            $statement instanceof ParsedReindex => $statement->target === ReindexTarget::Table
+                ? (new ReindexTableLowering())->lower($operation, $statement)
+                : (new ReindexIndexLowering())->lower($operation, $statement),
         };
     }
 }

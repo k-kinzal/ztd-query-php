@@ -99,7 +99,7 @@ def negatives(version):
     yield {**request, "sql": 'REINDEX INDEX "fixture"."orders"'}, refusal("not an ordinary index")
     yield {**missing, "complete": False}, refusal("cannot infer absence in an open index namespace")
     yield {**request, "declarations": [*request["declarations"], request["declarations"][3]]}, refusal("conflicting index declarations")
-    yield {**request, "sql": 'REINDEX TABLE "fixture"."orders"'}, refusal("needs a named index")
+    yield {**request, "sql": 'REINDEX SCHEMA "fixture"'}, refusal("needs a named index")
     yield {**request, "sql": 'REINDEX (TABLESPACE pg_default) INDEX "fixture"."cover"'}, refusal("accepts only concurrency options")
     yield {**request, "sql": """REINDEX (CONCURRENTLY 'yes') INDEX "fixture"."cover\""""}, refusal("concurrently", "SemanticException")
     yield {**request, "sql": 'REINDEX INDEX "other"."fixture"."cover"'}, refusal("requires a local schema and index")

@@ -1070,6 +1070,17 @@ if ($dialect !== 'sqlite') {
         $properties[$constraintIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
         $methods[$constraintIndex] = ['__construct', 'quoted'];
         $methods[$reindex] = ['__construct', 'profileId', 'toString'];
+        $reindexTable = 'Schema\\Index\\ReindexTable';
+        $reindexOwner = 'Schema\\Index\\ReindexTableTarget';
+        $reindexKind = 'Schema\\Index\\ReindexTableKind';
+        $roots[] = $reindexTable;
+        $internal[] = 'Schema\\Index\\ReindexTableLowering';
+        $properties[$reindexTable] = ['target' => [$reindexOwner], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindexOwner] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'kind' => [$reindexKind]];
+        $methods[$reindexTable] = ['__construct', 'profileId', 'toString'];
+        $methods[$reindexOwner] = ['__construct', 'quoted'];
+        $properties[$reindexKind] = $methods[$reindexKind] = [];
+        $enumCases[$reindexKind] = ['BaseTable' => 'base-table', 'MaterializedView' => 'materialized-view'];
         $properties[$rebuildMode] = $methods[$rebuildMode] = [];
         $enumCases[$rebuildMode] = ['Standard' => 'standard', 'Concurrent' => 'concurrently'];
         $properties[$indexRemoval] = ['targets' => ['array'], 'ifExists' => ['bool'], 'cascade' => ['bool'],
@@ -1897,11 +1908,11 @@ try {
                         'Unexpected PostgreSQL index selector publication');
                 }
             }
-            if ($dialect === 'postgres' && $short === 'Schema\\Index\\ReindexIndexLowering') {
+            if ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\ReindexIndexLowering', 'Schema\\Index\\ReindexTableLowering'], true)) {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Index\\ReindexIndex'],
+                    && types($members[0]->returnType, $prefix, $short) === [substr($short, 0, -strlen('Lowering'))],
                     'Unexpected PostgreSQL index rebuild publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\DropRelationLowering') {
@@ -1932,7 +1943,7 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
-                        'Schema\\Index\\ReindexIndex', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {
@@ -2023,7 +2034,7 @@ try {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference',
-                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex'], true)
+                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Index\\ReindexTableTarget'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
                 || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',

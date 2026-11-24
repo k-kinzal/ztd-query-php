@@ -1,0 +1,88 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-table-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-reindex-index-boundaries-v2.json",
+  "scope": "Seal standalone owner identity, the owner-wide selector and the exact native construction path.",
+  "rules": {
+    "Schema/Index/ReindexTable::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/ReindexTable::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Index/ReindexTable::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REINDEX TABLE ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Index/ReindexTableTarget::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::system($schema->value) && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'An index owner requires an application schema or pg_temp.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value !== 'pg_temp' || $kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableKind::BaseTable, 'Only base tables are temporary index owners.');"
+      ]
+    },
+    "Schema/Index/ReindexTableTarget::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->name->quoted();"
+      ]
+    },
+    "Schema/Index/ReindexTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX TABLE requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table && $statement->object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\QualifiedName && $statement->object->catalog === null, 'REINDEX TABLE needs a local schema and owner.');",
+        "foreach ($statement->options as $option) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($option->option() === 'concurrently', 'A complete REINDEX TABLE accepts only concurrency options.');",
+        "}",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Table\\DeclaredTable, 'REINDEX TABLE requires a resolved index owner.');",
+        "$name = $resolution->table->name;",
+        "$kind = $resolution->table->kind;",
+        "$schema = $name->schema ?? $context->declarationSchema;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name->catalog === null && ($kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable || $kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::MaterializedView), 'REINDEX TABLE requires a local table or materialized view.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$context->indexNamespace->partitioned($schema, $name->name), 'REINDEX TABLE requires a nonpartitioned owner.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTable(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableTarget(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name->name->value), $kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableKind::BaseTable : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableKind::MaterializedView), $statement->requestsConcurrentBuild() ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard, $profile->grammar);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => $statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table ? (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableLowering())->lower($operation, $statement) : (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    }
+  }
+}

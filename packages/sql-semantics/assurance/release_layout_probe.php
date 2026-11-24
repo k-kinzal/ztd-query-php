@@ -591,6 +591,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
+        $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Btree\\CreateIndex'] =
             'CREATE UNIQUE INDEX "new index" ON ledger (wide DESC NULLS LAST, value ASC NULLS FIRST) INCLUDE (ready, ready) NULLS NOT DISTINCT';
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
@@ -919,6 +920,27 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresReindexConstraintIndex'] = [
                 $boundKey->target::class === $key::class,
                 $boundKey->target->table->value, $boundKey->toString(), $withKey->toString(), $badDatabase,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexTable') {
+            $temporary = $semantics->context([
+                'CREATE TABLE public.orders (id integer)',
+                'CREATE TEMP TABLE orders (id integer)',
+            ]);
+            $shadow = $semantics->analyze('REINDEX TABLE orders', $temporary);
+            $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTableTarget(
+                $result->target->schema, $result->target->name, $result->target->kind,
+            );
+            $detached = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable($target, $result->mode, $result->release);
+            $badDatabase = false;
+            try {
+                $semantics->analyze('REINDEX TABLE other.public.orders', $temporary);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $badDatabase = str_contains($error->getMessage(), 'needs a local schema and owner');
+            }
+            $details['postgresReindexTable'] = [
+                $target->schema->value, $target->name->value, $target->kind->value, $result->mode->value,
+                $detached->toString(), $shadow->target->kind->value, $shadow->toString(), $badDatabase,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {

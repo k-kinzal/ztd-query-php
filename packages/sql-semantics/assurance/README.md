@@ -295,6 +295,8 @@ The [PostgreSQL index rebuild contract](postgres-reindex-index-v1.json) compares
 
 The [PostgreSQL constraint-index rebuild contract](postgres-reindex-constraint-index-v1.json) checks the separately bound named key index and whether each preserved foreign key points to the current physical index. It probes primary, unique, NULL equality and deferrable enforcement. Run `run_server_postgres_reindex_constraint_index.py` on both releases and replay with `combine_server_postgres_reindex_constraint_index_evidence.py`.
 
+The [PostgreSQL owner-wide index rebuild contract](postgres-reindex-table-v2.json) checks the bound table or materialized view and each visible and TOAST index while preserving the heap, its typed rows and decoy catalog. It measures mode-specific notices, temporary physical rebuilding, concurrent transaction refusal, and rollback. Run `run_server_postgres_reindex_table.py` for each pinned release and replay with `combine_server_postgres_reindex_table_evidence.py`.
+
 
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.

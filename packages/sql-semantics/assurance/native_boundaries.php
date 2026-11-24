@@ -138,6 +138,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-drop-index-boundaries-v3.json', 'e718bfa6ffe7788f9cd384861e8cd629faf2f5d0030bed5cf053757b689ce838'],
             ['postgres-create-btree-boundaries-v6.json', '07fedd537da3c81d4e66f375be586f3b869fadad4463d05d89f2d66b33f711c2'],
             ['postgres-reindex-index-boundaries-v2.json', '46cbe5135cc91941064cd7187f286ce191e842a1f36759d62f289e704ec64c00'],
+            ['postgres-reindex-table-boundaries-v1.json', '49fb4d1c8b77036d077aa74be41a15cdaf32b57ff464fb6ef343e88682c79021'],
         ],
         'sqlite' => [],
     };

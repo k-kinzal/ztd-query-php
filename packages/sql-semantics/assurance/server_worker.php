@@ -1128,6 +1128,35 @@ function observePostgresReindex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Inde
     ];
 }
 
+function constructPostgresReindexTable(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable
+{
+    $specification = $input['reindexTable'];
+    [$schema, $owner, $kind] = $specification['target'];
+    $name = \SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+    $target = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTableTarget(
+        new $name($schema), new $name($owner),
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTableKind::from($kind),
+    );
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable(
+        $target,
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($specification['mode']),
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresReindexTable(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable $value): array
+{
+    $target = $value->target;
+    return [
+        'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'reindexTable' => [
+            'target' => [$target->schema->value, $target->name->value, $target->kind->value],
+            'mode' => $value->mode->value,
+        ],
+    ];
+}
+
 function constructPostgresDropIndex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex
 {
     $drop = $input['dropIndex'];
@@ -1429,6 +1458,7 @@ function observeStatement(array $input): array
             isset($input['createBtree']) => constructPostgresBtree($input),
             isset($input['dropIndex']) => constructPostgresDropIndex($input),
             isset($input['reindex']) => constructPostgresReindex($input),
+            isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
@@ -1554,6 +1584,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex) {
         return observePostgresReindex($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable) {
+        return observePostgresReindexTable($value);
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [
