@@ -14,16 +14,15 @@ use SqlSemantics\Platform\PostgreSql\Semantics;
 #[CoversClass(IndexTablespaceLowering::class)]
 final class IndexTablespaceLoweringTest extends TestCase
 {
-    private const RELATIONS = [
-        'CREATE SCHEMA app',
-        'CREATE TABLE app.events (id integer)',
-        'CREATE INDEX event_key ON app.events (id)',
-    ];
-
     public function testResolvesTheEffectiveDeclaredPlacement(): void
     {
         $semantics = new Semantics();
-        $context = $semantics->context([...self::RELATIONS, 'CREATE TABLESPACE "cold archive" LOCATION \'/sql-context/cold\'']);
+        $context = $semantics->context([
+            'CREATE SCHEMA app',
+            'CREATE TABLE app.events (id integer)',
+            'CREATE INDEX event_key ON app.events (id)',
+            'CREATE TABLESPACE "cold archive" LOCATION \'/sql-context/cold\'',
+        ]);
         $value = $semantics->analyze('REINDEX (TABLESPACE earlier, VERBOSE, TABLESPACE "cold archive") INDEX app.event_key', $context);
 
         self::assertInstanceOf(ReindexIndex::class, $value);
@@ -34,10 +33,20 @@ final class IndexTablespaceLoweringTest extends TestCase
     public function testRejectsAnUnresolvedEffectivePlacement(): void
     {
         $semantics = new Semantics();
-        $context = $semantics->context(self::RELATIONS);
-        $this->expectException(InvalidConstruction::class);
-        $this->expectExceptionMessage('requires a declared tablespace');
+        $context = $semantics->context([
+            'CREATE SCHEMA app',
+            'CREATE TABLE app.events (id integer)',
+            'CREATE INDEX event_key ON app.events (id)',
+        ]);
 
-        $semantics->analyze('REINDEX (TABLESPACE pg_default, TABLESPACE missing_archive) INDEX app.event_key', $context);
+        try {
+            $semantics->analyze('REINDEX (TABLESPACE pg_default, TABLESPACE missing_archive) INDEX app.event_key', $context);
+        } catch (InvalidConstruction $failure) {
+            self::assertStringContainsString('requires a declared tablespace', $failure->getMessage());
+
+            return;
+        }
+
+        self::fail('An unresolved placement was published.');
     }
 }

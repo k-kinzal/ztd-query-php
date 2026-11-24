@@ -23,9 +23,14 @@ final class IndexTablespaceTest extends TestCase
 
     public function testRejectsTheReservedSharedDestination(): void
     {
-        $this->expectException(InvalidConstruction::class);
-        $this->expectExceptionMessage('requires an application tablespace or pg_default');
+        try {
+            new IndexTablespace(new Identifier('pg_global'));
+        } catch (InvalidConstruction $failure) {
+            self::assertStringContainsString('requires an application tablespace or pg_default', $failure->getMessage());
 
-        new IndexTablespace(new Identifier('pg_global'));
+            return;
+        }
+
+        self::fail('A shared destination was constructed for an application index.');
     }
 }
