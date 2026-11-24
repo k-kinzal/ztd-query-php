@@ -1508,7 +1508,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v13.json', '50635fb4a7ad786e5ee8c54f8ffc2cd50d019769bdb8a0187d162d96c8dccec3', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v14.json', '32ae6179674e3ad69026ac96dceecdd453c2aeab456100fc977d776911add8a4', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],

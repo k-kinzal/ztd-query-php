@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexSchemas;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;

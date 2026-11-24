@@ -65,7 +65,7 @@ final class CatalogTest extends TestCase
         $platform = Platform::shared();
         $profile = (new Semantics())->profile();
         $catalog = new Catalog($profile, null, $platform->parser($profile));
-        $this->expectExceptionMessage('A catalog definition must declare a relation, index or schema.');
+        $this->expectExceptionMessage('A catalog definition must declare a relation, index, schema or tablespace.');
 
         $catalog->build(['SELECT 1'], true);
     }

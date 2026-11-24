@@ -13,8 +13,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogRelationCoordinates;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Tablespace\CreateTablespace;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Tablespace\CreateTablespace;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 
 /**

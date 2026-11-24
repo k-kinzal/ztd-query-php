@@ -74,16 +74,16 @@ final class ReindexTest extends TestCase
         self::assertFalse($disabled->reportsProgress());
     }
 
-    public function testNamesTablespaceDetectsTheSeparateDestination(): void
+    public function testTablespaceSelectsTheLastDecodedDestination(): void
     {
         $inspection = new Inspection();
-        $move = $inspection->diagnose('REINDEX (VERBOSE, TABLESPACE other) INDEX app.lookup')->statement;
+        $move = $inspection->diagnose('REINDEX (TABLESPACE earlier, VERBOSE, TABLESPACE "two words") INDEX app.lookup')->statement;
         $rebuild = $inspection->diagnose('REINDEX (VERBOSE) INDEX app.lookup')->statement;
 
         self::assertInstanceOf(Reindex::class, $move);
         self::assertInstanceOf(Reindex::class, $rebuild);
-        self::assertTrue($move->namesTablespace());
-        self::assertFalse($rebuild->namesTablespace());
+        self::assertSame('two words', $move->tablespace());
+        self::assertNull($rebuild->tablespace());
     }
 
     public function testDeriveStatementReportsASequence(): void
