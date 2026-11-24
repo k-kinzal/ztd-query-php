@@ -1,0 +1,97 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-index-predicate-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-partial-btree-v1.json",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings, native parameters, named local B-tree on a resolved ordinary or temporary table.",
+  "scope": "Compose scalar column NULL tests with native AND, OR and NOT in partial B-tree predicates. Preserve the enclosing checked index layout and owner of every referenced physical column.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Index/Btree/IndexBooleanPredicate": {
+      "role": "A closed Boolean composition in the WHERE clause of a partial B-tree definition.",
+      "structure": "One existing logical operator, one required typed child, and one optional typed child. Each child is a scalar NULL test or another Boolean composition; children retain their positions.",
+      "conditions": "NOT consumes one operand. AND and OR consume exactly two operands. At the completed index, every terminal slot belongs to its table heading. Grouping in parsed SQL determines the tree, and binding uses the same declared occurrence for each leaf.",
+      "meaning": "Leaves are true precisely when their column has the tested nullness. AND is true when both children are true, OR when at least one is true and NOT when its child is false. Each result is two-valued because the leaves are scalar NULL tests. Exactly true rows participate in the enclosing index.",
+      "sql": "Render a fully grouped condition using only the native operator keyword and recursively represented typed operands. Resolve every field through its owning table heading, retaining the spelling by identifier quoting.",
+      "externalInterpretation": "The root uses the same resolved schema, relation and physical heading, language profile, key layout and runtime row and session state in both operands of the comparison.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "amendedConstructors": {
+    "Schema/Index/Btree/CreateIndex": "Accept absence, a scalar NULL test, or a finite Boolean composition of those tests. The owner boundary checks all leaf slots and the full expression is rendered from its tree. Retain the scalar and unfiltered contracts."
+  },
+  "existingRoles": ["Schema/Index/Btree/NullIndexPredicate", "Schema/Index/Btree/CreateIndex", "Predicate/LogicalOperator"],
+  "rules": [
+    "Zero or more grouping parentheses around operands do not change the represented binding or logical order.",
+    "Fold the finite tree using the scalar NULL rule and the three native Boolean operations. Each rule consumes children with closed two-valued results.",
+    "Physical uniqueness compares only admitted rows, with the root's separate key NULL policy. Initial duplicate failures, later writes, native notices, rollback and invalid index remnants follow the enclosing B-tree contract."
+  ],
+  "observations": [
+    "Exact composed operator and ordered child graph, scalar NULL polarity, release, index policies and resolved physical leaf coordinates.",
+    "Native catalog metadata, notices and state transitions, exact typed retained rows and original versus rendered command status, including duplicate-key refusal.",
+    "Extensional membership from PostgreSQL's stored predicate on all eight finite NULL assignments. PostgreSQL may flatten or negate the catalog expression using equivalent Boolean rules.",
+    "Writes that repeat participating and nonparticipating nullable rows, success or exact native SQLSTATE, and rollback state."
+  ],
+  "finite": {
+    "forms": ["binary", "nested-left", "nested-right", "negated-binary"],
+    "operators": ["AND", "OR"],
+    "leftSlots": [2, 3, 4],
+    "rightSlots": [2, 3, 4],
+    "leftNegation": [false, true],
+    "rightNegation": [false, true],
+    "identity": "For both releases, all 288 ordered tuples are exercised through direct construction and analyzed SQL. The finite heading is [label:int4, state:int4, a:int4, b:int8, c:bool]. The row at state n has label n modulo 3 and a, b and c null exactly at bits 1, 2 and 4. The repeated label and fully distinguished columns expose incorrect tree and scope rules. The tested unique B-tree uses label as its key. The additional fixed nonunique catalog witness for each coordinate still exposes the native membership mask when the unique build is rejected.",
+    "supplemental": "Exercise negation of a single leaf, nested negation, whitespace and grouping, and mixed qualified leaves. Distinguish arity, left and right branches, a leaf outside the owner heading and unsupported parsed roles at their required boundaries."
+  },
+  "exploration": {
+    "seeds": [2281, 83939, 169783],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 540,
+    "allowedExclusions": [],
+    "domain": "Build distinct finite predicate trees from variable connective choices and depths up to six, independently vary leaf slots and polarity, exercise both index scopes, key NULL policy, uniqueness, concurrency, transaction state and ownership-preserving identifier spelling."
+  },
+  "negative": [
+    "NOT with two children",
+    "AND or OR with a missing right child",
+    "Non-predicate child",
+    "A nested scalar leaf from outside the indexed table heading",
+    "An unrelated qualified reference in either child",
+    "A row-valued NULL test or unresolved parameter in a nested branch"
+  ],
+  "faults": [
+    "Admit a wrong-arity Boolean composition",
+    "Omit a right child when validating root scope",
+    "Exchange AND and OR",
+    "Erase a required negation",
+    "Render only one operand of a binary composition"
+  ],
+  "calibration": {
+    "driver": "01ace7002ad59b30e0a88beeaeeff50c8bb7e73ab23c02def8718e717967ecda",
+    "referenceComparison": "20da1d7a93ac1b17234cd3f1b3c0157d8b8c3dd575e7d16be9e57c4509df7749",
+    "queryPack": "7cbe33c677050d4003f8fdec8401c61271a37f07b99d2142e4c72a53d0f3bc9b",
+    "nativeProfiles": 56,
+    "uniqueBuildAccepted": 112,
+    "duplicateBuildRefused": 176,
+    "subsequentDuplicateRefused": 10,
+    "membershipAndUniqueResult": "b22a881d0d9f4879fc9f06b8bbeca7158f9429e9227c2e9dfc6ce11a9bb24353",
+    "16.6": {
+      "stdout": "e32b4133133fe4b7cb5a726324ce73e0c7a2bcb14e2a3079049a096cad4bd2ca",
+      "stderr": "a9cbcbd6afb97056db48879bd07a8dd65b44254194163126626f50923964a9b5"
+    },
+    "17.2": {
+      "stdout": "21d651bd7510648ed18f1cbe87c16b0220f636b1b849bbb671844b5b3b11cfe3",
+      "stderr": "45898d309551292a29094bb66357a2db84b4756712e0dfee71138b9190d279d4"
+    }
+  },
+  "sources": [
+    "https://www.postgresql.org/docs/16/functions-logical.html",
+    "https://www.postgresql.org/docs/17/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/indexes-partial.html"
+  ],
+  "trust": [
+    "The documented native scalar NULL and Boolean rules, the source-audited PHP tree construction, lookup and renderer, the independent finite membership evaluator, and the pinned PostgreSQL and libpq environment.",
+    "Assertion that every candidate trial and result is persisted and classified belongs to the isolated runner and independent replay. Finite trials establish the registered bounded domain. Structural induction on trees relies on the checked expression forms and native rule correspondence."
+  ],
+  "open": [
+    "Other row-valued and scalar predicates, expression keys, custom functions and collations, planner-dependent inference and wider B-tree grammar remain in the fixed whole-language inventory."
+  ]
+}
