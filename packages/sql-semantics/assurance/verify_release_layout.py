@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v123.json"
-CONTRACT = "cdef887cbb466740a9cd1baa37d216459e4929541cdc0658b60d2d5d271aac2d"
+CONTRACT_NAME = "release-layout-v124.json"
+CONTRACT = "54eb452db6fa96079d7ae9bcb3a6be3e8e92eb835f714686481461468836ebd9"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -317,6 +317,11 @@ def verify_probe(raw, catalog):
                 "branch", "groups", 'REINDEX INDEX "public"."branch_idx"',
                 "leaf", "child", physical, physical,
             ], "installed-postgres-reindex-partition-index-mismatch", item)
+            exclusion = 'REINDEX INDEX "public"."avoid_overlap"'
+            temporary = 'REINDEX INDEX CONCURRENTLY "pg_temp"."avoid_overlap"'
+            require(item.get("postgresReindexExclusionIndex") == [
+                True, "booked", exclusion, exclusion, temporary, True,
+            ], "installed-postgres-reindex-exclusion-index-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\ReindexTable"):
             emitted = 'REINDEX TABLE CONCURRENTLY "public"."snapshot"'
             require(item.get("postgresReindexTable") == [

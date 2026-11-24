@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Schema\Index;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ExclusionIndexReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndexLowering;
@@ -33,5 +34,21 @@ final class ReindexIndexLoweringTest extends TestCase
         self::assertSame(IndexRebuildMode::Standard, $result->mode);
         self::assertSame('REINDEX INDEX "pg_temp"."selected"', $result->toString());
         self::assertEquals($result, $semantics->analyze($result->toString(), $context));
+    }
+
+    public function testLowerSelectsTheExclusionIndexOverAnOrdinaryNamesake(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context([
+            'CREATE TABLE public.orders (id integer)',
+            'CREATE INDEX checked ON public.orders (id)',
+            'CREATE TEMP TABLE orders (id integer, ready boolean, CONSTRAINT checked EXCLUDE USING btree (id WITH =) WHERE (ready))',
+        ]);
+        $result = $semantics->analyze('REINDEX INDEX CONCURRENTLY checked', $context);
+
+        self::assertInstanceOf(ReindexIndex::class, $result);
+        self::assertInstanceOf(ExclusionIndexReference::class, $result->target);
+        self::assertSame('orders', $result->target->table->value);
+        self::assertSame('REINDEX INDEX CONCURRENTLY "pg_temp"."checked"', $result->toString());
     }
 }

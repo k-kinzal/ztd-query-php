@@ -1107,9 +1107,11 @@ function constructPostgresReindex(array $input): \SqlSemantics\Platform\PostgreS
     [$schema, $index, $table] = array_map(
         static fn (string $name) => new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($name), $specification['target'],
     );
-    $role = ($specification['constraintOwned'] ?? false)
-        ? \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference::class
-        : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference::class;
+    $role = match (true) {
+        ($specification['constraintOwned'] ?? false) => \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference::class,
+        ($specification['exclusionOwned'] ?? false) => \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ExclusionIndexReference::class,
+        default => \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference::class,
+    };
     $target = isset($specification['partitionKind'])
         ? new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference(
             $schema, $index, $table,
@@ -1133,6 +1135,7 @@ function observePostgresReindex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Inde
             'target' => [$target->schema->value, $target->index->value, $target->table->value],
             'mode' => $value->mode->value,
             ...($target instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference ? ['constraintOwned' => true] : []),
+            ...($target instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ExclusionIndexReference ? ['exclusionOwned' => true] : []),
             ...($target instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference
                 ? ['partitionKind' => $target->kind->value] : []),
         ],

@@ -48,7 +48,7 @@ final class IndexTargetLowering
      * Identifies the checked declared physical or partition-index rebuild role.
      * @throws InvalidConstruction For an index outside the supported rebuild roles
      */
-    public function resolveRebuild(AnalysisContext $context, QualifiedName $name): IndexReference|ConstraintIndexReference|PartitionIndexReference
+    public function resolveRebuild(AnalysisContext $context, QualifiedName $name): IndexReference|ConstraintIndexReference|ExclusionIndexReference|PartitionIndexReference
     {
         $match = $this->lookup($context, $name);
         Check::input($match !== null, 'The index selector requires a declared index.');
@@ -62,7 +62,7 @@ final class IndexTargetLowering
             IndexDeclarationKind::PartitionBranch => new PartitionIndexReference($schema, $index, $table, PartitionRebuildKind::Branch),
             IndexDeclarationKind::PartitionLeaf => new PartitionIndexReference($schema, $index, $table, PartitionRebuildKind::Leaf),
             IndexDeclarationKind::Partitioned => throw new InvalidConstruction('This index rebuild requires a nonpartitioned index.'),
-            IndexDeclarationKind::ExclusionConstraint => throw new InvalidConstruction('This index rebuild requires an ordinary or a primary or unique constraint index.'),
+            IndexDeclarationKind::ExclusionConstraint => new ExclusionIndexReference($schema, $index, $table),
         };
     }
 

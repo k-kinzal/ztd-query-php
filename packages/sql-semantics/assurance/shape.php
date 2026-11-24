@@ -1065,11 +1065,13 @@ if ($dialect !== 'sqlite') {
         $reindex = 'Schema\\Index\\ReindexIndex';
         $rebuildMode = 'Schema\\Index\\IndexRebuildMode';
         $constraintIndex = 'Schema\\Index\\ConstraintIndexReference';
+        $exclusionIndex = 'Schema\\Index\\ExclusionIndexReference';
         $partitionIndex = 'Schema\\Index\\Partition\\PartitionIndexReference';
         $roots[] = $reindex;
-        $properties[$reindex] = ['target' => [$constraintIndex, $indexReference, $partitionIndex], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindex] = ['target' => [$constraintIndex, $exclusionIndex, $indexReference, $partitionIndex], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $properties[$constraintIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
-        $methods[$constraintIndex] = ['__construct', 'quoted'];
+        $properties[$exclusionIndex] = $properties[$constraintIndex];
+        $methods[$constraintIndex] = $methods[$exclusionIndex] = ['__construct', 'quoted'];
         $methods[$reindex] = ['__construct', 'profileId', 'toString'];
         $reindexSchema = 'Schema\\Index\\Scope\\ReindexSchema';
         $roots[] = $reindexSchema;
@@ -1921,7 +1923,7 @@ try {
                 $members = $class->getMethods();
                 $returns = [
                     'resolve' => ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'],
-                    'resolveRebuild' => ['Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\IndexReference', 'Schema\\Index\\Partition\\PartitionIndexReference'],
+                    'resolveRebuild' => ['Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference', 'Schema\\Index\\IndexReference', 'Schema\\Index\\Partition\\PartitionIndexReference'],
                     'lookup' => ['?' . $platform . '\\Model\\Contract\\Index\\IndexDeclaration'],
                 ];
                 requireShape(count($members) === count($returns), 'Unexpected PostgreSQL index selector method count');
@@ -2068,7 +2070,7 @@ try {
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
-                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference',
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)

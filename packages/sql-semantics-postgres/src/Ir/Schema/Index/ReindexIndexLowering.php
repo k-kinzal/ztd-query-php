@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget;
 
 /**
- * Resolves a native reindex request to one ordinary application or temporary index.
+ * Resolves a single-index rebuild to its declared physical or partitioned target.
  *
  * @visibility SqlSemantics
  */

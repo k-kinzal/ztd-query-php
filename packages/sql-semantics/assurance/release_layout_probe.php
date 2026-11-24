@@ -960,6 +960,30 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $branch->target->kind->value, $branch->target->table->value, $branch->toString(),
                 $physical->target->kind->value, $physical->target->table->value, $physical->toString(), $copy->toString(),
             ];
+            $exclusions = $semantics->context([
+                'CREATE TABLE public.booked (id integer, ready boolean, CONSTRAINT avoid_overlap EXCLUDE USING btree (id WITH =) WHERE (ready))',
+                'CREATE TEMP TABLE booked (id integer, CONSTRAINT avoid_overlap EXCLUDE USING btree (id WITH =))',
+            ]);
+            $permanent = $semantics->analyze('REINDEX INDEX public.avoid_overlap', $exclusions);
+            $temporary = $semantics->analyze('REINDEX INDEX CONCURRENTLY avoid_overlap', $exclusions);
+            $exclusion = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ExclusionIndexReference(
+                $permanent->target->schema, $permanent->target->index, $permanent->target->table,
+            );
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                $exclusion, $permanent->mode, $permanent->release,
+            );
+            $invalid = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                    $exclusion, $temporary->mode, $permanent->release,
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $invalid = str_contains($error->getMessage(), 'persistent exclusion index requires a standard rebuild');
+            }
+            $details['postgresReindexExclusionIndex'] = [
+                $permanent->target::class === $exclusion::class,
+                $exclusion->table->value, $permanent->toString(), $rebuilt->toString(), $temporary->toString(), $invalid,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexTable') {
             $temporary = $semantics->context([

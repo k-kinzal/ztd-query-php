@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ExclusionIndexReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex;
@@ -31,5 +32,13 @@ final class ReindexIndexTest extends TestCase
         $value = new ReindexIndex($index, release: GrammarRelease::PostgreSql166);
 
         self::assertSame('pg-16.6/utf8/standard-conforming-strings/native', $value->profileId());
+    }
+
+    public function testToStringRebuildsTheExactExclusionIndex(): void
+    {
+        $index = new ExclusionIndexReference(new Identifier('app'), new Identifier('over"lap'), new Identifier('orders'));
+        $value = new ReindexIndex($index);
+
+        self::assertSame('REINDEX INDEX "app"."over""lap"', $value->toString());
     }
 }
