@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-lexical-proof-6",
+  "approval": "pending-human-review",
+  "targets": [
+    "PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings, native parameters"
+  ],
+  "obligations": [
+    "P06",
+    "Q04",
+    "Q05"
+  ],
+  "theorems": [
+    "For each decoded name and a suffix whose first character is not the identifier quote, the scanner of the quoted name followed by this suffix returns the identical decoded name and suffix.",
+    "Every header and target of the stated arity round-trips under the fixed canonical REINDEX decoder. The command head preserves the exact selector, requested concurrency when applicable, and progress-reporting choice.",
+    "For each canonical head, decoded placement name and target of the stated arity, the placement decoder returns the same head, placement and target."
+  ],
+  "profileConditions": [
+    "The accepted PostgreSQL Identifier contains a nonempty valid UTF-8 sequence without NUL and fits the 63-byte profile. The formal lexical result quantifies over all character lists.",
+    "PostgreSQL parses the fixed canonical syntax and counts each doubled identifier quote as one decoded character. Native name binding requires the same externally supplied identities.",
+    "The single named table syntax can refer to a standalone or partitioned owner. The separate IR role constrains which external owner is selected.",
+    "The base command theorem applies without placement. The placement theorem applies after canonical rendering with a bound TABLESPACE operand. Both retain the same release, profile, arity and external name interpretation assumptions."
+  ],
+  "connection": "Connect the six checked PHP rendering paths, the readonly optional placement and the exact placement prefix to the unchanged canonical name and header encoding plus its new placement decoder.",
+  "proofValidation": "Use a fixed trusted challenge export and compare both named theorem statements. Replay with Lean and at least one external kernel. Reject unapproved axioms, native computation axioms and mismatched theorem types. Record the exact verifier, source and artifact identity and actual availability of the sandbox.",
+  "measurement": "Separate the universal lexical theorem from the native execution comparison. The theorem covers canonical tokenization and names. The PostgreSQL engine and source rule checks establish the bounded semantic report, storage and transaction observations.",
+  "contractArtifacts": {
+    "ReindexSpec.lean": "0c6ace780f83a2bfbc7b44afbcd294afb59301aaa87d97fb892b163200b4b93a",
+    "PlacementSpec.lean": "f2cd833ddd83dcee91d1dad0437ba73c7064f9db1c04404d2e5e4ef495fe7c5d",
+    "PlacementChallenge.lean": "fffc038f3231fb33be49eb44b501c7e6821e0f759b18da9a9ff88c51a7ce1cb7",
+    "placement-comparator.json": "c8c16b162efb2c288e812ae0602d95780c6a91ced207efb233d0b3f4563bfac1",
+    "lean-toolchain": "582a63f8f9c5128067b688778c1051cf1464c3ca9d57b9325025c051c29b774a"
+  },
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-syntax-lexical.html",
+    "https://www.postgresql.org/docs/17/sql-syntax-lexical.html",
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html",
+    "https://lean-lang.org/doc/reference/latest/ValidatingProofs/"
+  ],
+  "revises": "contract-v5.json",
+  "rationale": "Extend the fixed lexical obligation to the placement prefix. Preserve both predecessor theorem types and the empty transitive axiom allowance.",
+  "toolchain": {
+    "version": "4.36.0",
+    "commit": "611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9",
+    "linuxAarch64": {
+      "name": "lean-4.36.0-linux_aarch64.tar.zst",
+      "sha256": "35471998152191ef809418ce5bf61f8fc5f209e5e3be05b48bdc4949fdb3e726"
+    }
+  }
+}
