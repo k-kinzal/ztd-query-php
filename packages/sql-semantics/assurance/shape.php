@@ -387,7 +387,7 @@ if ($dialect === 'sqlite') {
     $pureCollaborators[] = 'Schema\\Alter\\AppendColumnBounds';
     $properties['Schema\\Alter\\AddColumn'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'priorHeading' => ['array'],
-        'strict' => ['bool'], 'column' => ['Schema\\TableColumn'],
+        'strict' => ['bool'], 'column' => ['Schema\\TableColumn'], 'checks' => ['array'],
     ];
     $properties['Schema\\Alter\\AddGeneratedColumn'] = $properties['Schema\\Alter\\AddColumn'];
     $methods['Schema\\Alter\\AddColumn'] = $methods['Schema\\Alter\\AddGeneratedColumn'] = $methods['Select'];
@@ -1084,7 +1084,7 @@ try {
     if ($dialect === 'sqlite') {
         $contracts = [
             'sqlite-rename-boundaries-v2.json' => 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3',
-            'sqlite-add-column-boundaries-v2.json' => 'ee88516a312ecd4d88d32785dd800c300db193bff1fbb097e17d7df7ee0e0028',
+            'sqlite-add-column-boundaries-v3.json' => 'bcd82d1a6f7197fd39f31d4fe94f282408b5b4edb3e12017e2d5e2be62c51c1b',
         ];
         foreach ($contracts as $name => $digest) {
             $boundary = __DIR__ . '/' . $name;
@@ -1142,9 +1142,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v49.json';
+    $storagePath = __DIR__ . '/value-storage-v50.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '394f363733f6b984dd591c36e8e9968909809c20d6e9edc724791fe67297c596',
+        hash_file('sha256', $storagePath) === 'a55c5def88939ddaa15d2d20ada8fd019c703eda76035dd7caf37d82963a73aa',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

@@ -1150,6 +1150,29 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['computedDefaults'] = [$altered->expression->operator->value, $altered->expression->right->operator->value,
                 $declared->expression->operator->value, $alter->toString(), $create->toString()];
+            $checked = $semantics->analyze(
+                'ALTER TABLE main.accounts ADD total INTEGER DEFAULT 7 CONSTRAINT "minimum" CHECK (total > id)',
+                $context,
+            );
+            $firstCheck = $checked->checks[0];
+            $checks = [&$firstCheck];
+            $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn(
+                $checked->schema, $checked->table, $checked->priorHeading, $checked->strict, $checked->column, $checks,
+            );
+            $firstCheck = new SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint(
+                new SqlSemantics\Platform\Sqlite\Ir\Identifier('other'),
+                new SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0),
+                1,
+            );
+            $condition = $detached->checks[0];
+            if (!$condition->label instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$condition->condition instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison
+                || !$condition->condition->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$condition->condition->right instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed ordinary addition lost its checked slots.');
+            }
+            $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
+                $condition->condition->right->slot, $detached->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddGeneratedColumn') {
             $generation = $result->column->generated;
@@ -1169,6 +1192,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['addGeneratedColumn'] = [$result->schema->value, $result->table->value, array_column($direct->priorHeading, 'value'),
                 $result->strict, $result->column->name->value, $generation->mode->value, $generation->expression->operator->value,
                 $generation->expression->left->slot, $generation->expression->right->decimal, $direct->toString()];
+            $checked = $semantics->analyze(
+                'ALTER TABLE main.accounts ADD total INTEGER AS (id + 7) VIRTUAL CONSTRAINT "large" CHECK (total > id)',
+                $context,
+            );
+            $condition = $checked->checks[0];
+            if (!$condition->label instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$condition->condition instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison
+                || !$condition->condition->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$condition->condition->right instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed generated addition lost its checked slots.');
+            }
+            $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
+                $condition->condition->right->slot, $checked->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

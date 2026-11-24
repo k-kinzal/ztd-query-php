@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Alter;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateColumnLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckLowering;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -13,6 +14,8 @@ use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Collation;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnCheck;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ConstraintName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
@@ -34,7 +37,16 @@ final class AddColumnLowering
     public function lower(BoundStatement $operation, AlterAddColumn $statement): AddColumn|AddGeneratedColumn
     {
         [$schema, $name, $table] = (new AlterTargetLowering())->resolve($operation, $statement);
-        foreach ($statement->column->constraints as $constraint) {
+        $constraints = $statement->column->constraints;
+        foreach ($constraints as $position => $constraint) {
+            if ($constraint instanceof ConstraintName) {
+                Check::input(($constraints[$position + 1] ?? null) instanceof ColumnCheck, 'A column addition supports constraint names on inline CHECK conditions.');
+                continue;
+            }
+            if ($constraint instanceof ColumnCheck) {
+                Check::input(($constraints[$position - 1] ?? null) instanceof ConstraintName, 'A column addition requires an explicit CHECK constraint name.');
+                continue;
+            }
             Check::input(
                 $constraint instanceof Collation || $constraint instanceof DefaultExpression
                     || $constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord || $constraint instanceof NotNull
@@ -53,9 +65,10 @@ final class AddColumnLowering
         }
         $binding = new SourceBinding($operation, $statement, [...$heading, new Identifier($statement->column->name->value)]);
         $column = (new CreateColumnLowering())->lower($statement->column, $operation, $binding, $type->descriptor);
+        $checks = (new CheckLowering())->collect($binding, $constraints, count($heading));
 
         return $column->generated === null
-            ? new AddColumn($schema, $name, $heading, $strict, $column)
-            : new AddGeneratedColumn($schema, $name, $heading, $strict, $column);
+            ? new AddColumn($schema, $name, $heading, $strict, $column, $checks)
+            : new AddGeneratedColumn($schema, $name, $heading, $strict, $column, $checks);
     }
 }

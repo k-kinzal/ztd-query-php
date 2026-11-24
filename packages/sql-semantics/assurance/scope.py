@@ -191,6 +191,7 @@ CONTRACTS = {
     "sqlite-create-as-v5.json": "06b5c313bc7d216a77787303c104b7bcc9fb8cab1f494eeaaa922b330ed1a372",
     "sqlite-create-table-v3.json": "a2e7d433392ad397b62f58e5e0dc45f2307c591ad9d59c5317b49362545390c3",
     "sqlite-add-generated-column-v1.json": "606754be160a3039b0a6e8fc2a52314b00f2bc5055ecc7f59a1fd0436c627a60",
+    "sqlite-appended-column-checks-v1.json": "9b3ffe097d71ad0b0a90d9fef23e5e68406664780846ed889b67291ee4242023",
     "sqlite-computed-column-default-v3.json": "fdbe4b24fe5bb64a4a5d4a8509ff9f1ad083805e911f2e665f20c38301b1c512",
     "sqlite-add-column-v3.json": "156f45b0a77b3944d3735c2c26ca3b78b2035e035f16d28c6559acbdaeb3c662",
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",

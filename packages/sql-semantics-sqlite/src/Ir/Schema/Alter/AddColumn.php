@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Alter;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\DefinitionSource;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableDeclarationSql;
-use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -32,9 +31,15 @@ final class AddColumn implements SemanticsIR
     public readonly array $priorHeading;
 
     /**
+     * @var list<CheckConstraint> The explicitly named inline conditions in evaluation order
+     */
+    public readonly array $checks;
+
+    /**
      * Fixes the absolute target, prior heading and appended column.
      *
      * @param list<Identifier> $priorHeading The nonempty declared heading of the target
+     * @param list<CheckConstraint> $checks The explicitly named checks on the appended column
      */
     public function __construct(
         public readonly Identifier $schema,
@@ -42,11 +47,14 @@ final class AddColumn implements SemanticsIR
         array $priorHeading,
         public readonly bool $strict,
         public readonly TableColumn $column,
+        array $checks = [],
     ) {
         $heading = Check::listOf($priorHeading, Identifier::class, 'A column addition requires a nonempty ordered prior heading of identifiers.', 1);
-        (new AppendColumnBounds())->check($schema, $table, $heading, $strict, $column);
+        $conditions = Check::listOf($checks, CheckConstraint::class, 'An appended column requires an ordered list of checked conditions.');
+        (new AppendColumnBounds())->check($schema, $table, $heading, $strict, $column, $conditions);
         Check::input($column->generated === null, 'An ordinary column addition cannot have a generation expression.');
         $this->priorHeading = $heading;
+        $this->checks = $conditions;
     }
 
     /**
@@ -62,7 +70,7 @@ final class AddColumn implements SemanticsIR
      */
     public function toString(): string
     {
-        $definition = (new TableDeclarationSql())->column($this->column, new SelectSql(), new DefinitionSource([$this->column->name]));
+        $definition = (new TableDeclarationSql())->addition($this->column, $this->priorHeading, $this->checks);
 
         return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted() . ' ADD COLUMN ' . $definition;
     }

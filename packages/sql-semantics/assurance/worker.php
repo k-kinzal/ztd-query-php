@@ -497,15 +497,18 @@ function directCreateTable(array $input): CreateTable
         $input['strict'] ?? false,
         $input['withoutRowid'] ?? false,
         array_map(directTableKey(...), $keys),
-        array_map(
-            static fn (array $check): CheckConstraint => new CheckConstraint(
-                directCheckLabel($check['label']),
-                operand($check['condition']),
-                $check['column'],
-            ),
-            $input['checks'] ?? [],
-        ),
+        array_map(directSchemaCheck(...), $input['checks'] ?? []),
     );
+}
+
+function directSchemaCheck(array $check): CheckConstraint
+{
+    return new CheckConstraint(directCheckLabel($check['label']), operand($check['condition']), $check['column']);
+}
+
+function observeSchemaCheck(CheckConstraint $check): array
+{
+    return ['label' => observeCheckLabel($check->label), 'column' => $check->column, 'condition' => observeOperand($check->condition)];
 }
 
 function directCheckLabel(string|array $source): Identifier|ImplicitCheckLabel
@@ -569,11 +572,7 @@ function observeCreateTable(CreateTable $value): array
         'withoutRowid' => $value->withoutRowid,
         'primaryKey' => observePrimaryKey($value->primaryKey),
         'keys' => array_map(observeTableKey(...), $value->keys),
-        'checks' => array_map(static fn (CheckConstraint $check): array => [
-            'label' => observeCheckLabel($check->label),
-            'column' => $check->column,
-            'condition' => observeOperand($check->condition),
-        ], $value->checks),
+        'checks' => array_map(observeSchemaCheck(...), $value->checks),
         'collations' => array_map(static fn (TableColumn $column): string => $column->collation->value, $value->columns),
         ...($generated === [] ? [] : ['generated' => $generated]),
         'sql' => $value->toString(),
@@ -748,10 +747,11 @@ function directAddColumn(array $input): AddColumn|AddGeneratedColumn
     $table = new Identifier($input['table']);
     $heading = array_map(static fn ($part) => is_string($part) ? new Identifier($part) : $part, $input['priorHeading']);
     $column = directSchemaColumn($input['column']);
+    $checks = array_map(static fn ($check) => is_array($check) ? directSchemaCheck($check) : $check, $input['checks'] ?? []);
 
     return $input['operation'] === 'add-generated-column'
-        ? new AddGeneratedColumn($schema, $table, $heading, $input['strict'], $column)
-        : new AddColumn($schema, $table, $heading, $input['strict'], $column);
+        ? new AddGeneratedColumn($schema, $table, $heading, $input['strict'], $column, $checks)
+        : new AddColumn($schema, $table, $heading, $input['strict'], $column, $checks);
 }
 
 function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): array
@@ -771,6 +771,7 @@ function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): ar
             $column->default === null ? null : observeSchemaDefault($column->default), $column->collation->value,
             ...($column->generated === null ? [] : [[$column->generated->mode->value, observeOperand($column->generated->expression)]]),
         ],
+        'checks' => array_map(observeSchemaCheck(...), $value->checks),
         ...($render ? ['sql' => $value->toString()] : []),
     ];
 }
@@ -818,7 +819,7 @@ function runCase(array $input): array
     }
 
     if ($value instanceof AddColumn || $value instanceof AddGeneratedColumn) {
-        return observeAddColumn($value, !in_array($input['probe'] ?? null, ['add-generated-construction', 'computed-default-construction'], true));
+        return observeAddColumn($value, !in_array($input['probe'] ?? null, ['add-generated-construction', 'computed-default-construction', 'appended-check-construction'], true));
     }
     if ($value instanceof RenameTable || $value instanceof RenameColumn) {
         return observeRename($value);

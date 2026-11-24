@@ -160,7 +160,7 @@ def negatives():
         ("ALTER TABLE main.ir_append ADD x INTEGER AS (x + 1)", fixtures, "rejected", "visible occurrence"),
         ("ALTER TABLE unresolved ADD x INTEGER AS (7)", [], "rejected", "resolved ordinary table"),
         ("ALTER TABLE v ADD x INTEGER AS (7)", [*fixtures, "CREATE VIEW v AS SELECT 1 AS base"], "analysis-rejected", "view"),
-        ("ALTER TABLE main.ir_append ADD x INTEGER AS (operand) CHECK (x > 0)", fixtures, "rejected", "no complete column addition"),
+        ("ALTER TABLE main.ir_append ADD x INTEGER AS (operand) CHECK (x > 0)", fixtures, "rejected", "requires an explicit CHECK constraint name"),
     )
     for sql, context, status, detail in tests:
         yield {"sql": sql, "declarations": context}, status, detail

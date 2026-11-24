@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 use SqlSemantics\Platform\Sqlite\Ir\Collation;
+use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
@@ -23,6 +24,24 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
  */
 final class TableDeclarationSql
 {
+    /**
+     * Emits an appended column and its named conditions in their declaration order.
+     *
+     * @param non-empty-list<Identifier> $priorHeading The ordered prior members of the table
+     * @param list<CheckConstraint> $checks The conditions owned by the appended slot
+     */
+    public function addition(TableColumn $column, array $priorHeading, array $checks): string
+    {
+        $source = new DefinitionSource([...$priorHeading, $column->name]);
+        $expressions = new SelectSql();
+        $definition = $this->column($column, $expressions, $source);
+        foreach ($checks as $check) {
+            $definition .= ' ' . $this->checkClause($check, $expressions, $source);
+        }
+
+        return $definition;
+    }
+
     /**
      * Emits inline constraints on their declared column and table constraints after the columns.
      * @param non-empty-list<TableColumn> $columns

@@ -136,7 +136,7 @@ def negatives():
         ("ALTER TABLE main.ir_add ADD untyped", strict, "analysis-rejected", "STRICT"),
         ("ALTER TABLE main.ir_add ADD value INT PRIMARY KEY", ordinary, "analysis-rejected", "PRIMARY KEY"),
         ("ALTER TABLE main.ir_add ADD value INT UNIQUE", ordinary, "analysis-rejected", "UNIQUE"),
-        ("ALTER TABLE main.ir_add ADD value INT CHECK (value > 0)", ordinary, "rejected", "no complete column addition"),
+        ("ALTER TABLE main.ir_add ADD value INT CHECK (value > 0)", ordinary, "rejected", "requires an explicit CHECK constraint name"),
         ("ALTER TABLE main.ir_add ADD value INT DEFAULT CURRENT_TIMESTAMP", ordinary, "rejected", "no complete SQLite scalar representation"),
     ]:
         yield {"sql": sql, "declarations": catalog}, outcome, detail

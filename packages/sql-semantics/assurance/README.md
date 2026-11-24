@@ -700,6 +700,8 @@ The generated column addition fixture distinguishes VIRTUAL and STORED storage, 
 
 The computed default fixture compares declaration, old-row fallback and insertion across CREATE TABLE and both empty and populated ALTER targets. It observes computed NULL handling, folded marker registration, native error phase, and the nested unary minus cases that binary subtraction changes. Run `run_sqlite_computed_defaults.py` with the same SQLite fixture options. [SQLite computed column default contract](sqlite-computed-column-default-v3.json)
 
+The appended CHECK fixture compares ordinary, VIRTUAL and STORED additions with ordered named constraints. It measures the new and prior slots, old-row refusal, the first failing label during later writes, folded registrations and rollback. Run `run_sqlite_appended_checks.py` with the same SQLite fixture options. [SQLite appended CHECK contract](sqlite-appended-column-checks-v1.json)
+
 ## SQLite literal defaults
 
 The [default record](sqlite-defaults-v4.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.

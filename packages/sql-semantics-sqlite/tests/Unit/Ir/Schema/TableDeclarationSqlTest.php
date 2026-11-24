@@ -33,6 +33,22 @@ use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 #[Small]
 final class TableDeclarationSqlTest extends TestCase
 {
+    public function testAdditionNamesBothPriorAndAppendedSlotsInConstraintOrder(): void
+    {
+        $prior = new Identifier('operand');
+        $column = new TableColumn(new Identifier('appended'), DeclaredDatatypeName::Integer);
+        $first = new Comparison(ComparisonOperator::Greater, new ColumnReference(1), new ColumnReference(0));
+        $checks = [
+            new CheckConstraint(new Identifier('minimum'), $first, 1),
+            new CheckConstraint(new Identifier('upper"bound'), new ColumnReference(1), 1),
+        ];
+
+        self::assertSame(
+            '"appended" INTEGER CONSTRAINT "minimum" CHECK (("appended" > "operand")) CONSTRAINT "upper""bound" CHECK ("appended")',
+            (new TableDeclarationSql())->addition($column, [$prior], $checks),
+        );
+    }
+
     public function testDeclarationsPlaceOrderedKeysAndCheckedExpressions(): void
     {
         $column = new TableColumn(new Identifier('code'), collation: Collation::NoCase);
