@@ -139,6 +139,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'postgres-index-target-copy') {
+            requireShape($short === 'Schema\\Index\\DropIndex' && $property === 'targets'
+                && in_array('Schema/Index/DropIndex::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'copy',
+                'PostgreSQL index removal targets must come from the verified detached copy.');
+
+            continue;
+        }
+
         if ($rule === 'sqlite-trigger-action-copy') {
             requireShape($short === 'Schema\\Trigger\\CreateTrigger' && $property === 'program'
                 && in_array('Schema/Trigger/CreateTrigger::__construct', $checkedBoundaries, true)

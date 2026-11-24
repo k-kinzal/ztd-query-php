@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v109.json"
-CONTRACT = "26584760e2cda842ab21a24a170e9abe120be4a181482cad4f3969ef0de8bd81"
+CONTRACT_NAME = "release-layout-v110.json"
+CONTRACT = "c8deb275ce38faa300a63cce559b375f10f9f70ebb8d9ecf50646dbddc96de3e"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -279,6 +279,11 @@ def verify_probe(raw, catalog):
             require(item.get("postgresRefreshMaterializedView") == ["public", "snapshot", False]
                     and item["sql"] == 'REFRESH MATERIALIZED VIEW "public"."snapshot" WITH NO DATA',
                     "installed-postgres-refresh-materialized-view-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\DropIndex"):
+            emitted = 'DROP INDEX IF EXISTS "pg_temp"."removal", "absent_namespace"."idx" CASCADE'
+            require(item.get("postgresDropIndex") == ["pg_temp", "removal", "keyed", "absent_namespace", True, emitted,
+                                                     "concurrently", 'DROP INDEX CONCURRENTLY "public"."removal" RESTRICT', True]
+                    and item["sql"] == emitted, "installed-postgres-drop-index-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\DropView"):
             require(item.get("dropView") == ["MATERIALIZED VIEW", "public", "snapshot", False, True, "VIEW",
                                              'DROP VIEW IF EXISTS "public"."removable" RESTRICT']

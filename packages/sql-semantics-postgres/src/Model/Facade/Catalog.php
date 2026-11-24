@@ -9,7 +9,11 @@ use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogIndexes;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogRelationCoordinates;
 use SqlSemantics\Platform\PostgreSql\Platform;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 
 /**
  * Builds dialect-owned binding contexts from relation definitions.
@@ -37,15 +41,24 @@ final class Catalog
         $platform = Platform::shared();
         $binder = new StatementBinder($this->parser);
         $tables = [];
+        $indexes = new CatalogIndexes();
+        $coordinates = new CatalogRelationCoordinates();
         $closed = $declarations !== null && $complete;
         foreach ($declarations ?? [] as $sql) {
-            $scope = $platform->context($this->profile, $this->searchPath, $tables, $closed);
+            $scope = $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot());
             $binding = $binder->resolve($sql, $scope);
-            Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation.');
-            array_push($tables, ...$binding->facts->declarations);
+            Check::input(
+                $binding->facts->declarations !== [] || $binding->statement instanceof CreateSchema || $binding->statement instanceof CreateIndex,
+                'A catalog definition must declare a relation, index or schema.',
+            );
+            $indexes->add($binding);
+            $indexes->addIndexes($binding);
+            foreach ($binding->facts->declarations as $table) {
+                $tables[] = $coordinates->absolute($table, $scope->declarationSchema);
+            }
         }
 
-        return $platform->context($this->profile, $this->searchPath, $tables, $closed);
+        return $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot());
     }
 
     /**
@@ -61,4 +74,5 @@ final class Catalog
 
         return $context;
     }
+
 }

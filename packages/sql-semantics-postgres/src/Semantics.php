@@ -34,6 +34,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\PersistentDeclarationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
@@ -153,7 +154,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|RenameColumn|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|RenameColumn|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -182,7 +183,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|RenameColumn|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
+     * @return list<Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|RenameColumn|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

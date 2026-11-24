@@ -145,6 +145,8 @@ def execute(args, specification, tag, worker, db, domain=None):
     transport = check_transport()
     seen, direct, forms = Counter(), Counter(), Counter()
     observe_direct = getattr(domain, "direct_finite_id", None)
+    observe_rejection = getattr(domain, 'observe_rejection', None)
+    refusals = Counter()
     key = current = comparison = None
     batch = []
     with (args.out / "events.jsonl").open("w") as output:
@@ -159,10 +161,16 @@ def execute(args, specification, tag, worker, db, domain=None):
                 else:
                     replies = responses(worker.request, inputs, "server-worker-batch-mismatch")
                 if batch[0][3] is not None:
-                    key, current, _, rejection = batch[0]
+                    key, current, item, rejection = batch[0]
                     response = replies[0]
                     require(rejects(response, rejection), f"server-{label}-negative-boundary", response)
-                    ledger.record(key, "rejected", response=response)
+                    witness = {}
+                    if observe_rejection is not None and item is not None:
+                        verdict = db.request(domain.observer_request(item, current["sql"]))
+                        coordinate = observe_rejection(specification, item, verdict, current["sql"])
+                        refusals[coordinate] += 1
+                        witness["nativeRejection"] = verdict
+                    ledger.record(key, "rejected", response=response, **witness)
                     continue
                 for (key, current, item, _), response in zip(batch, replies):
                     domain.check_value(item, response)
@@ -200,10 +208,14 @@ def execute(args, specification, tag, worker, db, domain=None):
                 require(actual_seeds == expected_seeds, f"server-{label}-seed-budget", sorted(expected_seeds ^ actual_seeds))
             require(domain.required_forms(args.engine, tag) <= forms.keys(), f"server-{label}-exploration-incomplete",
                     sorted(domain.required_forms(args.engine, tag) - forms.keys()))
+            if observe_rejection is not None:
+                require(set(refusals) == domain.rejected_finite_ids(specification, tag) and set(refusals.values()) == {1},
+                        f"server-{label}-negative-finite-incomplete", list(refusals.items()))
             execution = ledger.verify()
             require(execution["rejected"] == negative_count(specification, args.engine, tag), f"server-{label}-rejections-incomplete")
             return {
                 "finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution, "transport": transport,
+                **({"rejectedFiniteIds": sorted(refusals)} if observe_rejection is not None else {}),
                 **({"directFiniteIds": sorted(direct)} if observe_direct is not None else {}),
             }
         except Exception as error:

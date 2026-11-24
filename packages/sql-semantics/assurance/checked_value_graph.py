@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v8.json"
-CONTRACT_DIGEST = "de8de69b4b831ec616be6895a0da91d836f7e94edb1e6cf25f4734a6fa32d2b6"
+CONTRACT = "closed-value-graph-v9.json"
+CONTRACT_DIGEST = "0ee47714975eeaae236c736fa5e7f4f2e7e37f5f98fa41bb3d8881a781078563"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -78,6 +78,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("erase-list-copy", "value-closure-unspecified-array"),
         ("erase-native-assignment-boundary", "value-closure-unverified-list"),
         ("erase-mysql-drop-target-boundary", "value-closure-unverified-list"),
+        ("erase-postgres-index-target-boundary", "value-closure-unverified-list"),
         ("erase-writable-trigger-boundary", "value-closure-unverified-list"),
         ("erase-ordered-trigger-action-boundary", "value-closure-unverified-list"),
         ("change-external-definition", "value-closure-external-definition"),
@@ -103,6 +104,10 @@ def controls(manifest, constructors, outcomes, specification):
         elif name == "erase-mysql-drop-target-boundary":
             before = "Schema/DropTable::__construct"
             mutated["mysql"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-postgres-index-target-boundary":
+            before = "Schema/Index/DropIndex::__construct"
+            mutated["postgres"]["checkedBoundaries"].remove(before)
             after = None
         elif name == "erase-writable-trigger-boundary":
             before = "Schema/Trigger/TriggerDestination::__construct"

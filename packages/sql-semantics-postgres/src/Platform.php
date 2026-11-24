@@ -15,6 +15,7 @@ use SqlSemantics\Contract\Mode;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
@@ -132,7 +133,7 @@ final class Platform
      * @param list<string>|null $searchPath
      * @param list<Model\Statement\Declaration\Table> $tables
      */
-    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, ?IndexNamespace $indexes = null): AnalysisContext
     {
         $schemas = $searchPath ?? ['public'];
         $path = [];
@@ -145,12 +146,15 @@ final class Platform
         foreach ($schemas as $schema) {
             $name = new Name($schema);
             $path[] = $name;
-            if ($first === null && $schema !== 'pg_temp' && $schema !== 'pg_catalog') {
+            $eligible = $indexes !== null && $complete
+                ? ($schema === 'pg_temp' || $indexes->known($name))
+                : ($schema !== 'pg_temp' && $schema !== 'pg_catalog');
+            if ($first === null && $eligible) {
                 $first = $name;
             }
         }
 
-        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0]);
+        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0], $indexes ?? new IndexNamespace());
     }
 
     /**

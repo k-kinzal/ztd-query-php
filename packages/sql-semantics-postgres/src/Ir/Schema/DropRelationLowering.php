@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndexLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropViewLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -22,9 +24,10 @@ final class DropRelationLowering
      * Publishes the owning checked relation removal.
      * @throws InvalidConstruction When the statement has no supported relation kind
      */
-    public function lower(BoundStatement $operation, Drop $statement): DropTable|DropView
+    public function lower(BoundStatement $operation, Drop $statement): DropIndex|DropTable|DropView
     {
         return match ($statement->kind) {
+            ObjectKind::Index => (new DropIndexLowering())->lower($operation, $statement),
             ObjectKind::Table => (new DropTableLowering())->lower($operation, $statement),
             ObjectKind::View, ObjectKind::MaterializedView => (new DropViewLowering())->lower($operation, $statement),
             default => throw new InvalidConstruction('The complete DROP requires a supported persistent relation kind.'),

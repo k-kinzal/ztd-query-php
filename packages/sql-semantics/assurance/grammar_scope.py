@@ -487,6 +487,23 @@ def inventory(root):
                     if alternative in view_removal:
                         related[alternative] = (*related.get(alternative, ()), "postgres-drop-view-v1.json")
         if postgres:
+            index_removal = {
+                "DropStmt: DROP object_type_any_name IF_P EXISTS any_name_list opt_drop_behavior",
+                "DropStmt: DROP object_type_any_name any_name_list opt_drop_behavior",
+                "DropStmt: DROP INDEX CONCURRENTLY any_name_list opt_drop_behavior",
+                "DropStmt: DROP INDEX CONCURRENTLY IF_P EXISTS any_name_list opt_drop_behavior",
+                "object_type_any_name: INDEX",
+                "opt_drop_behavior:",
+                "opt_drop_behavior: CASCADE",
+                "opt_drop_behavior: RESTRICT",
+                "any_name_list: any_name",
+                "any_name_list: any_name_list , any_name",
+            }
+            for rule in ("DropStmt", "object_type_any_name", "opt_drop_behavior", "any_name_list"):
+                for alternative in rules.get(rule, []):
+                    if alternative in index_removal:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-drop-index-v1.json")
+        if postgres:
             values_signatures = {
                 "simple_select: values_clause",
                 "values_clause: VALUES ( expr_list )",

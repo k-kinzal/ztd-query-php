@@ -34,6 +34,21 @@ An ordinary persistent `CREATE VIEW` returns `Ir\Schema\View\CreateView` with it
 
 `DROP VIEW` and `DROP MATERIALIZED VIEW` return `Ir\Schema\View\DropView` with the native kind, absolute names in statement order and both clause policies. Provide view declarations through the analysis context for named targets. An optional absent target requires an explicit known schema in a complete context. The rendered SQL leaves dependency checks and transactional effects to PostgreSQL.
 
+`DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
+
+```php
+$context = $semantics->context([
+    'CREATE SCHEMA archive',
+    'CREATE TABLE archive.accounts (id integer)',
+    'CREATE INDEX account_lookup ON archive.accounts (id)',
+]);
+
+$drop = $semantics->analyze('DROP INDEX archive.account_lookup', $context);
+echo $drop->toString(); // DROP INDEX "archive"."account_lookup" RESTRICT
+```
+
+Each installed target records its absolute schema, index name and indexed relation. Guarded absence records whether the selector's schema is missing or the index was absent in the searched namespace. Use `pg_temp` for the current session's temporary schema. Target order, repeats, `IF EXISTS`, dependency mode and `CONCURRENTLY` survive rendering. Indexed relations backed by constraint-owned or partitioned indexes require separate capabilities. PostgreSQL still determines runtime dependency, permission and transaction outcomes under the same external catalog.
+
 A persistent heap `CREATE MATERIALIZED VIEW` returns `Ir\Schema\View\CreateMaterializedView` with its effective ordered heading, checked defining query and explicit initial population policy. `REFRESH MATERIALIZED VIEW` returns `Ir\Schema\View\RefreshMaterializedView` for a resolved materialized relation. Include the target's declaration in the context when analyzing a refresh. `WITH NO DATA` makes the snapshot unscannable until a populated refresh. Concurrent refresh and custom storage settings are outside this complete IR domain.
 
 `CREATE TABLE AS` returns `Ir\Schema\Query\CreateTableAs` for a persistent native heap table. It preserves the resolved name and defining query, the ordered catalog heading, optional collision handling and logged or unlogged storage. `WITH DATA` copies the query's rows once. `WITH NO DATA` creates an empty writable table with the same heading. Temporary targets, custom storage and commit actions are outside this complete IR domain.

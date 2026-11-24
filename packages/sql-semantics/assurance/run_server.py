@@ -42,8 +42,9 @@ class Observer(Worker):
     def __init__(self, dialect, deadline, script="server_observer.php"):
         self.deadline = deadline
         self.startup_timeout = None
+        executable = "php" if script.endswith(".php") else "python3"
         self.proc = subprocess.Popen(
-            ["php", str(TOOL / script), dialect],
+            [executable, str(TOOL / script), dialect],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0,
         )
         self.buffer = b""

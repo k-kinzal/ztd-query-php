@@ -70,7 +70,9 @@ final class Drop implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new ObjectFacts())->derive($this->kind, $this->objects, $this->ifExists, $derivation);
-        (new RelationKinds())->named($derivation, $this->kind, $this->objects);
+        if ($this->kind !== ObjectKind::Index) {
+            (new RelationKinds())->named($derivation, $this->kind, $this->objects);
+        }
         if ($this->concurrently && count($this->objects) > 1) {
             $derivation->report(new ObjectProblem(ObjectProblemKind::ConcurrentMultiple));
         }

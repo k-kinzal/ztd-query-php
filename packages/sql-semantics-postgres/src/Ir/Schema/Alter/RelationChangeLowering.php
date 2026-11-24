@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropRelationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
@@ -24,7 +25,7 @@ final class RelationChangeLowering
     /**
      * Publishes the checked removal, rename or truncation.
      */
-    public function lower(BoundStatement $operation, ParsedDrop|ParsedRename|ParsedTruncateTable $statement): DropTable|DropView|RenameColumn|RenameTable|TruncateTable
+    public function lower(BoundStatement $operation, ParsedDrop|ParsedRename|ParsedTruncateTable $statement): DropIndex|DropTable|DropView|RenameColumn|RenameTable|TruncateTable
     {
         return match (true) {
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),

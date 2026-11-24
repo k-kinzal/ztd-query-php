@@ -260,10 +260,12 @@ function analyzeStatement(string $platform, array $input): SemanticsIR
 {
     $class = $platform . 'Semantics';
     $searchPath = $platform . 'Model\\Contract\\SearchPath';
-    $semantics = isset($input['currentDatabase'])
+    $semantics = isset($input['schemaPath'])
+        ? new $class($input['release'], searchPath: new $searchPath(...$input['schemaPath']))
+        : (isset($input['currentDatabase'])
         ? new $class($input['release'], searchPath: new $searchPath($input['currentDatabase']))
-        : new $class($input['release']);
-    return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null, $input['complete'] ?? true));
+        : new $class($input['release']));
+    return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?? null, $input['complete'] ?? true));
 }
 
 function observeSource(object $source, string $dialect, string $namespace): array
@@ -998,6 +1000,48 @@ function observePostgresTruncate(object $value): array
         'truncateTable' => ['targets' => $targets, 'restart' => $value->restartIdentity, 'cascade' => $value->cascade]];
 }
 
+function constructPostgresDropIndex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex
+{
+    $drop = $input['dropIndex'];
+    $targets = [];
+    foreach ($drop['targets'] as [$kind, $schema, $index, $detail]) {
+        $index = new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($index);
+        $schema = $schema === null ? null : new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($schema);
+        $targets[] = match ($kind) {
+            'bound' => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference(
+                $schema,
+                $index,
+                new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($detail),
+            ),
+            'missing' => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\MissingIndex($index, $schema, $detail),
+        };
+    }
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex(
+        $targets,
+        $drop['ifExists'],
+        $drop['cascade'],
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexDropMode::from($drop['mode']),
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresDropIndex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex $drop): array
+{
+    $targets = [];
+    foreach ($drop->targets as $target) {
+        $targets[] = match ($target::class) {
+            \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference::class => ['bound', $target->schema->value, $target->index->value, $target->table->value],
+            \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\MissingIndex::class => ['missing', $target->schema?->value, $target->index->value, $target->missingSchema],
+        };
+    }
+
+    return [
+        'status' => 'constructed', 'profile' => $drop->profileId(), 'sql' => $drop->toString(),
+        'dropIndex' => ['targets' => $targets, 'ifExists' => $drop->ifExists, 'cascade' => $drop->cascade, 'mode' => $drop->mode->value],
+    ];
+}
+
 function constructDropView(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -1254,6 +1298,7 @@ function observeStatement(array $input): array
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
+            isset($input['dropIndex']) => constructPostgresDropIndex($input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
@@ -1360,6 +1405,9 @@ function observeStatement(array $input): array
     }
     if ($dialect === 'postgres' && $value::class === $namespace . 'Schema\\Truncate\\TruncateTable') {
         return observePostgresTruncate($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex) {
+        return observePostgresDropIndex($value);
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

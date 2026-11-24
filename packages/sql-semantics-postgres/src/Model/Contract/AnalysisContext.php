@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Model\Contract;
 
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
@@ -62,6 +63,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         public readonly Comparison $relationNames = Comparison::Sensitive,
         public readonly Comparison $columnNames = Comparison::Sensitive,
         ?Name $declarationSchema = null,
+        public readonly IndexNamespace $indexNamespace = new IndexNamespace(),
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];

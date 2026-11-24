@@ -1025,6 +1025,20 @@ if ($dialect !== 'sqlite') {
         $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
         $properties['Schema\\TableColumn']['default'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+        $indexRemoval = 'Schema\\Index\\DropIndex';
+        $indexReference = 'Schema\\Index\\IndexReference';
+        $indexMissing = 'Schema\\Index\\MissingIndex';
+        $indexMode = 'Schema\\Index\\IndexDropMode';
+        $roots[] = $indexRemoval;
+        array_push($internal, 'Schema\\Index\\DropIndexLowering', 'Schema\\Index\\DropIndexTargetLowering');
+        $properties[$indexRemoval] = ['targets' => ['array'], 'ifExists' => ['bool'], 'cascade' => ['bool'],
+            'mode' => [$indexMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$indexReference] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
+        $properties[$indexMissing] = ['index' => ['Identifier'], 'schema' => ['?Identifier'], 'missingSchema' => ['bool']];
+        $properties[$indexMode] = $methods[$indexMode] = [];
+        $enumCases[$indexMode] = ['Ordinary' => 'ordinary', 'Concurrently' => 'concurrently'];
+        $methods[$indexRemoval] = ['__construct', 'profileId', 'toString'];
+        $methods[$indexReference] = $methods[$indexMissing] = ['__construct', 'quoted'];
         $viewRemoval = 'Schema\\View\\DropView';
         $viewName = 'Schema\\View\\ViewName';
         $valuesQuery = 'Rows\\Values\\ValuesQuery';
@@ -1409,7 +1423,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v1.json', '98302acdf9adbff1aa2619e30a190de6007ecfe826f5cf70c09407733d51b5b0', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v2.json', '3eabadeffa544c2bf20f150a6cf0f2ae0ae2e9fd9c568b7d7912839f0c9bea46', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1459,9 +1473,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v56.json';
+    $storagePath = __DIR__ . '/value-storage-v57.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'ded9fb1bdbbc78b747cf991d6cf790afc739c5b87b899e71160ed8664bd53e9c',
+        hash_file('sha256', $storagePath) === 'a51d73466d455d5e0eb49a08c6db36753cdc9c205043770bb83907b01a6ccbe1',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1790,11 +1804,18 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\AddColumn', 'Schema\\Alter\\AddGeneratedColumn'],
                     'Unexpected SQLite column addition publication');
             }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndexTargetLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'resolve' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'],
+                    'Unexpected PostgreSQL index selector publication');
+            }
             if ($dialect === 'postgres' && $short === 'Schema\\DropRelationLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\View\\DropView'],
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\Index\\DropIndex', 'Schema\\View\\DropView'],
                     'Unexpected PostgreSQL relation removal publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameLowering') {
@@ -1817,7 +1838,7 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable',
+                        'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
                         'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
@@ -1907,7 +1928,13 @@ try {
         }
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
-                || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity'),
+                || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'], true)
+                    && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
+                || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
+                    $platform . '\\Model\\Contract\\Index\\StockIndexNames',
+                    $platform . '\\Model\\Statement\\Identifier\\Name',
+                ], true)),
                 "Unexpected dependency in $short: $name");
         }
         foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
@@ -1919,6 +1946,7 @@ try {
                         && in_array($call->name->toString(), ['in_array', 'is_int', 'strtoupper'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerUpdate' && $call->name->toString() === 'in_array')
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerMutationSql' && $call->name->toString() === 'strtoupper')
+                    || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && $call->name->toString() === 'array_intersect_key')
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')

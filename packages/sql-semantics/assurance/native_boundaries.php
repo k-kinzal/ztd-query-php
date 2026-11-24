@@ -135,6 +135,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-create-table-as-boundaries-v1.json', '67906cdd1b60402f1d0145906b5a033ee0ae2a899b3777d80d5eed1db0235976'],
             ['postgres-table-rename-boundaries-v2.json', 'eb034cda577a7724f5e5b27f72736ca73038dea327c2cb395d7181aee37a3f68'],
             ['postgres-truncate-boundaries-v1.json', '99ebd669e0945794333bfe3ac886eefee1a2a272817e5b48cdd80f8f316d80a8'],
+            ['postgres-drop-index-boundaries-v1.json', '2487f529698f2100a5795338f8ac536ad32ca042f180883e2fb962e79f4fc4fa'],
         ],
         'sqlite' => [],
     };
@@ -282,6 +283,12 @@ function checkNativeBoundaries(
     } else {
         $imports .= 'use ' . $platform . '\\Ir\\SelectBounds;' . "\n";
         if ($dialect === 'postgres') {
+        foreach (['Ir\\Schema\\Index\\DropIndex', 'Ir\\Schema\\Index\\IndexReference', 'Ir\\Schema\\Index\\MissingIndex',
+            'Ir\\Schema\\Index\\IndexDropMode', 'Ir\\Schema\\Index\\DropIndexTargetLowering', 'Ir\\Schema\\Index\\DropIndexLowering as PostgresDropIndexLowering',
+            'Model\\Facade\\Index\\IndexBinding', 'Model\\Contract\\Index\\IndexSchemas', 'Model\\Contract\\Index\\StockIndexNames'] as $name) {
+            $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
+        }
+
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
             foreach (['Ir\\From\\ExternalRelationKind', 'Model\\Statement\\Declaration\\RelationKind', 'Model\\Statement\\Identifier\\Comparison', 'Model\\Statement\\Reference\\Table\\DeclaredTable',
                 'Ir\\Rows\\With\\WithProjection', 'Ir\\Rows\\With\\WithRead', 'Ir\\Rows\\With\\WithDefinition', 'Ir\\Rows\\With\\WithScope', 'Ir\\Rows\\With\\WithSql', 'Ir\\Rows\\With\\WithLowering', 'Ir\\Rows\\With\\WithMaterialization', 'Ir\\Rows\\LocalProjection', 'Ir\\Rows\\LocalProjectionSql', 'Ir\\Rows\\LocalProjectionLowering', 'Ir\\Rows\\LocalDefinition', 'Ir\\Rows\\LocalResultColumn', 'Statement\\Query\\With\\Materialization', 'Model\\Statement\\Reference\\Table\\CommonTable', 'Statement\\Query\\QueryExpression', 'Statement\\Query\\ExpressionTarget',

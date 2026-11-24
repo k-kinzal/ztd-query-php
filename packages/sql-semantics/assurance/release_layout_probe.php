@@ -589,6 +589,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     if ($platform === 'PostgreSql') {
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
+        $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
         $queries['Schema\\View\\CreateMaterializedView'] = 'CREATE MATERIALIZED VIEW materialized_probe (n) AS VALUES (6) WITH NO DATA';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE UNLOGGED TABLE copy_probe (n) AS VALUES (6) WITH NO DATA';
@@ -601,6 +602,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     foreach ($queries as $role => $sql) {
         $activeContext = $context;
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE public.persistent_items (id integer)',
+                'CREATE INDEX removal ON public.persistent_items (id)',
+                'CREATE TEMP TABLE keyed (n integer)',
+                'CREATE INDEX removal ON pg_temp.keyed (n)',
+            ]);
+        }
+
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\DropColumn') {
             $activeContext = $semantics->context([
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
@@ -781,6 +791,26 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\RefreshMaterializedView') {
             $details['postgresRefreshMaterializedView'] = [$result->name->schema->value, $result->name->view->value, $result->withData];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
+            [$target, $absence] = $result->targets;
+            $targets = [&$target, $absence];
+            $verified = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex(
+                $targets, $result->ifExists, $result->cascade, $result->mode, $result->release,
+            );
+            $target = $absence;
+            $concurrent = $semantics->analyze('DROP INDEX CONCURRENTLY public.removal', $activeContext);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex([$absence]);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = str_contains($error->getMessage(), 'guarded absence');
+            }
+            $details['postgresDropIndex'] = [
+                $verified->targets[0]->schema->value, $verified->targets[0]->index->value, $verified->targets[0]->table->value,
+                $verified->targets[1]->schema->value, $verified->targets[1]->missingSchema, $verified->toString(),
+                $concurrent->mode->value, $concurrent->toString(), $rejected,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {
             $ordinary = $semantics->analyze('DROP VIEW IF EXISTS public.removable RESTRICT', $context);

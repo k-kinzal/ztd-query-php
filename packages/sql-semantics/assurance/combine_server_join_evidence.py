@@ -24,6 +24,8 @@ def replay(path, report, specification, domain=run_server_join):
     seen, direct, forms, execution = Counter(), Counter(), Counter(), Counter()
     observe_direct = getattr(domain, "direct_finite_id", None)
     seeds = set()
+    observe_rejection = getattr(domain, 'observe_rejection', None)
+    refusals = Counter()
 
     def matched(key, kind):
         frame = next(stream, None)
@@ -38,9 +40,15 @@ def replay(path, report, specification, domain=run_server_join):
         for key, request, _, _ in batch:
             require(canonical(matched(key, "attempted")["input"]) == canonical(request), f"server-{label}-replay-request", key)
         if batch[0][3] is not None:
-            key, _, _, rejection = batch[0]
-            response = matched(key, "rejected")["response"]
-            require(rejects(response, rejection), f"server-{label}-replay-rejection", key)
+            key, request, item, rejection = batch[0]
+            frame = matched(key, "rejected")
+            require(rejects(frame["response"], rejection), f"server-{label}-replay-rejection", key)
+            if observe_rejection is not None and item is not None:
+                require("nativeRejection" in frame, f"server-{label}-replay-native-rejection-missing", key)
+                coordinate = observe_rejection(specification, item, frame["nativeRejection"], request["sql"])
+                refusals[coordinate] += 1
+            else:
+                require("nativeRejection" not in frame, f"server-{label}-replay-unexpected-native-rejection", key)
             continue
         replies = []
         for key, _, item, _ in batch:
@@ -64,6 +72,10 @@ def replay(path, report, specification, domain=run_server_join):
                 seeds.add(key)
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))
     require(set(seen) == domain.finite_ids(engine, specification, tag) and set(seen.values()) == {1}, f"server-{label}-replay-incomplete")
+    if observe_rejection is not None:
+        require(set(refusals) == domain.rejected_finite_ids(specification, tag) and set(refusals.values()) == {1},
+                f"server-{label}-replay-negative-finite-incomplete", list(refusals.items()))
+        require(canonical(sorted(refusals)) == canonical(report["rejectedFiniteIds"]), f"server-{label}-replay-negative-finite-receipt")
     if observe_direct is not None:
         require(set(direct) == domain.finite_ids(engine, specification, tag) and set(direct.values()) == {1},
                 f"server-{label}-replay-direct-incomplete", list(direct.items()))
@@ -145,7 +157,8 @@ def combine(candidate, checkout, paths, output, domain):
         releases[role] = {"index": relpath(path, output.parent), "indexDigest": digest(path), "eventsDigest": digest(ledger),
                           "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "faultDispatch": dispatch,
                           "execution": results,
-                          **({"directFinite": len(raw["directFiniteIds"])} if "directFiniteIds" in raw else {})}
+                          **({"directFinite": len(raw["directFiniteIds"])} if "directFiniteIds" in raw else {}),
+                          **({"rejectedFinite": len(raw["rejectedFiniteIds"])} if "rejectedFiniteIds" in raw else {})}
     verify_candidate(checkout, candidate, manifest)
     missing = sorted(required - releases.keys())
     status = "incomplete" if missing else f"provisional-native-{label}-matrix"
