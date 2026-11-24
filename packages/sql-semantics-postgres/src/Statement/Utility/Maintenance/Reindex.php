@@ -103,11 +103,11 @@ final class Reindex implements Statement
     }
 
     /**
-     * Tells whether the statement requests a destination tablespace.
+     * Answers the decoded value of the last validated destination option.
      */
-    public function namesTablespace(): bool
+    public function tablespace(): ?string
     {
-        return (new OptionRules())->find($this->options, 'tablespace') !== null;
+        return (new OptionRules())->find($this->options, 'tablespace')?->text();
     }
 
     /**

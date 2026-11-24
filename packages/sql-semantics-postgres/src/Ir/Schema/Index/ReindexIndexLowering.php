@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -33,12 +34,13 @@ final class ReindexIndexLowering
             $statement->target === ReindexTarget::Index && $statement->object instanceof QualifiedName,
             'A complete REINDEX needs a named index target.'
         );
-        Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
+        $tablespace = (new IndexTablespaceLowering())->resolve($statement, $context);
         return new ReindexIndex(
             (new IndexTargetLowering())->resolveRebuild($context, $statement->object),
             $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
             $context->profile->grammar,
             $statement->reportsProgress(),
+            $tablespace,
         );
     }
 }

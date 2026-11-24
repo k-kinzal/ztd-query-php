@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * A standard rebuild of the pinned catalog indexes of the selected database.
+ * A standard request for the pinned catalog indexes of the selected database.
  *
  * @visibility public
  * @example Selecting local system catalogs
@@ -28,6 +29,7 @@ final class ReindexSystemCatalogs implements SemanticsIR
         public readonly Identifier $database,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         public readonly bool $verbose = false,
+        public readonly ?IndexTablespace $tablespace = null,
     ) {
     }
 
@@ -44,6 +46,6 @@ final class ReindexSystemCatalogs implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'SYSTEM ' . $this->database->quoted();
+        return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'SYSTEM ' . $this->database->quoted();
     }
 }

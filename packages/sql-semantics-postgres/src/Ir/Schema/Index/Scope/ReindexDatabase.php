@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -30,6 +31,7 @@ final class ReindexDatabase implements SemanticsIR
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         public readonly bool $verbose = false,
+        public readonly ?IndexTablespace $tablespace = null,
     ) {
     }
 
@@ -46,6 +48,6 @@ final class ReindexDatabase implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'DATABASE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->database->quoted();
+        return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'DATABASE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->database->quoted();
     }
 }

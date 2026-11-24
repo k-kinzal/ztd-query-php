@@ -31,6 +31,7 @@ TEMPLATES = (
     "postgres-reindex-exclusion-index-boundaries-v1.json",
     "postgres-reindex-verbose-boundaries-v1.json",
     "postgres-reindex-lexical-boundaries-v1.json",
+    "postgres-reindex-tablespace-boundaries-v1.json",
 )
 PHP_SOURCE = "packages/sql-semantics-postgres/src/Ir"
 MODE = r"\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode"
@@ -42,8 +43,14 @@ def expected():
         fixed[role + "::quoted"] = "return $this->schema->quoted() . '.' . $this->" + field + "->quoted();"
     for role, (operator, field, has_mode) in ROOTS.items():
         locking = f"($this->mode === {MODE}::Concurrent ? 'CONCURRENTLY ' : '') . " if has_mode else ""
-        fixed[role + "::toString"] = ("return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . "
-                                     + f"'{operator} ' . " + locking + f"$this->{field}->quoted();")
+        fixed[role + "::toString"] = (
+            "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') "
+            + ": $this->tablespace->prefix($this->verbose)) . "
+            + f"'{operator} ' . " + locking + f"$this->{field}->quoted();"
+        )
+    fixed["Schema/Index/Placement/IndexTablespace::prefix"] = (
+        "return 'REINDEX (' . ($verbose ? 'VERBOSE, ' : '') . 'TABLESPACE ' . $this->name->quoted() . ') ';"
+    )
     return fixed
 
 
@@ -72,4 +79,5 @@ def verify_spelling(manifest, shape_result, specification):
     files = {f"{PHP_SOURCE}/{method.partition('::')[0]}.php" for method in required}
     files.add(f"{PHP_SOURCE}/Schema/Index/IndexRebuildMode.php")
     return {"methods": required, "files": {name: manifest[name] for name in sorted(files)}, "templates": receipts,
-            "lexemes": sorted(lexemes), "constructorPrecondition": "Identifier::__construct"}
+            "lexemes": sorted(lexemes), "constructorPrecondition": "Identifier::__construct",
+            "headPrecondition": "No explicit tablespace", "destinationPrecondition": "Identifier component"}

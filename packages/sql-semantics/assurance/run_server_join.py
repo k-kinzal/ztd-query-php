@@ -134,6 +134,11 @@ def seed_ids(specification):
     return {f"seed/{seed}/{index}" for seed in exploration["seeds"] for index in range(exploration["casesPerSeed"])}
 
 
+def direct_identities(domain, engine, specification, tag):
+    expected = getattr(domain, "direct_finite_ids", domain.finite_ids)
+    return expected(engine, specification, tag)
+
+
 def negative_count(specification, engine, tag):
     specific = specification.get("negativeByRelease", {})
     dialect = {"postgres": "additionalPostgreSqlNegatives", "mysql": "additionalMySqlNegatives"}[engine]
@@ -205,7 +210,7 @@ def execute(args, specification, tag, worker, db, domain=None):
             require(set(seen) == domain.finite_ids(args.engine, specification, tag) and set(seen.values()) == {1},
                     f"server-{label}-finite-incomplete", list(seen.items()))
             if observe_direct is not None:
-                require(set(direct) == domain.finite_ids(args.engine, specification, tag) and set(direct.values()) == {1},
+                require(set(direct) == direct_identities(domain, args.engine, specification, tag) and set(direct.values()) == {1},
                         f"server-{label}-direct-finite-incomplete", list(direct.items()))
             if observe_direct is not None or getattr(domain, "COMPLETE_SEEDS", False):
                 expected_seeds = seed_ids(specification)

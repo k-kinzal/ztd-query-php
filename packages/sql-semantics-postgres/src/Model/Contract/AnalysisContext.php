@@ -42,6 +42,11 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
     public readonly array $searchPath;
 
     /**
+     * @var list<Name> Explicit application table spaces in the cluster
+     */
+    public readonly array $tablespaces;
+
+    /**
      * @var Name The schema an unqualified declaration belongs to
      */
     public readonly Name $declarationSchema;
@@ -55,6 +60,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
      * @param Comparison $columnNames How column names are compared
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
      * @param Name|null $currentDatabase The decoded current database when specified
+     * @param list<Name> $tablespaces Explicit application table spaces in the cluster
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -66,6 +72,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         ?Name $declarationSchema = null,
         public readonly IndexNamespace $indexNamespace = new IndexNamespace(),
         public readonly ?Name $currentDatabase = null,
+        array $tablespaces = [],
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
@@ -77,6 +84,30 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         $this->searchPath = $path;
         $this->tables = array_values($unique);
         $this->declarationSchema = $declarationSchema ?? $path[0];
+        $storage = [];
+        foreach (Check::listOf($tablespaces, Name::class, 'Table-space declarations are decoded names.') as $tablespace) {
+            Check::input(!str_starts_with($tablespace->value, 'pg_'), 'An application tablespace declaration needs an unreserved name.');
+            Check::input(!isset($storage[$tablespace->value]), 'A tablespace coordinate can be declared only once.');
+            $storage[$tablespace->value] = $tablespace;
+        }
+        $this->tablespaces = array_values($storage);
+    }
+
+    /**
+     * Looks up an exact decoded tablespace coordinate in the cluster namespace.
+     */
+    public function knowsTablespace(string $name): bool
+    {
+        if ($name === 'pg_default' || $name === 'pg_global') {
+            return true;
+        }
+        foreach ($this->tablespaces as $tablespace) {
+            if ($tablespace->value === $name) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

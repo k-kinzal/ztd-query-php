@@ -13,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogRelationCoordinates;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Tablespace\CreateTablespace;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 
@@ -43,15 +44,21 @@ final class Catalog
         $platform = Platform::shared();
         $binder = new StatementBinder($this->parser);
         $tables = [];
+        $tablespaces = [];
         $indexes = new CatalogIndexes();
         $coordinates = new CatalogRelationCoordinates();
         $closed = $declarations !== null && $complete;
         foreach ($declarations ?? [] as $sql) {
-            $scope = $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot(), $this->database);
+            $scope = $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot(), $this->database, $tablespaces);
             $binding = $binder->resolve($sql, $scope);
+            if ($binding->statement instanceof CreateTablespace) {
+                $tablespaces[] = $binding->statement->name;
+
+                continue;
+            }
             Check::input(
                 $binding->facts->declarations !== [] || $binding->statement instanceof CreateSchema || $binding->statement instanceof CreateIndex,
-                'A catalog definition must declare a relation, index or schema.',
+                'A catalog definition must declare a relation, index, schema or tablespace.',
             );
             $indexes->add($binding);
             $indexes->addIndexes($binding);
@@ -60,7 +67,7 @@ final class Catalog
             }
         }
 
-        return $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot(), $this->database);
+        return $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot(), $this->database, $tablespaces);
     }
 
     /**

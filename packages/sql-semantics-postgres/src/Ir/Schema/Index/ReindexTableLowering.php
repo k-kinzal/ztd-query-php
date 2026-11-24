@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionRebuildKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\TablePartitionRole;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -35,7 +36,7 @@ final class ReindexTableLowering
         $profile = $context->profile;
         Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive, 'REINDEX TABLE requires the native PostgreSQL index profile.');
         Check::input($statement->target === ReindexTarget::Table && $statement->object instanceof QualifiedName, 'REINDEX TABLE needs a qualified-name owner.');
-        Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
+        $tablespace = (new IndexTablespaceLowering())->resolve($statement, $context);
         $resolution = $operation->facts->relation($statement)->table;
         Check::input($resolution instanceof DeclaredTable, 'REINDEX TABLE requires a resolved index owner.');
         $name = $resolution->table->name;
@@ -52,7 +53,7 @@ final class ReindexTableLowering
                 TablePartitionRole::Branch => PartitionRebuildKind::Branch,
                 TablePartitionRole::Leaf => PartitionRebuildKind::Leaf,
             };
-            return new ReindexPartitionTable(new TableName($namespace, $relation), $scope, $mode, $profile->grammar, $statement->reportsProgress());
+            return new ReindexPartitionTable(new TableName($namespace, $relation), $scope, $mode, $profile->grammar, $statement->reportsProgress(), $tablespace);
         }
 
         return new ReindexTable(
@@ -64,6 +65,7 @@ final class ReindexTableLowering
             $mode,
             $profile->grammar,
             $statement->reportsProgress(),
+            $tablespace,
         );
     }
 }

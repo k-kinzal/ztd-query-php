@@ -132,8 +132,9 @@ final class Platform
      * Creates a context: the temporary schema and `pg_catalog` are searched before the path unless the path names them, and names compare exactly.
      * @param list<string>|null $searchPath
      * @param list<Model\Statement\Declaration\Table> $tables
+     * @param list<Name> $tablespaces
      */
-    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, ?IndexNamespace $indexes = null, ?Name $database = null): AnalysisContext
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, ?IndexNamespace $indexes = null, ?Name $database = null, array $tablespaces = []): AnalysisContext
     {
         $schemas = $searchPath ?? ['public'];
         $path = [];
@@ -154,7 +155,7 @@ final class Platform
             }
         }
 
-        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0], $indexes ?? new IndexNamespace(), $database);
+        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0], $indexes ?? new IndexNamespace(), $database, $tablespaces);
     }
 
     /**

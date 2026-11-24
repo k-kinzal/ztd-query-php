@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -34,13 +35,13 @@ final class ReindexDatabaseLowering
         Check::input($database !== null, 'A database-wide rebuild requires a declared current database.');
         $written = $statement->object;
         Check::input($written === null || ($written instanceof Name && $written->value === $database->value), 'A database-wide rebuild must select the declared current database.');
-        Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
+        $tablespace = (new IndexTablespaceLowering())->resolve($statement, $context);
         $name = new Identifier($database->value);
         $concurrent = $statement->requestsConcurrentBuild();
         if ($statement->target === ReindexTarget::System) {
             Check::input(!$concurrent, 'A system catalog rebuild requires the standard mode.');
 
-            return new ReindexSystemCatalogs($name, $profile->grammar, $statement->reportsProgress());
+            return new ReindexSystemCatalogs($name, $profile->grammar, $statement->reportsProgress(), $tablespace);
         }
 
         return new ReindexDatabase(
@@ -48,6 +49,7 @@ final class ReindexDatabaseLowering
             $concurrent ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
             $profile->grammar,
             $statement->reportsProgress(),
+            $tablespace,
         );
     }
 }

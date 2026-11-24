@@ -8,8 +8,8 @@ import time
 
 from run import TOOL, digest, require, write_json
 
-NAME = "native-postgres-fixture-isolation-v1.json"
-CONTRACT = "13cdc0c0a4c73e8414057b8b3babae220c6a1e9db8f8a0a7c3202f4ee83aac3e"
+NAME = "native-postgres-fixture-isolation-v2.json"
+CONTRACT = "8fac56b2b25f3b42ba10eceab68f3ba70d73f90227a33bd6aeb7e60d66630faf"
 ENV = "ZTD_IR_POSTGRES_FIXTURE_CONTAINER"
 IMAGES = {
     "16.6": "postgres@sha256:557fea37a744d5f4c8faab304b0a90858b53ab119735a88c131fd19dab802f36",
@@ -17,8 +17,13 @@ IMAGES = {
 }
 DOMAINS = frozenset({
     "postgres_reindex_schema", "postgres_reindex_partition_table", "postgres_reindex_partition_index",
-    "postgres_reindex_database", "postgres_reindex_verbose",
+    "postgres_reindex_database", "postgres_reindex_verbose", "postgres_reindex_tablespace",
 })
+PLACEMENT_DOMAIN = "postgres_reindex_tablespace"
+TABLESPACES = ("ir_reindex_left", '置き場."右"')
+LOCATION = re.compile(r"/tmp/ztd-ir-reindex-space[.][a-zA-Z0-9]{12}\Z")
+SPACE_CENSUS = "SELECT spcname, pg_catalog.pg_tablespace_location(oid) FROM pg_catalog.pg_tablespace WHERE spcname NOT IN ('pg_default','pg_global')"
+
 TIMEOUT = 45
 MAINTENANCE = "postgres"
 DATABASE = "ir_fixture"
@@ -39,6 +44,9 @@ def fixed_contract():
     require(set(definition["domains"]) == DOMAINS and set(definition["releases"]) == IMAGES.keys()
             and setup["timeoutSeconds"] == TIMEOUT and list(COMMANDS) == setup["commands"],
             "postgres-fixture-contract-scope")
+    require(definition["tablespaceSetup"]["domain"] == PLACEMENT_DOMAIN
+            and tuple(definition["tablespaceSetup"]["applicationNames"]) == TABLESPACES,
+            "postgres-fixture-tablespace-scope")
 
 
 def check_container(container, image, port, identity):
@@ -70,6 +78,55 @@ def verify_report(record, domain, release):
             and re.fullmatch(r"[1-9][0-9]*", fields[2]) and fields[2] != before and fields[3:] == ["0", "0", "0"]
             and commands["renew"]["stdout"].splitlines() == ["DROP DATABASE", "CREATE DATABASE"],
             "postgres-fixture-not-pristine", {"before": before, "after": fields, "domain": domain})
+    require(("tablespaceSetup" in record) == (domain == PLACEMENT_DOMAIN), "postgres-fixture-tablespace-authority", domain)
+    if domain == PLACEMENT_DOMAIN:
+        verify_tablespaces(record["tablespaceSetup"])
+
+
+def quote_identifier(name):
+    return '"' + name.replace('"', '""') + '"'
+
+
+def create_tablespace(name, location):
+    require(LOCATION.fullmatch(location), "postgres-fixture-unexpected-tablespace-path", location)
+    return f"CREATE TABLESPACE {quote_identifier(name)} LOCATION '{location}'"
+
+
+def psql(call, container, database, statements):
+    flags = [flag for statement in statements for flag in ("-c", statement)]
+    reply = call("exec", "--user", "postgres", container, "psql", "-X", "-A", "-t", "-U", "postgres",
+                 "-v", "ON_ERROR_STOP=1", "-d", database, *flags)
+    return {"database": database, "sql": list(statements), "stdout": reply.stdout,
+            "stderr": reply.stderr, "exit": reply.returncode}
+
+
+def prepare_tablespaces(call, container):
+    created = []
+    for name in TABLESPACES:
+        result = call("exec", "--user", "postgres", container, "mktemp", "-d", "/tmp/ztd-ir-reindex-space.XXXXXXXXXXXX")
+        directory = result.stdout.strip()
+        require(result.returncode == 0 and result.stderr == "" and LOCATION.fullmatch(directory),
+                "postgres-fixture-tablespace-directory", result.stderr)
+        command = psql(call, container, MAINTENANCE, (create_tablespace(name, directory),))
+        require(command["exit"] == 0 and command["stderr"] == "", "postgres-fixture-tablespace-creation", command)
+        created.append({"name": name, "directory": directory, "command": command})
+    return {"created": created, "census": psql(call, container, MAINTENANCE, (SPACE_CENSUS,))}
+
+
+def verify_tablespaces(setup):
+    created = setup["created"]
+    require([record["name"] for record in created] == list(TABLESPACES), "postgres-fixture-tablespace-order")
+    expected = []
+    for record in created:
+        name, directory, command = (record[key] for key in ("name", "directory", "command"))
+        require(command == {"database": MAINTENANCE, "sql": [create_tablespace(name, directory)],
+                            "stdout": "CREATE TABLESPACE\n", "stderr": "", "exit": 0}, "postgres-fixture-tablespace-receipt", name)
+        expected.append(f"{name}|{directory}")
+    census = setup["census"]
+    require(len({record["directory"] for record in created}) == len(TABLESPACES)
+            and census["database"] == MAINTENANCE and census["sql"] == [SPACE_CENSUS]
+            and census["exit"] == 0 and census["stderr"] == "" and sorted(census["stdout"].splitlines()) == sorted(expected),
+            "postgres-fixture-tablespace-census", census)
 
 
 def renew(domain, release, container, out):
@@ -97,15 +154,15 @@ def renew(domain, release, container, out):
               "port": port, "commands": {}}
     for action, database, statements in (("before", MAINTENANCE, (IDENTITY,)), ("renew", MAINTENANCE, COMMANDS),
                                          ("after", DATABASE, (CENSUS,))):
-        flags = [flag for statement in statements for flag in ("-c", statement)]
-        reply = call("exec", "--user", "postgres", container, "psql", "-X", "-A", "-t", "-U", "postgres",
-                     "-v", "ON_ERROR_STOP=1", "-d", database, *flags)
-        record["commands"][action] = {"database": database, "sql": list(statements), "stdout": reply.stdout,
-                                      "stderr": reply.stderr, "exit": reply.returncode}
+        command = psql(call, container, database, statements)
+        record["commands"][action] = command
         write_json(out, record)
-        require(reply.returncode == 0 and not reply.stderr, "postgres-fixture-command-failed", record["commands"][action])
+        require(command["exit"] == 0 and not command["stderr"], "postgres-fixture-command-failed", command)
         if action == "before":
-            require(re.fullmatch(r"[1-9][0-9]*", reply.stdout.strip()), "postgres-fixture-owner", reply.stdout)
+            require(re.fullmatch(r"[1-9][0-9]*", command["stdout"].strip()), "postgres-fixture-owner", command["stdout"])
+    if domain == PLACEMENT_DOMAIN:
+        record["tablespaceSetup"] = prepare_tablespaces(call, container)
+        write_json(out, record)
     verify_report(record, domain, release)
     return {"file": out.name, "sha256": digest(out)}
 

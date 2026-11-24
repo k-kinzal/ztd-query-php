@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -31,7 +32,7 @@ final class ReindexSchemaLowering
         $profile = $context->profile;
         Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive, 'REINDEX SCHEMA requires the native PostgreSQL index profile.');
         Check::input($statement->target === ReindexTarget::Schema && $statement->object instanceof Name, 'REINDEX SCHEMA needs one schema name.');
-        Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
+        $tablespace = (new IndexTablespaceLowering())->resolve($statement, $context);
         Check::input((new IndexBinding())->known($context, $statement->object), 'REINDEX SCHEMA requires a declared schema.');
 
         return new ReindexSchema(
@@ -39,6 +40,7 @@ final class ReindexSchemaLowering
             $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
             $profile->grammar,
             $statement->reportsProgress(),
+            $tablespace,
         );
     }
 }

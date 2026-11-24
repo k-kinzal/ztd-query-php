@@ -77,6 +77,10 @@ An explicitly named partition index is a `PartitionIndexReference`. A branch sel
 
 Supply PostgreSQL's `VERBOSE` option on any rebuild to retain its progress-reporting policy. Each completed rebuild exposes the effective readonly `verbose` Boolean. An omitted option uses the native default and a repeated option uses its last value.
 
+An explicit `TABLESPACE` option adds an immutable `IndexTablespace` to the rebuild. Supply a `CREATE TABLESPACE` declaration in the analysis context to resolve an application placement. The analyzer recognizes the built-in `pg_default` directly. For example, if the context declares `archive_storage`, analyze `REINDEX (TABLESPACE archive_storage) INDEX archive.account_lookup` to select it. The published value retains the placement name. The declaration's directory and the expected files remain external to the value.
+
+PostgreSQL moves eligible rebuilt index files. The table files, partitioned index parents and TOAST placement follow their native policies. A placement request on `REINDEX SYSTEM` preserves the native skip warning and the pinned catalog files.
+
 A persistent heap `CREATE MATERIALIZED VIEW` returns `Ir\Schema\View\CreateMaterializedView` with its effective ordered heading, checked defining query and explicit initial population policy. `REFRESH MATERIALIZED VIEW` returns `Ir\Schema\View\RefreshMaterializedView` for a resolved materialized relation. Include the target's declaration in the context when analyzing a refresh. `WITH NO DATA` makes the snapshot unscannable until a populated refresh. Concurrent refresh and custom storage settings are outside this complete IR domain.
 
 `CREATE TABLE AS` returns `Ir\Schema\Query\CreateTableAs` for a persistent native heap table. It preserves the resolved name and defining query, the ordered catalog heading, optional collision handling and logged or unlogged storage. `WITH DATA` copies the query's rows once. `WITH NO DATA` creates an empty writable table with the same heading. Temporary targets, custom storage and commit actions are outside this complete IR domain.

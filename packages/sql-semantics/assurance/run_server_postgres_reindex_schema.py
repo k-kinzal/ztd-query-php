@@ -76,7 +76,7 @@ def negatives(tag):
     yield {**missing, "complete": False}, refusal("requires a declared schema")
     for name in ("pg_temp", "pg_temp_42", "pg_catalog"):
         yield {**item, "reindexSchema": {"schema": name, "mode": "standard"}}, refusal("requires a persistent application namespace")
-    yield {**request, "sql": "REINDEX (TABLESPACE pg_default) SCHEMA fixture"}, refusal("cannot move indexes to a tablespace")
+    yield {**request, "sql": "REINDEX (TABLESPACE unregistered_rebuild_space) SCHEMA fixture"}, refusal("requires a declared tablespace")
 
 
 def requests(_, tag, spec):
@@ -184,7 +184,7 @@ def faults(_, tag):
     return [
         RenderFault("postgres-schema-reindex-decoy", root, "$this->schema->quoted()", """'"decoy"'""", ordinary, "meaning-mismatch"),
         RenderFault("postgres-schema-reindex-single-owner", root,
-                    "return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'SCHEMA ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->schema->quoted();",
+                    "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'SCHEMA ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->schema->quoted();",
                     "return 'REINDEX TABLE ' . $this->schema->quoted() . '.\"orders\"';", ordinary, "meaning-mismatch"),
         RenderFault("postgres-schema-reindex-loses-concurrency", root, "$this->mode === IndexRebuildMode::Concurrent",
                     "false", concurrent, "meaning-mismatch"),

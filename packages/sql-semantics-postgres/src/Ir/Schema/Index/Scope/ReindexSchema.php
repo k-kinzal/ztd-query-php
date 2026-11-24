@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexSchemas;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -32,6 +33,7 @@ final class ReindexSchema implements SemanticsIR
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         public readonly bool $verbose = false,
+        public readonly ?IndexTablespace $tablespace = null,
     ) {
         Check::input(
             $schema->value !== 'pg_temp' && !IndexSchemas::system($schema->value) && !IndexSchemas::sessionInternal($schema->value),
@@ -52,6 +54,6 @@ final class ReindexSchema implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'SCHEMA ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->schema->quoted();
+        return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'SCHEMA ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->schema->quoted();
     }
 }

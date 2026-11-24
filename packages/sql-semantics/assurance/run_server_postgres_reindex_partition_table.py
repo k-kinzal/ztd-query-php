@@ -75,7 +75,7 @@ def negatives(tag):
     yield {**command, "sql": 'REINDEX TABLE "other"."fixture"."orders"'}, refusal("requires the matching current database")
     for schema, reason in (("pg_catalog","requires an application schema"), ("pg_temp","requires an absolute schema")):
         yield {**item, "reindexPartitionTable": {**item["reindexPartitionTable"], "target": [schema, "orders"]}}, refusal(reason)
-    yield {**command, "sql": 'REINDEX (TABLESPACE pg_default) TABLE "fixture"."orders"'}, refusal("cannot move indexes to a tablespace")
+    yield {**command, "sql": 'REINDEX (TABLESPACE unregistered_rebuild_space) TABLE "fixture"."orders"'}, refusal("requires a declared tablespace")
 
 
 def requests(_, tag, spec):
@@ -170,7 +170,7 @@ def faults(_, tag):
     root = dir + "Partition/ReindexPartitionTable.php"
     ordinary = trial(tag, "root-nested", False, False, "qualified")
     concurrent = trial(tag, "branch-remote", True, False, "qualified")
-    render = "return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+    render = "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
     return [
         RenderFault("postgres-partition-publish-wrong-role", dir + "ReindexTableLowering.php",
                     "TablePartitionRole::Branch => PartitionRebuildKind::Branch", "TablePartitionRole::Branch => PartitionRebuildKind::Leaf",

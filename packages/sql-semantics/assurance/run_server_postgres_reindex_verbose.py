@@ -99,8 +99,8 @@ def negatives(tag):
         sql, _, diagnostic = refusal_query(witness)
         yield {**analyzed(item), "sql": sql}, witness, refusal(diagnostic, "SemanticException")
     request = analyzed(item)
-    yield {**request, "sql": 'REINDEX (VERBOSE, TABLESPACE pg_default) INDEX fixture.chosen'}, None, \
-        refusal("cannot move indexes to a tablespace")
+    yield {**request, "sql": 'REINDEX (VERBOSE, TABLESPACE unregistered_rebuild_space) INDEX fixture.chosen'}, None, \
+        refusal("requires a declared tablespace")
 
 
 def rejected_finite_ids(_, _tag):

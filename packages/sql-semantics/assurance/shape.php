@@ -1103,6 +1103,13 @@ if ($dialect !== 'sqlite') {
         $roots[] = $partitionRebuild;
         $properties[$partitionRebuild] = ['target' => ['Schema\\TableName'], 'kind' => [$partitionRebuildKind], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'verbose' => ['bool']];
         $methods[$partitionRebuild] = ['__construct', 'profileId', 'toString'];
+        $rebuildPlacement = 'Schema\\Index\\Placement\\IndexTablespace';
+        $properties[$rebuildPlacement] = ['name' => ['Identifier']];
+        $methods[$rebuildPlacement] = ['__construct', 'prefix'];
+        $internal[] = 'Schema\\Index\\Placement\\IndexTablespaceLowering';
+        foreach ([$reindex, $reindexTable, $partitionRebuild, $reindexSchema, $reindexDatabase, $reindexSystem] as $rebuildRoot) {
+            $properties[$rebuildRoot]['tablespace'] = ['?' . $rebuildPlacement];
+        }
         $properties[$partitionRebuildKind] = $methods[$partitionRebuildKind] = [];
         $enumCases[$partitionRebuildKind] = ['Branch' => 'branch', 'Leaf' => 'leaf'];
         $properties[$rebuildMode] = $methods[$rebuildMode] = [];
@@ -1501,7 +1508,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v12.json', '57f8c260db394e12c7f40ea2c053f160e0571582246aa56627db45d444abfe6e', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v13.json', '50635fb4a7ad786e5ee8c54f8ffc2cd50d019769bdb8a0187d162d96c8dccec3', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1942,6 +1949,13 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === $results,
                     'Unexpected PostgreSQL index rebuild publication');
+            }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\Placement\\IndexTablespaceLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'resolve' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['?Schema\\Index\\Placement\\IndexTablespace'],
+                    'Unexpected PostgreSQL index placement route');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Scope\\ReindexDatabaseLowering') {
                 $members = $class->getMethods();

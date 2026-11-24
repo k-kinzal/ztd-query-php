@@ -12,7 +12,7 @@ from postgres_reindex_lexical_link import PHP_SOURCE, verify_spelling
 from run import TOOL, Failure, candidate_distribution, digest, require, shape, verify_candidate, write_json
 
 FORMAL = TOOL / "formal" / "postgres_reindex"
-CONTRACT_DIGEST = "459213ebf58e6f94b63067f5552455510533024a8a4b5ad7e2961722fad4d271"
+CONTRACT_DIGEST = "754f61f2d92fc37d3a7b3c2b4ed7f66535bb45005f39f076b5b78b03cefd2e5a"
 SOLUTION_DIGEST = "f077c5c0fd0827bf6956ccc3e730970275b9a508b1daa0fc0dbe0e9ee0cf4f75"
 ROOT = "PostgreSqlReindex.commandRoundTrip"
 EXTERNAL_KERNELS = ("lean4lean", "con-leche", "con-ron")
@@ -28,7 +28,7 @@ TIMEOUT = 150
 
 
 def load_contract():
-    path = FORMAL / "contract-v4.json"
+    path = FORMAL / "contract-v5.json"
     require(digest(path) == CONTRACT_DIGEST, "postgres-reindex-formal-contract")
     contract = json.loads(path.read_text())
     for name, wanted in contract["contractArtifacts"].items():

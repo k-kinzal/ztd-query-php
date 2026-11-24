@@ -576,6 +576,13 @@ def inventory(root):
                     }:
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-verbose-v1.json")
         if postgres:
+            for rule in ("ReindexStmt", "opt_reindex_option_list", "utility_option_elem", "CreateTableSpaceStmt"):
+                for alternative in rules.get(rule, ()):
+                    if rule in ("ReindexStmt", "CreateTableSpaceStmt") or alternative in (
+                        "opt_reindex_option_list: ( utility_option_list )", "utility_option_elem: utility_option_name utility_option_arg",
+                    ):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-tablespace-v1.json")
+        if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",
                 "indirection_el: . attr_name",

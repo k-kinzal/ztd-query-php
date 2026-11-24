@@ -82,7 +82,7 @@ def negatives(tag):
     for name, command in NATIVE_REFUSALS.items():
         reason = refusal("concurrent", "SemanticException") if name == "concurrent-system" else refusal("must select the declared current database")
         yield {**good, "sql": command}, {**item, "nativeRejection": name}, reason
-    yield {**good, "sql": "REINDEX (TABLESPACE pg_default) DATABASE ir_fixture"}, None, refusal("cannot move indexes to a tablespace")
+    yield {**good, "sql": "REINDEX (TABLESPACE unregistered_rebuild_space) DATABASE ir_fixture"}, None, refusal("requires a declared tablespace")
 
 
 def rejected_finite_ids(_, _tag):

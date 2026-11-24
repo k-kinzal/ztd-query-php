@@ -1101,6 +1101,18 @@ function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\
     ];
 }
 
+function constructPostgresIndexTablespace(array $input): ?\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace
+{
+    return isset($input['tablespace']) ? new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace(
+        new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($input['tablespace']),
+    ) : null;
+}
+
+function observePostgresIndexTablespace(?\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace $tablespace): array
+{
+    return $tablespace === null ? [] : ['tablespace' => $tablespace->name->value];
+}
+
 function constructPostgresReindex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex
 {
     $specification = $input['reindex'];
@@ -1124,6 +1136,7 @@ function constructPostgresReindex(array $input): \SqlSemantics\Platform\PostgreS
         \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($specification['mode']),
         \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
         $input['verbose'] ?? false,
+        constructPostgresIndexTablespace($input),
     );
 }
 
@@ -1132,6 +1145,7 @@ function observePostgresReindex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Inde
     $target = $value->target;
     return [
         'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $render ? $value->toString() : null, 'verbose' => $value->verbose,
+        ...observePostgresIndexTablespace($value->tablespace),
         'reindex' => [
             'target' => [$target->schema->value, $target->index->value, $target->table->value],
             'mode' => $value->mode->value,
@@ -1158,6 +1172,7 @@ function constructPostgresReindexTable(array $input): \SqlSemantics\Platform\Pos
         \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($specification['mode']),
         \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
         $input['verbose'] ?? false,
+        constructPostgresIndexTablespace($input),
     );
 }
 
@@ -1166,6 +1181,7 @@ function observePostgresReindexTable(\SqlSemantics\Platform\PostgreSql\Ir\Schema
     $target = $value->target;
     return [
         'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'verbose' => $value->verbose,
+        ...observePostgresIndexTablespace($value->tablespace),
         'reindexTable' => [
             'target' => [$target->schema->value, $target->name->value, $target->kind->value],
             'mode' => $value->mode->value,
@@ -1184,6 +1200,7 @@ function constructPostgresReindexPartitionTable(array $input): \SqlSemantics\Pla
         \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($value['mode']),
         \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
         $input['verbose'] ?? false,
+        constructPostgresIndexTablespace($input),
     );
 }
 
@@ -1194,6 +1211,7 @@ function constructPostgresReindexSchema(array $input): \SqlSemantics\Platform\Po
         \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($input['reindexSchema']['mode']),
         \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
         $input['verbose'] ?? false,
+        constructPostgresIndexTablespace($input),
     );
 }
 
@@ -1203,9 +1221,9 @@ function constructPostgresDatabaseRebuild(array $input): \SqlSemantics\Platform\
     $database = new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['database']);
     $release = \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']);
     return match ($spec['selector']) {
-        'system' => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs($database, $release, $input['verbose'] ?? false),
+        'system' => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs($database, $release, $input['verbose'] ?? false, constructPostgresIndexTablespace($input)),
         'database' => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase(
-            $database, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($spec['mode']), $release, $input['verbose'] ?? false,
+            $database, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($spec['mode']), $release, $input['verbose'] ?? false, constructPostgresIndexTablespace($input),
         ),
     };
 }
@@ -1646,10 +1664,12 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema) {
         return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'verbose' => $value->verbose,
+            ...observePostgresIndexTablespace($value->tablespace),
             'reindexSchema' => ['schema' => $value->schema->value, 'mode' => $value->mode->value]];
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable) {
         return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'verbose' => $value->verbose,
+            ...observePostgresIndexTablespace($value->tablespace),
             'reindexPartitionTable' => [
                 'target' => [$value->target->schema->value, $value->target->table->value],
                 'mode' => $value->mode->value, 'kind' => $value->kind->value,
@@ -1659,6 +1679,7 @@ function observeStatement(array $input): array
         || $value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs) {
         return [
             'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'verbose' => $value->verbose,
+            ...observePostgresIndexTablespace($value->tablespace),
             'databaseRebuild' => [
                 'database' => $value->database->value,
                 ...($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase
