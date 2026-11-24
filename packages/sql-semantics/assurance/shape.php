@@ -1308,7 +1308,9 @@ try {
     $recursiveWith = $dialect === 'mysql'
         ? '$statement->with instanceof \\' . $platform . '\\Statement\\Query\\With\\With && $statement->with->recursive'
         : '$statement->with?->recursive === true';
-    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
+    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; '
+        . ($dialect === 'postgres' ? '$transaction = new \\' . $prefix . 'Transaction\\TransactionLowering();' : '')
+        . 'return match (true) {'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && ' . $recursiveWith . ' => (new \\'
         . $prefix . 'Rows\\Recursive\\RecursiveSeriesLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null'
@@ -1346,7 +1348,8 @@ try {
         . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lowerQuery($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
-        . $transactions . ' => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($operation),'
+        . ($dialect === 'postgres' ? '$transaction->accepts($statement) => $transaction->lower($operation),'
+            : $transactions . ' => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($operation),')
         . 'default => (new \\' . $prefix . 'SelectLowering())->lower($operation), };';
     if ($dialect === 'sqlite') {
         $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
@@ -1934,6 +1937,7 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
+                    'Transaction\\TransactionLowering' => $dialect === 'postgres' ? ['accepts', 'lower'] : ['lower'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };
