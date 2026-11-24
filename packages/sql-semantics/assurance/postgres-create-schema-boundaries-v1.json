@@ -41,23 +41,19 @@
         "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
         "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->elements === [], 'CREATE SCHEMA elements require a checked namespace composition.');",
         "$role = $statement->authorization;",
-        "$owner = match ($role?->kind) {",
-        "    null, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentRole, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Effective,",
-        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::SessionUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Session,",
-        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Named => $this->bindOwner($context, $role->name),",
-        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Everyone => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A schema requires a single owner.'),",
-        "};",
+        "$principal = $role?->name;",
+        "if ($principal !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->knowsRole($principal->value), 'A named schema owner requires a declared role.');",
+        "    $owner = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($principal->value);",
+        "} else {",
+        "    $owner = match ($role?->kind) {",
+        "        null, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentRole, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Effective,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::SessionUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Session,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Named, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Everyone => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A schema requires a single owner.'),",
+        "    };",
+        "}",
         "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
         "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar);"
-      ]
-    },
-    "Schema/Namespace/CreateSchemaLowering::bindOwner": {
-      "dialects": [
-        "postgres"
-      ],
-      "common": [
-        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && $context->knowsRole($name->value), 'A named schema owner requires a declared role.');",
-        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name->value);"
       ]
     },
     "Schema/RelationDeclarationLowering::lower": {

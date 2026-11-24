@@ -484,8 +484,8 @@ def faults(engine):
                   "$present || $context->complete", "true"),
             Fault("postgres-schema-create-refuse-reserved-name", "Schema/Namespace/CreateSchema::__construct",
                   "$name === null || !str_starts_with($name->value, 'pg_')", "true"),
-            Fault("postgres-schema-create-bind-named-owner", "Schema/Namespace/CreateSchemaLowering::bindOwner",
-                  "$context->knowsRole($name->value)", "true"),
+            Fault("postgres-schema-create-bind-named-owner", "Schema/Namespace/CreateSchemaLowering::lower",
+                  "$context->knowsRole($principal->value)", "true"),
             Fault("postgres-schema-create-refuse-unchecked-elements", "Schema/Namespace/CreateSchemaLowering::lower",
                   "$statement->elements === []", "true"),
             Fault("postgres-reindex-table-refuse-temporary-view", "Schema/Index/ReindexTableTarget::__construct",
@@ -613,8 +613,8 @@ def faults(engine):
                             "$derivation->scalar($term, new Environment($derivation->context, null, [], [], $matches));", "$this->term($term, $projection, $derivation, $rows, $clause);",
                             "src/Rules/Query/Ordering.php", "PostgreSQL output order binding source differs in src/Rules/Query/Ordering.php"))
         shared.append(Fault("ignore-complete-postgres-declarations", "Catalog::build",
-                            "$scope = $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot(), $this->database, $tablespaces);",
-                            "$scope = $platform->context($this->profile, $this->searchPath, $tables, false, $indexes->snapshot(), $this->database, $tablespaces);",
+                            "$scope = $platform->context($this->profile, $this->searchPath, $tables, $closed, $indexes->snapshot(), $this->database, $tablespaces, $roles);",
+                            "$scope = $platform->context($this->profile, $this->searchPath, $tables, false, $indexes->snapshot(), $this->database, $tablespaces, $roles);",
                             "src/Catalog.php", "PostgreSQL declaration binding source differs in src/Catalog.php"))
         shared.append(Fault("postgres-bypass-decoded-catalog-binding", "StatementBinder::resolve",
                             "(new LocalCatalogBinding())->check($objects, $context->currentDatabase);", "",
