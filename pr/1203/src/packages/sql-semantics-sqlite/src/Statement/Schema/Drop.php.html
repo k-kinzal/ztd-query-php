@@ -68,8 +68,8 @@
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> * view and `DROP VIEW` of a declared table are diagnostics, with or without</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">30</span><span class="tok-com"> * IF EXISTS (SQLITE-RELATION-KIND-001). Indexes and triggers are not part of a declaration</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">31</span><span class="tok-com"> * context; their names are kept unresolved.</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * IF EXISTS (SQLITE-RELATION-KIND-001). Index removal is resolved at the</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * complete IR boundary from the catalog&#039;s explicit index declarations.</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * IF EXISTS (SQLITE-RELATION-KIND-001). Index and trigger removals resolve</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * at the complete IR boundary using the catalog&#039;s explicit declarations.</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> * Source: https://sqlite.org/lang_droptable.html, https://sqlite.org/lang_dropview.html,</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com"> * https://sqlite.org/lang_dropindex.html, https://sqlite.org/lang_droptrigger.html.</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com"> * Status: Implemented.</span></span>
