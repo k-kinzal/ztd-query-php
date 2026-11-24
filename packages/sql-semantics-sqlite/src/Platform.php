@@ -16,14 +16,18 @@ use SqlSemantics\Platform\Sqlite\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\DropRestrictions;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 
 /**
  * Wires the SQLite grammar releases, lowering rules and spelling rules into the analysis.
@@ -143,7 +147,7 @@ final class Platform
      * Creates a context: SQLite searches temp, then main, then the attached schemas, and compares names without regard to ASCII case.
      *
      * @param list<string>|null $searchPath
-     * @param list<Model\Statement\Declaration\Table> $tables
+     * @param list<Table> $tables
      * @throws InvalidArgumentException When the path does not start with main
      */
     public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
@@ -161,6 +165,26 @@ final class Platform
         }
 
         return new AnalysisContext($profile, $path, $tables, $complete, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $path[1]);
+    }
+
+    /**
+     * Exports the declarations in a binding with the facts required by later schema changes.
+     *
+     * @return list<Table>
+     */
+    public function declarations(BoundStatement $binding): array
+    {
+        $definition = $binding->statement;
+        if (!$definition instanceof CreateTable) {
+            return $binding->facts->declarations;
+        }
+
+        $removal = new DropRestrictions();
+
+        return array_map(
+            static fn (Table $table): Table => $removal->attach($definition, $binding->facts, $table),
+            $binding->facts->declarations,
+        );
     }
 
     /**

@@ -704,6 +704,8 @@ The appended CHECK fixture compares ordinary, VIRTUAL and STORED additions with 
 
 The implicit appended CHECK fixture uses checked comparisons and observes failures before and after renaming their referenced columns. It also exercises SQLite's rule that an explicit constraint name remains in effect for later checks in the same inline definition. Run `run_sqlite_appended_implicit_checks.py` with the same SQLite fixture options. [SQLite implicit appended CHECK contract](sqlite-appended-implicit-checks-v1.json)
 
+The column removal fixture binds the declared old slot and checks local keys, conditions and generated dependencies before publication. It independently compares the compacted catalog, ordered typed rows, rowid aliases, integrity, later writes and rollback. It also observes native index rewriting under temp-table shadowing. Run `run_sqlite_drop_column.py` with the same SQLite fixture options. [SQLite column removal contract](sqlite-drop-column-v2.json)
+
 ## SQLite literal defaults
 
 The [default record](sqlite-defaults-v4.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.

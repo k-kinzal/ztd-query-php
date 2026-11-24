@@ -13,6 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameTable;
 
@@ -29,7 +30,7 @@ final class AlterTargetLowering
      * @return array{Identifier, Identifier, Table}
      * @throws InvalidConstruction When the ordinary table is unresolved
      */
-    public function resolve(BoundStatement $operation, AlterAddColumn|AlterRenameTable|AlterRenameColumn $statement): array
+    public function resolve(BoundStatement $operation, AlterAddColumn|AlterDropColumn|AlterRenameTable|AlterRenameColumn $statement): array
     {
         $comparison = Comparison::AsciiInsensitive;
         $path = $operation->context->searchPath;

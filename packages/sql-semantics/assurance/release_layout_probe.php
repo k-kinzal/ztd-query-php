@@ -538,6 +538,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Alter\\RenameColumn'] = "ALTER TABLE $table RENAME COLUMN ID TO renamed";
         $queries['Schema\\Alter\\AddColumn'] = "ALTER TABLE $table ADD COLUMN added TEXT COLLATE NOCASE DEFAULT 'value'";
         $queries['Schema\\Alter\\AddGeneratedColumn'] = "ALTER TABLE $table ADD total INTEGER AS (id + 7) STORED";
+        $queries['Schema\\Alter\\DropColumn'] = 'ALTER TABLE removable DROP COLUMN OLD';
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
         $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
@@ -576,7 +577,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
     }
     foreach ($queries as $role => $sql) {
-        $result = $semantics->analyze($sql, $context);
+        $activeContext = $context;
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\DropColumn') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
+                'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        $result = $semantics->analyze($sql, $activeContext);
         if (!$result instanceof SqlSemantics\SemanticsIR || $result::class !== $namespace . 'Ir\\' . $role) {
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
@@ -1219,6 +1227,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $context,
             );
             $details['carriedAppendedChecks'] = [$carried->checks[0]->label->value, $carried->checks[1]->label->value, $carried->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\DropColumn') {
+            $selected = $result->heading[$result->slot];
+            $heading = $result->heading;
+            $heading[$result->slot] = &$selected;
+            $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropColumn($result->schema, $result->table, $heading, $result->slot);
+            $selected = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropMember(new SqlSemantics\Platform\Sqlite\Ir\Identifier('other'));
+            $protected = false;
+            try {
+                $semantics->analyze('ALTER TABLE removable DROP keep', $activeContext);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $protected = str_contains($error->getMessage(), 'declaration-local removal restriction');
+            }
+            $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
+                array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
+                $protected, $detached->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

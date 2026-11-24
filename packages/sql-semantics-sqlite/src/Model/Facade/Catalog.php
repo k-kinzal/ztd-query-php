@@ -41,7 +41,7 @@ final class Catalog
             $scope = $platform->context($this->profile, $this->searchPath, $tables, false);
             $binding = $binder->resolve($sql, $scope);
             Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation.');
-            array_push($tables, ...$binding->facts->declarations);
+            array_push($tables, ...$platform->declarations($binding));
         }
 
         return $platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete);

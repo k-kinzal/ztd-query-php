@@ -65,6 +65,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropMember;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression;
@@ -316,7 +318,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -741,6 +743,30 @@ function directSchemaColumn(array $slot): TableColumn
     );
 }
 
+function directDropColumn(array $input): DropColumn
+{
+    return new DropColumn(
+        new Identifier($input['schema']),
+        new Identifier($input['table']),
+        array_map(static fn ($member) => is_array($member) ? new DropMember(new Identifier($member[0]), $member[1], $member[2]) : $member, $input['heading']),
+        $input['slot'],
+    );
+}
+
+function observeDropColumn(DropColumn $value, bool $render): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'drop-column',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'heading' => array_map(static fn (DropMember $member): array => [$member->name->value, $member->generated, $member->protected], $value->heading),
+        'slot' => $value->slot,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
 function directAddColumn(array $input): AddColumn|AddGeneratedColumn
 {
     $schema = new Identifier($input['schema']);
@@ -803,6 +829,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
+            ($input['operation'] ?? null) === 'drop-column' => directDropColumn($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
@@ -818,6 +845,9 @@ function runCase(array $input): array
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     }
 
+    if ($value instanceof DropColumn) {
+        return observeDropColumn($value, ($input['probe'] ?? null) !== 'drop-column-construction');
+    }
     if ($value instanceof AddColumn || $value instanceof AddGeneratedColumn) {
         return observeAddColumn($value, !in_array($input['probe'] ?? null, ['add-generated-construction', 'computed-default-construction', 'appended-check-construction'], true));
     }

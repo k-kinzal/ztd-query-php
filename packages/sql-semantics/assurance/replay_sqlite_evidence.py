@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import run
 import run_sqlite_add_column as add_column
 import run_sqlite_add_generated_column as add_generated_column
+import run_sqlite_drop_column as drop_column
 import run_sqlite_appended_checks as appended_checks
 import run_sqlite_appended_implicit_checks as appended_implicit_checks
 import run_sqlite_auto_rowid as auto_rowid
@@ -116,6 +117,7 @@ DOMAINS = {
     appended_checks.CONTRACT_NAME: (appended_checks, appended_checks.FIXTURE),
     appended_implicit_checks.CONTRACT_NAME: (appended_implicit_checks, appended_implicit_checks.FIXTURE),
     add_generated_column.CONTRACT_NAME: (add_generated_column, add_generated_column.FIXTURE),
+    drop_column.CONTRACT_NAME: (drop_column, drop_column.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
     implicit_checks.CONTRACT_NAME: (implicit_checks, implicit_checks.FIXTURE),
     generated_columns.CONTRACT_NAME: (generated_columns, generated_columns.FIXTURE),
@@ -162,6 +164,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                generated_columns: generated_columns.GeneratedColumnDatabase,
                rename: rename.RenameDatabase, add_column: add_column.AddColumnDatabase, drop_view: drop_view.DropViewDatabase,
                add_generated_column: add_generated_column.GeneratedAddDatabase,
+               drop_column: drop_column.DropDatabase,
                appended_checks: appended_checks.CheckedAdditionDatabase,
                appended_implicit_checks: appended_implicit_checks.ImplicitAdditionDatabase,
                computed_defaults: computed_defaults.DefaultDatabase,

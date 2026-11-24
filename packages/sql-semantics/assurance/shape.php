@@ -391,6 +391,14 @@ if ($dialect === 'sqlite') {
     ];
     $properties['Schema\\Alter\\AddGeneratedColumn'] = $properties['Schema\\Alter\\AddColumn'];
     $methods['Schema\\Alter\\AddColumn'] = $methods['Schema\\Alter\\AddGeneratedColumn'] = $methods['Select'];
+    $properties['Schema\\Alter\\DropColumn'] = [
+        'schema' => ['Identifier'], 'table' => ['Identifier'], 'heading' => ['array'], 'slot' => ['int'],
+    ];
+    $properties['Schema\\Alter\\DropMember'] = ['name' => ['Identifier'], 'generated' => ['bool'], 'protected' => ['bool']];
+    $methods['Schema\\Alter\\DropColumn'] = $methods['Select'];
+    $methods['Schema\\Alter\\DropMember'] = ['__construct'];
+    $roots[] = 'Schema\\Alter\\DropColumn';
+    $internal[] = 'Schema\\Alter\\DropColumnLowering';
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
@@ -1055,6 +1063,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateView => (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterAddColumn => (new \\' . $prefix . 'Schema\\Alter\\AddColumnLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterDropColumn => (new \\' . $prefix . 'Schema\\Alter\\DropColumnLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -1111,7 +1120,8 @@ try {
     }
     $bindings = match ($dialect) {
         'sqlite' => [
-            ['sqlite-folded-binding-sources-v4.json', '34f474abd87a41d8a278748abc021ca580cdc549560df87c98d9278efc56413d', 'Folded binding'],
+            ['sqlite-drop-column-binding-v1.json', '7ec48bed5da24d0aa6174f51dd5d4a46a336f3c63291e0fa731c26a937e7193f', 'Column removal binding'],
+            ['sqlite-folded-binding-sources-v5.json', 'f4359e72a52ca5ddd90e535671ab49a386c5c9aaef7f034d425923a62f82c334', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1142,9 +1152,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v50.json';
+    $storagePath = __DIR__ . '/value-storage-v51.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'a55c5def88939ddaa15d2d20ada8fd019c703eda76035dd7caf37d82963a73aa',
+        hash_file('sha256', $storagePath) === 'da88ab19f6561bd317176588e16abd7891d5d25d4573d70164653ea1b41e6da4',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1256,6 +1266,7 @@ try {
                 'Expression\\Nulls\\CoalesceLowering' => 'Expression\\Nulls\\Coalesce',
                 'Schema\\Generation\\GeneratedLowering' => 'Schema\\Generation\\ColumnGeneration',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
+                'Schema\\Alter\\DropColumnLowering' => 'Schema\\Alter\\DropColumn',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,

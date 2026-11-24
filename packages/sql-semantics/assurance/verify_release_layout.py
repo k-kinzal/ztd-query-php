@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v85.json"
-CONTRACT = "9f199373ccebec11ab8a935901f5bec3062af86d65e2ef0760888ad33e100a7f"
+CONTRACT_NAME = "release-layout-v86.json"
+CONTRACT = "a6c1bd8192e97a913fbbc9fefaf89dcc52615c40209bbdae99e2a0544865d342"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -606,6 +606,11 @@ def verify_probe(raw, catalog):
                 "range", "range", 'ALTER TABLE "main"."accounts" ADD COLUMN "total" GENERATED ALWAYS AS (("id" + 7)) '
                 'VIRTUAL CONSTRAINT "range" CHECK (("total" > "id")) CONSTRAINT "range" CHECK (("total" < 100))',
             ], "installed-sqlite-carried-appended-check-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\DropColumn"):
+            require(item.get("dropColumn") == [
+                "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
+                True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
+            ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

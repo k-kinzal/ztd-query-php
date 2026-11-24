@@ -14,6 +14,7 @@ function nativeBoundaryContract(string $dialect): array
     $records = match ($dialect) {
         'sqlite' => [
             ['sqlite-rename-boundaries-v2.json', 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3'],
+            ['sqlite-drop-column-boundaries-v1.json', 'cdb8c0184c1950dc37897c17c43a427e17216eceb66d27a54ed7beb0bb43b01e'],
             ['sqlite-add-column-boundaries-v5.json', 'b33bcc1f10e3cca71f4dfc4ce1b5e2098a4fc817abfb41acd78c212b5c2c7c76'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
             ['sqlite-query-scope-boundaries-v9.json', 'bda4f3f5e8f81d04f57629a4f47e81cb2ba2f8a5b2761ffaceb7e42692f68006'],
@@ -172,7 +173,7 @@ function checkNativeBoundaries(
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\NotNullConflict', 'Ir\\Schema\\DefaultLowering', 'Statement\\Type\\NumberSign', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow',
             'Ir\\Mutation\\UpdateConflict', 'Statement\\Expression\\ColumnUse', 'Statement\\Expression\\DoubleQuotedWord', 'Statement\\Query\\TableStar', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord', 'Statement\\Schema\\Table\\TableOptionKind', 'Statement\\Mutation\\MutationTarget',
-            'Ir\\Schema\\Alter\\RenameColumn', 'Ir\\Schema\\Alter\\RenameTable', 'Ir\\Schema\\Alter\\AlterTargetLowering',
+            'Ir\\Schema\\Alter\\RenameColumn', 'Ir\\Schema\\Alter\\RenameTable', 'Ir\\Schema\\Alter\\AlterTargetLowering', 'Ir\\Schema\\Alter\\DropColumn', 'Ir\\Schema\\Alter\\DropMember',
             'Ir\\Schema\\CreateColumnLowering', 'Statement\\Schema\\AlterAddColumn', 'Model\\Statement\\Type\\Known',
             'Model\\Statement\\Declaration\\RelationKind', 'Model\\Statement\\Reference\\Table\\DeclaredTable',
             'Statement\\Schema\\AlterRenameColumn', 'Statement\\Schema\\AlterRenameTable',

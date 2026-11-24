@@ -17,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Platform;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Platform::class)]
 #[Medium]
@@ -129,6 +130,16 @@ final class PlatformTest extends TestCase
         self::assertSame(['temp', 'main', 'aux'], array_map(static fn (Name $schema): string => $schema->value, $explicit->searchPath));
         self::assertSame(['temp', 'main', 'aux'], array_map(static fn (Name $schema): string => $schema->value, $plain->searchPath));
         self::assertFalse($plain->complete);
+    }
+
+    public function testDeclarationsAttachesColumnRemovalFactsToTheOwnedTable(): void
+    {
+        $inspection = new Inspection();
+        $binding = $inspection->diagnose('CREATE TABLE accounts (id INTEGER PRIMARY KEY, name TEXT)')->binding();
+        $platform = new Platform();
+
+        self::assertSame([0 => true], $platform->declarations($binding)[0]->columnRemoval?->protected);
+        self::assertSame([], $platform->declarations($inspection->diagnose('SELECT 1')->binding()));
     }
 
     public function testStatementNamespaceNamesTheSqliteStatementValues(): void
