@@ -1,0 +1,98 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-exclusion-index-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-reindex-index-v1.json",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings and native parameters. An explicitly named exclusion constraint on an ordinary local table owns a physical index in its own namespace.",
+  "scope": "Resolve the physical index of an explicitly named exclusion constraint for single-index rebuilding, including a partial predicate, permanent and unlogged owners and the current session's temporary tables.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Index/ExclusionIndexReference": {
+      "role": "The absolute physical index of a named exclusion constraint.",
+      "structure": "One decoded application schema or pg_temp, exact constraint-index name and exact owner-table name.",
+      "conditions": "The names of the index and owner differ in the same application namespace. No stock system or numbered session namespace. Analysis discharges the declared owner and selects its known named exclusion index.",
+      "meaning": "The typed identity of the index owned by an exclusion constraint on the supplied table. The declared relation determines operators, access method, timing and the predicate under the fixed external-identity interpretation.",
+      "externalInterpretation": "The same table and constraint-owned index, release, fixture contents, transaction state and effective local temporary namespace.",
+      "sql": "Quote schema and index as two decoded identifiers and use that coordinate for REINDEX INDEX.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "amendedConstructors": {
+    "Schema/Index/ReindexIndex": "Accept the exclusion-index role. A concurrent request is valid with the same session's pg_temp target only; native execution uses a standard rebuild there. The option still requires top-level execution."
+  },
+  "existingRoles": ["Schema/Index/IndexReference", "Schema/Index/ReindexIndex", "Schema/Index/IndexRebuildMode", "Schema/Index/DropIndex"],
+  "rules": [
+    "A standard request changes the selected relation file while preserving the physical index OID, the constraint OID, its owner and its conindid link. A transaction can roll back the change.",
+    "A named persistent or unlogged exclusion index has no concurrent rebuild. The temporary equivalent accepts the requested concurrency option outside a transaction and uses a standard physical rebuild.",
+    "A request with concurrent mode inside a transaction has SQLSTATE 25001 before attempting construction of the physical replacement.",
+    "Neither the unrelated physical index nor the exclusion operator, partial predicate, constraint link, validity, persistence and stored rows may change.",
+    "The named exclusion index cannot enter the ordinary index removal role. PostgreSQL refuses implicit owner removal through DROP INDEX."
+  ],
+  "observations": [
+    "The closed exclusion-owned target role, exact qualified coordinate, owner, release, requested concurrency and returned native status.",
+    "The identity of the constraint and its physical index and owner, operator identity and constraint definition, row values and types, and predicates and flags in each phase.",
+    "The selected and unrelated indexes' physical OID and file transitions depending on persistence and transaction, including unchanged effects after a native refusal.",
+    "Typed writes after rebuild or rollback, with exact SQLSTATE for duplicate active/inactive keys, NULL keys and NULL predicate, and the protected DROP INDEX refusal."
+  ],
+  "finite": {
+    "storage": ["persistent", "unlogged", "temporary"],
+    "coverage": ["whole", "partial"],
+    "concurrently": [false, true],
+    "active": [false, true],
+    "spelling": ["qualified", "search-path"],
+    "identity": "Traverse all 48 ordered points per release. The 32 structurally valid points are constructed directly and analyzed independently, with original and emitted SQL compared. At the 16 persistent or unlogged concurrency points, require typed rejection of both public constructions and exact independent native SQLSTATE and unchanged state for the original statement. No unexecuted points."
+  },
+  "exploration": {
+    "seeds": [8147, 61979, 171091],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 360,
+    "allowedExclusions": [],
+    "domain": "Vary storage, predicate, index and table spelling including embedded quotes and multibyte characters, exact selected schema, concurrent option spelling and effective mode, transaction state, key values and unrelated decoy data. Choose accepted concurrency coordinates by the explicit domain rule before construction."
+  },
+  "negative": [
+    "Refuse all 16 static concurrent persistent or unlogged points during conformance to the fixed domain through each of direct construction and analysis."
+  ],
+  "additionalPostgreSqlNegatives": [
+    "Reject a direct exclusion reference that would denote its own table",
+    "Reject a direct exclusion reference to a stock system schema",
+    "Reject a direct exclusion reference to a numbered temporary schema",
+    "Reject an exclusion-owned name in the ordinary DROP INDEX boundary",
+    "Reject a missing exclusion-index declaration"
+  ],
+  "faults": [
+    "Allow a directly constructed persistent concurrent exclusion rebuild",
+    "Publish a named exclusion index as an ordinary index",
+    "Emit the same index name in a different schema",
+    "Drop the requested concurrent mode from a temporary target inside a transaction",
+    "Accept an observation with a stale constraint ownership link"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/commands/indexcmds.c"
+  ],
+  "trust": [
+    "Accurate declared constraint ownership and the same externally supplied relations and data, closed PHP target union, independently checked distribution and fixed native images.",
+    "The native simulator checks transition and dependency relations on the observed physical identities. The generated and enumerated evidence is bounded."
+  ],
+  "open": [
+    "Implicit and generated names, index ownership with other static metadata, advanced tablespace and verbose options and other uncovered forms remain in the whole-language inventory."
+  ],
+  "calibration": {
+    "driver": "846623cdd8e35d1f0a26d35985e533a22b15d7bc7da710fd3bc6c8fc76e8d491",
+    "queryPack": "df02095c5edd9c1795d2e57117de19692be795779f07f234b0b444e2b0cf6ca6",
+    "referenceComparison": "c01fd4a9298c049170683f637f7f71e5b647bd0ad1bcc52ca7ec3589d40dc411",
+    "nativeTransitions": "528afb9e0d544d030854ca90e291896222182fb9e0dea1d9c2c0c77e9a07a895",
+    "successfulRebuildsPerRelease": 28,
+    "unsupportedConcurrentRebuildsPerRelease": 8,
+    "prohibitedInTransactionPerRelease": 12,
+    "16.6": {
+      "stdout": "aa0b3f312dff6eb866d283a36bded97602b47bb013101ad18a6a99c8c0c4c6cb",
+      "stderr": "bfe81cb9feca55d28d88aa2b19d1e05c96319fc52cca83987e7dea728783cbc1"
+    },
+    "17.2": {
+      "stdout": "97ef6f0d5d8b6a3a9b12ee8dd87b7c4d4f57e048b7bceb90c9f38523a6215e89",
+      "stderr": "23f7fa78b1d37764c93ceffa99882a1396f0a7d20fe6f34ce0bad5b2953f6488"
+    }
+  }
+}
