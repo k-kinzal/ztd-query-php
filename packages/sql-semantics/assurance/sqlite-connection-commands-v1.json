@@ -1,0 +1,101 @@
+{
+  "revision": "SemanticsIR/sqlite-connection-commands-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with UTF-8, numbered parameters, the stock VFS and no encryption extension. Connection state, active B-tree transactions and file contents are external inputs.",
+  "scope": "ATTACH and DETACH with a resolved constant database name or an explicit numbered name operand. ATTACH filenames and keys use the closed source-free scalar profile.",
+  "additionalPublicRoots": ["Connection/Attach", "Connection/Detach"],
+  "constructors": {
+    "Connection/Attach": {
+      "role": "Declare an additional database attachment with a resolved name or numbered name operand.",
+      "structure": "One source-free filename scalar, an AttachmentName or numbered Parameter, and an optional source-free key scalar.",
+      "conditions": "A filename and a present key each contain one checked scalar. Their combined payload, slot registration and expression budget is checked in the parent. A constant name uses AttachmentName. The engine evaluates visible operands in the original lexical order and applies connection state.",
+      "meaning": "Open and append the exact database under the supplied name, or report the engine's corresponding runtime error. The stock engine evaluates the key operand and does not use it for encryption. Its bindings remain observable.",
+      "externalInterpretation": "The same attached source files, path interpretation, writable VFS, binding values, connection state and native maximum attachment count.",
+      "sql": "Emit ATTACH, the independently evaluated filename, AS, the native name operand and optional KEY operand. Keep grouping and the parameter labels in statement order.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Connection/Detach": {
+      "role": "Remove one resolved attached database or one supplied through a native numbered parameter.",
+      "structure": "A checked DetachTarget or an explicit Parameter.",
+      "conditions": "A constant target matches a declared attachment and excludes main and temp. A runtime parameter retains the native slot and marker spelling. A completed constant route cannot carry an unknown declaration or a mismatched spelling.",
+      "meaning": "Detach the selected connection-local database without deleting its file or changing unrelated databases. SQLite rejects a selected attachment with an active B-tree transaction and applies the requested name in its diagnostic.",
+      "externalInterpretation": "The same binding of the selected attached database, numbered values, live connection and transaction state.",
+      "sql": "Emit DETACH of the checked requested scalar or numbered marker.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Connection/AttachmentName": {
+      "role": "The native name produced by a checked constant SQLite operand.",
+      "structure": "A TextLiteral, IntegerLiteral or NullLiteral, and its derived Identifier.",
+      "conditions": "The converted name is UTF-8 and within the identifier budget. Builtin names are excluded under ASCII name comparison.",
+      "meaning": "TEXT retains its bytes up to the native NUL terminator. INTEGER uses the canonical decimal identifier and NULL uses the empty name. A root unqualified identifier enters this role as text. Preserve the constant's storage class and native authorization argument behavior.",
+      "sql": "Emit the exact typed name operand.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Connection/DetachTarget": {
+      "role": "An already resolved connection attachment and the operand SQLite uses to name it.",
+      "structure": "One resolved Identifier and one matching AttachmentName.",
+      "conditions": "The two identifiers agree under SQLite ASCII name comparison. Neither identity represents a builtin database.",
+      "meaning": "Identify the same attached database even when the request uses a different case. Keep the original semantic name spelling for the native diagnostic and authorization payload.",
+      "sql": "Emit the checked naming operand.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "The optional DATABASE keyword and parentheses around a single root identifier leave its role unchanged. A root bare identifier is a text value. An unresolved identifier inside a composed expression remains an analysis error.",
+    "ATTACH adds the chosen alias at the end of the native connection order, retaining spelling. A duplicate alias fails even with ASCII case variation. The same physical file may be attached under a distinct name. A null or empty filename opens transient storage.",
+    "DETACH removes the chosen alias and maintains the order and populations of surviving databases. It preserves the file itself. An active SQL transaction alone does not prevent detach. A transaction active in the target B-tree prevents it.",
+    "Connection attachments and detachments persist through rollback of an unrelated transaction. Dynamic unknown or builtin names can fail at evaluation. Constant detach scopes must resolve during analysis.",
+    "Observe native read-only classification, which is true for these commands, even though connection state changes. Observe no result columns, binder registration, the native function coordinate, and the exact prepare-time authorization argument.",
+    "The approved fixture authorizes only this operation and evaluates a bounded SQLite EXPLAIN argument footprint before execution. Only ordinary known local filenames, empty paths and :memory: are permitted in the observer."
+  ],
+  "observations": [
+    "Compare output names and typed values, marker slots and labels, the ATTACH or DETACH function and expiration scope, per-fixture attachment names and paths, and exact runtime effect or error.",
+    "Compare ordered schema populations and complete database identities before, after and after rollback. Observe retained file contents after a detach and runtime lock errors for the bound attachment.",
+    "Use different rows in each schema and a separate occupied shared file to detect source confusion."
+  ],
+  "finite": {
+    "requests": ["attach-memory", "attach-file", "attach-bare-file", "attach-file-and-key-parameters", "attach-name-and-key-parameters", "attach-concatenated-file", "attach-null-empty-name", "attach-integer-name", "attach-duplicate-alias", "attach-same-file-new-name", "attach-dynamic-reserved-name", "attach-key-literal", "detach-bare", "detach-case", "detach-file", "detach-numbered", "detach-dynamic-missing", "detach-dynamic-temp", "detach-integer-name", "detach-null-name"],
+    "temp": ["unopened", "warm"],
+    "transaction": ["none", "independent", "locked-alpha"],
+    "identity": "All 120 request, temporary B-tree and transaction combinations. Recover the coordinate from the native prepared statement, authorized argument and existing connection state. Check the paired direct construction for every analyzed input."
+  },
+  "exploration": {
+    "seeds": [77773, 18973, 82483],
+    "casesPerSeed": 60,
+    "timeoutSeconds": 720,
+    "allowedExclusions": [],
+    "domain": "Vary nested filename composition, concrete alias spellings and markers, known runtime failures, attached data, operation order and active transaction state."
+  },
+  "negative": [
+    "Unresolved nested filename identifier",
+    "Unknown resolved detach alias",
+    "Builtin constant name",
+    "Mismatched resolved detach identity and operand",
+    "Wrong filename arity",
+    "Wrong key arity"
+  ],
+  "faults": [
+    "Remove a file expression",
+    "Select a sibling database for detach",
+    "Drop the key operand or its parameter marker",
+    "Admit a mismatched detach identity",
+    "Resolve an unknown static name to another attachment",
+    "Skip a list arity guard",
+    "Normalize away the case of the requested attachment name"
+  ],
+  "open": [
+    "The fixed concrete domain uses ordinary VFS paths and selected typed name constants. Other composed name expressions, markers outside the numbered profile and optional encryption or authentication builds remain explicit additional obligations.",
+    "The bounds do not exhaust native simultaneous connection configurations, every lock schedule or ordinary filesystem error."
+  ],
+  "trust": [
+    "Pinned SQLite connection routines and C interface.",
+    "Closed reusable scalar profile and numbered marker rules.",
+    "Independent literal and parameter program reader, disposable observed filesystem and exact distribution."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "4879ad2e3f03988c5477381ed9254e8482ae9975cfe34aca13ae501a5ac32d92",
+    "cases": "ba021e0aa1b70abc6a83d46936ef859b923a61a6fed1514f9a7b29b96304c0af"
+  }
+}
