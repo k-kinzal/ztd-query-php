@@ -20,6 +20,7 @@ CONTRACT = "a10a0af3b78e1307374fc41a20ace5c5639659e43197a7caa61b23d1a5d9bd95"
 ORDER_CONTRACT = "f4795e89611f1f854d744d70f21e4ff8b7a273c91ef8fa2991c5cb417f09f390"
 WIDTH_CONTRACT = "d66a2772798381aeb7e92509591c2e9028cb7ea343d0616f9219c3bcde01e815"
 SOURCE_CONTRACT = "9a04d8c983e9484e70279798569fd1d83ef5ac2ca55432fc261bfa4eb4fb0ffe"
+DECLARATION_CONTRACT = "aaad27fe95a548871d66f8878aea697079d87add3db128aff7e64e7e1add6ebc"
 POSITIVE_BIGINT = {"legacy": 1000000000, "modern": 100000000}
 LEGACY_ORDER = "CREATE TABLE ir_fixture.ir_create_target AS SELECT CAST(17 AS SIGNED) AS value FROM DUAL ORDER BY 1 DESC LIMIT 0"
 ANALYSIS_FAILURE = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"
@@ -31,7 +32,7 @@ BARE_BINARY = (*OLD, "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0"
 INVALID = "mysql-create-table-as-invalid-published"
 NAME_ERROR = "CREATE TABLE AS requires ASCII column names of 1 to 64 characters without trailing spaces."
 FIELD_ERROR = "CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast."
-BODY_ERROR = "CREATE TABLE AS requires a single projection without explicit table definitions or a duplicate policy."
+BODY_ERROR = "CREATE TABLE AS requires a single projection without partitions or a duplicate policy."
 UNIQUE = "CREATE TABLE AS cannot repeat a column name."
 
 
@@ -53,6 +54,10 @@ def specifications():
     specification = json.loads(path.read_text())
     require(json.loads(sources.read_text())["replacesPreviousNegative"]["condition"] in specification["negative"],
             "mysql-create-table-as-source-retirement")
+    declarations = TOOL / "mysql-create-table-as-declarations-v1.json"
+    require(digest(declarations) == DECLARATION_CONTRACT, "mysql-create-table-as-declaration-admission")
+    retired = json.loads(declarations.read_text())["replacesPreviousNegative"]
+    require(retired["condition"] in specification["negative"], "mysql-create-table-as-retired-declaration-negative")
     specification["widthWitness"] = widths["witness"]
     specification["negativeByRelease"] = {rule["failure"]["profile"]: [LEGACY_ORDER]}
     return specification, profiles()[1]
@@ -152,7 +157,8 @@ def negatives(tag):
     yield replace_query(item, select([[literal(1), "c0"]], where=predicate)), "CREATE TABLE AS requires a constant filter or a checked table predicate."
     yield analyze_request(item, f"CREATE TEMPORARY TABLE {NAME} ENGINE=MEMORY AS SELECT 1 AS c0"), "CREATE TABLE AS requires the native InnoDB storage role."
     yield analyze_request(item, f"CREATE TABLE {NAME} AS SELECT 1 AS c0", named=False), "CREATE TABLE AS requires an absolute target name."
-    yield analyze_request(item, f"CREATE TABLE {NAME} (other INT) AS SELECT 1 AS c0"), BODY_ERROR
+    yield analyze_request(item, f"CREATE TABLE {NAME} (c0 INT NOT NULL, PRIMARY KEY (c0)) AS SELECT 1 AS c0"), \
+        "Explicit CREATE TABLE AS definitions do not support a primary key."
 
 
 def seeded(tag, specification, seed):
@@ -404,6 +410,7 @@ def replay_fault(rule, record):
 def faults(_, tag):
     ir = "sql-semantics-mysql/src/Ir/"
     root = ir + "Schema/Query/CreateTableAs.php"
+    layout = ir + "Schema/Query/CreateAsLayout.php"
     query = select(columns("mixed"))
     local = case(tag, "decoy", TEMP, "absent", False, query)
     guarded = case(tag, "primary", "table", "persistent", True, query)
@@ -422,7 +429,7 @@ def faults(_, tag):
                     case(tag, "decoy", TEMP, "absent", False, select(columns("cast"))), "meaning-mismatch"),
         RenderFault("invert-query-creation-guard", root, "$this->ifNotExists ? 'IF NOT EXISTS '", "!$this->ifNotExists ? 'IF NOT EXISTS '",
                     guarded, "meaning-mismatch"),
-        RenderFault("admit-repeated-query-creation-heading", root, "!isset($seen[$key])", "true", boundary, INVALID, invalid),
+        RenderFault("admit-repeated-query-creation-heading", layout, "!isset($seen[$key])", "true", boundary, INVALID, invalid),
     ]
 
 

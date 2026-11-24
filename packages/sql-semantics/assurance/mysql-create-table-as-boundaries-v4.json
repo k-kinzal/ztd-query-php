@@ -1,0 +1,147 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-boundaries-4",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check copying the ordered explicit definitions, both checked layout contributors, and native output of the closed signed declaration form.",
+  "rules": {
+    "Schema/Query/CreateTableAs::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$columns = Check::listOf($declaredColumns, TableColumn::class, 'CREATE TABLE AS requires an ordered list of explicit columns.');",
+        "$layout = new CreateAsLayout();",
+        "$layout->query($query);",
+        "$layout->declaration($query, $columns);",
+        "$this->declaredColumns = $columns;"
+      ]
+    },
+    "Schema/Query/CreateTableAs::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->declaredColumns as $column) {",
+        "    $columns[] = $column->toString();",
+        "}",
+        "",
+        "return 'CREATE ' . ($this->target->kind === ExternalRelationKind::TemporaryTable ? 'TEMPORARY ' : '')",
+        "    . 'TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()",
+        "    . ($columns === [] ? '' : ' (' . implode(', ', $columns) . ')')",
+        "    . ' ENGINE=InnoDB AS ' . $this->query->toString();"
+      ]
+    },
+    "Schema/Query/CreateAsLayout::query": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $query->source;",
+        "Check::input(",
+        "    $source === null || ($source instanceof TableSource && $source->kind->isTable()),",
+        "    'CREATE TABLE AS requires a source-free projection or one resolved table.'",
+        ");",
+        "Check::input(count($query->columns) <= 128, 'CREATE TABLE AS can have at most 128 columns.');",
+        "$filter = $query->where;",
+        "Check::input(",
+        "    $filter === null || $filter instanceof BooleanLiteral || $filter instanceof NullLiteral",
+        "        || ($source !== null && ($filter instanceof IntegerComparison",
+        "            || ($filter instanceof NullTest",
+        "                && ($filter->operand instanceof ColumnReference || $filter->operand instanceof TextColumnReference)))),",
+        "    'CREATE TABLE AS requires a constant filter or a checked table predicate.'",
+        ");",
+        "",
+        "$seen = [];",
+        "$bytes = intdiv(count($query->columns) + 7, 8);",
+        "foreach ($query->columns as $column) {",
+        "    Check::input(",
+        "        preg_match('/\\A[\\x01-\\x7f]{1,64}(?<! )\\z/D', $column->name->value) === 1,",
+        "        'CREATE TABLE AS requires ASCII column names of 1 to 64 characters without trailing spaces.'",
+        "    );",
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'CREATE TABLE AS cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "",
+        "    $expression = $column->expression;",
+        "    if ($expression instanceof TextColumnReference) {",
+        "        $type = $source instanceof TableSource ? $source->columnTypes[$expression->slot] : null;",
+        "        Check::invariant($type instanceof Varchar, 'The selecting table owns this native VARCHAR slot.');",
+        "        $maximumBytes = $type->length * 4;",
+        "        $bytes += $maximumBytes + ($maximumBytes > 255 ? 2 : 1);",
+        "        continue;",
+        "    }",
+        "",
+        "    $term = $expression instanceof SignedCast ? $expression->operand : $expression;",
+        "    Check::input(",
+        "        $expression instanceof ColumnReference || $term instanceof BooleanLiteral || $term instanceof NullLiteral",
+        "            || ($term instanceof IntegerLiteral && $term->leadingZeroes === 0 && !$term->negativeZero),",
+        "        'CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast.'",
+        "    );",
+        "    $bytes += 8;",
+        "}",
+        "Check::input($bytes <= 65535, 'The projected logical table record cannot exceed 65535 bytes.');"
+      ]
+    },
+    "Schema/Query/CreateAsLayout::declaration": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($columns === []) {",
+        "    return;",
+        "}",
+        "Check::input($query->source === null, 'Explicit CREATE TABLE AS definitions require a source-free projection.');",
+        "$names = [];",
+        "foreach ($columns as $column) {",
+        "    Check::input($column->storage instanceof IntegerStorage, 'Explicit CREATE TABLE AS definitions require signed storage.');",
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($names[$key]), 'CREATE TABLE AS cannot repeat an explicit column name.');",
+        "    $names[$key] = true;",
+        "}",
+        "foreach ($query->columns as $column) {",
+        "    $names[$column->name->key()] = true;",
+        "}",
+        "Check::input(count($names) <= 128, 'The combined CREATE TABLE AS heading can have at most 128 columns.');"
+      ]
+    },
+    "Schema/Query/CreateTableAsLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$query = $statement->query;",
+        "Check::input(",
+        "    $query !== null && $query->query instanceof ParsedSelect && $query->duplicate === null",
+        "        && $statement->partitioning === null && !$statement->enclosed,",
+        "    'CREATE TABLE AS requires a single projection without partitions or a duplicate policy.'",
+        ");",
+        "",
+        "$options = $statement->options;",
+        "$engine = $options[0] ?? null;",
+        "Check::input(",
+        "    $options === [] || (count($options) === 1 && $engine instanceof EngineOption && strcasecmp($engine->engine->value, 'InnoDB') === 0),",
+        "    'CREATE TABLE AS requires the native InnoDB storage role.'",
+        ");",
+        "$context = $operation->context;",
+        "Check::input($context->relationNames === Comparison::Sensitive, 'CREATE TABLE AS requires exact relation names.');",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "Check::input($schema !== SessionDatabase::UNNAMED, 'CREATE TABLE AS requires an absolute target name.');",
+        "$table = new TableName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "$kind = $statement->temporary() ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;",
+        "[$columns, $primaryKey] = (new CreateTableLayoutLowering())->lower($statement, $context->profile->grammar, null);",
+        "Check::input($primaryKey === null, 'Explicit CREATE TABLE AS definitions do not support a primary key.');",
+        "",
+        "return new CreateTableAs(",
+        "    new TableIdentity($table, $kind),",
+        "    (new SelectLowering())->lower($operation, $query->query),",
+        "    $statement->ifNotExists,",
+        "    $columns",
+        ");"
+      ]
+    }
+  }
+}

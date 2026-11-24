@@ -723,6 +723,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $rejectedWidth = $error->getMessage() === 'The projected logical table record cannot exceed 65535 bytes.';
             }
             $details['mysqlCreateTableAsVarchar'] = [$widths, $edge->toString(), $rejectedWidth];
+            $declared = $semantics->analyze(
+                'CREATE TABLE app.declared_copy (pre SMALLINT DEFAULT 7, N TINYINT NOT NULL) AS SELECT NULL AS n'
+            );
+            if (!$declared instanceof SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs) {
+                throw new RuntimeException('The installed table creation lost its declared fields.');
+            }
+            [$first, $second] = $declared->declaredColumns;
+            $alias = $second;
+            $caller = [$first, &$alias];
+            $owned = new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($declared->target, $declared->query, false, $caller);
+            $alias = $first;
+            $details['mysqlCreateTableAsDeclaration'] = [array_column(array_column($owned->declaredColumns, 'name'), 'value'),
+                $declared->toString(), $owned->toString(), $owned->declaredColumns[1] === $second];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Like\\CreateTableLike') {
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->source, true);

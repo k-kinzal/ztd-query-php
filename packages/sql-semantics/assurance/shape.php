@@ -832,8 +832,10 @@ if ($dialect !== 'sqlite') {
         $methods[$copy] = ['__construct', 'profileId', 'toString'];
         $createAs = 'Schema\\Query\\CreateTableAs';
         $roots[] = $createAs;
-        $internal[] = 'Schema\\Query\\CreateTableAsLowering';
-        $properties[$createAs] = ['target' => [$identity], 'query' => ['Select'], 'ifNotExists' => ['bool']];
+        array_push($internal, 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout');
+        $pureCollaborators[] = 'Schema\\Query\\CreateAsLayout';
+        $properties[$createAs] = ['target' => [$identity], 'query' => ['Select'], 'ifNotExists' => ['bool'],
+            'declaredColumns' => ['array']];
         $methods[$createAs] = ['__construct', 'profileId', 'toString'];
         $absent = 'Schema\\Identity\\AbsentDropTarget';
         $properties[$absent] = ['name' => [$tableName]];
@@ -1124,9 +1126,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v46.json';
+    $storagePath = __DIR__ . '/value-storage-v47.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '8a80b10bb82cde7185817d813df42e49a865e80a30aef02cd164a25228c7feeb',
+        hash_file('sha256', $storagePath) === '16954cccfec3161a503dad04633c7b228d8c94198a56193e43a1beded7fa2106',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1367,7 +1369,7 @@ try {
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
-                    || ($dialect === 'mysql' && in_array($short, ['Schema\\CreateTable', 'Schema\\Query\\CreateTableAs'], true)
+                    || ($dialect === 'mysql' && in_array($short, ['Schema\\CreateTable', 'Schema\\Query\\CreateAsLayout'], true)
                         && $call->name->toString() === 'intdiv')
                     || ($dialect === 'mysql' && $short === 'Schema\\Alter\\RenameTable' && $call->name->toString() === 'array_key_exists')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))

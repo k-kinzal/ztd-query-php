@@ -576,31 +576,45 @@ function observeGrouped(string $namespace, object $query, string $dialect): arra
     ];
 }
 
-function constructCreateTable(string $platform, array $input): SemanticsIR
+function constructDeclarationColumns(string $namespace, string $dialect, array $definitions): array
 {
-    $namespace = $platform . 'Ir\\';
-    $statement = $namespace . 'Schema\\CreateTable';
-    $target = $namespace . 'Schema\\TableName';
     $name = $namespace . 'Identifier';
     $column = $namespace . 'Schema\\TableColumn';
     $storage = $namespace . 'Schema\\IntegerStorage';
     $characters = $namespace . 'Schema\\CharacterStorage';
     $boolean = $namespace . 'Schema\\BooleanStorage';
     $collation = $namespace . 'From\\TextCollation';
+    $columns = [];
+    foreach ($definitions as $index => $definition) {
+        if (!is_array($definition)) {
+            $columns[$index] = $definition;
+            continue;
+        }
+        [$columnName, $kind, $nullable, $default] = $definition;
+        $type = match (true) {
+            $kind === 'pg_catalog.text' && $dialect === 'postgres' => $characters::from($kind),
+            $kind === 'pg_catalog.bool' && $dialect === 'postgres' => $boolean::from($kind),
+            $dialect === 'mysql' && is_array($kind) && $kind[0] === 'varchar' => new $characters($kind[1], $collation::from($kind[2])),
+            default => $storage::from($kind),
+        };
+        $columns[$index] = new $column(new $name($columnName), $type, $nullable, $default === null ? null : constructOperand($namespace, $default));
+    }
+
+    return $columns;
+}
+
+function constructCreateTable(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Schema\\CreateTable';
+    $target = $namespace . 'Schema\\TableName';
+    $name = $namespace . 'Identifier';
+    $collation = $namespace . 'From\\TextCollation';
     $primary = $namespace . 'Schema\\Key\\PrimaryKey';
     $term = $namespace . 'Schema\\Key\\PrimaryKeyColumn';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $create = $input['create'];
-    $columns = [];
-    foreach ($create['columns'] as [$columnName, $kind, $nullable, $default]) {
-        $type = match (true) {
-            $kind === 'pg_catalog.text' && $input['dialect'] === 'postgres' => $characters::from($kind),
-            $kind === 'pg_catalog.bool' && $input['dialect'] === 'postgres' => $boolean::from($kind),
-            $input['dialect'] === 'mysql' && is_array($kind) && $kind[0] === 'varchar' => new $characters($kind[1], $collation::from($kind[2])),
-            default => $storage::from($kind),
-        };
-        $columns[] = new $column(new $name($columnName), $type, $nullable, $default === null ? null : constructOperand($namespace, $default));
-    }
+    $columns = constructDeclarationColumns($namespace, $input['dialect'], $create['columns']);
     $coordinate = new $target(new $name($create['target'][0]), new $name($create['target'][1]));
     if ($input['dialect'] === 'mysql') {
         $identity = $namespace . 'Schema\\Identity\\TableIdentity';
@@ -899,6 +913,7 @@ function constructMysqlCreateAs(string $platform, array $input): SemanticsIR
         mysqlTableIdentity($namespace, $definition['target']),
         constructSelect($platform, $definition['query'] + ['dialect' => 'mysql', 'release' => $input['release']]),
         $definition['ifNotExists'],
+        constructDeclarationColumns($namespace, 'mysql', $definition['declaredColumns'] ?? []),
     );
 }
 
@@ -908,6 +923,11 @@ function observeMysqlCreateAs(string $namespace, object $value): array
         'mysqlCreateTableAs' => [
             'target' => observeMysqlTableIdentity($value->target), 'ifNotExists' => $value->ifNotExists,
             'query' => observeSetQuery($namespace, $value->query, 'mysql'),
+            ...($value->declaredColumns === [] ? [] : ['declaredColumns' => array_map(
+                static fn ($column): array => [$column->name->value, $column->storage->value, $column->nullable,
+                    $column->default === null ? null : observeOperand($namespace, $column->default)],
+                $value->declaredColumns
+            )]),
         ],
     ];
 }

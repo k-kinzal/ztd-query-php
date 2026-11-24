@@ -16,7 +16,9 @@ use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs;
+use SqlSemantics\Platform\MySql\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
@@ -61,6 +63,20 @@ final class CreateTableAsTest extends TestCase
                 . '`__ztd_source`.`label` AS `b` FROM `app`.`records` AS `__ztd_source`',
             (new CreateTableAs($target, $result))->toString()
         );
+    }
+
+    public function testToStringKeepsDeclaredStorageBeforeTheQuery(): void
+    {
+        $target = new TableIdentity(
+            new TableName(new Identifier('app'), new Identifier('copy')),
+            ExternalRelationKind::BaseTable
+        );
+        $query = new Select([new ResultColumn(new NullLiteral(), new Identifier('n'))]);
+        $definition = new TableColumn(new Identifier('N'), IntegerStorage::Tiny, false);
+        $value = new CreateTableAs($target, $query, declaredColumns: [$definition]);
+
+        self::assertSame([$definition], $value->declaredColumns);
+        self::assertSame('CREATE TABLE `app`.`copy` (`N` TINYINT NOT NULL) ENGINE=InnoDB AS SELECT NULL AS `n`', $value->toString());
     }
 
     public function testProfileIdUsesTheReleaseOfTheQuery(): void

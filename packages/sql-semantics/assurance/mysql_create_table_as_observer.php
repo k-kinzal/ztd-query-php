@@ -11,7 +11,7 @@ const CTAS_PRIMARY = 'ir_fixture.ir_create_target';
 const CTAS_DECOY = 'ir_ctas_decoy.ir_create_target';
 const CTAS_MARKER = 'ir_fixture.ir_ctas_marker';
 
-function admitMysqlCreateAs(string $sql, bool $withInput): bool
+function admitMysqlCreateAs(string $sql, bool $withInput, bool $withDefinitions): bool
 {
     $schema = '(?:`(?:ir_fixture|ir_ctas_decoy)`|ir_fixture|ir_ctas_decoy)';
     $target = '(?:`ir_create_target`|ir_create_target)';
@@ -33,8 +33,13 @@ function admitMysqlCreateAs(string $sql, bool $withInput): bool
         . '(?: WHERE ' . $predicate . ')?(?: ORDER BY [0-9]{1,3}(?: ASC| DESC)?'
         . '(?:, [0-9]{1,3}(?: ASC| DESC)?)*)?(?: LIMIT [0-9]{1,10}(?:(?: OFFSET |, ?)[0-9]{1,10})?)?';
 
-    return preg_match('/(?(DEFINE)(?<field>' . $field . '))\ACREATE (?:TEMPORARY )?TABLE (?:IF NOT EXISTS )?(?:' . $schema . '\.)?' . $target
-        . '(?: ENGINE=InnoDB)? AS ' . $query . '\z/D', $sql) === 1;
+    $declared = $label . ' (?:TINYINT|SMALLINT|MEDIUMINT|INTEGER|INT|BIGINT)(?: NOT NULL| NULL)?'
+        . '(?: DEFAULT (?:NULL|-?[0-9]{1,19}))?';
+    $layout = $withDefinitions ? '(?: \((?&declared)(?:, ?(?&declared)){0,127}\))?' : '';
+
+    return preg_match('/(?(DEFINE)(?<field>' . $field . ')(?<declared>' . $declared . '))'
+        . '\ACREATE (?:TEMPORARY )?TABLE (?:IF NOT EXISTS )?(?:' . $schema . '\.)?' . $target
+        . $layout . '(?: ENGINE=InnoDB)? AS ' . $query . '\z/D', $sql) === 1;
 }
 
 function resetMysqlCreateAs(PDO $catalog, PDO $owner, string $target, string $topology, int $variant): void
@@ -72,7 +77,8 @@ function observeMysqlCreateAs(PDO $catalog, array $request): array
 {
     ['sql' => $sql, 'target' => $target, 'topology' => $topology, 'variant' => $variant] = $request;
     $input = $request['sourceFixture'] ?? null;
-    if (!admitMysqlCreateAs($sql, $input !== null) || !in_array($target, [CTAS_PRIMARY, CTAS_DECOY], true)
+    $definitions = ($request['explicitDefinitions'] ?? false) === true;
+    if (!admitMysqlCreateAs($sql, $input !== null, $definitions) || !in_array($target, [CTAS_PRIMARY, CTAS_DECOY], true)
         || ($input !== null && !validMysqlCreateAsSource($input, $target, $topology))
         || !in_array($topology, ['absent', 'persistent', 'temporary', 'shadow'], true)
         || !is_int($variant) || $variant < 0 || $variant > 40) {

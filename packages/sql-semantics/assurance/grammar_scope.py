@@ -531,6 +531,12 @@ def inventory(root):
             }
             for alternative in signatures & declaration_roles:
                 related[alternative] = (*related.get(alternative, ()), "mysql-session-create-table-v1.json")
+            checked_declared_query = {
+                "create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( table_element_list ) opt_create_table_options_etc",
+                "create2a: create_field_list ) opt_create_table_options opt_create_partitioning create3",
+            }
+            for alternative in signatures & checked_declared_query:
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-table-as-declarations-v1.json")
             for alternative in signatures & {
                 "create2: LIKE table_ident",
                 "create2: ( LIKE table_ident )",

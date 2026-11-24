@@ -480,6 +480,10 @@ def verify_probe(raw, catalog):
                            "FROM `app`.`text_source` AS `__ztd_source`")
             require(item.get("mysqlCreateTableAsVarchar") == [[[8191, "utf8mb4_bin"], [0, "utf8mb4_bin"]], text_source, True],
                     "installed-mysql-create-table-as-varchar-mismatch", item)
+            declared = ("CREATE TABLE `app`.`declared_copy` (`pre` SMALLINT NULL DEFAULT 7, `N` TINYINT NOT NULL) "
+                        "ENGINE=InnoDB AS SELECT NULL AS `n`")
+            require(item.get("mysqlCreateTableAsDeclaration") == [["pre", "N"], declared, declared, True],
+                    "installed-mysql-create-table-as-explicit-layout-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Like\\CreateTableLike"):
             copy = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`copy_probe` LIKE `app`.`accounts`"
             require(item.get("mysqlCreateLike") == ["app", "copy_probe", "temporary-table", "app", "accounts",
