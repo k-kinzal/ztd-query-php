@@ -1143,6 +1143,29 @@ if ($dialect !== 'sqlite') {
         $properties[$sequenceMove] = ['source' => [$sequenceDropTarget], 'destination' => ['?Identifier'], 'ifExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$sequenceMove] = ['__construct', 'profileId', 'toString'];
+        $reconfigure = $sequence . 'Alter\\ReconfigureSequence';
+        $sequenceChanges = $sequence . 'Alter\\SequenceChanges';
+        $sequenceDefault = $sequence . 'Alter\\SequenceResetOperand';
+        $clearSequenceOwner = $sequence . 'Alter\\ClearSequenceOwner';
+        $sequenceChangeRules = $sequence . 'Alter\\SequenceChangeRules';
+        $roots[] = $reconfigure;
+        array_push($internal, $sequence . 'Alter\\ReconfigureSequenceLowering', $sequence . 'Alter\\SequenceChangesLowering', $sequenceChangeRules);
+        $pureCollaborators[] = $sequenceChangeRules;
+        $properties[$reconfigure] = ['source' => [$sequenceDropTarget], 'changes' => ['?' . $sequenceChanges], 'ifExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$reconfigure] = ['__construct', 'profileId', 'toString'];
+        $numericChoice = ['Expression\\WideIntegerLiteral', $sequenceDefault, 'null'];
+        $properties[$sequenceChanges] = [
+            'storage' => ['?Schema\\IntegerStorage'], 'increment' => ['?Expression\\WideIntegerLiteral'],
+            'minimum' => $numericChoice, 'maximum' => $numericChoice, 'start' => ['?Expression\\WideIntegerLiteral'],
+            'restart' => $numericChoice, 'cache' => ['?Expression\\WideIntegerLiteral'], 'cycle' => ['?bool'],
+            'owner' => [$clearSequenceOwner, $sequenceOwner, 'null'],
+        ];
+        $methods[$sequenceChanges] = ['__construct', 'toString'];
+        $properties[$sequenceDefault] = $methods[$sequenceDefault] = [];
+        $properties[$clearSequenceOwner] = $methods[$clearSequenceOwner] = [];
+        $enumCases[$sequenceDefault] = ['Native' => 'native-default'];
+        $enumCases[$clearSequenceOwner] = ['Remove' => 'remove'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1491,6 +1514,7 @@ try {
                 . $platform . '\\Statement\\Table\\TruncateTable, $statement instanceof \\' . $platform . '\\Statement\\Utility\\Maintenance\\Reindex'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\ChangeOwner'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\SetSchema'
+                . ', $statement instanceof \\' . $platform . '\\Statement\\Table\\Sequence\\AlterSequence'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
@@ -2089,7 +2113,7 @@ try {
                         'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
                         'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
                         'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\DropSchema', 'Schema\\Namespace\\RenameSchema',
-                        'Schema\\Sequence\\Alter\\MoveSequence', 'Schema\\Sequence\\Alter\\RenameSequence',
+                        'Schema\\Sequence\\Alter\\MoveSequence', 'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\RenameSequence',
                         'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }

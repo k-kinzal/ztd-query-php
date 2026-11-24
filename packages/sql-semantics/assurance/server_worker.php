@@ -1228,6 +1228,21 @@ function constructPostgresDatabaseRebuild(array $input): \SqlSemantics\Platform\
     };
 }
 
+function constructPostgresOwnedColumn(?array $owner): ?\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner
+{
+    if ($owner === null) {
+        return null;
+    }
+    [$namespace, $relation, $column, $kind] = $owner;
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner(
+        new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($namespace),
+        new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($relation),
+        new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($column),
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwnerKind::from($kind),
+    );
+}
+
 function constructPostgresSequence(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence
 {
     $spec = $input['createSequence'];
@@ -1245,16 +1260,7 @@ function constructPostgresSequence(array $input): \SqlSemantics\Platform\Postgre
         new \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral($spec['cache']),
         $spec['cycle'],
     );
-    $owner = null;
-    if (isset($spec['owner'])) {
-        [$namespace, $relation, $column, $kind] = $spec['owner'];
-        $owner = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner(
-            new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($namespace),
-            new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($relation),
-            new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($column),
-            \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwnerKind::from($kind),
-        );
-    }
+    $owner = constructPostgresOwnedColumn($spec['owner'] ?? null);
 
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence(
         $name, $numbers, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePersistence::from($spec['persistence']),
@@ -1345,6 +1351,64 @@ function observePostgresMoveSequence(\SqlSemantics\Platform\PostgreSql\Ir\Schema
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'moveSequence' => ['source' => observePostgresSequenceSelector($value->source),
             'destination' => $value->destination?->value, 'ifExists' => $value->ifExists]];
+}
+
+function constructPostgresChangeBound(?string $operand): \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceResetOperand|null
+{
+    return match ($operand) {
+        null => null,
+        'native-default' => \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceResetOperand::Native,
+        default => new \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral($operand),
+    };
+}
+
+function constructPostgresSequenceChanges(array $body): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceChanges
+{
+    $number = static fn (string $key): ?\SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral => isset($body[$key])
+        ? new \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral($body[$key]) : null;
+    $owner = $body['owner'] ?? null;
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceChanges(
+        isset($body['storage']) ? \SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage::from($body['storage']) : null,
+        $number('increment'),
+        constructPostgresChangeBound($body['minimum'] ?? null),
+        constructPostgresChangeBound($body['maximum'] ?? null),
+        $number('start'),
+        constructPostgresChangeBound($body['restart'] ?? null),
+        $number('cache'),
+        $body['cycle'] ?? null,
+        $owner === 'remove' ? \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ClearSequenceOwner::Remove : constructPostgresOwnedColumn($owner),
+    );
+}
+
+function constructPostgresReconfigureSequence(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ReconfigureSequence
+{
+    $spec = $input['reconfigureSequence'];
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ReconfigureSequence(
+        constructPostgresSequenceSelector($spec['source']),
+        $spec['changes'] === null ? null : constructPostgresSequenceChanges($spec['changes']),
+        $spec['ifExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresReconfigureSequence(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ReconfigureSequence $value): array
+{
+    $changes = $value->changes;
+    $bound = static fn ($operand): ?string => $operand instanceof \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral
+        ? $operand->decimal : $operand?->value;
+    $owner = $changes?->owner;
+    $encodedOwner = $owner instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner
+        ? [$owner->schema->value, $owner->relation->value, $owner->column->value, $owner->kind->value] : $owner?->value;
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'reconfigureSequence' => ['source' => observePostgresSequenceSelector($value->source), 'ifExists' => $value->ifExists,
+            'changes' => $changes === null ? null : [
+                'storage' => $changes->storage?->value, 'increment' => $changes->increment?->decimal,
+                'minimum' => $bound($changes->minimum), 'maximum' => $bound($changes->maximum), 'start' => $changes->start?->decimal,
+                'restart' => $bound($changes->restart), 'cache' => $changes->cache?->decimal, 'cycle' => $changes->cycle,
+                'owner' => $encodedOwner,
+            ]]];
 }
 
 function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
@@ -1766,6 +1830,7 @@ function observeStatement(array $input): array
             isset($input['dropSequence']) => constructPostgresDropSequence($input),
             isset($input['renameSequence']) => constructPostgresRenameSequence($input),
             isset($input['moveSequence']) => constructPostgresMoveSequence($input),
+            isset($input['reconfigureSequence']) => constructPostgresReconfigureSequence($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1809,6 +1874,9 @@ function observeStatement(array $input): array
     }
     if ($value::class === $namespace . 'Schema\\Sequence\\Alter\\MoveSequence') {
         return observePostgresMoveSequence($value);
+    }
+    if ($value::class === $namespace . 'Schema\\Sequence\\Alter\\ReconfigureSequence') {
+        return observePostgresReconfigureSequence($value);
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

@@ -54,6 +54,8 @@ A namespace with table or unowned sequence members has a static name and an ungu
 
 `ALTER SEQUENCE ... SET SCHEMA` resolves a persistent source and destination separately. Declare an empty destination with `CREATE SCHEMA` when building the analysis context. The move retains the sequence identity and its referring defaults. With `IF EXISTS` and a verified absent source, the IR records the guarded no-op and omits the unevaluated destination.
 
+Sequence reconfiguration stores one typed assignment for each requested generator option. Omitted options retain the corresponding settings under the native type-change rules. An explicit default resets a bound or restarts at the recorded start. A new `START` in the same statement supplies that start. `OWNED BY NONE` removes the owning-column dependency, and a named owner resolves to an exact column in the sequence's namespace.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php

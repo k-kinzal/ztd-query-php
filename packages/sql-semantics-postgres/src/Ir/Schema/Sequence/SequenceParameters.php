@@ -55,17 +55,13 @@ final class SequenceParameters
     ) {
         Check::input($increment->decimal !== '0', 'A sequence increment cannot be zero.');
         Check::input($cache->decimal !== '0' && !str_starts_with($cache->decimal, '-'), 'A sequence cache must be positive.');
-        [$first, $last] = match ($storage) {
-            IntegerStorage::Small => ['-32768', '32767'],
-            IntegerStorage::Standard => ['-2147483648', '2147483647'],
-            IntegerStorage::Wide => ['-9223372036854775808', '9223372036854775807'],
-        };
+        [$first, $last] = SequenceIntegerOrder::limits($storage);
         $descending = str_starts_with($increment->decimal, '-');
-        $lower = $minimum ?? new WideIntegerLiteral($descending ? $first : '1');
-        $upper = $maximum ?? new WideIntegerLiteral($descending ? '-1' : $last);
+        $lower = $minimum ?? ($descending ? $first : new WideIntegerLiteral('1'));
+        $upper = $maximum ?? ($descending ? new WideIntegerLiteral('-1') : $last);
         Check::input(
-            SequenceIntegerOrder::compare(new WideIntegerLiteral($first), $lower) <= 0
-            && SequenceIntegerOrder::compare($upper, new WideIntegerLiteral($last)) <= 0
+            SequenceIntegerOrder::compare($first, $lower) <= 0
+            && SequenceIntegerOrder::compare($upper, $last) <= 0
             && SequenceIntegerOrder::compare($lower, $upper) < 0,
             'Sequence limits must increase within the selected integer storage.'
         );

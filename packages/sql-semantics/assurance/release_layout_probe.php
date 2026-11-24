@@ -600,6 +600,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Sequence\\DropSequence'] = 'DROP SEQUENCE IF EXISTS ticket, pg_temp.ticket, public.absent, unknown CASCADE';
         $queries['Schema\\Sequence\\Alter\\RenameSequence'] = 'ALTER SEQUENCE ticket RENAME TO "Next.Ticket"';
         $queries['Schema\\Sequence\\Alter\\MoveSequence'] = 'ALTER SEQUENCE public.ticket SET SCHEMA "Archive.棚"';
+        $queries['Schema\\Sequence\\Alter\\ReconfigureSequence'] = 'ALTER SEQUENCE public.ticket RESTART OWNED BY NONE START 5 CYCLE';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -625,6 +626,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\MoveSequence') {
             $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE SCHEMA "Archive.棚"']);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\ReconfigureSequence') {
+            $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket AS smallint']);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
             $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy', $storageDeclaration]);
@@ -959,6 +963,32 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->source->schema?->value, $result->source->name->value, $result->source->presence->value,
                 $result->destination?->value, $direct->toString(), $direct == $result, $batch === [] ? false : $batch[0] == $direct,
                 $checked->destination, $checked->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\ReconfigureSequence') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $integer = SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $changes = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceChanges(
+                start: new $integer('5'),
+                restart: SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceResetOperand::Native,
+                cycle: true,
+                owner: SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ClearSequenceOwner::Remove,
+            );
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ReconfigureSequence($source, $changes, release: $result->release);
+            $guarded = $semantics->analyze('ALTER SEQUENCE IF EXISTS unused CACHE 0 CACHE 1', $activeContext);
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceChanges(increment: new $integer('0'));
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence increment cannot be zero.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresReconfigureSequence'] = [
+                $result->source->schema?->value, $result->source->name->value, $result->changes->start?->decimal,
+                $result->changes->restart->value, $result->changes->owner->value, $result->changes->cache,
+                $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
+                $guarded->changes, $guarded->toString(), $refused,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\RenameSequence') {
