@@ -41,18 +41,18 @@ def Head.binary : Head → Bool
   | _ => false
 
 def optionPrefix (verbose : Bool) : Text :=
-  if verbose then "(VERBOSE) ".toList else []
+  if verbose then ['(', 'V', 'E', 'R', 'B', 'O', 'S', 'E', ')', ' '] else []
 
 def lockPrefix (concurrent : Bool) : Text :=
-  if concurrent then "CONCURRENTLY ".toList else []
+  if concurrent then ['C', 'O', 'N', 'C', 'U', 'R', 'R', 'E', 'N', 'T', 'L', 'Y', ' '] else []
 
 def header (head : Head) : Text :=
-  "REINDEX ".toList ++ match head with
-    | .index c v => optionPrefix v ++ "INDEX ".toList ++ lockPrefix c
-    | .table c v => optionPrefix v ++ "TABLE ".toList ++ lockPrefix c
-    | .schema c v => optionPrefix v ++ "SCHEMA ".toList ++ lockPrefix c
-    | .database c v => optionPrefix v ++ "DATABASE ".toList ++ lockPrefix c
-    | .system v => optionPrefix v ++ "SYSTEM ".toList
+  ['R', 'E', 'I', 'N', 'D', 'E', 'X', ' '] ++ match head with
+    | .index c v => optionPrefix v ++ ['I', 'N', 'D', 'E', 'X', ' '] ++ lockPrefix c
+    | .table c v => optionPrefix v ++ ['T', 'A', 'B', 'L', 'E', ' '] ++ lockPrefix c
+    | .schema c v => optionPrefix v ++ ['S', 'C', 'H', 'E', 'M', 'A', ' '] ++ lockPrefix c
+    | .database c v => optionPrefix v ++ ['D', 'A', 'T', 'A', 'B', 'A', 'S', 'E', ' '] ++ lockPrefix c
+    | .system v => optionPrefix v ++ ['S', 'Y', 'S', 'T', 'E', 'M', ' ']
 
 def opening (head : Head) : Text := header head ++ [quote]
 
