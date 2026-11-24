@@ -138,13 +138,13 @@ def expected(item):
     return result_window(base["fields"], rows, item["orderBy"], item["limit"])
 
 
-def result_window(fields, rows, sorting, bounds):
-    ordered = sorted(rows, key=lambda row: key(row, sorting))
+def result_window(fields, rows, sorting, bounds, ordering_key=key):
+    ordered = sorted(rows, key=lambda row: ordering_key(row, sorting))
     upper, offset = bounds or (None, 0)
     start, stop = offset, offset + upper if upper is not None else len(ordered)
     bands = []
     index = 0
-    for _, tied in itertools.groupby(ordered, key=lambda row: key(row, sorting)):
+    for _, tied in itertools.groupby(ordered, key=lambda row: ordering_key(row, sorting)):
         members = list(tied)
         end = index + len(members)
         selected = max(0, min(end, stop) - max(index, start))

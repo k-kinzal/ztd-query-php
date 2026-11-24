@@ -1,5 +1,6 @@
 """Independent construction cases and native field materialization for CTAS with a table source."""
 
+from copy import deepcopy
 from itertools import product
 from random import Random
 
@@ -10,13 +11,13 @@ from run_server_mysql_session_create_table import COLLATION, TEMP, snapshot, tab
 from server_delete_cases import literal
 from server_join_cases import slot
 from server_result_cases import key, match, result_window
-from server_truth_model import predicate_value
+from server_truth_model import pad_space_distinct_rows, predicate_value
 
 SOURCE = "ir_ctas_source"
 AXES = ("sourceSchema", "sourceTopology", "destinationKind", "projection", "distinct", "predicate")
 SOURCE_ERROR = "CREATE TABLE AS requires a source-free projection or one resolved table."
-FILTER_ERROR = "CREATE TABLE AS requires a constant filter or a checked signed table predicate."
-FIELD_ERROR = "CREATE TABLE AS requires a signed table slot, an unpadded integral or NULL literal, or its single signed cast."
+FILTER_ERROR = "CREATE TABLE AS requires a constant filter or a checked table predicate."
+FIELD_ERROR = "CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast."
 SEMANTIC_ERROR = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\SemanticException"
 
 
@@ -122,7 +123,8 @@ def negatives(tag):
     crossed = {"kind": "CROSS", "left": source, "right": other, "on": None}
     yield constants.replace_query(item, {**shape, "source": crossed}), diagnostic, SOURCE_ERROR
     varchar = {**source, "columns": ["n", "v"], "columnTypes": ["int", ["varchar", 5, "utf8mb4_bin"]]}
-    yield constants.replace_query(item, {**shape, "source": varchar, "columns": [[["text-slot", 1, 0], "a"]]}), diagnostic, FIELD_ERROR
+    collated = ["collated-text", COLLATION, ["text-slot", 1, 0]]
+    yield constants.replace_query(item, {**shape, "source": varchar, "columns": [[collated, "a"]]}), diagnostic, FIELD_ERROR
     yield constants.replace_query(item, {**shape, "columns": [[slot(3), "a"]]}), diagnostic, "slot must belong to the SELECT source"
     yield constants.replace_query(item, {**shape, "columns": [[constants.cast(slot(0)), "a"]]}), diagnostic, FIELD_ERROR
     missing = constants.analyze_request(item, f"CREATE TABLE {constants.NAME} AS SELECT n AS a FROM ir_missing")
@@ -159,11 +161,24 @@ def ordered_rows(rows):
     return sorted(rows, key=lambda row: tuple((value is not None, value) for value in row))
 
 
-def input_table(tag, kind, name, base):
+def varchar_field(name, width, nullable, default=None):
+    return [name, ["varchar", width, COLLATION], nullable, None if default is None else ["text", default]]
+
+
+def input_table(tag, kind, name, base, layout):
     if name == "known":
         return table(tag, kind, [["metric", "INTEGER", False, literal(61)]], [], [[3], [3], [8]])
     fields = [["n", "INTEGER", False, literal(base + 31)], ["m", "INTEGER", True, literal(base + 57)]]
     rows = [[-7, -8], [3, None], [3, None], [3, base + 5], [8, base + 12], [base + 22, None]]
+    if layout == "width-edge":
+        fields = [varchar_field("v", 8191, True), varchar_field("z", 0, True)]
+        rows = [["edge", ""], [None, None]]
+    elif layout in ("text", "retained-text"):
+        width = 5 if layout == "retained-text" else 8
+        fields += [varchar_field("v", width, True, f"v{base} "), varchar_field("z", 0, False, ""),
+                   varchar_field("w", 63 if base % 2 == 0 else 64, False, f"w{base}")]
+        rows = [[-7, -8, "a\0", "", "first"], [3, None, "a", "", "t"], [3, None, "a ", "", "t"],
+                [3, None, "a ", "", "t"], [8, 5, None, "", "tail"], [base + 22, None, "한", "", f"w{base}"]]
     return table(tag, kind, fields, [], ordered_rows(rows))
 
 
@@ -174,6 +189,7 @@ def initial_state(item):
     permanent, session = constants.initial_state(tag, target, item["topology"], variant)
     fixture = item["sourceFixture"]
     location, source_topology = fixture["location"], fixture["topology"]
+    layout = fixture.get("layout", "signed")
     _, name = location.split(".", 1)
     for schema_index, schema in enumerate(constants.SCHEMAS.values()):
         source = f"{schema}.{name}"
@@ -181,9 +197,9 @@ def initial_state(item):
             continue
         base = 10 + schema_index * 40 + variant
         permanent[source] = (None if source == location and source_topology == "temporary-only"
-                             else input_table(tag, "table", name, base))
+                             else input_table(tag, "table", name, base, layout))
         if source == location and source_topology != "persistent":
-            session[source] = input_table(tag, TEMP, name, base + 81)
+            session[source] = input_table(tag, TEMP, name, base + 81, layout)
     return permanent, session
 
 
@@ -193,12 +209,12 @@ def inherited_layout(item, origin):
     physical_slots = [actual_by_name[name] for name in query["source"]["columns"]]
     fields = []
     for term, label in query["columns"]:
-        fields.append([label, *physical_slots[term[1]][1:]] if term[0] == "slot"
+        fields.append([label, *physical_slots[term[1]][1:]] if term[0] in ("slot", "text-slot")
                       else constants.evaluate_field(item["release"], term, label)[0])
     return physical_slots, fields
 
 
-def selecting_window(item, origin):
+def selecting_windows(item, origin):
     slots, heading = inherited_layout(item, origin)
     query = item["mysqlCreateTableAs"]["query"]
     positions = {field[0]: index for index, field in enumerate(origin["columns"])}
@@ -207,13 +223,32 @@ def selecting_window(item, origin):
     for row in origin["rows"]:
         scoped = [row[index] for index in coordinates]
         def operand(term):
-            return scoped[term[1]] if term[0] == "slot" else constants.evaluate_field(item["release"], term, "")[1]
+            return scoped[term[1]] if term[0] in ("slot", "text-slot") else constants.evaluate_field(item["release"], term, "")[1]
 
         if query["where"] is None or predicate_value(query["where"], operand) is True:
             selected.append([operand(term) for term, _ in query["columns"]])
-    if query["distinct"]:
-        selected = [list(row) for row in dict.fromkeys(map(tuple, selected))]
-    return result_window(heading, selected, query["orderBy"], query["limit"])
+    text_width = max((len(value) for row in selected for value in row if isinstance(value, str)), default=0)
+
+    def ranking(row, terms):
+        components = []
+        for slot, descending, nulls_first in terms:
+            value = row[slot - 1]
+            if value is None:
+                components.append((0 if nulls_first else 1, 0))
+                continue
+            if isinstance(value, str):
+                padded = value.ljust(text_width, " ").encode("utf8")
+                value = tuple(-byte for byte in padded) if descending else padded
+            elif descending:
+                value = -value
+            components.append((1 if nulls_first else 0, value))
+        return tuple(components)
+
+    if text_width == 0 and not any(field[1].startswith("varchar") for field in heading):
+        ranking = key
+    alternatives = pad_space_distinct_rows(selected) if query["distinct"] else [selected]
+    return ranking, [result_window(heading, [list(row) for row in allowed], query["orderBy"], query["limit"], ranking)
+                     for allowed in alternatives]
 
 
 def snapshots(item, rows=None, sql=None):
@@ -229,14 +264,24 @@ def snapshots(item, rows=None, sql=None):
     diagnostics = [] if not collision else [["Note" if optional else "Error", 1050, f"Table '{constants.NAME}' already exists"]]
     total = 0
     if not collision:
-        window = selecting_window(item, before["visible"][location])
+        ranking, windows = selecting_windows(item, before["visible"][location])
+        window = windows[0]
         total = window["total"]
         if rows is None:
             rows = [row for band in window["bands"] for row in band["members"][:band["multiplicity"]]]
         else:
             ordering = definition["query"]["orderBy"]
-            scoped = sorted(rows, key=lambda row: key(row, ordering))
-            match(window, {"status": "rows", "fields": window["fields"], "rows": scoped}, sql)
+            scoped = sorted(rows, key=lambda row: ranking(row, ordering))
+            for alternative in windows:
+                try:
+                    match(alternative, {"status": "rows", "fields": alternative["fields"], "rows": scoped}, sql)
+                except Failure as error:
+                    if error.signal != "meaning-mismatch":
+                        raise
+                else:
+                    break
+            else:
+                raise Failure("meaning-mismatch", {"sql": sql, "allowed": windows, "observed": rows})
         destination[target] = {"kind": kind, "engine": "InnoDB", "collation": COLLATION, "columns": window["fields"],
                                "key": [], "rows": ordered_rows(rows)}
     effect = ["db-error", "42S01", 1050] if collision and not optional else ["executed", total]
@@ -262,9 +307,17 @@ def observed_rows(item, actual):
 
 def check_observation(item, actual, sql):
     require(actual["status"] == constants.LABEL, "mysql-create-as-input-observer-rejected", {"sql": sql, "observed": actual})
+    compared = actual
+    if item["sourceFixture"].get("layout", "signed") != "signed":
+        compared = deepcopy(actual)
+        for phase in ("initial", "after", "restored", "afterDisconnect"):
+            for namespace in ("visible", "permanent"):
+                for relation in compared[phase][namespace].values():
+                    if relation is not None:
+                        relation["rows"] = ordered_rows(relation["rows"])
     try:
-        expected = snapshots(item, observed_rows(item, actual), sql)
-        same(expected, actual)
+        expected = snapshots(item, observed_rows(item, compared), sql)
+        same(expected, compared)
     except Failure as error:
         if error.signal != "meaning-mismatch":
             raise

@@ -30,7 +30,7 @@ AXES = ("destinationSchema", "destinationKind", "destinationTopology", "ifNotExi
 BARE_BINARY = (*OLD, "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0")
 INVALID = "mysql-create-table-as-invalid-published"
 NAME_ERROR = "CREATE TABLE AS requires ASCII column names of 1 to 64 characters without trailing spaces."
-FIELD_ERROR = "CREATE TABLE AS requires a signed table slot, an unpadded integral or NULL literal, or its single signed cast."
+FIELD_ERROR = "CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast."
 BODY_ERROR = "CREATE TABLE AS requires a single projection without explicit table definitions or a duplicate policy."
 UNIQUE = "CREATE TABLE AS cannot repeat a column name."
 
@@ -149,7 +149,7 @@ def negatives(tag):
     for term in (["parameter", 1], ["integer", "1", 4, False], cast(["operation", "+", literal(1), literal(2)])):
         yield replace_query(item, select([[term, "c0"]])), FIELD_ERROR
     predicate = ["comparison", "=", literal(1), literal(2)]
-    yield replace_query(item, select([[literal(1), "c0"]], where=predicate)), "CREATE TABLE AS requires a constant filter or a checked signed table predicate."
+    yield replace_query(item, select([[literal(1), "c0"]], where=predicate)), "CREATE TABLE AS requires a constant filter or a checked table predicate."
     yield analyze_request(item, f"CREATE TEMPORARY TABLE {NAME} ENGINE=MEMORY AS SELECT 1 AS c0"), "CREATE TABLE AS requires the native InnoDB storage role."
     yield analyze_request(item, f"CREATE TABLE {NAME} AS SELECT 1 AS c0", named=False), "CREATE TABLE AS requires an absolute target name."
     yield analyze_request(item, f"CREATE TABLE {NAME} (other INT) AS SELECT 1 AS c0"), BODY_ERROR

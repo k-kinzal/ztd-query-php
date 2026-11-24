@@ -17,6 +17,7 @@ LABEL = "mysql-create-table-as-source"
 OBSERVER = constants.OBSERVER
 CONTRACT_NAME = "mysql-create-table-as-source-v1.json"
 CONTRACT = constants.SOURCE_CONTRACT
+VARCHAR_ADMISSION = "a58750e80af50328a9d7f492a2e96bf9d6b49d722fd6a578026b6d4629d0d46f"
 COMPLETE_SEEDS = True
 BINDING = "mysql-create-as-input-binding-mismatch"
 
@@ -24,6 +25,9 @@ BINDING = "mysql-create-as-input-binding-mismatch"
 def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "mysql-create-as-input-contract-mismatch")
+    amendment = TOOL / "mysql-create-table-as-varchar-v1.json"
+    require(digest(amendment) == VARCHAR_ADMISSION, "mysql-create-as-text-admission-mismatch")
+    require("priorAdmission" in json.loads(amendment.read_text()), "mysql-create-as-text-admission-record")
     return json.loads(path.read_text()), constants.specifications()[1]
 
 

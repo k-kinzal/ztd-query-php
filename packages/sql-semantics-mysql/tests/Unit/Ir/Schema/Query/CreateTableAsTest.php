@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
@@ -17,6 +19,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
 #[CoversClass(CreateTableAs::class)]
@@ -40,6 +43,23 @@ final class CreateTableAsTest extends TestCase
         self::assertSame(
             'CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`created` ENGINE=InnoDB AS SELECT CAST(17 AS SIGNED) AS `n`, NULL AS `absent`',
             $value->toString()
+        );
+    }
+
+    public function testToStringCopiesEachOccurrenceOfAResolvedVarcharSlot(): void
+    {
+        $schema = new Identifier('app');
+        $origin = new TableSource($schema, new Identifier('records'), [new Identifier('label')], [new Varchar(8)]);
+        $result = new Select([
+            new ResultColumn(new TextColumnReference(0), new Identifier('a')),
+            new ResultColumn(new TextColumnReference(0), new Identifier('b')),
+        ], $origin);
+        $target = new TableIdentity(new TableName($schema, new Identifier('copy')), ExternalRelationKind::BaseTable);
+
+        self::assertSame(
+            'CREATE TABLE `app`.`copy` ENGINE=InnoDB AS SELECT `__ztd_source`.`label` AS `a`, '
+                . '`__ztd_source`.`label` AS `b` FROM `app`.`records` AS `__ztd_source`',
+            (new CreateTableAs($target, $result))->toString()
         );
     }
 

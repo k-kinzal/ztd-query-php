@@ -703,6 +703,26 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['mysqlCreateTableAsSource'] = [$from->query->source->schema->value, $from->query->source->table->value,
                 $from->query->source->kind->value, $slots, $from->toString()];
+            $large = $semantics->context(['CREATE TABLE app.text_source (v VARCHAR(8191) COLLATE utf8mb4_bin, z VARCHAR(0) COLLATE utf8mb4_bin)']);
+            $edge = $semantics->analyze('CREATE TABLE app.text_copy AS SELECT v AS a, v AS b, z AS c, z AS d FROM app.text_source', $large);
+            if (!$edge instanceof SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs
+                || !$edge->query->source instanceof SqlSemantics\Platform\MySql\Ir\TableSource) {
+                throw new RuntimeException('The installed table creation lost its resolved VARCHAR input.');
+            }
+            $widths = [];
+            foreach ($edge->query->source->columnTypes as $field) {
+                if (!$field instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar) {
+                    throw new RuntimeException('The installed input lost its VARCHAR storage.');
+                }
+                $widths[] = [$field->length, $field->collation->value];
+            }
+            $rejectedWidth = false;
+            try {
+                $semantics->analyze('CREATE TABLE app.text_copy AS SELECT v AS a, v AS b, z AS c, z AS d, z AS e FROM app.text_source', $large);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejectedWidth = $error->getMessage() === 'The projected logical table record cannot exceed 65535 bytes.';
+            }
+            $details['mysqlCreateTableAsVarchar'] = [$widths, $edge->toString(), $rejectedWidth];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Like\\CreateTableLike') {
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->source, true);

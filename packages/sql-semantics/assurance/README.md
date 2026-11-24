@@ -297,6 +297,8 @@ The [MySQL query-backed table contract](mysql-create-table-as-v1.json) checks so
 
 The [resolved MySQL query source contract](mysql-create-table-as-source-v1.json) covers inherited native signed fields, resolved temporary table precedence and two spellings of the same slot. Its observer records both sessions and compares inserted rows with the independent peer-group selection rule when LIMIT cuts a tie. Run `run_server_mysql_create_table_as_source.py` and `combine_server_mysql_create_table_as_source_evidence.py` for the nine releases.
 
+The [MySQL VARCHAR table creation contract](mysql-create-table-as-varchar-v1.json) checks native text boundaries and row effects, including exact inherited storage, padding, positional row selection and the maximum logical row size. Run `run_server_mysql_create_table_as_varchar.py` and `combine_server_mysql_create_table_as_varchar_evidence.py` for the nine releases.
+
 The [PostgreSQL truncation contract](postgres-truncate-v1.json) observes duplicate target order, inherited rows, transitive foreign-key effects, the lifetime of owned sequence state and before/after callback order. Run `run_server_postgres_truncate.py` and `combine_server_postgres_truncate_evidence.py` on both pinned releases.
 
 The [PostgreSQL view removal contract](postgres-drop-view-v1.json) covers persistent ordinary and materialized views. It compares exact qualified targets, dependency failures and transitive cascade, live and materialized rows in surviving objects, and native rollback. Run `run_server_postgres_drop_view.py` and `combine_server_postgres_drop_view_evidence.py` on both pinned releases.

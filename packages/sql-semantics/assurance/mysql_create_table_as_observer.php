@@ -17,7 +17,7 @@ function admitMysqlCreateAs(string $sql, bool $withInput): bool
     $target = '(?:`ir_create_target`|ir_create_target)';
     $literal = '(?:-?[0-9]{1,10}|NULL|TRUE|FALSE)';
     $label = '(?:`(?:[a-zA-Z0-9_ ]|``){1,66}`|[a-zA-Z_][a-zA-Z0-9_]*)';
-    $reference = '(?:(?:`[a-zA-Z_][a-zA-Z0-9_]*`|[a-zA-Z_][a-zA-Z0-9_]*)\.){0,2}(?:`[nm]`|[nm])';
+    $reference = '(?:(?:`[a-zA-Z_][a-zA-Z0-9_]*`|[a-zA-Z_][a-zA-Z0-9_]*)\.){0,2}(?:`[nmvzw]`|[nmvzw])';
     $field = '(?:' . $literal . '|CAST\(' . $literal . ' AS SIGNED\)' . ($withInput ? '|' . $reference : '') . ')(?: AS ' . $label . ')?';
     $source = '(?: FROM (?:DUAL|\(SELECT 1 AS `__ztd_unit`\) AS `__ztd_single`))?';
     $predicate = '(?:TRUE|FALSE|NULL)';

@@ -475,6 +475,11 @@ def verify_probe(raw, catalog):
                       "`__ztd_source`.`id` AS `b` FROM `app`.`ctas_probe` AS `__ztd_source`")
             require(item.get("mysqlCreateTableAsSource") == ["app", "ctas_probe", "temporary-table",
                     [["a", 0, 0], ["b", 0, 0]], source], "installed-mysql-create-table-as-source-mismatch", item)
+            text_source = ("CREATE TABLE `app`.`text_copy` ENGINE=InnoDB AS SELECT `__ztd_source`.`v` AS `a`, "
+                           "`__ztd_source`.`v` AS `b`, `__ztd_source`.`z` AS `c`, `__ztd_source`.`z` AS `d` "
+                           "FROM `app`.`text_source` AS `__ztd_source`")
+            require(item.get("mysqlCreateTableAsVarchar") == [[[8191, "utf8mb4_bin"], [0, "utf8mb4_bin"]], text_source, True],
+                    "installed-mysql-create-table-as-varchar-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Like\\CreateTableLike"):
             copy = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`copy_probe` LIKE `app`.`accounts`"
             require(item.get("mysqlCreateLike") == ["app", "copy_probe", "temporary-table", "app", "accounts",

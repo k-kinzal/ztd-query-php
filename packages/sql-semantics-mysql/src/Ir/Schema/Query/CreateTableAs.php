@@ -8,6 +8,8 @@ use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -50,11 +52,13 @@ final class CreateTableAs implements SemanticsIR
         Check::input(
             $filter === null || $filter instanceof BooleanLiteral || $filter instanceof NullLiteral
                 || ($source !== null && ($filter instanceof IntegerComparison
-                    || ($filter instanceof NullTest && $filter->operand instanceof ColumnReference))),
-            'CREATE TABLE AS requires a constant filter or a checked signed table predicate.'
+                    || ($filter instanceof NullTest
+                        && ($filter->operand instanceof ColumnReference || $filter->operand instanceof TextColumnReference)))),
+            'CREATE TABLE AS requires a constant filter or a checked table predicate.'
         );
 
         $seen = [];
+        $bytes = intdiv(count($query->columns) + 7, 8);
         foreach ($query->columns as $column) {
             Check::input(
                 preg_match('/\A[\x01-\x7f]{1,64}(?<! )\z/D', $column->name->value) === 1,
@@ -65,13 +69,23 @@ final class CreateTableAs implements SemanticsIR
             $seen[$key] = true;
 
             $expression = $column->expression;
+            if ($expression instanceof TextColumnReference) {
+                $type = $source instanceof TableSource ? $source->columnTypes[$expression->slot] : null;
+                Check::invariant($type instanceof Varchar, 'The selecting table owns this native VARCHAR slot.');
+                $maximumBytes = $type->length * 4;
+                $bytes += $maximumBytes + ($maximumBytes > 255 ? 2 : 1);
+                continue;
+            }
+
             $term = $expression instanceof SignedCast ? $expression->operand : $expression;
             Check::input(
                 $expression instanceof ColumnReference || $term instanceof BooleanLiteral || $term instanceof NullLiteral
                     || ($term instanceof IntegerLiteral && $term->leadingZeroes === 0 && !$term->negativeZero),
-                'CREATE TABLE AS requires a signed table slot, an unpadded integral or NULL literal, or its single signed cast.'
+                'CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast.'
             );
+            $bytes += 8;
         }
+        Check::input($bytes <= 65535, 'The projected logical table record cannot exceed 65535 bytes.');
     }
 
     /**

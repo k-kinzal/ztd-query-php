@@ -549,7 +549,7 @@ def inventory(root):
                 "as_create_query_expression: AS query_expression_with_opt_locking_clauses",
             }
             for alternative in signatures & query_backed:
-                related[alternative] = (*related.get(alternative, ()), "mysql-create-table-as-v1.json", "mysql-create-table-as-source-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-table-as-v1.json", "mysql-create-table-as-source-v1.json", "mysql-create-table-as-varchar-v1.json")
         if mysql:
             declarations = {
                 "field_spec: field_ident type opt_attribute",
