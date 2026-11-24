@@ -1,0 +1,36 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-integer-width-1",
+  "approval": "pending-human-review",
+  "extends": "mysql-create-table-as-v1.json",
+  "notification": "The first MySQL 8.4.7 comparison measured nine-digit positive constants becoming BIGINT while the independent oracle expected INT. The production renderer preserved the exact numeric tokens. The original observations are retained.",
+  "counterexamples": {
+    "archiveSha256": "c0017e991d8669de2580e632255f56ed977b43e422681b88b56a479eb17ea030",
+    "firstCase": "seed/331/2",
+    "measuredMismatches": 7
+  },
+  "materialization": {
+    "minimumPositiveBigint": {
+      "legacy": 1000000000,
+      "modern": 100000000
+    },
+    "legacyProfiles": [
+      "mysql-5.6.51",
+      "mysql-5.7.44"
+    ],
+    "rules": "The threshold applies to unpadded positive integer literal terms in the signed 32-bit admission domain. Negative signed 32-bit literals stay INT. Legacy INT and BIGINT keep the measured signed display width. The existing CAST, Boolean, NULL, default, column order and value rules still apply.",
+    "calibrationSha256": "49c7cf55c2b97beca0170a528fc15b4ebfad9dc2977965f8b3e75f35d8843aa4"
+  },
+  "witness": {
+    "terms": [
+      99999999,
+      100000000,
+      999999999,
+      1000000000,
+      -100000000,
+      -1000000000
+    ],
+    "casesPerRelease": 1,
+    "rule": "Directly construct the specified ordered literals on all pinned releases. Compare exact storage, value, default and nullability. The new witness supplements every original authored, finite and seeded input."
+  },
+  "preserves": "Identical language acceptance, production rendering, release set, finite enumeration, original seed exploration, observation fields, allowed failures and fault controls."
+}
