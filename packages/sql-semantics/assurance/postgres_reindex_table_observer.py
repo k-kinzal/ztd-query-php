@@ -57,27 +57,29 @@ def read_indexes(raw):
     return indexes
 
 
+def read_owner(db, schema, name):
+    table = qualified(schema, name)
+    target = data_literal(table)
+    regclass = f"pg_catalog.to_regclass({target})"
+    toast_oid = f"(SELECT reltoastrelid FROM pg_catalog.pg_class WHERE oid={regclass})"
+    columns = ATTRIBUTES.format(target=target)
+    rows = f"SELECT pg_catalog.json_agg(pg_catalog.row_to_json(r) ORDER BY r.id) FROM {table} r"
+    queries = (HEAP.format(target=target), columns, rows,
+               INDEXES.format(owner=regclass), INDEXES.format(owner=toast_oid))
+    heap, keys, content, indexes, toast = db.execute("SELECT " + ", ".join(f"({q})" for q in queries))[0]
+    oid, file, kind, persistence, toast_oid = json.loads(heap)
+    heading = json.loads(keys)
+    source_rows = [] if content is None else json.loads(content)
+    records = [[record[field] for field, _ in heading] for record in source_rows]
+    return {
+        "oid": oid, "file": file, "kind": kind, "persistence": persistence, "toastOid": toast_oid,
+        "columns": heading, "rows": records, "indexes": read_indexes(indexes), "toastIndexes": read_indexes(toast),
+    }
+
+
 def snapshot(db, item):
     _, name, _ = item["reindexTable"]["target"]
-    selected = {}
-    for schema in schemas(item):
-        table = qualified(schema, name)
-        target = data_literal(table)
-        regclass = f"pg_catalog.to_regclass({target})"
-        toast_oid = f"(SELECT reltoastrelid FROM pg_catalog.pg_class WHERE oid={regclass})"
-        columns = ATTRIBUTES.format(target=target)
-        rows = f"SELECT pg_catalog.json_agg(pg_catalog.row_to_json(r) ORDER BY r.id) FROM {table} r"
-        queries = (HEAP.format(target=target), columns, rows,
-                   INDEXES.format(owner=regclass), INDEXES.format(owner=toast_oid))
-        heap, keys, content, indexes, toast = db.execute("SELECT " + ", ".join(f"({q})" for q in queries))[0]
-        oid, file, kind, persistence, toast_oid = json.loads(heap)
-        heading = json.loads(keys)
-        records = [[record[field] for field, _ in heading] for record in json.loads(content)]
-        selected[schema] = {
-            "oid": oid, "file": file, "kind": kind, "persistence": persistence, "toastOid": toast_oid,
-            "columns": heading, "rows": records, "indexes": read_indexes(indexes), "toastIndexes": read_indexes(toast),
-        }
-    return selected
+    return {schema: read_owner(db, schema, name) for schema in schemas(item)}
 
 
 def observe(db, request):

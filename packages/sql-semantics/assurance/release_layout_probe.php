@@ -592,6 +592,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
+        $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
         $queries['Schema\\Index\\Btree\\CreateIndex'] =
             'CREATE UNIQUE INDEX "new index" ON ledger (wide DESC NULLS LAST, value ASC NULLS FIRST) INCLUDE (ready, ready) NULLS NOT DISTINCT';
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
@@ -606,6 +607,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     foreach ($queries as $role => $sql) {
         $activeContext = $context;
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Scope\\ReindexSchema') {
+            $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy']);
+        }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Btree\\CreateIndex') {
             $activeContext = $semantics->context([
                 'CREATE TABLE public.ledger (value integer, wide bigint, ready boolean)',
@@ -941,6 +945,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresReindexTable'] = [
                 $target->schema->value, $target->name->value, $target->kind->value, $result->mode->value,
                 $detached->toString(), $shadow->target->kind->value, $shadow->toString(), $badDatabase,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Scope\\ReindexSchema') {
+            $reassembled = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema(
+                $result->schema, $result->mode, $result->release,
+            );
+            $details['postgresReindexSchema'] = [
+                $result->schema->value, $result->mode->value, $result->toString(), $reassembled->toString(),
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {

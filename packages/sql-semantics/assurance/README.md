@@ -299,6 +299,8 @@ The [PostgreSQL owner-wide index rebuild contract](postgres-reindex-table-v2.jso
 
 The [PostgreSQL catalog binding contract](postgres-local-catalog-binding-v1.json) verifies that a decoded current catalog qualifier resolves to the same local coordinate and scalar slot as the schema-qualified spelling. The native observer compares typed result headings, ordered rows, write effects and materialized snapshots. It also executes the original mismatched qualifiers and verifies their SQLSTATE and unchanged local state. Run `run_server_postgres_local_catalog.py` on both pinned releases and replay with `combine_server_postgres_local_catalog_evidence.py`.
 
+The [PostgreSQL schema rebuild contract](postgres-reindex-schema-v2.json) observes the complete selected native index set and an independent decoy. A partition attached across schemas keeps its catalog link while selection follows the actual namespace of each physical owner. Run `run_server_postgres_reindex_schema.py` on both pinned releases and replay with `combine_server_postgres_reindex_schema_evidence.py`.
+
 
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.
@@ -730,7 +732,7 @@ The index fixture compares a scoped ordinary or unique index and its optional pa
 
 The index expression spelling fixture compares native CAST names and binary IFNULL against independently authored SQLite SQL. It observes literal conversion, exact partial index matching, expression key search and typed results. Both the original and rendered CREATE INDEX run on the same pinned engine. Run `run_sqlite_index_expression_spelling.py` with the SQLite fixture options. [SQLite index expression spelling contract](sqlite-index-expression-spelling-v1.json)
 
-The index removal fixture compares the selected object and owner, catalog and statistics removal, original and subsequent typed table state, constrained writes, rollback, and the schemas verified by an IF EXISTS no-op. Run \`run_sqlite_drop_index.py\` with the SQLite fixture options. [SQLite index removal contract](sqlite-drop-index-v3.json)
+The index removal fixture compares the selected object and owner, catalog and statistics removal, original and subsequent typed table state, constrained writes, rollback, and the schemas verified by an IF EXISTS no-op. Run `run_sqlite_drop_index.py` with the SQLite fixture options. [SQLite index removal contract](sqlite-drop-index-v3.json)
 
 The SQLite trigger mutation fixture checks ordered INSERT, UPDATE and DELETE actions, local and row-image field roles, collation-sensitive comparison orientation, and conflict handling. Fixture triggers observe whether the outer write took place before or after the checked trigger program. Run `run_sqlite_trigger_mutations.py` with the SQLite fixture options. [SQLite trigger mutation contract](sqlite-trigger-mutations-v2.json)
 
@@ -740,9 +742,9 @@ The SQLite trigger interruption fixture checks source-free SELECT RAISE actions 
 
 The SQLite trigger removal fixture compares installation identity, schema verification, unaffected sibling definitions, rollback and later firing. For every required missing name in the finite matrix, it compares a native preparation diagnostic with the typed construction refusal. Run `run_sqlite_drop_triggers.py` with the SQLite fixture options. [SQLite trigger removal contract](sqlite-drop-triggers-v4.json)
 
-The constraint index fixture compares the native original and generated absence selectors. It records protected PRIMARY KEY and UNIQUE indexes, including WITHOUT ROWID storage, along with separate direct checks for each watched absence. Run \`run_sqlite_constraint_index_names.py\` using the SQLite fixture options. [SQLite constraint index contract](sqlite-constraint-index-names-v2.json)
+The constraint index fixture compares the native original and generated absence selectors. It records protected PRIMARY KEY and UNIQUE indexes, including WITHOUT ROWID storage, along with separate direct checks for each watched absence. Run `run_sqlite_constraint_index_names.py` using the SQLite fixture options. [SQLite constraint index contract](sqlite-constraint-index-names-v2.json)
 
-The REINDEX fixture compares the selected index coordinates and actual traversal order before and after rebuilding. Distinct outdated orders expose incorrect selections, and a unique-key fixture records a native failure and atomic rollback. Run \`run_sqlite_reindex.py\` with the SQLite fixture options. [SQLite REINDEX contract](sqlite-reindex-v2.json)
+The REINDEX fixture compares the selected index coordinates and actual traversal order before and after rebuilding. Distinct outdated orders expose incorrect selections, and a unique-key fixture records a native failure and atomic rollback. Run `run_sqlite_reindex.py` with the SQLite fixture options. [SQLite REINDEX contract](sqlite-reindex-v2.json)
 
 The statistics fixture compares names, scope and exact STAT1 rows after collecting table or index statistics. It checks NULL, collation, partial membership, stale state, WITHOUT ROWID duplicates and rollback. Run `run_sqlite_analyze_statistics.py` with the SQLite fixture options. [SQLite ANALYZE contract](sqlite-analyze-statistics-v1.json)
 

@@ -1070,6 +1070,11 @@ if ($dialect !== 'sqlite') {
         $properties[$constraintIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
         $methods[$constraintIndex] = ['__construct', 'quoted'];
         $methods[$reindex] = ['__construct', 'profileId', 'toString'];
+        $reindexSchema = 'Schema\\Index\\Scope\\ReindexSchema';
+        $roots[] = $reindexSchema;
+        $internal[] = 'Schema\\Index\\Scope\\ReindexSchemaLowering';
+        $properties[$reindexSchema] = ['schema' => ['Identifier'], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$reindexSchema] = ['__construct', 'profileId', 'toString'];
         $reindexTable = 'Schema\\Index\\ReindexTable';
         $reindexOwner = 'Schema\\Index\\ReindexTableTarget';
         $reindexKind = 'Schema\\Index\\ReindexTableKind';
@@ -1909,7 +1914,7 @@ try {
                         'Unexpected PostgreSQL index selector publication');
                 }
             }
-            if ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\ReindexIndexLowering', 'Schema\\Index\\ReindexTableLowering'], true)) {
+            if ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\ReindexIndexLowering', 'Schema\\Index\\Scope\\ReindexSchemaLowering', 'Schema\\Index\\ReindexTableLowering'], true)) {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
@@ -1944,7 +1949,8 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
-                        'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable', 'Schema\\Index\\Scope\\ReindexSchema',
+                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {
@@ -2035,7 +2041,8 @@ try {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference',
-                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Index\\ReindexTableTarget'], true)
+                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex',
+                    'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
                 || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',

@@ -1160,6 +1160,15 @@ function observePostgresReindexTable(\SqlSemantics\Platform\PostgreSql\Ir\Schema
     ];
 }
 
+function constructPostgresReindexSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema
+{
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema(
+        new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($input['reindexSchema']['schema']),
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($input['reindexSchema']['mode']),
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
 function constructPostgresDropIndex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex
 {
     $drop = $input['dropIndex'];
@@ -1462,6 +1471,7 @@ function observeStatement(array $input): array
             isset($input['dropIndex']) => constructPostgresDropIndex($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
+            isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
@@ -1590,6 +1600,10 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable) {
         return observePostgresReindexTable($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema) {
+        return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+            'reindexSchema' => ['schema' => $value->schema->value, 'mode' => $value->mode->value]];
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [
