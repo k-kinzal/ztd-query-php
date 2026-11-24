@@ -1266,6 +1266,32 @@ function observePostgresSequence(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Seq
         ]];
 }
 
+function constructPostgresDropSequence(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence
+{
+    $spec = $input['dropSequence'];
+    $targets = [];
+    foreach ($spec['targets'] as [$scope, $sequence, $presence]) {
+        $targets[] = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceDropTarget(
+            new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($sequence),
+            $scope === null ? null : new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($scope),
+            \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceDropPresence::from($presence),
+        );
+    }
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence(
+        $targets, $spec['ifExists'], $spec['cascade'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresDropSequence(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'dropSequence' => [
+            'targets' => array_map(static fn ($target) => [$target->schema?->value, $target->name->value, $target->presence->value], $value->targets),
+            'ifExists' => $value->ifExists, 'cascade' => $value->cascade,
+        ]];
+}
+
 function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
 {
     $spec = $input['alterSchema'];
@@ -1682,6 +1708,7 @@ function observeStatement(array $input): array
             isset($input['dropSchema']) => constructPostgresDropSchema($input),
             isset($input['alterSchema']) => constructPostgresAlterSchema($input),
             isset($input['createSequence']) => constructPostgresSequence($input),
+            isset($input['dropSequence']) => constructPostgresDropSequence($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1716,6 +1743,9 @@ function observeStatement(array $input): array
     }
     if ($value::class === $namespace . 'Schema\\Sequence\\CreateSequence') {
         return observePostgresSequence($value);
+    }
+    if ($value::class === $namespace . 'Schema\\Sequence\\DropSequence') {
+        return observePostgresDropSequence($value);
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

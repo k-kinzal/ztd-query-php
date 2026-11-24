@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v131.json"
-CONTRACT = "389f77afa9eae6ef9235a6fb9383b5e90ae8286770dbfbf749802e5e485de85e"
+CONTRACT_NAME = "release-layout-v132.json"
+CONTRACT = "1464b42a8bff0dc0e6c7d9b6237b3c897d9c0afed8c83b121ff4ae135308bef9"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -323,6 +323,12 @@ def verify_probe(raw, catalog):
             require(item.get("postgresChangeSchemaOwner") == [
                 "Tax.Reg", "Tax Owner", emitted, "Session", 'ALTER SCHEMA "Tax.Reg" OWNER TO SESSION_USER', True,
             ] and item["sql"] == emitted, "installed-postgres-schema-owner-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\DropSequence"):
+            emitted = 'DROP SEQUENCE IF EXISTS "pg_temp"."ticket", "pg_temp"."ticket", "public"."absent", "unknown" CASCADE'
+            targets = [["pg_temp", "ticket", "existing"], ["pg_temp", "ticket", "existing"],
+                       ["public", "absent", "missing-sequence"], [None, "unknown", "missing-sequence"]]
+            require(item.get("postgresDropSequence") == [targets, True, emitted, True] and item["sql"] == emitted,
+                    "installed-postgres-drop-sequence-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\CreateSequence"):
             emitted = ('CREATE UNLOGGED SEQUENCE IF NOT EXISTS "public"."Ticket.棚" AS SMALLINT INCREMENT BY 2 '
                        'MINVALUE 1 MAXVALUE 32767 START WITH 3 RESTART WITH 10 CACHE 2 CYCLE')

@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v75.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v76.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -346,6 +346,8 @@ The [PostgreSQL namespace table contract](postgres-schema-tables-v1.json) checks
 The [PostgreSQL namespace alteration contract](postgres-alter-schema-v1.json) verifies distinct rename and ownership roles. It records namespace and relation identities, ownership and namespace grants, dependent views, unchanged rows and rollback. Run `run_server_postgres_alter_schema.py` against the verified disposable services and replay with `combine_server_postgres_alter_schema_evidence.py`.
 
 The [PostgreSQL sequence creation contract](postgres-create-sequence-v3.json) covers standalone unowned sequences. It checks direct and analyzed construction, signed options, persistence, guarded occupancy, and rollback. The native observer reads the generator catalog, the initial sequence tuple, and four calls to nextval. Run run_server_postgres_create_sequence.py for 16.6 and 17.2 against disposable services and replay using combine_server_postgres_create_sequence_evidence.py.
+
+The [PostgreSQL sequence removal contract](postgres-drop-sequence-v1.json) fixes ordering, duplicate selectors, temporary and persistent precedence, explicit absences and dependency policy. Its [stock inventory](postgres-drop-sequence-stock-v1.json) pins both native releases and their checked PHP correspondence. Run run_server_postgres_drop_sequence.py against each disposable service and replay with combine_server_postgres_drop_sequence_evidence.py.
 
 The [PostgreSQL namespace sequence contract](postgres-schema-sequences-v1.json) covers native sequence and table phases inside CREATE SCHEMA. Both child lists are checked through direct construction and analyzed publication. The native observer verifies generator state, defaults, ownership, guarded collisions and rollback. Run run_server_postgres_schema_sequences.py for both PostgreSQL releases and replay using combine_server_postgres_schema_sequences_evidence.py.
 

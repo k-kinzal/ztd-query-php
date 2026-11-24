@@ -21,6 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaAlterLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
@@ -46,7 +47,7 @@ final class RelationChangeLowering
     public function lower(
         BoundStatement $operation,
         ParsedDrop|ParsedReindex|ParsedRename|ParsedTruncateTable|ParsedChangeOwner $statement,
-    ): ChangeSchemaOwner|DropIndex|DropSchema|DropTable|DropView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameTable|TruncateTable {
+    ): ChangeSchemaOwner|DropIndex|DropSchema|DropSequence|DropTable|DropView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameTable|TruncateTable {
         return match (true) {
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedChangeOwner, $statement instanceof ParsedRename && $statement->kind === ObjectKind::Schema => (new SchemaAlterLowering())->lower($operation, $statement),

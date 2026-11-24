@@ -50,6 +50,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\RelationDeclarationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
@@ -179,7 +180,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
+    public function analyze(string $sql, ?Context $context = null): ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -208,7 +209,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
+     * @return list<ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

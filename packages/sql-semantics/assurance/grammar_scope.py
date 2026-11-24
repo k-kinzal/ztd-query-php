@@ -614,6 +614,11 @@ def inventory(root):
                         "schema_stmt: CreateSeqStmt", "schema_stmt: CreateStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
                     }:
                         related[alternative] = (*related.get(alternative, ()), "postgres-schema-sequences-v1.json")
+            for rule in ("DropStmt", "drop_type_name", "any_name_list", "opt_drop_behavior"):
+                for alternative in rules.get(rule, ()):
+                    if rule in ("any_name_list", "opt_drop_behavior") or alternative.startswith("DropStmt: DROP drop_type_name ") \
+                            or alternative == "drop_type_name: SEQUENCE":
+                        related[alternative] = (*related.get(alternative, ()), "postgres-drop-sequence-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

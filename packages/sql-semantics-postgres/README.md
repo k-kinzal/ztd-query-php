@@ -46,6 +46,8 @@ A namespace with table or unowned sequence members has a static name and an ungu
 
 `CREATE SEQUENCE` returns `Ir\Schema\Sequence\CreateSequence` for standalone unowned sequences. The value fixes the absolute name, persistence, integer storage, increment, limits, catalog start, initial value, cache, and cycle behavior. `START WITH` sets the catalog start. An explicit `RESTART WITH` can set a different first value. The analyzer resolves temporary declarations to the session's `pg_temp` namespace. `IF NOT EXISTS` retains an occupied relation and leaves its generator state intact.
 
+`DROP SEQUENCE` publishes `Ir\Schema\Sequence\DropSequence`. Declare persistent and session-local sequence names in the analysis context. The value preserves selector order, repeats, the guard and the dependency policy. An unqualified existing name resolves to the first matching namespace. Known absences use the guard and retain their native notice form.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php
