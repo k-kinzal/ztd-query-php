@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
@@ -32,6 +33,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\Sqlite\Model\Contract\TypeNameAffinity;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
@@ -62,7 +64,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList as ParsedMembership;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
-use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 
 /**
  * Resolves the closed scalar expressions used by queries and writes.
@@ -72,7 +73,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 final class ExpressionLowering
 {
     /**
-     * Checks SQLite's planner-sensitive expression forms while compiling an index.
+     * Retains SQLite's planner-sensitive expression names while compiling an index.
      */
     public function __construct(private readonly bool $indexSyntax = false)
     {
@@ -126,13 +127,9 @@ final class ExpressionLowering
      */
     public function conditional(ParsedCase|FunctionCall $expression, SourceBinding $binding): CaseExpression|Coalesce
     {
-        Check::input(
-            !$this->indexSyntax || !$expression instanceof FunctionCall || strcasecmp($expression->name->value, 'IFNULL') !== 0,
-            'The native IFNULL spelling has no complete index representation.',
-        );
         return $expression instanceof ParsedCase
             ? $this->choice($expression, $binding)
-            : (new CoalesceLowering())->lower($expression, $binding, $this);
+            : (new CoalesceLowering())->lower($expression, $binding, $this, $this->indexSyntax);
     }
 
     /**
@@ -285,20 +282,10 @@ final class ExpressionLowering
      */
     public function cast(ParsedCast $expression, SourceBinding $binding): CastExpression
     {
-        $target = match ($expression->target?->affinity() ?? Affinity::Numeric) {
-            Affinity::Integer => CastTarget::Integer,
-            Affinity::Real => CastTarget::Real,
-            Affinity::Numeric => CastTarget::Numeric,
-            Affinity::Text => CastTarget::Text,
-            Affinity::Blob => CastTarget::Blob,
-        };
-        $written = $expression->target;
-        Check::input(
-            !$this->indexSyntax || ($written !== null && count($written->words) === 1 && $written->words[0]->bare()
-                && $written->words[0]->name->value === $target->value && $written->arguments === []),
-            'This native CAST spelling has no complete index representation.',
-        );
+        $native = $expression->nativeType();
+        $target = CastTarget::from((new TypeNameAffinity())->conversion($native));
+        $name = $this->indexSyntax && $native !== $target->value ? new CastTypeName($native) : null;
 
-        return new CastExpression($target, $this->lower($expression->operand, $binding));
+        return new CastExpression($target, $this->lower($expression->operand, $binding), $name);
     }
 }

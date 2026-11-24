@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
@@ -119,10 +120,10 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
             array_map(static fn (array $branch): CaseBranch => new CaseBranch(operand($branch[0]), operand($branch[1])), $input[2]),
             $input[3] === null ? null : operand($input[3]),
         ),
-        'coalesce' => new Coalesce(array_map(
+        'coalesce', 'if-null' => new Coalesce(array_map(
             static fn (array $value) => $value === ['wrong-argument'] ? new IntegerLiteral('3') : new CoalesceArgument(operand($value)),
             $input[1],
-        )),
+        ), $input[0] === 'if-null'),
         'concat' => new Concatenation(operand($input[1]), operand($input[2])),
         'pattern' => new PatternTest(
             PatternKind::from($input[1]),
@@ -132,7 +133,11 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
             $input[5] === null ? null : operand($input[5])
         ),
         'collate' => new CollatedExpression(operand($input[2]), Collation::from($input[1])),
-        'cast' => new CastExpression(CastTarget::from($input[1]), operand($input[2])),
+        'cast' => new CastExpression(
+            CastTarget::from($input[1]),
+            operand($input[2]),
+            !isset($input[3]) ? null : new CastTypeName(is_array($input[3]) ? hex2bin($input[3][0]) : $input[3]),
+        ),
         'unary' => new UnaryExpression(UnaryKind::from($input[1]), operand($input[2])),
         'folded-membership' => new FoldedMembership($input[1], array_map(static fn (string $label): Parameter => new Parameter($label), $input[2])),
         'membership' => new MembershipTest(
@@ -166,7 +171,7 @@ function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastEx
             array_map(static fn (CaseBranch $branch): array => [observeOperand($branch->when), observeOperand($branch->then)], $value->branches),
             $value->otherwise === null ? null : observeOperand($value->otherwise),
         ],
-        $value instanceof Coalesce => ['coalesce', array_map(
+        $value instanceof Coalesce => [$value->ifNull ? 'if-null' : 'coalesce', array_map(
             static fn (CoalesceArgument $argument): array => observeOperand($argument->expression),
             $value->arguments,
         )],
@@ -174,7 +179,8 @@ function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastEx
         $value instanceof PatternTest => ['pattern', $value->kind->value, $value->negated, observeOperand($value->subject),
             observeOperand($value->pattern), $value->escape === null ? null : observeOperand($value->escape)],
         $value instanceof CollatedExpression => ['collate', $value->collation->value, observeOperand($value->operand)],
-        $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand)],
+        $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand),
+            ...($value->typeName === null ? [] : [$value->typeName->value])],
         $value instanceof UnaryExpression => ['unary', $value->kind->value, observeOperand($value->operand)],
         $value instanceof FoldedMembership => ['folded-membership', $value->matches,
             array_map(static fn (Parameter $binding): string => $binding->label, $value->bindings)],

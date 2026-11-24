@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v87.json"
-CONTRACT = "143c133f4b9490b39d0d9915808dd0aadea2f30e7feba39a34c2d4051eeebcb6"
+CONTRACT_NAME = "release-layout-v88.json"
+CONTRACT = "a53a54f6c19d3af66335b3911320ba263b8671fc23731fd0449bb8c422f04cae"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -617,6 +617,12 @@ def verify_probe(raw, catalog):
                 'CREATE UNIQUE INDEX IF NOT EXISTS "temp"."indexed_tag" ON "indexed_rows" ("code" DESC) '
                 'WHERE ((CASE WHEN ?09 THEN 0 WHEN ?1 THEN 0 END) NOT IN ())',
             ] and item["sql"] == item["createIndex"][-1], "installed-sqlite-create-index-mismatch", item)
+            native_cast_sql = (
+                'CREATE INDEX "temp"."native_cast" ON "indexed_rows" (IFNULL((CAST("id" AS "int")), 0) ASC)'
+            )
+            require(item.get("sqliteIndexExpressionSpelling") == [
+                True, "int", "INTEGER", 0, True, native_cast_sql, native_cast_sql,
+            ], "installed-sqlite-index-expression-spelling-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

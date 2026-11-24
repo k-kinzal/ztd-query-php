@@ -91,7 +91,7 @@ final class TypeNameTest extends TestCase
         self::assertSame(Affinity::Integer, $quoted->affinity());
     }
 
-    public function testRenderWritesTheWordsAndTheArgumentsWithoutSpaces(): void
+    public function testRenderKeepsSpacesInTheNativeCastTypeName(): void
     {
         $semantics = new Inspection();
         $spaced = $semantics->inspect('select cast(a as decimal ( + 10 , -2 )) AS c1 from t');
@@ -102,7 +102,7 @@ final class TypeNameTest extends TestCase
         self::assertNotNull($cast->target);
         self::assertSame('decimal', $cast->target->text());
         self::assertCount(2, $cast->target->arguments);
-        self::assertSame('SELECT CAST(a AS decimal(+10,-2)) AS c1 FROM t', $spaced->toString());
+        self::assertSame('SELECT CAST(a AS decimal ( + 10 , -2 )) AS c1 FROM t', $spaced->toString());
         self::assertSame('SELECT CAST(a AS "big" int) AS c1, CAST(a AS unsigned big int(3)) AS c2 FROM t', $quoted->toString());
     }
 

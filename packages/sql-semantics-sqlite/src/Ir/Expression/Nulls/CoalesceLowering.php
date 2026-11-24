@@ -21,7 +21,7 @@ final class CoalesceLowering
      * Converts COALESCE and binary IFNULL to the same ordered operand role.
      * @throws InvalidConstruction When the function does not have the checked role
      */
-    public function lower(FunctionCall $call, SourceBinding $binding, ExpressionLowering $lowering): Coalesce
+    public function lower(FunctionCall $call, SourceBinding $binding, ExpressionLowering $lowering, bool $preserveBuiltin): Coalesce
     {
         $name = strtr($call->name->value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
         Check::input(
@@ -37,6 +37,6 @@ final class CoalesceLowering
             $arguments[] = new CoalesceArgument($lowering->lower($argument, $binding));
         }
 
-        return new Coalesce($arguments);
+        return new Coalesce($arguments, $preserveBuiltin && $name === 'ifnull');
     }
 }

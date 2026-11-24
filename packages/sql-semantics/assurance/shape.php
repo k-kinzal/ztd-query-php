@@ -274,11 +274,13 @@ if ($dialect === 'sqlite') {
     $methods['Expression\\CollatedExpression'] = ['__construct'];
     $internal[] = 'Rows\\ValueRowOperand';
     $pureCollaborators[] = 'Rows\\ValueRowOperand';
-    $properties['Expression\\Nulls\\Coalesce'] = ['arguments' => ['array']];
+    $properties['Expression\\Nulls\\Coalesce'] = ['arguments' => ['array'], 'ifNull' => ['bool']];
     $properties['Expression\\Nulls\\CoalesceArgument'] = ['expression' => $operands];
     $methods['Expression\\Nulls\\Coalesce'] = $methods['Expression\\Nulls\\CoalesceArgument'] = ['__construct'];
     $internal[] = 'Expression\\Nulls\\CoalesceLowering';
-    $properties['Expression\\CastExpression'] = ['target' => ['Expression\\CastTarget'], 'operand' => $operands];
+    $properties['Expression\\CastExpression'] = ['target' => ['Expression\\CastTarget'], 'operand' => $operands, 'typeName' => ['?Expression\\CastTypeName']];
+    $properties['Expression\\CastTypeName'] = ['value' => ['string']];
+    $methods['Expression\\CastTypeName'] = ['__construct', 'target', 'quoted', 'payloadBytes'];
     $methods['Expression\\CastExpression'] = ['__construct'];
     $properties['Expression\\CastTarget'] = $methods['Expression\\CastTarget'] = [];
     $enumCases['Expression\\CastTarget'] = ['Integer' => 'INTEGER', 'Real' => 'REAL', 'Numeric' => 'NUMERIC', 'Text' => 'TEXT', 'Blob' => 'BLOB'];
@@ -1132,6 +1134,7 @@ try {
     $bindings = match ($dialect) {
         'sqlite' => [
             ['sqlite-create-index-binding-v1.json', '1a41e92624fe1473383b7239fe79abb28048f4c1674e62d1248b91560450031f', 'Index binding'],
+            ['sqlite-index-expression-binding-v1.json', '0f51026989e87bb830f5a9fac584794e318c410fcc85744079e38839e8e7a255', 'Native index expression binding'],
             ['sqlite-drop-column-binding-v2.json', '646ee03d7cc6edc19ec64b800fd947105ff187363c8060025bda77e2b66f3f5e', 'Column removal binding'],
             ['sqlite-folded-binding-sources-v6.json', '899bc660712ee6508953c31ea9ccd99cb43c663d75f32159a00658db97c60422', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
@@ -1421,7 +1424,9 @@ try {
             continue;
         }
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
-            requireShape(in_array($name->toString(), $allowed, true), "Unexpected dependency in $short: $name");
+            requireShape(in_array($name->toString(), $allowed, true)
+                || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity'),
+                "Unexpected dependency in $short: $name");
         }
         foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
             requireShape(

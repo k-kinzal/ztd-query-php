@@ -190,7 +190,8 @@ CONTRACTS = {
     "sqlite-auto-rowid-v1.json": "530a93ca4c873c4560f3401a65d5aeb396a2ff5275881c76c4a089e39e89d4c7",
     "sqlite-create-as-v5.json": "06b5c313bc7d216a77787303c104b7bcc9fb8cab1f494eeaaa922b330ed1a372",
     "sqlite-create-table-v3.json": "a2e7d433392ad397b62f58e5e0dc45f2307c591ad9d59c5317b49362545390c3",
-    "sqlite-create-index-v4.json": "7a75f3f9c8d628508b21540d25d71f0f5073fd51f4a1d65949b419a93e61fd2f",
+    "sqlite-create-index-v5.json": "5de8d76708ad174043a3ee7d09855244f6ba45830226ad20e506244e207cdde0",
+    "sqlite-index-expression-spelling-v1.json": "704f6ef9139e3edc1d8844301211f474bba4c175e9f59ec31dc89b51c2c38e51",
     "sqlite-drop-column-v3.json": "ec3c4a2625f4ecca94d5b40bbbf25ed6394295f4e4f38c69167cab66e78a1fac",
     "sqlite-add-generated-column-v1.json": "606754be160a3039b0a6e8fc2a52314b00f2bc5055ecc7f59a1fd0436c627a60",
     "sqlite-appended-column-checks-v2.json": "d51fd4ee7cda94276cf5e9156ce139a8ca793c1383e2e9f75d0d2e90bd9dd75f",
@@ -200,7 +201,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "6634f8ce4d50d4eacc1947659b3ef6105b2f368afd3a2ce7cf283354719c6844"
+PUBLICATION = "b0534469416411e27859feec93be4b8754a44128db7f815f9ceca79134f8cc47"
 
 
 def declared_constructors(dialects):
@@ -230,7 +231,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v45.json").read_bytes()
+    publication = (TOOL / "publication-v46.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

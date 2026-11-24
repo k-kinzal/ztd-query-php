@@ -163,7 +163,8 @@ final class SelectSql
             $expression instanceof Concatenation => '(' . $this->expression($expression->left, $source, $joins)
                 . ' || ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof CollatedExpression => '(' . $this->expression($expression->operand, $source, $joins) . ' COLLATE ' . $expression->collation->value . ')',
-            $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))',
+            $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins)
+                . ' AS ' . ($expression->typeName?->quoted() ?? $expression->target->value) . '))',
             $expression instanceof TruthTest => $this->truth($expression, $source, $joins),
             $expression instanceof UnaryExpression => '(' . $expression->kind->value . ' ' . $this->expression($expression->operand, $source, $joins) . ')',
             $expression instanceof IntegerLiteral => $expression->decimal,
@@ -199,7 +200,7 @@ final class SelectSql
             $arguments[] = $this->expression($argument->expression, $source, $joins);
         }
 
-        return 'COALESCE(' . implode(', ', $arguments) . ')';
+        return ($expression->ifNull ? 'IFNULL(' : 'COALESCE(') . implode(', ', $arguments) . ')';
     }
 
     /**

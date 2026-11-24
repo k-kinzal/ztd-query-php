@@ -139,7 +139,7 @@ def check_faults(args, db, runner=check_render_faults):
                     record(query, guard=True, table=EXISTING), "meaning-mismatch"),
         RenderFault("replace-population-query", table, "$this->query->toString()", "'SELECT 9 AS fixed'",
                     record(query), "meaning-mismatch"),
-        RenderFault("erase-text-declaration-cast", renderer, "' AS ' . $expression->target->value . '))'", "' AS BLOB))'",
+        RenderFault("erase-text-declaration-cast", renderer, "' AS ' . ($expression->typeName?->quoted() ?? $expression->target->value) . '))'", "' AS BLOB))'",
                     record(expression), "meaning-mismatch"),
     ], probe)
 

@@ -21,6 +21,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
@@ -43,6 +44,8 @@ final class CastExpression
     public function __construct(
         public readonly CastTarget $target,
         public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|self|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
+        public readonly ?CastTypeName $typeName = null,
     ) {
+        Check::input($typeName === null || $typeName->target() === $target, 'The native type name must select the effective CAST target.');
     }
 }

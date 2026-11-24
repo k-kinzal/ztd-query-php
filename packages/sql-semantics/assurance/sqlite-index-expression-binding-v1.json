@@ -1,0 +1,53 @@
+{
+  "revision": "SemanticsIR/sqlite-index-expression-binding-1",
+  "approval": "pending-human-review",
+  "scope": "Tie native type-token extraction from the SQLite grammar, first-word delimiter decoding and exact affinity priority to the implemented CAST and index representation.",
+  "artifacts": {
+    "src/Model/Contract/TypeNameAffinity.php": {
+      "methods": [
+        "conversion"
+      ],
+      "sha256": "0f4d059e53c82c6497999ba839ab0b58f23e3798dd38ab7c4ed462712ed7a51e"
+    },
+    "src/Model/Construction/Layouts.php": {
+      "methods": [
+        "of"
+      ],
+      "sha256": "f0eb4b21ba9d39f8eb43bacd10ecb260374006fff1b6d4960b6024d578af9c0e"
+    },
+    "src/Lowering/Expression/ExpressionRule.php": {
+      "methods": [
+        "expression",
+        "cast"
+      ],
+      "sha256": "b238bdb2ef8b44b582e820274eed3c0835e6affd3e222f6ec0fcee6e26a12eb9"
+    },
+    "src/Statement/Expression/Cast.php": {
+      "methods": [
+        "nativeType",
+        "deriveScalar",
+        "render"
+      ],
+      "sha256": "7a3aea77d3ccd3589c76307fcd75f2e3d9e5e675c020f08b662f98406f11df9e"
+    },
+    "src/Statement/Lexical/Word.php": {
+      "methods": [
+        "bare",
+        "spelling"
+      ],
+      "sha256": "896ea9920e1d2538c47e90bc056ea8cf35f4fe42a562e5ddbeb442b633fe967b"
+    },
+    "src/Statement/Type/TypeName.php": {
+      "methods": [
+        "text",
+        "render"
+      ],
+      "sha256": "e9cb76de4f74b5624b880c6a870980f6cd95228a3e167a5294eb09a111b573d8"
+    }
+  },
+  "unchangedDependencies": [
+    "Checked SQLite grammar artifacts",
+    "Reviewed type-word token decoder",
+    "Installation check for direct and analyzed CAST"
+  ]
+}

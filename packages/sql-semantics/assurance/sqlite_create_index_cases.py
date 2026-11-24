@@ -175,9 +175,6 @@ def negatives():
         ("CREATE INDEX main.tag ON ledger(code) WHERE EXISTS (SELECT 1)", "analysis-rejected", "Subqueries are prohibited in partial index", ()),
         ("CREATE INDEX main.tag ON ledger(code NULLS FIRST)", "rejected", "cannot specify NULLS FIRST", ()),
         ("CREATE INDEX main.tag ON ledger(code DESC NULLS LAST)", "rejected", "cannot specify NULLS FIRST", ()),
-        ("CREATE INDEX main.tag ON ledger(code) WHERE IFNULL(amount,0)>0", "rejected", "native IFNULL spelling", ()),
-        ("CREATE INDEX main.tag ON ledger(COALESCE(CAST(amount AS INT),0))", "rejected", "native CAST spelling", ()),
-        ("CREATE INDEX main.tag ON ledger(code) WHERE CAST(amount AS integer) >= 2", "rejected", "native CAST spelling", ()),
     ):
         yield {"sql": sql, "declarations": [*declarations(value), *extra]}, outcome, message
 

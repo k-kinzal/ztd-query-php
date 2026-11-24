@@ -252,4 +252,14 @@ final class ExpressionRuleTest extends TestCase
         self::assertInstanceOf(Binary::class, $filtered->where);
         self::assertSame(BinaryOperator::Equal, $filtered->where->operator);
     }
+
+    public function testCastRetainsTheNativeTypeTokenRange(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT CAST(1 AS NUMERIC (04, 02))');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
+        $cast = $operation->statement->columns[0]->expression;
+        self::assertInstanceOf(Cast::class, $cast);
+        self::assertSame('NUMERIC (04, 02)', $cast->nativeType());
+    }
 }

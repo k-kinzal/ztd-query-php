@@ -1267,6 +1267,37 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['createIndex'] = [$result->schema->value, $result->index->value, $result->table->value,
                 $expression->slot, $detached->terms[0]->descending, $detached->unique, $detached->ifNotExists,
                 array_column($detached->where->bindings, 'label'), $detached->toString()];
+            $named = $semantics->analyze('CREATE INDEX native_cast ON indexed_rows(IFNULL(CAST(id AS int), 0))', $activeContext);
+            $function = $named->terms[0]->expression;
+            if (!$function instanceof SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce) {
+                throw new RuntimeException('The installed index lost the native builtin.');
+            }
+            $cast = $function->arguments[0]->expression;
+            if (!$cast instanceof SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression || $cast->typeName === null
+                || !$cast->operand instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed index lost the native CAST name or its bound input.');
+            }
+            $type = new SqlSemantics\Platform\Sqlite\Ir\Expression\CastTypeName('int');
+            $scope = new SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0);
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression($type->target(), $scope, $type);
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce([
+                new SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument($copy),
+                new SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument(new SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral('0')),
+            ], true);
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex(
+                $named->schema, $named->index, $named->table, $named->heading,
+                [new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm($direct)],
+            );
+            $mismatched = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression(
+                    SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget::Blob, $scope, $type,
+                );
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $mismatched = str_contains($error->getMessage(), 'select the effective CAST target');
+            }
+            $details['sqliteIndexExpressionSpelling'] = [$function->ifNull, $cast->typeName->value,
+                $cast->target->value, $cast->operand->slot, $mismatched, $named->toString(), $rebuilt->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Expression;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
@@ -96,5 +97,28 @@ final class CastTest extends TestCase
         $operation = (new Inspection())->inspect('select cast(a as varchar(10)) AS c1, cast(1 as) AS c2, cast(b as "int") AS c3 from t');
 
         self::assertSame('SELECT CAST(a AS varchar(10)) AS c1, CAST(1 AS) AS c2, CAST(b AS "int") AS c3 FROM t', $operation->toString());
+    }
+
+
+    #[DataProvider('providerNativeTypes')]
+    public function testNativeTypePreservesPlannerIdentity(string $sqlType, string $name, Known|Choice $type): void
+    {
+        $operation = (new Inspection())->inspect("SELECT CAST(1 AS{$sqlType})");
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $column = $operation->statement->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        self::assertInstanceOf(Cast::class, $column->expression);
+        self::assertSame($name, $column->expression->nativeType());
+        self::assertEquals($type, $operation->field(0)->type);
+    }
+
+    /**
+     * @return iterable<array{string, string, Known|Choice}>
+     */
+    public static function providerNativeTypes(): iterable
+    {
+        yield [' WORD /* INT */ TYPE', 'WORD /* INT */ TYPE', new Known(Storage::Integer)];
+        yield [' "WORD" INT', 'WORD', new Choice([Storage::Integer, Storage::Real])];
+        yield ['', '', new Choice([Storage::Integer, Storage::Real])];
     }
 }

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Lowering\Expression;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Layouts;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
@@ -70,7 +71,7 @@ final class ExpressionRule
             'expr: nm DOT nm DOT nm' => $this->column([$form->node(4), $form->node(2), $form->node(0)]),
             'expr: VARIABLE' => $this->parameter($form->token(0)),
             'expr: expr COLLATE ids' => new Collate($this->expression($form->node(0)), $names->token($form->token(2))),
-            'expr: CAST LP expr AS typetoken RP' => new Cast($this->expression($form->node(2)), $this->lowering->typeNames->named($form->node(4))),
+            'expr: CAST LP expr AS typetoken RP' => $this->cast($form->node(2), $form->node(4)),
             'expr: LP nexprlist COMMA expr RP' => new RowExpression([...$this->items($form->node(1)), $this->expression($form->node(3))]),
             'expr: LP select RP' => new ScalarSubquery($this->lowering->selects->select($form->node(1))),
             'expr: EXISTS LP select RP' => new Exists($this->lowering->selects->select($form->node(2))),
@@ -79,6 +80,16 @@ final class ExpressionRule
             'expr: RAISE LP raisetype COMMA expr RP' => new Raise(RaiseAction::from($this->lowering->conflicts->raised($form->node(2))->value), $this->expression($form->node(4))),
             default => $this->operators->expression($form),
         };
+    }
+
+    /**
+     * Captures the type token from which SQLite derives the conversion and planner identity.
+     */
+    public function cast(Node $operand, Node $type): Cast
+    {
+        $target = $this->lowering->typeNames->named($type);
+
+        return new Cast($this->expression($operand), $target, $target === null ? null : (new Layouts())->of($type));
     }
 
     /**

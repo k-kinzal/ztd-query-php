@@ -77,6 +77,12 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
         return int((decision is desired) != negated)
     if kind == "cast":
         return convert(arguments[0], evaluate(arguments[1], bindings, row, case_equal, comparison_inputs))
+    if kind in ("coalesce", "if-null"):
+        for operand in arguments[0]:
+            result = evaluate(operand, bindings, row, case_equal, comparison_inputs)
+            if result is not None:
+                return result
+        return None
     if kind == "case":
         base, branches, fallback = arguments
         value = None if base is None else evaluate(base, bindings, row, case_equal, comparison_inputs)

@@ -65,7 +65,7 @@ final class TypeNameRuleTest extends TestCase
                 return [$argument->sign, $argument->number->digits];
             }, $column->expression->target->arguments ?? []);
         }, $operation->statement->columns));
-        self::assertSame('SELECT CAST(a AS VARCHAR(10)) AS c1, CAST(a AS DECIMAL(+10,-2)) AS c2 FROM t', $operation->toString());
+        self::assertSame('SELECT CAST(a AS VARCHAR(10)) AS c1, CAST(a AS DECIMAL(+10, -2)) AS c2 FROM t', $operation->toString());
     }
 
     public function testWordsKeepTheQuotingOfEachWord(): void
@@ -96,7 +96,7 @@ final class TypeNameRuleTest extends TestCase
         self::assertSame(NumberSign::Minus, $arguments[1]->sign);
         self::assertInstanceOf(HexLiteral::class, $arguments[1]->number);
         self::assertSame('10', $arguments[1]->number->digits);
-        self::assertSame('SELECT CAST(a AS N(1.5,-0x10)) AS c1 FROM t', $operation->toString());
+        self::assertSame('SELECT CAST(a AS N(1.5, -0x10)) AS c1 FROM t', $operation->toString());
     }
 
     public function testPlusNumberLowersAnUnsignedAndAPlusSignedNumber(): void
@@ -112,7 +112,7 @@ final class TypeNameRuleTest extends TestCase
         self::assertSame(NumberSign::Plus, $arguments[1]->sign);
         self::assertInstanceOf(RealLiteral::class, $arguments[1]->number);
         self::assertSame('', $arguments[1]->number->whole);
-        self::assertSame('SELECT CAST(a AS N(3,+.5)) AS c1 FROM t', $operation->toString());
+        self::assertSame('SELECT CAST(a AS N(3, +.5)) AS c1 FROM t', $operation->toString());
     }
 
     public function testMinusNumberLowersAMinusSignedNumber(): void

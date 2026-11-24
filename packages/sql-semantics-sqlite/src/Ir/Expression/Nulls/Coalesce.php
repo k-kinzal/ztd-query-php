@@ -30,8 +30,9 @@ final class Coalesce
      *
      * @param list<CoalesceArgument> $arguments
      */
-    public function __construct(array $arguments)
+    public function __construct(array $arguments, public readonly bool $ifNull = false)
     {
+        Check::input(!$ifNull || count($arguments) === 2, 'SQLite IFNULL requires exactly two arguments.');
         Check::input(count($arguments) <= 127, 'SQLite COALESCE allows at most 127 arguments.');
         $this->arguments = Check::listOf($arguments, CoalesceArgument::class, 'COALESCE requires at least two checked scalar arguments in order.', 2);
     }

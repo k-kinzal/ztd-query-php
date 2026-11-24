@@ -127,12 +127,12 @@ def check_faults(args, db, runner=check_render_faults):
     competing = finite_case(3, "first-text", "result")
     competing["columns"][0][0][1][-1] = ["integer", "9"]
     arg = "$arguments[] = $this->expression($argument->expression, $source, $joins);"
-    output = "return 'COALESCE(' . implode(', ', $arguments) . ')';"
+    output = "return ($expression->ifNull ? 'IFNULL(' : 'COALESCE(') . implode(', ', $arguments) . ')';"
     return runner(args, db, [
         RenderFault("reverse-coalesce-arguments", renderer, "foreach ($expression->arguments as $argument)",
                     "foreach (array_reverse($expression->arguments) as $argument)", competing, "meaning-mismatch"),
         RenderFault("drop-last-coalesce-argument", renderer, output,
-                    "return 'COALESCE(' . implode(', ', array_slice($arguments, 0, -1)) . ')';", fallback, "meaning-mismatch"),
+                    output.replace("$arguments)", "array_slice($arguments, 0, -1))"), fallback, "meaning-mismatch"),
         RenderFault("erase-dormant-coalesce-registration", renderer, arg,
                     "$arguments[] = $argument->expression instanceof Parameter ? 'NULL' : $this->expression($argument->expression, $source, $joins);",
                     dormant, "meaning-mismatch"),

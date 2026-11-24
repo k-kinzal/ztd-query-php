@@ -71,7 +71,8 @@ def execute(args, specification, db, worker_factory=Worker):
 def check_faults(args, db, runner=check_render_faults):
     sql = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     input_item = query("select", [[cast("TEXT", integer(7))]])
-    render = "'(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))'"
+    render = ("'(CAST(' . $this->expression($expression->operand, $source, $joins)\n"
+              "                . ' AS ' . ($expression->typeName?->quoted() ?? $expression->target->value) . '))'")
     return runner(args, db, [
         RenderFault("omit-native-cast", sql, render, "$this->expression($expression->operand, $source, $joins)", input_item, "meaning-mismatch"),
         RenderFault("substitute-cast-affinity", sql, "$expression->target->value", "'BLOB'", input_item, "meaning-mismatch"),

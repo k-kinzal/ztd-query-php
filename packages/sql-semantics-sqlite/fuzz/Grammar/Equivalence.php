@@ -6,6 +6,7 @@ namespace SqlSemantics\Testing\Sqlite;
 
 use ReflectionClass;
 use ReflectionProperty;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use UnitEnum;
 
 /**
@@ -57,6 +58,12 @@ final class Equivalence
                 return $path . ' (' . $a::class . ' against ' . $b::class . ')';
             }
             foreach ($this->members($a) as $property) {
+                if ($a instanceof Cast && $b instanceof Cast && $property->getName() === 'typeLayout') {
+                    $lefts[] = $a->nativeType();
+                    $rights[] = $b->nativeType();
+                    $paths[] = $path . '->nativeType()';
+                    continue;
+                }
                 $lefts[] = $property->getValue($a);
                 $rights[] = $property->getValue($b);
                 $paths[] = $path . '->' . $property->getName();

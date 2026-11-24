@@ -16,8 +16,8 @@ from sqlite_engine import Database, ObserverAuthorizationError
 from sqlite_generated_column_cases import column
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-create-index-v4.json"
-CONTRACT = "7a75f3f9c8d628508b21540d25d71f0f5073fd51f4a1d65949b419a93e61fd2f"
+CONTRACT_NAME = "sqlite-create-index-v5.json"
+CONTRACT = "5de8d76708ad174043a3ee7d09855244f6ba45830226ad20e506244e207cdde0"
 CREATE_ACTION = {b"main": 1, b"temp": 3}
 INVALID = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\InvalidConstruction"
 
@@ -107,12 +107,12 @@ def snapshot(db, item):
     return result
 
 
-def later(db, item):
+def later(db, item, predicate_of=predicate_sql):
     target = f"{item['schema']}.{quoted(item['table'])}"
     index = quoted(item["index"])
     outcomes = [db._observe(f"INSERT INTO {target} VALUES {values_sql((row,))}", {}, capture_evaluation_error=True)
                 for row in writes(item)]
-    sql = f"SELECT * FROM {target} INDEXED BY {index}" + predicate_sql(item) + f" ORDER BY {quoted(item['heading'][0])}"
+    sql = f"SELECT * FROM {target} INDEXED BY {index}" + predicate_of(item) + f" ORDER BY {quoted(item['heading'][0])}"
     try:
         visible = db.read(sql)["rows"]
     except RuntimeError as error:
@@ -122,15 +122,15 @@ def later(db, item):
     return {"writes": outcomes, "state": snapshot(db, item), "visible": visible}
 
 
-def observe(template, item, sql):
-    db = IndexDatabase(template.library)
+def observe(template, item, sql, observe_later=later):
+    db = type(template)(template.library)
     try:
         setup(db, item)
         before = snapshot(db, item)
         db.execute("BEGIN")
         result = db.create(sql, item, before[item["schema"]]["index"] is not None)
         after = snapshot(db, item)
-        subsequent = later(db, item) if result["evaluationError"] is None else None
+        subsequent = observe_later(db, item) if result["evaluationError"] is None else None
         active = not bool(db.get_autocommit(db.db))
         if active:
             db.execute("ROLLBACK")

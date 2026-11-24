@@ -72,6 +72,9 @@ final class ExpressionScope
                     => array_push($pending, [$expression->right, $height + 1, $visibility], [$expression->left, $height + 1, $visibility]),
                 $expression instanceof HexIntegerLiteral, $expression instanceof IntegerLiteral, $expression instanceof NullLiteral => null,
             };
+            if ($expression instanceof CastExpression && $expression->typeName !== null) {
+                $payloadBytes += $expression->typeName->payloadBytes();
+            }
             Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');
         }
 

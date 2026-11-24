@@ -27,7 +27,7 @@ use SqlSemantics\Testing\Sqlite\Inspection;
 #[Medium]
 final class SignedNumberTest extends TestCase
 {
-    public function testRenderWritesTheSignDirectlyBeforeTheNumber(): void
+    public function testRenderKeepsTheNativeSpacingAroundSignedNumbers(): void
     {
         $query = (new Inspection())->inspect('SELECT CAST(1 AS DECIMAL( + 10 , - 2 )) AS c1');
         $cast = $query->field(0)->expression;
@@ -37,7 +37,7 @@ final class SignedNumberTest extends TestCase
         self::assertSame(NumberSign::Minus, $cast->target->arguments[1]->sign);
         self::assertInstanceOf(IntegerLiteral::class, $cast->target->arguments[1]->number);
         self::assertSame('2', $cast->target->arguments[1]->number->digits);
-        self::assertSame('SELECT CAST(1 AS DECIMAL(+10,-2)) AS c1', $query->toString());
+        self::assertSame('SELECT CAST(1 AS DECIMAL( + 10 , - 2 )) AS c1', $query->toString());
     }
 
     public function testRenderWritesEveryKindOfNumericLiteral(): void
