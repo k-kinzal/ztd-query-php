@@ -328,6 +328,10 @@ The [PostgreSQL exclusion-index contract](postgres-reindex-exclusion-index-v2.js
 
 The [PostgreSQL rebuild reporting contract](postgres-reindex-verbose-v1.json) checks effective `VERBOSE` through each resolved rebuild root and both public construction routes. The native observer records raw diagnostics, compares the report order and target names for each release, and measures changes to physical index identities. The resource-use comparison retains the structure of native CPU and elapsed-time details. The ledger includes the raw durations. Run `run_server_postgres_reindex_verbose.py` on both pinned releases and replay with `combine_server_postgres_reindex_verbose_evidence.py`.
 
+The [PostgreSQL qualified index operation contract](postgres-index-catalog-binding-v1.json) checks explicit current-database qualifiers on index creation, removal and rebuilds. The observer measures physical index selection, ownership, attachment and independently resolved decoy state. Run `run_server_postgres_index_catalog.py` on both pinned releases and replay with `combine_server_postgres_index_catalog_evidence.py`.
+
+The [fixture isolation contract](native-postgres-fixture-isolation-v1.json) renews the trusted service's disposable `ir_fixture` database before the five observers that inspect database-wide state. Their receipts identify the container and record the database identity and native catalog census. Start focused runs with a freshly launched fixture. Collecting a full matrix requires each scheduled renewal receipt.
+
 
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.

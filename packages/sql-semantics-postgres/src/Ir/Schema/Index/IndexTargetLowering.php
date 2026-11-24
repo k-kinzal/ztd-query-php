@@ -71,7 +71,10 @@ final class IndexTargetLowering
      */
     public function lookup(AnalysisContext $context, QualifiedName $name): ?IndexDeclaration
     {
-        Check::input($name->catalog === null, 'The index selector requires a local schema and index.');
+        Check::input(
+            $name->catalog === null || $name->catalog->value === $context->currentDatabase?->value,
+            'An explicit PostgreSQL catalog requires the matching current database.',
+        );
         $binding = new IndexBinding();
         $schemas = $name->schema === null ? $context->searchPath : [$name->schema];
         foreach ($schemas as $schema) {

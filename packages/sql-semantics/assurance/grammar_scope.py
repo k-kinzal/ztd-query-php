@@ -576,6 +576,18 @@ def inventory(root):
                     }:
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-verbose-v1.json")
         if postgres:
+            index_catalog = {
+                "qualified_name: ColId indirection",
+                "indirection_el: . attr_name",
+                "reindex_target_relation: INDEX",
+                "reindex_target_relation: TABLE",
+                "ReindexStmt: REINDEX opt_reindex_option_list reindex_target_relation opt_concurrently qualified_name",
+            }
+            for rule in ("qualified_name", "indirection_el", "IndexStmt", "DropStmt", "ReindexStmt", "reindex_target_relation"):
+                for alternative in rules.get(rule, ()):
+                    if rule == "IndexStmt" or alternative.startswith("DropStmt: DROP INDEX ") or alternative in index_catalog:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-index-catalog-binding-v1.json")
+        if postgres:
             for rule in ("qualified_name", "columnref", "indirection_el"):
                 for alternative in rules.get(rule, ()):
                     if alternative in {"qualified_name: ColId indirection", "columnref: ColId indirection",

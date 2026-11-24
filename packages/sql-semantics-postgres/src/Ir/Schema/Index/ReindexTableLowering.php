@@ -34,8 +34,7 @@ final class ReindexTableLowering
         $context = $operation->context;
         $profile = $context->profile;
         Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive, 'REINDEX TABLE requires the native PostgreSQL index profile.');
-        Check::input($statement->target === ReindexTarget::Table && $statement->object instanceof QualifiedName
-            && $statement->object->catalog === null, 'REINDEX TABLE needs a local schema and owner.');
+        Check::input($statement->target === ReindexTarget::Table && $statement->object instanceof QualifiedName, 'REINDEX TABLE needs a qualified-name owner.');
         Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
         $resolution = $operation->facts->relation($statement)->table;
         Check::input($resolution instanceof DeclaredTable, 'REINDEX TABLE requires a resolved index owner.');

@@ -31,7 +31,7 @@ final class DropIndexLowering
         $bindings = new IndexTargetLowering();
         $targets = [];
         foreach ($statement->objects as $selector) {
-            Check::input($selector instanceof DottedName && count($selector->parts) <= 2, 'DROP INDEX names a local index and optional schema.');
+            Check::input($selector instanceof DottedName, 'DROP INDEX needs a valid index name.');
             $name = $selector->qualified();
             Check::input($name !== null, 'DROP INDEX needs a valid index name.');
             $targets[] = $bindings->resolve($context, $name, $statement->ifExists);

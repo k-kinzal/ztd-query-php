@@ -36,7 +36,7 @@ final class IndexTableLowering
         $table = $resolution->table;
         $context = $operation->context;
         $schema = $table->name->schema ?? $context->declarationSchema;
-        Check::input($statement->table->name->catalog === null && $table->name->catalog === null
+        Check::input($table->name->catalog === null
             && !$context->indexNamespace->partitioned($schema, $table->name->name), 'A B-tree needs a local nonpartitioned table.');
         if ($statement->table->name->schema === null) {
             (new IndexCreationVisibility())->verifyPath($context, $context->indexNamespace->indexes, $table->name->name, $schema);
