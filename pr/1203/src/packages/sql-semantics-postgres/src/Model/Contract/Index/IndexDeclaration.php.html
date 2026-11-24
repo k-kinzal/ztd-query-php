@@ -48,7 +48,7 @@
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * A named index in an analysis catalog with its owner and removal eligibility.</span></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * A named index in an analysis catalog with its physical ownership.</span></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
@@ -57,13 +57,13 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * Records the nominal index coordinate and whether it can participate in ordinary removal.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * Records the nominal index and how the table declaration owns it.</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Name</span> <span class="tok-var">$schema</span>,</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Name</span> <span class="tok-var">$index</span>,</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Name</span> <span class="tok-var">$table</span>,</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$ordinary</span>,</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">IndexDeclarationKind</span> <span class="tok-var">$kind</span>,</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    ) {</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>}</span>
