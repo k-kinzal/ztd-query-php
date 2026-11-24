@@ -549,6 +549,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
         $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
         $queries['Maintenance\\Header\\HeaderPragma'] = 'PRAGMA metadata.user_version = -2147483648';
+        $queries['Maintenance\\Page\\PagePragma'] = 'PRAGMA archive.max_page_count(4294967295)';
         $queries['Maintenance\\Vacuum\\Vacuum'] = 'VACUUM archive INTO ?002';
         $queries['Connection\\Attach'] = 'ATTACH ?002 AS reports KEY ?007';
         $queries['Connection\\Detach'] = "DETACH DATABASE 'ARChive'";
@@ -606,6 +607,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $configured->context([]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Page\\PagePragma') {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
                 searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
             );
@@ -1367,6 +1374,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $default = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum();
             $details['vacuum'] = [$result->schema->value, $operand->expression->values[0]->label, $rebuilt->toString(),
                 $default->toString(), $skipped->schema->value, $skipped->destination->bindings[0]->label, $skipped->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Page\\PagePragma') {
+            $pending = $semantics->analyze('PRAGMA temp.page_size(DEFAULT)', $activeContext);
+            $count = $semantics->analyze('PRAGMA archive.page_count(17)', $activeContext);
+            if (!$result->value instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PageLimit
+                || !$pending instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma
+                || !$pending->value instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\RequestedPageSize
+                || !$count instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma) {
+                throw new RuntimeException('The installed pager pragma lost its native argument role.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma($result->kind, $result->schema, $result->value);
+            $details['pagePragma'] = [$result->schema->value, $result->value->decimal, $copy->toString(),
+                $pending->schema->value, $pending->value->bytes, $pending->toString(), $count->value, $count->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Header\\HeaderPragma') {
             $readonly = $semantics->analyze("PRAGMA temp.data_version('ignored')", $activeContext);

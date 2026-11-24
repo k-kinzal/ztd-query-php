@@ -22,6 +22,7 @@ import run_sqlite_integrity_audit as integrity_audit
 import run_sqlite_header_pragmas as header_pragmas
 import run_sqlite_vacuum as vacuum
 import run_sqlite_connection_commands as connection_commands
+import run_sqlite_page_pragmas as page_pragmas
 import run_sqlite_create_index as create_index
 import run_sqlite_index_expression_spelling as index_spelling
 import run_sqlite_appended_checks as appended_checks
@@ -146,6 +147,7 @@ DOMAINS = {
     header_pragmas.CONTRACT_NAME: (header_pragmas, header_pragmas.FIXTURE),
     vacuum.CONTRACT_NAME: (vacuum, vacuum.FIXTURE),
     connection_commands.CONTRACT_NAME: (connection_commands, connection_commands.FIXTURE),
+    page_pragmas.CONTRACT_NAME: (page_pragmas, page_pragmas.FIXTURE),
     create_index.CONTRACT_NAME: (create_index, create_index.FIXTURE),
     index_spelling.CONTRACT_NAME: (index_spelling, index_spelling.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
@@ -208,6 +210,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                header_pragmas: header_pragmas.HeaderDatabase,
                vacuum: vacuum.VacuumDatabase,
                connection_commands: connection_commands.ConnectionDatabase,
+               page_pragmas: page_pragmas.PagerDatabase,
                create_index: create_index.IndexDatabase,
                index_spelling: index_spelling.SpellingIndexDatabase,
                appended_checks: appended_checks.CheckedAdditionDatabase,

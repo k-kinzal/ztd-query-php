@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v101.json"
-CONTRACT = "d47a649f66473fe65ec24d3a9ddd80e26e3fc0646b98c5866cf6584b6b34ee2b"
+CONTRACT_NAME = "release-layout-v102.json"
+CONTRACT = "93975dd4b4ce097851e3ec659ad770b5eebd8b3b925f99cad63461ddb5e4f13d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -624,6 +624,11 @@ def verify_probe(raw, catalog):
             require(item.get("vacuum") == [
                 "archive", "002", expect, 'VACUUM "main"', "temp", "011", 'VACUUM "temp" INTO (0 IN (?011))',
             ] and item["sql"] == expect, "installed-sqlite-vacuum-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Page\\PagePragma"):
+            expect = 'PRAGMA "archive".max_page_count(4294967294)'
+            require(item.get("pagePragma") == [
+                "archive", "4294967294", expect, "temp", 0, 'PRAGMA "temp".page_size(0)', None, 'PRAGMA "archive".page_count',
+            ] and item["sql"] == expect, "installed-sqlite-pager-pragma-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Header\\HeaderPragma"):
             expect = 'PRAGMA "metadata".user_version(-2147483648)'
             require(item.get("headerPragma") == [

@@ -504,6 +504,18 @@ if ($dialect === 'sqlite') {
     $methods['Connection\\DetachTarget'] = ['__construct'];
     array_push($roots, 'Connection\\Attach', 'Connection\\Detach');
     array_push($internal, 'Connection\\ConnectionOperands', 'Connection\\ConnectionLowering');
+    $properties['Maintenance\\Page\\PagePragma'] = [
+        'kind' => ['Maintenance\\Page\\PagePragmaKind'], 'schema' => ['Identifier'],
+        'value' => ['Maintenance\\Page\\PageLimit', 'Maintenance\\Page\\RequestedPageSize', 'null'],
+    ];
+    $properties['Maintenance\\Page\\PageLimit'] = ['decimal' => ['string']];
+    $properties['Maintenance\\Page\\RequestedPageSize'] = ['bytes' => ['int']];
+    $properties['Maintenance\\Page\\PagePragmaKind'] = $methods['Maintenance\\Page\\PagePragmaKind'] = [];
+    $methods['Maintenance\\Page\\PagePragma'] = $methods['Select'];
+    $methods['Maintenance\\Page\\PageLimit'] = $methods['Maintenance\\Page\\RequestedPageSize'] = ['__construct'];
+    $enumCases['Maintenance\\Page\\PagePragmaKind'] = ['Size' => 'page_size', 'Count' => 'page_count', 'MaximumCount' => 'max_page_count'];
+    $roots[] = 'Maintenance\\Page\\PagePragma';
+    array_push($internal, 'Maintenance\\Page\\PagePragmaLowering', 'Maintenance\\Page\\PageLimitArgument');
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1388,6 +1400,13 @@ try {
                 && $parameter->default instanceof Expr\ConstFetch && $parameter->default->name->toLowerString() === 'false'
                 && !$parameter->byRef && !$parameter->variadic, "Unexpected SQLite index form parameter in $short");
         }
+        if ($short === 'Maintenance\\Page\\PageLimit') {
+            $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
+            $definition = $constants[0]->consts[0] ?? null;
+            requireShape(count($constants) === 1 && count($constants[0]->consts) === 1 && $constants[0]->isPublic()
+                && $definition->name->toString() === 'MAXIMUM' && $definition->value instanceof String_
+                && $definition->value->value === '4294967294', 'The SQLite native page-limit range differs');
+        }
         if ($short === 'Maintenance\\Integrity\\IntegrityLimit') {
             $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
             $present = [];
@@ -1481,6 +1500,7 @@ try {
                 'Maintenance\\Integrity\\IntegrityAuditLowering' => 'Maintenance\\Integrity\\IntegrityAudit',
                 'Maintenance\\Header\\HeaderPragmaLowering' => 'Maintenance\\Header\\HeaderPragma',
                 'Maintenance\\Vacuum\\VacuumLowering' => 'Maintenance\\Vacuum\\Vacuum',
+                'Maintenance\\Page\\PagePragmaLowering' => 'Maintenance\\Page\\PagePragma',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
@@ -1492,7 +1512,7 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
                         'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
-                        'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex', 'Maintenance\\Vacuum\\Vacuum',
+                        'Maintenance\\Metadata\\TableListing', 'Maintenance\\Page\\PagePragma', 'Maintenance\\Reindex', 'Maintenance\\Vacuum\\Vacuum',
                     ], 'Unexpected SQLite maintenance publication');
             }
             if ($short === 'Maintenance\\PragmaLowering' || $short === 'Maintenance\\Metadata\\TableMetadataLowering') {
@@ -1501,7 +1521,7 @@ try {
                 $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
                 $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
                 $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
-                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots, 'Maintenance\\Page\\PagePragma'] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
             }
@@ -1516,6 +1536,12 @@ try {
                     requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
                         && types($member->returnType, $prefix, $short) === ($expected[$method] ?? null), 'Unexpected SQLite connection route');
                 }
+            }
+            if ($short === 'Maintenance\\Page\\PageLimitArgument') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'read' && types($members[0]->returnType, $prefix, $short) === ['?Maintenance\\Page\\PageLimit'],
+                    'Unexpected SQLite page-limit operand route');
             }
             if ($short === 'Expression\\Binding\\NumberedRegistrations') {
                 $members = $class->getMethods();

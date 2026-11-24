@@ -46,6 +46,8 @@ Connection-flag PRAGMAs such as `foreign_keys`, `query_only`, and `writable_sche
 
 The database header pragmas `application_id`, `user_version`, `schema_version`, `freelist_count` and `data_version` return `HeaderPragma`. The value records the selected database, the exact field, and the normalized signed operand for a write. A missing database qualifier selects main.
 
+The pager pragmas `page_size`, `page_count` and `max_page_count` return `PagePragma`. The value records the resolved pager and the typed setting, when present. A page-size request can set the pending size for a later `VACUUM`. An upper page-count request takes effect when SQLite steps the statement.
+
 `VACUUM` and `VACUUM INTO` return `Vacuum` with a resolved database and, where applicable, a source-free filename expression. SQLite skips rebuilding the temporary database and evaluating its filename. The IR retains any numbered slots and marker names that SQLite registers in that expression.
 
 `ATTACH` and `DETACH` return typed connection commands. A constant detachment name resolves against the analysis context. Numbered selector parameters keep their binding slots. The IR keeps the filename and key operands in order and carries no connection state.

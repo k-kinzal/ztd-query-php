@@ -124,7 +124,7 @@ def checked_methods(guard, dialect, role):
             ("postgres", "Expression/BuiltinCast"),
             ("sqlite", "Schema/Index/CreateIndex"), ("sqlite", "Schema/Index/DropIndex"),
             ("sqlite", "Schema/Index/IndexReference"), ("sqlite", "Schema/Index/MissingIndex"),
-            ("sqlite", "Maintenance/Analyze"), ("sqlite", "Maintenance/Reindex"), ("sqlite", "Maintenance/FlagPragma"), ("sqlite", "Maintenance/Inventory/InventoryPragma"), ("sqlite", "Maintenance/Metadata/TableInspection"), ("sqlite", "Maintenance/Metadata/IndexInspection"), ("sqlite", "Maintenance/Metadata/ForeignKeyAudit"), ("sqlite", "Maintenance/Integrity/IntegrityAudit"), ("sqlite", "Maintenance/Header/HeaderPragma"), ("sqlite", "Maintenance/Vacuum/Vacuum"), ("sqlite", "Connection/Attach"), ("sqlite", "Connection/Detach"), ("sqlite", "Maintenance/Metadata/TableListing"), ("sqlite", "Maintenance/RelationTarget"), ("sqlite", "Maintenance/IndexTarget"),
+            ("sqlite", "Maintenance/Analyze"), ("sqlite", "Maintenance/Reindex"), ("sqlite", "Maintenance/FlagPragma"), ("sqlite", "Maintenance/Inventory/InventoryPragma"), ("sqlite", "Maintenance/Metadata/TableInspection"), ("sqlite", "Maintenance/Metadata/IndexInspection"), ("sqlite", "Maintenance/Metadata/ForeignKeyAudit"), ("sqlite", "Maintenance/Integrity/IntegrityAudit"), ("sqlite", "Maintenance/Header/HeaderPragma"), ("sqlite", "Maintenance/Vacuum/Vacuum"), ("sqlite", "Connection/Attach"), ("sqlite", "Connection/Detach"), ("sqlite", "Maintenance/Page/PagePragma"), ("sqlite", "Maintenance/Metadata/TableListing"), ("sqlite", "Maintenance/RelationTarget"), ("sqlite", "Maintenance/IndexTarget"),
         } else {}),
     }
 

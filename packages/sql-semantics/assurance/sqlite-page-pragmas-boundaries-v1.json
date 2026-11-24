@@ -1,0 +1,83 @@
+{
+  "revision": "SemanticsIR/sqlite-page-pragmas-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Fix pager identities, the separate decoding rules, the fixed unsigned limit and the exact emitted phase-sensitive operation.",
+  "rules": {
+    "Maintenance/Page/PagePragma::__construct": {
+      "common": [
+        "Check::input(match ($kind) {",
+        "    PagePragmaKind::Count => $value === null,",
+        "    PagePragmaKind::Size => $value === null || $value instanceof RequestedPageSize,",
+        "    PagePragmaKind::MaximumCount => $value === null || $value instanceof PageLimit,",
+        "}, 'The pager setting must match its native operation.');"
+      ]
+    },
+    "Maintenance/Page/PagePragma::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Page/PagePragma::toString": {
+      "common": [
+        "$value = $this->value;",
+        "$argument = match (true) {",
+        "    $value === null => '',",
+        "    $value instanceof RequestedPageSize => '(' . $value->bytes . ')',",
+        "    $value instanceof PageLimit => '(' . $value->decimal . ')',",
+        "};",
+        "return 'PRAGMA ' . $this->schema->quoted() . '.' . $this->kind->value . $argument;"
+      ]
+    },
+    "Maintenance/Page/PageLimit::__construct": {
+      "common": [
+        "Check::input(preg_match('/\\A[1-9][0-9]{0,9}\\z/', $decimal) === 1 && (strlen($decimal) < 10 || strcmp($decimal, self::MAXIMUM) <= 0), 'A page limit requires a canonical decimal from 1 to 4294967294.');"
+      ]
+    },
+    "Maintenance/Page/RequestedPageSize::__construct": {
+      "common": [
+        "Check::input($bytes >= -2147483648 && $bytes <= 2147483647, 'A pending page-size request needs a signed 32-bit input.');"
+      ]
+    },
+    "Maintenance/Page/PagePragmaLowering::lower": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema) ?? new Identifier('main');",
+        "$value = $statement->value;",
+        "if ($value === null || $kind === PagePragmaKind::Count) {",
+        "    return new PagePragma($kind, $schema);",
+        "}",
+        "$text = $value instanceof PragmaNumber ? $value->nativeText() : $value->value;",
+        "$setting = match ($kind) {",
+        "    PagePragmaKind::Size => new RequestedPageSize((new NativePragmaInteger())->parse($text) ?? 0),",
+        "    PagePragmaKind::MaximumCount => (new PageLimitArgument())->read($text),",
+        "};",
+        "return new PagePragma($kind, $schema, $setting);"
+      ]
+    },
+    "Maintenance/Page/PageLimitArgument::read": {
+      "common": [
+        "if (strncasecmp($text, '0x', 2) === 0) {",
+        "    if (preg_match('/\\A0[xX]([0-9a-fA-F]*)\\z/', $text, $parts) !== 1) {",
+        "        return null;",
+        "    }",
+        "    $digits = strtolower(ltrim($parts[1], '0'));",
+        "    $width = strlen($digits);",
+        "    if ($width === 0 || $width > 16 || $width === 16 && strcmp($digits[0], '8') >= 0) {",
+        "        return null;",
+        "    }",
+        "    $decimal = $width > 8 ? PageLimit::MAXIMUM : base_convert($digits, 16, 10);",
+        "} else {",
+        "    $nativeSpan = substr($text, 0, strspn($text, \"+- \\n\\t0123456789\") + 1);",
+        "    if (preg_match('/\\A[\\x09-\\x0d ]*\\+?([0-9]+)[\\x09-\\x0d ]*\\z/', $nativeSpan, $parts) !== 1) {",
+        "        return null;",
+        "    }",
+        "    $decimal = ltrim($parts[1], '0');",
+        "    if ($decimal === '' || strlen($decimal) > 19 || strlen($decimal) === 19 && strcmp($decimal, '9223372036854775807') > 0) {",
+        "        return null;",
+        "    }",
+        "}",
+        "$limit = strlen($decimal) > 10 || strlen($decimal) === 10 && strcmp($decimal, PageLimit::MAXIMUM) > 0 ? PageLimit::MAXIMUM : $decimal;",
+        "return new PageLimit($limit);"
+      ]
+    }
+  }
+}

@@ -58,6 +58,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\MissingMetadataTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspectionKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PageLimit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragmaKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\RequestedPageSize;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumDestination;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumRegistrations;
@@ -363,7 +367,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Attach|Detach|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|Vacuum|Attach|Detach|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -862,6 +866,37 @@ function observeInventoryPragma(InventoryPragma $value): array
     ];
 }
 
+function directPagePragma(array $input): PagePragma
+{
+    $argument = $input['value'];
+    $value = match ($argument[0]) {
+        'read' => null,
+        'size' => new RequestedPageSize($argument[1]),
+        'limit' => new PageLimit($argument[1]),
+    };
+
+    return new PagePragma(PagePragmaKind::from($input['kind']), new Identifier($input['schema']), $value);
+}
+
+function observePagePragma(PagePragma $value): array
+{
+    $argument = $value->value;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'page-pragma',
+        'profile' => $value->profileId(),
+        'kind' => $value->kind->value,
+        'schema' => $value->schema->value,
+        'value' => match (true) {
+            $argument === null => ['read'],
+            $argument instanceof RequestedPageSize => ['size', $argument->bytes],
+            $argument instanceof PageLimit => ['limit', $argument->decimal],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
 function connectionName(array $raw): AttachmentName|Parameter
 {
     $value = operand($raw);
@@ -1221,6 +1256,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
                 InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
             ),
+            ($input['operation'] ?? null) === 'page-pragma' => directPagePragma($input),
             ($input['operation'] ?? null) === 'connection-command' => directConnectionCommand($input),
             ($input['operation'] ?? null) === 'vacuum' => directVacuum($input),
             ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
@@ -1253,6 +1289,9 @@ function runCase(array $input): array
     }
     if ($value instanceof InventoryPragma) {
         return observeInventoryPragma($value);
+    }
+    if ($value instanceof PagePragma) {
+        return observePagePragma($value);
     }
     if ($value instanceof Attach || $value instanceof Detach) {
         return observeConnectionCommand($value);
