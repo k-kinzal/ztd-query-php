@@ -28,14 +28,14 @@ final class TableDeclarationSql
      * Emits an appended column and its named conditions in their declaration order.
      *
      * @param non-empty-list<Identifier> $priorHeading The ordered prior members of the table
-     * @param list<CheckConstraint> $checks The conditions owned by the appended slot
+     * @param list<CheckConstraint> $conditions The conditions owned by the appended slot
      */
-    public function addition(TableColumn $column, array $priorHeading, array $checks): string
+    public function addition(TableColumn $column, array $priorHeading, array $conditions): string
     {
         $source = new DefinitionSource([...$priorHeading, $column->name]);
         $expressions = new SelectSql();
         $definition = $this->column($column, $expressions, $source);
-        foreach ($checks as $check) {
+        foreach ($conditions as $check) {
             $definition .= ' ' . $this->checkClause($check, $expressions, $source);
         }
 

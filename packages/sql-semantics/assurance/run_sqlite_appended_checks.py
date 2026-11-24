@@ -170,7 +170,7 @@ def check_faults(args, db, runner=check_render_faults):
     base = "sql-semantics-sqlite/src/Ir/"
     renderer = base + "Schema/TableDeclarationSql.php"
     guard = base + "Schema/Alter/AppendColumnBounds.php"
-    iteration = "foreach ($checks as $check) {\n            $definition .="
+    iteration = "foreach ($conditions as $check) {\n            $definition .="
     return runner(args, db, [
         RenderFault("omit-appended-check-owner", guard, "$check->column === $owner", "true",
                     {**case(), "checks": [entry("wrong owner", None, integer(1))],
@@ -180,10 +180,10 @@ def check_faults(args, db, runner=check_render_faults):
                     "new DefinitionSource([$priorHeading[1], $priorHeading[0], $column->name])",
                     case(population="below", predicate="old-positive"), "meaning-mismatch"),
         RenderFault("omit-first-appended-check", renderer, iteration,
-                    "foreach (array_slice($checks, 1) as $check) {\n            $definition .=",
+                    "foreach (array_slice($conditions, 1) as $check) {\n            $definition .=",
                     case(population="mixed", checks=2), "meaning-mismatch"),
         RenderFault("omit-later-appended-check", renderer, iteration,
-                    "foreach (array_slice($checks, 0, 1) as $check) {\n            $definition .=",
+                    "foreach (array_slice($conditions, 0, 1) as $check) {\n            $definition .=",
                     case(population="empty", predicate="new-positive", checks=2), "meaning-mismatch"),
         RenderFault("rewrite-appended-check-label", renderer, "$check->label->quoted()", "'\"changed\"'",
                     case(population="empty"), "meaning-mismatch"),
