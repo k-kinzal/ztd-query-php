@@ -104,7 +104,7 @@ def tree(rng, depth):
 def generated(tag, seed, total):
     rng = Random(seed)
     for ordinal in range(total):
-        mixed = tree(rng, 1 + ordinal % 4)
+        mixed = tree(rng, ordinal % 5)
         if ordinal % 2:
             mixed = ["AND", [rng.choice((2, 3)), rng.choice(TRUTH_TESTS)], mixed]
         yield build(
