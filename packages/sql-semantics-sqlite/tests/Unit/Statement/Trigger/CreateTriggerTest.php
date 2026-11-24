@@ -101,7 +101,7 @@ final class CreateTriggerTest extends TestCase
         self::assertSame([], $raise->facts->diagnostics);
     }
 
-    public function testDeriveStatementChecksTheColumnsOfAnUpdateOfTrigger(): void
+    public function testDeriveStatementRetainsASelectorForAnAbsentColumn(): void
     {
         $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
@@ -111,8 +111,9 @@ final class CreateTriggerTest extends TestCase
         self::assertInstanceOf(CreateTrigger::class, $known->statement);
         self::assertSame(['a', 'b'], array_map(static fn (Name $name): string => $name->value, $known->statement->columns));
         self::assertSame([], $known->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $unknown->facts->diagnostics[0]);
-        self::assertSame('zz', $unknown->facts->diagnostics[0]->name->value);
+        self::assertInstanceOf(CreateTrigger::class, $unknown->statement);
+        self::assertSame([], $unknown->facts->diagnostics);
+        self::assertSame('zz', $unknown->statement->columns[0]->value);
     }
 
     public function testRenderWritesEveryPartInGrammarOrder(): void

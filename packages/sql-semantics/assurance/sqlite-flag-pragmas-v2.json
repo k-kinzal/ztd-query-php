@@ -1,0 +1,188 @@
+{
+  "revision": "SemanticsIR/sqlite-flag-pragmas-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2, UTF-8, stock VFS and PRAGMA implementation, native hexadecimal integer input, explicit attached-schema coordinates. A caller can impose additional connection restrictions.",
+  "scope": "The 18 stock FLAG pragmas active in the pinned Linux and Darwin SQLite builds. Other built-in names and compile-time variants are listed independently in sqlite-pragma-namespace-v1.json.",
+  "additionalPublicRoots": [
+    "Maintenance/FlagPragma"
+  ],
+  "constructors": {
+    "Maintenance/FlagPragma": {
+      "role": "Read a native connection flag, request to turn it on or off, or clear writable_schema and reload the schema cache.",
+      "structure": "Exact FlagName, optional FlagChange, optional resolved schema Identifier.",
+      "conditions": "An explicit schema qualifier must resolve in SQLite's schema namespace before publication. The schema qualifies the native invocation without making its flag state schema-local. Reset is available only for writable_schema.",
+      "meaning": "One typed, canonically named integer row on read. A write requests the named transition at prepare time and returns no fields or rows. A foreign_keys write inside a transaction leaves the flag unchanged. Disabling defer_foreign_keys clears the deferred immediate-constraint counter. Reset also reloads the schema cache. Changes expire prepared statements and update affected pager flags.",
+      "externalInterpretation": "Use the same SQLite build, selected connection and attached databases, runtime flags, transaction state, defensive-mode restrictions and native prepared-statement behavior. Explicit temp selection opens the temp database. No custom VFS supplies extensions to these names.",
+      "sql": "Emit PRAGMA, the separately quoted database coordinate when supplied, the canonical name, and one of no suffix, = 0, = 1 or = RESET.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/FlagName": {
+      "role": "Identify the exact built-in native connection setting.",
+      "structure": "Closed enum with the 18 active names from the independently extracted native FLAG family.",
+      "conditions": "Recognize a name using native ASCII case-insensitive comparison. Use the canonical enum name in the result header on reads.",
+      "meaning": "Selects the named SQLite flag and any native side effects associated with it.",
+      "externalInterpretation": "The pinned names map to the native flag masks in the independent pragma namespace. A debug-only compile-time name does not have a value in this enum.",
+      "sql": "Emit the built-in name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/FlagChange": {
+      "role": "Describe the native change requested by a pragma argument.",
+      "structure": "Closed enum with Disable, Enable and Reset.",
+      "conditions": "Only the parent writable_schema operation accepts Reset. Resolve the native argument interpretation before a complete value exists.",
+      "meaning": "A stock native boolean setting, or the distinct request to clear writable_schema and reload the connection's schema cache.",
+      "externalInterpretation": "Native flags may be affected by documented connection settings and transaction state.",
+      "sql": "Emit 0, 1 or RESET as applicable.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "rules": [
+    "The native boolean argument recognizes on, yes and true using ASCII case-insensitive equality. Other text requests false except for Reset on writable_schema. A quoted sign or leading whitespace is part of the argument. A grammar PLUS on a number is discarded and a grammar MINUS is prepended.",
+    "When the decoded argument starts with a digit, read the decimal or 0x-prefixed hexadecimal integer prefix. Ignore following characters. A value outside the positive signed 32-bit magnitude maps to zero. After reducing a valid result to its low byte, nonzero means true. This is the native text rule even for an unquoted REAL or over-wide hexadecimal token.",
+    "Foreign key changes are a runtime state transition: setting foreign_keys during an explicit transaction does not toggle the flag. Setting or clearing writable_schema follows native defensive-mode restrictions.",
+    "Writable_schema Reset clears the bit and refreshes the connection catalog; a false boolean value alone leaves the loaded catalog intact. A freshly created table fixture with a deliberately renamed schema row distinguishes the two operations.",
+    "The optional resolved database coordinate preserves database selection and the native access to temp. Boolean arguments are semantic settings under the stock VFS and native authorization; unnormalized authorizer input text is not a statement result."
+  ],
+  "observations": [
+    "Compare exact native flags, written/read result names, positions, integer storage class, rows, parameter shape, readOnly classification and connection state. Observe prepare-time values and visible schema attachment slots.",
+    "Use separately established witness SQL for changed rows, write restrictions, foreign key and CHECK enforcement, output labels, cursor traversal, recursive triggers and schema-cache reload. Preserve evaluation errors for fixed known effect probes.",
+    "Observe the native authorizer operation name, existing schema and presence of the argument. No assertion relies on SQL accepted by a candidate parser alone. The recorded raw argument remains available for review."
+  ],
+  "finite": {
+    "flags": [
+      "automatic_index",
+      "cell_size_check",
+      "checkpoint_fullfsync",
+      "count_changes",
+      "defer_foreign_keys",
+      "empty_result_callbacks",
+      "foreign_keys",
+      "full_column_names",
+      "fullfsync",
+      "ignore_check_constraints",
+      "legacy_alter_table",
+      "query_only",
+      "read_uncommitted",
+      "recursive_triggers",
+      "reverse_unordered_selects",
+      "short_column_names",
+      "trusted_schema",
+      "writable_schema"
+    ],
+    "changes": [
+      "read",
+      "0",
+      "1"
+    ],
+    "scopes": [
+      "implicit",
+      "main",
+      "temp",
+      "attached"
+    ],
+    "initial": [
+      0,
+      1
+    ],
+    "transactions": [
+      false,
+      true
+    ],
+    "extra": {
+      "flag": "writable_schema",
+      "change": "RESET"
+    },
+    "identity": "The full 864 flag/action/scope/baseline/transaction product plus the 16 Reset combinations. Derive identity from constructed fields, observed native scope, baseline and transaction."
+  },
+  "exploration": {
+    "seeds": [
+      6029,
+      20681,
+      56269
+    ],
+    "casesPerSeed": 70,
+    "timeoutSeconds": 480,
+    "allowedExclusions": [],
+    "domain": "Vary flag, operation, qualifier, attached name and its escaping, casing, argument spelling, baseline and transaction. Traverse a separate pinned set of signed, decimal, hexadecimal, quoted, real, text and boundary witnesses."
+  },
+  "negative": [
+    "Direct Reset on a flag other than writable_schema",
+    "Direct unknown or mutable flag role",
+    "Unknown schema qualifier",
+    "Direct construction of a flag with the page_size name of another native family",
+    "Unknown native PRAGMA name, which would otherwise be a silent no-op",
+    "Native rejection of numeric separators in the PRAGMA value grammar"
+  ],
+  "faults": [
+    "Allow Reset for the wrong flag",
+    "Always emit the same setting",
+    "Substitute a different flag name",
+    "Remove explicit database qualification",
+    "Treat Reset as ordinary disable",
+    "Drop the argument and read instead",
+    "Treat integer 256 as true instead of reducing to a byte"
+  ],
+  "open": [
+    "Debug flags, additional build profiles, custom VFS or argument-sensitive authorizer extensions, and all non-FLAG pragmas remain separately accounted for.",
+    "The independent effect probes exercise selected SQL-visible consequences. Filesystem sync, locking visibility, planner decisions, resource use, custom extensions and defensive mode need additional external evidence."
+  ],
+  "trust": [
+    "Pinned native PRAGMA definition table and compiler profile.",
+    "Native action authorization restricted to the stock flag names in disposable connections.",
+    "Independent transition and observation model and the exact distributed implementation digest."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "argumentDriver": "5afb3647eb63cbe0dd2e3fc7e89e2c7f42696941cf1ff83795794edadaa3e0e3",
+    "argumentCases": "9548f57173d7c6eefc4b97b874baec4723a3d321f13586c9189e3645ea86e2c6",
+    "effectDriver": "5ba5f29ab4c88f26c28c0fa041811e98537b0a7ca1f6e4ba805dc4e9b1f26b35",
+    "effectCases": "32bfa0f1e17da36c579a9d8d0efd89d21268f1b6bfb5a7359563c3be19de234d",
+    "engineRoutines": [
+      "sqlite3Pragma",
+      "PragTyp_FLAG",
+      "sqlite3GetBoolean",
+      "getSafetyLevel",
+      "sqlite3GetInt32"
+    ]
+  },
+  "revises": "sqlite-flag-pragmas-v1.json",
+  "assuranceRevision": "Exercise the formerly unsupported page-size name directly at the flag-specific construction boundary. The independent pager contract requires that ordinary page-size analysis publish PagePragma."
+}

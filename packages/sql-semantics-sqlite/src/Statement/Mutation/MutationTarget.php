@@ -61,7 +61,9 @@ final class MutationTarget implements NamedRelation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return (new TableShapes())->fact($derivation, $this->name, $derivation->environment());
+        $writes = new Environment($derivation->context, relationSchema: $environment->owningSchema());
+
+        return (new TableShapes())->fact($derivation, $this->name, $writes);
     }
 
     /**

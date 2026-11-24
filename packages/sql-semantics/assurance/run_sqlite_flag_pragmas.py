@@ -14,8 +14,8 @@ from sqlite_flag_pragma_cases import analyzed, case, expected, finite_id, finite
 from sqlite_flag_pragma_effects import FIXTURES, expected_effects
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-flag-pragmas-v1.json"
-CONTRACT = "22b43117680de193553fb0154503d593b8788c6c858ea80aee98c7c587e1bcfe"
+CONTRACT_NAME = "sqlite-flag-pragmas-v2.json"
+CONTRACT = "68c10c1e24169885dd2ea953a119e516e889dd45d9e716392f8ce660cd60dfc0"
 NAMESPACE = "ba957109ec9febbe65ec7874f647c0549233c7617166eed9d613315042dba010"
 FIXTURE = ""
 

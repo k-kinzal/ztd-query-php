@@ -81,7 +81,7 @@ final class TriggerFactsTest extends TestCase
         self::assertCount(1, $facts->diagnostics);
     }
 
-    public function testDeriveReportsTriggerOnlyMisusesAndTheColumnsOfUpdateOf(): void
+    public function testDeriveReportsTriggerOnlyMisusesAndIgnoresAnAbsentSelector(): void
     {
         $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
@@ -94,7 +94,7 @@ final class TriggerFactsTest extends TestCase
         $facts = $derivation->facts();
         $rules = array_map(static fn (object $diagnostic): string => $diagnostic instanceof Misuse ? $diagnostic->rule->name : $diagnostic::class, $facts->diagnostics);
 
-        self::assertSame([MissingColumn::class, MisuseRule::QualifiedTriggerTarget->name, MisuseRule::IndexedTriggerTarget->name], $rules);
+        self::assertSame([MisuseRule::QualifiedTriggerTarget->name, MisuseRule::IndexedTriggerTarget->name], $rules);
         self::assertInstanceOf(ResolvedColumn::class, $facts->scalar($qualified->assignments[0]->value)->resolution);
         self::assertTrue($facts->covers($qualified->target));
         self::assertTrue($facts->covers($indexed->target));

@@ -46,6 +46,8 @@ Connection-flag PRAGMAs such as `foreign_keys`, `query_only`, and `writable_sche
 
 The database header pragmas `application_id`, `user_version`, `schema_version`, `freelist_count` and `data_version` return `HeaderPragma`. The value records the selected database, the exact field, and the normalized signed operand for a write. A missing database qualifier selects main.
 
+A row trigger with an ordered INSERT VALUES body returns `CreateTrigger`. Supply the watched relation and body table declarations in the context. Each `OLD` or `NEW` use identifies the row image and declared column position. The trigger keeps its placement, timing, event and optional NULL condition. An absent `UPDATE OF` name remains in the definition so SQLite can recognize it if a later column uses that name.
+
 The pager pragmas `page_size`, `page_count` and `max_page_count` return `PagePragma`. The value records the resolved pager and the typed setting, when present. A page-size request can set the pending size for a later `VACUUM`. An upper page-count request takes effect when SQLite steps the statement.
 
 The reclamation pragmas return `AutoVacuum` or `IncrementalVacuum`. An automatic mode request can affect a later file `VACUUM`. An incremental request keeps its effective positive limit and can return one zero-column row per reclaimed page.

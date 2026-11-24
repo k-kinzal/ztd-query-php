@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v104.json"
-CONTRACT = "745e9e7abea46e0fdc398579df4fc75c2129083e3b24a24f348e7209578240b0"
+CONTRACT_NAME = "release-layout-v105.json"
+CONTRACT = "be82257b0f461cefaa612061b4c9018be05507673b6af7873bb9114494a6b54d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -624,6 +624,12 @@ def verify_probe(raw, catalog):
             require(item.get("vacuum") == [
                 "archive", "002", expect, 'VACUUM "main"', "temp", "011", 'VACUUM "temp" INTO (0 IN (?011))',
             ] and item["sql"] == expect, "installed-sqlite-vacuum-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Trigger\\CreateTrigger"):
+            expected = ('CREATE TRIGGER "archive"."audit_tr" AFTER UPDATE OF "payload", "future" '
+                        'ON "archive"."watched" WHEN OLD."payload" IS NOT NULL BEGIN '
+                        'INSERT INTO "journal" ("prior", "current") VALUES (OLD."payload", NEW."payload"); END')
+            require(item.get("auditTrigger") == ["archive", "archive", "OLD", 1, "NEW", 1, 1, "future", False, expected]
+                    and item["sql"] == expected, "installed-sqlite-audit-trigger-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Cache\\CacheSize"):
             expected = 'PRAGMA "archive".cache_size(-128)'
             require(item.get("cacheSize") == ["archive", -128, expected] and item["sql"] == expected,

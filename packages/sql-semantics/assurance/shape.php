@@ -540,6 +540,37 @@ if ($dialect === 'sqlite') {
     $enumCases['Maintenance\\Cache\\SpillMode'] = ['Enabled' => 'ON', 'Disabled' => 'OFF'];
     array_push($roots, 'Maintenance\\Cache\\CacheSize', 'Maintenance\\Cache\\CacheSpill', 'Maintenance\\Cache\\DefaultCacheSize');
     array_push($internal, 'Maintenance\\Cache\\CachePragmaLowering', 'Maintenance\\Cache\\SpillArgument');
+    $properties['Schema\\Trigger\\CreateTrigger'] = [
+        'schema' => ['Identifier'], 'name' => ['Identifier'], 'placement' => ['Schema\\Trigger\\TriggerPlacement'],
+        'watched' => ['TableSource'], 'timing' => ['Schema\\Trigger\\TriggerTiming'], 'event' => ['Schema\\Trigger\\TriggerEvent'],
+        'program' => ['array'], 'selectors' => ['array'], 'condition' => ['?Schema\\Trigger\\TriggerCondition'], 'ifNotExists' => ['bool'],
+    ];
+    $properties['Schema\\Trigger\\TriggerField'] = ['image' => ['Schema\\Trigger\\RowImage'], 'column' => ['int']];
+    $properties['Schema\\Trigger\\TriggerCondition'] = ['field' => ['Schema\\Trigger\\TriggerField'], 'isNull' => ['bool']];
+    $properties['Schema\\Trigger\\TriggerDestination'] = ['table' => ['TableSource'], 'writable' => ['array']];
+    $properties['Schema\\Trigger\\TriggerInsert'] = [
+        'destination' => ['Schema\\Trigger\\TriggerDestination'], 'fields' => ['array'], 'conflict' => ['Mutation\\InsertConflict'],
+    ];
+    $properties['Schema\\Trigger\\TriggerInsertField'] = [
+        'column' => ['int'], 'value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Schema\\Trigger\\TriggerField'],
+    ];
+    $properties['Schema\\Trigger\\TriggerUpdateName'] = ['selector' => ['Identifier', 'int']];
+    $methods['Schema\\Trigger\\CreateTrigger'] = $methods['Select'];
+    foreach (['TriggerField', 'TriggerCondition', 'TriggerDestination', 'TriggerInsert', 'TriggerInsertField', 'TriggerUpdateName'] as $role) {
+        $methods['Schema\\Trigger\\' . $role] = ['__construct'];
+    }
+    $enumCases['Schema\\Trigger\\RowImage'] = ['New' => 'NEW', 'Old' => 'OLD'];
+    $enumCases['Schema\\Trigger\\TriggerEvent'] = ['Insert' => 'INSERT', 'Update' => 'UPDATE', 'Delete' => 'DELETE'];
+    $enumCases['Schema\\Trigger\\TriggerPlacement'] = ['Stored' => 'stored', 'NamedTemporary' => 'named-temporary', 'TemporaryKeyword' => 'temporary-keyword'];
+    $enumCases['Schema\\Trigger\\TriggerTiming'] = ['After' => 'AFTER', 'Before' => 'BEFORE', 'InsteadOf' => 'INSTEAD OF'];
+    foreach (['RowImage', 'TriggerEvent', 'TriggerPlacement', 'TriggerTiming'] as $role) {
+        $properties['Schema\\Trigger\\' . $role] = $methods['Schema\\Trigger\\' . $role] = [];
+    }
+    $roots[] = 'Schema\\Trigger\\CreateTrigger';
+    $internal[] = 'Schema\\DefinitionLowering';
+    array_push($internal, 'Schema\\Trigger\\TriggerSql', 'Schema\\Trigger\\TriggerChecks',
+        'Schema\\Trigger\\Binding\\TriggerLowering', 'Schema\\Trigger\\Binding\\TriggerStepLowering', 'Schema\\Trigger\\Binding\\TriggerOperands');
+    array_push($pureCollaborators, 'Schema\\Trigger\\TriggerSql', 'Schema\\Trigger\\TriggerChecks');
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1244,10 +1275,11 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateIndex => (new \\' . $prefix . 'Schema\\Index\\CreateIndexLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateView => (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateIndex,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Trigger\\CreateTrigger,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateView => (new \\' . $prefix . 'Schema\\DefinitionLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterAddColumn => (new \\' . $prefix . 'Schema\\Alter\\AddColumnLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterDropColumn => (new \\' . $prefix . 'Schema\\Alter\\DropColumnLowering())->lower($operation, $statement),'
@@ -1323,6 +1355,7 @@ try {
             ['sqlite-flag-pragmas-binding-v3.json', '22bc56b01907c3b3a4305b9b81c833d70aa1dfc9617d945ecb0f2d56641d9649', 'Flag pragma binding'],
             ['sqlite-folded-binding-sources-v10.json', 'b6fd88b517829551074b5b575b5d907988c378395fcd29568960fa6bcc3750db', 'Folded binding'],
             ['sqlite-connection-commands-binding-v1.json', '4e048dce7881dd175ff0be0b027010a69e1b8c4d495e09f4d7329bfb7073aed9', 'Connection operand binding'],
+            ['sqlite-audit-triggers-binding-v1.json', '3c0e69cef67978466c908f54323a05a012220dbf0fbda31d1962cdfe8dea3f59', 'SQLite trigger binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1369,9 +1402,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v53.json';
+    $storagePath = __DIR__ . '/value-storage-v54.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '3980c68b7793994cfafdec31e01cf43e4cf0a2958be68a462d4b5fb44d2cbb08',
+        hash_file('sha256', $storagePath) === '2d251097ea69a7cd6594d26a76d4b1501523cde0b0130c620079c13e5704f9b4',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1581,6 +1614,34 @@ try {
                         && types($member->returnType, $prefix, $short) === ($expected[$member->name->toString()] ?? null), 'Unexpected SQLite cache route');
                 }
             }
+            if ($short === 'Schema\\DefinitionLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && types($members[0]->returnType, $prefix, $short) === [
+                        'Schema\\CreateTable', 'Schema\\Index\\CreateIndex', 'Schema\\Query\\CreateTableAs',
+                        'Schema\\Trigger\\CreateTrigger', 'Schema\\View\\CreateView',
+                    ], 'Unexpected SQLite declaration publication route');
+            }
+            if ($short === 'Schema\\Trigger\\Binding\\TriggerLowering' || $short === 'Schema\\Trigger\\Binding\\TriggerStepLowering'
+                || $short === 'Schema\\Trigger\\Binding\\TriggerOperands') {
+                $expected = match ($short) {
+                    'Schema\\Trigger\\Binding\\TriggerLowering' => ['lower' => ['Schema\\Trigger\\CreateTrigger'],
+                        'watched' => ['TableSource'], 'selectors' => ['array'], 'schema' => ['Identifier']],
+                    'Schema\\Trigger\\Binding\\TriggerStepLowering' => ['lower' => ['Schema\\Trigger\\TriggerInsert']],
+                    'Schema\\Trigger\\Binding\\TriggerOperands' => [
+                        'value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Schema\\Trigger\\TriggerField'],
+                        'field' => ['Schema\\Trigger\\TriggerField'], 'condition' => ['?Schema\\Trigger\\TriggerCondition'],
+                        'ungroup' => ['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\Scalar'],
+                    ],
+                };
+                $members = $class->getMethods();
+                requireShape(count($members) === count($expected), 'Unexpected SQLite trigger binding route count');
+                foreach ($members as $member) {
+                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === ($expected[$member->name->toString()] ?? null),
+                        'Unexpected SQLite trigger binding route');
+                }
+            }
             if ($short === 'Maintenance\\Reclaim\\ReclaimPragmaLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 2, 'Unexpected SQLite reclamation route count');
@@ -1769,6 +1830,8 @@ try {
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
                     || ($dialect === 'sqlite' && $short === 'Connection\\AttachmentName' && $call->name->toString() === 'explode')
+                    || ($dialect === 'sqlite' && in_array($short, ['Schema\\Trigger\\TriggerChecks', 'Schema\\Trigger\\TriggerDestination', 'Schema\\Trigger\\TriggerInsert', 'Schema\\Trigger\\TriggerUpdateName', 'Schema\\Trigger\\TriggerSql'], true)
+                        && in_array($call->name->toString(), ['in_array', 'is_int', 'strtoupper'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')

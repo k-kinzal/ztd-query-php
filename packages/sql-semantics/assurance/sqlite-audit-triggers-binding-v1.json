@@ -1,0 +1,44 @@
+{
+  "revision": "SemanticsIR/sqlite-audit-triggers-binding-1",
+  "approval": "pending-human-review",
+  "scope": "Fix parsed trigger leaf and owner selection, watched shape, trigger environment and write-target source.",
+  "artifacts": {
+    "src/Rules/Mutation/TriggerFacts.php": {
+      "methods": [
+        "derive"
+      ],
+      "sha256": "58a8275bb8b30117a60a5fcb9cce8e7d3fc0c1472425e165c31bfded5631aaa0"
+    },
+    "src/Statement/Mutation/MutationTarget.php": {
+      "methods": [
+        "deriveRelation"
+      ],
+      "sha256": "ec01983ab8da6c6201b1e75482919ddaf6642360b2e368949a5585c0e1cd514f"
+    },
+    "src/Lowering/Query/QueryCommands.php": {
+      "methods": [
+        "lower"
+      ],
+      "sha256": "0845d77ba0abfe45a96206eceeac754c4c06831968e284696a5eb842974d4100"
+    },
+    "src/Lowering/Trigger/TriggerRule.php": {
+      "methods": [
+        "create",
+        "timing",
+        "event",
+        "when",
+        "program",
+        "step",
+        "target"
+      ],
+      "sha256": "43fb28fad01f2c534cd762c6783e79ab7bc66be9e99cdc80b63ebc69d0d9e29f"
+    },
+    "src/Model/Resolution/TriggerNamespace.php": {
+      "methods": [
+        "owner",
+        "watched"
+      ],
+      "sha256": "e502f413f9f6c4f0517455547de8c55b8a61d56c9c9ba4ba38fcbab0654dcde9"
+    }
+  }
+}

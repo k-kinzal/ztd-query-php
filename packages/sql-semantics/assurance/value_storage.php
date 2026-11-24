@@ -139,6 +139,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'sqlite-trigger-writable-copy') {
+            requireShape($short === 'Schema\\Trigger\\TriggerDestination' && $property === 'writable'
+                && in_array('Schema/Trigger/TriggerDestination::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'positions',
+                'SQLite writable trigger positions must come from the verified detached copy.');
+
+            continue;
+        }
+
         if ($rule === 'native-slot-copy') {
             requireShape($short === 'TableSource' && $property === 'columnTypes'
                 && in_array('TableSource::__construct', $checkedBoundaries, true)

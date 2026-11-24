@@ -58,8 +58,8 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
                 key = f"negative/{index}"
                 ledger.record(key, "attempted", input=current)
                 reply = worker.request(current)
-                if status == "type-rejected":
-                    expected_status, exception = "error", "TypeError"
+                if status in ("type-rejected", "enum-rejected"):
+                    expected_status, exception = "error", {"type-rejected": "TypeError", "enum-rejected": "ValueError"}[status]
                 else:
                     expected_status = "analysis-rejected" if status == "syntax-rejected" else status
                     exception = EXCEPTION + ({

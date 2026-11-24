@@ -55,9 +55,11 @@ final class SemanticsTest extends TestCase
 
     public function testAnalyzeRejectsAnOperationOutsideTheCompleteDomain(): void
     {
-        $this->expectExceptionMessage('This SQLite statement has no complete IR representation.');
+        $semantics = new Semantics();
+        $context = $semantics->context(['CREATE TABLE records (a)']);
+        $this->expectExceptionMessage('A checked trigger program currently requires VALUES insertions.');
 
-        (new Semantics())->analyze('CREATE TRIGGER t AFTER INSERT ON records BEGIN SELECT 1; END');
+        $semantics->analyze('CREATE TRIGGER t AFTER INSERT ON records BEGIN SELECT 1; END', $context);
     }
 
     public function testInspectLeavesMissingInputsInAnOpenContextAsFacts(): void

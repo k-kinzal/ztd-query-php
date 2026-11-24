@@ -549,6 +549,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
         $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
         $queries['Maintenance\\Header\\HeaderPragma'] = 'PRAGMA metadata.user_version = -2147483648';
+        $queries['Schema\\Trigger\\CreateTrigger'] = 'CREATE TRIGGER archive.audit_tr AFTER UPDATE OF payload,future ON watched WHEN OLD.payload IS NOT NULL BEGIN INSERT INTO journal(prior,current) VALUES(OLD.payload,NEW.payload); END';
         $queries['Maintenance\\Cache\\CacheSize'] = 'PRAGMA ARCHIVE.cache_size(-128)';
         $queries['Maintenance\\Cache\\DefaultCacheSize'] = 'PRAGMA ARCHIVE.default_cache_size(-2147483648)';
         $queries['Maintenance\\Cache\\CacheSpill'] = "PRAGMA ARCHIVE.cache_spill('+256')";
@@ -616,6 +617,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
             );
             $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Trigger\\CreateTrigger') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([
+                'CREATE TABLE temp.watched (decoy)', 'CREATE TABLE main.watched (decoy)',
+                'CREATE TABLE archive.watched (id,payload)', 'CREATE TABLE temp.journal (wrong)',
+                'CREATE TABLE archive.journal (prior,current)',
+            ]);
         }
         if ($platform === 'Sqlite' && str_starts_with($role, 'Maintenance\\Cache\\')) {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
@@ -1391,6 +1402,24 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $default = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum();
             $details['vacuum'] = [$result->schema->value, $operand->expression->values[0]->label, $rebuilt->toString(),
                 $default->toString(), $skipped->schema->value, $skipped->destination->bindings[0]->label, $skipped->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger) {
+            $step = $result->program[0];
+            $old = $step->fields[0]->value;
+            $new = $step->fields[1]->value;
+            $future = $result->selectors[1]->selector;
+            if (!$old instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField
+                || !$new instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField
+                || !$future instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier) {
+                throw new RuntimeException('The installed trigger lost its image or update selector roles.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $result->schema, $result->name, $result->placement, $result->watched, $result->timing, $result->event,
+                $result->program, $result->selectors, $result->condition, $result->ifNotExists,
+            );
+            $details['auditTrigger'] = [$result->watched->schema->value, $step->destination->table->schema->value,
+                $old->image->value, $old->column, $new->image->value, $new->column,
+                $result->selectors[0]->selector, $future->value, $result->condition?->isNull, $copy->toString()];
         }
         if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize) {
             $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize($result->schema, $result->amount);

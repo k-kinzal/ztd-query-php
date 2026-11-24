@@ -140,6 +140,17 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerCondition;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerDestination;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerEvent;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerPlacement;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerTiming;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerUpdateName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -378,7 +389,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -908,6 +919,85 @@ function observePagePragma(PagePragma $value): array
     ];
 }
 
+function triggerField(array $value): TriggerField
+{
+    return new TriggerField(RowImage::from($value[1]), $value[2]);
+}
+
+function triggerOperand(array $value): TriggerField|IntegerLiteral|TextLiteral|NullLiteral
+{
+    return match ($value[0]) {
+        'field' => triggerField($value),
+        'integer' => new IntegerLiteral($value[1]),
+        'text' => new TextLiteral($value[1]),
+        'null' => new NullLiteral(),
+    };
+}
+
+function directTriggerInsert(array $input): TriggerInsert
+{
+    return new TriggerInsert(
+        new TriggerDestination(source($input['table']), $input['writable']),
+        array_map(static fn (array $field): TriggerInsertField => new TriggerInsertField($field[0], triggerOperand($field[1])), $input['fields']),
+        InsertConflict::from($input['conflict']),
+    );
+}
+
+function directTrigger(array $input): CreateTrigger
+{
+    $condition = $input['condition'];
+    $selectors = array_map(static fn (array $member): TriggerUpdateName => new TriggerUpdateName(match ($member[0]) {
+        'slot' => $member[1],
+        'absent' => new Identifier($member[1]),
+    }), $input['selectors']);
+
+    return new CreateTrigger(new Identifier($input['schema']), new Identifier($input['name']),
+        TriggerPlacement::from($input['placement']), source($input['watched']), TriggerTiming::from($input['timing']),
+        TriggerEvent::from($input['event']), array_map(directTriggerInsert(...), $input['program']), $selectors,
+        $condition === null ? null : new TriggerCondition(triggerField($condition[0]), $condition[1]), $input['ifNotExists']);
+}
+
+function observeTriggerField(TriggerField $field): array
+{
+    return ['field', $field->image->value, $field->column];
+}
+
+function observeTriggerInsert(TriggerInsert $value): array
+{
+    $fields = [];
+    foreach ($value->fields as $field) {
+        $operand = $field->value;
+        $fields[] = [$field->column, match (true) {
+            $operand instanceof TriggerField => observeTriggerField($operand),
+            $operand instanceof IntegerLiteral => ['integer', $operand->decimal],
+            $operand instanceof TextLiteral => ['text', $operand->value],
+            $operand instanceof NullLiteral => ['null'],
+        }];
+    }
+
+    return ['table' => observeSource($value->destination->table), 'writable' => $value->destination->writable,
+        'fields' => $fields, 'conflict' => $value->conflict->value];
+}
+
+function observeTrigger(CreateTrigger $value): array
+{
+    $condition = $value->condition;
+    $selectors = [];
+    foreach ($value->selectors as $entry) {
+        $item = $entry->selector;
+        $selectors[] = is_int($item) ? ['slot', $item] : ['absent', $item->value];
+    }
+
+    return [
+        'status' => 'constructed', 'operation' => 'create-trigger', 'profile' => $value->profileId(),
+        'schema' => $value->schema->value, 'name' => $value->name->value, 'placement' => $value->placement->value,
+        'watched' => observeSource($value->watched), 'timing' => $value->timing->value, 'event' => $value->event->value,
+        'selectors' => $selectors, 'condition' => $condition === null ? null : [observeTriggerField($condition->field), $condition->isNull],
+        'program' => array_map(observeTriggerInsert(...), $value->program), 'ifNotExists' => $value->ifNotExists,
+        'sql' => $value->toString(),
+    ];
+}
+
 function directSpillChange(?array $value): SpillMode|SpillThreshold|null
 {
     if ($value === null) {
@@ -1341,6 +1431,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'page-pragma' => directPagePragma($input),
             ($input['operation'] ?? null) === 'reclaim-pragma' => directReclaimPragma($input),
             ($input['operation'] ?? null) === 'cache-pragma' => directCachePragma($input),
+            ($input['operation'] ?? null) === 'create-trigger' => directTrigger($input),
             ($input['operation'] ?? null) === 'connection-command' => directConnectionCommand($input),
             ($input['operation'] ?? null) === 'vacuum' => directVacuum($input),
             ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
@@ -1376,6 +1467,9 @@ function runCase(array $input): array
     }
     if ($value instanceof PagePragma) {
         return observePagePragma($value);
+    }
+    if ($value instanceof CreateTrigger) {
+        return observeTrigger($value);
     }
     if ($value instanceof CacheSize || $value instanceof DefaultCacheSize || $value instanceof CacheSpill) {
         return observeCachePragma($value);

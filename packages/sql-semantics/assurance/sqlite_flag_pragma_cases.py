@@ -118,7 +118,7 @@ def negatives():
     yield {**item, "change": "RESET"}, "rejected", "Only writable_schema"
     yield {**item, "flag": {"mutable": "foreign_keys"}}, "type-rejected", "FlagName::from()"
     yield analyzed(item, "PRAGMA absent.automatic_index"), "rejected", "requires a known schema qualifier"
-    yield analyzed(item, "PRAGMA main.page_size"), "rejected", "no complete flag representation"
+    yield {**item, "flag": "page_size"}, "enum-rejected", ("page_size", "not a valid backing value")
     yield analyzed(item, "PRAGMA missing_pragma = 1"), "rejected", "no complete flag representation"
     yield analyzed(item, "PRAGMA automatic_index = 2_56"), "syntax-rejected", ("Unexpected", "2_56")
 
