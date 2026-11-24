@@ -1,0 +1,105 @@
+{
+  "revision": "SemanticsIR/postgres-rename-sequence-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Sequence/Alter/RenameSequence"
+  ],
+  "scope": "Native sequence rename with a present or known absent typed selector, a decoded destination and the native optional existence guard.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-altersequence.html",
+    "https://www.postgresql.org/docs/17/sql-altersequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/tablecmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/tablecmds.c"
+  ],
+  "constructors": {
+    "RenameSequence": {
+      "type": "Schema/Sequence/Alter/RenameSequence",
+      "role": "Rename one checked persistent or temporary native sequence.",
+      "structure": "SequenceSelector, decoded unqualified destination, IF EXISTS, exact release.",
+      "conditions": "The old selector must resolve under the fixed native profile and stock occupancy. Absent selectors require IF EXISTS. A present sequence needs a different destination. Namespace stays the same.",
+      "meaning": "Preserve generator parameters, runtime state, relation identity and defaults referencing the same physical object. A guarded absent selection emits the native relation absence notice. Occupied destinations can fail atomically at evaluation.",
+      "sql": "Render ALTER SEQUENCE, the explicit guard, the resolved selector and one separately quoted destination."
+    }
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ],
+  "finite": {
+    "roles": [
+      "local",
+      "temporary",
+      "other",
+      "missing-scoped",
+      "missing-bare",
+      "missing-namespace"
+    ],
+    "guard": [
+      false,
+      true
+    ],
+    "transactional": [
+      false,
+      true
+    ],
+    "occupiedDestination": [
+      false,
+      true
+    ],
+    "dependentDefault": [
+      false,
+      true
+    ],
+    "bound": "96 total identities per release. Accept 72 analyzed and 72 direct coordinates. The 24 unguarded absent coordinates each have analyzed and direct typed refusal and one native witness."
+  },
+  "exploration": {
+    "seeds": [
+      4903,
+      27823,
+      63499
+    ],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Vary exact quoted source and destination, native namespace precedence, existing and absent selectors, valid local database qualification, transactional context and busy destination."
+  },
+  "observations": [
+    "Exact physical relation identity, native type and generator state, command, diagnostics and rollback.",
+    "Retained dependent default, referenced sequence identity and table rows including duplicates and NULL.",
+    "Unchanged same-name generators in competing namespaces and the preexisting destination on a collision."
+  ],
+  "negative": [
+    "Same source and destination on a present sequence.",
+    "Wrong relation kind with the guard.",
+    "Foreign database qualifier.",
+    "Absence in an open context.",
+    "Direct selector at an occupied stock nonsequence identity.",
+    "Direct absent selector without a guard."
+  ],
+  "edges": [
+    "Qualified validated current database selector with quoted names.",
+    "An allocated temporary namespace with an absent sequence.",
+    "Guarded missing source may repeat its name as the requested destination."
+  ],
+  "faults": [
+    "Select the same-named decoy.",
+    "Retain the source name as the destination.",
+    "Remove the guard on an absent source."
+  ],
+  "trust": [
+    "Exact local selector binding and stock occupancy.",
+    "Native PostgreSQL rename and catalogue observation."
+  ]
+}
