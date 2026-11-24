@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 final class TableDeclarationSql
 {
     /**
-     * Emits an appended column and its named conditions in their declaration order.
+     * Emits an appended column and its checked conditions in their declaration order.
      *
      * @param non-empty-list<Identifier> $priorHeading The ordered prior members of the table
      * @param list<CheckConstraint> $conditions The conditions owned by the appended slot

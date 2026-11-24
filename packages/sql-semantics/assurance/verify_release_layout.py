@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v84.json"
-CONTRACT = "e6559543215682e13e85cd005e9c0c10243d16641279daa8413856f5d79534bb"
+CONTRACT_NAME = "release-layout-v85.json"
+CONTRACT = "9f199373ccebec11ab8a935901f5bec3062af86d65e2ef0760888ad33e100a7f"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -589,6 +589,9 @@ def verify_probe(raw, catalog):
                 "minimum", 1, 1, 0,
                 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER DEFAULT 7 CONSTRAINT "minimum" CHECK (("total" > "id"))',
             ], "installed-sqlite-ordinary-appended-check-mismatch", item)
+            require(item.get("implicitAppendedCheck") == [
+                "TOTAL", ">=", 2, 1, 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER CHECK (TOTAL >= 007)',
+            ], "installed-sqlite-implicit-appended-check-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\AddGeneratedColumn"):
             require(item.get("addGeneratedColumn") == [
                 "main", "accounts", ["id"], False, "total", "STORED", "+", 0, "7",
@@ -599,6 +602,10 @@ def verify_probe(raw, catalog):
                 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER GENERATED ALWAYS AS (("id" + 7)) '
                 'VIRTUAL CONSTRAINT "large" CHECK (("total" > "id"))',
             ], "installed-sqlite-generated-appended-check-mismatch", item)
+            require(item.get("carriedAppendedChecks") == [
+                "range", "range", 'ALTER TABLE "main"."accounts" ADD COLUMN "total" GENERATED ALWAYS AS (("id" + 7)) '
+                'VIRTUAL CONSTRAINT "range" CHECK (("total" > "id")) CONSTRAINT "range" CHECK (("total" < 100))',
+            ], "installed-sqlite-carried-appended-check-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

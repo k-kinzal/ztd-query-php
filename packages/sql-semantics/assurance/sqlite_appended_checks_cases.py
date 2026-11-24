@@ -136,11 +136,11 @@ def negatives():
     yield {**value, "checks": [entry("wrong", 1, integer(1))]}, "rejected", "belong to the new column slot"
     yield {**value, "checks": [entry("table", None, integer(1))]}, "rejected", "belong to the new column slot"
     yield {**value, "checks": [entry("outside", 2, compare(">", column(3), integer(0)))]}, "rejected", "visible occurrence"
-    implicit = {"name": "checked", "glyph": ">", "quoted": False, "before": " ", "after": " ", "zeroes": 0}
-    yield {**value, "checks": [entry(implicit, 2, compare(">", column(2), integer(0)))]}, "rejected", "requires an explicit name"
+    implicit = {"name": "operand", "glyph": ">", "quoted": False, "before": " ", "after": " ", "zeroes": 0}
+    yield {**value, "checks": [entry(implicit, 2, compare(">", column(2), integer(0)))]}, "rejected", "must identify the resolved column"
     declarations = prior_definitions(value)
     for sql, status, message in (
-        ("ALTER TABLE main.ir_add_checks ADD checked INTEGER CHECK (checked>0)", "rejected", "requires an explicit CHECK"),
+        ("ALTER TABLE main.ir_add_checks ADD checked INTEGER CHECK (checked>0 AND checked<8)", "rejected", "checked implicit comparison"),
         ("ALTER TABLE main.ir_add_checks ADD checked INTEGER CONSTRAINT limited NOT NULL", "rejected", "constraint names on inline CHECK"),
         ("ALTER TABLE main.ir_add_checks ADD checked INTEGER CONSTRAINT limited CHECK (missing>0)", "analysis-rejected", "Column missing does not exist"),
         ("ALTER TABLE main.ir_add_checks ADD checked INTEGER CONSTRAINT limited CHECK (?2>0)", "analysis-rejected", "Parameters are prohibited in CHECK"),
@@ -197,7 +197,7 @@ def status(value):
     return record
 
 
-def picture(value, applied=False, rewritten=None):
+def picture(value, applied=False, rewritten=None, renamed=None):
     camera = {}
     names = value["priorHeading"]
     for schema in SCHEMAS:
@@ -212,6 +212,10 @@ def picture(value, applied=False, rewritten=None):
             mode = {None: 0, "VIRTUAL": 2, "STORED": 3}[replacements(value)]
             columns.append([len(names), name, kind, int(bool(policy)), default is not None, 0, mode])
             rows = [row_values(value, row) for row in rows] if rewritten is None else rewritten
+            if renamed is not None:
+                rename_slot, label, _quote = renamed
+                fields[rename_slot] = label
+                columns[rename_slot][1] = label
         rowset = [[typed(value) for value in row] for row in rows]
         camera[schema] = {"root": [typed("table"), typed(value["table"]), typed(value["table"]), typed(2)],
                           "strict": strict, "fields": fields, "columns": normalized(columns), "rows": rowset}
@@ -235,7 +239,11 @@ def write_inputs(value):
     return writes
 
 
-def after_writes(value):
+def named_label(check, _):
+    return check["label"]
+
+
+def after_writes(value, label_of=named_label, renamed=None):
     rows = {row[0]: row_values(value, row) for row in before_rows(value, value["schema"])}
     receipts = {}
     for name, row, update, explicit, supplied in write_inputs(value):
@@ -247,20 +255,20 @@ def after_writes(value):
         observed = row_values(value, row, explicit, supplied)
         blocker = rejected_by(value, observed)
         if blocker:
-            receipts[name] = statement(error=error(f'{LOADED}: {blocker["label"]}'))
+            receipts[name] = statement(error=error(f"{LOADED}: {label_of(blocker, renamed)}"))
         else:
             receipts[name] = statement(changes=1)
             rows[row[0]] = observed
-    return {"statements": receipts, "rows": picture(value, True, [rows[key] for key in sorted(rows)]),
-            "rolledBack": picture(value, True), "transaction": True}
+    return {"statements": receipts, "rows": picture(value, True, [rows[key] for key in sorted(rows)], renamed),
+            "rolledBack": picture(value, True, renamed=renamed), "transaction": True}
 
 
-def expected(value):
+def expected(value, label_of=named_label):
     initial = picture(value)
     result = status(value)
     success = result["evaluationError"] is None
     return {"before": initial, "statement": result, "after": picture(value, success), "rolledBack": initial,
-            "transaction": True, "writes": after_writes(value) if success else None}
+            "transaction": True, "writes": after_writes(value, label_of) if success else None}
 
 
 def forms(measured):

@@ -14,7 +14,7 @@ function nativeBoundaryContract(string $dialect): array
     $records = match ($dialect) {
         'sqlite' => [
             ['sqlite-rename-boundaries-v2.json', 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3'],
-            ['sqlite-add-column-boundaries-v4.json', '08e585bee1cd4f78ee3586c02e6ed4635bbcf18d39e278a30fb859a8d188006a'],
+            ['sqlite-add-column-boundaries-v5.json', 'b33bcc1f10e3cca71f4dfc4ce1b5e2098a4fc817abfb41acd78c212b5c2c7c76'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
             ['sqlite-query-scope-boundaries-v9.json', 'bda4f3f5e8f81d04f57629a4f47e81cb2ba2f8a5b2761ffaceb7e42692f68006'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],
@@ -22,7 +22,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-insert-slots-boundaries-v5.json', '55d984c88686949361c74660945cc67450c02a86b6a69c53aec6f079f46f87c0'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
             ['sqlite-scalar-boundaries-v19.json', 'b35b867d0ef98bd06ad47f87d225b84fb26a6e334d797433d6c618b3d1db492d'],
-            ['sqlite-default-boundaries-v11.json', '05e08207078888443a628c380029e7d2a28a9ed735213e9517a78692603a1585'],
+            ['sqlite-default-boundaries-v12.json', 'f90647e1f52d04d254da47c35202ba9370cf16911d659c2818f687b1545630bd'],
             ['sqlite-drop-view-boundaries-v1.json', '565bcb84c952123e8e1c311606be91b0f0e7a04e63833aa025ea883852df1f02'],
             ['sqlite-create-view-boundaries-v4.json', '98fe27cbdbf1c468c1c633c8449ad89002257aaa2826fd1e9af60f114f11caaa'],
             ['sqlite-mutation-returning-boundaries-v3.json', 'bf2ac57e17e98eeedb1b078271a5f02c7daef17aa3c33339af6e7909d64d350b'],

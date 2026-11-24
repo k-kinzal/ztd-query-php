@@ -1173,6 +1173,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
                 $condition->condition->right->slot, $detached->toString()];
+            $implicit = $semantics->analyze('ALTER TABLE main.accounts ADD total INTEGER CHECK (TOTAL >= 007)', $context);
+            $condition = $implicit->checks[0];
+            if (!$condition->label instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel
+                || !$condition->condition instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison
+                || !$condition->condition->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed implicit comparison lost its checked source slot.');
+            }
+            $details['implicitAppendedCheck'] = [$condition->label->columnName->value, $condition->label->token->value,
+                $condition->label->leadingZeroes, $condition->condition->left->slot, $implicit->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddGeneratedColumn') {
             $generation = $result->column->generated;
@@ -1205,6 +1214,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
                 $condition->condition->right->slot, $checked->toString()];
+            $carried = $semantics->analyze(
+                'ALTER TABLE main.accounts ADD total AS (id + 7) CONSTRAINT range CHECK (total > id) CHECK (total < 100)',
+                $context,
+            );
+            $details['carriedAppendedChecks'] = [$carried->checks[0]->label->value, $carried->checks[1]->label->value, $carried->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

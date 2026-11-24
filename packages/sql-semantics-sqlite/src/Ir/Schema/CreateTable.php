@@ -72,12 +72,14 @@ final class CreateTable implements SemanticsIR
         Check::input(count($checked) <= 2000, 'A CREATE TABLE can have at most 2000 columns in this profile.');
         [$orderedKeys, $primaryKey] = (new TableKeyLayout())->check($keys, $checked, $withoutRowid);
         $seen = [];
+        $heading = [];
         $conditions = [];
         foreach ($checked as $column) {
             Check::input(!$strict || $column->type !== DeclaredDatatypeName::Untyped, 'A STRICT table requires every column to declare a datatype.');
             $key = $column->name->key();
             Check::input(!isset($seen[$key]), 'A CREATE TABLE cannot repeat a column name.');
             $seen[$key] = true;
+            $heading[] = $column->name;
             $default = $column->default;
             if ($default !== null) {
                 $conditions[] = [$default instanceof ColumnDefaultExpression ? $default->expression : $default, 0, 0];
@@ -88,10 +90,12 @@ final class CreateTable implements SemanticsIR
         }
         $orderedChecks = Check::listOf($checks, CheckConstraint::class, 'A CREATE TABLE has an ordered list of checks.');
         $lastOwner = -1;
+        $namedOwner = null;
         foreach ($orderedChecks as $check) {
             $owner = $check->column ?? count($checked);
             Check::input(($check->column === null || isset($checked[$owner])) && $owner >= $lastOwner, 'A CHECK belongs to a visible owning column in declaration order or to the table.');
-            $check->checkPresentation($checked);
+            $check->checkPresentation($heading, $namedOwner === $owner);
+            $namedOwner = $check->label instanceof Identifier ? $check->column : null;
             $lastOwner = $owner;
             $conditions[] = [$check->condition, 0, 1];
         }

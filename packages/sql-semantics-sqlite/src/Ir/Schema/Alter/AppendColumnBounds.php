@@ -38,10 +38,13 @@ final class AppendColumnBounds
         Check::input(!isset($keys[$column->name->key()]), 'The added column must have a distinct declared name.');
         Check::input(!$strict || $column->type !== DeclaredDatatypeName::Untyped, 'A STRICT column addition requires a standard type.');
         $owner = count($heading);
+        $scope = [...$heading, $column->name];
         $expressions = [];
+        $named = false;
         foreach ($checks as $check) {
-            Check::input($check->label instanceof Identifier, 'An appended CHECK requires an explicit name.');
             Check::input($check->column === $owner, 'An appended CHECK must belong to the new column slot.');
+            $check->checkPresentation($scope, $named);
+            $named = $check->label instanceof Identifier;
             $expressions[] = [$check->condition, 0, 1];
         }
         (new ExpressionScope())->check([$owner + 1], $expressions, false);

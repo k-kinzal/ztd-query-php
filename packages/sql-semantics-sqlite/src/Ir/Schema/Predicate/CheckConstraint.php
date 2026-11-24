@@ -27,7 +27,6 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
@@ -66,19 +65,20 @@ final class CheckConstraint
     }
 
     /**
-     * Relates the displayed spelling to the bound slot in the owning statement.
+     * Relates the displayed spelling to the bound slot and naming state in the owning statement.
      *
-     * @param non-empty-list<TableColumn> $columns
+     * @param non-empty-list<Identifier> $heading
      */
-    public function checkPresentation(array $columns): void
+    public function checkPresentation(array $heading, bool $inheritsName = false): void
     {
         $label = $this->label;
         if (!$label instanceof ImplicitCheckLabel) {
             return;
         }
+        Check::input(!$inheritsName, 'An implicit CHECK cannot follow a named CHECK in the same inline declaration.');
         $condition = $this->condition;
         Check::invariant($condition instanceof Comparison && $condition->left instanceof ColumnReference, 'The implicit CHECK has a resolved comparison.');
-        $declared = $columns[$condition->left->slot] ?? null;
-        Check::input($declared !== null && $declared->name->key() === $label->columnName->key(), 'The implicit CHECK spelling must identify the resolved column.');
+        $declared = $heading[$condition->left->slot] ?? null;
+        Check::input($declared !== null && $declared->key() === $label->columnName->key(), 'The implicit CHECK spelling must identify the resolved column.');
     }
 }

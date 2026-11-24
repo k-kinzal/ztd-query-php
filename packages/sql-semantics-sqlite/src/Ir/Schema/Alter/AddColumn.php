@@ -31,7 +31,7 @@ final class AddColumn implements SemanticsIR
     public readonly array $priorHeading;
 
     /**
-     * @var list<CheckConstraint> The explicitly named inline conditions in evaluation order
+     * @var list<CheckConstraint> The inline conditions in evaluation order
      */
     public readonly array $checks;
 
@@ -39,7 +39,7 @@ final class AddColumn implements SemanticsIR
      * Fixes the absolute target, prior heading and appended column.
      *
      * @param list<Identifier> $priorHeading The nonempty declared heading of the target
-     * @param list<CheckConstraint> $checks The explicitly named checks on the appended column
+     * @param list<CheckConstraint> $checks The checked conditions on the appended column
      */
     public function __construct(
         public readonly Identifier $schema,

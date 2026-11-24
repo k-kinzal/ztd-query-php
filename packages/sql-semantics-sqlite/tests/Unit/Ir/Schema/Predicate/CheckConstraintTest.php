@@ -15,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ComparisonSpelling;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 
 #[CoversClass(CheckConstraint::class)]
 #[Small]
@@ -37,6 +36,6 @@ final class CheckConstraintTest extends TestCase
         $check = new CheckConstraint($label, $condition, 0);
         $this->expectExceptionMessage('must identify the resolved column');
 
-        $check->checkPresentation([new TableColumn(new Identifier('a')), new TableColumn(new Identifier('b'))]);
+        $check->checkPresentation([new Identifier('a'), new Identifier('b')]);
     }
 }

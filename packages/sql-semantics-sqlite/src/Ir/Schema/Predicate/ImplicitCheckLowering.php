@@ -23,7 +23,7 @@ final class ImplicitCheckLowering
      */
     public function label(?Comparison $condition, ?Layout $layout): ImplicitCheckLabel
     {
-        $error = 'This column constraint has no complete CREATE TABLE representation without an explicit CHECK label or a checked implicit comparison.';
+        $error = 'This column constraint has no complete representation without an explicit CHECK label or a checked implicit comparison.';
         Check::input($condition !== null && $condition->left instanceof ColumnReference
             && $condition->right instanceof IntegerLiteral && $layout !== null && count($layout->tokens) === 3, $error);
         [$column, $operator, $value] = $layout->tokens;

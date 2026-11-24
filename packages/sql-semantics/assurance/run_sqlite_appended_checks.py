@@ -17,8 +17,8 @@ from sqlite_engine import ObserverAuthorizationError, typed
 from sqlite_generated_column_cases import column, integer
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-appended-column-checks-v1.json"
-CONTRACT = "9b3ffe097d71ad0b0a90d9fef23e5e68406664780846ed889b67291ee4242023"
+CONTRACT_NAME = "sqlite-appended-column-checks-v2.json"
+CONTRACT = "d51fd4ee7cda94276cf5e9156ce139a8ca793c1383e2e9f75d0d2e90bd9dd75f"
 
 
 class CheckedAdditionDatabase(GeneratedAddDatabase):
@@ -84,7 +84,7 @@ def writes(db, item):
     return {"transaction": active, "statements": statements, "rows": visible, "rolledBack": snapshot(db, item)}
 
 
-def observe(template, item, sql):
+def observe(template, item, sql, renamed=None):
     db = CheckedAdditionDatabase(template.library)
     try:
         setup(db, item)
@@ -104,11 +104,24 @@ def observe(template, item, sql):
         subsequent = None
         if statement["evaluationError"] is None:
             require(db.append(item, sql) == statement, "sqlite-appended-checks-repeat-effect")
-            subsequent = writes(db, item)
+            if renamed is None:
+                subsequent = writes(db, item)
+            else:
+                subsequent = writes(db, rename(db, item, renamed))
         return {"before": before, "statement": statement, "after": after, "rolledBack": restored,
                 "transaction": active, "writes": subsequent}
     finally:
         db.close(db.db)
+
+
+def rename(db, item, change):
+    slot, destination, delimited = change
+    names = [*item["priorHeading"], item["column"][0]]
+    source = quoted(names[slot])
+    target = f"{item['schema']}.{quoted(item['table'])}"
+    db.execute(f"ALTER TABLE {target} RENAME COLUMN {source} TO {quoted(destination) if delimited else destination}")
+    names[slot] = destination
+    return {**item, "priorHeading": names[:-1], "column": [names[-1], *item["column"][1:]]}
 
 
 def probe(item, reply, db, ledger=None, key=None, original=None):

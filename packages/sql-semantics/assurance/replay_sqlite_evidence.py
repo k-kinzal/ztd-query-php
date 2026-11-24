@@ -9,6 +9,7 @@ import run
 import run_sqlite_add_column as add_column
 import run_sqlite_add_generated_column as add_generated_column
 import run_sqlite_appended_checks as appended_checks
+import run_sqlite_appended_implicit_checks as appended_implicit_checks
 import run_sqlite_auto_rowid as auto_rowid
 import run_sqlite_case as choice
 import run_sqlite_coalesce as coalesce
@@ -113,6 +114,7 @@ DOMAINS = {
     rename.CONTRACT_NAME: (rename, rename.FIXTURE),
     add_column.CONTRACT_NAME: (add_column, add_column.FIXTURE),
     appended_checks.CONTRACT_NAME: (appended_checks, appended_checks.FIXTURE),
+    appended_implicit_checks.CONTRACT_NAME: (appended_implicit_checks, appended_implicit_checks.FIXTURE),
     add_generated_column.CONTRACT_NAME: (add_generated_column, add_generated_column.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
     implicit_checks.CONTRACT_NAME: (implicit_checks, implicit_checks.FIXTURE),
@@ -161,6 +163,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                rename: rename.RenameDatabase, add_column: add_column.AddColumnDatabase, drop_view: drop_view.DropViewDatabase,
                add_generated_column: add_generated_column.GeneratedAddDatabase,
                appended_checks: appended_checks.CheckedAdditionDatabase,
+               appended_implicit_checks: appended_implicit_checks.ImplicitAdditionDatabase,
                computed_defaults: computed_defaults.DefaultDatabase,
                create_view: create_view.CreateViewDatabase,
                create_view_grouped: create_view_grouped.GroupedViewDatabase,
