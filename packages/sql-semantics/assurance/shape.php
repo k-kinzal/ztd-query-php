@@ -1077,7 +1077,7 @@ if ($dialect !== 'sqlite') {
         $createMaterialized = 'Schema\\View\\CreateMaterializedView';
         $refreshMaterialized = 'Schema\\View\\RefreshMaterializedView';
         array_push($roots, $createMaterialized, $refreshMaterialized);
-        array_push($internal, 'Schema\\PersistentDeclarationLowering', 'Schema\\View\\CreateMaterializedViewLowering',
+        array_push($internal, 'Schema\\RelationDeclarationLowering', 'Schema\\View\\CreateMaterializedViewLowering',
             'Schema\\View\\RefreshMaterializedViewLowering', 'Schema\\View\\ViewHeading', 'Schema\\DefinitionQueryLowering');
         $pureCollaborators[] = 'Schema\\View\\ViewHeading';
         $createAs = 'Schema\\Query\\CreateTableAs';
@@ -1308,9 +1308,7 @@ try {
     $recursiveWith = $dialect === 'mysql'
         ? '$statement->with instanceof \\' . $platform . '\\Statement\\Query\\With\\With && $statement->with->recursive'
         : '$statement->with?->recursive === true';
-    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; '
-        . ($dialect === 'postgres' ? '$transaction = new \\' . $prefix . 'Transaction\\TransactionLowering();' : '')
-        . 'return match (true) {'
+    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && ' . $recursiveWith . ' => (new \\'
         . $prefix . 'Rows\\Recursive\\RecursiveSeriesLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null'
@@ -1329,10 +1327,8 @@ try {
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\Table\\CreateTableAs, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform
-                . '\\Statement\\Table\\View\\CreateMaterializedView => (new \\'
-                . $prefix . 'Schema\\PersistentDeclarationLowering())->lower($operation, $statement),')
-        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\Index\\CreateIndex => (new \\'
-            . $prefix . 'Schema\\Index\\Btree\\CreateIndexLowering())->lower($operation, $statement),' : '')
+                . '\\Statement\\Table\\View\\CreateMaterializedView, $statement instanceof \\' . $platform . '\\Statement\\Table\\Index\\CreateIndex => (new \\'
+                . $prefix . 'Schema\\RelationDeclarationLowering())->lower($operation, $statement),')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres'
@@ -1348,8 +1344,7 @@ try {
         . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lowerQuery($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
-        . ($dialect === 'postgres' ? '$transaction->accepts($statement) => $transaction->lower($operation),'
-            : $transactions . ' => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($operation),')
+        . $transactions . ' => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($operation),'
         . 'default => (new \\' . $prefix . 'SelectLowering())->lower($operation), };';
     if ($dialect === 'sqlite') {
         $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
@@ -1879,13 +1874,13 @@ try {
                         'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
-            if ($short === 'Schema\\PersistentDeclarationLowering') {
+            if ($short === 'Schema\\RelationDeclarationLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\CreateTable', 'Schema\\Query\\CreateTableAs', 'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
-                    ], 'Unexpected PostgreSQL persistent declaration publication');
+                        'Schema\\CreateTable', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Query\\CreateTableAs', 'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
+                    ], 'Unexpected PostgreSQL relation and index declaration publication');
             }
             if ($short === 'Schema\\CreateRelationLowering') {
                 $members = $class->getMethods();
@@ -1937,7 +1932,6 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
-                    'Transaction\\TransactionLowering' => $dialect === 'postgres' ? ['accepts', 'lower'] : ['lower'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };

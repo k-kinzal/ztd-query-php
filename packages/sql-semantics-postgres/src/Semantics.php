@@ -35,10 +35,9 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndexLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\PersistentDeclarationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Query\CreateTableAs;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\RelationDeclarationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
@@ -77,6 +76,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\TruncateTable as ParsedTrun
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateMaterializedView as ParsedCreateMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView as ParsedCreateView;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\RefreshMaterializedView as ParsedRefreshMaterializedView;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Begin as ParsedBegin;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Commit as ParsedCommit;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Rollback as ParsedRollback;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointCommand as ParsedSavepointCommand;
 
 /**
  * Binds SQL under a fixed dialect profile and publishes complete semantic values.
@@ -157,7 +160,6 @@ final class Semantics implements Analyzer
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
         $statement = $operation->statement;
-        $transaction = new TransactionLowering();
         return match (true) {
             $statement instanceof ParsedWith && $statement->with?->recursive === true => (new RecursiveSeriesLowering())->lower($operation, $statement),
             $statement instanceof ParsedWith && $statement->with !== null => (new WithLowering())->lower($operation, $statement),
@@ -166,14 +168,13 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
             $statement instanceof ValuesList => (new ValuesLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
-            $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateTableAs, $statement instanceof ParsedCreateView, $statement instanceof ParsedCreateMaterializedView => (new PersistentDeclarationLowering())->lower($operation, $statement),
-            $statement instanceof ParsedCreateIndex => (new CreateIndexLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateTableAs, $statement instanceof ParsedCreateView, $statement instanceof ParsedCreateMaterializedView, $statement instanceof ParsedCreateIndex => (new RelationDeclarationLowering())->lower($operation, $statement),
             $statement instanceof ParsedRefreshMaterializedView => (new RefreshMaterializedViewLowering())->lower($operation, $statement),
             $statement instanceof ParsedDrop, $statement instanceof ParsedRename, $statement instanceof ParsedTruncateTable => (new RelationChangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
-            $transaction->accepts($statement) => $transaction->lower($operation),
+            $statement instanceof ParsedBegin, $statement instanceof ParsedCommit, $statement instanceof ParsedRollback, $statement instanceof ParsedSavepointCommand => (new TransactionLowering())->lower($operation),
             default => (new SelectLowering())->lower($operation),
         };
     }

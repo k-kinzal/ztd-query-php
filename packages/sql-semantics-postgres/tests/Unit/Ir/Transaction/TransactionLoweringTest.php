@@ -15,17 +15,6 @@ use SqlSemantics\Testing\PostgreSql\Inspection;
 #[Medium]
 final class TransactionLoweringTest extends TestCase
 {
-    public function testAcceptsRoutesOnlyTheTransactionStatementFamily(): void
-    {
-        $inspection = new Inspection();
-        $lowering = new TransactionLowering();
-        $transaction = $inspection->inspect('BEGIN')->binding()->statement;
-        $query = $inspection->inspect('SELECT 1')->binding()->statement;
-
-        self::assertTrue($lowering->accepts($transaction));
-        self::assertFalse($lowering->accepts($query));
-    }
-
     public function testLowerDecodesTheCheckpointNameAndCommand(): void
     {
         $inspection = new Inspection();

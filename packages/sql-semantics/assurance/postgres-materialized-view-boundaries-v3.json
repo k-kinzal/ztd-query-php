@@ -1,0 +1,193 @@
+{
+  "revision": "SemanticsIR/postgres-materialized-view-boundaries-3",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Preserve the materialized and ordinary view boundaries under the shared persistent relation query lowerer and declaration dispatch. Bind the index declaration in the same checked relation declaration family.",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$heading = Check::listOf($columns, Identifier::class, 'A persistent view needs a nonempty ordered heading.', 1);",
+        "$width = (new ViewDefinitionBounds())->width($query, $name, $checkOption);",
+        "(new ViewHeading())->check($heading, $width);",
+        "$this->columns = $heading;"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "Check::input($context->profile->parameters === ParameterStyle::Native, 'CREATE VIEW requires the native language profile.');",
+        "Check::input(",
+        "    !$statement->recursive && $statement->persistence === Persistence::Permanent && $statement->name->catalog === null,",
+        "    'CREATE VIEW requires a persistent ordinary view in an absolute schema.'",
+        ");",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "$name = new ViewName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "[$barrier, $invoker, $check] = (new ViewOptionsLowering())->lower($statement);",
+        "[$body, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns);",
+        "",
+        "return new CreateView($name, $body, $columns, $statement->replace, $barrier, $invoker, $check);"
+      ]
+    },
+    "Schema/View/CreateMaterializedView::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$heading = Check::listOf($columns, Identifier::class, 'A persistent view needs a nonempty ordered heading.', 1);",
+        "$width = (new ViewDefinitionBounds())->width($query, $name, ViewCheckOption::None);",
+        "(new ViewHeading())->check($heading, $width);",
+        "$this->columns = $heading;"
+      ]
+    },
+    "Schema/View/CreateMaterializedView::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->query->profileId();"
+      ]
+    },
+    "Schema/View/CreateMaterializedView::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "",
+        "return 'CREATE MATERIALIZED VIEW ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->name->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') USING heap AS ' . $this->query->toString()",
+        "    . ($this->withData ? ' WITH DATA' : ' WITH NO DATA');"
+      ]
+    },
+    "Schema/View/CreateMaterializedViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "Check::input($context->profile->parameters === ParameterStyle::Native, 'CREATE MATERIALIZED VIEW requires the native profile.');",
+        "Check::input(",
+        "    !$statement->unlogged && ($statement->method === null || $statement->method->value === 'heap')",
+        "    && $statement->options === [] && $statement->tablespace === null && $statement->name->catalog === null,",
+        "    'CREATE MATERIALIZED VIEW requires persistent native heap storage and the default tablespace.'",
+        ");",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "$name = new ViewName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "[$query, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns);",
+        "",
+        "return new CreateMaterializedView($name, $query, $columns, $statement->ifNotExists, $statement->withData ?? true);"
+      ]
+    },
+    "Schema/View/RefreshMaterializedView::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": []
+    },
+    "Schema/View/RefreshMaterializedView::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/View/RefreshMaterializedView::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REFRESH MATERIALIZED VIEW ' . $this->name->quoted() . ($this->withData ? ' WITH DATA' : ' WITH NO DATA');"
+      ]
+    },
+    "Schema/View/RefreshMaterializedViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive,",
+        "    'REFRESH MATERIALIZED VIEW requires the native language profile.');",
+        "Check::input(!$statement->concurrently, 'A checked materialized refresh must be nonconcurrent.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "Check::input($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::MaterializedView",
+        "    && $resolution->table->name->catalog === null, 'REFRESH requires a resolved persistent materialized view.');",
+        "$target = $resolution->table->name;",
+        "$schema = ($target->schema ?? $context->declarationSchema)->value;",
+        "$name = new ViewName(new Identifier($schema), new Identifier($target->name->value));",
+        "",
+        "return new RefreshMaterializedView($name, $statement->withData ?? true, $profile->grammar);"
+      ]
+    },
+    "Schema/View/ViewHeading::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($columns) === $width && $width <= 1600, 'The view heading must match its query within 1600 columns.');",
+        "$seen = [];",
+        "foreach ($columns as $column) {",
+        "    Check::input(!isset($seen[$column->value]), 'A persistent view cannot repeat a column name.');",
+        "    $seen[$column->value] = true;",
+        "}"
+      ]
+    },
+    "Schema/DefinitionQueryLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($query instanceof ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "$body = match (true) {",
+        "    $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),",
+        "    $query instanceof ValuesList => (new ValuesLowering())->lower($operation, $query),",
+        "    default => throw new InvalidConstruction('A persistent relation needs a checked SELECT or standalone VALUES definition.'),",
+        "};",
+        "$fields = $operation->facts->query($query)->fields();",
+        "Check::input($fields !== null && count($aliases) <= count($fields), 'The relation needs a complete resolved heading.');",
+        "$columns = [];",
+        "foreach ($fields as $position => $field) {",
+        "    $column = $aliases[$position] ?? $field->name;",
+        "    Check::input($column !== null, 'Each field needs a resolved catalog name.');",
+        "    $columns[] = new Identifier($column->value);",
+        "}",
+        "",
+        "return [$body, $columns];"
+      ]
+    },
+    "Schema/RelationDeclarationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateIndex => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndexLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTableLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTableAs => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateViewLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateMaterializedView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateMaterializedViewLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    }
+  },
+  "replaces": {
+    "path": "postgres-materialized-view-boundaries-v1.json",
+    "sha256": "9f16bf6abc877858e2bc511fe467c8995a038a3642693819781c18fc74933317"
+  },
+  "revises": "postgres-materialized-view-boundaries-v2.json"
+}

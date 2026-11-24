@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Begin;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Commit;
@@ -24,15 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointComm
  */
 final class TransactionLowering
 {
-    /**
-     * Recognizes the native transaction statement roles routed to this boundary.
-     */
-    public function accepts(Statement $statement): bool
-    {
-        return $statement instanceof Begin || $statement instanceof Commit
-            || $statement instanceof Rollback || $statement instanceof SavepointCommand;
-    }
-
     /**
      * Fixes the command and a savepoint label when the command takes one.
      *
