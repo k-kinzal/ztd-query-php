@@ -28,7 +28,7 @@ final class SelectLowering
      * @param array<int, CastDestination> $inputTypes Native input types inferred in statement order
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null, array &$inputTypes = [], ?Destination $assignment = null): Select
+    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null, array &$inputTypes = [], ?Destination $assignment = null, bool $resolvedTextOutput = false): Select
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
@@ -46,7 +46,7 @@ final class SelectLowering
         $catalogFirst = $operators === 'pg_catalog';
         $binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);
         $where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);
-        $results = (new ProjectionLowering())->lower($operation, $statement, $binding, $catalogFirst, $inputTypes, $assignment, $operand === null);
+        $results = (new ProjectionLowering())->lower($operation, $statement, $binding, $catalogFirst, $inputTypes, $assignment, $operand === null || $resolvedTextOutput);
 
         $result = new ResultLowering();
         $order = $result->orders($operation, $statement, $binding, $results, $catalogFirst);

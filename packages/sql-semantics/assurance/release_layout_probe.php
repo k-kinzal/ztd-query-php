@@ -1389,6 +1389,34 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $source->columnKind(0)->value, $downstream->columns[0]->value, $closed->toString(), $chain->toString(), $future,
                 $external->query->source->kind->value, $external->toString(),
             ];
+            $replacement = $semantics->analyze(
+                'CREATE SCHEMA "Replacement Batch" CREATE VIEW feed (n,c) AS SELECT 1,\'old\''
+                . ' CREATE VIEW prev AS SELECT n FROM "Replacement Batch".feed'
+                . ' CREATE OR REPLACE VIEW feed (n,c,enabled) AS SELECT 2,\'changed\',TRUE'
+                . ' CREATE VIEW next AS SELECT enabled FROM "Replacement Batch".feed',
+            );
+            [$first, $prior, $updated, $next] = $replacement->views;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $replacement->name, $replacement->owner, release: $replacement->release, views: [$first, $prior, $updated, $next],
+            );
+            $renamed = $updated->columns;
+            $renamed[0] = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('different');
+            $wrongPrefix = new SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView(
+                $updated->name, $updated->query, $renamed, replace: true,
+            );
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $replacement->name, $replacement->owner, release: $replacement->release, views: [$first, $wrongPrefix],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A schema view replacement cannot rename established fields.';
+            }
+            $details['postgresSchemaViewReplacement'] = [
+                $first->replace, $updated->replace, array_column($updated->columns, 'value'),
+                $next->query->source->columns[0]->value, $next->query->source->columnKind(0)->value,
+                $replacement->toString(), $rebuilt->toString(), $refused,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
             [$present, $absent] = $result->targets;

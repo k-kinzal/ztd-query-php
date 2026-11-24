@@ -1071,9 +1071,10 @@ if ($dialect !== 'sqlite') {
         array_push($internal, 'Schema\\Namespace\\CreateSchemaLowering', 'Schema\\Namespace\\SchemaTableLowering',
             'Schema\\Namespace\\SchemaSequenceLowering', 'Schema\\Namespace\\SchemaRelationOrder',
             'Schema\\Namespace\\View\\SchemaViewLowering', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\View\\SchemaViewInputs',
+            'Schema\\Namespace\\View\\SchemaViewFields', 'Schema\\Namespace\\View\\SchemaViewReplacement',
             'Schema\\Namespace\\Index\\SchemaIndexLowering', 'Schema\\Namespace\\Index\\SchemaIndexOrder',
             'Schema\\Namespace\\Access\\SchemaGrantLowering', 'Schema\\Namespace\\Access\\SchemaGrantOrder');
-        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\Index\\SchemaIndexOrder', 'Schema\\Namespace\\Access\\SchemaGrantOrder', 'Schema\\Namespace\\View\\SchemaViewInputs');
+        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\Index\\SchemaIndexOrder', 'Schema\\Namespace\\Access\\SchemaGrantOrder', 'Schema\\Namespace\\View\\SchemaViewInputs', 'Schema\\Namespace\\View\\SchemaViewFields', 'Schema\\Namespace\\View\\SchemaViewReplacement');
         $properties[$schemaCreation] = [
             'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'], 'views' => ['array'], 'indexes' => ['array'], 'grants' => ['array'],
             'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
@@ -1694,7 +1695,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v20.json', '3b51ebbb051d17ff0ddf49e9af1f6664e6ab1736f633cb472f7355d487e1bba6', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v21.json', 'afd456fecc404053b0b0f0a695eaea123057eb268ddab7f7daea94fad14f4796', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],

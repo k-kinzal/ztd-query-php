@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v144.json"
-CONTRACT = "e9fdd16bd09a3a059a20cf148ab920bfab6b4dff2fe92f83be2baad92b70c4ad"
+CONTRACT_NAME = "release-layout-v145.json"
+CONTRACT = "32d7de053450a514f094676304a7ce7cd676906f1e73927d2268c39271d9516c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -447,6 +447,19 @@ def verify_probe(raw, catalog):
             require(item.get("postgresSchemaViewDependencies") == [
                 "view", "Chain Batch", "source", "mystery", "text", "result", dependencies, dependencies, True, "view", external,
             ], "installed-postgres-schema-view-dependencies-mismatch", item)
+            replacement = (
+                'CREATE SCHEMA "Replacement Batch" AUTHORIZATION CURRENT_USER'
+                ' CREATE VIEW "Replacement Batch"."feed" ("n", "c") AS'
+                " SELECT CAST(1 AS pg_catalog.int4) AS \"?column?\", CAST('old' AS pg_catalog.text) AS \"?column?\""
+                ' CREATE VIEW "Replacement Batch"."prev" ("n") AS'
+                ' SELECT "__ztd_source"."n" AS "n" FROM "Replacement Batch"."feed" AS "__ztd_source"'
+                ' CREATE OR REPLACE VIEW "Replacement Batch"."feed" ("n", "c", "enabled") AS'
+                " SELECT CAST(2 AS pg_catalog.int4) AS \"?column?\", CAST('changed' AS pg_catalog.text) AS \"?column?\", TRUE AS \"?column?\""
+                ' CREATE VIEW "Replacement Batch"."next" ("enabled") AS'
+                ' SELECT "__ztd_source"."enabled" AS "enabled" FROM "Replacement Batch"."feed" AS "__ztd_source"')
+            require(item.get("postgresSchemaViewReplacement") == [
+                False, True, ["n", "c", "enabled"], "enabled", "bool", replacement, replacement, True,
+            ], "installed-postgres-schema-view-replacement-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\DropSchema"):
             emitted = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE'
             require(item.get("postgresDropSchema") == [

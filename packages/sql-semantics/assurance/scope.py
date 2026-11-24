@@ -143,6 +143,7 @@ CONTRACTS = {
     "postgres-schema-indexes-v1.json": "c4008fd5e064005908b46fd3d40170f1de7afd6cd1b932452d8897deaadd0205",
     "postgres-schema-sequence-grants-v2.json": "f3302a9cceca6d81a18c57e687cbeb04889b9b78ca272f5abc817a049d9da3d8",
     "postgres-schema-view-dependencies-v1.json": "1351a17f257e9339f7bedf812f521caf6b51e6fb340d47721b47f6fc9bc2d81f",
+    "postgres-schema-view-replacement-v1.json": "e56e28f03abc55470b56e00f23eeac53c3aeea757720b7676df17d6f0a4f975a",
     "postgres-schema-views-v3.json": "01a84a719c11e3d51196c3436cedbc7055620d347a55993d022806493dbc6102",
     "postgres-drop-view-v1.json": "f38844b5c9ed143cbd9b46e344f721b384c5ce9a969ec85d08e6319e95e8cd4d",
     "postgres-values-v3.json": "602fa84cd6517e5e56f7b4967669399194522ff952e36183d3acf17c08c9c3c8",

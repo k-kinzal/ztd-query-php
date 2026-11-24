@@ -8,8 +8,8 @@ import time
 
 from run import TOOL, digest, require, write_json
 
-NAME = "native-postgres-fixture-isolation-v21.json"
-CONTRACT = "1319c8640ad4117fc73a4054a8c04ab1269185d3949dbb2337e48f1e105ab655"
+NAME = "native-postgres-fixture-isolation-v22.json"
+CONTRACT = "120abc045f061a1cfdd57411887587f6e2dbe36943186e0bfa255077334044f9"
 STORAGE_NAME = "native-postgres-fixture-storage-v1.json"
 STORAGE_CONTRACT = "fee0adc1f3a7a5568346e4b0ba0ce82bf2f552af58121404fdfc05d39a44aa35"
 ENV = "ZTD_IR_POSTGRES_FIXTURE_CONTAINER"
@@ -20,7 +20,7 @@ IMAGES = {
 DOMAINS = frozenset({
     "postgres_reindex_schema", "postgres_reindex_partition_table", "postgres_reindex_partition_index",
     "postgres_reindex_database", "postgres_reindex_verbose", "postgres_reindex_tablespace", "postgres_create_schema",
-    "postgres_schema_tables", "postgres_schema_sequences", "postgres_schema_views", "postgres_schema_view_dependencies", "postgres_schema_indexes", "postgres_schema_sequence_grants", "postgres_alter_schema", "postgres_create_sequence", "postgres_drop_sequence", "postgres_sequence_owner", "postgres_rename_sequence", "postgres_move_sequence", "postgres_reconfigure_sequence", "postgres_sequence_logging", "postgres_sequence_authorization", "postgres_sequence_access", "postgres_sequence_default_access",
+    "postgres_schema_tables", "postgres_schema_sequences", "postgres_schema_views", "postgres_schema_view_dependencies", "postgres_schema_view_replacement", "postgres_schema_indexes", "postgres_schema_sequence_grants", "postgres_alter_schema", "postgres_create_sequence", "postgres_drop_sequence", "postgres_sequence_owner", "postgres_rename_sequence", "postgres_move_sequence", "postgres_reconfigure_sequence", "postgres_sequence_logging", "postgres_sequence_authorization", "postgres_sequence_access", "postgres_sequence_default_access",
 })
 PLACEMENT_DOMAIN = "postgres_reindex_tablespace"
 TABLESPACES = ("ir_reindex_left", '置き場."右"')

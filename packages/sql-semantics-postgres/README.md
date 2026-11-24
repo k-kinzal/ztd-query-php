@@ -40,6 +40,8 @@ An ordinary persistent `CREATE VIEW` returns `Ir\Schema\View\CreateView` with it
 
 A namespace with members has a static name and an unguarded parent declaration. PostgreSQL creates sequences, then tables, views, and indexes, preserving relative order within each phase. A guarded table can preserve a same-name sequence. A view over a local table binds to the first table that actually occupies that name and keeps the identities and types of the fields it uses. Views can also use checked constant queries, standalone `VALUES`, an earlier ordinary view, or a resolved external base table or ordinary view. PostgreSQL applies the selected schema owner to every new member.
 
+An ordered `CREATE OR REPLACE VIEW` can replace an earlier ordinary view. Existing fields retain their names, types and collations in order. A later view can use an appended field, and earlier dependents continue to refer to the replaced view.
+
 A named B-tree index in the schema binds to an ordinary table created by the table phase. Its position-bearing keys, covering columns and predicate use that table’s full physical heading. A guarded index name can preserve a sequence, table, view or earlier index. A concurrent build requires a separate statement.
 
 A sequence grant can name earlier local sequences or declared external sequences. It can also select all sequences in named schemas. PostgreSQL applies the grants after creating the other members, using the schema owner as the effective role. Within a grant, `SESSION_USER` still selects the authenticated role.

@@ -386,6 +386,8 @@ The [PostgreSQL namespace view contract](postgres-schema-views-v3.json) runs ord
 
 The [PostgreSQL view dependency contract](postgres-schema-view-dependencies-v1.json) observes a persistent view over another view, both as a standalone definition and as an ordered member of a namespace declaration. It compares physical view dependencies and field identities, names, native types, duplicate rows and NULLs. Run `run_server_postgres_schema_view_dependencies.py` on both pinned releases and replay with `combine_server_postgres_schema_view_dependencies_evidence.py`.
 
+The [PostgreSQL view replacement contract](postgres-schema-view-replacement-v1.json) checks the retained physical heading and relation dependencies in the ordered namespace view phase. Run `run_server_postgres_schema_view_replacement.py` on both pinned releases and replay with `combine_server_postgres_schema_view_replacement_evidence.py`.
+
 The [PostgreSQL namespace index contract](postgres-schema-indexes-v1.json) checks composed named B-tree indexes, guarded collisions and key positions against native catalog identities and writes. Run `run_server_postgres_schema_indexes.py` on both pinned releases and replay with `combine_server_postgres_schema_indexes_evidence.py`.
 
 The [PostgreSQL namespace sequence grant contract](postgres-schema-sequence-grants-v2.json) checks grants inside the namespace owner scope and distinguishes the effective role, session authorization, universal PUBLIC, and the quoted role of the same name. The native observer reads grant option bits and depends on exact local and declared external sequence identities. Run `run_server_postgres_schema_sequence_grants.py` on both pinned releases and replay with `combine_server_postgres_schema_sequence_grants_evidence.py`.

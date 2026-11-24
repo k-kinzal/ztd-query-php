@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ExternalRelationKind;
-use SqlSemantics\Platform\PostgreSql\Ir\Rows\CompoundShape;
-use SqlSemantics\Platform\PostgreSql\Ir\Rows\ResultKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaRelationOrder;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
@@ -23,19 +21,15 @@ final class SchemaViewInputs
 {
     /**
      * Checks the input's exact preceding role, column names and column kinds.
+     * @param array<array-key, array{ColumnKind, TextCollation|array{string,string,string,string}|null}>|null $view
      */
-    public static function check(TableSource $source, ?CreateTable $local, ?CreateView $view): void
+    public static function check(TableSource $source, ?CreateTable $local, ?array $view): void
     {
         $fields = [];
         if ($source->kind === ExternalRelationKind::View) {
             Check::input($view !== null, 'A schema view must resolve its local view input to a preceding ordinary view.');
-            foreach ($view->columns as $position => $column) {
-                $fields[$column->value] = match (CompoundShape::type($view->query, $position)) {
-                    ResultKind::Integer => ColumnKind::Int4,
-                    ResultKind::WideInteger => ColumnKind::Int8,
-                    ResultKind::Boolean => ColumnKind::Boolean,
-                    ResultKind::Text, ResultKind::Unknown => ColumnKind::Text,
-                };
+            foreach ($view as $name => [$kind]) {
+                $fields[$name] = $kind;
             }
         } else {
             Check::input(

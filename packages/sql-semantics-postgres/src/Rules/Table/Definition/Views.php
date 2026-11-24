@@ -47,6 +47,14 @@ final class Views
             (new CreationSchemas())->check($derivation, $view->name, $view->persistence);
         }
         $rules = new QueryTables();
-        $derivation->declare($rules->table($derivation, $rules->name($view->name, $view->persistence, $schema), $fact, $view->columns, RelationKind::View, DefinitionRule::ViewColumnCount));
+        $declaration = $rules->table(
+            $derivation,
+            $rules->name($view->name, $view->persistence, $schema),
+            $fact,
+            $view->columns,
+            RelationKind::View,
+            DefinitionRule::ViewColumnCount
+        );
+        $derivation->declare($declaration, $schema !== null && $view->replace);
     }
 }

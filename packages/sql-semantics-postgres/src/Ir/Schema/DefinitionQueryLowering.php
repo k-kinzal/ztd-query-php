@@ -31,13 +31,13 @@ final class DefinitionQueryLowering
      * @return array{Select|ValuesQuery, list<Identifier>}
      * @throws InvalidConstruction When the query or heading cannot be resolved
      */
-    public function lower(BoundStatement $operation, Query $query, array $aliases): array
+    public function lower(BoundStatement $operation, Query $query, array $aliases, bool $resolvedTextOutput = false): array
     {
         while ($query instanceof ParenthesizedQuery) {
             $query = $query->query;
         }
         $body = match (true) {
-            $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),
+            $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query, resolvedTextOutput: $resolvedTextOutput),
             $query instanceof ValuesList => (new ValuesLowering())->lower($operation, $query),
             default => throw new InvalidConstruction('A persistent relation needs a checked SELECT or standalone VALUES definition.'),
         };

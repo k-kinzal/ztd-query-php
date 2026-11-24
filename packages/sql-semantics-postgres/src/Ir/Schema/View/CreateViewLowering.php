@@ -35,7 +35,7 @@ final class CreateViewLowering
         $schema = $statement->name->schema->value ?? $memberNamespace->value ?? $context->declarationSchema->value;
         $name = new ViewName(new Identifier($schema), new Identifier($statement->name->name->value));
         [$barrier, $invoker, $check] = (new ViewOptionsLowering())->lower($statement);
-        [$body, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns);
+        [$body, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns, resolvedTextOutput: true);
 
         return new CreateView($name, $body, $columns, $statement->replace, $barrier, $invoker, $check);
     }
