@@ -1,0 +1,64 @@
+{
+  "revision": "SemanticsIR/postgres-schema-view-replacement-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "scope": "Support CREATE OR REPLACE VIEW after an earlier same-name ordinary view member. The replacement keeps each existing field's exact name, native type and collation and may append new fields. Known text collation is established by a literal, builtin collation, prior checked local field, or an identical external reference. Schema view check options across ordinary-view sources and collation equivalence of unrelated externally typed fields remain open.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-createview.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/view.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/view.c"
+  ],
+  "constructors": {
+    "CreateSchema": {
+      "type": "Schema/Namespace/CreateSchema",
+      "role": "Apply replacements of earlier ordinary view definitions in native member order.",
+      "structure": "The existing ordered statements include both the original and replacement with exact sequential dependency roles and compatible field signatures.",
+      "conditions": "A replacement may occupy the name of an earlier ordinary view, preserving the existing fields as an ordered prefix by name, native type and collation. Base tables and sequences cannot be replaced by a view. Subsequent local consumers use the latest successfully composed view heading.",
+      "meaning": "Replace the native definition and options while retaining the same relation identity. Earlier created dependents continue to reference the original output slots and read the replacement's definition. Later members may refer to newly appended fields.",
+      "sql": "Retain both native DDL operations in the same statement and view phase order, preserve their CREATE or CREATE OR REPLACE choice, and write each ordered heading and later source reference."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "owners": ["effective", "named"],
+    "replacements": ["same-heading", "append-boolean", "explicit-collation"],
+    "dependentPositions": ["earlier", "earlier-and-later"],
+    "transactional": [false, true],
+    "bound": "24 unique finite coordinates per construction route and release, all with an earlier dependent object."
+  },
+  "exploration": {
+    "seeds": [18169, 39761, 83477],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 230,
+    "allowedExclusions": [],
+    "structure": "Vary the number and relative placement of replacements, earlier and later dependents, appended fields, source definitions, implicit and explicit collations, quoting, data values, NULL, and duplicate rows."
+  },
+  "observations": [
+    "Final physical relation identity, rewrite dependency on that object, exact attribute positions and names, native types, modifiers and collations.",
+    "Earlier and later dependent views read the final definition, with corresponding duplicate and NULL result tuples and exact retained or replaced security options.",
+    "On a rejected replacement no partial namespace is published, and a transaction can roll back the entire schema operation."
+  ],
+  "negative": [
+    "An unguarded duplicate view requires its explicit replacement choice (42P07).",
+    "A changed physical column name (42P16).",
+    "An omitted previously present column (42P16).",
+    "A changed native column type (42P16).",
+    "An incompatible native collation (42P16).",
+    "A view replacement of an earlier table (42809).",
+    "A direct replacement with an incompatible prefix.",
+    "A direct later reference to a field the current provider does not declare."
+  ],
+  "faults": [
+    "Omit the replacement while retaining the original definition.",
+    "Erase the OR REPLACE choice.",
+    "Use an old row value in the replacement.",
+    "Drop an appended field from the replacement."
+  ],
+  "trust": [
+    "Pinned PostgreSQL checks the native signature policy and the fixture uses matching external catalog coordinates.",
+    "Native physical dependencies, field mutability rules, final rows and options are checked independently of the PHP binder."
+  ]
+}
