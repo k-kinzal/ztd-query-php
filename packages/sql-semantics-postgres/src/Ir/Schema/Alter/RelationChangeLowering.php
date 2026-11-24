@@ -17,6 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabaseLoweri
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchemaLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
@@ -40,7 +41,7 @@ final class RelationChangeLowering
     public function lower(
         BoundStatement $operation,
         ParsedDrop|ParsedReindex|ParsedRename|ParsedTruncateTable $statement,
-    ): DropIndex|DropTable|DropView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameTable|TruncateTable {
+    ): DropIndex|DropSchema|DropTable|DropView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameTable|TruncateTable {
         return match (true) {
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedRename => (new RenameLowering())->lower($operation, $statement),

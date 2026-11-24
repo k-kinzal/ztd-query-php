@@ -583,6 +583,14 @@ def inventory(root):
                     ):
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-tablespace-v2.json")
         if postgres:
+            for rule in ("DropStmt", "drop_type_name", "name_list", "opt_drop_behavior"):
+                for alternative in rules.get(rule, ()):
+                    if alternative.startswith("DropStmt: DROP drop_type_name ") or alternative in (
+                        "drop_type_name: SCHEMA", "name_list: name", "name_list: name_list , name",
+                        "opt_drop_behavior: CASCADE", "opt_drop_behavior: RESTRICT",
+                    ):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-drop-schema-v2.json")
+        if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",
                 "indirection_el: . attr_name",

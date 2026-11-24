@@ -1228,6 +1228,31 @@ function constructPostgresDatabaseRebuild(array $input): \SqlSemantics\Platform\
     };
 }
 
+function constructPostgresDropSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema
+{
+    $drop = $input['dropSchema'];
+    $targets = array_map(
+        static fn (array $target): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaDropTarget => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaDropTarget(new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($target[0]), $target[1]),
+        $drop['targets'],
+    );
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema(
+        $targets, $drop['ifExists'], $drop['cascade'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresDropSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema $drop): array
+{
+    return [
+        'status' => 'constructed', 'profile' => $drop->profileId(), 'sql' => $drop->toString(),
+        'dropSchema' => [
+            'targets' => array_map(static fn (\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaDropTarget $target): array => [$target->name->value, $target->present], $drop->targets),
+            'ifExists' => $drop->ifExists,
+            'cascade' => $drop->cascade,
+        ],
+    ];
+}
+
 function constructPostgresDropIndex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex
 {
     $drop = $input['dropIndex'];
@@ -1528,6 +1553,7 @@ function observeStatement(array $input): array
             isset($input['createView']) => constructCreateView($platform, $input),
             isset($input['createBtree']) => constructPostgresBtree($input),
             isset($input['dropIndex']) => constructPostgresDropIndex($input),
+            isset($input['dropSchema']) => constructPostgresDropSchema($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1652,6 +1678,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex) {
         return observePostgresBtree($value, !($input['constructionOnly'] ?? false));
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema) {
+        return observePostgresDropSchema($value);
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex) {
         return observePostgresDropIndex($value);

@@ -36,6 +36,8 @@ An ordinary persistent `CREATE VIEW` returns `Ir\Schema\View\CreateView` with it
 
 `DROP VIEW` and `DROP MATERIALIZED VIEW` return `Ir\Schema\View\DropView` with the native kind, absolute names in statement order and both clause policies. Provide view declarations through the analysis context for named targets. An optional absent target requires an explicit known schema in a complete context. The rendered SQL leaves dependency checks and transactional effects to PostgreSQL.
 
+`DROP SCHEMA` returns an ordered list of resolved namespace selectors in `Ir\Schema\Namespace\DropSchema`. Supply explicit `CREATE SCHEMA` declarations when your catalog contains empty schemas. An absent selector requires an explicit complete catalog and `IF EXISTS`. The value keeps repeats, the guard and `CASCADE` or `RESTRICT`. PostgreSQL applies the dependency policy to objects in the selected namespaces and their dependents.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php

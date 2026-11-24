@@ -1056,6 +1056,15 @@ if ($dialect !== 'sqlite') {
         $methods[$btree . 'IndexKey'] = $methods[$btree . 'IncludedColumn'] = ['__construct'];
         $methods[$btree . 'NullIndexPredicate'] = $methods[$btree . 'IndexBooleanPredicate'] = $methods[$btree . 'IndexTruthTest'] = ['__construct'];
         $methods[$btree . 'IndexBooleanColumn'] = ['__construct'];
+        $schemaRemoval = 'Schema\\Namespace\\DropSchema';
+        $schemaTarget = 'Schema\\Namespace\\SchemaDropTarget';
+        $roots[] = $schemaRemoval;
+        $internal[] = 'Schema\\Namespace\\DropSchemaLowering';
+        $properties[$schemaRemoval] = ['targets' => ['array'], 'ifExists' => ['bool'], 'cascade' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$schemaTarget] = ['name' => ['Identifier'], 'present' => ['bool']];
+        $methods[$schemaRemoval] = ['__construct', 'profileId', 'toString'];
+        $methods[$schemaTarget] = ['__construct'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1558,9 +1567,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v58.json';
+    $storagePath = __DIR__ . '/value-storage-v59.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '6767950c1c0a41bdbd1aa277c6cb194cac9dd13cc95d47501248f20d62f3edad',
+        hash_file('sha256', $storagePath) === '79985f6bf69207ce804fe9395cdfdb5f1b742460def0220007b3a8248900bdc1',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1968,7 +1977,7 @@ try {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\Index\\DropIndex', 'Schema\\View\\DropView'],
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\Index\\DropIndex', 'Schema\\Namespace\\DropSchema', 'Schema\\View\\DropView'],
                     'Unexpected PostgreSQL relation removal publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameLowering') {
@@ -1994,7 +2003,7 @@ try {
                         'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
                         'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
                         'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
-                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Namespace\\DropSchema', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {
@@ -2085,7 +2094,7 @@ try {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
-                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex',
+                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')

@@ -6,9 +6,9 @@ namespace Tests\Unit\Ir\Schema\Index\Placement;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\AnalysisException;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 
 #[CoversClass(IndexTablespace::class)]
 final class IndexTablespaceTest extends TestCase
@@ -23,14 +23,9 @@ final class IndexTablespaceTest extends TestCase
 
     public function testRejectsTheReservedSharedDestination(): void
     {
-        try {
-            new IndexTablespace(new Identifier('pg_global'));
-        } catch (InvalidConstruction $failure) {
-            self::assertStringContainsString('requires an application tablespace or pg_default', $failure->getMessage());
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('requires an application tablespace or pg_default');
 
-            return;
-        }
-
-        self::fail('A shared destination was constructed for an application index.');
+        new IndexTablespace(new Identifier('pg_global'));
     }
 }

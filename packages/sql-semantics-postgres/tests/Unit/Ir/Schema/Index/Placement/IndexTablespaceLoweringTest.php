@@ -6,9 +6,9 @@ namespace Tests\Unit\Ir\Schema\Index\Placement;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\AnalysisException;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
 #[CoversClass(IndexTablespaceLowering::class)]
@@ -39,14 +39,9 @@ final class IndexTablespaceLoweringTest extends TestCase
             'CREATE INDEX event_key ON app.events (id)',
         ]);
 
-        try {
-            $semantics->analyze('REINDEX (TABLESPACE pg_default, TABLESPACE missing_archive) INDEX app.event_key', $context);
-        } catch (InvalidConstruction $failure) {
-            self::assertStringContainsString('requires a declared tablespace', $failure->getMessage());
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('requires a declared tablespace');
 
-            return;
-        }
-
-        self::fail('An unresolved placement was published.');
+        $semantics->analyze('REINDEX (TABLESPACE pg_default, TABLESPACE missing_archive) INDEX app.event_key', $context);
     }
 }
