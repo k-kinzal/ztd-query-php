@@ -716,7 +716,7 @@ The constraint index fixture compares the native original and generated absence 
 
 The REINDEX fixture compares the selected index coordinates and actual traversal order before and after rebuilding. Distinct outdated orders expose incorrect selections, and a unique-key fixture records a native failure and atomic rollback. Run \`run_sqlite_reindex.py\` with the SQLite fixture options. [SQLite REINDEX contract](sqlite-reindex-v2.json)
 
-The statistics fixture compares names, scope and exact STAT1 rows after collecting table or index statistics. It checks NULL, collation, partial membership, stale state, WITHOUT ROWID duplicates and rollback. Run \`run_sqlite_analyze_statistics.py\` with the SQLite fixture options. [SQLite ANALYZE contract](sqlite-analyze-statistics-v1.json)
+The statistics fixture compares names, scope and exact STAT1 rows after collecting table or index statistics. It checks NULL, collation, partial membership, stale state, WITHOUT ROWID duplicates and rollback. Run `run_sqlite_analyze_statistics.py` with the SQLite fixture options. [SQLite ANALYZE contract](sqlite-analyze-statistics-v1.json)
 
 ## SQLite literal defaults
 
@@ -790,3 +790,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_tr
 ```
 
 The reference state machine tracks fixture rows, the outer transaction and the ordered savepoint stack. The native observer reads autocommit, rows, metadata and state-dependent errors after every operation in the fixture. A separate two-connection fixture observes the three BEGIN modes under DELETE journaling. A savepoint lookup is a named action on the connection's state at execution, so no declaration context or savepoint object is retained.
+
+The [SQLite PRAGMA inventory](sqlite-pragma-namespace-v1.json) records the 78 stock and conditional names independently of the PHP class and test generators. Regenerate the native declaration table and the active engine inventory with `python3 sqlite_pragma_inventory.py --sqlite-source <sqlite3.c> --sqlite-library <library> --out <new-json-file>`. The `declaredColumns` entry lists the explicit column labels or the default label for a pragma that emits a column. Build conditions and the request family determine which labels appear in an actual result.
+
+The [SQLite flag PRAGMA contract](sqlite-flag-pragmas-v1.json) covers the 18 connection flags present in both builds. Run `run_sqlite_flag_pragmas.py` with the SQLite fixture options to compare direct and analyzed requests, state changes at prepare time, exact result headers and SQLite types, transaction-sensitive foreign key behavior and schema reload. The engine inventory records all unexercised names, including active pragmas outside the flag family.

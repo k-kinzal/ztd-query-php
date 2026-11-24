@@ -542,6 +542,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX tag';
         $queries['Maintenance\\Reindex'] = 'REINDEX names';
         $queries['Maintenance\\Analyze'] = 'ANALYZE names';
+        $queries['Maintenance\\FlagPragma'] = "PRAGMA Temp.Writable_Schema('reset')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
@@ -1281,6 +1282,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\FlagPragma') {
+            $disabled = $semantics->analyze('PRAGMA automatic_index(256)', $activeContext);
+            $read = $semantics->analyze('PRAGMA MAIN.FOREIGN_KEYS', $activeContext);
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma($result->name, $result->change, $result->schema);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma(
+                    SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagName::ForeignKeys,
+                    SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagChange::Reset,
+                );
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = str_contains($error->getMessage(), 'Only writable_schema');
+            }
+            $details['flagPragma'] = [$result->name->value, $result->change?->value, $result->schema?->value, $copy->toString(),
+                $disabled->change?->value, $disabled->toString(), $read->change, $read->toString(), $rejected];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Analyze') {
             $index = $result->target;

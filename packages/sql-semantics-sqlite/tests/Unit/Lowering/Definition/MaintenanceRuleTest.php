@@ -12,10 +12,10 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
-use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(MaintenanceRule::class)]
@@ -59,6 +59,15 @@ final class MaintenanceRuleTest extends TestCase
         self::assertNotNull($into->into);
     }
 
+    public function testNumberRetainsTheNativeIntegerPrefixEvenWhenItExceedsAnExpressionLiteral(): void
+    {
+        $statement = (new Inspection())->inspect('PRAGMA a = 0x80000000000000000')->statement;
+
+        self::assertInstanceOf(Pragma::class, $statement);
+        self::assertInstanceOf(PragmaNumber::class, $statement->value);
+        self::assertSame('0x80000000000000000', $statement->value->token);
+    }
+
     public function testValueKeepsEachOperandKindApart(): void
     {
         $semantics = new Inspection();
@@ -73,9 +82,9 @@ final class MaintenanceRuleTest extends TestCase
         self::assertInstanceOf(Pragma::class, $name);
         self::assertInstanceOf(Pragma::class, $on);
         self::assertInstanceOf(Pragma::class, $default);
-        self::assertInstanceOf(SignedNumber::class, $number->value);
+        self::assertInstanceOf(PragmaNumber::class, $number->value);
         self::assertSame(NumberSign::Plus, $number->value->sign);
-        self::assertInstanceOf(SignedNumber::class, $negative->value);
+        self::assertInstanceOf(PragmaNumber::class, $negative->value);
         self::assertSame(NumberSign::Minus, $negative->value->sign);
         self::assertInstanceOf(Name::class, $name->value);
         self::assertSame(PragmaKeyword::On, $on->value);

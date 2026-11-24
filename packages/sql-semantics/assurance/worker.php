@@ -33,6 +33,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagChange;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagName;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget;
@@ -335,7 +338,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -800,6 +803,28 @@ function observeCreateIndex(CreateIndex $value, bool $render): array
     ];
 }
 
+function directFlagPragma(array $input): FlagPragma
+{
+    return new FlagPragma(
+        FlagName::from($input['flag']),
+        $input['change'] === null ? null : FlagChange::from($input['change']),
+        $input['schema'] === null ? null : new Identifier($input['schema']),
+    );
+}
+
+function observeFlagPragma(FlagPragma $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'flag-pragma',
+        'profile' => $value->profileId(),
+        'flag' => $value->name->value,
+        'change' => $value->change?->value,
+        'schema' => $value->schema?->value,
+        'sql' => $value->toString(),
+    ];
+}
+
 function maintenanceTarget(array $role): Identifier|Collation|RelationTarget|IndexTarget|null
 {
     return match ($role[0]) {
@@ -943,6 +968,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
             ($input['operation'] ?? null) === 'create-index' => directCreateIndex($input),
+            ($input['operation'] ?? null) === 'flag-pragma' => directFlagPragma($input),
             ($input['operation'] ?? null) === 'reindex' => new Reindex(maintenanceTarget($input['target'])),
             ($input['operation'] ?? null) === 'analyze-statistics' => new Analyze(maintenanceTarget($input['target'])),
             ($input['operation'] ?? null) === 'drop-index' => directDropIndex($input),
@@ -964,6 +990,9 @@ function runCase(array $input): array
 
     if ($value instanceof CreateIndex) {
         return observeCreateIndex($value, ($input['probe'] ?? null) !== 'create-index-construction');
+    }
+    if ($value instanceof FlagPragma) {
+        return observeFlagPragma($value);
     }
     if ($value instanceof Reindex || $value instanceof Analyze) {
         return observeMaintenance($value);

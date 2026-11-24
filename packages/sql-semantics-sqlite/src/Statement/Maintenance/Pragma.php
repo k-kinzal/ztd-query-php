@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
-use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 
 /**
  * A pragma: a query or a change of a setting or of internal data of the database library.
@@ -24,10 +23,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
  * DEFAULT; these are distinct operand kinds. SQLite hands the value to the
  * pragma as text. `PRAGMA x = v` and
  * `PRAGMA x(v)` "yield identical results"; the value is written with `=`.
- * What a pragma does, whether it returns rows and which columns they have, is
- * fixed per pragma name by the manual and is not derived: the operation
- * records no output, no relation use and no diagnostic, and an unknown pragma
- * name is not an error in SQLite either.
+ * The parsed request defers the meaning of every argument to the rule for
+ * the resolved pragma name, including arguments written as numeric tokens.
  * Source: https://sqlite.org/pragma.html. Status: Implemented.
  *
  * @visibility SqlSemantics
@@ -38,21 +35,18 @@ final class Pragma implements Statement
 
     /**
      * @param QualifiedName $name The pragma name with its optional schema
-     * @param SignedNumber|Name|PragmaKeyword|null $value The value: a signed number, a name, a keyword, or null when none is written
+     * @param PragmaNumber|Name|PragmaKeyword|null $value The value: a signed number, a name, a keyword, or null when none is written
      */
-    public function __construct(public readonly QualifiedName $name, public readonly SignedNumber|Name|PragmaKeyword|null $value = null)
+    public function __construct(public readonly QualifiedName $name, public readonly PragmaNumber|Name|PragmaKeyword|null $value = null)
     {
         Check::input($name->catalog === null, 'A pragma name has at most a schema qualifier.');
     }
 
     /**
-     * Derives the numeric literal of the value; what a pragma reads and returns depends on its name, which the grammar does not fix.
+     * Leaves pragma-specific interpretation to the resolved name rule.
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        if ($this->value instanceof SignedNumber) {
-            $derivation->scalar($this->value->number, $derivation->environment());
-        }
     }
 
     /**
@@ -66,7 +60,7 @@ final class Pragma implements Statement
             return;
         }
         $out->symbol('=');
-        if ($this->value instanceof SignedNumber) {
+        if ($this->value instanceof PragmaNumber) {
             $out->node($this->value);
         } elseif ($this->value instanceof Name) {
             $out->name($this->value, NameUse::Label);

@@ -13,9 +13,9 @@ use SqlSemantics\Contract\Mode;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
-use SqlSemantics\Platform\Sqlite\Ir\Maintenance\AnalyzeLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\MaintenanceLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex;
-use SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\DeleteLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
@@ -61,6 +61,7 @@ use SqlSemantics\Platform\Sqlite\Model\Facade\Catalog;
 use SqlSemantics\Platform\Sqlite\Model\Facade\Splitter;
 use SqlSemantics\Platform\Sqlite\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze as ParsedAnalyze;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma as ParsedPragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex as ParsedReindex;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertDefaults as ParsedInsertDefaults;
@@ -155,7 +156,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|Transaction
+    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|Transaction
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -177,8 +178,7 @@ final class Semantics implements Analyzer
             $statement instanceof AlterRenameColumn, $statement instanceof AlterRenameTable => (new RenameLowering())->lower($operation, $statement),
             $statement instanceof AlterAddColumn => (new AddColumnLowering())->lower($operation, $statement),
             $statement instanceof AlterDropColumn => (new DropColumnLowering())->lower($operation, $statement),
-            $statement instanceof ParsedAnalyze => (new AnalyzeLowering())->lower($operation, $statement),
-            $statement instanceof ParsedReindex => (new ReindexLowering())->lower($operation, $statement),
+            $statement instanceof ParsedAnalyze, $statement instanceof ParsedReindex, $statement instanceof ParsedPragma => (new MaintenanceLowering())->lower($operation, $statement),
             default => (new TransactionLowering())->lower($statement),
         };
     }
@@ -188,7 +188,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|Transaction>
+     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

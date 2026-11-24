@@ -9,12 +9,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
-use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
-use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Testing\Sqlite\InspectedStatement;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
@@ -31,15 +29,15 @@ final class PragmaTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    public function testDeriveStatementDerivesTheNumberOfASignedValue(): void
+    public function testDeriveStatementLeavesNumericOperandsForPragmaRules(): void
     {
         $operation = (new Inspection())->inspect('PRAGMA cache_size = -2000');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Pragma::class, $statement);
-        self::assertInstanceOf(SignedNumber::class, $statement->value);
+        self::assertInstanceOf(PragmaNumber::class, $statement->value);
         self::assertSame(NumberSign::Minus, $statement->value->sign);
-        self::assertEquals(new Known(Storage::Integer), $operation->facts->scalar($statement->value->number)->type);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesBothValueNotationsWithAnEqualSign(): void

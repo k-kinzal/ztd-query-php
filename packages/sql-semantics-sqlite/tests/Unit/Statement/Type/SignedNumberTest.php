@@ -14,7 +14,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
-use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
@@ -47,19 +46,6 @@ final class SignedNumberTest extends TestCase
 
         self::assertSame([IntegerLiteral::class, HexLiteral::class, RealLiteral::class], $numbers);
         self::assertSame('SELECT CAST(1 AS DECIMAL(10)), CAST(1 AS DECIMAL(0x10)), CAST(1 AS DECIMAL(1.5))', $query->toString());
-    }
-
-    public function testRenderWritesAPragmaValue(): void
-    {
-        $operation = (new Inspection())->inspect('pragma cache_size = -2000');
-        $pragma = $operation->statement;
-
-        self::assertInstanceOf(Pragma::class, $pragma);
-        self::assertInstanceOf(SignedNumber::class, $pragma->value);
-        self::assertSame(NumberSign::Minus, $pragma->value->sign);
-        self::assertInstanceOf(IntegerLiteral::class, $pragma->value->number);
-        self::assertSame('2000', $pragma->value->number->digits);
-        self::assertSame('PRAGMA cache_size = -2000', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltNumber(): void

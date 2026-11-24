@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v92.json"
-CONTRACT = "a27f963f0f01c02f1b55c7da8fb8571c4803a79007c8a9816b796718d4e871c0"
+CONTRACT_NAME = "release-layout-v93.json"
+CONTRACT = "9d6389be1674800cfe55d7b24ecd229a7cc453cc0af8d355c4ee09e693f8002a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,11 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\FlagPragma"):
+            require(item.get("flagPragma") == [
+                "writable_schema", "RESET", "temp", 'PRAGMA "temp".writable_schema = RESET',
+                "0", "PRAGMA automatic_index = 0", None, 'PRAGMA "main".foreign_keys', True,
+            ] and item["sql"] == 'PRAGMA "temp".writable_schema = RESET', "installed-sqlite-flag-pragma-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Analyze"):
             require(item.get("analyzeStatistics") == [
                 "temp", "names", "accounts", "extension", 'ANALYZE "extension"', "view",

@@ -43,8 +43,12 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
                 if status == "type-rejected":
                     expected_status, exception = "error", "TypeError"
                 else:
-                    expected_status = status
-                    exception = EXCEPTION + ({"rejected": "InvalidConstruction", "analysis-rejected": "SemanticException"}[status])
+                    expected_status = "analysis-rejected" if status == "syntax-rejected" else status
+                    exception = EXCEPTION + ({
+                        "rejected": "InvalidConstruction",
+                        "analysis-rejected": "SemanticException",
+                        "syntax-rejected": "AnalysisException",
+                    }[status])
                 fragments = (reason,) if isinstance(reason, str) else reason
                 require(reply["status"] == expected_status and reply["exception"] == exception
                         and all(fragment in reply["message"] for fragment in fragments),

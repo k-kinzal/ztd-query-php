@@ -210,6 +210,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-constraint-index-names-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-reindex-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-analyze-statistics-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-flag-pragmas-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-implicit-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/

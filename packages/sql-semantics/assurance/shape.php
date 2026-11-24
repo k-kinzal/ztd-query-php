@@ -427,6 +427,33 @@ if ($dialect === 'sqlite') {
     $properties['Maintenance\\Analyze'] = ['target' => ['Identifier', 'Maintenance\\IndexTarget', 'Maintenance\\RelationTarget', 'null']];
     $methods['Maintenance\\Analyze'] = $methods['Select'];
     $roots[] = 'Maintenance\\Analyze';
+    $properties['Maintenance\\FlagPragma'] = ['name' => ['Maintenance\\FlagName'], 'change' => ['?Maintenance\\FlagChange'], 'schema' => ['?Identifier']];
+    $methods['Maintenance\\FlagPragma'] = $methods['Select'];
+    $roots[] = 'Maintenance\\FlagPragma';
+    $properties['Maintenance\\FlagName'] = $methods['Maintenance\\FlagName'] = [];
+    $properties['Maintenance\\FlagChange'] = $methods['Maintenance\\FlagChange'] = [];
+    $enumCases['Maintenance\\FlagChange'] = ['Disable' => '0', 'Enable' => '1', 'Reset' => 'RESET'];
+    $enumCases['Maintenance\\FlagName'] = [
+        'AutomaticIndex' => 'automatic_index',
+        'CellSizeCheck' => 'cell_size_check',
+        'CheckpointFullfsync' => 'checkpoint_fullfsync',
+        'CountChanges' => 'count_changes',
+        'DeferForeignKeys' => 'defer_foreign_keys',
+        'EmptyResultCallbacks' => 'empty_result_callbacks',
+        'ForeignKeys' => 'foreign_keys',
+        'FullColumnNames' => 'full_column_names',
+        'Fullfsync' => 'fullfsync',
+        'IgnoreCheckConstraints' => 'ignore_check_constraints',
+        'LegacyAlterTable' => 'legacy_alter_table',
+        'QueryOnly' => 'query_only',
+        'ReadUncommitted' => 'read_uncommitted',
+        'RecursiveTriggers' => 'recursive_triggers',
+        'ReverseUnorderedSelects' => 'reverse_unordered_selects',
+        'ShortColumnNames' => 'short_column_names',
+        'TrustedSchema' => 'trusted_schema',
+        'WritableSchema' => 'writable_schema',
+    ];
+    array_push($internal, 'Maintenance\\FlagArgument', 'Maintenance\\FlagPragmaLowering', 'Maintenance\\MaintenanceLowering');
     array_push($internal, 'Maintenance\\AnalyzeLowering', 'Maintenance\\MaintenanceLookup');
     $internal[] = 'Maintenance\\ReindexLowering';
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
@@ -1095,8 +1122,9 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterAddColumn => (new \\' . $prefix . 'Schema\\Alter\\AddColumnLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterDropColumn => (new \\' . $prefix . 'Schema\\Alter\\DropColumnLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Analyze => (new \\' . $prefix . 'Maintenance\\AnalyzeLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Reindex => (new \\' . $prefix . 'Maintenance\\ReindexLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Analyze,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Reindex,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Pragma => (new \\' . $prefix . 'Maintenance\\MaintenanceLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -1158,8 +1186,9 @@ try {
             ['sqlite-drop-column-binding-v4.json', '61cf124acd1c6c4a5a923f6721fdaf701d63b3a5f4f2665c2a8a3a643885f15c', 'Column removal binding'],
             ['sqlite-drop-index-binding-v3.json', 'e96dccf114b72f782c4c7eb8bf108629c442393a73689c008eb1fd09bce55d96', 'Index removal binding'],
             ['sqlite-constraint-index-binding-v1.json', '792ea111ed9e254c8f883e33ee6b33b2afa7d9fdd2317575e15864ae935ae63e', 'Constraint index binding'],
-            ['sqlite-reindex-binding-v1.json', 'e548d07c612d205fed69369e3d9223a30f653ae5b1edb4d5abee16c4406ec217', 'Reindex binding'],
-            ['sqlite-analyze-statistics-binding-v1.json', '30776121cd17e68e35e527a4ecbb8729e8c053f024a18fe964d6b5c16cfc21b6', 'Analyze statistics binding'],
+            ['sqlite-reindex-binding-v2.json', '03e65c0bf4b2ca33a6ab529d9385de4d0ea7c3c4a325a4dc1e2f49fd7efbcdb2', 'Reindex binding'],
+            ['sqlite-analyze-statistics-binding-v2.json', 'd142c29969ec426d0bd2518c5acc4b0ae38bdba4f2c7c298690f89bd3dcbaa0b', 'Analyze statistics binding'],
+            ['sqlite-flag-pragmas-binding-v1.json', 'b5636898d08476b16da1d450e4555f480008addc4ec7f44aefa90b51eb83eeb8', 'Flag pragma binding'],
             ['sqlite-folded-binding-sources-v8.json', '96f3f69296855ca2cf8b6047b4026cf8d9c6688c4dd94a8cb86139f5e20ef350', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
@@ -1340,10 +1369,19 @@ try {
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
                 'Maintenance\\ReindexLowering' => 'Maintenance\\Reindex',
                 'Maintenance\\AnalyzeLowering' => 'Maintenance\\Analyze',
+                'Maintenance\\FlagPragmaLowering' => 'Maintenance\\FlagPragma',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };
+            if ($short === 'Maintenance\\MaintenanceLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === [
+                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Reindex',
+                    ], 'Unexpected SQLite maintenance publication');
+            }
             if ($short === 'Maintenance\\MaintenanceLookup') {
                 $public = array_values(array_map(
                     static fn ($method) => $method->name->toString(),
