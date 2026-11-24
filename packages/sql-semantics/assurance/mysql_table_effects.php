@@ -26,7 +26,7 @@ function observeMysqlFixtureTable(PDO $pdo, string $name): ?array
     }
     $ddl = $definition['Create Table'];
     $kind = str_starts_with($ddl, 'CREATE TEMPORARY TABLE ') ? 'temporary-table' : 'table';
-    if (preg_match('/ ENGINE=([A-Za-z0-9]+) DEFAULT CHARSET=utf8mb4 COLLATE=(utf8mb4_[a-z0-9_]+)/', $ddl, $storage) !== 1) {
+    if (preg_match('/ ENGINE=([A-Za-z0-9]+)(?: AUTO_INCREMENT=[1-9][0-9]*)? DEFAULT CHARSET=utf8mb4 COLLATE=(utf8mb4_[a-z0-9_]+)/', $ddl, $storage) !== 1) {
         throw new RuntimeException('Unrecognized native table storage: ' . $ddl);
     }
     $columns = [];
