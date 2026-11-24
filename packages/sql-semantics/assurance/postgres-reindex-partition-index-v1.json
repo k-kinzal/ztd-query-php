@@ -1,0 +1,78 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-partition-index-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-reindex-index-v1.json",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2 under the native UTF-8 profile. Explicitly named plain partitioned indexes and explicitly named physical indexes on attached leaves are declared in the same local catalog.",
+  "scope": "Resolve one named btree index on a partitioned branch or attached leaf. A nonphysical branch selects only the attached physical index lineage. An attached heap's named physical index is rebuilt as a single index.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Index/Partition/PartitionIndexReference": {
+      "role": "Absolute resolved named index reference and its physical partition role.",
+      "structure": "Immutable schema, index and owning table identifiers, and PartitionRebuildKind.",
+      "conditions": "The owner and index share a persistent local application namespace and different relation names. The analyzer must identify the exact declared branch or leaf index. Ordinary removal must refuse this restricted role.",
+      "meaning": "Rebuild the exact named physical index or physical descendants of this index's attachment lineage. The referenced heap's other indexes and its TOAST indexes remain unchanged.",
+      "sql": "Independently quote the schema and index positions. The same external declared identity retains its branch or leaf semantics.",
+      "externalInterpretation": "Use the same local named index, owner, native attached index lineage and language profile.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "amendedConstructors": {
+    "Schema/Index/ReindexIndex": "Admit the separately typed partition index reference as a third closed target role. Keep the same mode and grammar anchor."
+  },
+  "existingRoles": ["Schema/Index/Partition/PartitionRebuildKind", "Schema/Index/IndexRebuildMode", "Schema/Index/ReindexIndex", "Schema/Index/DropIndex"],
+  "rules": [
+    "Native standard and concurrent branch rebuilds require a top-level command. A standard physical leaf rebuild can be rolled back.",
+    "Rebuild only the selected physical index lineage across schemas. Preserve all other index storage, TOAST relations, heap rows, ownership and attachment edges.",
+    "A standard physical rebuild retains the index OID. A concurrent physical rebuild can replace it and relink the resulting index to the same owner and parent coordinates.",
+    "An empty partitioned index lineage can be a valid rebuild with no physical effects."
+  ],
+  "observations": [
+    "Exact named index, owning table and branch or leaf tag in both construction routes.",
+    "Native result, transaction state, indexed positions, physical OID and storage change relations and complete declared parent links.",
+    "Cross-schema attached leaves, untouched other named indexes and auxiliary TOAST storage, rows and rollback."
+  ],
+  "finite": {
+    "targets": ["root-empty", "root-flat", "root-nested", "branch-remote", "leaf-physical"],
+    "concurrently": [false, true],
+    "active": [false, true],
+    "spellings": ["qualified", "local"],
+    "identity": "Consume all 40 coordinates in both direct and analyzed construction on each pinned native release."
+  },
+  "exploration": {
+    "seeds": [1019, 8101, 139999],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 390,
+    "allowedExclusions": [],
+    "domain": "Vary empty and populated partitions, branch scope and attached physical selection, quoted names, ordered native concurrency options, distinct unaffected indexes and transaction state."
+  },
+  "negative": [
+    "Unknown named branch index",
+    "Foreign database qualifier",
+    "Ordinary DROP INDEX given a branch",
+    "Ordinary DROP INDEX given a physical leaf target",
+    "Direct temporary partition index",
+    "Direct identical index and owner names"
+  ],
+  "faults": [
+    "Publish the branch through the leaf role",
+    "Rebuild only one attached physical child",
+    "Change the selector to a table and rebuild unrelated and auxiliary indexes",
+    "Discard requested concurrent mode"
+  ],
+  "sources": ["https://www.postgresql.org/docs/16/sql-reindex.html", "https://www.postgresql.org/docs/17/sql-reindex.html"],
+  "trust": [
+    "Named declarations and index kind, closed resolved target types, exact PHP route audit, stock index and heap catalog observations and independent replay."
+  ],
+  "open": [
+    "Implicitly named indexes, partitioned constraint-owned indexes and incomplete hierarchy declarations require additional rules and evidence."
+  ],
+  "calibration": {
+    "driver": "9af1c1a5c7d61c50cc345ddfb5565473befd94c5e81bda2d62081356eee9b5de",
+    "queryPack": "6998048ef94d7f746796159952975c6afcff871a9136db24b1672105c39d6227",
+    "referenceComparison": "59c889e437f94d0bb7af8aca654f7759ab8deaa1912894b7e8db18152c6c7890",
+    "normalized": "77be3c6394dc6cded993cad11c84bac32bc7f8633aaa8211b77215a1d5283f8c",
+    "16.6": {"stdout": "8a25730b18de27c9a700f9730f4bab6a354c46fef099b1433354433554c06969", "stderr": "95efa633c9e13d2e6a873326a71ecfadc0137a0ea72bcabef9e5c552455670a4"},
+    "17.2": {"stdout": "9ac84b346521aa77cafa4fdba15e29ef64cb765ca1b136e4fc8c6b7ba89abcf2", "stderr": "b29212525dbebbc480990605c6f4bb0dfc92befe52a37124bcedd7dcccd15c4c"}
+  }
+}
