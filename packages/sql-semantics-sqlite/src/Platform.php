@@ -21,9 +21,11 @@ use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\TriggerNamespace;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Index;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Trigger;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
@@ -36,6 +38,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
+use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 
 /**
  * Wires the SQLite grammar releases, lowering rules and spelling rules into the analysis.
@@ -161,6 +164,7 @@ final class Platform
      * @param list<Table> $tables
      * @param list<Index> $indexes
      * @param list<Name>|null $opaqueIndexSchemas
+     * @param list<Trigger> $triggers
      * @throws InvalidArgumentException When the path does not start with main
      */
     public function context(
@@ -170,6 +174,7 @@ final class Platform
         bool $complete,
         array $indexes = [],
         ?array $opaqueIndexSchemas = null,
+        array $triggers = [],
     ): AnalysisContext {
         $schemas = $searchPath ?? ['main'];
         if ($schemas !== [] && strcasecmp($schemas[0], 'temp') === 0) {
@@ -193,6 +198,7 @@ final class Platform
             $path[1],
             $indexes,
             $opaqueIndexSchemas,
+            $triggers,
         );
     }
 
@@ -232,6 +238,45 @@ final class Platform
         Check::input(!str_starts_with($comparison->fold($definition->name->name->value), 'sqlite_'), 'An ordinary index cannot belong to the reserved SQLite namespace.');
 
         return new Index($owner->table->name->schema ?? $binding->context->declarationSchema, $definition->name->name, $owner->table->name->name);
+    }
+
+    /**
+     * Exports a trigger identity after checking its native owning schema and watched relation.
+     */
+    public function triggerDeclaration(BoundStatement $binding, bool $complete): ?Trigger
+    {
+        $statement = $binding->statement;
+        if (!$statement instanceof CreateTrigger) {
+            return null;
+        }
+        $context = $binding->context;
+        $names = new TriggerNamespace();
+        $names->validatePath($context);
+        Check::input(!$statement->temporary || $statement->name->schema === null, 'A TEMP keyword trigger cannot have a qualified name.');
+        $selector = $statement->table->name;
+        $selected = $names->owner($context, $statement->name->schema, $statement->temporary, $selector);
+        $owner = $names->known($context, $selected);
+        Check::input($owner !== null, 'A trigger declaration requires a known owning schema.');
+        $temp = Comparison::AsciiInsensitive->equal($owner->value, 'temp');
+        Check::input(
+            $complete || $statement->name->schema !== null || $selector->schema !== null || $temp,
+            'An unqualified trigger declaration needs a known temporary namespace.'
+        );
+
+        $resolved = $binding->facts->relation($statement->table)->table;
+        Check::input(
+            $resolved instanceof DeclaredTable && in_array($resolved->table->kind, [RelationKind::BaseTable, RelationKind::View], true),
+            'A trigger declaration requires a resolved ordinary watched relation.'
+        );
+        $watched = $resolved->table->name;
+        $schema = $names->known($context, $watched->schema ?? $context->declarationSchema);
+        Check::input($schema !== null, 'A trigger declaration requires a known watched schema.');
+        Check::input(
+            !$temp || $complete || $selector->schema !== null || Comparison::AsciiInsensitive->equal($schema->value, 'temp'),
+            'An unqualified temporary trigger watch cannot skip an open schema.'
+        );
+
+        return new Trigger($owner, $statement->name->name, $schema, $watched->name);
     }
 
     /**

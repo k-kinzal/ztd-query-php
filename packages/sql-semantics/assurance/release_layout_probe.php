@@ -539,6 +539,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Alter\\AddColumn'] = "ALTER TABLE $table ADD COLUMN added TEXT COLLATE NOCASE DEFAULT 'value'";
         $queries['Schema\\Alter\\AddGeneratedColumn'] = "ALTER TABLE $table ADD total INTEGER AS (id + 7) STORED";
         $queries['Schema\\Alter\\DropColumn'] = 'ALTER TABLE removable DROP COLUMN OLD';
+        $queries['Schema\\Trigger\\DropTrigger'] = 'DROP TRIGGER tracked';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX tag';
         $queries['Maintenance\\Reindex'] = 'REINDEX names';
         $queries['Maintenance\\Analyze'] = 'ANALYZE names';
@@ -617,6 +618,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
             );
             $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Trigger\\DropTrigger') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([
+                'CREATE TABLE main.watched (id)', 'CREATE TABLE archive.watched (id)',
+                'CREATE TRIGGER main.Tracked AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END',
+                'CREATE TEMP TRIGGER Tracked AFTER INSERT ON archive.watched BEGIN SELECT NEW.id; END',
+            ]);
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Trigger\\CreateTrigger') {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
@@ -1402,6 +1413,27 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $default = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum();
             $details['vacuum'] = [$result->schema->value, $operand->expression->values[0]->label, $rebuilt->toString(),
                 $default->toString(), $skipped->schema->value, $skipped->destination->bindings[0]->label, $skipped->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger) {
+            $target = $result->target;
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference) {
+                throw new RuntimeException('The installed DROP TRIGGER lost its installed target.');
+            }
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger(
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference(
+                    $target->schema, $target->name, $target->watchedSchema, $target->watchedName,
+                ),
+            );
+            $absences = [];
+            foreach (['absent', 'archive.absent', 'unknown.absent'] as $selector) {
+                $absent = $semantics->analyze('DROP TRIGGER IF EXISTS ' . $selector, $activeContext);
+                if (!$absent->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\MissingTrigger) {
+                    throw new RuntimeException('The installed DROP TRIGGER lost its verified absence.');
+                }
+                $absences[] = [$absent->target->verification->value, $absent->toString()];
+            }
+            $details['dropTrigger'] = [$target->schema->value, $target->name->value, $target->watchedSchema->value,
+                $target->watchedName->value, $direct->toString(), $absences];
         }
         if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger) {
             $step = $result->program[0];

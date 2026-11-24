@@ -20,12 +20,19 @@ class ScalarSchedule(NamedTuple):
 
 
 def execute_schedule(args, specification, db, worker_factory, schedule, observe=probe, *, measured_input=None,
-                     paired_finite=None):
+                     paired_finite=None, finite_refusals=()):
     domain, settings = specification["finite"], specification["exploration"]
     negative_cases = tuple(schedule.negatives())
     expected_negatives = len(specification["negative"]) + len(specification.get("analysisNegative", ()))
     require(len(negative_cases) == expected_negatives, "sqlite-scalar-negative-schedule",
             {"contract": expected_negatives, "scheduled": len(negative_cases)})
+    refusal_cases = tuple(finite_refusals)
+    require(len(refusal_cases) == specification.get("scheduledRejections", 0), "sqlite-scalar-finite-rejection-budget",
+            {"contract": specification.get("scheduledRejections", 0), "scheduled": len(refusal_cases)})
+    scheduled_negatives = [(f"negative/{index}", current, status, reason, {})
+                           for index, (current, status, reason) in enumerate(negative_cases)]
+    scheduled_negatives.extend((f"finite-negative/{index}", current, status, reason, control)
+                               for index, (current, status, reason, control) in enumerate(refusal_cases))
     seen, observed = Counter(), Counter()
     awaiting_direct, checked_direct = {}, set()
     comparator = schedule.comparator_controls()
@@ -54,9 +61,8 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
                     checked_direct.add(coordinate)
                 if key.startswith("seed/"):
                     observed.update(schedule.observed_forms(measured))
-            for index, (current, status, reason) in enumerate(negative_cases):
-                key = f"negative/{index}"
-                ledger.record(key, "attempted", input=current)
+            for key, current, status, reason, control in scheduled_negatives:
+                ledger.record(key, "attempted", input=current, **control)
                 reply = worker.request(current)
                 if status in ("type-rejected", "enum-rejected"):
                     expected_status, exception = "error", {"type-rejected": "TypeError", "enum-rejected": "ValueError"}[status]

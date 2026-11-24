@@ -60,6 +60,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
@@ -148,10 +149,10 @@ final class Semantics implements Analyzer
     }
 
     /**
-     * Builds a context from explicit relation and index definitions.
+     * Builds a context from explicit relation, index and trigger definitions.
      *
      * Null describes an open catalog. An explicit list can enumerate the entire catalog.
-     * @param array<array-key, mixed>|null $declarations An ordered list of relation and index definitions
+     * @param array<array-key, mixed>|null $declarations An ordered list of relation, index and trigger definitions
      */
     public function context(?array $declarations = null, bool $complete = true): Context
     {
@@ -175,7 +176,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
+    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|DropTrigger|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -206,7 +207,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction>
+     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|DropTrigger|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

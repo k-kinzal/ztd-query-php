@@ -712,6 +712,8 @@ The index expression spelling fixture compares native CAST names and binary IFNU
 
 The index removal fixture compares the selected object and owner, catalog and statistics removal, original and subsequent typed table state, constrained writes, rollback, and the schemas verified by an IF EXISTS no-op. Run \`run_sqlite_drop_index.py\` with the SQLite fixture options. [SQLite index removal contract](sqlite-drop-index-v3.json)
 
+The SQLite trigger removal fixture compares installation identity, schema verification, unaffected sibling definitions, rollback and later firing. For every required missing name in the finite matrix, it compares a native preparation diagnostic with the typed construction refusal. Run `run_sqlite_drop_triggers.py` with the SQLite fixture options. [SQLite trigger removal contract](sqlite-drop-triggers-v4.json)
+
 The constraint index fixture compares the native original and generated absence selectors. It records protected PRIMARY KEY and UNIQUE indexes, including WITHOUT ROWID storage, along with separate direct checks for each watched absence. Run \`run_sqlite_constraint_index_names.py\` using the SQLite fixture options. [SQLite constraint index contract](sqlite-constraint-index-names-v2.json)
 
 The REINDEX fixture compares the selected index coordinates and actual traversal order before and after rebuilding. Distinct outdated orders expose incorrect selections, and a unique-key fixture records a native failure and atomic rollback. Run \`run_sqlite_reindex.py\` with the SQLite fixture options. [SQLite REINDEX contract](sqlite-reindex-v2.json)

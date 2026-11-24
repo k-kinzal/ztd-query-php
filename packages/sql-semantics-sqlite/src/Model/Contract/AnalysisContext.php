@@ -8,13 +8,14 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Index;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Trigger;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * A fixed language profile with an immutable snapshot of relation and index declarations.
+ * A fixed language profile with an immutable snapshot of relation, index and trigger declarations.
  *
  * The context states what is known: the declarations, whether they enumerate
  * every relation, and how names are compared. The same declaration object
@@ -43,6 +44,11 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
     public readonly array $indexes;
 
     /**
+     * @var list<Trigger> The explicit trigger declarations in catalog order
+     */
+    public readonly array $triggers;
+
+    /**
      * @var list<Name>|null The opaque automatic-index namespaces, or null when their scope is unknown
      */
     public readonly ?array $opaqueIndexSchemas;
@@ -67,6 +73,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
      * @param list<Index> $indexes Index declarations with absolute table owners
      * @param list<Name>|null $opaqueIndexSchemas Schemas with incomplete automatic index declarations
+     * @param list<Trigger> $triggers Trigger declarations with absolute watched relations
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -78,6 +85,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         ?Name $declarationSchema = null,
         array $indexes = [],
         ?array $opaqueIndexSchemas = null,
+        array $triggers = [],
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
@@ -90,6 +98,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         $this->indexes = Check::listOf($indexes, Index::class, 'Context indexes are an ordered list of index declarations.');
         $this->opaqueIndexSchemas = $opaqueIndexSchemas === null ? null
             : Check::listOf($opaqueIndexSchemas, Name::class, 'Opaque index namespaces are an ordered list of schema names.');
+        $this->triggers = Check::listOf($triggers, Trigger::class, 'Context triggers are an ordered list of trigger declarations.');
         $this->declarationSchema = $declarationSchema ?? $path[0];
     }
 
@@ -129,6 +138,24 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
                     'A declared index must have one resolved ordinary owner in its schema.'
                 );
                 $matches[] = $index;
+            }
+        }
+
+        return $matches;
+    }
+
+    /**
+     * Finds every declared trigger at the selected SQLite coordinate.
+     *
+     * @return list<Trigger>
+     */
+    public function triggersAt(Name $name, Name $schema): array
+    {
+        $matches = [];
+        foreach ($this->triggers as $trigger) {
+            if ($this->relationNames->equal($trigger->schema->value, $schema->value)
+                && $this->relationNames->equal($trigger->name->value, $name->value)) {
+                $matches[] = $trigger;
             }
         }
 

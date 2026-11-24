@@ -73,6 +73,7 @@ RELATED_SQLITE_DOMAINS = {
     "cmd: DROP VIEW ifexists fullname": ("sqlite-drop-view-v1.json",),
     "cmd: DROP TABLE ifexists fullname": ("sqlite-drop-table-v2.json",),
     "cmd: DROP INDEX ifexists fullname": ("sqlite-drop-index-v3.json", "sqlite-constraint-index-names-v2.json"),
+    "cmd: DROP TRIGGER ifexists fullname": ("sqlite-drop-triggers-v4.json",),
     "cmd: REINDEX": ("sqlite-reindex-v2.json",),
     "cmd: REINDEX nm dbnm": ("sqlite-reindex-v2.json",),
     "cmd: ANALYZE": ("sqlite-analyze-statistics-v1.json",),

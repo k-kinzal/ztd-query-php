@@ -1,0 +1,48 @@
+{
+  "revision": "SemanticsIR/sqlite-audit-triggers-binding-2",
+  "approval": "pending-human-review",
+  "scope": "Fix parsed trigger leaf and owner selection, watched shape, trigger environment and write-target source.",
+  "artifacts": {
+    "src/Rules/Mutation/TriggerFacts.php": {
+      "methods": [
+        "derive"
+      ],
+      "sha256": "58a8275bb8b30117a60a5fcb9cce8e7d3fc0c1472425e165c31bfded5631aaa0"
+    },
+    "src/Statement/Mutation/MutationTarget.php": {
+      "methods": [
+        "deriveRelation"
+      ],
+      "sha256": "ec01983ab8da6c6201b1e75482919ddaf6642360b2e368949a5585c0e1cd514f"
+    },
+    "src/Lowering/Query/QueryCommands.php": {
+      "methods": [
+        "lower"
+      ],
+      "sha256": "0845d77ba0abfe45a96206eceeac754c4c06831968e284696a5eb842974d4100"
+    },
+    "src/Lowering/Trigger/TriggerRule.php": {
+      "methods": [
+        "create",
+        "timing",
+        "event",
+        "when",
+        "program",
+        "step",
+        "target"
+      ],
+      "sha256": "43fb28fad01f2c534cd762c6783e79ab7bc66be9e99cdc80b63ebc69d0d9e29f"
+    },
+    "src/Model/Resolution/TriggerNamespace.php": {
+      "methods": [
+        "owner",
+        "watched",
+        "validatePath",
+        "known"
+      ],
+      "sha256": "938a0149f190a8a44af516b2d84c7a66567aa7401114d8199a1d9e1a5595def3"
+    }
+  },
+  "extends": "sqlite-audit-triggers-binding-v1.json",
+  "change": "Extend the catalog to carry resolved trigger identities while retaining every existing binding source and dependency."
+}

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Platform;
 
 /**
- * Builds dialect-owned binding contexts from relation and index definitions.
+ * Builds dialect-owned binding contexts from relation, index and trigger definitions.
  *
  * @visibility SqlSemantics
  */
@@ -38,16 +38,22 @@ final class Catalog
         $binder = new StatementBinder($this->parser);
         $tables = [];
         $indexes = [];
+        $triggers = [];
         $opaqueIndexSchemas = [];
         foreach ($declarations ?? [] as $sql) {
             $scope = $platform->context($this->profile, $this->searchPath, $tables, false);
             $binding = $binder->resolve($sql, $scope);
+            $trigger = $platform->triggerDeclaration($binding, $complete);
+            if ($trigger !== null) {
+                $triggers[] = $trigger;
+                continue;
+            }
             $index = $platform->indexDeclaration($binding);
             if ($index !== null) {
                 $indexes[] = $index;
                 continue;
             }
-            Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation or an index.');
+            Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation, an index or a trigger.');
             array_push($tables, ...$platform->declarations($binding));
             $constraints = $platform->constraintIndexes($binding);
             if ($constraints === null) {
@@ -66,6 +72,7 @@ final class Catalog
             $declarations !== null && $complete,
             $indexes,
             $opaqueIndexSchemas,
+            $triggers,
         );
     }
 

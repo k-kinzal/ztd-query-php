@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v105.json"
-CONTRACT = "be82257b0f461cefaa612061b4c9018be05507673b6af7873bb9114494a6b54d"
+CONTRACT_NAME = "release-layout-v106.json"
+CONTRACT = "9f11d0b624dab8549644d05caa23eedada26df2ab66abff26aa6bbaa4968ced7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -624,6 +624,13 @@ def verify_probe(raw, catalog):
             require(item.get("vacuum") == [
                 "archive", "002", expect, 'VACUUM "main"', "temp", "011", 'VACUUM "temp" INTO (0 IN (?011))',
             ] and item["sql"] == expect, "installed-sqlite-vacuum-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Trigger\\DropTrigger"):
+            expect = 'DROP TRIGGER "temp"."Tracked"'
+            require(item.get("dropTrigger") == ["temp", "Tracked", "archive", "watched", expect, [
+                ["search-path", 'DROP TRIGGER IF EXISTS "absent"'],
+                ["known-schema", 'DROP TRIGGER IF EXISTS "archive"."absent"'],
+                ["unknown-schema", 'DROP TRIGGER IF EXISTS "unknown"."absent"'],
+            ]] and item["sql"] == expect, "installed-sqlite-drop-trigger-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Trigger\\CreateTrigger"):
             expected = ('CREATE TRIGGER "archive"."audit_tr" AFTER UPDATE OF "payload", "future" '
                         'ON "archive"."watched" WHEN OLD."payload" IS NOT NULL BEGIN '

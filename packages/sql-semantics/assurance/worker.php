@@ -141,6 +141,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\MissingTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerVerification;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerCondition;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerDestination;
@@ -389,7 +393,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|DropTrigger|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -1338,6 +1342,37 @@ function observeDropIndex(DropIndex $value, bool $render): array
     ];
 }
 
+function directDropTrigger(array $input): DropTrigger
+{
+    $name = new Identifier($input['name']);
+    $target = match ($input['targetRole']) {
+        'installed' => new TriggerReference(new Identifier($input['schema']), $name,
+            new Identifier($input['watched'][0]), new Identifier($input['watched'][1])),
+        'absent' => new MissingTrigger($name, TriggerVerification::from($input['verification']),
+            $input['schema'] === null ? null : new Identifier($input['schema'])),
+    };
+
+    return new DropTrigger($target, $input['ifExists']);
+}
+
+function observeDropTrigger(DropTrigger $value, bool $render): array
+{
+    $target = $value->target;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'drop-trigger',
+        'profile' => $value->profileId(),
+        'targetRole' => $target instanceof TriggerReference ? 'installed' : 'absent',
+        'schema' => $target->schema?->value,
+        'name' => $target->name->value,
+        'watched' => $target instanceof TriggerReference ? [$target->watchedSchema->value, $target->watchedName->value] : null,
+        'verification' => $target instanceof MissingTrigger ? $target->verification->value : null,
+        'ifExists' => $value->ifExists,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
 function directDropColumn(array $input): DropColumn
 {
     return new DropColumn(
@@ -1443,6 +1478,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'reindex' => new Reindex(maintenanceTarget($input['target'])),
             ($input['operation'] ?? null) === 'analyze-statistics' => new Analyze(maintenanceTarget($input['target'])),
             ($input['operation'] ?? null) === 'drop-index' => directDropIndex($input),
+            ($input['operation'] ?? null) === 'drop-trigger' => directDropTrigger($input),
             ($input['operation'] ?? null) === 'drop-column' => directDropColumn($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
@@ -1503,6 +1539,9 @@ function runCase(array $input): array
     }
     if ($value instanceof Reindex || $value instanceof Analyze) {
         return observeMaintenance($value);
+    }
+    if ($value instanceof DropTrigger) {
+        return observeDropTrigger($value, ($input['probe'] ?? null) !== 'drop-trigger-construction');
     }
     if ($value instanceof DropIndex) {
         return observeDropIndex($value, ($input['probe'] ?? null) !== 'drop-index-construction');

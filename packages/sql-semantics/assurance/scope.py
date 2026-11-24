@@ -209,6 +209,7 @@ CONTRACTS = {
     "sqlite-reclaim-pragmas-v2.json": "e182df950dd6973a4c9577379df07ba2c718d5ff0b8ca16de3aba07b5c9d78a3",
     "sqlite-cache-pragmas-v2.json": "501085d843c8c8a63660bbbfe0cf546c54d36d1bdee5a2f0a566066d2c52f5c0",
     "sqlite-audit-triggers-v2.json": "fa4707626bf562f55ad952a1c4b3d9b40df06b109e24ce2fe3eb05dc6c7a2bd1",
+    "sqlite-drop-triggers-v4.json": "7784b1c111552cf523ef02e1d2f9bd6e173fff5506e97d04aa9380e19672a591",
     "sqlite-drop-column-v3.json": "ec3c4a2625f4ecca94d5b40bbbf25ed6394295f4e4f38c69167cab66e78a1fac",
     "sqlite-add-generated-column-v1.json": "606754be160a3039b0a6e8fc2a52314b00f2bc5055ecc7f59a1fd0436c627a60",
     "sqlite-appended-column-checks-v2.json": "d51fd4ee7cda94276cf5e9156ce139a8ca793c1383e2e9f75d0d2e90bd9dd75f",
@@ -218,7 +219,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "567b5006a60d8d816ea8b78d5640041268b62fefbb5dd92b05577f52d529d4a4"
+PUBLICATION = "2425eec82f05ebd334d90afa70710f8fc9a311c190eb2f91e5f1a158c75e64a6"
 
 
 def declared_constructors(dialects):
@@ -248,7 +249,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v63.json").read_bytes()
+    publication = (TOOL / "publication-v64.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

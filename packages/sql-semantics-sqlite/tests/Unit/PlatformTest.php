@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
@@ -262,5 +263,25 @@ final class PlatformTest extends TestCase
             array_map(static fn (Index $index): string => $index->name->value, $indexes)
         );
         self::assertFalse($indexes[1]->removable);
+    }
+
+    public function testTriggerDeclarationKeepsOnlyTheExternalTriggerAndWatchCoordinates(): void
+    {
+        $platform = new Platform();
+        $dialect = new \SqlSemantics\Platform\Sqlite\Semantics();
+        $context = $dialect->context(['CREATE TABLE watched (id)']);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+        $binder = new \SqlSemantics\Platform\Sqlite\Model\Facade\StatementBinder($platform->parser($dialect->profile()));
+        $trigger = $platform->triggerDeclaration(
+            $binder->resolve('CREATE TEMP TRIGGER track AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END', $context),
+            true,
+        );
+
+        self::assertNotNull($trigger);
+        self::assertSame('temp', $trigger->schema->value);
+        self::assertSame('track', $trigger->name->value);
+        self::assertSame('main', $trigger->watchedSchema->value);
+        self::assertSame('watched', $trigger->watchedName->value);
+        self::assertNull($platform->triggerDeclaration($binder->resolve('SELECT 1', $context), true));
     }
 }

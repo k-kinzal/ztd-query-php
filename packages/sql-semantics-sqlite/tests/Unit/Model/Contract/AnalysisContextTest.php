@@ -146,4 +146,20 @@ final class AnalysisContextTest extends TestCase
         self::assertFalse($context->knowsConstraintIndexes(new Name('TEMP')));
         self::assertFalse($context->knowsConstraintIndexes(null));
     }
+
+    public function testTriggersAtFindsEveryMatchingDeclarationButOnlyInTheSelectedSchema(): void
+    {
+        $context = (new Semantics())->context([
+            'CREATE TABLE watched (id)',
+            'CREATE TRIGGER main.audit AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END',
+            'CREATE TEMP TRIGGER audit AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END',
+        ]);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+        $matches = $context->triggersAt(new Name('AUDIT'), new Name('TEMP'));
+
+        self::assertCount(1, $matches);
+        self::assertSame('temp', $matches[0]->schema->value);
+        self::assertSame('main', $matches[0]->watchedSchema->value);
+        self::assertSame([], $context->triggersAt(new Name('absent'), new Name('main')));
+    }
 }

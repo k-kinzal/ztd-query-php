@@ -567,6 +567,23 @@ if ($dialect === 'sqlite') {
         $properties['Schema\\Trigger\\' . $role] = $methods['Schema\\Trigger\\' . $role] = [];
     }
     $roots[] = 'Schema\\Trigger\\CreateTrigger';
+    $properties['Schema\\Trigger\\DropTrigger'] = [
+        'target' => ['Schema\\Trigger\\Removal\\MissingTrigger', 'Schema\\Trigger\\Removal\\TriggerReference'], 'ifExists' => ['bool'],
+    ];
+    $properties['Schema\\Trigger\\Removal\\TriggerReference'] = [
+        'schema' => ['Identifier'], 'name' => ['Identifier'], 'watchedSchema' => ['Identifier'], 'watchedName' => ['Identifier'],
+    ];
+    $properties['Schema\\Trigger\\Removal\\MissingTrigger'] = [
+        'name' => ['Identifier'], 'verification' => ['Schema\\Trigger\\Removal\\TriggerVerification'], 'schema' => ['?Identifier'],
+    ];
+    $properties['Schema\\Trigger\\Removal\\TriggerVerification'] = $methods['Schema\\Trigger\\Removal\\TriggerVerification'] = [];
+    $enumCases['Schema\\Trigger\\Removal\\TriggerVerification'] = [
+        'SearchPath' => 'search-path', 'KnownSchema' => 'known-schema', 'UnknownSchema' => 'unknown-schema',
+    ];
+    $methods['Schema\\Trigger\\DropTrigger'] = $methods['Select'];
+    $methods['Schema\\Trigger\\Removal\\TriggerReference'] = $methods['Schema\\Trigger\\Removal\\MissingTrigger'] = ['__construct', 'quoted'];
+    $roots[] = 'Schema\\Trigger\\DropTrigger';
+    $internal[] = 'Schema\\Trigger\\Binding\\DropTriggerLowering';
     $internal[] = 'Schema\\DefinitionLowering';
     array_push($internal, 'Schema\\Trigger\\TriggerSql', 'Schema\\Trigger\\TriggerChecks',
         'Schema\\Trigger\\Binding\\TriggerLowering', 'Schema\\Trigger\\Binding\\TriggerStepLowering', 'Schema\\Trigger\\Binding\\TriggerOperands');
@@ -1347,15 +1364,16 @@ try {
         'sqlite' => [
             ['sqlite-create-index-binding-v2.json', '518f25e19be787f59726f4d9783d029c5a77bc6c5b8bb97103aeebbba3c7fd69', 'Index binding'],
             ['sqlite-index-expression-binding-v1.json', '0f51026989e87bb830f5a9fac584794e318c410fcc85744079e38839e8e7a255', 'Native index expression binding'],
-            ['sqlite-drop-column-binding-v5.json', '84c88c4604e98b0312cb9e8fff9414a167abd363010ce5393fb24b70365f92fd', 'Column removal binding'],
-            ['sqlite-drop-index-binding-v5.json', '40b2f91eb574a7cc31008ff4267cf1a7207485113be2d321137a797d5ab16bfd', 'Index removal binding'],
-            ['sqlite-constraint-index-binding-v3.json', '210b07c9a80932ca1df2c0010e38ff873c892eadf2dd8da46d1850fb88687848', 'Constraint index binding'],
-            ['sqlite-reindex-binding-v4.json', '1c3281dfe3c38103a40a60adb4895906058b37df832e214e692152de49f289c5', 'Reindex binding'],
-            ['sqlite-analyze-statistics-binding-v4.json', '12a5200663460d1e044ad0f0befc7c580ca8da0dfd0d678bf4c9dea146075e1e', 'Analyze statistics binding'],
-            ['sqlite-flag-pragmas-binding-v3.json', '22bc56b01907c3b3a4305b9b81c833d70aa1dfc9617d945ecb0f2d56641d9649', 'Flag pragma binding'],
-            ['sqlite-folded-binding-sources-v10.json', 'b6fd88b517829551074b5b575b5d907988c378395fcd29568960fa6bcc3750db', 'Folded binding'],
+            ['sqlite-drop-column-binding-v6.json', 'af0239a7ec580713e889f6568ecff825d6a0c1527d0cd4383e7040162a2fa55a', 'Column removal binding'],
+            ['sqlite-drop-index-binding-v6.json', 'c2fbfe1a46cf1d4efacaadb803e9cdccdaf75aa0401f97920301f6531c3fff06', 'Index removal binding'],
+            ['sqlite-constraint-index-binding-v4.json', '22d8e3b6a6bd80dc8e3bc5d6fbe57c360a90a80cc48fc4336819d6cb71b9f6a9', 'Constraint index binding'],
+            ['sqlite-reindex-binding-v5.json', '2841be5618d282174f012bdc1c96eaccac5dfd64a65ee9882762c7bbdb48c039', 'Reindex binding'],
+            ['sqlite-analyze-statistics-binding-v5.json', 'e34dd9b081e55a22b68bed8d9f25b97ab5a42dd3d0101707d9b201f6bea10557', 'Analyze statistics binding'],
+            ['sqlite-flag-pragmas-binding-v4.json', '7947b1414c41c211ca79ae102b8e576afdc7b91effcf5539f6aa7dc18c1ddb61', 'Flag pragma binding'],
+            ['sqlite-folded-binding-sources-v11.json', 'c0878a2e8b2d4c0f27659feba880e10cccd398f4d13d2ba4063d630ee495003d', 'Folded binding'],
             ['sqlite-connection-commands-binding-v1.json', '4e048dce7881dd175ff0be0b027010a69e1b8c4d495e09f4d7329bfb7073aed9', 'Connection operand binding'],
-            ['sqlite-audit-triggers-binding-v1.json', '3c0e69cef67978466c908f54323a05a012220dbf0fbda31d1962cdfe8dea3f59', 'SQLite trigger binding'],
+            ['sqlite-audit-triggers-binding-v2.json', '610ce46ce341b884b7103cb555ab3f8f7e2f7a223fce0e37c1aab0df12e2a0e4', 'SQLite trigger binding'],
+            ['sqlite-drop-triggers-binding-v1.json', '36b7fa54327fde21b52ae3e4c733a8b7eadb24747f29319ad83844b15e6c0453', 'SQLite trigger removal binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1557,6 +1575,7 @@ try {
                 'Schema\\Alter\\DropColumnLowering' => 'Schema\\Alter\\DropColumn',
                 'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
+                'Schema\\Trigger\\Binding\\DropTriggerLowering' => 'Schema\\Trigger\\DropTrigger',
                 'Maintenance\\ReindexLowering' => 'Maintenance\\Reindex',
                 'Maintenance\\AnalyzeLowering' => 'Maintenance\\Analyze',
                 'Maintenance\\FlagPragmaLowering' => 'Maintenance\\FlagPragma',
@@ -1783,7 +1802,7 @@ try {
                 $methodsByName = array_values(array_filter($class->getMethods(), static fn ($method) => $method->isPublic()));
                 requireShape(
                     count($methodsByName) === 1 && $methodsByName[0]->name->toString() === 'lower'
-                    && types($methodsByName[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\DropView', 'Schema\\Index\\DropIndex'],
+                    && types($methodsByName[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\DropView', 'Schema\\Index\\DropIndex', 'Schema\\Trigger\\DropTrigger'],
                     'Unexpected SQLite relation removal publication shape'
                 );
             }

@@ -27,8 +27,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * context does not declare is a diagnostic, unless IF EXISTS is written, in
  * which case it is the resolution AbsentRelation. `DROP TABLE` of a declared
  * view and `DROP VIEW` of a declared table are diagnostics, with or without
- * IF EXISTS (SQLITE-RELATION-KIND-001). Index removal is resolved at the
- * complete IR boundary from the catalog's explicit index declarations.
+ * IF EXISTS (SQLITE-RELATION-KIND-001). Index and trigger removals resolve
+ * at the complete IR boundary using the catalog's explicit declarations.
  * Source: https://sqlite.org/lang_droptable.html, https://sqlite.org/lang_dropview.html,
  * https://sqlite.org/lang_dropindex.html, https://sqlite.org/lang_droptrigger.html.
  * Status: Implemented.
