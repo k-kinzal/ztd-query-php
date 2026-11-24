@@ -40,7 +40,8 @@ final class TriggerStepLoweringTest extends TestCase
         $statement = $result->program[0];
         self::assertInstanceOf(TriggerInsert::class, $statement);
         self::assertCount(2, $statement->rows);
-        self::assertSame([1, 0], $statement->rows[1]->columns());
+        self::assertSame(1, $statement->rows[1]->fields[0]->column);
+        self::assertSame(0, $statement->rows[1]->fields[1]->column);
         self::assertStringContainsString('INSERT OR FAIL INTO "audit" ("note", "source") VALUES (NULL, NEW."id"), (NULL, 4);', $result->toString());
     }
 }
