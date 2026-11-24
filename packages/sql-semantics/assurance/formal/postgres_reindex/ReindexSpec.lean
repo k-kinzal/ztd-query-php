@@ -37,8 +37,11 @@ inductive Head where
   deriving DecidableEq, Repr
 
 def Head.binary : Head → Bool
-  | .index .. | .table .. => true
-  | _ => false
+  | .index _ _ => true
+  | .table _ _ => true
+  | .schema _ _ => false
+  | .database _ _ => false
+  | .system _ => false
 
 def optionPrefix (verbose : Bool) : Text :=
   if verbose then ['(', 'V', 'E', 'R', 'B', 'O', 'S', 'E', ')', ' '] else []
@@ -66,9 +69,13 @@ def cut : Text → Text → Option Text
   | _ :: _, [] => none
   | x :: xs, y :: ys => if x = y then cut xs ys else none
 
-def incompatible : Text → Text → Bool
-  | x :: xs, y :: ys => if x = y then incompatible xs ys else true
-  | _, _ => false
+def incompatible (left right : Text) : Bool :=
+  match left with
+  | [] => false
+  | x :: xs =>
+    match right with
+    | [] => false
+    | y :: ys => if x = y then incompatible xs ys else true
 
 def consumeHead (text : Text) : List (Head × Text) :=
   choices.filterMap fun head => (cut (opening head) text).map (head, ·)
@@ -82,24 +89,29 @@ def putTarget : Target → Text
   | .one name => putName name
   | .two schema name => putName schema ++ '.' :: putName name
 
+def closedName : Text × Text → Option Text
+  | (name, []) => some name
+  | (_, _ :: _) => none
+
 def payload (head : Head) (text : Text) : Option Target := do
   let (first, tail) ← scan text
   if head.binary then
     match tail with
-    | '.' :: rest =>
-      match getName rest with
-      | some (second, []) => some (.two first second)
-      | _ => none
-    | _ => none
+    | [] => none
+    | separator :: rest =>
+      if separator = '.' then
+        (getName rest >>= closedName).map (Target.two first)
+      else none
   else
-    match tail with
-    | [] => some (.one first)
-    | _ => none
+    (closedName (first, tail)).map Target.one
 
 def identify (text : Text) : Option (Head × Target) :=
   match consumeHead text with
-  | [(head, rest)] => (payload head rest).map (head, ·)
-  | _ => none
+  | [] => none
+  | entry :: remaining =>
+    match remaining with
+    | [] => (payload entry.1 entry.2).map (entry.1, ·)
+    | _ :: _ => none
 
 def encode (head : Head) (target : Target) : Text := header head ++ putTarget target
 
