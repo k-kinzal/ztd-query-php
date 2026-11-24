@@ -77,7 +77,7 @@ def replay(path, report, specification, domain=run_server_join):
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))
     require(set(seen) == domain.finite_ids(engine, specification, tag) and set(seen.values()) == {1}, f"server-{label}-replay-incomplete")
     if observe_rejection is not None:
-        require(set(refusals) == domain.rejected_finite_ids(specification, tag) and set(refusals.values()) == {1},
+        require(refusals == Counter(domain.rejected_finite_ids(specification, tag)),
                 f"server-{label}-replay-negative-finite-incomplete", list(refusals.items()))
         require(canonical(sorted(refusals)) == canonical(report["rejectedFiniteIds"]), f"server-{label}-replay-negative-finite-receipt")
     if observe_direct is not None:

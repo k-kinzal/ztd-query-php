@@ -220,7 +220,7 @@ def execute(args, specification, tag, worker, db, domain=None):
             require(domain.required_forms(args.engine, tag) <= forms.keys(), f"server-{label}-exploration-incomplete",
                     sorted(domain.required_forms(args.engine, tag) - forms.keys()))
             if observe_rejection is not None:
-                require(set(refusals) == domain.rejected_finite_ids(specification, tag) and set(refusals.values()) == {1},
+                require(refusals == Counter(domain.rejected_finite_ids(specification, tag)),
                         f"server-{label}-negative-finite-incomplete", list(refusals.items()))
             execution = ledger.verify()
             require(execution["rejected"] == negative_count(specification, args.engine, tag), f"server-{label}-rejections-incomplete")
