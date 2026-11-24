@@ -9,14 +9,14 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * The absolute SQLite relation whose indexes will be rebuilt.
+ * The absolute SQLite relation selected by a maintenance statement.
  *
  * @visibility public
  * @example Addressing a table in the temporary schema
- *     $target = new \SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexRelation(new \SqlSemantics\Platform\Sqlite\Ir\Identifier('temp'), new \SqlSemantics\Platform\Sqlite\Ir\Identifier('entries'));
+ *     $target = new \SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget(new \SqlSemantics\Platform\Sqlite\Ir\Identifier('temp'), new \SqlSemantics\Platform\Sqlite\Ir\Identifier('entries'));
  *     $target->quoted() // => '"temp"."entries"'
  */
-final class ReindexRelation
+final class RelationTarget
 {
     use Snapshot;
 
@@ -31,7 +31,7 @@ final class ReindexRelation
     }
 
     /**
-     * Emits the exact schema and relation for native index rebuilding.
+     * Emits the exact schema and relation for a native statement.
      */
     public function quoted(): string
     {

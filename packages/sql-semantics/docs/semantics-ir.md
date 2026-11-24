@@ -68,6 +68,7 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 - SQLite index creation records the owning schema, bound ordered keys and optional partial predicate. A CAST used in an index may carry a checked native type name. Indexed binary IFNULL preserves its builtin identity. Both are observable when a query forces a specific index.
 - SQLite index removal selects the index and owner in an absolute schema. An optional absence keeps its exact qualification scope so emitted SQL verifies the same native schemas.
 - SQLite index rebuilding distinguishes all indexes, one builtin collation, one resolved relation, and one resolved index. A bound index includes its absolute schema and owner.
+- SQLite statistics collection distinguishes the global persistent scope, a selected schema, an absolute relation, and an absolute index. Its schema and index priority follow native ANALYZE.
 - BEGIN with its effective lock mode, COMMIT, ROLLBACK, SAVEPOINT, RELEASE and ROLLBACK TO. The value identifies the transition and carries the decoded checkpoint label when needed. The same connection is responsible for its transaction stack and lock state. RELEASE and ROLLBACK TO address the most recent matching checkpoint at execution.
 
 `Semantics::analyze()` returns the complete value. Handle `SqlSemantics\AnalysisException` for malformed, unresolved or unsupported input. `analyzeAll()` applies the same contract to each statement against the same explicit context.

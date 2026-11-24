@@ -9,15 +9,15 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
-use SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexRelation;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget;
 
-#[CoversClass(ReindexRelation::class)]
+#[CoversClass(RelationTarget::class)]
 #[Small]
-final class ReindexRelationTest extends TestCase
+final class RelationTargetTest extends TestCase
 {
     public function testQuotedUsesAnAbsoluteEmptyNamedAttachment(): void
     {
-        $relation = new ReindexRelation(new Identifier(''), new Identifier('quoted "view"'), ExternalRelationKind::View);
+        $relation = new RelationTarget(new Identifier(''), new Identifier('quoted "view"'), ExternalRelationKind::View);
 
         self::assertSame('""."quoted ""view"""', $relation->quoted());
         self::assertSame(ExternalRelationKind::View, $relation->kind);

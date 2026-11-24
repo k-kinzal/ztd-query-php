@@ -15,8 +15,8 @@ from sqlite_reindex_cases import (
 )
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-reindex-v1.json"
-CONTRACT = "bb8192ba6f1faa8174bcb11ab61280ee90493f319f82672a6699e8b4522a996d"
+CONTRACT_NAME = "sqlite-reindex-v2.json"
+CONTRACT = "a8f6e5b5455eefec2b7940c123aeddaf080afb76be02467465171866221178fc"
 FIXTURE = ""
 REINDEX = 27
 COLLATION = c.CFUNCTYPE(c.c_int, c.c_void_p, c.c_int, c.c_void_p, c.c_int, c.c_void_p)
@@ -230,23 +230,23 @@ def check_faults(args, db, runner=check_render_faults):
     named = case("unqualified-table-priority")
     temp = case("temp-shadow-index")
     nocase = case("nocase")
-    resolve = "return new Reindex($relation ?? $this->index($context, $target->name, $scopes));"
+    resolve = "$lookup->relation($context, $target, $scopes) ?? $lookup->index($context, $target, $scopes)"
+    missing = "Check::input($selected !== null, 'REINDEX requires a resolved collation, relation or index.');"
     return runner(args, db, [
         RenderFault("ignore-builtin-before-relation", lowering, "if ($target->schema === null) {", "if (false) {",
                     nocase, "sqlite-reindex-bound-target", analysis(nocase, "REINDEX NOCASE")),
         RenderFault("rebuild-index-before-resolving-relation", lowering, resolve,
-                    "return new Reindex($this->index($context, $target->name, $scopes));",
+                    "$lookup->index($context, $target, $scopes)",
                     named, "sqlite-reindex-bound-target", analysis(named, "REINDEX shadow")),
-        RenderFault("lose-reindex-schema", root + "ReindexRelation.php", "$this->schema->quoted() . '.' . ", "",
+        RenderFault("lose-reindex-schema", root + "RelationTarget.php", "$this->schema->quoted() . '.' . ", "",
                     case("main-table"), "meaning-mismatch"),
         RenderFault("rebuild-all-from-named-target", rebuild, "'REINDEX ' . $this->target->quoted()", "'REINDEX'",
                     case("main-table"), "meaning-mismatch"),
-        RenderFault("rebuild-the-sibling-index", root + "ReindexIndex.php", "$this->name->quoted()", "'rev_temp'",
+        RenderFault("rebuild-the-sibling-index", root + "IndexTarget.php", "$this->name->quoted()", "'rev_temp'",
                     temp, "meaning-mismatch"),
-        RenderFault("reindex-unresolved-as-all", lowering, resolve,
-                    "try { " + resolve + " } catch (InvalidConstruction) { return new Reindex(); }",
+        RenderFault("reindex-unresolved-as-all", lowering, missing, "",
                     {**named, "probe": "reject-unknown"}, "sqlite-reindex-unknown-became-value", analysis(named, "REINDEX unknown")),
-        RenderFault("lose-resolved-index-owner", lowering, "new Identifier($target->table->value)",
+        RenderFault("lose-resolved-index-owner", root + "MaintenanceLookup.php", "new Identifier($target->table->value)",
                     "new Identifier($target->name->value)", temp, "sqlite-reindex-bound-target", analysis(temp, "REINDEX temp.shadow")),
     ], fault_probe)
 

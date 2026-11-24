@@ -32,6 +32,8 @@ For \`DROP INDEX\`, include the indexed table and its \`CREATE INDEX\` declarati
 
 \`REINDEX\` rebuilds all indexes, indexes that use one builtin collation, all indexes of a declared relation, or one declared index. Unqualified names match builtin collations first, then relations, then indexes. A qualified name bypasses collation lookup. The returned \`Reindex\` keeps the selected absolute relation or index and its owner.
 
+\`ANALYZE\` collects SQLite planner statistics. With no selector it skips the temporary schema. An unqualified name selects a known schema first, then an index, then a relation. \`Analyze\` retains that selected role and shares the absolute relation and index coordinates with \`Reindex\`.
+
 A single INNER, CROSS, LEFT, RIGHT, or FULL join between two declared base tables can use USING or NATURAL. The IR resolves the comparison operands in left-to-right order and keeps both inputs addressable by qualified names. An unqualified merged name selects the right slot for RIGHT and the left slot for INNER, CROSS, and LEFT. FULL combines the left and right slots, keeping the first non-NULL value. SQLite also resolves USING and NATURAL in longer INNER, CROSS, and LEFT chains. Each equality refers to its actual earlier input, and each step retains its own right occurrence. The rendered SELECT uses explicit ON and projection clauses.
 
 INSERT and UPDATE keep their explicit conflict strategy or inherit the target schema's policy. REPLACE is an INSERT with an explicit REPLACE strategy. Execution uses the target's constraint and trigger definitions. INSERT with VALUES or SELECT can record a targetless ON CONFLICT DO NOTHING action.

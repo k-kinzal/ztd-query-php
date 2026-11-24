@@ -24,7 +24,7 @@ final class Reindex implements SemanticsIR
     /**
      * Fixes the selector. The null case selects all native indexes.
      */
-    public function __construct(public readonly Collation|ReindexRelation|ReindexIndex|null $target = null)
+    public function __construct(public readonly Collation|RelationTarget|IndexTarget|null $target = null)
     {
     }
 
@@ -44,7 +44,7 @@ final class Reindex implements SemanticsIR
         return match (true) {
             $this->target === null => 'REINDEX',
             $this->target instanceof Collation => 'REINDEX ' . (new Identifier($this->target->value))->quoted(),
-            $this->target instanceof ReindexRelation, $this->target instanceof ReindexIndex => 'REINDEX ' . $this->target->quoted(),
+            $this->target instanceof RelationTarget, $this->target instanceof IndexTarget => 'REINDEX ' . $this->target->quoted(),
         };
     }
 }

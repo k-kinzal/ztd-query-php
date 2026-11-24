@@ -8,14 +8,14 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * The absolute SQLite index and owner selected for a rebuild.
+ * The absolute SQLite index and owner selected by a maintenance statement.
  *
  * @visibility public
  * @example Selecting an automatic constraint index
- *     $target = new \SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexIndex(new \SqlSemantics\Platform\Sqlite\Ir\Identifier('main'), new \SqlSemantics\Platform\Sqlite\Ir\Identifier('sqlite_autoindex_items_1'), new \SqlSemantics\Platform\Sqlite\Ir\Identifier('items'));
+ *     $target = new \SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget(new \SqlSemantics\Platform\Sqlite\Ir\Identifier('main'), new \SqlSemantics\Platform\Sqlite\Ir\Identifier('sqlite_autoindex_items_1'), new \SqlSemantics\Platform\Sqlite\Ir\Identifier('items'));
  *     $target->quoted() // => '"main"."sqlite_autoindex_items_1"'
  */
-final class ReindexIndex
+final class IndexTarget
 {
     use Snapshot;
 
@@ -30,7 +30,7 @@ final class ReindexIndex
     }
 
     /**
-     * Emits the absolute index name for a rebuild.
+     * Emits the absolute index name for a native statement.
      */
     public function quoted(): string
     {

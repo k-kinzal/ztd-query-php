@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v91.json"
-CONTRACT = "5787985e53db7a035f558663cf63bfc4718d7214eba536efcd5259a83c5ee46a"
+CONTRACT_NAME = "release-layout-v92.json"
+CONTRACT = "a27f963f0f01c02f1b55c7da8fb8571c4803a79007c8a9816b796718d4e871c0"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,11 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Analyze"):
+            require(item.get("analyzeStatistics") == [
+                "temp", "names", "accounts", "extension", 'ANALYZE "extension"', "view",
+                'ANALYZE "main"."stats_view"', 'ANALYZE "temp"."names"',
+            ] and item["sql"] == 'ANALYZE "temp"."names"', "installed-sqlite-analyze-statistics-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Reindex"):
             require(item.get("reindex") == [
                 "main", "names", "table", "NOCASE", 'REINDEX "NOCASE"', "accounts",

@@ -32,9 +32,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex;
-use SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexIndex;
-use SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexRelation;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
@@ -334,7 +335,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -799,29 +800,30 @@ function observeCreateIndex(CreateIndex $value, bool $render): array
     ];
 }
 
-function directReindex(array $input): Reindex
+function maintenanceTarget(array $role): Identifier|Collation|RelationTarget|IndexTarget|null
 {
-    $role = $input['target'];
-    return new Reindex(match ($role[0]) {
+    return match ($role[0]) {
         'all' => null,
+        'schema' => new Identifier($role[1]),
         'collation' => Collation::from($role[1]),
-        'relation' => new ReindexRelation(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
-        'index' => new ReindexIndex(new Identifier($role[1]), new Identifier($role[2]), new Identifier($role[3])),
-    });
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+        'index' => new IndexTarget(new Identifier($role[1]), new Identifier($role[2]), new Identifier($role[3])),
+    };
 }
 
-function observeReindex(Reindex $value): array
+function observeMaintenance(Reindex|Analyze $value): array
 {
     $target = $value->target;
     return [
         'status' => 'constructed',
-        'operation' => 'reindex',
+        'operation' => $value instanceof Analyze ? 'analyze-statistics' : 'reindex',
         'profile' => $value->profileId(),
         'target' => match (true) {
             $target === null => ['all'],
+            $target instanceof Identifier => ['schema', $target->value],
             $target instanceof Collation => ['collation', $target->value],
-            $target instanceof ReindexRelation => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
-            $target instanceof ReindexIndex => ['index', $target->schema->value, $target->name->value, $target->table->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+            $target instanceof IndexTarget => ['index', $target->schema->value, $target->name->value, $target->table->value],
         },
         'sql' => $value->toString(),
     ];
@@ -941,7 +943,8 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
             ($input['operation'] ?? null) === 'create-index' => directCreateIndex($input),
-            ($input['operation'] ?? null) === 'reindex' => directReindex($input),
+            ($input['operation'] ?? null) === 'reindex' => new Reindex(maintenanceTarget($input['target'])),
+            ($input['operation'] ?? null) === 'analyze-statistics' => new Analyze(maintenanceTarget($input['target'])),
             ($input['operation'] ?? null) === 'drop-index' => directDropIndex($input),
             ($input['operation'] ?? null) === 'drop-column' => directDropColumn($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
@@ -962,8 +965,8 @@ function runCase(array $input): array
     if ($value instanceof CreateIndex) {
         return observeCreateIndex($value, ($input['probe'] ?? null) !== 'create-index-construction');
     }
-    if ($value instanceof Reindex) {
-        return observeReindex($value);
+    if ($value instanceof Reindex || $value instanceof Analyze) {
+        return observeMaintenance($value);
     }
     if ($value instanceof DropIndex) {
         return observeDropIndex($value, ($input['probe'] ?? null) !== 'drop-index-construction');

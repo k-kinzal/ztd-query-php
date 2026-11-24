@@ -12,6 +12,7 @@ import run_sqlite_drop_column as drop_column
 import run_sqlite_drop_index as drop_index
 import run_sqlite_constraint_index_names as constraint_indexes
 import run_sqlite_reindex as reindex
+import run_sqlite_analyze_statistics as analyze_statistics
 import run_sqlite_create_index as create_index
 import run_sqlite_index_expression_spelling as index_spelling
 import run_sqlite_appended_checks as appended_checks
@@ -126,6 +127,7 @@ DOMAINS = {
     drop_index.CONTRACT_NAME: (drop_index, drop_index.FIXTURE),
     constraint_indexes.CONTRACT_NAME: (constraint_indexes, constraint_indexes.FIXTURE),
     reindex.CONTRACT_NAME: (reindex, reindex.FIXTURE),
+    analyze_statistics.CONTRACT_NAME: (analyze_statistics, analyze_statistics.FIXTURE),
     create_index.CONTRACT_NAME: (create_index, create_index.FIXTURE),
     index_spelling.CONTRACT_NAME: (index_spelling, index_spelling.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
@@ -178,6 +180,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                drop_index: drop_index.DropIndexDatabase,
                constraint_indexes: constraint_indexes.ConstraintIndexDatabase,
                reindex: reindex.ReindexDatabase,
+               analyze_statistics: analyze_statistics.StatisticsDatabase,
                create_index: create_index.IndexDatabase,
                index_spelling: index_spelling.SpellingIndexDatabase,
                appended_checks: appended_checks.CheckedAdditionDatabase,

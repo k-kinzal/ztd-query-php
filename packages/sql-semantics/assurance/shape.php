@@ -418,12 +418,16 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Index\\IndexReference'] = $methods['Schema\\Index\\MissingIndex'] = ['__construct', 'quoted'];
     $roots[] = 'Schema\\Index\\DropIndex';
     $internal[] = 'Schema\\Index\\DropIndexLowering';
-    $properties['Maintenance\\Reindex'] = ['target' => ['Collation', 'Maintenance\\ReindexIndex', 'Maintenance\\ReindexRelation', 'null']];
-    $properties['Maintenance\\ReindexRelation'] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'kind' => ['From\\ExternalRelationKind']];
-    $properties['Maintenance\\ReindexIndex'] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'table' => ['Identifier']];
+    $properties['Maintenance\\Reindex'] = ['target' => ['Collation', 'Maintenance\\IndexTarget', 'Maintenance\\RelationTarget', 'null']];
+    $properties['Maintenance\\RelationTarget'] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'kind' => ['From\\ExternalRelationKind']];
+    $properties['Maintenance\\IndexTarget'] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'table' => ['Identifier']];
     $methods['Maintenance\\Reindex'] = $methods['Select'];
-    $methods['Maintenance\\ReindexRelation'] = $methods['Maintenance\\ReindexIndex'] = ['__construct', 'quoted'];
+    $methods['Maintenance\\RelationTarget'] = $methods['Maintenance\\IndexTarget'] = ['__construct', 'quoted'];
     $roots[] = 'Maintenance\\Reindex';
+    $properties['Maintenance\\Analyze'] = ['target' => ['Identifier', 'Maintenance\\IndexTarget', 'Maintenance\\RelationTarget', 'null']];
+    $methods['Maintenance\\Analyze'] = $methods['Select'];
+    $roots[] = 'Maintenance\\Analyze';
+    array_push($internal, 'Maintenance\\AnalyzeLowering', 'Maintenance\\MaintenanceLookup');
     $internal[] = 'Maintenance\\ReindexLowering';
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
@@ -1091,6 +1095,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterAddColumn => (new \\' . $prefix . 'Schema\\Alter\\AddColumnLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterDropColumn => (new \\' . $prefix . 'Schema\\Alter\\DropColumnLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Analyze => (new \\' . $prefix . 'Maintenance\\AnalyzeLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Reindex => (new \\' . $prefix . 'Maintenance\\ReindexLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
@@ -1154,6 +1159,7 @@ try {
             ['sqlite-drop-index-binding-v3.json', 'e96dccf114b72f782c4c7eb8bf108629c442393a73689c008eb1fd09bce55d96', 'Index removal binding'],
             ['sqlite-constraint-index-binding-v1.json', '792ea111ed9e254c8f883e33ee6b33b2afa7d9fdd2317575e15864ae935ae63e', 'Constraint index binding'],
             ['sqlite-reindex-binding-v1.json', 'e548d07c612d205fed69369e3d9223a30f653ae5b1edb4d5abee16c4406ec217', 'Reindex binding'],
+            ['sqlite-analyze-statistics-binding-v1.json', '30776121cd17e68e35e527a4ecbb8729e8c053f024a18fe964d6b5c16cfc21b6', 'Analyze statistics binding'],
             ['sqlite-folded-binding-sources-v8.json', '96f3f69296855ca2cf8b6047b4026cf8d9c6688c4dd94a8cb86139f5e20ef350', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
@@ -1333,10 +1339,18 @@ try {
                 'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
                 'Maintenance\\ReindexLowering' => 'Maintenance\\Reindex',
+                'Maintenance\\AnalyzeLowering' => 'Maintenance\\Analyze',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };
+            if ($short === 'Maintenance\\MaintenanceLookup') {
+                $public = array_values(array_map(
+                    static fn ($method) => $method->name->toString(),
+                    array_filter($class->getMethods(), static fn ($method) => $method->isPublic()),
+                ));
+                requireShape($public === ['scopes', 'relation', 'index', 'path', 'schema'], 'Unexpected SQLite maintenance lookup route');
+            }
             if ($short === 'Schema\\Alter\\AddColumnLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
@@ -1433,7 +1447,6 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
-                    'Maintenance\\ReindexLowering' => ['lower', 'scopes', 'relation', 'index'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };

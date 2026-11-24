@@ -541,6 +541,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Alter\\DropColumn'] = 'ALTER TABLE removable DROP COLUMN OLD';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX tag';
         $queries['Maintenance\\Reindex'] = 'REINDEX names';
+        $queries['Maintenance\\Analyze'] = 'ANALYZE names';
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
@@ -585,6 +586,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $semantics->context([
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Analyze') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'extension'),
+            );
+            $activeContext = $configured->context([
+                'CREATE TABLE main.names (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE main.extension (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE temp.accounts (id INT PRIMARY KEY, code TEXT)',
+                'CREATE INDEX temp.names ON accounts(code)',
+                'CREATE VIEW main.stats_view AS SELECT id FROM main.names',
             ]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Reindex') {
@@ -1269,16 +1282,31 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
         }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Analyze') {
+            $index = $result->target;
+            $schema = $semantics->analyze('ANALYZE EXTENSION', $activeContext);
+            $view = $semantics->analyze('ANALYZE main.stats_view', $activeContext);
+            if (!$index instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
+                || !$schema->target instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$view->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget) {
+                throw new RuntimeException('The installed statistics operation lost its resolved target role.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze(
+                new SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget($index->schema, $index->name, $index->table),
+            );
+            $details['analyzeStatistics'] = [$index->schema->value, $index->name->value, $index->table->value,
+                $schema->target->value, $schema->toString(), $view->target->kind->value, $view->toString(), $rebuilt->toString()];
+        }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Reindex') {
             $relation = $result->target;
             $builtin = $semantics->analyze('REINDEX NoCase', $activeContext);
             $index = $semantics->analyze('REINDEX temp.names', $activeContext);
-            if (!$relation instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexRelation
-                || !$index->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexIndex
+            if (!$relation instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$index->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
                 || !$builtin->target instanceof SqlSemantics\Platform\Sqlite\Ir\Collation) {
                 throw new RuntimeException('The installed rebuild did not retain native namespace precedence.');
             }
-            $bound = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\ReindexIndex(
+            $bound = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget(
                 $index->target->schema, $index->target->name, $index->target->table,
             );
             $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex($bound);
