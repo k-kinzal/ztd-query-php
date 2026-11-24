@@ -1,0 +1,91 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-database-2",
+  "approval": "pending-human-review",
+  "revises": "postgres-reindex-database-v1.json",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings and native parameters. The explicitly declared current database matches the fixture connection. Stock server catalog, user tables, materialized views, local temporary tables and a possible exclusion index participate.",
+  "scope": "REINDEX DATABASE and REINDEX SYSTEM on the exact current database with optional written name and ordered Boolean concurrency options. Native results distinguish the selected physical sets and the top-level transaction requirement.",
+  "additionalPublicRoots": ["Schema/Index/Scope/ReindexDatabase", "Schema/Index/Scope/ReindexSystemCatalogs"],
+  "constructors": {
+    "Schema/Index/Scope/ReindexDatabase": {
+      "role": "Rebuild eligible application indexes of the exact selected database.",
+      "structure": "One decoded database identifier, effective IndexRebuildMode and native grammar release.",
+      "conditions": "The analyzer binds the current database from the explicit construction context. A written name must equal it. Standard and requested concurrent modes are legal. Native execution requires a top-level command.",
+      "meaning": "Replace or rebuild eligible indexes of nonpinned owner relations and their TOAST storage. Excluded constraint indexes stay untouched during a concurrent database rebuild. Own temporary indexes use the standard physical transition.",
+      "sql": "Emit REINDEX DATABASE, optional CONCURRENTLY and the exact quoted database name.",
+      "externalInterpretation": "Same selected database, consistent native catalog and session identity, appropriate DB owner privileges and an unchanged declared profile.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Schema/Index/Scope/ReindexSystem": {
+      "type": "Schema/Index/Scope/ReindexSystemCatalogs",
+      "role": "Rebuild the pinned system catalog indexes of the exact selected local database.",
+      "structure": "One decoded database identifier and native grammar release.",
+      "conditions": "The analyzer settles the current database and only admits the native standard request. Native execution requires a top-level command.",
+      "meaning": "Rebuild eligible pinned catalog indexes and auxiliary storage, including the shared stock catalogs. Preserve user data, ordinary indexes and information-schema indexes.",
+      "sql": "Emit REINDEX SYSTEM and the exact quoted database name.",
+      "externalInterpretation": "Same current database and pinned system catalog, with permissions for the observed shared catalogs.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Schema/Index/IndexRebuildMode"],
+  "rules": [
+    "A current database is supplied to name binding. An implicit spelling binds that reference. An explicit spelling must name that same database.",
+    "Both operation scopes are prohibited inside a transaction block. A concurrent SYSTEM request and a written different database yield native 0A000 when executed outside a transaction.",
+    "Pinned catalog ownership follows the stock FirstUnpinnedObjectId boundary of 12000. Information-schema owners are unpinned even when created during initdb.",
+    "An eligible standard physical rebuild retains OID and changes its storage file. Concurrent DATABASE can replace both for persistent application indexes. Temporary indexes retain their OID. Each logical catalog identity and ordinary row is preserved.",
+    "An exclusion index outside the concurrent path has its own warning and remains untouched. The same index is rebuilt under the standard application mode."
+  ],
+  "observations": [
+    "Resolved database name, concrete operation scope, concurrent mode, grammar release, original and rendered SQL.",
+    "Exact native SQLSTATE, command, ordered warning messages and transaction state.",
+    "All pinned and nonpinned eligible catalog index identities in the fixture, at least one shared system index, same-session temporary and TOAST storage, query rows and typed headings."
+  ],
+  "finite": {
+    "selectors": ["ordinary-database", "concurrent-database", "system-catalogs"],
+    "spellings": ["implicit", "explicit"],
+    "transactions": [false, true],
+    "exclusion": [false, true],
+    "identity": "Consume 24 paired direct and analyzed coordinates per release. Observe the declared owner classification for every native index in the fixed fixture."
+  },
+  "exploration": {
+    "seeds": [613, 8039, 91499],
+    "casesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": [],
+    "domain": "Vary quoted database spelling, effective Boolean flags, current and shared index membership, user and temporary rows, exclusion warnings and transaction state."
+  },
+  "negative": [
+    "Implicit DATABASE without a declared current database",
+    "Explicit SYSTEM without a declared current database",
+    "Written different database under DATABASE",
+    "Written different database under SYSTEM",
+    "Concurrent SYSTEM request",
+    "Unsupported tablespace option"
+  ],
+  "faults": [
+    "Change DATABASE to SYSTEM",
+    "Change SYSTEM to DATABASE",
+    "Discard requested concurrent rebuilding",
+    "Discard the exact resolved database name"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/catalog/catalog.c",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/include/access/transam.h"
+  ],
+  "trust": [
+    "Independent stock catalog ownership and phase observer, fixed disposable engine and explicit current database, native declaration and privilege interpretation, closed constructor and renderer audits."
+  ],
+  "open": [
+    "Other-session temporary ownership, reduced privileges, output verbosity, tablespace placement and invalid index repair remain separately tracked."
+  ],
+  "calibration": {
+    "driver": "825e4ad2ea7f280444bf321e2f4024474dfa53d2ac922a494737dc08c93cf8d5",
+    "queryPack": "e493e3560a284178970aac384be4a57b76fad9d873ed102a39a7a582b40f3306",
+    "referenceComparison": "b298f43ffa157afa2b270e1287d2c5ae8113750c464d0cc78190ebe8f0f93ecf",
+    "normalized": "d5932ab5faaf12c50e60ddfdfdcc2c687aae3669bf820f9c423f3a2fe85f655c",
+    "16.6": {"stdout": "19cff04c2ea591fb6a50a8fb72da978a2a7cd800d3bf3a92d2e102da052a18c6", "stderr": "c9b6a6c76a44d0135c806bf42eb1889e734c3ffdef75614d14aa6dc8254b8d22"},
+    "17.2": {"stdout": "91d167866f741dd0f853dd22514616730f554ced4bce376bcae845dd73bf71c8", "stderr": "b9a674a6b743dfa60f5464e63caee4f72c3e38d525af549f7b13d40a28189158"}
+  }
+}
