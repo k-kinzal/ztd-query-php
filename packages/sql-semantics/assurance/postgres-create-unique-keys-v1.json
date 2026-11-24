@@ -1,0 +1,73 @@
+{
+  "revision": "SemanticsIR/postgres-create-unique-keys-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "extends": ["postgres-create-primary-key-v1.json", "postgres-primary-key-evidence-v1.json"],
+  "mode": "UTF-8, standard_conforming_strings on, native ordinary heap tables and stock builtin B-tree operator classes, with matched database collation and namespace state.",
+  "scope": "Inline and table-level ordinary UNIQUE constraints with either NULL treatment, ordered include references, optional explicit names and all three coherent timing modes. Keep physically distinct primary and unique constraints, including native redundancy elimination and transfer of explicit names. Member occupancy remains defined in the ordered CREATE SCHEMA phases.",
+  "constructors": {
+    "UniqueKey": {
+      "type": "Schema/Key/UniqueKey",
+      "role": "A native unique table constraint with independent key-slot, payload, naming, NULL comparison and timing roles.",
+      "structure": "A distinct nonempty ordered key list and an ordered payload list, at most 32 items combined. An optional explicit identifier, a two-way NULL equality policy and a three-way deferral policy.",
+      "conditions": "The parent supplies all referenced physical fields. A nullable key field remains nullable. Duplicate key column references are invalid. Included references may repeat or also be keys.",
+      "meaning": "Enforce uniqueness of the key tuple and create the corresponding B-tree and native unique constraint. NULL values distinguish tuples under the default policy. Under NULLS NOT DISTINCT, two NULL values in the same slot compare equal for uniqueness.",
+      "sql": "Use the explicit unique constraint with the ordered fields and payload, its NULL comparison and timing, and its name or native allocation policy."
+    },
+    "CreateTable": {
+      "type": "Schema/CreateTable",
+      "role": "Close all ordered key effects for the declared relation.",
+      "structure": "At most one effective primary constraint and the ordered native sequence of retained unique constraints, each with resolved local coordinates.",
+      "conditions": "Check all input operands before combining equivalent index effects. The primary policy is considered first. Compare keys and included lists in physical order and both NULL and timing policies. Among redundant constraints retain the first, transfer a later explicit name only when the retained effect is unnamed, and preserve the order of non-redundant indexes. Remaining explicit names are unique and cannot name the new table.",
+      "meaning": "Create exactly the native constraint metadata and backing index occupants. Every retained unique role keeps its payload and write-check policies. Native allocation includes the physical index attribute names including their duplicate suffixes, the table name and collision suffix in a fixed UTF-8 bytes profile.",
+      "sql": "Write the normalized primary and unique constraint list in creation order. Export the same raw catalog and declared schema effects as the admitted source constraint list."
+    }
+  },
+  "observations": [
+    "Constraint and index names, native type, exact owner relation and index identity, ordered physical key attributes and named index heading, included positions and duplicates.",
+    "Catalog type, flags for NULLS NOT DISTINCT, deferrability and initial deferral, physical table required columns, default policy, duplicate and NULL write effects, and transactional rollback.",
+    "Redundancy by physical order and payload, all three timing alternatives and both NULL policies. Verify first named winner, transferred name, primary preference, and subsequent physical occupation even when creation occurs in CREATE SCHEMA.",
+    "Automatic suffixes across pre-existing ordinary relations, indexes and constraints, duplicate generated index column names with suffix collisions, byte truncation and multibyte identifier boundaries."
+  ],
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "kind": ["inline", "ordered", "reversed"],
+    "nullableInput": [true, false],
+    "nullEquality": ["distinct", "equal"],
+    "timing": ["nondeferrable", "immediate", "deferred"],
+    "naming": ["automatic", "explicit"],
+    "payload": ["none", "twice-overlap"],
+    "coordinates": "Enumerate all 120 valid coordinate tuples for each of direct construction and analyzed SQL. The inline syntax has no INCLUDE. Measure each admitted coordinate exactly once independently of iteration order.",
+    "compositions": ["unique merge", "primary merge", "transfer name", "retain first explicit name", "separate order", "separate NULL policy", "separate timing", "separate payload", "same generated candidate", "index column label suffix", "UTF-8 allocation", "guarded namespace shadow", "skipped namespace table", "late index occupancy"]
+  },
+  "exploration": {
+    "seeds": [1579, 15319, 27791],
+    "casesPerSeed": 20,
+    "directCasesPerSeed": 20,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "structure": "Generate different field counts, storage roles, multiple overlapping and independent primary and unique constraints, arbitrary ordered listed and included slots, NULL policy, timings, explicit and allocated names, and distinct effect probes."
+  },
+  "negative": [
+    "Repeated or missing key fields, missing included fields, invalid closed list shape and width.",
+    "Two distinct retained backing indexes with the same explicit name, or a constraint name equal to its table.",
+    "An explicit occupied earlier namespace object or a following unguarded object targeting the occupied backing index name.",
+    "Conflicting deferral state or an unsupported index storage or placement expression."
+  ],
+  "faults": [
+    "Replace NULLS NOT DISTINCT with NULLS DISTINCT.",
+    "Erase a nonredundant unique constraint.",
+    "Drop an included role.",
+    "Alter unique creation order for an auto-name collision.",
+    "Treat NULL/deferral differences as redundant.",
+    "Retain the second name where the first is specified."
+  ],
+  "trust": ["Stock native parser and B-tree reference rules", "Checked name byte routines and shape scripts", "Exact native observations and fixed catalog fixtures"],
+  "sources": [
+    "https://www.postgresql.org/docs/17/sql-createtable.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/parser/parse_utilcmd.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_utilcmd.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/indexcmds.c"
+  ]
+}
