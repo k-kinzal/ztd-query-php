@@ -76,11 +76,11 @@ final class LimitsTest extends TestCase
 
     public function testNonConstantFindsWhatADefaultMayNotContain(): void
     {
-        $row = (new Inspection())->diagnose('SELECT (?, (SELECT 1), 1 IN t, a, "a", RAISE(IGNORE), random() + abs(1), CASE WHEN 1 THEN 2 END, TRUE, CURRENT_TIME)')->field(0)->expression;
+        $row = (new Inspection())->diagnose('SELECT (?, (SELECT 1), 1 IN t, a, "a", RAISE(IGNORE), random() + abs(1), CASE WHEN 1 THEN 2 END, TRUE, CURRENT_TIME, (?7 + a) NOT IN ())')->field(0)->expression;
         $limits = new Limits();
 
         self::assertInstanceOf(RowExpression::class, $row);
         $constant = array_map(static fn (Scalar $item): bool => $limits->nonConstant($item), $row->items);
-        self::assertSame([true, true, true, true, true, true, false, false, false, false], $constant);
+        self::assertSame([true, true, true, true, true, true, false, false, false, false, false], $constant);
     }
 }

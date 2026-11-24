@@ -51,7 +51,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
  * found at the expression that holds it and at the query itself; the inside
  * of a subquery is not examined, as SQLite stops at the subquery. Terminates: the
  * expression is walked once with an explicit stack. Empty membership in
- * CHECK and generated expressions discards its left operand before these
+ * DEFAULT, CHECK and generated expressions discards its left operand before these
  * semantic limits apply. Its lexical registrations survive separately.
  * Source: https://sqlite.org/lang_createtable.html#check_constraints,
  * https://sqlite.org/lang_createtable.html#the_default_clause,
@@ -166,7 +166,7 @@ final class Limits
      */
     public function nonConstant(Scalar $expression): bool
     {
-        foreach ($this->nodes($expression) as $node) {
+        foreach ($this->nodes($expression, true) as $node) {
             if ($node instanceof BindParameter || $node instanceof Query || $node instanceof InTable || $node instanceof ColumnUse || $node instanceof DoubleQuotedWord || $node instanceof Raise) {
                 return true;
             }

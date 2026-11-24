@@ -20,6 +20,8 @@ For an ordinary ADD COLUMN operation, provide the target table declaration to `c
 
 For a generated addition, `analyze()` returns SQLite `AddGeneratedColumn`. The generated expression binds to the resolved prior column ordinals, including prior generated columns. SQLite 3.47.2 supports adding a VIRTUAL column to a populated table and adding a STORED column to an empty table.
 
+Both table declarations and ordinary column additions can carry `ColumnDefaultExpression` with a checked expression. SQLite applies the expression when an insert omits the column. An addition to a populated table also follows SQLite's existing-row fallback rules. Arithmetic such as `DEFAULT (1 + 2)` succeeds when adding to an empty table and fails when adding to a populated table.
+
 A single INNER, CROSS, LEFT, RIGHT, or FULL join between two declared base tables can use USING or NATURAL. The IR resolves the comparison operands in left-to-right order and keeps both inputs addressable by qualified names. An unqualified merged name selects the right slot for RIGHT and the left slot for INNER, CROSS, and LEFT. FULL combines the left and right slots, keeping the first non-NULL value. SQLite also resolves USING and NATURAL in longer INNER, CROSS, and LEFT chains. Each equality refers to its actual earlier input, and each step retains its own right occurrence. The rendered SELECT uses explicit ON and projection clauses.
 
 INSERT and UPDATE keep their explicit conflict strategy or inherit the target schema's policy. REPLACE is an INSERT with an explicit REPLACE strategy. Execution uses the target's constraint and trigger definitions. INSERT with VALUES or SELECT can record a targetless ON CONFLICT DO NOTHING action.

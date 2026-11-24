@@ -190,6 +190,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-concatenation-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-pattern-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-computed-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-not-null-conflict-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-strict-tables-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-primary-keys-evidence/

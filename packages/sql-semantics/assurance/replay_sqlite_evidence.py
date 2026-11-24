@@ -13,6 +13,7 @@ import run_sqlite_case as choice
 import run_sqlite_coalesce as coalesce
 import run_sqlite_cast as cast
 import run_sqlite_compound as compound
+import run_sqlite_computed_defaults as computed_defaults
 import run_sqlite_create_table as create
 import run_sqlite_create_as as create_as
 import run_sqlite_create_view as create_view
@@ -77,6 +78,7 @@ DOMAINS = {
     coalesce.CONTRACT_NAME: (coalesce, coalesce.FIXTURE),
     cast.CONTRACT_NAME: (cast, cast.FIXTURE),
     defaults.CONTRACT_NAME: (defaults, defaults.FIXTURE),
+    computed_defaults.CONTRACT_NAME: (computed_defaults, computed_defaults.FIXTURE),
     not_null_conflict.CONTRACT_NAME: (not_null_conflict, not_null_conflict.FIXTURE),
     returning.CONTRACT_NAME: (returning, returning.SCHEMA),
     "sqlite-relational-v4.json": (relational, relational.SCHEMA),
@@ -156,6 +158,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                generated_columns: generated_columns.GeneratedColumnDatabase,
                rename: rename.RenameDatabase, add_column: add_column.AddColumnDatabase, drop_view: drop_view.DropViewDatabase,
                add_generated_column: add_generated_column.GeneratedAddDatabase,
+               computed_defaults: computed_defaults.DefaultDatabase,
                create_view: create_view.CreateViewDatabase,
                create_view_grouped: create_view_grouped.GroupedViewDatabase,
                create_view_compound: create_view_compound.CreateViewDatabase,

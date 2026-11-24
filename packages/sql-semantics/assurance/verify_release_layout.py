@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v82.json"
-CONTRACT = "6f5c205f1590fb913fb3c436af0ad451fd17892a99a65b829a3cd0bb796a7a91"
+CONTRACT_NAME = "release-layout-v83.json"
+CONTRACT = "df01ac00cd8876e78ebc7794b2d80548b549890d10194f5ab33a2dd83a6927fa"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -580,6 +580,11 @@ def verify_probe(raw, catalog):
                 "main", "accounts", ["id"], False, "added", "TEXT", "NOCASE", "value", True,
                 """ALTER TABLE "main"."accounts" ADD COLUMN "added" TEXT DEFAULT 'value' COLLATE NOCASE""",
             ] and item["sql"] == item["addColumn"][-1], "installed-sqlite-add-column-mismatch", item)
+            require(item.get("computedDefaults") == [
+                "-", "-", "+",
+                'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER DEFAULT ((7 - (5 - 2)))',
+                'CREATE TABLE "main"."calculated" ("amount" TEXT DEFAULT ((2 + 3)))',
+            ], "installed-sqlite-computed-default-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\AddGeneratedColumn"):
             require(item.get("addGeneratedColumn") == [
                 "main", "accounts", ["id"], False, "total", "STORED", "+", 0, "7",

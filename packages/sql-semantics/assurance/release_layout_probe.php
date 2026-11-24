@@ -1137,6 +1137,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['addColumn'] = [$result->schema->value, $result->table->value, array_column($direct->priorHeading, 'value'),
                 $result->strict, $result->column->name->value, $result->column->type->value, $result->column->collation->value,
                 $result->column->default->value, $refused, $direct->toString()];
+            $alter = $semantics->analyze('ALTER TABLE main.accounts ADD total INTEGER DEFAULT (7 - (5 - 2))', $context);
+            $create = $semantics->analyze('CREATE TABLE main.calculated (amount TEXT DEFAULT (2 + 3))');
+            $altered = $alter->column->default;
+            $declared = $create->columns[0]->default;
+            if (!$altered instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression
+                || !$declared instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression
+                || !$altered->expression instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic
+                || !$declared->expression instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic
+                || !$altered->expression->right instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic) {
+                throw new RuntimeException('The installed computed defaults lost their operand roles.');
+            }
+            $details['computedDefaults'] = [$altered->expression->operator->value, $altered->expression->right->operator->value,
+                $declared->expression->operator->value, $alter->toString(), $create->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddGeneratedColumn') {
             $generation = $result->column->generated;

@@ -14,6 +14,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Expression;
 enum UnaryKind: string
 {
     case Plus = '+';
+    case Minus = '-';
     case Not = 'NOT';
     case Complement = '~';
 }

@@ -14,8 +14,8 @@ from sqlite_domain import RenderFault, check_render_faults, run_domain
 from sqlite_engine import Database, ObserverAuthorizationError, typed
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-add-column-v2.json"
-CONTRACT = "27dba9aac4062ed92f1795d8bf89c9ea2a27b8749dfdeac9105bae7c7e4fbe48"
+CONTRACT_NAME = "sqlite-add-column-v3.json"
+CONTRACT = "156f45b0a77b3944d3735c2c26ca3b78b2035e035f16d28c6559acbdaeb3c662"
 FIXTURE = "PRAGMA foreign_keys=ON; PRAGMA legacy_alter_table=OFF; PRAGMA writable_schema=OFF;"
 CATALOG = {b"main": b"sqlite_master", b"temp": b"sqlite_temp_master"}
 INTERNAL = frozenset((b"printf", b"substr", b"length", b"glob"))
@@ -231,7 +231,7 @@ def check_faults(args, db, runner=check_render_faults):
         RenderFault("other-add-column-schema", column, "$this->schema->quoted()", "'temp'",
                     addition(), "sqlite-add-column-target-mismatch"),
         RenderFault("omit-add-column-default", renderer,
-                    "$column->default === null ? '' : ' DEFAULT ' . $expressions->expression($column->default, null)", "''",
+                    "$default = ' DEFAULT ' . $expressions->expression($operand, null);", "$default = '';",
                     addition(default=["integer", "8"]), "meaning-mismatch"),
         RenderFault("omit-add-column-not-null", renderer, "$type . $constraint . $default", "$type . $default",
                     addition(default=["integer", "1"], policy="FAIL"), "meaning-mismatch"),

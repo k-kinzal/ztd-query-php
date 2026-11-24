@@ -231,7 +231,7 @@ final class ExpressionLowering
      * Selects the literal or computed role of a prefix operation.
      * @throws InvalidConstruction When a signed literal or resolved operand is invalid
      */
-    public function prefix(Unary $expression, SourceBinding $binding): Arithmetic|HexIntegerLiteral|IntegerLiteral|RealLiteral|UnaryExpression
+    public function prefix(Unary $expression, SourceBinding $binding): HexIntegerLiteral|IntegerLiteral|RealLiteral|UnaryExpression
     {
         $literal = (new NumericLiteralLowering())->signed($expression);
         if ($literal !== null) {
@@ -243,7 +243,7 @@ final class ExpressionLowering
             UnaryOperator::Plus => new UnaryExpression(UnaryKind::Plus, $operand),
             UnaryOperator::Not => new UnaryExpression(UnaryKind::Not, $operand),
             UnaryOperator::BitNot => new UnaryExpression(UnaryKind::Complement, $operand),
-            UnaryOperator::Minus => new Arithmetic(ArithmeticOperator::Subtract, new IntegerLiteral('0'), $operand),
+            UnaryOperator::Minus => new UnaryExpression(UnaryKind::Minus, $operand),
         };
     }
 

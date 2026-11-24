@@ -40,8 +40,14 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
                 key = f"negative/{index}"
                 ledger.record(key, "attempted", input=current)
                 reply = worker.request(current)
-                exception = EXCEPTION + ({"rejected": "InvalidConstruction", "analysis-rejected": "SemanticException"}[status])
-                require(reply["status"] == status and reply["exception"] == exception and reason in reply["message"],
+                if status == "type-rejected":
+                    expected_status, exception = "error", "TypeError"
+                else:
+                    expected_status = status
+                    exception = EXCEPTION + ({"rejected": "InvalidConstruction", "analysis-rejected": "SemanticException"}[status])
+                fragments = (reason,) if isinstance(reason, str) else reason
+                require(reply["status"] == expected_status and reply["exception"] == exception
+                        and all(fragment in reply["message"] for fragment in fragments),
                         "sqlite-scalar-negative-boundary", reply)
                 ledger.record(key, "rejected", response=reply)
             require(seen.keys() == schedule.finite_ids(domain) and set(seen.values()) == {1}, "sqlite-scalar-finite-incomplete", sorted(seen))

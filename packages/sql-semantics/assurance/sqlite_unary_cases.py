@@ -9,17 +9,14 @@ from sqlite_cast_semantics import REAL_PREFIX, SPACES, comparison_values, numeri
 from sqlite_relational_cases import children
 from sqlite_result_cases import integer
 
-PREFIX = {"plus": "+", "not": "NOT", "complement": "~"}
+PREFIX = {"plus": "+", "negate": "-", "not": "NOT", "complement": "~"}
 TESTS = {"is-null": "IS", "is-not-null": "IS NOT"}
 
 
 def expression(operator, operand):
     if operator in PREFIX:
         return ["unary", PREFIX[operator], operand]
-    if operator in TESTS:
-        return ["comparison", TESTS[operator], operand, ["null"]]
-    assert operator == "negate"
-    return ["arithmetic", "-", integer(0), operand]
+    return ["comparison", TESTS[operator], operand, ["null"]]
 
 
 def finite_cases(domain):
@@ -68,9 +65,10 @@ def deep(level):
 
 def boundaries():
     yield query("select", [[deep(32)]])
-    yield query("values", [[expression("negate", ["hex", "8000000000000000", False])]])
+    yield query("values", [[["arithmetic", "-", integer(0), ["hex", "8000000000000000", False]]]])
     yield query("select", [[expression("plus", ["real", "0", "0", None, True])]])
     yield query("select", [[expression("complement", integer(-(1 << 63))), expression("negate", integer(-(1 << 63)))]])
+    yield query("select", [[expression("negate", ["real", "0", "0", None, False])]])
 
 
 def affinity_witness():
@@ -103,6 +101,7 @@ def negatives():
     yield ({"sql": "SELECT -(+0x8000000000000000) AS n", "declarations": []},
            "rejected", "minimum hexadecimal INTEGER cannot be negated")
     yield query("select", [[deep(33)]]), "rejected", "Expression height or expanded node count"
+    yield query("values", [[expression("negate", expression("plus", ["hex", "8000000000000000", False]))]]), "rejected", "minimum hexadecimal INTEGER cannot be negated"
 
 
 def expected(item):

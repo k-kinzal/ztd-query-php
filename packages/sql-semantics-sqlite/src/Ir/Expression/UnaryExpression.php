@@ -21,6 +21,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
@@ -43,5 +44,12 @@ final class UnaryExpression
         public readonly UnaryKind $kind,
         public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|self $operand,
     ) {
+        if ($kind === UnaryKind::Minus) {
+            $literal = $operand;
+            while ($literal instanceof self && $literal->kind === UnaryKind::Plus) {
+                $literal = $literal->operand;
+            }
+            Check::input(!$literal instanceof HexIntegerLiteral || $literal->digits !== '8000000000000000', 'The minimum hexadecimal INTEGER cannot be negated.');
+        }
     }
 }

@@ -33,14 +33,14 @@ final class TableColumn
      * Defines the column within its parent table.
      *
      * @param NotNullConflict|null $notNull The declared constraint algorithm, or null when no constraint is present
-     * @param BlobLiteral|HexIntegerLiteral|IntegerLiteral|NullLiteral|RealLiteral|TextLiteral|null $default The explicit default when present
+     * @param BlobLiteral|ColumnDefaultExpression|HexIntegerLiteral|IntegerLiteral|NullLiteral|RealLiteral|TextLiteral|null $default The explicit default when present
      * @param ColumnGeneration|null $generated The generated value when declared
      */
     public function __construct(
         public readonly Identifier $name,
         public readonly DeclaredDatatypeName $type = DeclaredDatatypeName::Untyped,
         public readonly ?NotNullConflict $notNull = null,
-        public readonly BlobLiteral|HexIntegerLiteral|IntegerLiteral|NullLiteral|RealLiteral|TextLiteral|null $default = null,
+        public readonly BlobLiteral|ColumnDefaultExpression|HexIntegerLiteral|IntegerLiteral|NullLiteral|RealLiteral|TextLiteral|null $default = null,
         public readonly Collation $collation = Collation::Binary,
         public readonly ?ColumnGeneration $generated = null,
     ) {

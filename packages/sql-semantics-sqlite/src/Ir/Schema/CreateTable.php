@@ -78,8 +78,9 @@ final class CreateTable implements SemanticsIR
             $key = $column->name->key();
             Check::input(!isset($seen[$key]), 'A CREATE TABLE cannot repeat a column name.');
             $seen[$key] = true;
-            if ($column->default !== null) {
-                $conditions[] = [$column->default, 0, 0];
+            $default = $column->default;
+            if ($default !== null) {
+                $conditions[] = [$default instanceof ColumnDefaultExpression ? $default->expression : $default, 0, 0];
             }
             if ($column->generated !== null) {
                 $conditions[] = [$column->generated->expression, 0, 1];

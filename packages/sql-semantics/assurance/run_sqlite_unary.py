@@ -13,8 +13,8 @@ from sqlite_unary_cases import (
     affinity_witness, analyzed, boundaries, expected, expression, finite_cases, finite_id, finite_ids, forms, negatives, seeded,
 )
 
-CONTRACT_NAME = "sqlite-unary-v1.json"
-CONTRACT = "c79d1248b2e3e55c4cb4d2b94109811f8393fe824055ef02f92fbe0ab6abb9d6"
+CONTRACT_NAME = "sqlite-unary-v2.json"
+CONTRACT = "56a291fac5dfef57b8616bd3c2ac4172b4790240437a59b289096fb0db9bc3a0"
 observe = partial(probe, prediction=expected)
 
 
@@ -73,7 +73,7 @@ def check_faults(args, db, runner=check_render_faults):
                     query("select", [[expression("not", integer(1))]]), "meaning-mismatch"),
         RenderFault("reverse-null-test", renderer, binary, f"({binary} === 'IS' ? 'IS NOT' : {binary})",
                     query("select", [[expression("is-null", ["null"])]]), "meaning-mismatch"),
-        RenderFault("replace-computed-negation", renderer, binary, f"({binary} === '-' ? '+' : {binary})",
+        RenderFault("replace-computed-negation", renderer, emission, f"($expression->kind->value === '-' ? '+ ' : {unary}) . {operand}",
                     query("select", [[expression("negate", integer(7))]]), "meaning-mismatch"),
     ], observe)
 

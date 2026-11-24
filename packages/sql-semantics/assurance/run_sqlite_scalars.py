@@ -59,6 +59,16 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
             return value
         if operator == "NOT":
             return int(not truth(value))
+        if operator == "-":
+            literal = operand
+            while literal[:2] == ["unary", "+"]:
+                literal = literal[2]
+            if literal[0] == "real" and not literal[4]:
+                if literal[2:4] == [None, None] and literal[1].lstrip("0") == str(-MIN):
+                    return MIN
+                return -value
+            result = 0 - numeric(value)
+            return float(result) if type(result) is int and not MIN <= result <= MAX else result
         assert operator == "~"
         return ~convert("INTEGER", value)
     if kind == "truth":

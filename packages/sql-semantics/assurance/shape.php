@@ -229,7 +229,7 @@ if ($dialect === 'sqlite') {
     $properties['Expression\\UnaryExpression'] = ['kind' => ['Expression\\UnaryKind'], 'operand' => $operands];
     $methods['Expression\\UnaryExpression'] = ['__construct'];
     $properties['Expression\\UnaryKind'] = $methods['Expression\\UnaryKind'] = [];
-    $enumCases['Expression\\UnaryKind'] = ['Plus' => '+', 'Not' => 'NOT', 'Complement' => '~'];
+    $enumCases['Expression\\UnaryKind'] = ['Plus' => '+', 'Minus' => '-', 'Not' => 'NOT', 'Complement' => '~'];
     $properties['Predicate\\FoldedMembership'] = ['matches' => ['bool'], 'bindings' => ['array']];
     $methods['Predicate\\FoldedMembership'] = ['__construct'];
     $internal[] = 'Predicate\\FoldedMembershipLowering';
@@ -406,10 +406,15 @@ if ($dialect === 'sqlite') {
     $roots[] = 'Schema\\Query\\CreateTableAs';
     array_push($internal, 'Schema\\CreateSchema', 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
     array_push($pureCollaborators, 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
+    $properties['Schema\\ColumnDefaultExpression'] = ['expression' => [
+        'Arithmetic', 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\Concatenation',
+        'Expression\\Nulls\\Coalesce', 'Expression\\UnaryExpression', 'Predicate\\FoldedMembership',
+    ]];
+    $methods['Schema\\ColumnDefaultExpression'] = ['__construct'];
     $properties['Schema\\TableColumn'] = [
         'name' => ['Identifier'], 'collation' => ['Collation'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['?Schema\\NotNullConflict'],
         'default' => ['IntegerLiteral', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral',
-            'Literal\\TextLiteral', 'NullLiteral', 'null'],
+            'Literal\\TextLiteral', 'NullLiteral', 'Schema\\ColumnDefaultExpression', 'null'],
     ];
     $properties['Schema\\TableColumn']['generated'] = ['?Schema\\Generation\\ColumnGeneration'];
     $methods['Schema\\TableColumn'] = ['__construct'];
@@ -732,6 +737,11 @@ if ($dialect !== 'sqlite') {
         'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
     ];
     $methods['Schema\\CreateTable'] = $methods['Select'];
+    $properties['Schema\\ColumnDefaultExpression'] = ['expression' => [
+        'Arithmetic', 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\Concatenation',
+        'Expression\\Nulls\\Coalesce', 'Expression\\UnaryExpression', 'Predicate\\FoldedMembership',
+    ]];
+    $methods['Schema\\ColumnDefaultExpression'] = ['__construct'];
     $properties['Schema\\TableColumn'] = [
         'name' => ['Identifier'], 'storage' => ['Schema\\IntegerStorage'], 'nullable' => ['bool'],
         'default' => ['IntegerLiteral', 'NullLiteral', 'null'],
@@ -1106,7 +1116,7 @@ try {
     }
     $bindings = match ($dialect) {
         'sqlite' => [
-            ['sqlite-folded-binding-sources-v3.json', '04a7cf6e55458afc27dcda650193a449aef0665c7c3a241cf1d789c26c2d8dce', 'Folded binding'],
+            ['sqlite-folded-binding-sources-v4.json', '34f474abd87a41d8a278748abc021ca580cdc549560df87c98d9278efc56413d', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [

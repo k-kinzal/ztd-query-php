@@ -88,7 +88,13 @@ final class TableDeclarationSql
     {
         $type = $column->type === DeclaredDatatypeName::Untyped ? '' : ' ' . $column->type->value;
 
-        $default = $column->default === null ? '' : ' DEFAULT ' . $expressions->expression($column->default, null);
+        $operand = $column->default;
+        $default = '';
+        if ($operand instanceof ColumnDefaultExpression) {
+            $default = ' DEFAULT (' . $expressions->expression($operand->expression, null) . ')';
+        } elseif ($operand !== null) {
+            $default = ' DEFAULT ' . $expressions->expression($operand, null);
+        }
 
         $constraint = match ($column->notNull) {
             null => '',

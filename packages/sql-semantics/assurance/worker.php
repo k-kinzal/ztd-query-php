@@ -67,6 +67,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
@@ -559,7 +560,7 @@ function observeCreateTable(CreateTable $value): array
                     NotNullConflict::Abort => true,
                     default => $column->notNull->value,
                 },
-                ...($column->default === null ? [] : [observeOperand($column->default)]),
+                ...($column->default === null ? [] : [observeSchemaDefault($column->default)]),
             ],
             $value->columns,
         ),
@@ -718,8 +719,15 @@ function directRename(array $input): RenameTable|RenameColumn
         : new RenameColumn($schema, $table, new Identifier($input['column']), $destination, $input['quoteReferences']);
 }
 
+function observeSchemaDefault(object $value): array
+{
+    return $value instanceof ColumnDefaultExpression ? ['computed', observeOperand($value->expression)] : observeOperand($value);
+}
+
 function directSchemaColumn(array $slot): TableColumn
 {
+    $default = $slot[3] ?? null;
+
     return new TableColumn(
         new Identifier($slot[0]),
         DeclaredDatatypeName::from($slot[1]),
@@ -728,7 +736,7 @@ function directSchemaColumn(array $slot): TableColumn
             true => NotNullConflict::Abort,
             default => NotNullConflict::tryFrom($slot[2]) ?? $slot[2],
         },
-        isset($slot[3]) ? operand($slot[3]) : null,
+        $default === null ? null : ($default[0] === 'computed' ? new ColumnDefaultExpression(operand($default[1])) : operand($default)),
         Collation::from($slot[4] ?? 'BINARY'),
         isset($slot[5]) ? new ColumnGeneration(GeneratedStorage::from($slot[5][0]), operand($slot[5][1])) : null,
     );
@@ -760,7 +768,7 @@ function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): ar
         'strict' => $value->strict,
         'column' => [
             $column->name->value, $column->type->value, $column->notNull?->value ?? false,
-            $column->default === null ? null : observeOperand($column->default), $column->collation->value,
+            $column->default === null ? null : observeSchemaDefault($column->default), $column->collation->value,
             ...($column->generated === null ? [] : [[$column->generated->mode->value, observeOperand($column->generated->expression)]]),
         ],
         ...($render ? ['sql' => $value->toString()] : []),
@@ -810,7 +818,7 @@ function runCase(array $input): array
     }
 
     if ($value instanceof AddColumn || $value instanceof AddGeneratedColumn) {
-        return observeAddColumn($value, ($input['probe'] ?? null) !== 'add-generated-construction');
+        return observeAddColumn($value, !in_array($input['probe'] ?? null, ['add-generated-construction', 'computed-default-construction'], true));
     }
     if ($value instanceof RenameTable || $value instanceof RenameColumn) {
         return observeRename($value);
