@@ -305,6 +305,8 @@ The [PostgreSQL partition table rebuild contract](postgres-reindex-partition-tab
 
 The [PostgreSQL named partition index rebuild contract](postgres-reindex-partition-index-v1.json) compares a resolved named branch or leaf index, its exact attachment lineage, and the auxiliary storage of its owning table. The leaf-only and branch-wide cases preserve unrelated index storage and verify the native transaction differences. Run `run_server_postgres_reindex_partition_index.py` on both pinned releases and replay with `combine_server_postgres_reindex_partition_index_evidence.py`.
 
+The [PostgreSQL database rebuild contract](postgres-reindex-database-v2.json) compares current-database and pinned system selectors against the full [stock index census](postgres-stock-reindex-catalog-v1.json). The observer measures independently named native relations, shared and auxiliary catalogs, same-session temporary relations and the exact exclusion-index warning. Run `run_server_postgres_reindex_database.py` on both pinned releases and replay with `combine_server_postgres_reindex_database_evidence.py`.
+
 
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.

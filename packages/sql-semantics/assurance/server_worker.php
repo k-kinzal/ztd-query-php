@@ -1190,6 +1190,19 @@ function constructPostgresReindexSchema(array $input): \SqlSemantics\Platform\Po
     );
 }
 
+function constructPostgresDatabaseRebuild(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs
+{
+    $spec = $input['databaseRebuild'];
+    $database = new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['database']);
+    $release = \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']);
+    return match ($spec['selector']) {
+        'system' => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs($database, $release),
+        'database' => new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase(
+            $database, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($spec['mode']), $release,
+        ),
+    };
+}
+
 function constructPostgresDropIndex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex
 {
     $drop = $input['dropIndex'];
@@ -1494,6 +1507,7 @@ function observeStatement(array $input): array
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
             isset($input['reindexPartitionTable']) => constructPostgresReindexPartitionTable($input),
+            isset($input['databaseRebuild']) => constructPostgresDatabaseRebuild($input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
@@ -1633,6 +1647,17 @@ function observeStatement(array $input): array
                 'target' => [$value->target->schema->value, $value->target->table->value],
                 'mode' => $value->mode->value, 'kind' => $value->kind->value,
             ]];
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase
+        || $value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs) {
+        return [
+            'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+            'databaseRebuild' => [
+                'database' => $value->database->value,
+                ...($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase
+                    ? ['selector' => 'database', 'mode' => $value->mode->value] : ['selector' => 'system']),
+            ],
+        ];
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

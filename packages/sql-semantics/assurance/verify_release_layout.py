@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v122.json"
-CONTRACT = "de1ae736f8368345fee409495325b814728c4a1ef08795a52fea88c29d227e7c"
+CONTRACT_NAME = "release-layout-v123.json"
+CONTRACT = "cdef887cbb466740a9cd1baa37d216459e4929541cdc0658b60d2d5d271aac2d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -327,6 +327,14 @@ def verify_probe(raw, catalog):
             emitted = 'REINDEX SCHEMA CONCURRENTLY "reporting.data"'
             require(item.get("postgresReindexSchema") == ["reporting.data", "concurrently", emitted, emitted]
                     and item["sql"] == emitted, "installed-postgres-reindex-schema-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\Scope\\ReindexDatabase"):
+            emitted = 'REINDEX DATABASE CONCURRENTLY "billing.data"'
+            require(item.get("postgresReindexDatabase") == ["billing.data", "concurrently", emitted]
+                    and item["sql"] == emitted, "installed-postgres-reindex-database-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\Scope\\ReindexSystemCatalogs"):
+            emitted = 'REINDEX SYSTEM "billing.data"'
+            require(item.get("postgresReindexSystemCatalogs") == ["billing.data", emitted]
+                    and item["sql"] == emitted, "installed-postgres-reindex-system-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\Partition\\ReindexPartitionTable"):
             emitted = 'REINDEX TABLE CONCURRENTLY "public"."partitioned_items"'
             require(item.get("postgresReindexPartitionTable") == [

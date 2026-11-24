@@ -1076,6 +1076,13 @@ if ($dialect !== 'sqlite') {
         $internal[] = 'Schema\\Index\\Scope\\ReindexSchemaLowering';
         $properties[$reindexSchema] = ['schema' => ['Identifier'], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$reindexSchema] = ['__construct', 'profileId', 'toString'];
+        $reindexDatabase = 'Schema\\Index\\Scope\\ReindexDatabase';
+        $reindexSystem = 'Schema\\Index\\Scope\\ReindexSystemCatalogs';
+        array_push($roots, $reindexDatabase, $reindexSystem);
+        $internal[] = 'Schema\\Index\\Scope\\ReindexDatabaseLowering';
+        $properties[$reindexSystem] = ['database' => ['Identifier'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindexDatabase] = $properties[$reindexSystem] + ['mode' => [$rebuildMode]];
+        $methods[$reindexDatabase] = $methods[$reindexSystem] = ['__construct', 'profileId', 'toString'];
         $reindexTable = 'Schema\\Index\\ReindexTable';
         $reindexOwner = 'Schema\\Index\\ReindexTableTarget';
         $reindexKind = 'Schema\\Index\\ReindexTableKind';
@@ -1934,6 +1941,13 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === $results,
                     'Unexpected PostgreSQL index rebuild publication');
             }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\Scope\\ReindexDatabaseLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSystemCatalogs'],
+                    'Unexpected PostgreSQL database rebuild publication');
+            }
             if ($dialect === 'postgres' && $short === 'Schema\\DropRelationLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
@@ -1962,7 +1976,8 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
-                        'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable', 'Schema\\Index\\Scope\\ReindexSchema',
+                        'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
+                        'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
                         'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }

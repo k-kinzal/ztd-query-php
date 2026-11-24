@@ -559,6 +559,13 @@ def inventory(root):
                     if alternative in {"ReindexStmt: REINDEX opt_reindex_option_list SCHEMA opt_concurrently name",
                                        "opt_reindex_option_list:", "opt_reindex_option_list: ( utility_option_list )"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-schema-v2.json")
+            for rule in ("ReindexStmt", "reindex_target_all", "opt_reindex_option_list", "opt_single_name"):
+                for alternative in rules.get(rule, ()):
+                    if alternative in {"ReindexStmt: REINDEX opt_reindex_option_list reindex_target_all opt_concurrently opt_single_name",
+                                       "reindex_target_all: SYSTEM_P", "reindex_target_all: DATABASE",
+                                       "opt_reindex_option_list:", "opt_reindex_option_list: ( utility_option_list )",
+                                       "opt_single_name:", "opt_single_name: name"}:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-database-v2.json")
         if postgres:
             for rule in ("qualified_name", "columnref", "indirection_el"):
                 for alternative in rules.get(rule, ()):

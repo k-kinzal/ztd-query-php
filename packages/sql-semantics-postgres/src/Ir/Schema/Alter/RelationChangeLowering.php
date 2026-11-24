@@ -12,12 +12,14 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndexLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTableLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabaseLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchemaLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop as ParsedDrop;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Rename as ParsedRename;
@@ -34,12 +36,11 @@ final class RelationChangeLowering
 {
     /**
      * Publishes the checked object change.
-     * @throws InvalidConstruction When the requested rebuild needs a database-wide target
      */
     public function lower(
         BoundStatement $operation,
         ParsedDrop|ParsedReindex|ParsedRename|ParsedTruncateTable $statement,
-    ): DropIndex|DropTable|DropView|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexTable|RenameColumn|RenameTable|TruncateTable {
+    ): DropIndex|DropTable|DropView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameTable|TruncateTable {
         return match (true) {
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedRename => (new RenameLowering())->lower($operation, $statement),
@@ -48,7 +49,7 @@ final class RelationChangeLowering
                 ReindexTarget::Index => (new ReindexIndexLowering())->lower($operation, $statement),
                 ReindexTarget::Table => (new ReindexTableLowering())->lower($operation, $statement),
                 ReindexTarget::Schema => (new ReindexSchemaLowering())->lower($operation, $statement),
-                ReindexTarget::System, ReindexTarget::Database => throw new InvalidConstruction('A database-wide index rebuild needs its own target role.'),
+                ReindexTarget::System, ReindexTarget::Database => (new ReindexDatabaseLowering())->lower($operation, $statement),
             },
         };
     }
