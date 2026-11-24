@@ -1,0 +1,72 @@
+{
+  "revision": "SemanticsIR/postgres-create-primary-key-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "mode": "Native UTF-8, standard_conforming_strings on, heap, stock default btree classes for the supported native storage roles, with the same database collation and catalog state on both sides.",
+  "scope": "An ordinary persistent checked table with one inline or table-level primary key, optional explicit name, ordered optional INCLUDE columns, and all three consistent deferral states. Known steps of an unguarded CREATE SCHEMA also carry the backing index's name occupancy. Other constraints, non-default index parameters and tablespaces, partitioning and inherited keys remain required open grammar domains.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createtable.html",
+    "https://www.postgresql.org/docs/17/sql-createtable.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/indexcmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/indexcmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_utilcmd.c"
+  ],
+  "constructors": {
+    "PrimaryKey": {
+      "type": "Schema/Key/PrimaryKey",
+      "role": "The one primary key of an ordinary persistent table, consisting of exact local attribute references and its default native btree creation policy.",
+      "structure": "Optional decoded constraint name, nonempty distinct ordered key references, ordered included references and one timing role. Key and included lists have at most 32 entries in total. Included references may repeat or also be key references.",
+      "conditions": "References must all resolve in the parent table's own unique physical field list. Key references impose NOT NULL on those fields. An explicit backing index name cannot identify the newly declared table. In a fresh schema, a created table adds its backing index to the relation occupancy before later table, view, index or grant members. A skipped table contributes neither fields nor backing index.",
+      "meaning": "Declare the sole primary key and its unique native btree. Key columns are required and uniqueness applies to their tuple only. Included columns are ordered payload. Both constraint and backing index share their explicit name or use PostgreSQL's native allocation rule. Outside a fresh schema, name allocation and collisions depend on the actual runtime catalog, including existing constraint names. In a fresh supported schema the set of prior relation and constraint names is known and identical for primary keys, so the parent can compute occupancy without environment access.",
+      "sql": "Use a table-level PRIMARY KEY, emit key coordinates before the INCLUDE list, preserve explicit name or native unnamed allocation, and emit exactly the effective deferral policy. The rendered field definitions preserve physical NOT NULL on key columns."
+    },
+    "KeyTiming": {
+      "type": "Schema/Key/KeyTiming",
+      "role": "Native default nondeferrable, deferrable initially immediate or deferrable initially deferred.",
+      "structure": "Three enum alternatives.",
+      "conditions": "A not-deferrable constraint cannot be initially deferred. INITIALLY DEFERRED alone implies DEFERRABLE.",
+      "meaning": "Control whether duplicate enforcement is immediate per row, immediately at statement close, or deferred until requested or transaction close. Nullability remains immediate.",
+      "sql": "Use the explicit canonical keywords appropriate to the timing alternative."
+    },
+    "CreateTable": {
+      "type": "Schema/CreateTable",
+      "role": "Add an optional primary key to a resolved native table while keeping the physical field order and defaults.",
+      "structure": "Existing declaration plus an optional PrimaryKey with ordered local references.",
+      "conditions": "A parent table closes local attribute membership, exact field types, unique names, key nullability and the distinct table/index naming roles.",
+      "meaning": "Create or retain the target under the existing guard, with the declared table and index effects.",
+      "sql": "Emit the optional key after the ordered field declarations."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "keyForms": ["inline-single", "table-forward", "table-reverse"],
+    "timing": ["nondeferrable", "immediate", "deferred"],
+    "names": ["automatic", "quoted-explicit"],
+    "payload": ["none", "separate", "repeat-and-overlap"],
+    "nullableInput": ["implicit", "explicit-null"],
+    "coordinates": "Use all 84 valid tuples per route and release. An inline constraint admits no INCLUDE. Verify exact set equality from independently read case coordinates, not counts.",
+    "schemaEdges": "Required native allocation over two collisions, UTF-8 truncation, explicit occupied name, guarded table shadowed by a backing index, skipped table that contributes no backing index, and schema-level conflicting guard effects."
+  },
+  "exploration": {
+    "seeds": [8219, 31469, 69761],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 270,
+    "allowedExclusions": [],
+    "structure": "Vary width, exact ordered key and payload references, includes that repeat and overlap, type roles, labels, explicit or allocated names, defaults and timing. Observe structurally different statements from each route."
+  },
+  "observations": [
+    "Exact relation and index catalog identity, constraint name, relation access method, key and payload attribute positions and order, primary/unique flags, immediate bit, and constraints' deferral flags.",
+    "Exact native physical attribute names, order, types and nullability. Default presence and checked default values remain as in the underlying table domain.",
+    "Distinguish row-immediate from statement-immediate enforcement by a one-statement key swap. Distinguish initial deferral by observer-controlled SET CONSTRAINTS. Observe 23505 for actual duplicate keys, 23502 for key NULL, successful distinct tuples and freely repeated/NULL payload values.",
+    "Observe existing-object guard and generated-name occupancy, PostgreSQL rollback, and absence of any partial schema on a conflicting child."
+  ],
+  "negative": [
+    "No key coordinates, duplicate key field, absent key or included field, sparse or wrong-class lists, more than 32 total index attributes.",
+    "Inline or table forms with a second primary key, conflicting NULL/NOT NULL markings, contradictory timing flags or an explicit name identical to the new table.",
+    "A primary key backing index name already occupied by a relation created earlier in an unguarded new schema."
+  ],
+  "faults": ["Reverse key references.", "Drop included references.", "Erase initial deferral.", "Drop the primary key.", "Disable uniqueness of the physical key by substituting a different column."],
+  "trust": ["Pinned catalog/types and fixture collation", "Pure constructor and renderer shapes", "Native PostgreSQL catalog and independent expected effects", "Reviewed assumptions on occupied names when computing fresh-schema membership"]
+}
