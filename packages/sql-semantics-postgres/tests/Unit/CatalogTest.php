@@ -60,12 +60,12 @@ final class CatalogTest extends TestCase
         self::assertInstanceOf(NamedOnPath::class, $context->tables[0]->columns[0]->type);
     }
 
-    public function testBuildRejectsSqlThatDeclaresNoRelation(): void
+    public function testBuildRejectsSqlThatDeclaresNoCatalogObject(): void
     {
         $platform = Platform::shared();
         $profile = (new Semantics())->profile();
         $catalog = new Catalog($profile, null, $platform->parser($profile));
-        $this->expectExceptionMessage('A catalog definition must declare a relation, index, schema or tablespace.');
+        $this->expectExceptionMessage('A catalog definition must declare a relation, index, schema, tablespace or role.');
 
         $catalog->build(['SELECT 1'], true);
     }
