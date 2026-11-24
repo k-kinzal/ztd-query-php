@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndexLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
@@ -24,7 +25,7 @@ final class SchemaIndexLowering
     /**
      * Preserves the relative order of the native index phase.
      *
-     * @param array<array-key, CreateTable|true> $occupied Checked preceding relation occupants
+     * @param array<array-key, CreateTable|TableName|true> $occupied Checked preceding relation occupants
      * @return list<CreateIndex>
      */
     public function lower(BoundStatement $operation, CreateSchema $schema, ?Identifier $resolved, array $occupied): array

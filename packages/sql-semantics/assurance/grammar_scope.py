@@ -624,6 +624,12 @@ def inventory(root):
                         "schema_stmt: ViewStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
                     }:
                         related[alternative] = (*related.get(alternative, ()), "postgres-schema-views-v3.json", "postgres-schema-view-dependencies-v1.json", "postgres-schema-view-replacement-v1.json")
+            for rule in ("ColConstraintElem", "ConstraintElem", "opt_c_include", "ConstraintAttr", "ConstraintAttributeSpec", "ConstraintAttributeElem"):
+                for alternative in rules.get(rule, ()):
+                    if (("PRIMARY KEY " in alternative and " ExistingIndex" not in alternative)
+                            or rule == "opt_c_include"
+                            or (rule.startswith("ConstraintAttr") and ("DEFERRABLE" in alternative or "INITIALLY" in alternative))):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-primary-key-evidence-v1.json")
             for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "IndexStmt"):
                 for alternative in rules.get(rule, ()):
                     if rule in ("CreateSchemaStmt", "IndexStmt") or alternative in {
@@ -744,7 +750,8 @@ def inventory(root):
         for rule in create:
             for alternative in rules.get(rule, []):
                 related[alternative] = (("server-create-table-v2.json", "postgres-create-text-v1.json",
-                                         "postgres-create-signed-defaults-v1.json", "postgres-create-boolean-v2.json") if postgres else ("server-create-table-v2.json",))
+                                         "postgres-create-signed-defaults-v1.json", "postgres-create-boolean-v2.json",
+                                         "postgres-primary-key-evidence-v1.json") if postgres else ("server-create-table-v2.json",))
         for rule in parameters:
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):

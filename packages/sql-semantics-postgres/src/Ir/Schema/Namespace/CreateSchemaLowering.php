@@ -44,7 +44,7 @@ final class CreateSchemaLowering
         $occupied = SchemaRelationOrder::check($resolved, $statement->ifNotExists, $release, $sequences, $tables);
         $occupied = SchemaViewOrder::check($resolved, $statement->ifNotExists, $release, $occupied, $views);
         $indexes = (new SchemaIndexLowering())->lower($operation, $statement, $resolved, $occupied);
-        $grants = (new SchemaGrantLowering())->lower($operation, $statement, $resolved, $indexes);
+        $grants = (new SchemaGrantLowering())->lower($operation, $statement, $resolved, $indexes, $occupied);
 
         return new CreateSchema($name, $owner, $statement->ifNotExists, $release, $tables, $sequences, $views, $indexes, $grants);
     }

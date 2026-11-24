@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaRelationOrder;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
@@ -22,7 +23,7 @@ final class SchemaIndexOrder
     /**
      * Checks the ordered index phase of a new schema.
      *
-     * @param array<array-key, CreateTable|true> $occupied
+     * @param array<array-key, CreateTable|TableName|true> $occupied
      * @param list<CreateIndex> $indexes
      */
     public static function check(?Identifier $name, bool $guard, GrammarRelease $release, array $occupied, array $indexes): void

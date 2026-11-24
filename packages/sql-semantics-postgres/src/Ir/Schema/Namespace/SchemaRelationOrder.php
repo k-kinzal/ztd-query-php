@@ -10,8 +10,10 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\BooleanStorage;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CharacterStorage;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKeyName;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableColumn;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
@@ -26,7 +28,7 @@ final class SchemaRelationOrder
      * Validates the placement and name occupancy of checked roles in execution order.
      * @param list<CreateSequence> $sequences
      * @param list<CreateTable> $tables
-     * @return array<array-key, CreateTable|true> Actual relation occupants
+     * @return array<array-key, CreateTable|TableName|true> Actual relation occupants
      */
     public static function check(?Identifier $name, bool $guard, GrammarRelease $release, array $sequences, array $tables): array
     {
@@ -51,8 +53,16 @@ final class SchemaRelationOrder
                 'A schema table must belong to its namespace and release.'
             );
             $coordinate = $table->target->table->value;
-            Check::input(!isset($seen[$coordinate]) || $table->ifNotExists, 'A repeated schema table requires its own IF NOT EXISTS guard.');
-            $seen[$coordinate] ??= $table;
+            if (isset($seen[$coordinate])) {
+                Check::input($table->ifNotExists, 'A repeated schema table requires its own IF NOT EXISTS guard.');
+                continue;
+            }
+            $seen[$coordinate] = $table;
+            if ($table->primaryKey !== null) {
+                $index = $table->primaryKey->name->value ?? PrimaryKeyName::allocate($table->target->table, $seen);
+                Check::input(!isset($seen[$index]), 'A schema primary key index requires an unused relation name.');
+                $seen[$index] = $table->target;
+            }
         }
 
         return $seen;

@@ -260,6 +260,35 @@ function observePostgresBooleanDefault(SqlSemantics\Platform\PostgreSql\Semantic
     ], $value->columns), $value->toString()];
 }
 
+function observePostgresPrimaryKey(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze(
+        'CREATE TABLE public.checked_key (a INTEGER NULL, b BIGINT, note pg_catalog.text,'
+        . ' CONSTRAINT "my key" PRIMARY KEY (b,a) INCLUDE (note,b,note) INITIALLY DEFERRED)',
+    );
+    $key = $value->primaryKey;
+    $payload = $key->included[0];
+    $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKey(
+        $key->keys, [&$payload, $key->included[1], $key->included[2]], $key->name, $key->timing,
+    );
+    $payload = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('mutated');
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+        $value->target, $value->columns, primaryKey: $rebuilt,
+    );
+    $rejected = false;
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+            $value->target, [$value->columns[0]], primaryKey: $rebuilt,
+        );
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage() === 'A primary key reference must select a declared column.';
+    }
+
+    return [array_column($key->keys, 'value'), array_column($rebuilt->included, 'value'),
+        $key->name->value, $key->timing->value, array_column($value->columns, 'nullable'),
+        $value->toString(), $direct->toString(), $rejected];
+}
+
 function observePostgresBooleanFields(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled pg_catalog.bool)']);
@@ -1654,6 +1683,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
             $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);
             $details['postgresBooleanDefault'] = observePostgresBooleanDefault($semantics);
+            $details['postgresPrimaryKey'] = observePostgresPrimaryKey($semantics);
         }
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);

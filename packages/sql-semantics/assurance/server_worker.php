@@ -636,7 +636,28 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
             ? ['defaultCollation' => $collation::from($create['tableCollation'])] : []),
         ...($input['dialect'] === 'mysql' && isset($create['primaryKey'])
             ? ['primaryKey' => new $primary(array_map(static fn ($slot) => new $term($slot[0], $slot[1]), $create['primaryKey']))] : []),
+        ...($input['dialect'] === 'postgres' && isset($create['primaryKey'])
+            ? ['primaryKey' => constructPostgresPrimaryKey($create['primaryKey'])] : []),
     );
+}
+
+function constructPostgresPrimaryKey(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKey
+{
+    $identifier = static fn ($field) => is_string($field) ? new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($field) : $field;
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKey(
+        array_map($identifier, $input['keys']),
+        array_map($identifier, $input['included']),
+        $input['name'] === null ? null : $identifier($input['name']),
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\KeyTiming::from($input['timing']),
+    );
+}
+
+function observePostgresPrimaryKey(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKey $key): array
+{
+    return [
+        'keys' => array_column($key->keys, 'value'), 'included' => array_column($key->included, 'value'),
+        'name' => $key->name?->value, 'timing' => $key->timing->value,
+    ];
 }
 
 function constructPostgresValues(string $platform, array $input): SemanticsIR
@@ -1698,6 +1719,7 @@ function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema
                     $column->default === null ? null : observeOperand($namespace, $column->default),
                 ], $table->columns),
                 'ifNotExists' => $table->ifNotExists,
+                ...($table->primaryKey === null ? [] : ['primaryKey' => observePostgresPrimaryKey($table->primaryKey)]),
             ];
         }, $schema->tables),
         'schemaViews' => array_map(
@@ -2148,6 +2170,9 @@ function observeStatement(array $input): array
         }
         if ($dialect === 'mysql' && $value->primaryKey !== null) {
             $observed['primaryKey'] = array_map(static fn ($term): array => [$term->slot, $term->descending], $value->primaryKey->terms);
+        }
+        if ($dialect === 'postgres' && $value->primaryKey !== null) {
+            $observed['primaryKey'] = observePostgresPrimaryKey($value->primaryKey);
         }
         foreach ($value->columns as $column) {
             $storage = $column->storage;

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\Access;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceAccessLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclaration;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclarationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -29,9 +31,10 @@ final class SchemaGrantLowering
      * Resolves targets against the checked local members and the outer catalog before publication.
      *
      * @param list<CreateIndex> $indexes
+     * @param array<array-key, CreateTable|TableName|true> $occupied
      * @return list<GrantSequenceAccess>
      */
-    public function lower(BoundStatement $operation, CreateSchema $schema, ?Identifier $resolved, array $indexes): array
+    public function lower(BoundStatement $operation, CreateSchema $schema, ?Identifier $resolved, array $indexes, array $occupied): array
     {
         $grants = [];
         $lowering = new SequenceAccessLowering();
@@ -44,6 +47,11 @@ final class SchemaGrantLowering
             if ($context === null) {
                 $name = new Name($resolved->value);
                 $relations = [];
+                foreach ($occupied as $coordinate => $occupant) {
+                    if ($occupant instanceof TableName) {
+                        $relations[] = new IndexDeclaration($name, new Name((string) $coordinate), new Name($occupant->table->value), IndexDeclarationKind::Ordinary);
+                    }
+                }
                 foreach ($indexes as $index) {
                     if ($index->presence === IndexPresence::Vacant) {
                         $relations[] = new IndexDeclaration(

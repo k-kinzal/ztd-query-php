@@ -44,4 +44,23 @@ final class SchemaRelationOrderTest extends TestCase
         self::assertSame(ColumnKind::Int8, SchemaRelationOrder::columnKind(new TableColumn($name, IntegerStorage::Wide)));
         self::assertNull(SchemaRelationOrder::columnKind(new TableColumn($name, IntegerStorage::Small)));
     }
+
+    public function testCheckRetainsTheNativePrimaryIndexOccupancy(): void
+    {
+        $sql = 'CREATE SCHEMA batch CREATE SEQUENCE data_pkey CREATE TABLE data (id integer PRIMARY KEY)'
+            . ' CREATE TABLE IF NOT EXISTS data_pkey1 (other integer)';
+        $value = (new Semantics())->analyze($sql);
+        self::assertInstanceOf(CreateSchema::class, $value);
+        $occupied = SchemaRelationOrder::check($value->name, false, $value->release, $value->sequences, $value->tables);
+
+        self::assertSame($value->tables[0]->target, $occupied['data_pkey1']);
+    }
+
+    public function testCheckRejectsPrimaryIndexCollisionDuringALaterTable(): void
+    {
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('A schema primary key index requires an unused relation name.');
+
+        (new Semantics())->analyze('CREATE SCHEMA batch CREATE SEQUENCE occupied CREATE TABLE t (id integer CONSTRAINT occupied PRIMARY KEY)');
+    }
 }

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -20,9 +21,9 @@ final class SchemaViewOrder
 {
     /**
      * Checks unique view targets and each exact local input against earlier member roles.
-     * @param array<array-key, CreateTable|true> $occupied Checked earlier occupants
+     * @param array<array-key, CreateTable|TableName|true> $occupied Checked earlier occupants
      * @param list<CreateView> $views
-     * @return array<array-key, CreateTable|true> Occupants after the view phase
+     * @return array<array-key, CreateTable|TableName|true> Occupants after the view phase
      */
     public static function check(?Identifier $name, bool $guard, GrammarRelease $release, array $occupied, array $views): array
     {

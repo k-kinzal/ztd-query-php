@@ -1025,6 +1025,19 @@ if ($dialect !== 'sqlite') {
         $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
         $properties['Schema\\TableColumn']['default'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+        $key = 'Schema\\Key\\';
+        $properties['Schema\\CreateTable']['primaryKey'] = ['?' . $key . 'PrimaryKey'];
+        $properties[$key . 'PrimaryKey'] = [
+            'keys' => ['array'], 'included' => ['array'], 'name' => ['?Identifier'], 'timing' => [$key . 'KeyTiming'],
+        ];
+        $methods[$key . 'PrimaryKey'] = ['__construct', 'toString'];
+        $properties[$key . 'KeyTiming'] = $methods[$key . 'KeyTiming'] = [];
+        $enumCases[$key . 'KeyTiming'] = [
+            'NotDeferrable' => 'NOT DEFERRABLE', 'InitiallyImmediate' => 'DEFERRABLE INITIALLY IMMEDIATE',
+            'InitiallyDeferred' => 'DEFERRABLE INITIALLY DEFERRED',
+        ];
+        array_push($internal, $key . 'PrimaryKeyLowering', $key . 'PrimaryKeyName');
+        $pureCollaborators[] = $key . 'PrimaryKeyName';
         $btree = 'Schema\\Index\\Btree\\';
         $btreeCreate = $btree . 'CreateIndex';
         $roots[] = $btreeCreate;
@@ -1745,9 +1758,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v70.json';
+    $storagePath = __DIR__ . '/value-storage-v71.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '36a77071a1c3dc3481412c113ec4738d2006542b0bb86e2e53cc0bf4eff7dd4f',
+        hash_file('sha256', $storagePath) === '170c5c0e1a9fdbbc6fc3d452d7b2cd29d918db8e32656c22c238ac07e15624ad',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2307,6 +2320,7 @@ try {
                         && in_array($call->name->toString(), ['in_array', 'is_int', 'strtoupper'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerUpdate' && $call->name->toString() === 'in_array')
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerMutationSql' && $call->name->toString() === 'strtoupper')
+                    || ($dialect === 'postgres' && $short === 'Schema\\Key\\PrimaryKeyName' && in_array($call->name->toString(), ['min', 'ord', 'substr'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && $call->name->toString() === 'array_intersect_key')
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')

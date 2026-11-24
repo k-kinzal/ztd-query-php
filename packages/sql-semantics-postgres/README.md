@@ -143,6 +143,8 @@ A Boolean destination accepts TRUE, FALSE and NULL in VALUES. A quoted unknown l
 
 An ordinary CREATE TABLE can use an int4 or int8 literal as a default for SMALLINT, INTEGER, BIGINT or native text. The IR keeps the source type and exact value. PostgreSQL applies the destination conversion when a row uses the default. A narrowing overflow raises SQLSTATE 22003 at that insertion. Supplying an explicit in-range value bypasses the default.
 
+An ordinary `CREATE TABLE` can also declare one primary key. `CreateTable::$primaryKey` holds the ordered local key columns, the ordered optional `INCLUDE` columns, the explicit constraint name when given, and the native deferral policy. Key columns are required in the published heading. Included columns may repeat and keep their own nullability unless they also serve as key columns. An unnamed key uses the database's native name allocation. In `CREATE SCHEMA`, the backing index occupies its name before later members run.
+
 An ordinary BOOLEAN column holds a native TRUE, FALSE, or NULL default, or omits the default. A quoted input such as `' YE '` uses the builtin Boolean input rules during analysis. Use `BOOLEAN` or `pg_catalog.bool` to select the builtin type explicitly. An unqualified `bool` name requires a declaration context that resolves it.
 
 Concrete types are under `SqlSemantics\Platform\PostgreSql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

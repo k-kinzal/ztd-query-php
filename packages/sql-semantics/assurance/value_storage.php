@@ -193,6 +193,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'postgres-primary-column-copy') {
+            requireShape($short === 'Schema\\CreateTable' && $property === 'columns'
+                && in_array('Schema/CreateTable::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'checked',
+                'The PostgreSQL table columns must come from the checked detached copy with applied primary key nullability.');
+
+            continue;
+        }
+
         if ($rule === 'ordered-table-key-copy') {
             requireShape(
                 $short === 'Schema\\CreateTable' && $property === 'keys'

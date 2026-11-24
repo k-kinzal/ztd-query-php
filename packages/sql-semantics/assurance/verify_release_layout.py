@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v145.json"
-CONTRACT = "32d7de053450a514f094676304a7ce7cd676906f1e73927d2268c39271d9516c"
+CONTRACT_NAME = "release-layout-v146.json"
+CONTRACT = "9d11a55474964b0f1745c0fefe8cf06eb253db4f8f450ca5fe039a3376e567d9"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -744,6 +744,12 @@ def verify_probe(raw, catalog):
                 'CREATE TABLE "public"."bool_decl" ("enabled" pg_catalog.bool NOT NULL DEFAULT TRUE, '
                 '"disabled" pg_catalog.bool NULL DEFAULT FALSE) USING heap',
             ], "installed-postgres-boolean-default-mismatch", item)
+            key = ('CREATE TABLE "public"."checked_key" ("a" INTEGER NOT NULL, "b" BIGINT NOT NULL, '
+                   '"note" pg_catalog.text NULL, CONSTRAINT "my key" PRIMARY KEY ("b", "a") INCLUDE ("note", "b", "note") '
+                   'DEFERRABLE INITIALLY DEFERRED) USING heap')
+            require(item.get("postgresPrimaryKey") == [
+                ["b", "a"], ["note", "b", "note"], "my key", "DEFERRABLE INITIALLY DEFERRED", [False, False, True], key, key, True,
+            ], "installed-postgres-primary-key-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],
