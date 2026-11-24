@@ -122,8 +122,8 @@ def check_observation(item, actual, sql):
 def sample_forms(forms, result, _, item):
     for key in ("selector", "active", "spelling", "form"):
         forms[f"{key}/{item[key]}"] += 1
-    for key in ("mode", "kind"):
-        forms[f"{key}/{result['reindexPartitionTable'][key]}"] += 1
+    forms[f"mode/{result['reindex']['mode']}"] += 1
+    forms[f"kind/{result['reindex']['partitionKind']}"] += 1
 
 
 def required_forms(*_):
