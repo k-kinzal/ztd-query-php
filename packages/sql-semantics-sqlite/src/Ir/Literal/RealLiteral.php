@@ -44,6 +44,14 @@ final class RealLiteral
     }
 
     /**
+     * Counts the variable number bytes used by the statement budget.
+     */
+    public function payloadBytes(): int
+    {
+        return strlen($this->whole) + strlen($this->fraction ?? '') + strlen($this->exponent ?? '');
+    }
+
+    /**
      * Emits the signed significand and optional exponent.
      */
     public function toString(): string

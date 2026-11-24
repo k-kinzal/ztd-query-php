@@ -298,7 +298,7 @@ if ($dialect === 'sqlite') {
     $properties['Select']['where'] = $nullablePredicates;
     $properties['Select']['distinct'] = ['bool'];
     $properties['Select']['limit'] = ['?Ordering\\Limit'];
-    $methods['Literal\\RealLiteral'][] = 'toString';
+    array_push($methods['Literal\\RealLiteral'], 'toString', 'payloadBytes');
     $methods['Literal\\HexIntegerLiteral'][] = 'toString';
     $methods['Literal\\TextLiteral'] = ['__construct', 'toString', 'payloadBytes'];
     $properties['TableSource']['kind'] = ['From\\ExternalRelationKind'];

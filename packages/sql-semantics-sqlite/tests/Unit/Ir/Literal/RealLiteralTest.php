@@ -36,4 +36,10 @@ final class RealLiteralTest extends TestCase
 
         new RealLiteral('9223372036854775808', null, null, true);
     }
+
+    public function testPayloadBytesCountsTheVariableParts(): void
+    {
+        self::assertSame(7, (new RealLiteral('09', '01', '-14'))->payloadBytes());
+        self::assertSame(1, (new RealLiteral('4', ''))->payloadBytes());
+    }
 }

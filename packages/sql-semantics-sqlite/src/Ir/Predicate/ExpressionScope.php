@@ -67,7 +67,7 @@ final class ExpressionScope
                 ),
                 $expression instanceof TextLiteral => $payloadBytes += $expression->payloadBytes(),
                 $expression instanceof BlobLiteral => $payloadBytes += strlen($expression->hex),
-                $expression instanceof RealLiteral => $payloadBytes += strlen($expression->whole) + strlen($expression->fraction ?? '') + strlen($expression->exponent ?? ''),
+                $expression instanceof RealLiteral => $payloadBytes += $expression->payloadBytes(),
                 $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Concatenation, $expression instanceof Logical
                     => array_push($pending, [$expression->right, $height + 1, $visibility], [$expression->left, $height + 1, $visibility]),
                 $expression instanceof HexIntegerLiteral, $expression instanceof IntegerLiteral, $expression instanceof NullLiteral => null,
