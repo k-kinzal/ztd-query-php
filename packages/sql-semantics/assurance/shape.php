@@ -1028,14 +1028,16 @@ if ($dialect !== 'sqlite') {
         $btree = 'Schema\\Index\\Btree\\';
         $btreeCreate = $btree . 'CreateIndex';
         $roots[] = $btreeCreate;
-        array_push($internal, $btree . 'CreateIndexLowering', $btree . 'IndexTableLowering', $btree . 'IndexOperands');
+        array_push($internal, $btree . 'CreateIndexLowering', $btree . 'IndexTableLowering', $btree . 'IndexOperands', $btree . 'IndexPredicateLowering');
         $properties[$btreeCreate] = [
             'keys' => ['array'], 'included' => ['array'], 'table' => ['TableSource'], 'name' => ['Identifier'],
             'presence' => [$btree . 'IndexPresence'], 'ifNotExists' => ['bool'], 'unique' => ['bool'],
             'nullsNotDistinct' => ['bool'], 'concurrently' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+            'predicate' => ['?' . $btree . 'NullIndexPredicate'],
         ];
         $properties[$btree . 'IndexKey'] = ['slot' => ['int'], 'order' => [$btree . 'IndexOrder']];
         $properties[$btree . 'IncludedColumn'] = ['slot' => ['int']];
+        $properties[$btree . 'NullIndexPredicate'] = ['slot' => ['int'], 'negated' => ['bool']];
         $properties[$btree . 'IndexOrder'] = $methods[$btree . 'IndexOrder'] = [];
         $properties[$btree . 'IndexPresence'] = $methods[$btree . 'IndexPresence'] = [];
         $enumCases[$btree . 'IndexPresence'] = ['Vacant' => 'vacant', 'Occupied' => 'occupied'];
@@ -1043,6 +1045,7 @@ if ($dialect !== 'sqlite') {
             'DescendingNullsFirst' => 'DESC NULLS FIRST', 'DescendingNullsLast' => 'DESC NULLS LAST'];
         $methods[$btreeCreate] = ['__construct', 'profileId', 'toString'];
         $methods[$btree . 'IndexKey'] = $methods[$btree . 'IncludedColumn'] = ['__construct'];
+        $methods[$btree . 'NullIndexPredicate'] = ['__construct'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1442,7 +1445,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v4.json', '38e2c81aaad6cdd982f69d20471db2a4e7059205334a44c3322412153b862394', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v5.json', '7f9b426efd4af14815a6563dac47731a0a8be867af9a7632df213b8f26909ac0', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1824,6 +1827,13 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\AddColumn', 'Schema\\Alter\\AddGeneratedColumn'],
                     'Unexpected SQLite column addition publication');
+            }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexPredicateLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['?Schema\\Index\\Btree\\NullIndexPredicate'],
+                    'Unexpected PostgreSQL partial-index predicate publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexOperands') {
                 $methodsByName = $class->getMethods();

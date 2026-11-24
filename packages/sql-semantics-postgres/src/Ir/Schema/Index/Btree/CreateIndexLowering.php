@@ -30,7 +30,7 @@ final class CreateIndexLowering
             && $context->columnNames === Comparison::Sensitive, 'CREATE INDEX requires the native PostgreSQL index profile.');
         Check::input(
             $statement->name !== null && ($statement->method === null || $statement->method->value === 'btree')
-            && $statement->options === [] && $statement->tablespace === null && $statement->where === null,
+            && $statement->options === [] && $statement->tablespace === null,
             'CREATE INDEX needs a named ordinary B-tree without additional index options.'
         );
         $target = (new IndexTableLowering())->lower($operation, $statement);
@@ -61,6 +61,7 @@ final class CreateIndexLowering
             $statement->nullsDistinct === false,
             $statement->concurrently,
             $context->profile->grammar,
+            (new IndexPredicateLowering())->lower($operation, $statement),
         );
     }
 }

@@ -15,7 +15,8 @@ CATALOG = """SELECT i.indisunique::text, i.indnullsnotdistinct::text,
        a.amname, n.nspname, c.relname, r.relname,
        (SELECT pg_catalog.json_agg(op.opcname ORDER BY x.n)
         FROM pg_catalog.unnest(i.indclass::oid[]) WITH ORDINALITY AS x(oid, n)
-        JOIN pg_catalog.pg_opclass op ON op.oid=x.oid)::text
+        JOIN pg_catalog.pg_opclass op ON op.oid=x.oid)::text,
+       pg_catalog.pg_get_expr(i.indpred, i.indrelid, false)
 FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON c.oid=i.indexrelid
 JOIN pg_catalog.pg_class r ON r.oid=i.indrelid
 JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
@@ -50,7 +51,9 @@ def admit_sql(command, data):
     target = r'(?:(?:"fixture"|"pg_temp")[.])?' + re.escape(quoted(table))
     key_list = rf"\({atom}(?:, {atom}){{0,31}}\)"
     payload = rf"(?: INCLUDE \({heading}(?:, {heading}){{0,31}}\))?"
-    pattern = rf"CREATE (?:UNIQUE )?INDEX (?:CONCURRENTLY )?(?:IF NOT EXISTS )?{ident} ON (?:ONLY )?{target} USING btree {key_list}{payload}(?: NULLS (?:NOT )?DISTINCT)?"
+    field = rf"(?:{target}[.])?{heading}"
+    where = rf"(?: WHERE \({field} IS (?:NOT )?NULL\))?"
+    pattern = rf"CREATE (?:UNIQUE )?INDEX (?:CONCURRENTLY )?(?:IF NOT EXISTS )?{ident} ON (?:ONLY )?{target} USING btree {key_list}{payload}(?: NULLS (?:NOT )?DISTINCT)?{where}"
 
     return re.fullmatch(pattern, command) is not None
 
@@ -78,6 +81,16 @@ def initialize(db, trial, path):
     db.execute(";".join(commands))
 
 
+def observed_predicate(expression):
+    if expression is None:
+        return None
+    form = re.fullmatch(r'\(("(?:[^"]|"")+"|[^() "]+) IS (NOT )?NULL\)', expression)
+    require(form is not None, "postgres-btree-native-predicate-form", expression)
+    name = form[1][1:-1].replace('""', '"') if form[1].startswith('"') else form[1]
+
+    return [name, form[2] is not None]
+
+
 def indexed(db, table, index, scope):
     rows = db.execute(CATALOG.format(index=data_literal(index), table=data_literal(table)))
     if not rows:
@@ -94,6 +107,7 @@ def indexed(db, table, index, scope):
         "index": name, "table": owner, "accessMethod": method, "unique": unique, "nullsNotDistinct": nulls,
         "valid": valid, "ready": ready, "live": live, "keyCount": key_count, "memberCount": member_count,
         "positions": positions, "classNames": json.loads(row[14]), "collations": collations, "orders": orders,
+        "predicate": observed_predicate(row[15]),
     }
 
 
@@ -122,7 +136,7 @@ def detect_conflict(db, trial):
     table, _, _ = chosen(trial)
     active = trial["transaction"]
     findings = []
-    for number in (0, 2):
+    for number in trial["probeRows"]:
         db.execute("SAVEPOINT observe_write" if active else "BEGIN")
         values = ", ".join(map(literal, trial["rows"][number]))
         findings.append(db.run(f"INSERT INTO {table} VALUES ({values})")["sqlState"])

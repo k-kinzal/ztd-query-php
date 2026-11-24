@@ -32,7 +32,7 @@ def refusal(message, exception="InvalidConstruction"):
 
 def case(tag, keys, included=(), scope="persistent", occupied="vacant", *,
          guard=False, unique=False, nulls=False, concurrently=False, transaction=False, only=False,
-         name="idx", columns=HEADINGS, rows=ROWS, coordinate=None):
+         name="idx", columns=HEADINGS, rows=ROWS, coordinate=None, predicate=None, probe_rows=(0, 2)):
     return {
         "dialect": "postgres", "release": tag, "coordinate": coordinate,
         "createBtree": {
@@ -40,8 +40,9 @@ def case(tag, keys, included=(), scope="persistent", occupied="vacant", *,
             "name": name, "keys": [list(key) for key in keys], "included": list(included),
             "presence": "vacant" if occupied == "vacant" else "occupied",
             "ifNotExists": guard, "unique": unique, "nullsNotDistinct": nulls, "concurrently": concurrently,
+            "predicate": predicate,
         },
-        "occupancy": occupied, "transaction": transaction, "rows": rows,
+        "occupancy": occupied, "transaction": transaction, "rows": rows, "probeRows": list(probe_rows),
     }
 
 
@@ -79,7 +80,20 @@ def sql(item, *, original=False, unqualified=False):
     if original and coord and coord[0] == "key" and coord[-1][1] == "distinct":
         nulls = " NULLS DISTINCT"
 
-    return words + quoted(index["name"]) + " ON " + target + " USING btree (" + ", ".join(keys) + ")" + include + nulls
+    predicate = index["predicate"]
+    where = ""
+    if predicate is not None:
+        slot, negated = predicate
+        spelling = coord[-1] if original and coord and coord[0] == "partial" else "unqualified"
+        if spelling == "schema":
+            operand = qualified(schema, table) + "." + quoted(columns[slot])
+        elif spelling == "table":
+            operand = qualified(table, columns[slot])
+        else:
+            operand = quoted(columns[slot])
+        where = " WHERE (" + operand + (" IS NOT NULL)" if negated else " IS NULL)")
+
+    return words + quoted(index["name"]) + " ON " + target + " USING btree (" + ", ".join(keys) + ")" + include + nulls + where
 
 
 def declarations(item):
@@ -107,9 +121,13 @@ def analyzed(item, *, unqualified=False):
             "schemaPath": PATH, "declarations": declarations(item)}
 
 
-def conflicts(keys, rows, nulls_not_distinct):
+def conflicts(keys, rows, nulls_not_distinct, predicate):
     seen = set()
     for row in rows:
+        if predicate is not None:
+            slot, negated = predicate
+            if (row[slot] is not None) != negated:
+                continue
         values = tuple(row[column] for column, _ in keys)
         if not nulls_not_distinct and None in values:
             continue
@@ -121,13 +139,15 @@ def conflicts(keys, rows, nulls_not_distinct):
 
 def index_record(item, valid=None, previous=False):
     index = item["createBtree"]
-    schema, table, _, kinds, _ = index["table"]
+    schema, table, names, kinds, _ = index["table"]
     if previous:
         keys, includes, unique, nulls = OLD_INDEX, [], False, False
     else:
         keys, includes, unique, nulls = index["keys"], index["included"], index["unique"], index["nullsNotDistinct"]
 
+    predicate = None if previous else index["predicate"]
     return {
+        "predicate": None if predicate is None else [names[predicate[0]], predicate[1]],
         "schema": schema, "index": index["name"], "table": table, "accessMethod": "btree",
         "unique": unique, "nullsNotDistinct": nulls, "valid": valid, "ready": valid, "live": True,
         "keyCount": len(keys), "memberCount": len(keys) + len(includes),
@@ -166,7 +186,7 @@ def expected(item):
         state = "42P07"
     elif occupied:
         notices = [["NOTICE", "42P07", f'relation "{index["name"]}" already exists, skipping', None, None]]
-    elif index["unique"] and conflicts(index["keys"], item["rows"], index["nullsNotDistinct"]):
+    elif index["unique"] and conflicts(index["keys"], item["rows"], index["nullsNotDistinct"], index["predicate"]):
         state = "23505"
         if concurrent and scope != "pg_temp":
             created = index_record(item, False)
@@ -176,11 +196,10 @@ def expected(item):
     success = state == "00000"
     probe = None
     if success:
-        first, second = item["rows"][0], item["rows"][2]
         probe = [
-            "23505" if created and created["unique"] and conflicts(index["keys"], [*item["rows"], candidate], index["nullsNotDistinct"])
+            "23505" if created and created["unique"] and conflicts(index["keys"], [*item["rows"], item["rows"][position]], index["nullsNotDistinct"], index["predicate"])
             else "00000"
-            for candidate in (first, second)
+            for position in item["probeRows"]
         ]
     return {
         "status": "btree-creation", "sqlState": state, "command": "CREATE INDEX" if success else None, "notices": notices,

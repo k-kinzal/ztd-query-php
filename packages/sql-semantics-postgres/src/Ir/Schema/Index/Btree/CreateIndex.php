@@ -54,6 +54,7 @@ final class CreateIndex implements SemanticsIR
         public readonly bool $nullsNotDistinct = false,
         public readonly bool $concurrently = false,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        public readonly ?NullIndexPredicate $predicate = null,
     ) {
         Check::input($table->kind === ExternalRelationKind::BaseTable && !IndexSchemas::system($table->schema->value)
             && !IndexSchemas::sessionInternal($table->schema->value), 'A B-tree needs a resolved ordinary application or temporary table.');
@@ -71,6 +72,7 @@ final class CreateIndex implements SemanticsIR
         foreach ($checkedIncluded as $column) {
             Check::input(isset($table->columns[$column->slot]), 'An included position must refer to a column of the indexed table.');
         }
+        Check::input($predicate === null || isset($table->columns[$predicate->slot]), 'A partial B-tree predicate must refer to a column of the indexed table.');
         $this->keys = $checkedKeys;
         $this->included = $checkedIncluded;
     }
@@ -102,6 +104,8 @@ final class CreateIndex implements SemanticsIR
             . ' ON ' . ($this->table->only ? 'ONLY ' : '') . $this->table->schema->quoted() . '.' . $this->table->table->quoted()
             . ' USING btree (' . implode(', ', $keys) . ')'
             . ($included === [] ? '' : ' INCLUDE (' . implode(', ', $included) . ')')
-            . ($this->nullsNotDistinct ? ' NULLS NOT DISTINCT' : '');
+            . ($this->nullsNotDistinct ? ' NULLS NOT DISTINCT' : '')
+            . ($this->predicate === null ? '' : ' WHERE (' . $this->table->columns[$this->predicate->slot]->quoted()
+                . ($this->predicate->negated ? ' IS NOT NULL)' : ' IS NULL)'));
     }
 }

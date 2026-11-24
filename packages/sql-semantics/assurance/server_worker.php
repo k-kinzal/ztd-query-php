@@ -1022,11 +1022,13 @@ function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql
         $included[] = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IncludedColumn($slot);
     }
 
+    $predicate = $value['predicate'];
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
         $owner, new $identifier($value['name']), $keys, $included,
         \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence::from($value['presence']),
         $value['ifNotExists'], $value['unique'], $value['nullsNotDistinct'], $value['concurrently'],
         \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+        $predicate === null ? null : new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate($predicate[0], $predicate[1]),
     );
 }
 
@@ -1042,6 +1044,7 @@ function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\
                 array_map(static fn ($kind) => $kind->value, $table->columnKinds), $table->only,
             ],
             'name' => $index->name->value,
+            'predicate' => $index->predicate === null ? null : [$index->predicate->slot, $index->predicate->negated],
             'keys' => array_map(static fn ($key) => [$key->slot, $key->order->value], $index->keys),
             'included' => array_map(static fn ($column) => $column->slot, $index->included),
             'presence' => $index->presence->value, 'ifNotExists' => $index->ifNotExists,

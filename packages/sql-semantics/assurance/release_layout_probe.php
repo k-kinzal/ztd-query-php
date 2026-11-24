@@ -816,6 +816,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_map(static fn ($inc) => $inc->slot, $reconstructed->included),
                 $reconstructed->presence->value, $reconstructed->toString(), $guarded->presence->value, $guarded->ifNotExists,
             ];
+            $partial = $semantics->analyze('CREATE INDEX "partial probe" ON ledger (value) WHERE (public.ledger.ready IS NOT NULL)', $activeContext);
+            $predicate = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate(
+                $partial->predicate->slot, $partial->predicate->negated,
+            );
+            $partialCopy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $partial->table, $partial->name, $partial->keys, $partial->included,
+                release: $partial->release, predicate: $predicate,
+            );
+            $details['postgresPartialBtree'] = [$predicate->slot, $predicate->negated, $partial->toString(), $partialCopy->toString()];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
             [$target, $absence] = $result->targets;

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v111.json"
-CONTRACT = "4ddf0ce9d85366f5f8efebea8ac45229de42404104134fa08e2e330819282e95"
+CONTRACT_NAME = "release-layout-v112.json"
+CONTRACT = "2059fce37e5b635274bcdab227f4e31eba8ad32cd0bb889b131c4784ca954746"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -286,6 +286,10 @@ def verify_probe(raw, catalog):
                                                        [[1, "DESC NULLS LAST"], [0, "ASC NULLS FIRST"]], [2, 2],
                                                        "vacant", emitted, "occupied", True]
                     and item["sql"] == emitted, "installed-postgres-create-btree-mismatch", item)
+            partial = ('CREATE INDEX "partial probe" ON "public"."ledger" USING btree ("value" ASC NULLS LAST)'
+                       ' WHERE ("ready" IS NOT NULL)')
+            require(item.get("postgresPartialBtree") == [2, True, partial, partial],
+                    "installed-postgres-partial-btree-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\DropIndex"):
             emitted = 'DROP INDEX IF EXISTS "pg_temp"."removal", "absent_namespace"."idx" CASCADE'
             require(item.get("postgresDropIndex") == ["pg_temp", "removal", "keyed", "absent_namespace", True, emitted,
