@@ -29,7 +29,8 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-drop-view-boundaries-v2.json', 'db4c23de7ac34227f73a1d11c8fe75e7f03e21c5f5bdd488035a478698c3c2a6'],
             ['sqlite-reindex-boundaries-v2.json', '3fb402c7fac25484836e5d50c33ea03e7f55cd6f3d5511ffe6327a260177ba80'],
             ['sqlite-analyze-statistics-boundaries-v1.json', '02dbd2404a342c2048199c37f0904e2fa8f0c6e4ca31347549409f8d4b2adb7d'],
-            ['sqlite-flag-pragmas-boundaries-v1.json', 'e3826f73344d145ccc28115be0ec2b173b8f3a89f10814d6c4cb8cc43e275ed6'],
+            ['sqlite-flag-pragmas-boundaries-v2.json', 'ff7ef20aaf7117f46e82ae60f28ba8c9a1d5555d82a3186a511d42793c3ad138'],
+            ['sqlite-table-metadata-boundaries-v1.json', '18fcde0e5a40fe80940c4fcbf0956d8108ca9d8413a7409f5fccc5066d2ad687'],
             ['sqlite-create-view-boundaries-v4.json', '98fe27cbdbf1c468c1c633c8449ad89002257aaa2826fd1e9af60f114f11caaa'],
             ['sqlite-mutation-returning-boundaries-v3.json', 'bf2ac57e17e98eeedb1b078271a5f02c7daef17aa3c33339af6e7909d64d350b'],
         ],
@@ -213,6 +214,10 @@ function checkNativeBoundaries(
             'Ir\\Rows\\ValuesLowering', 'Statement\\Query\\ValuesClause',
             'Ir\\Maintenance\\FlagPragma', 'Ir\\Maintenance\\FlagName', 'Ir\\Maintenance\\FlagChange',
             'Ir\\Maintenance\\FlagArgument', 'Ir\\Maintenance\\FlagPragmaLowering',
+            'Ir\\Maintenance\\PragmaLowering', 'Ir\\Maintenance\\MaintenanceLookup', 'Ir\\Maintenance\\RelationTarget',
+            'Ir\\Maintenance\\Metadata\\CatalogAliases', 'Ir\\Maintenance\\Metadata\\CatalogTable', 'Ir\\Maintenance\\Metadata\\MissingMetadataTable',
+            'Ir\\Maintenance\\Metadata\\TableInspectionKind', 'Ir\\Maintenance\\Metadata\\TableInspection', 'Ir\\Maintenance\\Metadata\\TableListing',
+            'Ir\\Maintenance\\Metadata\\TableMetadataLowering', 'Model\\Statement\\Identifier\\QualifiedName',
             'Statement\\Maintenance\\Pragma', 'Statement\\Maintenance\\PragmaNumber',
             'Statement\\Maintenance\\Analyze as ParsedAnalyze', 'Statement\\Maintenance\\Reindex as ParsedReindex'] as $name) {
 

@@ -36,6 +36,11 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagChange;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagName;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\MissingMetadataTable;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspectionKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget;
@@ -338,7 +343,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|TableInspection|TableListing|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -825,6 +830,43 @@ function observeFlagPragma(FlagPragma $value): array
     ];
 }
 
+function directTableMetadata(array $input): TableInspection|TableListing
+{
+    $schema = $input['schema'] === null ? null : new Identifier($input['schema']);
+    if ($input['pragma'] === 'table_list') {
+        return new TableListing($schema, $input['argument'] === null ? null : new Identifier($input['argument']));
+    }
+    $role = $input['target'];
+    $target = match ($role[0] ?? null) {
+        null => null,
+        'catalog' => new CatalogTable(new Identifier($role[1])),
+        'missing' => new MissingMetadataTable(new Identifier($role[1])),
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+    };
+
+    return new TableInspection(TableInspectionKind::from($input['pragma']), $target, $schema);
+}
+
+function observeTableMetadata(TableInspection|TableListing $value): array
+{
+    $target = $value instanceof TableInspection ? $value->target : null;
+    return [
+        'status' => 'constructed',
+        'operation' => 'table-metadata',
+        'profile' => $value->profileId(),
+        'pragma' => $value instanceof TableInspection ? $value->kind->value : 'table_list',
+        'schema' => $value->schema?->value,
+        'filter' => $value instanceof TableListing ? $value->nameFilter?->value : null,
+        'target' => match (true) {
+            $target === null => null,
+            $target instanceof CatalogTable => ['catalog', $target->schema->value],
+            $target instanceof MissingMetadataTable => ['missing', $target->name->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
 function maintenanceTarget(array $role): Identifier|Collation|RelationTarget|IndexTarget|null
 {
     return match ($role[0]) {
@@ -968,6 +1010,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
             ($input['operation'] ?? null) === 'create-index' => directCreateIndex($input),
+            ($input['operation'] ?? null) === 'table-metadata' => directTableMetadata($input),
             ($input['operation'] ?? null) === 'flag-pragma' => directFlagPragma($input),
             ($input['operation'] ?? null) === 'reindex' => new Reindex(maintenanceTarget($input['target'])),
             ($input['operation'] ?? null) === 'analyze-statistics' => new Analyze(maintenanceTarget($input['target'])),
@@ -990,6 +1033,9 @@ function runCase(array $input): array
 
     if ($value instanceof CreateIndex) {
         return observeCreateIndex($value, ($input['probe'] ?? null) !== 'create-index-construction');
+    }
+    if ($value instanceof TableInspection || $value instanceof TableListing) {
+        return observeTableMetadata($value);
     }
     if ($value instanceof FlagPragma) {
         return observeFlagPragma($value);

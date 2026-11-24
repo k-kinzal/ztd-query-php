@@ -543,6 +543,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Reindex'] = 'REINDEX names';
         $queries['Maintenance\\Analyze'] = 'ANALYZE names';
         $queries['Maintenance\\FlagPragma'] = "PRAGMA Temp.Writable_Schema('reset')";
+        $queries['Maintenance\\Metadata\\TableInspection'] = "PRAGMA table_xinfo(accounts)";
+        $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
@@ -588,6 +590,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
             ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableInspection') {
+            $activeContext = $semantics->context([...$declarations, 'CREATE TEMP TABLE accounts(code TEXT, doubled INT AS (3*2))']);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Analyze') {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
@@ -1282,6 +1287,21 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableInspection') {
+            $target = $result->target;
+            $catalog = $semantics->analyze('PRAGMA table_info(sqlite_temp_schema)', $activeContext);
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection($result->kind, $target, $result->schema);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$catalog->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable) {
+                throw new RuntimeException('The installed metadata query lost its table role.');
+            }
+            $details['tableInspection'] = [$result->kind->value, $target->schema->value, $target->name->value, $result->schema?->value,
+                $catalog->target->schema->value, $catalog->toString(), $rebuilt->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableListing') {
+            $empty = $semantics->analyze("PRAGMA temp.table_list('')", $activeContext);
+            $details['tableListing'] = [$result->schema?->value, $result->nameFilter?->value, $empty->nameFilter?->value, $empty->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\FlagPragma') {
             $disabled = $semantics->analyze('PRAGMA automatic_index(256)', $activeContext);

@@ -430,6 +430,23 @@ if ($dialect === 'sqlite') {
     $properties['Maintenance\\FlagPragma'] = ['name' => ['Maintenance\\FlagName'], 'change' => ['?Maintenance\\FlagChange'], 'schema' => ['?Identifier']];
     $methods['Maintenance\\FlagPragma'] = $methods['Select'];
     $roots[] = 'Maintenance\\FlagPragma';
+    $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
+        'target' => ['Maintenance\\Metadata\\CatalogTable', 'Maintenance\\Metadata\\MissingMetadataTable', 'Maintenance\\RelationTarget', 'null'],
+        'schema' => ['?Identifier'],
+    ];
+    $properties['Maintenance\\Metadata\\TableListing'] = ['schema' => ['?Identifier'], 'nameFilter' => ['?Identifier']];
+    $methods['Maintenance\\Metadata\\TableInspection'] = $methods['Maintenance\\Metadata\\TableListing'] = $methods['Select'];
+    $properties['Maintenance\\Metadata\\CatalogTable'] = ['schema' => ['Identifier']];
+    $methods['Maintenance\\Metadata\\CatalogTable'] = ['__construct', 'name'];
+    $properties['Maintenance\\Metadata\\MissingMetadataTable'] = ['name' => ['Identifier']];
+    $methods['Maintenance\\Metadata\\MissingMetadataTable'] = ['__construct'];
+    $properties['Maintenance\\Metadata\\TableInspectionKind'] = $methods['Maintenance\\Metadata\\TableInspectionKind'] = [];
+    $enumCases['Maintenance\\Metadata\\TableInspectionKind'] = [
+        'Columns' => 'table_info', 'ExtendedColumns' => 'table_xinfo', 'Indexes' => 'index_list', 'ForeignKeys' => 'foreign_key_list',
+    ];
+    array_push($roots, 'Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing');
+    array_push($internal, 'Maintenance\\Metadata\\CatalogAliases', 'Maintenance\\Metadata\\TableMetadataLowering', 'Maintenance\\PragmaLowering');
+    $pureCollaborators[] = 'Maintenance\\Metadata\\CatalogAliases';
     $properties['Maintenance\\FlagName'] = $methods['Maintenance\\FlagName'] = [];
     $properties['Maintenance\\FlagChange'] = $methods['Maintenance\\FlagChange'] = [];
     $enumCases['Maintenance\\FlagChange'] = ['Disable' => '0', 'Enable' => '1', 'Reset' => 'RESET'];
@@ -1379,8 +1396,19 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Reindex',
+                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Metadata\\TableInspection',
+                        'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex',
                     ], 'Unexpected SQLite maintenance publication');
+            }
+            if ($short === 'Maintenance\\PragmaLowering' || $short === 'Maintenance\\Metadata\\TableMetadataLowering') {
+                $members = $class->getMethods();
+                $expected = $short === 'Maintenance\\PragmaLowering' ? ['lower'] : ['lower', 'target'];
+                $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
+                $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
+                $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', ...$metadataRoots] : $metadataRoots;
+                requireShape($methodNames === $expected && count($public) === count($expected)
+                    && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
             }
             if ($short === 'Maintenance\\MaintenanceLookup') {
                 $public = array_values(array_map(

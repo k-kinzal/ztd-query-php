@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v93.json"
-CONTRACT = "9d6389be1674800cfe55d7b24ecd229a7cc453cc0af8d355c4ee09e693f8002a"
+CONTRACT_NAME = "release-layout-v94.json"
+CONTRACT = "31ed161098b3ebebc0d34521b7168b022227e96a90d6643f666abbae903afb60"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,14 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Metadata\\TableInspection"):
+            require(item.get("tableInspection") == [
+                "table_xinfo", "temp", "accounts", None, "temp", 'PRAGMA table_info("sqlite_temp_master")',
+                'PRAGMA table_xinfo("accounts")',
+            ] and item["sql"] == 'PRAGMA table_xinfo("accounts")', "installed-sqlite-table-inspection-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Metadata\\TableListing"):
+            require(item.get("tableListing") == ["main", "sqlite_master", "", 'PRAGMA "temp".table_list("")']
+                    and item["sql"] == 'PRAGMA "main".table_list("sqlite_master")', "installed-sqlite-table-listing-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\FlagPragma"):
             require(item.get("flagPragma") == [
                 "writable_schema", "RESET", "temp", 'PRAGMA "temp".writable_schema = RESET',
