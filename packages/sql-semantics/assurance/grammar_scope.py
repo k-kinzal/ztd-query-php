@@ -593,7 +593,13 @@ def inventory(root):
             for rule in ("CreateSchemaStmt", "RoleSpec", "CreateRoleStmt", "CreateUserStmt", "CreateGroupStmt", "OptSchemaEltList"):
                 for alternative in rules.get(rule, ()):
                     if rule != "OptSchemaEltList" or alternative == "OptSchemaEltList:":
-                        related[alternative] = (*related.get(alternative, ()), "postgres-create-schema-v2.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-create-schema-v3.json")
+            for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "CreateStmt"):
+                for alternative in rules.get(rule, ()):
+                    if rule == "CreateSchemaStmt" or alternative in {
+                        "schema_stmt: CreateStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
+                    } or rule == "CreateStmt" and alternative.startswith("CreateStmt: CREATE OptTemp TABLE "):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-tables-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

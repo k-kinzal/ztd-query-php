@@ -332,7 +332,9 @@ The [PostgreSQL qualified index operation contract](postgres-index-catalog-bindi
 
 The [PostgreSQL namespace removal contract](postgres-drop-schema-v2.json) checks ordered selectors and admitted absence. Its native oracle measures untouched names, table rows, views and foreign keys after `CASCADE`, `RESTRICT` and rollback. Run `run_server_postgres_drop_schema.py` on both pinned releases and replay with `combine_server_postgres_drop_schema_evidence.py`.
 
-The [PostgreSQL namespace creation contract](postgres-create-schema-v2.json) checks the decoded namespace, exact named or session owner, guard, release-specific stock roles and transaction outcomes. Run `run_server_postgres_create_schema.py` on both pinned releases with the verified disposable service ID and then replay with `combine_server_postgres_create_schema_evidence.py`. The oracle gives different identities to the effective role and session authorization.
+The [PostgreSQL namespace creation contract](postgres-create-schema-v3.json) checks the decoded namespace, exact named or session owner, guard, release-specific stock roles and transaction outcomes. Run `run_server_postgres_create_schema.py` on both pinned releases with the verified disposable service ID and then replay with `combine_server_postgres_create_schema_evidence.py`. The oracle gives different identities to the effective role and session authorization.
+
+The [PostgreSQL namespace table contract](postgres-schema-tables-v1.json) checks absolute child coordinates, column metadata, effective ownership, ordered duplicates, deferred defaults and rollback. Run `run_server_postgres_schema_tables.py` with the same verified disposable service inputs and replay with `combine_server_postgres_schema_tables_evidence.py`.
 
 The [fixture isolation contract](native-postgres-fixture-isolation-v2.json) renews the trusted service's disposable `ir_fixture` database before the six observers that inspect database-wide state. Their receipts identify the container and record the database identity and native catalog census. Start focused runs with a freshly launched fixture. Collecting a full matrix requires each scheduled renewal receipt.
 

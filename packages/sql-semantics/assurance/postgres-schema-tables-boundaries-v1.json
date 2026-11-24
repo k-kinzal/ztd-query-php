@@ -1,0 +1,104 @@
+{
+  "revision": "SemanticsIR/postgres-schema-tables-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-create-schema-boundaries-v1.json",
+  "scope": "Check complete checked child roles, parent namespace and release, guard consistency, member order and composition.",
+  "rules": {
+    "Schema/Namespace/CreateSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!str_starts_with($owner->value, 'pg_') || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\StockRoles::contains($release, $owner->value), 'The stock schema owner must exist in this release.');",
+        "    $name ??= $owner;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name === null || !str_starts_with($name->value, 'pg_'), 'A declared schema name cannot start with pg_.');",
+        "$checked = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($tables, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable::class, 'Schema tables are an ordered list of checked table declarations.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($checked === [] || $name !== null && !$ifNotExists, 'Schema tables require an unguarded, statically named namespace.');",
+        "$seen = [];",
+        "foreach ($checked as $table) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->target->schema->value === $name?->value && $table->release === $release, 'A schema table must belong to its namespace and release.');",
+        "    $coordinate = $table->target->table->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$coordinate]) || $table->ifNotExists, 'A repeated schema table requires its own IF NOT EXISTS guard.');",
+        "    $seen[$coordinate] = true;",
+        "}",
+        "$this->name = $name;",
+        "$this->tables = $checked;"
+      ]
+    },
+    "Schema/Namespace/CreateSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$name = $this->name === null ? '' : $this->name->quoted() . ' ';",
+        "$owner = $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;",
+        "$elements = '';",
+        "foreach ($this->tables as $table) {",
+        "    $elements .= ' ' . $table->toString();",
+        "}",
+        "return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner . $elements;"
+      ]
+    },
+    "Schema/Namespace/CreateSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
+        "$role = $statement->authorization;",
+        "$principal = $role?->name;",
+        "if ($principal !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->knowsRole($principal->value), 'A named schema owner requires a declared role.');",
+        "    $owner = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($principal->value);",
+        "} else {",
+        "    $owner = match ($role?->kind) {",
+        "        null, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentRole, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Effective,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::SessionUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Session,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Named, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Everyone => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A schema requires a single owner.'),",
+        "    };",
+        "}",
+        "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
+        "$resolved = $name ?? ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $owner : null);",
+        "$tables = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaTableLowering())->lower($context, $statement, $resolved);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables);"
+      ]
+    },
+    "Schema/Namespace/SchemaTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($schema->elements === []) {",
+        "    return [];",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema tables require an unguarded, statically named namespace.');",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($resolved->value);",
+        "$resolvedTables = [];",
+        "$provided = [];",
+        "$seen = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTableLowering();",
+        "foreach ($schema->elements as $element) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable, 'CREATE SCHEMA elements require a checked namespace composition.');",
+        "    $member = new \\SqlSemantics\\Platform\\PostgreSql\\Rules\\Catalog\\SchemaMember($element, $name);",
+        "    $binding = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\BoundStatement($member->context($context, $provided), $element);",
+        "    $table = $lowering->lower($binding, $element);",
+        "    $resolvedTables[] = $table;",
+        "    $coordinate = $table->target->table->value;",
+        "    if (!isset($seen[$coordinate])) {",
+        "        $seen[$coordinate] = true;",
+        "        array_push($provided, ...$binding->facts->declarations);",
+        "    }",
+        "}",
+        "return $resolvedTables;"
+      ]
+    }
+  }
+}

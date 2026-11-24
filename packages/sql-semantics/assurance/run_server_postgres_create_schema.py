@@ -20,8 +20,8 @@ from run_server_postgres_create_btree import observation, prepare
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-create-schema"
-CONTRACT_NAME = "postgres-create-schema-v2.json"
-CONTRACT = "3e05125e0cac2c1d21b2d23760e0eb52c9323b1c7610bf5dbbcca2f877e20ba3"
+CONTRACT_NAME = "postgres-create-schema-v3.json"
+CONTRACT = "914c73e7d4a64d9e12c035be63498c61485a8762949f42248830ab7c0ac78228"
 OBSERVER = "postgres_create_schema_observer.py"
 AXES = ("ownerCoordinates", "occupied", "guarded", "transactional")
 UNKNOWN_OWNER = refusal("A named schema owner requires a declared role.")
@@ -86,7 +86,7 @@ def refusals(tag):
     yield missing, None, UNKNOWN_OWNER
     reserved = trial(tag, "named/derived", False, True, False, variant="pg_checkpoint")
     yield direct(reserved), None, RESERVED_SCHEMA
-    members = {**analyzed(base), "sql": "CREATE SCHEMA owning_schema CREATE TABLE items (id integer)"}
+    members = {**analyzed(base), "sql": "CREATE SCHEMA owning_schema CREATE SEQUENCE unimplemented_member"}
     yield members, None, refusal("CREATE SCHEMA elements require a checked namespace composition.")
     if tag == "pg-16.6":
         stock = trial(tag, "named/explicit", False, False, False, variant="pg_maintain")
@@ -122,6 +122,7 @@ def edge_cases(tag):
 
 
 def check_value(item, reply):
+    same([], reply.get("schemaTables"))
     same(["constructed", item["release"] + "/utf8/standard-conforming-strings/native", shape(item)],
          [reply.get("status"), reply.get("profile"), reply.get("createSchema")])
 

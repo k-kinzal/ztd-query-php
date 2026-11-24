@@ -1068,9 +1068,9 @@ if ($dialect !== 'sqlite') {
         $schemaCreation = 'Schema\\Namespace\\CreateSchema';
         $schemaSession = 'Schema\\Namespace\\SchemaSessionRole';
         $roots[] = $schemaCreation;
-        $internal[] = 'Schema\\Namespace\\CreateSchemaLowering';
+        array_push($internal, 'Schema\\Namespace\\CreateSchemaLowering', 'Schema\\Namespace\\SchemaTableLowering');
         $properties[$schemaCreation] = [
-            'name' => ['?Identifier'], 'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
+            'name' => ['?Identifier'], 'tables' => ['array'], 'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
         ];
         $methods[$schemaCreation] = ['__construct', 'profileId', 'toString'];
@@ -1529,7 +1529,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v15.json', '0aa2afdb89a4e1584418dd2bd50339fb8f662537af251f07e74d6eb0264f7365', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v16.json', 'b9ced5b3d745f33d1b2536a824acdf452cc1a1c1ba82574701134156397af335', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1579,9 +1579,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v59.json';
+    $storagePath = __DIR__ . '/value-storage-v60.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '79985f6bf69207ce804fe9395cdfdb5f1b742460def0220007b3a8248900bdc1',
+        hash_file('sha256', $storagePath) === '1aa2c39b43ee9733b75281852dca983420475c5f5bbdd1eb5a0a40e9ea00ab8e',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

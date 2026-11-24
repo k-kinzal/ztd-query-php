@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\StockRoles;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -28,13 +29,21 @@ final class CreateSchema implements SemanticsIR
     public readonly ?Identifier $name;
 
     /**
+     * @var list<CreateTable> Checked table members in native execution order
+     */
+    public readonly array $tables;
+
+    /**
      * Fixes the namespace coordinate, owner, and duplicate handling.
+     *
+     * @param list<CreateTable> $tables
      */
     public function __construct(
         ?Identifier $name,
         public readonly Identifier|SchemaSessionRole $owner = SchemaSessionRole::Effective,
         public readonly bool $ifNotExists = false,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        array $tables = [],
     ) {
         if ($owner instanceof Identifier) {
             Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');
@@ -42,7 +51,17 @@ final class CreateSchema implements SemanticsIR
             $name ??= $owner;
         }
         Check::input($name === null || !str_starts_with($name->value, 'pg_'), 'A declared schema name cannot start with pg_.');
+        $checked = Check::listOf($tables, CreateTable::class, 'Schema tables are an ordered list of checked table declarations.');
+        Check::input($checked === [] || ($name !== null && !$ifNotExists), 'Schema tables require an unguarded, statically named namespace.');
+        $seen = [];
+        foreach ($checked as $table) {
+            Check::input($table->target->schema->value === $name?->value && $table->release === $release, 'A schema table must belong to its namespace and release.');
+            $coordinate = $table->target->table->value;
+            Check::input(!isset($seen[$coordinate]) || $table->ifNotExists, 'A repeated schema table requires its own IF NOT EXISTS guard.');
+            $seen[$coordinate] = true;
+        }
         $this->name = $name;
+        $this->tables = $checked;
     }
 
     /**
@@ -60,7 +79,11 @@ final class CreateSchema implements SemanticsIR
     {
         $name = $this->name === null ? '' : $this->name->quoted() . ' ';
         $owner = $this->owner instanceof Identifier ? $this->owner->quoted() : $this->owner->value;
+        $elements = '';
+        foreach ($this->tables as $table) {
+            $elements .= ' ' . $table->toString();
+        }
 
-        return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner;
+        return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner . $elements;
     }
 }

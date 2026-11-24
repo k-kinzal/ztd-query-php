@@ -1235,9 +1235,15 @@ function constructPostgresCreateSchema(array $input): \SqlSemantics\Platform\Pos
     $owner = isset($spec['owner']['named'])
         ? new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['owner']['named'])
         : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::from($spec['owner']['session']);
+    $tables = [];
+    foreach ($spec['tables'] ?? [] as $table) {
+        $tables[] = constructCreateTable('SqlSemantics\\Platform\\PostgreSql\\', [
+            'dialect' => 'postgres', 'release' => $table['release'], 'create' => $table,
+        ]);
+    }
 
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
-        $name, $owner, $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+        $name, $owner, $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']), $tables,
     );
 }
 
@@ -1249,6 +1255,18 @@ function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema
     return [
         'status' => 'constructed', 'profile' => $schema->profileId(), 'sql' => $schema->toString(),
         'createSchema' => ['name' => $schema->name?->value, 'owner' => $owner, 'ifNotExists' => $schema->ifNotExists],
+        'schemaTables' => array_map(static function (\SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable $table): array {
+            $namespace = 'SqlSemantics\\Platform\\PostgreSql\\Ir\\';
+            return [
+                'release' => $table->release->value,
+                'target' => [$table->target->schema->value, $table->target->table->value],
+                'columns' => array_map(static fn ($column): array => [
+                    $column->name->value, $column->storage->value, $column->nullable,
+                    $column->default === null ? null : observeOperand($namespace, $column->default),
+                ], $table->columns),
+                'ifNotExists' => $table->ifNotExists,
+            ];
+        }, $schema->tables),
     ];
 }
 

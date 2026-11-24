@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v127.json"
-CONTRACT = "0ffde2edd4ee56f205bcde94462765ce3fd2d45b025dcca4dba0c11ee0beb9b3"
+CONTRACT_NAME = "release-layout-v128.json"
+CONTRACT = "d591659a0c7a80024b22cde550a5fb238734eb4591ba3e69d117b7cef0d2944b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -320,6 +320,13 @@ def verify_probe(raw, catalog):
                 "Tax.Reg", "Tax Owner", True, emitted, [None, "Effective", "CREATE SCHEMA AUTHORIZATION CURRENT_USER"],
                 [None, "Session", "CREATE SCHEMA AUTHORIZATION SESSION_USER"],
             ] and item["sql"] == emitted, "installed-postgres-create-schema-mismatch", item)
+            composed = ('CREATE SCHEMA "Batch" AUTHORIZATION "Tax Owner"'
+                        ' CREATE TABLE "Batch"."child" ("n" INTEGER NULL) USING heap'
+                        ' CREATE TABLE IF NOT EXISTS "Batch"."child" ("wide" BIGINT NULL) USING heap')
+            require(item.get("postgresSchemaTables") == [
+                [["Batch", "child", "n", "INTEGER", False], ["Batch", "child", "wide", "BIGINT", True]],
+                composed, composed, True,
+            ], "installed-postgres-schema-tables-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\DropSchema"):
             emitted = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE'
             require(item.get("postgresDropSchema") == [

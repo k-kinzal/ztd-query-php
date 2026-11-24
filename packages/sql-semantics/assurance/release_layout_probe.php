@@ -912,6 +912,35 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 [$effective->name, $effective->owner->name, $effective->toString()],
                 [$session->name, $session->owner->name, $session->toString()],
             ];
+            $composite = $semantics->analyze(
+                'CREATE SCHEMA "Batch" AUTHORIZATION "Tax Owner" CREATE TABLE child (n integer)'
+                . ' CREATE TABLE IF NOT EXISTS child (wide bigint)',
+                $activeContext,
+            );
+            [$original, $repeat] = $composite->tables;
+            $first = $original;
+            $members = [&$first, $repeat];
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $composite->name, $owner, release: $composite->release, tables: $members,
+            );
+            $first = $repeat;
+            $wrongRelease = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+                $repeat->target, $repeat->columns, true,
+                SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql166,
+            );
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $composite->name, $owner, release: $composite->release, tables: [$wrongRelease],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A schema table must belong to its namespace and release.';
+            }
+            $details['postgresSchemaTables'] = [
+                array_map(static fn ($table) => [$table->target->schema->value, $table->target->table->value,
+                    $table->columns[0]->name->value, $table->columns[0]->storage->value, $table->ifNotExists], $rebuilt->tables),
+                $composite->toString(), $rebuilt->toString(), $refused,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
             [$present, $absent] = $result->targets;

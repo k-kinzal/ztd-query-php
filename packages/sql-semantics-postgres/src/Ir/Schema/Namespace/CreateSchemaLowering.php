@@ -31,7 +31,6 @@ final class CreateSchemaLowering
             $context->profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive,
             'CREATE SCHEMA requires the native PostgreSQL namespace profile.'
         );
-        Check::input($statement->elements === [], 'CREATE SCHEMA elements require a checked namespace composition.');
         $role = $statement->authorization;
         $principal = $role?->name;
         if ($principal !== null) {
@@ -45,7 +44,9 @@ final class CreateSchemaLowering
             };
         }
         $name = $statement->name === null ? null : new Identifier($statement->name->value);
+        $resolved = $name ?? ($owner instanceof Identifier ? $owner : null);
+        $tables = (new SchemaTableLowering())->lower($context, $statement, $resolved);
 
-        return new CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar);
+        return new CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables);
     }
 }

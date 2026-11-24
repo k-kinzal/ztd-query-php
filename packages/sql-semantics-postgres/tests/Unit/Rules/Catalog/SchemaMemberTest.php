@@ -26,7 +26,7 @@ final class SchemaMemberTest extends TestCase
         $create = $semantics->inspect('CREATE TABLE t (a int4)', []);
         $context = (new SchemaMember($create->statement, new Name('s')))->context($semantics->context([]));
         self::assertSame(['pg_temp', 'pg_catalog', 's', 'public'], array_map(static fn (Name $name): string => $name->value, $context->searchPath));
-        self::assertSame('public', $context->declarationSchema->value);
+        self::assertSame('s', $context->declarationSchema->value);
     }
 
     public function testContextAddsTheRelationsTheStatementProvided(): void
