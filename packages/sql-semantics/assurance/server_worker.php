@@ -1228,6 +1228,44 @@ function constructPostgresDatabaseRebuild(array $input): \SqlSemantics\Platform\
     };
 }
 
+function constructPostgresSequence(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence
+{
+    $spec = $input['createSequence'];
+    $number = static fn (?string $decimal): ?\SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral => $decimal === null
+        ? null : new \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral($decimal);
+    [$schema, $sequence] = $spec['target'];
+    $name = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceName(
+        new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($schema),
+        new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($sequence),
+    );
+    $numbers = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceParameters(
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage::from($spec['storage']),
+        new \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral($spec['increment']),
+        $number($spec['minimum']), $number($spec['maximum']), $number($spec['start']), $number($spec['initial']),
+        new \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral($spec['cache']),
+        $spec['cycle'],
+    );
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence(
+        $name, $numbers, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePersistence::from($spec['persistence']),
+        $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresSequence(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence $value): array
+{
+    $numbers = $value->parameters;
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'createSequence' => [
+            'target' => [$value->name->schema->value, $value->name->name->value],
+            'persistence' => $value->persistence->value, 'ifNotExists' => $value->ifNotExists,
+            'storage' => $numbers->storage->value, 'increment' => $numbers->increment->decimal,
+            'minimum' => $numbers->minimum->decimal, 'maximum' => $numbers->maximum->decimal,
+            'start' => $numbers->start->decimal, 'initial' => $numbers->initial->decimal,
+            'cache' => $numbers->cache->decimal, 'cycle' => $numbers->cycle,
+        ]];
+}
+
 function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
 {
     $spec = $input['alterSchema'];
@@ -1631,6 +1669,7 @@ function observeStatement(array $input): array
             isset($input['createSchema']) => constructPostgresCreateSchema($input),
             isset($input['dropSchema']) => constructPostgresDropSchema($input),
             isset($input['alterSchema']) => constructPostgresAlterSchema($input),
+            isset($input['createSequence']) => constructPostgresSequence($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1662,6 +1701,9 @@ function observeStatement(array $input): array
             return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
         }
         throw $error;
+    }
+    if ($value::class === $namespace . 'Schema\\Sequence\\CreateSequence') {
+        return observePostgresSequence($value);
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

@@ -604,6 +604,10 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if rule == "RoleSpec" or alternative.startswith(rule + ": ALTER SCHEMA "):
                         related[alternative] = (*related.get(alternative, ()), "postgres-alter-schema-v1.json")
+            for rule in ("CreateSeqStmt", "OptSeqOptList", "SeqOptList", "SeqOptElem", "OptTemp"):
+                for alternative in rules.get(rule, ()):
+                    if rule != "SeqOptElem" or alternative.split()[1] not in {"SEQUENCE", "LOGGED", "UNLOGGED"}:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-create-sequence-v3.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

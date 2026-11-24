@@ -44,6 +44,8 @@ A namespace with table members has a static name and an unguarded parent declara
 
 `DROP SCHEMA` returns an ordered list of resolved namespace selectors in `Ir\Schema\Namespace\DropSchema`. Supply explicit `CREATE SCHEMA` declarations when your catalog contains empty schemas. An absent selector requires an explicit complete catalog and `IF EXISTS`. The value keeps repeats, the guard and `CASCADE` or `RESTRICT`. PostgreSQL applies the dependency policy to objects in the selected namespaces and their dependents.
 
+`CREATE SEQUENCE` returns `Ir\Schema\Sequence\CreateSequence` for standalone unowned sequences. The value fixes the absolute name, persistence, integer storage, increment, limits, catalog start, initial value, cache, and cycle behavior. `START WITH` sets the catalog start. An explicit `RESTART WITH` can set a different first value. The analyzer resolves temporary declarations to the session's `pg_temp` namespace. `IF NOT EXISTS` retains an occupied relation and leaves its generator state intact.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php

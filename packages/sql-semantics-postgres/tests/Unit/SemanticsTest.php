@@ -80,7 +80,7 @@ final class SemanticsTest extends TestCase
     {
         $this->expectExceptionMessage('Complete PostgreSQL IR currently supports a single projection SELECT.');
 
-        (new Semantics())->analyze('CREATE SEQUENCE app_sequence');
+        (new Semantics())->analyze('ALTER SEQUENCE app_sequence INCREMENT BY 2');
     }
 
     public function testInspectLeavesMissingInputsInAnOpenContextAsFacts(): void

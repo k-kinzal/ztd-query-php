@@ -1085,6 +1085,30 @@ if ($dialect !== 'sqlite') {
         $properties[$schemaOwnership] = ['schema' => ['Identifier'], 'owner' => ['Identifier', $schemaSession],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$schemaRename] = $methods[$schemaOwnership] = ['__construct', 'profileId', 'toString'];
+        $sequence = 'Schema\\Sequence\\';
+        $sequenceCreate = $sequence . 'CreateSequence';
+        $sequenceName = $sequence . 'SequenceName';
+        $sequenceParameters = $sequence . 'SequenceParameters';
+        $sequencePersistence = $sequence . 'SequencePersistence';
+        $roots[] = $sequenceCreate;
+        array_push($internal, $sequence . 'CreateSequenceLowering', $sequence . 'SequenceOptionLowering',
+            $sequence . 'SequenceOptionsLowering', $sequence . 'SequenceIntegerOrder');
+        $pureCollaborators[] = $sequence . 'SequenceIntegerOrder';
+        $properties[$sequenceCreate] = ['name' => [$sequenceName], 'parameters' => [$sequenceParameters],
+            'persistence' => [$sequencePersistence], 'ifNotExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$sequenceName] = ['schema' => ['Identifier'], 'name' => ['Identifier']];
+        $properties[$sequenceParameters] = ['storage' => ['Schema\\IntegerStorage'], 'cycle' => ['bool']];
+        foreach (['increment', 'minimum', 'maximum', 'start', 'initial', 'cache'] as $operand) {
+            $properties[$sequenceParameters][$operand] = ['Expression\\WideIntegerLiteral'];
+        }
+        $properties[$sequencePersistence] = [];
+        $enumCases[$sequencePersistence] = ['Permanent' => '', 'Unlogged' => 'UNLOGGED',
+            'Temporary' => 'TEMPORARY', 'GlobalTemporary' => 'GLOBAL TEMPORARY'];
+        $methods[$sequenceCreate] = ['__construct', 'profileId', 'toString'];
+        $methods[$sequenceName] = ['__construct', 'quoted'];
+        $methods[$sequenceParameters] = ['__construct'];
+        $methods[$sequencePersistence] = ['temporary'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1423,7 +1447,8 @@ try {
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\Table\\CreateTableAs, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform
                 . '\\Statement\\Table\\View\\CreateMaterializedView, $statement instanceof \\' . $platform . '\\Statement\\Table\\Index\\CreateIndex, '
-                . '$statement instanceof \\' . $platform . '\\Statement\\Catalog\\Schema\\CreateSchema => (new \\'
+                . '$statement instanceof \\' . $platform . '\\Statement\\Catalog\\Schema\\CreateSchema, $statement instanceof \\'
+                . $platform . '\\Statement\\Table\\Sequence\\CreateSequence => (new \\'
                 . $prefix . 'Schema\\RelationDeclarationLowering())->lower($operation, $statement),')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
@@ -2035,7 +2060,7 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Schema\\CreateTable', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\CreateSchema', 'Schema\\Query\\CreateTableAs',
-                        'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
+                        'Schema\\Sequence\\CreateSequence', 'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
                     ], 'Unexpected PostgreSQL relation and index declaration publication');
             }
             if ($short === 'Schema\\CreateRelationLowering') {
@@ -2121,7 +2146,7 @@ try {
                     && $name->toString() === $platform . '\\Model\\Contract\\StockRoles')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
-                    'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema',
+                    'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema', 'Schema\\Sequence\\SequenceName',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
@@ -2207,7 +2232,10 @@ try {
             requireShape($class instanceof Enum_ && $class->scalarType?->toString() === 'string', 'Arithmetic operators must be a string enum');
             $operators = [];
             foreach ($class->stmts as $case) {
-                if ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'From\\ExternalRelationKind'], true) && $case instanceof Stmt\ClassMethod) {
+                if ($case instanceof Stmt\ClassMethod && (
+                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'From\\ExternalRelationKind'], true))
+                    || ($dialect === 'postgres' && $short === 'Schema\\Sequence\\SequencePersistence')
+                )) {
                     continue;
                 }
                 requireShape($case instanceof Stmt\EnumCase && $case->expr instanceof String_, 'An arithmetic operator must be a literal case');

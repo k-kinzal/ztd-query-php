@@ -596,6 +596,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Namespace\\DropSchema'] = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE';
         $queries['Schema\\Namespace\\RenameSchema'] = 'ALTER SCHEMA "Tax.Reg" RENAME TO "Archive.2025"';
         $queries['Schema\\Namespace\\ChangeSchemaOwner'] = 'ALTER SCHEMA "Tax.Reg" OWNER TO "Tax Owner"';
+        $queries['Schema\\Sequence\\CreateSequence'] = 'CREATE UNLOGGED SEQUENCE IF NOT EXISTS public."Ticket.棚" AS smallint INCREMENT 2 START 3 RESTART 10 CACHE 2 CYCLE';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -929,6 +930,31 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['postgresChangeSchemaOwner'] = [
                 $result->schema->value, $result->owner->value, $direct->toString(), $session->owner->name, $session->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\CreateSequence') {
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceName(
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'),
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Ticket.棚'),
+            );
+            $integer = SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral::class;
+            $options = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceParameters(
+                SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage::Small,
+                new $integer('2'), start: new $integer('3'), initial: new $integer('10'), cache: new $integer('2'), cycle: true,
+            );
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence(
+                $name, $options, SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePersistence::Unlogged, true, $result->release,
+            );
+            $refused = false;
+            try {
+                $semantics->analyze('CREATE SEQUENCE public.invalid_seq INCREMENT 0', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence increment cannot be zero.';
+            }
+            $details['postgresCreateSequence'] = [
+                $result->name->schema->value, $result->name->name->value, $result->persistence->name,
+                $result->parameters->storage->value, $result->parameters->start->decimal, $result->parameters->initial->decimal,
+                $result->ifNotExists, $result == $direct, $direct->toString(), $refused,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {

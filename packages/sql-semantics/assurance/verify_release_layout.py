@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v129.json"
-CONTRACT = "d8b64017a27ace0aeab19a862b9e3b18fb98cfce8f29c784955f041fa2bf98f8"
+CONTRACT_NAME = "release-layout-v130.json"
+CONTRACT = "d570f7f3fbf11683cece66e7de2cd34afd91eeb7fa9cf0de7ee91e0d80c938f9"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -323,6 +323,12 @@ def verify_probe(raw, catalog):
             require(item.get("postgresChangeSchemaOwner") == [
                 "Tax.Reg", "Tax Owner", emitted, "Session", 'ALTER SCHEMA "Tax.Reg" OWNER TO SESSION_USER', True,
             ] and item["sql"] == emitted, "installed-postgres-schema-owner-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\CreateSequence"):
+            emitted = ('CREATE UNLOGGED SEQUENCE IF NOT EXISTS "public"."Ticket.棚" AS SMALLINT INCREMENT BY 2 '
+                       'MINVALUE 1 MAXVALUE 32767 START WITH 3 RESTART WITH 10 CACHE 2 CYCLE')
+            require(item.get("postgresCreateSequence") == [
+                "public", "Ticket.棚", "Unlogged", "SMALLINT", "3", "10", True, True, emitted, True,
+            ] and item["sql"] == emitted, "installed-postgres-create-sequence-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\CreateSchema"):
             emitted = 'CREATE SCHEMA IF NOT EXISTS "Tax.Reg" AUTHORIZATION "Tax Owner"'
             require(item.get("postgresCreateSchema") == [
