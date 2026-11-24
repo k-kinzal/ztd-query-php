@@ -1,5 +1,6 @@
 """Observe ordered native REINDEX diagnostics and catalog phases over disposable data."""
 
+from contextlib import ExitStack
 import json
 from platform import python_version
 import sys
@@ -66,22 +67,26 @@ def snapshot(db, item):
     return {"owners": owners, "indexes": indexes, "links": db.execute(LINKS), "rows": rows}
 
 
+def observe_prepared(db, item, sql):
+    before = snapshot(db, item)
+    if item["active"]:
+        db.execute("BEGIN")
+    reply = db.run(sql, diagnostic_error=True)
+    transaction = db.transaction()
+    after = snapshot(db, item) if reply["sqlState"] == "00000" else None
+    if item["active"]:
+        db.execute("ROLLBACK")
+    settled = snapshot(db, item) if item["active"] or after is None else after
+    return {"status": STATUS, "before": before, "during": after, "settled": settled,
+            "transactionAfter": transaction, **{key: reply[key] for key in ("notices", "error", "sqlState", "command")}}
+
+
 def observe(item, sql):
     if not allowed(item, sql):
         return {"status": "outside-observer-scope"}
     with Session() as db:
         setup(db, item)
-        before = snapshot(db, item)
-        if item["active"]:
-            db.execute("BEGIN")
-        reply = db.run(sql, diagnostic_error=True)
-        transaction = db.transaction()
-        after = snapshot(db, item) if reply["sqlState"] == "00000" else None
-        if item["active"]:
-            db.execute("ROLLBACK")
-        settled = snapshot(db, item) if item["active"] or after is None else after
-        return {"status": STATUS, "before": before, "during": after, "settled": settled,
-                "transactionAfter": transaction, **{key: reply[key] for key in ("notices", "error", "sqlState", "command")}}
+        return observe_prepared(db, item, sql)
 
 
 def main():
@@ -92,13 +97,29 @@ def main():
         locale = db.execute("SHOW lc_messages")[0][0]
         current = db.execute("SELECT current_database()")[0][0]
         assert current == DATABASE
-    print(json.dumps({"database": settings, "currentDatabase": current, "locale": locale, "python": python_version(),
-                      "libpq": LIB.PQlibVersion()}), flush=True)
-    for line in sys.stdin:
-        incoming = json.loads(line)
-        items = incoming if isinstance(incoming, list) else [incoming]
-        result = [observe(item["trial"], item["sql"]) for item in items]
-        print(json.dumps(result if isinstance(incoming, list) else result[0], ensure_ascii=False), flush=True)
+    print(json.dumps({"database": settings, "currentDatabase": current, "locale": locale,
+                      "fixtureSession": "reuse-exact-declarations-and-rows",
+                      "python": python_version(), "libpq": LIB.PQlibVersion()}), flush=True)
+    with ExitStack() as sessions:
+        fixture, db = None, None
+
+        def run(request):
+            nonlocal fixture, db
+            item, sql = request["trial"], request["sql"]
+            if not allowed(item, sql):
+                return {"status": "outside-observer-scope"}
+            wanted = declarations(item), table_data(item)
+            if wanted != fixture:
+                sessions.close()
+                db = sessions.enter_context(Session())
+                setup(db, item)
+                fixture = wanted
+            return observe_prepared(db, item, sql)
+
+        for line in sys.stdin:
+            incoming = json.loads(line)
+            result = [run(request) for request in incoming] if isinstance(incoming, list) else run(incoming)
+            print(json.dumps(result, ensure_ascii=False), flush=True)
 
 
 if __name__ == "__main__":

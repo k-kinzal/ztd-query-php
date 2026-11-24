@@ -39,6 +39,7 @@ def check_preparation(engine, environment, preparation):
     check_libpq(engine, environment, preparation)
     same(DATABASE, environment["currentDatabase"])
     same("C", environment["locale"])
+    same("reuse-exact-declarations-and-rows", environment["fixtureSession"])
 
 
 def grid(spec):
