@@ -652,6 +652,10 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if rule != "privilege_target" or alternative in access_targets:
                         related[alternative] = (*related.get(alternative, ()), "postgres-sequence-access-v1.json")
+            for rule in ("AlterDefaultPrivilegesStmt", "DefACLOptionList", "DefACLOption", "DefACLAction", "defacl_privilege_target"):
+                for alternative in rules.get(rule, ()):
+                    if rule != "defacl_privilege_target" or alternative == "defacl_privilege_target: SEQUENCES":
+                        related[alternative] = (*related.get(alternative, ()), "postgres-sequence-default-access-v2.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

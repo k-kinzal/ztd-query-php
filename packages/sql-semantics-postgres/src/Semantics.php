@@ -57,6 +57,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\GrantSequenceDefaults;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\RevokeSequenceDefaults;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateMaterializedView;
@@ -78,6 +80,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Splitter;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\AlterDefaultPrivileges as ParsedAlterDefaultPrivileges;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant as ParsedGrant;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Revoke as ParsedRevoke;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema as ParsedCreateSchema;
@@ -192,7 +195,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): AlterSequenceAuthorization|ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GrantSequenceAccess|GroupedSelect|Insert|InsertQuery|LocalProjection|MoveSequence|RecursiveSeries|ReconfigureSequence|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|RevokeSequenceAccess|Select|SetSequenceLogging|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
+    public function analyze(string $sql, ?Context $context = null): AlterSequenceAuthorization|ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GrantSequenceAccess|GrantSequenceDefaults|GroupedSelect|Insert|InsertQuery|LocalProjection|MoveSequence|RecursiveSeries|ReconfigureSequence|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|RevokeSequenceAccess|RevokeSequenceDefaults|Select|SetSequenceLogging|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -207,7 +210,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateTableAs, $statement instanceof ParsedCreateView, $statement instanceof ParsedCreateMaterializedView, $statement instanceof ParsedCreateIndex, $statement instanceof ParsedCreateSchema, $statement instanceof ParsedCreateSequence => (new RelationDeclarationLowering())->lower($operation, $statement),
             $statement instanceof ParsedRefreshMaterializedView => (new RefreshMaterializedViewLowering())->lower($operation, $statement),
-            $statement instanceof ParsedDrop, $statement instanceof ParsedRename, $statement instanceof ParsedTruncateTable, $statement instanceof ParsedReindex, $statement instanceof ParsedChangeOwner, $statement instanceof ParsedSetSchema, $statement instanceof ParsedAlterSequence, $statement instanceof ParsedAlterTable, $statement instanceof ParsedGrant, $statement instanceof ParsedRevoke => (new RelationChangeLowering())->lower($operation, $statement),
+            $statement instanceof ParsedDrop, $statement instanceof ParsedRename, $statement instanceof ParsedTruncateTable, $statement instanceof ParsedReindex, $statement instanceof ParsedChangeOwner, $statement instanceof ParsedSetSchema, $statement instanceof ParsedAlterSequence, $statement instanceof ParsedAlterTable, $statement instanceof ParsedGrant, $statement instanceof ParsedRevoke, $statement instanceof ParsedAlterDefaultPrivileges => (new RelationChangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
@@ -221,7 +224,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<AlterSequenceAuthorization|ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GrantSequenceAccess|GroupedSelect|Insert|InsertQuery|LocalProjection|MoveSequence|RecursiveSeries|ReconfigureSequence|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|RevokeSequenceAccess|Select|SetSequenceLogging|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
+     * @return list<AlterSequenceAuthorization|ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GrantSequenceAccess|GrantSequenceDefaults|GroupedSelect|Insert|InsertQuery|LocalProjection|MoveSequence|RecursiveSeries|ReconfigureSequence|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|RevokeSequenceAccess|RevokeSequenceDefaults|Select|SetSequenceLogging|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Revoke;
-use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpecKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 
 /**
@@ -33,25 +32,15 @@ final class SequenceAccessLowering
         );
         $target = (new SequenceAccessTargetLowering())->lower($context, $statement->target);
         $owners = new SchemaOwnerLowering();
-        $grantees = [];
-        foreach ($statement->grantees as $role) {
-            $grantees[] = new SequenceGrantee($role->kind === RoleSpecKind::Everyone
-                ? UniversalGrantee::Everyone : new SequencePrincipal($owners->lower($context, $role)));
-        }
         $grantor = $statement->grantor === null ? null : new SequencePrincipal($owners->lower($context, $statement->grantor));
-        $rights = [];
-        foreach ($statement->privileges as $privilege) {
-            $word = match ($privilege->privilege()) {
-                'select' => SequenceRight::Select,
-                'update' => SequenceRight::Update,
-                'usage' => SequenceRight::Usage,
-                'rule' => SequenceRight::LegacyRule,
-                default => null,
-            };
-            Check::input($word !== null && $privilege->columns === [], 'A sequence privilege must name one native right without columns.');
-            $rights[] = $word;
-        }
-        $access = new SequenceAccess($target, $rights, $grantees, $grantor, $context->profile->grammar);
+        $operands = new SequencePrivilegeLowering();
+        $access = new SequenceAccess(
+            $target,
+            $operands->rights($statement->privileges),
+            $operands->grantees($context, $statement->grantees),
+            $grantor,
+            $context->profile->grammar
+        );
         if ($statement instanceof Grant) {
             return new GrantSequenceAccess($access, $statement->grantOption);
         }

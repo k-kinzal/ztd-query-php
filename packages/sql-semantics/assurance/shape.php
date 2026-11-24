@@ -1218,6 +1218,18 @@ if ($dialect !== 'sqlite') {
         $enumCases[$universal] = ['Everyone' => 'PUBLIC'];
         $enumCases[$right] = ['Select' => 'SELECT', 'Update' => 'UPDATE', 'Usage' => 'USAGE', 'LegacyRule' => 'RULE'];
         $enumCases[$grantDependency] = ['Restrict' => 'RESTRICT', 'Cascade' => 'CASCADE'];
+        $defaults = $sequence . 'Defaults\\';
+        $grantDefaults = $defaults . 'GrantSequenceDefaults';
+        $revokeDefaults = $defaults . 'RevokeSequenceDefaults';
+        $defaultPolicy = $defaults . 'SequenceDefaultPolicy';
+        array_push($roots, $grantDefaults, $revokeDefaults);
+        array_push($internal, $access . 'SequencePrivilegeLowering', $defaults . 'SequenceDefaultLowering', $defaults . 'SequenceDefaultScopesLowering');
+        $properties[$grantDefaults] = ['policy' => [$defaultPolicy], 'grantOption' => ['bool']];
+        $properties[$revokeDefaults] = ['policy' => [$defaultPolicy], 'grantOptionOnly' => ['bool'], 'dependency' => [$grantDependency]];
+        $methods[$grantDefaults] = $methods[$revokeDefaults] = ['__construct', 'profileId', 'toString'];
+        $properties[$defaultPolicy] = ['creators' => ['array'], 'schemas' => ['array'], 'rights' => ['array'], 'grantees' => ['array'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$defaultPolicy] = ['__construct', 'profileId', 'scopeSql', 'objectSql', 'recipientsSql'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1570,6 +1582,7 @@ try {
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Table\\Alter\\AlterTable'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Catalog\\Access\\Privilege\\Grant'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Catalog\\Access\\Privilege\\Revoke'
+                . ', $statement instanceof \\' . $platform . '\\Statement\\Catalog\\Access\\Defaults\\AlterDefaultPrivileges'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
@@ -1728,9 +1741,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v66.json';
+    $storagePath = __DIR__ . '/value-storage-v67.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '290937b42dc1d968c6bfb4db975a5a2190093806b47e3658bfa7e55f3f1a52ea',
+        hash_file('sha256', $storagePath) === 'b815ed1f94c9665f801c70eea8e81bd32337523ab5b8496089407a51e69ebc15',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2171,6 +2184,7 @@ try {
                         'Schema\\Sequence\\Access\\GrantSequenceAccess', 'Schema\\Sequence\\Access\\RevokeSequenceAccess',
                         'Schema\\Sequence\\Alter\\MoveSequence', 'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\RenameSequence',
                         'Schema\\Sequence\\Alter\\SetSequenceLogging', 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization',
+                        'Schema\\Sequence\\Defaults\\GrantSequenceDefaults', 'Schema\\Sequence\\Defaults\\RevokeSequenceDefaults',
                         'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
@@ -2269,7 +2283,7 @@ try {
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema', 'Schema\\Sequence\\SequenceName',
                     'Schema\\Sequence\\SequenceSelector', 'Schema\\Sequence\\Ownership\\SequenceOwner', 'Schema\\Sequence\\Alter\\MoveSequence',
-                    'Schema\\Sequence\\Access\\SequencesInSchemas',
+                    'Schema\\Sequence\\Access\\SequencesInSchemas', 'Schema\\Sequence\\Defaults\\SequenceDefaultPolicy',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')

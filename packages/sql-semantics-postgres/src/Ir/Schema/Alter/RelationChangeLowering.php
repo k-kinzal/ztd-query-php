@@ -32,11 +32,15 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequenceActionsLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\GrantSequenceDefaults;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\RevokeSequenceDefaults;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\SequenceDefaultLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\AlterDefaultPrivileges as ParsedAlterDefaultPrivileges;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant as ParsedGrant;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Revoke as ParsedRevoke;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
@@ -62,8 +66,8 @@ final class RelationChangeLowering
      */
     public function lower(
         BoundStatement $operation,
-        ParsedDrop|ParsedReindex|ParsedRename|ParsedTruncateTable|ParsedChangeOwner|ParsedSetSchema|ParsedAlterSequence|ParsedAlterTable|ParsedGrant|ParsedRevoke $statement,
-    ): AlterSequenceAuthorization|ChangeSchemaOwner|DropIndex|DropSchema|DropSequence|DropTable|DropView|GrantSequenceAccess|MoveSequence|ReconfigureSequence|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|RevokeSequenceAccess|SetSequenceLogging|TruncateTable {
+        ParsedDrop|ParsedReindex|ParsedRename|ParsedTruncateTable|ParsedChangeOwner|ParsedSetSchema|ParsedAlterSequence|ParsedAlterTable|ParsedGrant|ParsedRevoke|ParsedAlterDefaultPrivileges $statement,
+    ): AlterSequenceAuthorization|ChangeSchemaOwner|DropIndex|DropSchema|DropSequence|DropTable|DropView|GrantSequenceAccess|GrantSequenceDefaults|MoveSequence|ReconfigureSequence|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|RevokeSequenceAccess|RevokeSequenceDefaults|SetSequenceLogging|TruncateTable {
         return match (true) {
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedChangeOwner, $statement instanceof ParsedRename && $statement->kind === ObjectKind::Schema => (new SchemaAlterLowering())->lower($operation, $statement),
@@ -71,6 +75,7 @@ final class RelationChangeLowering
             $statement instanceof ParsedAlterSequence => (new ReconfigureSequenceLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable => (new SequenceActionsLowering())->lower($operation, $statement),
             $statement instanceof ParsedGrant, $statement instanceof ParsedRevoke => (new SequenceAccessLowering())->lower($operation, $statement),
+            $statement instanceof ParsedAlterDefaultPrivileges => (new SequenceDefaultLowering())->lower($operation, $statement),
             $statement instanceof ParsedRename => (new RenameLowering())->lower($operation, $statement),
             $statement instanceof ParsedTruncateTable => (new TruncateLowering())->lower($operation, $statement),
             $statement instanceof ParsedReindex => match ($statement->target) {

@@ -62,6 +62,8 @@ Sequence reconfiguration stores one typed assignment for each requested generato
 
 Sequence `GRANT` and `REVOKE` support ordered lists of named sequences and `ALL SEQUENCES IN SCHEMA`. The schema form selects the sequences in those schemas when the statement runs. The IR retains the recipients, any explicit grantor, and the grant or revoke options. For a revoke, `CASCADE` propagates to dependent grants, and `RESTRICT` requires them to be absent. The universal token `PUBLIC` is distinct from a declared role named `"PUBLIC"`.
 
+`ALTER DEFAULT PRIVILEGES ... ON SEQUENCES` changes the privileges assigned to future sequences. Declare any named creator, recipient, and schema used by the statement in the analysis context. An omitted creator selects the effective role, and an omitted schema selects the database-wide policy. A schema-specific policy adds privileges to the database-wide policy of the same creator.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php

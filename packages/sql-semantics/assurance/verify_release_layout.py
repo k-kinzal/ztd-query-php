@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v139.json"
-CONTRACT = "e032f2cf32b42a98e0ee07a868a53e9a065342274cef6c5f4f0c81cdb32a32a3"
+CONTRACT_NAME = "release-layout-v140.json"
+CONTRACT = "698cb98fa2d4d446bfe7f9a56df6113e4d6b8ba82164e256224def5dd17829ad"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -348,6 +348,17 @@ def verify_probe(raw, catalog):
             require(item.get("postgresSequenceAccess") == [target, ["SELECT"], 'PUBLIC, "PUBLIC"', " GRANTED BY SESSION_USER",
                                                           emitted, True, True, None]
                     and item["sql"] == emitted, "installed-postgres-sequence-revoke-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\Defaults\\GrantSequenceDefaults"):
+            scope = 'ALTER DEFAULT PRIVILEGES FOR ROLE "Owner Role", CURRENT_USER IN SCHEMA "Policy.Archive"'
+            rights, recipients = 'USAGE, UPDATE ON SEQUENCES', '"Reader Role", SESSION_USER'
+            emitted = f'{scope} GRANT {rights} TO {recipients} WITH GRANT OPTION'
+            require(item.get("postgresSequenceDefaultAccess") == [scope, rights, recipients, emitted, True, True, True]
+                    and item["sql"] == emitted, "installed-postgres-sequence-default-grant-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\Defaults\\RevokeSequenceDefaults"):
+            scope, rights, recipients = 'ALTER DEFAULT PRIVILEGES', 'ALL ON SEQUENCES', 'PUBLIC, CURRENT_USER'
+            emitted = f'{scope} REVOKE GRANT OPTION FOR {rights} FROM {recipients} CASCADE'
+            require(item.get("postgresSequenceDefaultAccess") == [scope, rights, recipients, emitted, True, True, True]
+                    and item["sql"] == emitted, "installed-postgres-sequence-default-revoke-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\Alter\\ReconfigureSequence"):
             emitted = 'ALTER SEQUENCE "public"."ticket" START WITH 5 RESTART CYCLE OWNED BY NONE'
             guarded = 'ALTER SEQUENCE IF EXISTS "unused" RESTART'
