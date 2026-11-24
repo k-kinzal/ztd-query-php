@@ -515,22 +515,6 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-schema-indexes-evidence"
-      - name: Compare PostgreSQL namespace sequence grants and native ACL effects
-        if: ${{ !cancelled() && matrix.engine == 'postgres' }}
-        env:
-          PYTHONDONTWRITEBYTECODE: '1'
-          ENGINE: ${{ matrix.engine }}
-          RELEASE: ${{ matrix.release }}
-          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
-          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
-          ZTD_IR_POSTGRES_USER: postgres
-          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
-        run: |
-          python3 trusted/packages/sql-semantics/assurance/run_server_postgres_schema_sequence_grants.py \
-            --engine "$ENGINE" --release "$RELEASE" \
-            --candidate candidate \
-            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
-            --out "$RUNNER_TEMP/semantics-ir-postgres-schema-sequence-grants-evidence"
       - name: Compare PostgreSQL namespace rename and owning-role changes
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -691,6 +675,22 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-sequence-access-evidence"
+      - name: Compare PostgreSQL namespace sequence grants and native ACL effects
+        if: ${{ !cancelled() && matrix.engine == 'postgres' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_postgres_schema_sequence_grants.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-postgres-schema-sequence-grants-evidence"
       - name: Compare PostgreSQL user and schema default sequence privileges
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:

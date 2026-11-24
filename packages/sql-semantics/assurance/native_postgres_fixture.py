@@ -8,8 +8,8 @@ import time
 
 from run import TOOL, digest, require, write_json
 
-NAME = "native-postgres-fixture-isolation-v19.json"
-CONTRACT = "e65599403725bacb4661ce69105c3fe100c14d1a1f07de6fcfa3cd5242de5494"
+NAME = "native-postgres-fixture-isolation-v20.json"
+CONTRACT = "2701982a8c7492f81af21903f92c12a5fce2ae8f6d625ff4ff8e8772db2f6753"
 STORAGE_NAME = "native-postgres-fixture-storage-v1.json"
 STORAGE_CONTRACT = "fee0adc1f3a7a5568346e4b0ba0ce82bf2f552af58121404fdfc05d39a44aa35"
 ENV = "ZTD_IR_POSTGRES_FIXTURE_CONTAINER"

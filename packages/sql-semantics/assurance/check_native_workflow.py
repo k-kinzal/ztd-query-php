@@ -123,6 +123,15 @@ def audit(workflow, plan):
     expected_uploads = {route_paths(domain)[1] for domain, _ in expected}
     require(runners.keys() == expected_runners, "native-workflow-runner-inventory", sorted(runners.keys() ^ expected_runners))
     require(uploads.keys() == expected_uploads, "native-workflow-artifact-inventory", sorted(uploads.keys() ^ expected_uploads))
+    grants = "postgres_schema_sequence_grants"
+    acl = "postgres_sequence_access"
+    if any(grants in {domain for domain, _, _ in jobs} for jobs in plan.values()):
+        require(all(acl in names and names.index(acl) < names.index(grants)
+                    for jobs in plan.values() if grants in (names := [domain for domain, _, _ in jobs])),
+                "native-schedule-shared-postgres-role-order")
+        require(authorized_steps.index(runners[f"run_server_{acl}.py"][0])
+                < authorized_steps.index(runners[f"run_server_{grants}.py"][0]),
+                "native-workflow-shared-postgres-role-order")
     routes = {}
     for (domain, runner), profiles in sorted(expected.items()):
         out, artifact = route_paths(domain)
