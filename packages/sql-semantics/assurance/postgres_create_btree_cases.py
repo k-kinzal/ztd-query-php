@@ -24,6 +24,7 @@ KEY_AXES = ("keys", "firstOrder", "included", "uniqueNullPolicies")
 ROUTE_AXES = ("targetScopes", "concurrently", "transaction", "guard", "occupancy")
 PATH = ["fixture", "public", "pg_catalog"]
 PREFIX = "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\"
+TRUTH_VALUES = {"TRUE": True, "FALSE": False, "UNKNOWN": None}
 
 
 def refusal(message, exception="InvalidConstruction"):
@@ -65,8 +66,10 @@ def route_case(tag, scope, concurrently, transaction, guard, occupied):
 
 def predicate_sql(predicate, field):
     if len(predicate) == 2:
-        slot, negated = predicate
-        return "(" + field(slot) + (" IS NOT NULL)" if negated else " IS NULL)")
+        slot, test = predicate
+        if isinstance(test, str):
+            return "(" + field(slot) + " " + test + ")"
+        return "(" + field(slot) + (" IS NOT NULL)" if test else " IS NULL)")
     operator, left, right = predicate
     if operator == "NOT":
         return "(NOT " + predicate_sql(left, field) + ")"
@@ -134,8 +137,12 @@ def qualifies(predicate, row):
     if predicate is None:
         return True
     if len(predicate) == 2:
-        slot, negated = predicate
-        return (row[slot] is not None) == negated
+        slot, test = predicate
+        if isinstance(test, str):
+            prefix, value = test.rsplit(" ", 1)
+            require(prefix in ("IS", "IS NOT") and value in TRUTH_VALUES, "postgres-btree-oracle-truth-test", test)
+            return (row[slot] is TRUTH_VALUES[value]) == (prefix == "IS")
+        return (row[slot] is not None) == test
     operator, left, right = predicate
     if operator == "NOT":
         return not qualifies(left, row)
@@ -195,6 +202,10 @@ def snapshot(item, index, marker=False):
     }
 
 
+def future_rows(item):
+    return [item["rows"][position] for position in item["probeRows"]] + item.get("probeValues", [])
+
+
 def expected(item):
     index = item["createBtree"]
     scope = index["table"][0]
@@ -221,11 +232,11 @@ def expected(item):
 
     success = state == "00000"
     probe = None
-    if success:
+    if success or (item.get("probeFailedBuild") and not active and state == "23505"):
         probe = [
-            "23505" if created and created["unique"] and conflicts(index["keys"], [*item["rows"], item["rows"][position]], index["nullsNotDistinct"], index["predicate"])
+            "23505" if created and created["ready"] and created["unique"] and conflicts(index["keys"], [*item["rows"], row], index["nullsNotDistinct"], index["predicate"])
             else "00000"
-            for position in item["probeRows"]
+            for row in future_rows(item)
         ]
     result = {
         "status": "btree-creation", "sqlState": state, "command": "CREATE INDEX" if success else None, "notices": notices,

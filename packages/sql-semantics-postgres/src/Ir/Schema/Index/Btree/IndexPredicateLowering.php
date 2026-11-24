@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -16,11 +17,12 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperator;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Negation;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\BooleanTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 
 /**
- * Resolves a partial B-tree condition to logical nodes and physical column tests.
+ * Resolves a partial B-tree condition to logical nodes and two-valued column tests.
  *
  * @visibility SqlSemantics
  */
@@ -31,16 +33,16 @@ final class IndexPredicateLowering
      *
      * @throws InvalidConstruction When the predicate does not use a physical column
      */
-    public function lower(BoundStatement $operation, CreateIndex $statement): NullIndexPredicate|IndexBooleanPredicate|null
+    public function lower(BoundStatement $operation, CreateIndex $statement): NullIndexPredicate|IndexTruthTest|IndexBooleanPredicate|null
     {
         return $statement->where === null ? null : $this->node($operation, $statement, $statement->where);
     }
 
     /**
      * Preserves the parsed operator, grouping and ordered operands.
-     * @throws InvalidConstruction When a terminal is outside the scalar NULL role
+     * @throws InvalidConstruction When a terminal is outside the checked column roles
      */
-    public function node(BoundStatement $operation, CreateIndex $statement, Scalar $condition): NullIndexPredicate|IndexBooleanPredicate
+    public function node(BoundStatement $operation, CreateIndex $statement, Scalar $condition): NullIndexPredicate|IndexTruthTest|IndexBooleanPredicate
     {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
@@ -56,22 +58,24 @@ final class IndexPredicateLowering
         if ($condition instanceof Negation) {
             return new IndexBooleanPredicate(LogicalOperator::Not, $this->node($operation, $statement, $condition->operand));
         }
+        if ($condition instanceof BooleanTest) {
+            return new IndexTruthTest($this->slot($operation, $statement, $condition->operand), TruthOperator::from($condition->kind->value));
+        }
         Check::input($condition instanceof NullTest, 'A partial B-tree needs a direct scalar column NULL test.');
 
-        return $this->column($operation, $statement, $condition);
+        return new NullIndexPredicate($this->slot($operation, $statement, $condition->operand), $condition->negated);
     }
 
     /**
      * Finds the tested column by the exact declared owner and occurrence.
      * @throws InvalidConstruction When the test does not use a physical column
      */
-    public function column(BoundStatement $operation, CreateIndex $statement, NullTest $condition): NullIndexPredicate
+    public function slot(BoundStatement $operation, CreateIndex $statement, Scalar $operand): int
     {
-        $operand = $condition->operand;
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
         }
-        Check::input($operand instanceof ColumnReference, 'A partial B-tree needs a direct scalar column NULL test.');
+        Check::input($operand instanceof ColumnReference, 'A partial B-tree needs a direct scalar column NULL test or Boolean truth test.');
         $table = $operation->facts->relation($statement)->table;
         $resolved = $operation->facts->scalar($operand)->resolution;
         Check::input($table instanceof DeclaredTable && $resolved instanceof ResolvedColumn
@@ -79,7 +83,7 @@ final class IndexPredicateLowering
         $column = $resolved->declaration();
         foreach ($table->table->columns as $slot => $candidate) {
             if ($candidate === $column) {
-                return new NullIndexPredicate($slot, $condition->negated);
+                return $slot;
             }
         }
         throw new InvalidConstruction('The partial B-tree operand must be a declared physical column.');

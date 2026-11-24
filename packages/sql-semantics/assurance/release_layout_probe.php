@@ -842,6 +842,21 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $parsedPredicate->left->left->slot, $parsedPredicate->left->right->slot,
                 $formula->toString(), $detached->toString(), $parsedPredicate == $detached->predicate,
             ];
+            $truth = $semantics->analyze(
+                'CREATE INDEX "truth probe" ON ledger (wide) WHERE public.ledger.ready IS NOT UNKNOWN',
+                $activeContext,
+            );
+            $test = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest(
+                2,
+                SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator::IsNotUnknown,
+            );
+            $copy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $truth->table, $truth->name, $truth->keys, release: $truth->release, predicate: $test,
+            );
+            $details['postgresIndexTruthTest'] = [
+                $truth->predicate->slot, $truth->predicate->operator->value,
+                $truth->toString(), $copy->toString(), $test == $truth->predicate,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
             [$target, $absence] = $result->targets;

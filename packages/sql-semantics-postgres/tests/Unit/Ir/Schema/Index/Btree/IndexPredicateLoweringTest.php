@@ -8,9 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPredicateLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
@@ -64,7 +66,7 @@ final class IndexPredicateLoweringTest extends TestCase
         self::assertEquals($index, $analyzer->analyze($index->toString(), $context));
     }
 
-    public function testColumnBindsDifferentNativeHeadingPositions(): void
+    public function testSlotBindsDifferentNativeHeadingPositions(): void
     {
         $analyzer = new Semantics();
         $context = $analyzer->context(['CREATE TABLE public.orders (id integer, active boolean, ref bigint)']);
@@ -76,6 +78,23 @@ final class IndexPredicateLoweringTest extends TestCase
 
         self::assertInstanceOf(ParsedCreateIndex::class, $operation->statement);
         self::assertInstanceOf(NullTest::class, $operation->statement->where);
-        self::assertEquals(new NullIndexPredicate(2, true), (new IndexPredicateLowering())->column($operation, $operation->statement, $operation->statement->where));
+        self::assertSame(2, (new IndexPredicateLowering())->slot($operation, $operation->statement, $operation->statement->where->operand));
+    }
+
+    public function testLowerPreservesTruthOperationAndQualifiedColumn(): void
+    {
+        $analyzer = new Semantics();
+        $context = $analyzer->context(['CREATE TABLE public.orders (id integer, active boolean, delivered boolean)']);
+        $index = $analyzer->analyze(
+            'CREATE INDEX selected ON orders (id) WHERE orders.active IS UNKNOWN AND public.orders.delivered IS NOT TRUE',
+            $context,
+        );
+
+        self::assertInstanceOf(CreateIndex::class, $index);
+        self::assertEquals(
+            new IndexBooleanPredicate(LogicalOperator::And, new IndexTruthTest(1, TruthOperator::IsUnknown), new IndexTruthTest(2, TruthOperator::IsNotTrue)),
+            $index->predicate,
+        );
+        self::assertEquals($index, $analyzer->analyze($index->toString(), $context));
     }
 }

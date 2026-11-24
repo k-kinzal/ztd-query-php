@@ -53,7 +53,9 @@ A named `CREATE INDEX` on a declared ordinary table returns `Ir\Schema\Index\Btr
 
 The same B-tree value can carry a direct scalar `IS NULL` or `IS NOT NULL` predicate as a resolved physical slot. For example, `CREATE INDEX queued ON app.orders (id) WHERE app.orders.is_closed IS NULL` checks the exact indexed column if the declared physical type belongs to the supported B-tree profile. A unique partial index checks only the rows that satisfy its predicate.
 
-Combine these conditions with `AND`, `OR` and `NOT`. Each `IndexBooleanPredicate` keeps its operator and ordered children, and every leaf is checked against the indexed table even when it occurs inside a nested condition. For example, `WHERE NOT (is_closed IS NULL OR archived_at IS NOT NULL)` retains the grouping and both indexed column positions when rendered.
+Combine these conditions with `AND`, `OR` and `NOT`. Each `IndexBooleanPredicate` keeps its operator and ordered children, and every leaf is checked against the indexed table even when it occurs inside a nested condition. For example, `WHERE NOT (is_closed IS NULL OR archive_id IS NOT NULL)` retains the grouping and both indexed column positions when rendered.
+
+For declared Boolean columns, `IndexTruthTest` also represents all six `IS [NOT] TRUE`, `IS [NOT] FALSE` and `IS [NOT] UNKNOWN` forms. Use `WHERE ready IS NOT FALSE` to include the true and NULL states in a partial index. The root checks that the selected physical column has native Boolean type.
 
 A persistent heap `CREATE MATERIALIZED VIEW` returns `Ir\Schema\View\CreateMaterializedView` with its effective ordered heading, checked defining query and explicit initial population policy. `REFRESH MATERIALIZED VIEW` returns `Ir\Schema\View\RefreshMaterializedView` for a resolved materialized relation. Include the target's declaration in the context when analyzing a refresh. `WITH NO DATA` makes the snapshot unscannable until a populated refresh. Concurrent refresh and custom storage settings are outside this complete IR domain.
 

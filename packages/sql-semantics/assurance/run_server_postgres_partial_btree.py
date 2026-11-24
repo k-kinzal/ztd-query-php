@@ -164,8 +164,8 @@ def faults(_, tag):
     return [
         RenderFault("postgres-partial-btree-drop-null-filter", source, "$this->predicate === null ? '' : IndexCondition::sql",
                     "true ? '' : IndexCondition::sql", partial, "meaning-mismatch"),
-        RenderFault("postgres-partial-btree-other-null-column", condition, "$table->columns[$node->slot]->quoted()",
-                    "$table->columns[0]->quoted()", mismatch, "meaning-mismatch"),
+        RenderFault("postgres-partial-btree-other-null-column", condition, "$table->columns[$node->slot]->quoted() . ($node->negated",
+                    "$table->columns[0]->quoted() . ($node->negated", mismatch, "meaning-mismatch"),
         RenderFault("postgres-partial-btree-invert-null-condition", condition, "$node->negated ? ' IS NOT NULL)'",
                     "!$node->negated ? ' IS NOT NULL)'", partial, "meaning-mismatch"),
         RenderFault("postgres-partial-btree-admit-absent-null-column", condition,

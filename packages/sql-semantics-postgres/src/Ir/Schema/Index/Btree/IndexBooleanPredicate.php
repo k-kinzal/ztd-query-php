@@ -9,7 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * A resolved logical composition of scalar NULL conditions in a partial B-tree.
+ * A resolved logical composition of two-valued column tests in a partial B-tree.
  *
  * @visibility public
  * @example Negating a test of the first physical column
@@ -25,8 +25,8 @@ final class IndexBooleanPredicate
      */
     public function __construct(
         public readonly LogicalOperator $operator,
-        public readonly NullIndexPredicate|self $left,
-        public readonly NullIndexPredicate|self|null $right = null,
+        public readonly NullIndexPredicate|IndexTruthTest|self $left,
+        public readonly NullIndexPredicate|IndexTruthTest|self|null $right = null,
     ) {
         Check::input(($operator === LogicalOperator::Not) === ($right === null), 'A partial index NOT needs one operand and AND or OR needs two.');
     }

@@ -42,7 +42,7 @@ def data_literal(value):
 
 
 def admit_condition(expression, fields):
-    atom = rf"{fields} IS (?:NOT )?NULL"
+    atom = rf"{fields} IS (?:NOT )?(?:NULL|TRUE|FALSE|UNKNOWN)"
     token = rf"(?:{atom}|AND|OR|NOT|[()]| )"
     return re.fullmatch(rf"{token}+", expression) is not None
 
@@ -175,9 +175,10 @@ def detect_conflict(db, trial):
     table, _, _ = chosen(trial)
     active = trial["transaction"]
     findings = []
-    for number in trial["probeRows"]:
+    pending = [trial["rows"][number] for number in trial["probeRows"]] + trial.get("probeValues", [])
+    for row in pending:
         db.execute("SAVEPOINT observe_write" if active else "BEGIN")
-        values = ", ".join(map(literal, trial["rows"][number]))
+        values = ", ".join(map(literal, row))
         findings.append(db.run(f"INSERT INTO {table} VALUES ({values})")["sqlState"])
         db.execute("ROLLBACK TO SAVEPOINT observe_write; RELEASE SAVEPOINT observe_write" if active else "ROLLBACK")
 
@@ -214,7 +215,8 @@ def observe(db, data):
     transaction = db.transaction()
     success = result["sqlState"] == "00000"
     after = snapshot(db, trial) if success or not active else None
-    probe = detect_conflict(db, trial) if success else None
+    probes_available = success or (trial.get("probeFailedBuild") and not active and result["sqlState"] == "23505")
+    probe = detect_conflict(db, trial) if probes_available else None
     if active:
         db.execute("ROLLBACK")
     observed = {

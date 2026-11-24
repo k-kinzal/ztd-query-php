@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v113.json"
-CONTRACT = "63690baa2848242f973f240ce95925a273c7fb0bf48df3bc408e862f849b70c2"
+CONTRACT_NAME = "release-layout-v114.json"
+CONTRACT = "6404c8726b8e002428938165edaafa21f0d56115005e3e8749ee730de5a38710"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -294,6 +294,10 @@ def verify_probe(raw, catalog):
                        ' WHERE (NOT (("value" IS NULL) OR ("ready" IS NOT NULL)))')
             require(item.get("postgresBooleanIndexPredicate") == ["NOT", "OR", 0, 2, formula, formula, True],
                     "installed-postgres-boolean-index-predicate-mismatch", item)
+            truth = ('CREATE INDEX "truth probe" ON "public"."ledger" USING btree ("wide" ASC NULLS LAST)'
+                     ' WHERE ("ready" IS NOT UNKNOWN)')
+            require(item.get("postgresIndexTruthTest") == [2, "IS NOT UNKNOWN", truth, truth, True],
+                    "installed-postgres-index-truth-test-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\DropIndex"):
             emitted = 'DROP INDEX IF EXISTS "pg_temp"."removal", "absent_namespace"."idx" CASCADE'
             require(item.get("postgresDropIndex") == ["pg_temp", "removal", "keyed", "absent_namespace", True, emitted,

@@ -1035,15 +1035,16 @@ if ($dialect !== 'sqlite') {
             'keys' => ['array'], 'included' => ['array'], 'table' => ['TableSource'], 'name' => ['Identifier'],
             'presence' => [$btree . 'IndexPresence'], 'ifNotExists' => ['bool'], 'unique' => ['bool'],
             'nullsNotDistinct' => ['bool'], 'concurrently' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
-            'predicate' => [$btree . 'IndexBooleanPredicate', $btree . 'NullIndexPredicate', 'null'],
+            'predicate' => [$btree . 'IndexBooleanPredicate', $btree . 'IndexTruthTest', $btree . 'NullIndexPredicate', 'null'],
         ];
         $properties[$btree . 'IndexKey'] = ['slot' => ['int'], 'order' => [$btree . 'IndexOrder']];
         $properties[$btree . 'IncludedColumn'] = ['slot' => ['int']];
         $properties[$btree . 'NullIndexPredicate'] = ['slot' => ['int'], 'negated' => ['bool']];
+        $properties[$btree . 'IndexTruthTest'] = ['slot' => ['int'], 'operator' => ['Predicate\\TruthOperator']];
         $properties[$btree . 'IndexBooleanPredicate'] = [
             'operator' => ['Predicate\\LogicalOperator'],
-            'left' => [$btree . 'IndexBooleanPredicate', $btree . 'NullIndexPredicate'],
-            'right' => [$btree . 'IndexBooleanPredicate', $btree . 'NullIndexPredicate', 'null'],
+            'left' => [$btree . 'IndexBooleanPredicate', $btree . 'IndexTruthTest', $btree . 'NullIndexPredicate'],
+            'right' => [$btree . 'IndexBooleanPredicate', $btree . 'IndexTruthTest', $btree . 'NullIndexPredicate', 'null'],
         ];
         $properties[$btree . 'IndexOrder'] = $methods[$btree . 'IndexOrder'] = [];
         $properties[$btree . 'IndexPresence'] = $methods[$btree . 'IndexPresence'] = [];
@@ -1052,7 +1053,7 @@ if ($dialect !== 'sqlite') {
             'DescendingNullsFirst' => 'DESC NULLS FIRST', 'DescendingNullsLast' => 'DESC NULLS LAST'];
         $methods[$btreeCreate] = ['__construct', 'profileId', 'toString'];
         $methods[$btree . 'IndexKey'] = $methods[$btree . 'IncludedColumn'] = ['__construct'];
-        $methods[$btree . 'NullIndexPredicate'] = $methods[$btree . 'IndexBooleanPredicate'] = ['__construct'];
+        $methods[$btree . 'NullIndexPredicate'] = $methods[$btree . 'IndexBooleanPredicate'] = $methods[$btree . 'IndexTruthTest'] = ['__construct'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1836,8 +1837,8 @@ try {
                     'Unexpected SQLite column addition publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexPredicateLowering') {
-                $family = ['Schema\\Index\\Btree\\IndexBooleanPredicate', 'Schema\\Index\\Btree\\NullIndexPredicate'];
-                $returns = ['lower' => [...$family, 'null'], 'node' => $family, 'column' => [$family[1]]];
+                $family = ['Schema\\Index\\Btree\\IndexBooleanPredicate', 'Schema\\Index\\Btree\\IndexTruthTest', 'Schema\\Index\\Btree\\NullIndexPredicate'];
+                $returns = ['lower' => [...$family, 'null'], 'node' => $family, 'slot' => ['int']];
                 $members = $class->getMethods();
                 requireShape(count($members) === count($returns), 'Unexpected PostgreSQL partial-index predicate method count');
                 foreach ($members as $member) {
