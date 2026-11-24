@@ -22,6 +22,8 @@ A declared session-temporary table has its own `ExternalRelationKind::TemporaryT
 
 `DROP TABLE` keeps each persistent or session-local identity. `DROP TEMPORARY TABLE` restricts lookup to session tables and leaves the transaction open. Use `IF EXISTS` to allow a known absent name in the selected namespace.
 
+`CREATE TABLE … LIKE` resolves the source table in the session's visible namespace and records the destination separately. Use `CREATE TEMPORARY TABLE … LIKE` for a session-local destination. The server creates an empty table using the original column and index definitions.
+
 Declare `COLLATE utf8mb4_bin` on the VARCHAR field or as the table default to read the field by its native position. The declaration can name `CHARACTER SET utf8mb4` explicitly. A field with its own character-set clause needs its own collation. Bare, qualified and wildcard projections of the same field retain the same reference and its declared VARCHAR length. Values retain trailing spaces, and comparisons for ORDER BY and DISTINCT use the collation’s PAD SPACE rules. Use IS NULL and IS NOT NULL on the resolved field in a result, a WHERE filter or a join condition.
 
 Compare a resolved VARCHAR field with another field, a plain text literal or NULL using `=`, `<>`, `<`, `<=`, `>`, `>=` or `<=>`. The field fixes the collation. Ordinary comparisons propagate NULL and `<=>` produces an integer truth value for every operand pair. Use these comparisons as projected results or in SELECT, UPDATE and DELETE filters and local join conditions.

@@ -531,6 +531,13 @@ def inventory(root):
             }
             for alternative in signatures & declaration_roles:
                 related[alternative] = (*related.get(alternative, ()), "mysql-session-create-table-v1.json")
+            for alternative in signatures & {
+                "create2: LIKE table_ident",
+                "create2: ( LIKE table_ident )",
+                "create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident LIKE table_ident",
+                "create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( LIKE table_ident )",
+            }:
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-like-v1.json")
         if mysql:
             declarations = {
                 "field_spec: field_ident type opt_attribute",

@@ -1,0 +1,69 @@
+{
+  "revision": "SemanticsIR/mysql-create-like-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check both absolute operands, the source-binding role and destination render policy. Close the public constructor against identical coordinates.",
+  "rules": {
+    "Schema/Like/CreateTableLike::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($destination->quoted() !== $source->quoted(), 'CREATE TABLE LIKE requires distinct source and destination names.');"
+      ]
+    },
+    "Schema/Like/CreateTableLike::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native';"
+      ]
+    },
+    "Schema/Like/CreateTableLike::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'CREATE ' . ($this->destination->kind === ExternalRelationKind::TemporaryTable ? 'TEMPORARY ' : '')",
+        "    . 'TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->destination->quoted()",
+        "    . ' LIKE ' . $this->source->quoted();"
+      ]
+    },
+    "Schema/Like/CreateTableLikeLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "    && $context->relationNames === Comparison::Sensitive, 'CREATE TABLE LIKE requires the default native profile.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "Check::input($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable",
+        "    && $resolution->table->name->catalog === null, 'CREATE TABLE LIKE requires a resolved source table.');",
+        "$original = $resolution->table->name;",
+        "$sourceSchema = ($original->schema ?? $context->declarationSchema)->value;",
+        "$destinationSchema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "Check::input(",
+        "    $sourceSchema !== SessionDatabase::UNNAMED && $destinationSchema !== SessionDatabase::UNNAMED,",
+        "    'CREATE TABLE LIKE requires absolute source and destination names.'",
+        ");",
+        "$sourceKind = $resolution->table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;",
+        "$destinationKind = $statement->temporaryWords > 0 ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;",
+        "$source = new TableName(new Identifier($sourceSchema), new Identifier($original->name->value));",
+        "$destination = new TableName(new Identifier($destinationSchema), new Identifier($statement->name->name->value));",
+        "",
+        "return new CreateTableLike(",
+        "    new TableIdentity($destination, $destinationKind),",
+        "    new TableIdentity($source, $sourceKind),",
+        "    $statement->ifNotExists,",
+        "    $profile->grammar",
+        ");"
+      ]
+    }
+  }
+}

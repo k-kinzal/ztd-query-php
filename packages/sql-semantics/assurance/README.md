@@ -291,6 +291,8 @@ The [MySQL session table removal contract](mysql-session-drop-table-v1.json) com
 
 The [MySQL table declaration namespace contract](mysql-session-create-table-v1.json) compares temporary and persistent InnoDB declarations. The observer checks ordered columns and primary keys, namespace-specific collision, default insertion, transaction effects and the view of a fresh session after the owner disconnects. Run `run_server_mysql_session_create_table.py` and `combine_server_mysql_session_create_table_evidence.py` on all nine pinned releases.
 
+The [MySQL table definition copy contract](mysql-create-like-v1.json) checks both resolved operands of `CREATE TABLE … LIKE` across permanent and session-local namespaces. Observe the empty copy, preserved column and index definitions, allocation and foreign-key behavior, and rollback. Run `run_server_mysql_create_like.py` and `combine_server_mysql_create_like_evidence.py` on all nine pinned releases.
+
 The [PostgreSQL truncation contract](postgres-truncate-v1.json) observes duplicate target order, inherited rows, transitive foreign-key effects, the lifetime of owned sequence state and before/after callback order. Run `run_server_postgres_truncate.py` and `combine_server_postgres_truncate_evidence.py` on both pinned releases.
 
 The [PostgreSQL view removal contract](postgres-drop-view-v1.json) covers persistent ordinary and materialized views. It compares exact qualified targets, dependency failures and transitive cascade, live and materialized rows in surviving objects, and native rollback. Run `run_server_postgres_drop_view.py` and `combine_server_postgres_drop_view_evidence.py` on both pinned releases.

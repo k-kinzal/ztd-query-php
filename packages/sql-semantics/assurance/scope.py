@@ -38,6 +38,7 @@ CONTRACTS = {
     "mysql-truncate-v2.json": "ae66fbc18e9d2fc59120550865194a38c82d6f6ad0b1da1f320988562e76414d",
     "mysql-session-drop-table-v1.json": "f74032510b22e940d5902b43156e39d1752e5bd51974561ee1ec127d13954da9",
     "mysql-session-create-table-v1.json": "d128967df8d5696561122f4064c976acc904293f4a301f5b8b432f3d4cdce79a",
+    "mysql-create-like-v1.json": "0211e157e525a76943102e25042da8a860714b6c6e75c59fb0b529aab9439070",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
@@ -188,7 +189,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "240267d47b9c03da28d0051817e291c8d6528c159b7d5cec0c883f866516548d"
+PUBLICATION = "b9d775bba05ae687d65c316f141c73b8e7208f07a3f82f56ea143f9df004beb7"
 
 
 def declared_constructors(dialects):
@@ -218,7 +219,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v39.json").read_bytes()
+    publication = (TOOL / "publication-v40.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

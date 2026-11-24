@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v78.json"
-CONTRACT = "3454d0b6866e2449f35473379067d6b311cca942976d78a9bcd3215fc738d536"
+CONTRACT_NAME = "release-layout-v79.json"
+CONTRACT = "1905b18351a905b2640d694f6c5d35c0edbab1c5c74251eef9eec715e40225e7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -464,6 +464,10 @@ def verify_probe(raw, catalog):
             temporary = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`scratch` (`n` SMALLINT NOT NULL DEFAULT -7) ENGINE=InnoDB"
             require(item.get("mysqlSessionCreateTable") == ["app", "scratch", "temporary-table", True, temporary, temporary],
                     "installed-mysql-session-declaration-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Like\\CreateTableLike"):
+            copy = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`copy_probe` LIKE `app`.`accounts`"
+            require(item.get("mysqlCreateLike") == ["app", "copy_probe", "temporary-table", "app", "accounts",
+                    "table", True, copy, copy, True], "installed-mysql-create-like-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\CreateTable"):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],

@@ -551,6 +551,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
 
     if ($platform === 'MySql') {
         $queries['Schema\\View\\CreateView'] = 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW app.answer (value) AS SELECT 42 AS original';
+        $queries['Schema\\Like\\CreateTableLike'] = 'CREATE TEMPORARY TABLE IF NOT EXISTS app.copy_probe (LIKE app.accounts)';
         $queries['Schema\\View\\DropView'] = 'DROP VIEW IF EXISTS app.absent_view CASCADE';
         $queries['Schema\\Alter\\RenameTable'] = 'RENAME TABLE app.accounts TO app.staged, app.staged TO app.archived';
         $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE app.accounts';
@@ -670,6 +671,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);
             $details['mysqlPrimaryKey'] = observeMysqlPrimaryKey($semantics);
             $details['mysqlSessionCreateTable'] = observeMysqlSessionCreateTable($semantics);
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Like\\CreateTableLike') {
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->source, true);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->destination);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage() === 'CREATE TABLE LIKE requires distinct source and destination names.';
+            }
+            $details['mysqlCreateLike'] = [$result->destination->name->schema->value, $result->destination->name->table->value,
+                $result->destination->kind->value, $result->source->name->schema->value, $result->source->name->table->value,
+                $result->source->kind->value, $result->ifNotExists, $result->toString(), $direct->toString(), $rejected];
         }
         if ($platform === 'MySql' && $role === 'Select') {
             $value = $result->columns[0]->expression;

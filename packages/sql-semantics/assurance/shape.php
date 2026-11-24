@@ -824,6 +824,12 @@ if ($dialect !== 'sqlite') {
         $identity = 'Schema\\Identity\\TableIdentity';
         $properties[$identity] = ['name' => [$tableName], 'kind' => ['From\\ExternalRelationKind']];
         $methods[$identity] = ['__construct', 'quoted'];
+        $copy = 'Schema\\Like\\CreateTableLike';
+        $roots[] = $copy;
+        $internal[] = 'Schema\\Like\\CreateTableLikeLowering';
+        $properties[$copy] = ['destination' => [$identity], 'source' => [$identity], 'ifNotExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$copy] = ['__construct', 'profileId', 'toString'];
         $absent = 'Schema\\Identity\\AbsentDropTarget';
         $properties[$absent] = ['name' => [$tableName]];
         $methods[$absent] = ['__construct', 'quoted'];
@@ -992,6 +998,7 @@ try {
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . ($dialect === 'mysql'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
+                . '\\Statement\\Table\\CreateTableLike, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\Table\\CreateTableAs, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform
@@ -1214,6 +1221,7 @@ try {
                 'Rows\\With\\WithLowering' => 'Rows\\With\\WithProjection',
                 'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
+                'Schema\\Like\\CreateTableLikeLowering' => 'Schema\\Like\\CreateTableLike',
                 'Schema\\Alter\\TableRenameLowering' => 'Schema\\Alter\\RenameTable',
                 'Schema\\Truncate\\TruncateLowering' => 'Schema\\Truncate\\TruncateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
@@ -1270,12 +1278,18 @@ try {
             }
             if ($short === 'Schema\\CreateRelationLowering') {
                 $members = $class->getMethods();
-                $body = 'return $statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable'
-                    . ' ? (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement)'
-                    . ' : (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement);';
+                $body = 'return match (true) {'
+                    . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\'
+                    . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
+                    . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTableLike => (new \\'
+                    . $prefix . 'Schema\\Like\\CreateTableLikeLowering())->lower($operation, $statement),'
+                    . '$statement instanceof \\' . $platform . '\\Statement\\View\\CreateView => (new \\'
+                    . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),};';
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\CreateTable', 'Schema\\View\\CreateView']
+                    && types($members[0]->returnType, $prefix, $short) === [
+                        'Schema\\CreateTable', 'Schema\\Like\\CreateTableLike', 'Schema\\View\\CreateView',
+                    ]
                     && $printer->prettyPrint($members[0]->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)),
                     'Unexpected MySQL declaration publication');
             }

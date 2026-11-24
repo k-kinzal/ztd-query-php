@@ -875,25 +875,54 @@ function observePostgresRename(string $namespace, object $value): array
     ];
 }
 
-function constructMysqlTruncate(string $platform, array $input): SemanticsIR
+function mysqlTableIdentity(string $namespace, array $input): object
 {
-    $namespace = $platform . 'Ir\\';
     $identifier = $namespace . 'Identifier';
     $table = $namespace . 'Schema\\TableName';
     $identity = $namespace . 'Schema\\Identity\\TableIdentity';
     $kind = $namespace . 'From\\ExternalRelationKind';
+    [$schema, $name, $role] = $input;
+    return new $identity(new $table(new $identifier($schema), new $identifier($name)), $kind::from($role));
+}
+
+function observeMysqlTableIdentity(object $identity): array
+{
+    return [$identity->name->schema->value, $identity->name->table->value, $identity->kind->value];
+}
+
+function constructMysqlCreateLike(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Schema\\Like\\CreateTableLike';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $copy = $input['createLike'];
+    return new $statement(
+        mysqlTableIdentity($namespace, $copy['destination']),
+        mysqlTableIdentity($namespace, $copy['source']),
+        $copy['ifNotExists'],
+        $release::from($input['release'])
+    );
+}
+
+function observeMysqlCreateLike(object $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'createLike' => ['destination' => observeMysqlTableIdentity($value->destination),
+            'source' => observeMysqlTableIdentity($value->source), 'ifNotExists' => $value->ifNotExists]];
+}
+
+function constructMysqlTruncate(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
     $statement = $namespace . 'Schema\\Truncate\\TruncateTable';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
-    [$schema, $name, $role] = $input['mysqlTruncate'];
-    $target = new $identity(new $table(new $identifier($schema), new $identifier($name)), $kind::from($role));
-    return new $statement($target, $release::from($input['release']));
+    return new $statement(mysqlTableIdentity($namespace, $input['mysqlTruncate']), $release::from($input['release']));
 }
 
 function observeMysqlTruncate(object $value): array
 {
-    $target = $value->target;
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-        'mysqlTruncate' => [$target->name->schema->value, $target->name->table->value, $target->kind->value]];
+        'mysqlTruncate' => observeMysqlTableIdentity($value->target)];
 }
 
 function constructPostgresTruncate(string $platform, array $input): SemanticsIR
@@ -1178,6 +1207,7 @@ function observeStatement(array $input): array
             isset($input['series']) => constructRecursiveSeries($platform, $input),
             isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['create']) => constructCreateTable($platform, $input),
+            isset($input['createLike']) => constructMysqlCreateLike($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -1213,6 +1243,9 @@ function observeStatement(array $input): array
                 'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
             ],
         ];
+    }
+    if ($value::class === $namespace . 'Schema\\Like\\CreateTableLike') {
+        return observeMysqlCreateLike($value);
     }
     if ($value::class === $namespace . 'Schema\\CreateTable') {
         $coordinate = $dialect === 'mysql' ? $value->target->name : $value->target;
