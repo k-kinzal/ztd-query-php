@@ -1228,6 +1228,30 @@ function constructPostgresDatabaseRebuild(array $input): \SqlSemantics\Platform\
     };
 }
 
+function constructPostgresCreateSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema
+{
+    $spec = $input['createSchema'];
+    $name = $spec['name'] === null ? null : new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['name']);
+    $owner = isset($spec['owner']['named'])
+        ? new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['owner']['named'])
+        : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::from($spec['owner']['session']);
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+        $name, $owner, $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema $schema): array
+{
+    $owner = $schema->owner instanceof \SqlSemantics\Platform\PostgreSql\Ir\Identifier
+        ? ['named' => $schema->owner->value] : ['session' => $schema->owner->value];
+
+    return [
+        'status' => 'constructed', 'profile' => $schema->profileId(), 'sql' => $schema->toString(),
+        'createSchema' => ['name' => $schema->name?->value, 'owner' => $owner, 'ifNotExists' => $schema->ifNotExists],
+    ];
+}
+
 function constructPostgresDropSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema
 {
     $drop = $input['dropSchema'];
@@ -1553,6 +1577,7 @@ function observeStatement(array $input): array
             isset($input['createView']) => constructCreateView($platform, $input),
             isset($input['createBtree']) => constructPostgresBtree($input),
             isset($input['dropIndex']) => constructPostgresDropIndex($input),
+            isset($input['createSchema']) => constructPostgresCreateSchema($input),
             isset($input['dropSchema']) => constructPostgresDropSchema($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
@@ -1681,6 +1706,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema) {
         return observePostgresDropSchema($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema) {
+        return observePostgresCreateSchema($value);
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex) {
         return observePostgresDropIndex($value);

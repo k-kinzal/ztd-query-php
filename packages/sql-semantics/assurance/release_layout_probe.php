@@ -592,6 +592,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'PostgreSql') {
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
+        $queries['Schema\\Namespace\\CreateSchema'] = 'CREATE SCHEMA IF NOT EXISTS "Tax.Reg" AUTHORIZATION "Tax Owner"';
         $queries['Schema\\Namespace\\DropSchema'] = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
@@ -615,6 +616,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $activeContext = $context;
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
             $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy', $storageDeclaration]);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {
+            $activeContext = $semantics->context(['CREATE USER "Tax Owner"']);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSystemCatalogs'], true)) {
             $configured = new SqlSemantics\Platform\PostgreSql\Semantics(
@@ -893,6 +897,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresIndexBooleanValue'] = [
                 $field->predicate->operator->value, $field->predicate->left->slot,
                 $field->toString(), $detachedField->toString(), $negated == $field->predicate,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {
+            $owner = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax Owner');
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema($name, $owner, true, $result->release);
+            [$effective, $session] = $semantics->analyzeAll(
+                'CREATE SCHEMA AUTHORIZATION CURRENT_ROLE; CREATE SCHEMA AUTHORIZATION SESSION_USER;',
+                $activeContext,
+            );
+            $details['postgresCreateSchema'] = [
+                $result->name?->value, $result->owner->value, $result->ifNotExists, $direct->toString(),
+                [$effective->name, $effective->owner->name, $effective->toString()],
+                [$session->name, $session->owner->name, $session->toString()],
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {

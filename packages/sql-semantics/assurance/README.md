@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v72.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v73.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -331,6 +331,8 @@ The [PostgreSQL rebuild reporting contract](postgres-reindex-verbose-v1.json) ch
 The [PostgreSQL qualified index operation contract](postgres-index-catalog-binding-v1.json) checks explicit current-database qualifiers on index creation, removal and rebuilds. The observer measures physical index selection, ownership, attachment and independently resolved decoy state. Run `run_server_postgres_index_catalog.py` on both pinned releases and replay with `combine_server_postgres_index_catalog_evidence.py`.
 
 The [PostgreSQL namespace removal contract](postgres-drop-schema-v2.json) checks ordered selectors and admitted absence. Its native oracle measures untouched names, table rows, views and foreign keys after `CASCADE`, `RESTRICT` and rollback. Run `run_server_postgres_drop_schema.py` on both pinned releases and replay with `combine_server_postgres_drop_schema_evidence.py`.
+
+The [PostgreSQL namespace creation contract](postgres-create-schema-v2.json) checks the decoded namespace, exact named or session owner, guard, release-specific stock roles and transaction outcomes. Run `run_server_postgres_create_schema.py` on both pinned releases with the verified disposable service ID and then replay with `combine_server_postgres_create_schema_evidence.py`. The oracle gives different identities to the effective role and session authorization.
 
 The [fixture isolation contract](native-postgres-fixture-isolation-v2.json) renews the trusted service's disposable `ir_fixture` database before the six observers that inspect database-wide state. Their receipts identify the container and record the database identity and native catalog census. Start focused runs with a freshly launched fixture. Collecting a full matrix requires each scheduled renewal receipt.
 

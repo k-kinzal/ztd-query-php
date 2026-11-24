@@ -1,0 +1,79 @@
+{
+  "revision": "SemanticsIR/postgres-create-schema-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-drop-schema-boundaries-v1.json",
+  "scope": "Check ownership, namespace name derivation, existence handling and exact CREATE SCHEMA publication.",
+  "rules": {
+    "Schema/Namespace/CreateSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!str_starts_with($owner->value, 'pg_') || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\StockRoles::contains($release, $owner->value), 'The stock schema owner must exist in this release.');",
+        "    $name ??= $owner;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name === null || !str_starts_with($name->value, 'pg_'), 'A declared schema name cannot start with pg_.');",
+        "$this->name = $name;"
+      ]
+    },
+    "Schema/Namespace/CreateSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$name = $this->name === null ? '' : $this->name->quoted() . ' ';",
+        "$owner = $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;",
+        "return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner;"
+      ]
+    },
+    "Schema/Namespace/CreateSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->elements === [], 'CREATE SCHEMA elements require a checked namespace composition.');",
+        "$role = $statement->authorization;",
+        "$owner = match ($role?->kind) {",
+        "    null, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentRole, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Effective,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::SessionUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Session,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Named => $this->bindOwner($context, $role->name),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Everyone => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A schema requires a single owner.'),",
+        "};",
+        "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Namespace/CreateSchemaLowering::bindOwner": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && $context->knowsRole($name->value), 'A named schema owner requires a declared role.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name->value);"
+      ]
+    },
+    "Schema/RelationDeclarationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateIndex => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndexLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Schema\\CreateSchema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchemaLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTableLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTableAs => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateViewLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateMaterializedView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateMaterializedViewLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    }
+  }
+}

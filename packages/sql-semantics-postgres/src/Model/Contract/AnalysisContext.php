@@ -47,6 +47,11 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
     public readonly array $tablespaces;
 
     /**
+     * @var list<Name> Explicit application roles in the cluster
+     */
+    public readonly array $roles;
+
+    /**
      * @var Name The schema an unqualified declaration belongs to
      */
     public readonly Name $declarationSchema;
@@ -61,6 +66,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
      * @param Name|null $currentDatabase The decoded current database when specified
      * @param list<Name> $tablespaces Explicit application table spaces in the cluster
+     * @param list<Name> $roles Explicit application roles in the cluster
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -73,6 +79,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         public readonly IndexNamespace $indexNamespace = new IndexNamespace(),
         public readonly ?Name $currentDatabase = null,
         array $tablespaces = [],
+        array $roles = [],
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
@@ -91,6 +98,13 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
             $storage[$tablespace->value] = $tablespace;
         }
         $this->tablespaces = array_values($storage);
+        $principals = [];
+        foreach (Check::listOf($roles, Name::class, 'Role declarations are decoded names.') as $role) {
+            Check::input($role->value !== 'public' && $role->value !== 'none' && !str_starts_with($role->value, 'pg_'), 'An application role declaration needs an unreserved name.');
+            Check::input(!isset($principals[$role->value]), 'A role coordinate can be declared only once.');
+            $principals[$role->value] = $role;
+        }
+        $this->roles = array_values($principals);
     }
 
     /**
@@ -103,6 +117,23 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         }
         foreach ($this->tablespaces as $tablespace) {
             if ($tablespace->value === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Looks up an exact role name in the declared and stock role catalogs.
+     */
+    public function knowsRole(string $name): bool
+    {
+        if (StockRoles::contains($this->profile->grammar, $name)) {
+            return true;
+        }
+        foreach ($this->roles as $role) {
+            if ($role->value === $name) {
                 return true;
             }
         }

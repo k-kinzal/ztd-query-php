@@ -432,6 +432,22 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-drop-schema-evidence"
+      - name: Compare PostgreSQL namespace creation and ownership effects
+        if: ${{ !cancelled() && matrix.engine == 'postgres' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_postgres_create_schema.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-postgres-create-schema-evidence"
       - name: Compare named PostgreSQL B-tree declarations
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -2220,6 +2236,12 @@ jobs:
         with:
           name: native-postgres-drop-schema-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-drop-schema-evidence/
+      - name: Preserve PostgreSQL namespace creation observations and any failure
+        if: ${{ always() && matrix.engine == 'postgres' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-postgres-create-schema-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-postgres-create-schema-evidence/
       - name: Preserve PostgreSQL B-tree observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

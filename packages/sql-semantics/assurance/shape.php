@@ -1065,6 +1065,17 @@ if ($dialect !== 'sqlite') {
         $properties[$schemaTarget] = ['name' => ['Identifier'], 'present' => ['bool']];
         $methods[$schemaRemoval] = ['__construct', 'profileId', 'toString'];
         $methods[$schemaTarget] = ['__construct'];
+        $schemaCreation = 'Schema\\Namespace\\CreateSchema';
+        $schemaSession = 'Schema\\Namespace\\SchemaSessionRole';
+        $roots[] = $schemaCreation;
+        $internal[] = 'Schema\\Namespace\\CreateSchemaLowering';
+        $properties[$schemaCreation] = [
+            'name' => ['?Identifier'], 'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+        ];
+        $methods[$schemaCreation] = ['__construct', 'profileId', 'toString'];
+        $properties[$schemaSession] = $methods[$schemaSession] = [];
+        $enumCases[$schemaSession] = ['Effective' => 'CURRENT_USER', 'Session' => 'SESSION_USER'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1402,7 +1413,8 @@ try {
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\Table\\CreateTableAs, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform
-                . '\\Statement\\Table\\View\\CreateMaterializedView, $statement instanceof \\' . $platform . '\\Statement\\Table\\Index\\CreateIndex => (new \\'
+                . '\\Statement\\Table\\View\\CreateMaterializedView, $statement instanceof \\' . $platform . '\\Statement\\Table\\Index\\CreateIndex, '
+                . '$statement instanceof \\' . $platform . '\\Statement\\Catalog\\Schema\\CreateSchema => (new \\'
                 . $prefix . 'Schema\\RelationDeclarationLowering())->lower($operation, $statement),')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
@@ -1517,7 +1529,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v14.json', '32ae6179674e3ad69026ac96dceecdd453c2aeab456100fc977d776911add8a4', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v15.json', '0aa2afdb89a4e1584418dd2bd50339fb8f662537af251f07e74d6eb0264f7365', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -2011,7 +2023,8 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\CreateTable', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Query\\CreateTableAs', 'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
+                        'Schema\\CreateTable', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\CreateSchema', 'Schema\\Query\\CreateTableAs',
+                        'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
                     ], 'Unexpected PostgreSQL relation and index declaration publication');
             }
             if ($short === 'Schema\\CreateRelationLowering') {
@@ -2093,6 +2106,7 @@ try {
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
+                || ($dialect === 'postgres' && $short === 'Schema\\Namespace\\CreateSchema' && $name->toString() === $platform . '\\Model\\Contract\\StockRoles')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',

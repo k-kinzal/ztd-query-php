@@ -133,9 +133,18 @@ final class Platform
      * @param list<string>|null $searchPath
      * @param list<Model\Statement\Declaration\Table> $tables
      * @param list<Name> $tablespaces
+     * @param list<Name> $roles The declared cluster roles
      */
-    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, ?IndexNamespace $indexes = null, ?Name $database = null, array $tablespaces = []): AnalysisContext
-    {
+    public function context(
+        LanguageProfile $profile,
+        ?array $searchPath,
+        array $tables,
+        bool $complete,
+        ?IndexNamespace $indexes = null,
+        ?Name $database = null,
+        array $tablespaces = [],
+        array $roles = [],
+    ): AnalysisContext {
         $schemas = $searchPath ?? ['public'];
         $path = [];
         foreach (['pg_temp', 'pg_catalog'] as $implicit) {
@@ -155,7 +164,7 @@ final class Platform
             }
         }
 
-        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0], $indexes ?? new IndexNamespace(), $database, $tablespaces);
+        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0], $indexes ?? new IndexNamespace(), $database, $tablespaces, $roles);
     }
 
     /**

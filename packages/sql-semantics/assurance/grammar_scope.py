@@ -590,6 +590,10 @@ def inventory(root):
                         "opt_drop_behavior: CASCADE", "opt_drop_behavior: RESTRICT",
                     ):
                         related[alternative] = (*related.get(alternative, ()), "postgres-drop-schema-v2.json")
+            for rule in ("CreateSchemaStmt", "RoleSpec", "CreateRoleStmt", "CreateUserStmt", "CreateGroupStmt", "OptSchemaEltList"):
+                for alternative in rules.get(rule, ()):
+                    if rule != "OptSchemaEltList" or alternative == "OptSchemaEltList:":
+                        related[alternative] = (*related.get(alternative, ()), "postgres-create-schema-v2.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",
