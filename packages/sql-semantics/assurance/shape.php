@@ -438,6 +438,16 @@ if ($dialect === 'sqlite') {
         'Functions' => 'function_list', 'Modules' => 'module_list', 'Pragmas' => 'pragma_list',
     ];
     $roots[] = 'Maintenance\\Inventory\\InventoryPragma';
+    $properties['Maintenance\\Metadata\\IndexInspection'] = [
+        'kind' => ['Maintenance\\Metadata\\IndexInspectionKind'], 'target' => ['Maintenance\\IndexTarget', 'Maintenance\\Metadata\\EmptyIndexMetadata'],
+    ];
+    $properties['Maintenance\\Metadata\\EmptyIndexMetadata'] = ['schema' => ['?Identifier'], 'name' => ['?Identifier']];
+    $properties['Maintenance\\Metadata\\IndexInspectionKind'] = $methods['Maintenance\\Metadata\\IndexInspectionKind'] = [];
+    $methods['Maintenance\\Metadata\\IndexInspection'] = $methods['Select'];
+    $methods['Maintenance\\Metadata\\EmptyIndexMetadata'] = ['__construct'];
+    $enumCases['Maintenance\\Metadata\\IndexInspectionKind'] = ['Basic' => 'index_info', 'Extended' => 'index_xinfo'];
+    $roots[] = 'Maintenance\\Metadata\\IndexInspection';
+    $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
         'target' => ['Maintenance\\Metadata\\CatalogTable', 'Maintenance\\Metadata\\MissingMetadataTable', 'Maintenance\\RelationTarget', 'null'],
@@ -1209,13 +1219,13 @@ try {
         'sqlite' => [
             ['sqlite-create-index-binding-v2.json', '518f25e19be787f59726f4d9783d029c5a77bc6c5b8bb97103aeebbba3c7fd69', 'Index binding'],
             ['sqlite-index-expression-binding-v1.json', '0f51026989e87bb830f5a9fac584794e318c410fcc85744079e38839e8e7a255', 'Native index expression binding'],
-            ['sqlite-drop-column-binding-v4.json', '61cf124acd1c6c4a5a923f6721fdaf701d63b3a5f4f2665c2a8a3a643885f15c', 'Column removal binding'],
-            ['sqlite-drop-index-binding-v3.json', 'e96dccf114b72f782c4c7eb8bf108629c442393a73689c008eb1fd09bce55d96', 'Index removal binding'],
-            ['sqlite-constraint-index-binding-v1.json', '792ea111ed9e254c8f883e33ee6b33b2afa7d9fdd2317575e15864ae935ae63e', 'Constraint index binding'],
-            ['sqlite-reindex-binding-v2.json', '03e65c0bf4b2ca33a6ab529d9385de4d0ea7c3c4a325a4dc1e2f49fd7efbcdb2', 'Reindex binding'],
-            ['sqlite-analyze-statistics-binding-v2.json', 'd142c29969ec426d0bd2518c5acc4b0ae38bdba4f2c7c298690f89bd3dcbaa0b', 'Analyze statistics binding'],
-            ['sqlite-flag-pragmas-binding-v1.json', 'b5636898d08476b16da1d450e4555f480008addc4ec7f44aefa90b51eb83eeb8', 'Flag pragma binding'],
-            ['sqlite-folded-binding-sources-v8.json', '96f3f69296855ca2cf8b6047b4026cf8d9c6688c4dd94a8cb86139f5e20ef350', 'Folded binding'],
+            ['sqlite-drop-column-binding-v5.json', '84c88c4604e98b0312cb9e8fff9414a167abd363010ce5393fb24b70365f92fd', 'Column removal binding'],
+            ['sqlite-drop-index-binding-v4.json', '03224813338aa5ab9f25c66c61376b9c03314b742713723f86d4053ed0f3c082', 'Index removal binding'],
+            ['sqlite-constraint-index-binding-v2.json', 'da87d3492e3fa7c2075880f8cbd394dd6ee807ce45964455ee760c27b736c38a', 'Constraint index binding'],
+            ['sqlite-reindex-binding-v3.json', 'f6c733915370ed0d540ba772ea407498cb6277b94b79e1ce3fb6119b84a307d1', 'Reindex binding'],
+            ['sqlite-analyze-statistics-binding-v3.json', '4591a5f7005e1c2b57f41c8517d099dfc2f186324d7441bb2312628338dd6331', 'Analyze statistics binding'],
+            ['sqlite-flag-pragmas-binding-v2.json', '5a9ae5af4c00d83a4f02ad2e48b6d0cf649262fee90d4d7078c746a7c8f3cf53', 'Flag pragma binding'],
+            ['sqlite-folded-binding-sources-v9.json', 'e01e268edce43e74afafaeb6f8a4ae45e715c282756a440056ed384e8910d270', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1406,7 +1416,7 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma',
-                        'Maintenance\\Metadata\\TableInspection',
+                        'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
                         'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex',
                     ], 'Unexpected SQLite maintenance publication');
             }
@@ -1416,9 +1426,18 @@ try {
                 $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
                 $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
                 $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
-                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma', ...$metadataRoots] : $metadataRoots;
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
+            }
+            if ($short === 'Maintenance\\Metadata\\IndexMetadataLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 2 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[1]->isPublic() && !$members[1]->isStatic()
+                    && $members[1]->name->toString() === 'storage'
+                    && types($members[0]->returnType, $prefix, $short) === ['Maintenance\\Metadata\\IndexInspection']
+                    && types($members[1]->returnType, $prefix, $short) === ['?Maintenance\\IndexTarget'],
+                    'Unexpected SQLite index metadata lowering');
             }
             if ($short === 'Maintenance\\PragmaScope') {
                 $members = $class->getMethods();

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v95.json"
-CONTRACT = "4f0a9b6d3980e883c1094ca25fd7fbc3f2d8814f606bd7cfc0fbfda933eb048d"
+CONTRACT_NAME = "release-layout-v96.json"
+CONTRACT = "eeeee110ee55c5a344cb55505c0104c6078b9e8fb45a778830df55c8db79213b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,12 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Metadata\\IndexInspection"):
+            expect = 'PRAGMA "main".index_xinfo("sqlite_autoindex_storage_table_2")'
+            require(item.get("indexMetadata") == [
+                "main", "sqlite_autoindex_storage_table_2", "storage_table", "sqlite_autoindex_storage_table_2",
+                expect, "temp", "absent", 'PRAGMA "temp".index_info("absent")',
+            ] and item["sql"] == expect, "installed-sqlite-index-metadata-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Metadata\\TableInspection"):
             require(item.get("tableInspection") == [
                 "table_xinfo", "temp", "accounts", None, "temp", 'PRAGMA table_info("sqlite_temp_master")',

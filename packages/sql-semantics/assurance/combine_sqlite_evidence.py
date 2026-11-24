@@ -64,6 +64,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-flag-pragmas-evidence", "sqlite-flag-pragmas-v1.json", 880, 2264, 6, 7),
     Domain("semantics-ir-sqlite-table-metadata-evidence", "sqlite-table-metadata-v2.json", 360, 1073, 7, 7),
     Domain("semantics-ir-sqlite-inventory-evidence", "sqlite-connection-inventory-v1.json", 216, 756, 4, 5),
+    Domain("semantics-ir-sqlite-index-metadata-evidence", "sqlite-index-metadata-v1.json", 1024, 2456, 6, 6),
     Domain("semantics-ir-sqlite-drop-column-evidence", "sqlite-drop-column-v3.json", 1440, 1523, 20, 5),
     Domain("semantics-ir-sqlite-add-generated-column-evidence", "sqlite-add-generated-column-v1.json", 1152, 1231, 13, 6),
     Domain("semantics-ir-sqlite-generated-columns-evidence", "sqlite-generated-columns-v2.json", 96, 211, 8, 4),

@@ -545,6 +545,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\FlagPragma'] = "PRAGMA Temp.Writable_Schema('reset')";
         $queries['Maintenance\\Inventory\\InventoryPragma'] = 'PRAGMA Temp.function_list(+1)';
         $queries['Maintenance\\Metadata\\TableInspection'] = "PRAGMA table_xinfo(accounts)";
+        $queries['Maintenance\\Metadata\\IndexInspection'] = 'PRAGMA index_xinfo(storage_table)';
         $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
@@ -590,6 +591,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $semantics->context([
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\IndexInspection') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.storage_table(code INT, label TEXT, UNIQUE(label), PRIMARY KEY(code DESC)) WITHOUT ROWID',
             ]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableInspection') {
@@ -1288,6 +1294,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\IndexInspection') {
+            $target = $result->target;
+            $named = $semantics->analyze('PRAGMA main.index_xinfo(sqlite_autoindex_storage_table_2)', $activeContext);
+            $empty = $semantics->analyze('PRAGMA temp.index_info(absent)', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
+                || !$named->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
+                || !$empty->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\EmptyIndexMetadata) {
+                throw new RuntimeException('The installed index metadata query lost its physical selector.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection($result->kind, $target);
+            $details['indexMetadata'] = [$target->schema->value, $target->name->value, $target->table->value,
+                $named->target->name->value, $copy->toString(), $empty->target->schema?->value, $empty->target->name?->value, $empty->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableInspection') {
             $target = $result->target;

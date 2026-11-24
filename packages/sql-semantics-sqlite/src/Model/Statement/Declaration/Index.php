@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Model\Statement\Declaration;
 
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
@@ -24,6 +25,8 @@ final class Index
         public readonly Name $name,
         public readonly Name $table,
         public readonly bool $removable = true,
+        public readonly bool $primaryStorage = false,
     ) {
+        Check::input(!$primaryStorage || !$removable, 'Primary table storage is a protected automatic index.');
     }
 }

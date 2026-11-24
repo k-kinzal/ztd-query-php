@@ -244,17 +244,17 @@ final class Platform
         if (!$definition instanceof CreateTable) {
             return [];
         }
-        $count = (new ConstraintIndexes())->count($definition);
-        if ($count === null) {
+        $layout = (new ConstraintIndexes())->layout($definition);
+        if ($layout === null) {
             return null;
         }
 
         $owner = $binding->facts->declarations[0]->name;
         $schema = $owner->schema ?? $binding->context->declarationSchema;
         $indexes = [];
-        for ($ordinal = 1; $ordinal <= $count; $ordinal++) {
+        for ($ordinal = 1; $ordinal <= $layout->count; $ordinal++) {
             $name = new Name('sqlite_autoindex_' . $owner->name->value . '_' . $ordinal);
-            $indexes[] = new Index($schema, $name, $owner->name, false);
+            $indexes[] = new Index($schema, $name, $owner->name, false, $layout->primaryStorage === $ordinal);
         }
 
         return $indexes;

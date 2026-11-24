@@ -6,6 +6,9 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance;
 
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspectionKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexMetadataLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspectionKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
@@ -26,7 +29,7 @@ final class PragmaLowering
      * Dispatches a known SQLite operation by its exact native identity.
      * @throws InvalidConstruction When the selected pragma family has no complete representation
      */
-    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|TableInspection|TableListing
+    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|IndexInspection|TableInspection|TableListing
     {
         $name = Comparison::AsciiInsensitive->fold($statement->name->name->value);
         $kind = TableInspectionKind::tryFrom($name);
@@ -34,6 +37,10 @@ final class PragmaLowering
             return (new TableMetadataLowering())->lower($operation, $statement, $kind);
         }
 
+        $indexKind = IndexInspectionKind::tryFrom($name);
+        if ($indexKind !== null) {
+            return (new IndexMetadataLowering())->lower($operation, $statement, $indexKind);
+        }
         $inventory = InventoryKind::tryFrom($name);
         if ($inventory !== null) {
             return new InventoryPragma($inventory, (new PragmaScope())->resolve($operation->context, $statement->name->schema));

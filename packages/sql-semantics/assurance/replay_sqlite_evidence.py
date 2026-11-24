@@ -16,6 +16,7 @@ import run_sqlite_analyze_statistics as analyze_statistics
 import run_sqlite_flag_pragmas as flag_pragmas
 import run_sqlite_table_metadata as table_metadata
 import run_sqlite_inventory as inventory
+import run_sqlite_index_metadata as index_metadata
 import run_sqlite_create_index as create_index
 import run_sqlite_index_expression_spelling as index_spelling
 import run_sqlite_appended_checks as appended_checks
@@ -134,6 +135,7 @@ DOMAINS = {
     flag_pragmas.CONTRACT_NAME: (flag_pragmas, flag_pragmas.FIXTURE),
     table_metadata.CONTRACT_NAME: (table_metadata, table_metadata.FIXTURE),
     inventory.CONTRACT_NAME: (inventory, inventory.FIXTURE),
+    index_metadata.CONTRACT_NAME: (index_metadata, index_metadata.FIXTURE),
     create_index.CONTRACT_NAME: (create_index, create_index.FIXTURE),
     index_spelling.CONTRACT_NAME: (index_spelling, index_spelling.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
@@ -190,6 +192,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                flag_pragmas: flag_pragmas.FlagDatabase,
                table_metadata: table_metadata.TableMetadataDatabase,
                inventory: inventory.InventoryDatabase,
+               index_metadata: index_metadata.IndexMetadataDatabase,
                create_index: create_index.IndexDatabase,
                index_spelling: index_spelling.SpellingIndexDatabase,
                appended_checks: appended_checks.CheckedAdditionDatabase,

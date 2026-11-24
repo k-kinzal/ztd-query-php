@@ -19,12 +19,32 @@ use SqlSemantics\Testing\Sqlite\Inspection;
 #[Small]
 final class ConstraintIndexesTest extends TestCase
 {
-    public function testCountCombinesEquivalentConstraintKeysInDeclarationOrder(): void
+    public function testLayoutCombinesEquivalentConstraintKeysInDeclarationOrder(): void
     {
         $table = (new Inspection())->inspect('CREATE TABLE members (id INTEGER PRIMARY KEY, code UNIQUE COLLATE NOCASE, UNIQUE(code DESC), UNIQUE(code COLLATE BINARY))')->statement;
         self::assertInstanceOf(CreateTable::class, $table);
 
-        self::assertSame(2, (new ConstraintIndexes())->count($table));
+        self::assertSame(2, (new ConstraintIndexes())->layout($table)?->count);
+    }
+
+    public function testLayoutKeepsTheNativeOrdinalOfReusedPrimaryStorage(): void
+    {
+        $table = (new Inspection())->inspect('CREATE TABLE members (a INT, b TEXT, UNIQUE(b), UNIQUE(a), PRIMARY KEY(a DESC)) WITHOUT ROWID')->statement;
+        self::assertInstanceOf(CreateTable::class, $table);
+        $layout = (new ConstraintIndexes())->layout($table);
+
+        self::assertNotNull($layout);
+        self::assertSame(2, $layout->count);
+        self::assertSame(2, $layout->primaryStorage);
+    }
+
+    public function testStorageLayoutUsesTheFirstRegisteredEquivalentSignature(): void
+    {
+        $rules = new ConstraintIndexes();
+
+        self::assertSame(2, $rules->storageLayout(['a', 'b'], true, 'b')?->primaryStorage);
+        self::assertNull($rules->storageLayout(['a', 'b'], true, 'd'));
+        self::assertNull($rules->storageLayout(['a', 'b'], false, 'b')?->primaryStorage);
     }
 
     public function testInlineKeysKeepTheOwningSlotAndFinalCollation(): void

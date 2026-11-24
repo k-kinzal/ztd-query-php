@@ -1,0 +1,22 @@
+{
+  "revision": "SemanticsIR/sqlite-flag-pragmas-binding-2",
+  "approval": "pending-human-review",
+  "scope": "Verify the transient numeric PRAGMA token, native argument sign and value rules, and reuse the same explicit namespace lowerings.",
+  "artifacts": {
+    "src/Statement/Maintenance/Pragma.php": {
+      "sha256": "3243aa864d9eca76ea036c6f708937f823148a770c6685075a676e67bfe4a541",
+      "role": "Keep the parsed name and argument in distinct roles before semantic publication."
+    },
+    "src/Statement/Maintenance/PragmaNumber.php": {
+      "sha256": "e327d8d44a9974fe095dc18dd1395c98c02ddcd4926186e2a5f79d1301922c1e",
+      "role": "Constrain a native number to one validated token and derive the text SQLite receives without expression evaluation."
+    }
+  },
+  "sharedBindings": {
+    "src/Lowering/Definition/MaintenanceRule.php": {
+      "contract": "sqlite-reindex-binding-v3.json",
+      "sha256": "73a8b686773a372812144d91ef5fc9fd6d5c6a1370fe8cfba9abb1cac8cdb66d"
+    }
+  },
+  "revises": "sqlite-flag-pragmas-binding-v1.json"
+}

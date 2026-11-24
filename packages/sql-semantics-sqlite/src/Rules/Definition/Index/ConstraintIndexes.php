@@ -18,17 +18,17 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
 
 /**
- * Counts SQLite's contiguous automatic index names in an ordinary table declaration.
+ * Derives SQLite's contiguous automatic index identities in an ordinary table declaration.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
 final class ConstraintIndexes
 {
     /**
-     * Counts distinct native key signatures after eliminating a rowid alias.
+     * Records distinct native key signatures and the ordinal of WITHOUT ROWID primary storage.
      * Returns null when a key term lacks a checked column coordinate.
      */
-    public function count(CreateTable $table): ?int
+    public function layout(CreateTable $table): ?ConstraintIndexLayout
     {
         $names = Comparison::AsciiInsensitive;
         $primary = (new PrimaryKeyRule())->key($table, (new TableDeclaration())->domains($table), $names);
@@ -40,6 +40,8 @@ final class ConstraintIndexes
             $collations[] = $names->fold($column->collation()->value ?? 'binary');
         }
         $keys = $this->inlineKeys($table, $collations, $alias);
+        $column = $primary->columns[0] ?? null;
+        $storage = $table->withoutRowid() && $column !== null ? $this->signature([[$column, $collations[$column]]]) : null;
         foreach ($table->constraints as $run) {
             foreach ($run->items as $constraint) {
                 if (!$constraint instanceof TablePrimaryKey && !$constraint instanceof TableUnique) {
@@ -57,10 +59,27 @@ final class ConstraintIndexes
                     $terms[] = $key;
                 }
                 $keys[$this->signature($terms)] = true;
+                if ($table->withoutRowid() && $constraint instanceof TablePrimaryKey) {
+                    $storage = $this->signature($terms);
+                }
             }
         }
 
-        return count($keys);
+        return $this->storageLayout(array_keys($keys), $table->withoutRowid(), $storage);
+    }
+
+    /**
+     * Finds the primary key's first registered signature in the physical index sequence.
+     * @param list<string> $signatures
+     */
+    public function storageLayout(array $signatures, bool $withoutRowid, ?string $primary): ?ConstraintIndexLayout
+    {
+        if (!$withoutRowid) {
+            return new ConstraintIndexLayout(count($signatures));
+        }
+        $position = array_search($primary, $signatures, true);
+
+        return $position === false ? null : new ConstraintIndexLayout(count($signatures), $position + 1);
     }
 
     /**
