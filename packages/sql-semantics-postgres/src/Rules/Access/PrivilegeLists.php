@@ -64,6 +64,24 @@ final class PrivilegeLists
     }
 
     /**
+     * Recognizes an explicit legacy privilege list that requests no ACL bits.
+     * @param list<Privilege> $privileges
+     */
+    public function legacyOnly(array $privileges): bool
+    {
+        if ($privileges === []) {
+            return false;
+        }
+        foreach ($privileges as $privilege) {
+            if ($privilege->privilege() !== 'rule' || $privilege->columns !== []) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Writes the privilege list of a grant on objects: ALL when it is empty.
      *
      * @param list<Privilege> $privileges

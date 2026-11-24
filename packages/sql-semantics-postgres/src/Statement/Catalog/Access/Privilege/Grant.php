@@ -12,6 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\SchemaContentsTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
@@ -64,7 +65,8 @@ final class Grant implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new PrivilegeChecks())->privileges($derivation, $this->privileges, $this->target->object(), false);
-        if ($this->grantOption && !$this->target instanceof SchemaContentsTarget) {
+        $legacyOnly = $this->target->object() === PrivilegeObjectKind::Sequence && (new PrivilegeLists())->legacyOnly($this->privileges);
+        if ($this->grantOption && !$this->target instanceof SchemaContentsTarget && !$legacyOnly) {
             (new PrivilegeChecks())->grantOption($derivation, $this->grantees);
         }
         if ($this->grantor !== null) {

@@ -645,6 +645,13 @@ def inventory(root):
                                                "alter_table_cmd: SET UNLOGGED", "RoleSpec: NonReservedWord",
                                                "RoleSpec: CURRENT_ROLE", "RoleSpec: CURRENT_USER", "RoleSpec: SESSION_USER")):
                         related[alternative] = (*related.get(alternative, ()), "postgres-sequence-authorization-v1.json")
+            access_targets = {"privilege_target: SEQUENCE qualified_name_list",
+                              "privilege_target: ALL SEQUENCES IN_P SCHEMA name_list"}
+            for rule in ("GrantStmt", "RevokeStmt", "privileges", "privilege_list", "privilege_target", "grantee_list",
+                         "grantee", "RoleSpec", "opt_grant_grant_option", "opt_granted_by", "opt_drop_behavior"):
+                for alternative in rules.get(rule, ()):
+                    if rule != "privilege_target" or alternative in access_targets:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-sequence-access-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

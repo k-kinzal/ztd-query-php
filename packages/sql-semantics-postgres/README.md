@@ -60,6 +60,8 @@ Sequence reconfiguration stores one typed assignment for each requested generato
 
 `ALTER SEQUENCE ... OWNER TO` retains each owner assignment in order, including when combined with logging assignments. Declare a named role with `CREATE ROLE` in the analysis context. `CURRENT_ROLE` and `CURRENT_USER` select the effective role, while `SESSION_USER` selects the authenticated role. PostgreSQL uses the proposed owner to update the sequence's privileges, so intermediate assignments can affect privileges even when the final owner is the same. In a guarded statement with a verified absent sequence, PostgreSQL skips the action list.
 
+Sequence `GRANT` and `REVOKE` support ordered lists of named sequences and `ALL SEQUENCES IN SCHEMA`. The schema form selects the sequences in those schemas when the statement runs. The IR retains the recipients, any explicit grantor, and the grant or revoke options. For a revoke, `CASCADE` propagates to dependent grants, and `RESTRICT` requires them to be absent. The universal token `PUBLIC` is distinct from a declared role named `"PUBLIC"`.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php

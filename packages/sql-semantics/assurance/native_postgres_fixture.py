@@ -8,8 +8,8 @@ import time
 
 from run import TOOL, digest, require, write_json
 
-NAME = "native-postgres-fixture-isolation-v14.json"
-CONTRACT = "145127b3b8ffb450ff94b2132415044c30d8616a19859516ad20a0ca6879f997"
+NAME = "native-postgres-fixture-isolation-v15.json"
+CONTRACT = "e5b2b8c09d20e57009edfa6d1eb536d1f024f9d1144944697b8326f20ab57f63"
 STORAGE_NAME = "native-postgres-fixture-storage-v1.json"
 STORAGE_CONTRACT = "fee0adc1f3a7a5568346e4b0ba0ce82bf2f552af58121404fdfc05d39a44aa35"
 ENV = "ZTD_IR_POSTGRES_FIXTURE_CONTAINER"
@@ -20,7 +20,7 @@ IMAGES = {
 DOMAINS = frozenset({
     "postgres_reindex_schema", "postgres_reindex_partition_table", "postgres_reindex_partition_index",
     "postgres_reindex_database", "postgres_reindex_verbose", "postgres_reindex_tablespace", "postgres_create_schema",
-    "postgres_schema_tables", "postgres_schema_sequences", "postgres_alter_schema", "postgres_create_sequence", "postgres_drop_sequence", "postgres_sequence_owner", "postgres_rename_sequence", "postgres_move_sequence", "postgres_reconfigure_sequence", "postgres_sequence_logging", "postgres_sequence_authorization",
+    "postgres_schema_tables", "postgres_schema_sequences", "postgres_alter_schema", "postgres_create_sequence", "postgres_drop_sequence", "postgres_sequence_owner", "postgres_rename_sequence", "postgres_move_sequence", "postgres_reconfigure_sequence", "postgres_sequence_logging", "postgres_sequence_authorization", "postgres_sequence_access",
 })
 PLACEMENT_DOMAIN = "postgres_reindex_tablespace"
 TABLESPACES = ("ir_reindex_left", '置き場."右"')

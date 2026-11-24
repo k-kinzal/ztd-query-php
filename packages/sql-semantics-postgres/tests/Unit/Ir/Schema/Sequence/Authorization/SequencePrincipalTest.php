@@ -32,4 +32,10 @@ final class SequencePrincipalTest extends TestCase
 
         $role->checkRelease(GrammarRelease::PostgreSql166);
     }
+
+    public function testReferenceQuotesANameEvenWhenItSpellsANativeRole(): void
+    {
+        self::assertSame('"CURRENT_USER"', (new SequencePrincipal(new Identifier('CURRENT_USER')))->reference());
+        self::assertSame('CURRENT_USER', (new SequencePrincipal(SchemaSessionRole::Effective))->reference());
+    }
 }

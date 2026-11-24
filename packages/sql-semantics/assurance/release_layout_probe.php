@@ -603,6 +603,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Sequence\\Alter\\ReconfigureSequence'] = 'ALTER SEQUENCE public.ticket RESTART OWNED BY NONE START 5 CYCLE';
         $queries['Schema\\Sequence\\Alter\\SetSequenceLogging'] = 'ALTER SEQUENCE public.ticket SET LOGGED, SET UNLOGGED';
         $queries['Schema\\Sequence\\Authorization\\AlterSequenceAuthorization'] = 'ALTER SEQUENCE public.ticket SET LOGGED, OWNER TO "Tax Owner", OWNER TO SESSION_USER, SET UNLOGGED';
+        $queries['Schema\\Sequence\\Access\\GrantSequenceAccess'] = 'GRANT UPDATE, USAGE ON SEQUENCE ticket, public.ticket TO "PUBLIC", SESSION_USER WITH GRANT OPTION GRANTED BY CURRENT_ROLE';
+        $queries['Schema\\Sequence\\Access\\RevokeSequenceAccess'] = 'REVOKE GRANT OPTION FOR SELECT ON ALL SEQUENCES IN SCHEMA "Audit.Log", public FROM PUBLIC, "PUBLIC" GRANTED BY SESSION_USER CASCADE';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -636,6 +638,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization') {
             $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE ROLE "Tax Owner"']);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\Access\\GrantSequenceAccess', 'Schema\\Sequence\\Access\\RevokeSequenceAccess'], true)) {
+            $activeContext = $semantics->context([
+                'CREATE ROLE "PUBLIC"', 'CREATE SCHEMA "Audit.Log"', 'CREATE SEQUENCE public.ticket', 'CREATE TEMP SEQUENCE ticket',
+            ]);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
             $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy', $storageDeclaration]);
@@ -1046,6 +1053,40 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_map(static fn ($item): string => $item->toString(), $direct->actions),
                 $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
                 $guarded->actions, $guarded->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\Access\\GrantSequenceAccess', 'Schema\\Sequence\\Access\\RevokeSequenceAccess'], true)) {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $principal = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal::class;
+            $token = SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::class;
+            $access = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceAccess::class;
+            $grantee = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantee::class;
+            $right = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceRight::class;
+            $everyone = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\UniversalGrantee::Everyone;
+            $grant = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess::class;
+            $revoke = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\RevokeSequenceAccess::class;
+            $namedPublic = new $grantee(new $principal(new $name('PUBLIC')));
+            if ($result instanceof $grant) {
+                $selector = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector::class;
+                $first = new $selector(new $name('ticket'), new $name('pg_temp'));
+                $second = new $selector(new $name('ticket'), new $name('public'));
+                $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\NamedSequences([&$first, $second]);
+                $first = $second;
+                $rights = [$right::Update, $right::Usage];
+                $grantees = [$namedPublic, new $grantee(new $principal($token::Session))];
+                $direct = new $grant(new $access($target, $rights, $grantees, new $principal($token::Effective), $result->access->release), true);
+                $legacy = $semantics->analyze('GRANT RULE ON SEQUENCE public.ticket TO PUBLIC WITH GRANT OPTION', $activeContext)->toString();
+            } else {
+                $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequencesInSchemas([new $name('Audit.Log'), new $name('public')]);
+                $recipients = [new $grantee($everyone), $namedPublic];
+                $operands = new $access($target, [$right::Select], $recipients, new $principal($token::Session), $result->access->release);
+                $direct = new $revoke($operands, true, SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantDependency::Cascade);
+                $legacy = null;
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresSequenceAccess'] = [
+                $result->access->target->toString(), array_column($result->access->rights, 'value'), $result->access->recipientsSql(),
+                $result->access->grantorSql(), $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct, $legacy,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\RenameSequence') {

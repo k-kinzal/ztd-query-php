@@ -1189,7 +1189,35 @@ if ($dialect !== 'sqlite') {
         $properties[$authorizationAction] = ['value' => [$loggingMode, $principal]];
         $methods[$authorizationAction] = ['__construct', 'toString'];
         $properties[$principal] = ['owner' => ['Identifier', 'Schema\\Namespace\\SchemaSessionRole']];
-        $methods[$principal] = ['__construct', 'checkRelease', 'toString'];
+        $methods[$principal] = ['__construct', 'checkRelease', 'toString', 'reference'];
+        $access = $sequence . 'Access\\';
+        $grantAccess = $access . 'GrantSequenceAccess';
+        $revokeAccess = $access . 'RevokeSequenceAccess';
+        $accessOperands = $access . 'SequenceAccess';
+        $grantee = $access . 'SequenceGrantee';
+        $universal = $access . 'UniversalGrantee';
+        $right = $access . 'SequenceRight';
+        $grantDependency = $access . 'SequenceGrantDependency';
+        $namedSequences = $access . 'NamedSequences';
+        $schemaSequences = $access . 'SequencesInSchemas';
+        array_push($roots, $grantAccess, $revokeAccess);
+        array_push($internal, $access . 'SequenceAccessLowering', $access . 'SequenceAccessTargetLowering');
+        $properties[$grantAccess] = ['access' => [$accessOperands], 'grantOption' => ['bool']];
+        $properties[$revokeAccess] = ['access' => [$accessOperands], 'grantOptionOnly' => ['bool'], 'dependency' => [$grantDependency]];
+        $methods[$grantAccess] = $methods[$revokeAccess] = ['__construct', 'profileId', 'toString'];
+        $properties[$accessOperands] = ['target' => [$namedSequences, $schemaSequences], 'rights' => ['array'], 'grantees' => ['array'],
+            'grantor' => ['?' . $principal], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$accessOperands] = ['__construct', 'profileId', 'hasEffectiveRights', 'objectSql', 'recipientsSql', 'grantorSql'];
+        $properties[$namedSequences] = ['sequences' => ['array']];
+        $methods[$namedSequences] = ['__construct', 'checkRelease', 'toString'];
+        $properties[$schemaSequences] = ['schemas' => ['array']];
+        $methods[$schemaSequences] = ['__construct', 'toString'];
+        $properties[$grantee] = ['role' => [$universal, $principal]];
+        $methods[$grantee] = ['__construct', 'checkRelease', 'toString'];
+        $properties[$universal] = $methods[$universal] = $properties[$right] = $methods[$right] = $properties[$grantDependency] = $methods[$grantDependency] = [];
+        $enumCases[$universal] = ['Everyone' => 'PUBLIC'];
+        $enumCases[$right] = ['Select' => 'SELECT', 'Update' => 'UPDATE', 'Usage' => 'USAGE', 'LegacyRule' => 'RULE'];
+        $enumCases[$grantDependency] = ['Restrict' => 'RESTRICT', 'Cascade' => 'CASCADE'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1540,6 +1568,8 @@ try {
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\SetSchema'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Table\\Sequence\\AlterSequence'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Table\\Alter\\AlterTable'
+                . ', $statement instanceof \\' . $platform . '\\Statement\\Catalog\\Access\\Privilege\\Grant'
+                . ', $statement instanceof \\' . $platform . '\\Statement\\Catalog\\Access\\Privilege\\Revoke'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
@@ -1698,9 +1728,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v65.json';
+    $storagePath = __DIR__ . '/value-storage-v66.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '04754aa9c4c7343c5180bd37dfc8caf4c0ca44a5a818004105fa4d40a90cd036',
+        hash_file('sha256', $storagePath) === '290937b42dc1d968c6bfb4db975a5a2190093806b47e3658bfa7e55f3f1a52ea',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2138,6 +2168,7 @@ try {
                         'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
                         'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
                         'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\DropSchema', 'Schema\\Namespace\\RenameSchema',
+                        'Schema\\Sequence\\Access\\GrantSequenceAccess', 'Schema\\Sequence\\Access\\RevokeSequenceAccess',
                         'Schema\\Sequence\\Alter\\MoveSequence', 'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\RenameSequence',
                         'Schema\\Sequence\\Alter\\SetSequenceLogging', 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization',
                         'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
@@ -2238,6 +2269,7 @@ try {
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema', 'Schema\\Sequence\\SequenceName',
                     'Schema\\Sequence\\SequenceSelector', 'Schema\\Sequence\\Ownership\\SequenceOwner', 'Schema\\Sequence\\Alter\\MoveSequence',
+                    'Schema\\Sequence\\Access\\SequencesInSchemas',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')

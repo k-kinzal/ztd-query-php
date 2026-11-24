@@ -1479,6 +1479,70 @@ function observePostgresSequenceAuthorization(\SqlSemantics\Platform\PostgreSql\
     ]];
 }
 
+function constructPostgresSequencePrincipal(array $role): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal
+{
+    $reference = isset($role['name'])
+        ? new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($role['name'])
+        : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::from($role['session']);
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal($reference);
+}
+
+function constructPostgresSequenceAccess(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\RevokeSequenceAccess
+{
+    $spec = $input['sequenceAccess'];
+    $named = $spec['target']['named'] ?? null;
+    $target = $named === null
+        ? new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequencesInSchemas(array_map(
+            static fn (string $name) => new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($name), $spec['target']['schemas'],
+        ))
+        : new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\NamedSequences(array_map(
+            'constructPostgresSequenceSelector', $named,
+        ));
+    $rights = array_map(static fn (string $right) => \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceRight::tryFrom($right) ?? $right, $spec['rights']);
+    $grantees = array_map(static function (mixed $role): mixed {
+        if (!is_array($role)) {
+            return $role;
+        }
+        return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantee(
+            isset($role['universal']) ? \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\UniversalGrantee::Everyone
+                : constructPostgresSequencePrincipal($role),
+        );
+    }, $spec['grantees']);
+    $access = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceAccess(
+        $target, $rights, $grantees, $spec['grantor'] === null ? null : constructPostgresSequencePrincipal($spec['grantor']),
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+    if (isset($spec['grantOption'])) {
+        return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess($access, $spec['grantOption']);
+    }
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\RevokeSequenceAccess(
+        $access, $spec['grantOptionOnly'], \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantDependency::from($spec['dependency']),
+    );
+}
+
+function observePostgresSequenceAccess(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\RevokeSequenceAccess $value): array
+{
+    $principal = static fn (\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal $role): array => [
+        $role->owner instanceof \SqlSemantics\Platform\PostgreSql\Ir\Identifier ? 'name' : 'session' => $role->owner->value,
+    ];
+    $access = $value->access;
+    $target = $access->target instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\NamedSequences
+        ? ['named' => array_map('observePostgresSequenceSelector', $access->target->sequences)]
+        : ['schemas' => array_column($access->target->schemas, 'value')];
+    $roles = array_map(
+        static fn ($role): array => $role->role instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\UniversalGrantee
+            ? ['universal' => true] : $principal($role->role),
+        $access->grantees,
+    );
+    $operation = $value instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess
+        ? ['grantOption' => $value->grantOption]
+        : ['grantOptionOnly' => $value->grantOptionOnly, 'dependency' => $value->dependency->value];
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'sequenceAccess' => [
+        'target' => $target, 'rights' => array_column($access->rights, 'value'),
+        'grantees' => $roles, 'grantor' => $access->grantor === null ? null : $principal($access->grantor), ...$operation,
+    ]];
+}
+
 function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
 {
     $spec = $input['alterSchema'];
@@ -1901,6 +1965,7 @@ function observeStatement(array $input): array
             isset($input['reconfigureSequence']) => constructPostgresReconfigureSequence($input),
             isset($input['sequenceLogging']) => constructPostgresSequenceLogging($input),
             isset($input['sequenceAuthorization']) => constructPostgresSequenceAuthorization($input),
+            isset($input['sequenceAccess']) => constructPostgresSequenceAccess($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1953,6 +2018,9 @@ function observeStatement(array $input): array
     }
     if ($value::class === $namespace . 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization') {
         return observePostgresSequenceAuthorization($value);
+    }
+    if (in_array($value::class, [$namespace . 'Schema\\Sequence\\Access\\GrantSequenceAccess', $namespace . 'Schema\\Sequence\\Access\\RevokeSequenceAccess'], true)) {
+        return observePostgresSequenceAccess($value);
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

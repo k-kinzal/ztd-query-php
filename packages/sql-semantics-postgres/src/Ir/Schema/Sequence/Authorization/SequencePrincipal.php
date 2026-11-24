@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * Names one owning principal of a native sequence.
+ * Names one principal of a native sequence authorization operation.
  * @visibility public
  * @example Assigning the authenticated connection role
  *     (new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::Session))->toString() // => 'OWNER TO SESSION_USER'
@@ -49,8 +49,14 @@ final class SequencePrincipal
      */
     public function toString(): string
     {
-        $name = $this->owner instanceof Identifier ? $this->owner->quoted() : $this->owner->value;
+        return 'OWNER TO ' . $this->reference();
+    }
 
-        return 'OWNER TO ' . $name;
+    /**
+     * Emits the native role operand for a privilege or owner assignment.
+     */
+    public function reference(): string
+    {
+        return $this->owner instanceof Identifier ? $this->owner->quoted() : $this->owner->value;
     }
 }
