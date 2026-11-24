@@ -199,7 +199,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "2c56b727beb3557dc7e8a85a9433ee1bc6a09b29a7cb7e7ca747a575bfa4a424"
+PUBLICATION = "817c25f01085d9fa282def0f153d02cc9dc9dd058b0093bc17e3526c0e2359ec"
 
 
 def declared_constructors(dialects):
@@ -229,7 +229,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v43.json").read_bytes()
+    publication = (TOOL / "publication-v44.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)
