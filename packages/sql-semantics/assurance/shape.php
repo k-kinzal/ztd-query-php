@@ -1145,7 +1145,7 @@ try {
             ['sqlite-create-index-binding-v2.json', '518f25e19be787f59726f4d9783d029c5a77bc6c5b8bb97103aeebbba3c7fd69', 'Index binding'],
             ['sqlite-index-expression-binding-v1.json', '0f51026989e87bb830f5a9fac584794e318c410fcc85744079e38839e8e7a255', 'Native index expression binding'],
             ['sqlite-drop-column-binding-v3.json', 'a3270087ab9e5dd4431c69bc869fdc11291cfcf080c8288a71bcf4863c7142be', 'Column removal binding'],
-            ['sqlite-drop-index-binding-v1.json', '7cd4881ed8154ec6f55ea399dea10ec77338e81929e4d44069e75c55bb49b9fc', 'Index removal binding'],
+            ['sqlite-drop-index-binding-v2.json', 'f2c396bef0faf725b781bb844c74b2dcc6b99472bd0d05125eb901494572004c', 'Index removal binding'],
             ['sqlite-folded-binding-sources-v7.json', 'fde16c4d2ced975234793b158ea8608dc9f2c625a012a1dc1d234407abc46178', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
