@@ -27,13 +27,15 @@ final class AddColumn implements SemanticsIR
 {
     use Snapshot;
 
-    /** @var non-empty-list<Identifier> The prior declared names in ordinal order */
+    /**
+     * @var non-empty-list<Identifier> The prior declared names in ordinal order
+     */
     public readonly array $priorHeading;
 
     /**
      * Fixes the absolute target, prior heading and appended column.
      *
-     * @param array<array-key, mixed> $priorHeading The complete declared heading of the target
+     * @param list<Identifier> $priorHeading The nonempty declared heading of the target
      */
     public function __construct(
         public readonly Identifier $schema,
