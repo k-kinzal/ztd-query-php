@@ -71,6 +71,23 @@ It also emits `constructors.json` with each audited type, source digest, constru
 
 The [folded SQLite binding record](sqlite-folded-binding-sources-v4.json) ties the empty-membership checks to the exact transient syntax sources. The graph audit follows all syntax edges. The binding walk omits only the operand edge identified by the SQLite wiring for an empty IN list. Two source mutations exercise the full audit and the edge classifier independently.
 
+### Check the PostgreSQL rebuild spelling proof
+
+Use a Linux ARM64 controller with Bubblewrap and the official Lean 4.36.0 release archive named in the [frozen lexical challenge](formal/postgres_reindex/contract-v4.json). Unpack the release outside the candidate, and keep the verified archive for the toolchain check. Use a separate trusted verifier checkout and its PHP parser autoload file.
+
+```sh
+python3 "$verifier/verify_postgres_reindex_proof.py" \
+  --candidate "$candidate" --candidate-sha "$candidate_sha" \
+  --tool-autoload "$tool_autoload" \
+  --lean "$lean_release_directory" --archive "$lean_release_archive" \
+  --out "$evidence/postgres-reindex-proof"
+```
+
+The checker validates the two exact theorem types and their transitive axiom sets. It runs the Lean, lean4lean, con-leche and con-ron kernels. It checks a weakened statement and an unfinished proof for their prescribed rejection signals. The PHP correspondence checks the actual AST bodies of the six rebuild renderers, all of their coordinate renderers, and the identifier representation. It applies a changed delimiter and checks the expected boundary rejection. Source, build and export, physical package distribution, toolchain and fault evidence carry separate digests.
+
+The theorems cover canonical lexical rendering for complete rebuild values under the fixed name interpretation. Consult the native rebuild receipts for observed physical storage changes, transaction outcomes and ordered PostgreSQL reports. Both records remain subject to review and protected acceptance. [Lean proof-validation reference](https://lean-lang.org/doc/reference/latest/ValidatingProofs/)
+
+
 ### Reproduce the SQLite matrix
 
 Use an archived verifier checkout and a new evidence directory for the complete SQLite schedule. The launcher checks that every domain has both a runner and a replay observer. It checks that each source mutation can be applied, executes each domain in its own process, and runs the independent collector after all domain attempts. The launcher writes its full plan before starting and records each child start and exit as it occurs. Its final receipt links the journal, logs and artifacts to the measured candidate and SQLite binary. The manual workflow on main runs the same schedule from its trusted workflow revision.

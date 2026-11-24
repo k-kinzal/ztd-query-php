@@ -145,6 +145,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-reindex-database-boundaries-v1.json', 'e6714016169da729bd01ed0bdd718ea5f2130638dcb81554928d1e5b1a146a01'],
             ['postgres-reindex-exclusion-index-boundaries-v1.json', 'e9b06d29c00448bc49da8da0ad6baeb2536a66aaac0a6811dbcb2d9417f330c6'],
             ['postgres-reindex-verbose-boundaries-v1.json', '11f4aa1a5303614b865eb95cfdedb7407971392ccc6a89e71e4d2e3972b8af70'],
+            ['postgres-reindex-lexical-boundaries-v1.json', 'cceec322faaf51fd2a0c2c827118471150e87713e19d91190404b53e3aee7823'],
         ],
         'sqlite' => [],
     };
