@@ -1,0 +1,160 @@
+{
+  "revision": "SemanticsIR/sqlite-appended-column-checks-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Pinned SQLite 3.47.2, standard limits, native name comparison and schema search order, writable_schema and legacy_alter_table disabled and ignore_check_constraints disabled.",
+  "scope": "Explicitly named inline CHECK constraints on ordinary and generated appended columns of a resolved ordinary table.",
+  "constructors": {
+    "Schema/Alter/AddColumn": {
+      "role": "Append a column with explicitly named inline CHECK constraints.",
+      "structure": "Resolved absolute schema and table, prior heading and strictness, one TableColumn carrying ordinary literal, computed or absent default, and an owned ordered list of CheckConstraint values.",
+      "conditions": "Each appended CHECK in this named domain has an explicit Identifier label and the new column as its owner. Its terms resolve to the prior declared ordinals and the new ordinal of that same table. No live parameter, second relation, implicit rowid, or out-of-scope reference enters the value. Checked folded registrations retain their numbered spellings. Generation operands keep their narrower scope of prior ordinals.",
+      "meaning": "Test the added conditions in declaration order. For existing rows, SQLite validates the combined definition and can atomically refuse it. On subsequent inserts and updates, NULL satisfies CHECK, false fails, and the first failing CHECK supplies the named diagnostic. Keep the existing table and effects of the underlying column definition.",
+      "externalInterpretation": "Apply to the same ordinary table and actual rows, table strictness and transaction state. Existing checks, indices and dependencies retain their native behavior. The prior heading and binding slots belong to the value. No original SQL, parser, context or database object belongs to it.",
+      "sql": "Emit the absolute ALTER TABLE, column clause and one CONSTRAINT quoted-label CHECK (resolved expression) per explicitly named list entry. Emit references by their resolved ordinal and preserve explicit names, ordering and folded registrations.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Alter/AddGeneratedColumn": {
+      "role": "Append a column with explicitly named inline CHECK constraints.",
+      "structure": "Resolved absolute schema and table, prior heading and strictness, one TableColumn carrying VIRTUAL or STORED generation, and an owned ordered list of CheckConstraint values.",
+      "conditions": "Each appended CHECK in this named domain has an explicit Identifier label and the new column as its owner. Its terms resolve to the prior declared ordinals and the new ordinal of that same table. No live parameter, second relation, implicit rowid, or out-of-scope reference enters the value. Checked folded registrations retain their numbered spellings. Generation operands keep their narrower scope of prior ordinals.",
+      "meaning": "Test the added conditions in declaration order. For existing rows, SQLite validates the combined definition and can atomically refuse it. On subsequent inserts and updates, NULL satisfies CHECK, false fails, and the first failing CHECK supplies the named diagnostic. Keep the existing table and effects of the underlying column definition.",
+      "externalInterpretation": "Apply to the same ordinary table and actual rows, table strictness and transaction state. Existing checks, indices and dependencies retain their native behavior. The prior heading and binding slots belong to the value. No original SQL, parser, context or database object belongs to it.",
+      "sql": "Emit the absolute ALTER TABLE, column clause and one CONSTRAINT quoted-label CHECK (resolved expression) per explicitly named list entry. Emit references by their resolved ordinal and preserve explicit names, ordering and folded registrations.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "additionalPublicRoots": [],
+  "existingRoles": [
+    "Identifier",
+    "Schema/Predicate/CheckConstraint",
+    "Schema/TableColumn"
+  ],
+  "rules": [
+    "The new ordinary or generated field is an addressable input to its own CHECK, even though it cannot supply a generation input.",
+    "Preserve CHECK order, label spelling, NULL as a success, and typed source slot identity. Old-row refusal has SQLite's generic code 1 message. Future insert or update failure identifies the first failing CHECK with constraint code 19.",
+    "Populated STORED addition preserves the native earlier refusal. Empty STORED addition installs its checks, as does a successful VIRTUAL addition.",
+    "Reuse the closed scalar role and native numbered registrations. ALTER placement resolves the exact table before construction and does not infer live rows, outcomes or unrelated external catalog definitions.",
+    "The separate implicit comparison domain checks admitted spellings. A mismatched implicit binding or a wider uncompiled anonymous expression remains a typed refusal. Naming of other column constraint roles remains open."
+  ],
+  "observations": [
+    "Compare exact schema identity, column and CHECK order, catalog mode, rollback and typed rows from both same-named fixture tables.",
+    "Distinguish default value or generated value, CHECK input slot, NULL success, native rejection of a previously stored row, first failure label from multiple checks, omitted and explicit insert values and updates of a prior operand.",
+    "Observe native parameter names and slots even in a folded condition that can never fail.",
+    "Directly construct all finite cases and exercise independently written original SQL against the same pinned engine where analyzed. Compare each result with the independent evaluator."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "columnForms": [
+      "ordinary-absent",
+      "ordinary-two",
+      "virtual",
+      "stored"
+    ],
+    "strict": [
+      false,
+      true
+    ],
+    "population": [
+      "empty",
+      "below",
+      "mixed",
+      "null"
+    ],
+    "predicates": [
+      "new-greater-than-old",
+      "new-positive",
+      "old-positive",
+      "folded-registered"
+    ],
+    "checkCounts": [
+      1,
+      2
+    ],
+    "identity": "All 512 combinations in printed axis order, recovered from the built column, checked ordinal and mode, ordered predicate list and before-row observations."
+  },
+  "exploration": {
+    "seeds": [
+      30139,
+      52391,
+      71741
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 285,
+    "allowedExclusions": [],
+    "domain": "Vary prior heading width and input binding, explicit labels including empty, quotes and non-ASCII, number of constraints, nested operators, storage mode and NULL patterns. Include dual authored SQL for both appended roles and independent multiple-failure witnesses."
+  },
+  "negative": [
+    "Non-check element in the list",
+    "Unordered list",
+    "Incorrect owner ordinal",
+    "Table-level owner",
+    "Out-of-scope operand",
+    "Implicit label spelling differs from its declared reference"
+  ],
+  "analysisNegative": [
+    "An anonymous inline CHECK expression outside the checked implicit comparison grammar",
+    "A label for a constraint other than CHECK",
+    "Unresolved prior member",
+    "Live parameter",
+    "Nonordinary or unresolved target"
+  ],
+  "faults": [
+    "Remove the owner and placement guard",
+    "Move condition to the wrong input slot",
+    "Drop the first condition",
+    "Drop a non-first condition",
+    "Change the label in emission",
+    "Erase parameter registrations"
+  ],
+  "open": [
+    "Unnamed inline checks beyond their existing compiled CREATE TABLE roles, foreign keys, additional constraint types and dependent topologies remain scope work."
+  ],
+  "trust": [
+    "Pinned native SQLite CHECK, affinity, schema parsing and engine authorization",
+    "Independent row and condition evaluator and catalog observation",
+    "Exact PHP scope and ordered rendering, isolated distribution and replay"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_altertable.html#alter_table_add_column",
+    "https://sqlite.org/lang_createtable.html#check_constraints",
+    "https://sqlite.org/src/file/src/alter.c?ci=version-3.47.2"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "nativeCases": "87fb04f5db7ab04218b2c6a3b601fa0aeb5225cdedadb44562c8dfc9963e18bf",
+    "driver": "a067bda395837a7294e2a188db6d80795f7f226b5ca4880e539e6fb7df5f72fb",
+    "storedAndPrecedence": "8055167a54f44b58be8660c415eb29e5de859606b09bad593e96b0efa6beb7bc"
+  },
+  "extends": "sqlite-appended-column-checks-v1.json",
+  "change": "Extends admission through sqlite-appended-implicit-checks-v1.json. Retains every named input, finite identity, seed, comparison observation, existing fault and refusal count. Replaces two previous admission boundaries with known invalid spellings or expression forms whose rejections remain required."
+}
