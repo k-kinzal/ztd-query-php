@@ -38,9 +38,12 @@ def decodePlacement (text : Text) : Option (Head × Text × Target) := do
   let (verbose, suffix) ← stripStem text
   let (space, tail) ← getName suffix
   match tail with
-  | ')' :: ' ' :: rest =>
-    let (head, target) ← identify (ordinaryStem verbose ++ rest)
-    some (head, space, target)
-  | _ => none
+  | first :: second :: rest =>
+    if first == ')' && second == ' ' then
+      let (head, target) ← identify (ordinaryStem verbose ++ rest)
+      some (head, space, target)
+    else none
+  | [] => none
+  | [_] => none
 
 end PlacementSpec
