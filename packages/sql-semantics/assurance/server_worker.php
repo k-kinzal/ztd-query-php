@@ -1104,12 +1104,18 @@ function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\
 function constructPostgresReindex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex
 {
     $specification = $input['reindex'];
-    [$schema, $index, $table] = $specification['target'];
-    $name = \SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+    [$schema, $index, $table] = array_map(
+        static fn (string $name) => new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($name), $specification['target'],
+    );
     $role = ($specification['constraintOwned'] ?? false)
         ? \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference::class
         : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexReference::class;
-    $target = new $role(new $name($schema), new $name($index), new $name($table));
+    $target = isset($specification['partitionKind'])
+        ? new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference(
+            $schema, $index, $table,
+            \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionRebuildKind::from($specification['partitionKind']),
+        )
+        : new $role($schema, $index, $table);
 
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
         $target,
@@ -1127,6 +1133,8 @@ function observePostgresReindex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Inde
             'target' => [$target->schema->value, $target->index->value, $target->table->value],
             'mode' => $value->mode->value,
             ...($target instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference ? ['constraintOwned' => true] : []),
+            ...($target instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference
+                ? ['partitionKind' => $target->kind->value] : []),
         ],
     ];
 }

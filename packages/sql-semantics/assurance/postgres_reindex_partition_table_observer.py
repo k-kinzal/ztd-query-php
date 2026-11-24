@@ -24,15 +24,15 @@ def snapshot(db, item):
     return {name(owner): read_owner(db, owner["schema"], owner["name"]) for owner in tree(item)}
 
 
-def observe(db, request):
-    item, sql = request["trial"], request["sql"]
-    if not admitted(item, sql):
-        return {"status": "outside-observer-scope"}
+def initialize(db, item, declarations):
     setup = ["SET client_min_messages=warning", "RESET search_path",
              "DROP SCHEMA IF EXISTS fixture CASCADE", f"DROP SCHEMA IF EXISTS {DECOY} CASCADE",
-             *fixture(item, populate=True), "SET search_path=" + ",".join(map(quoted, path(item))),
+             *declarations, "SET search_path=" + ",".join(map(quoted, path(item))),
              "SET client_min_messages=notice"]
     db.execute(";".join(setup))
+
+
+def phases(db, item, sql, status):
     before = snapshot(db, item)
     before_links = sorted(db.execute(ATTACHMENTS))
     if item["active"]:
@@ -45,10 +45,18 @@ def observe(db, request):
     if item["active"]:
         db.execute("ROLLBACK")
     return {
-        "status": "partition-rebuild", "before": before, "during": during, "settled": snapshot(db, item),
+        "status": status, "before": before, "during": during, "settled": snapshot(db, item),
         "transactionAfter": transaction, "attachmentsBefore": before_links, "attachmentsDuring": during_links,
         "attachmentsSettled": sorted(db.execute(ATTACHMENTS)), **{key: result[key] for key in ("sqlState", "command", "notices")},
     }
+
+
+def observe(db, request):
+    item, sql = request["trial"], request["sql"]
+    if not admitted(item, sql):
+        return {"status": "outside-observer-scope"}
+    initialize(db, item, fixture(item, populate=True))
+    return phases(db, item, sql, "partition-rebuild")
 
 
 def main():

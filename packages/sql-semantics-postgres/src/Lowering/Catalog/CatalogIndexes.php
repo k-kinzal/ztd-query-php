@@ -117,7 +117,11 @@ final class CatalogIndexes
                 $this->opaque[] = $schema;
                 continue;
             }
-            $kind = isset($this->partitioned[$key]) ? IndexDeclarationKind::Partitioned : IndexDeclarationKind::Ordinary;
+            $kind = match ($this->partitioned[$key]->role ?? null) {
+                TablePartitionRole::Branch => IndexDeclarationKind::PartitionBranch,
+                TablePartitionRole::Leaf => IndexDeclarationKind::PartitionLeaf,
+                null => IndexDeclarationKind::Ordinary,
+            };
             $this->indexes[] = new IndexDeclaration($schema, $name, $table, $kind);
         }
     }

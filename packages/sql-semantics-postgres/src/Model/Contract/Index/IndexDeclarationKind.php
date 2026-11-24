@@ -15,4 +15,6 @@ enum IndexDeclarationKind
     case KeyConstraint;
     case ExclusionConstraint;
     case Partitioned;
+    case PartitionBranch;
+    case PartitionLeaf;
 }

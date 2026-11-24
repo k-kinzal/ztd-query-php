@@ -1065,8 +1065,9 @@ if ($dialect !== 'sqlite') {
         $reindex = 'Schema\\Index\\ReindexIndex';
         $rebuildMode = 'Schema\\Index\\IndexRebuildMode';
         $constraintIndex = 'Schema\\Index\\ConstraintIndexReference';
+        $partitionIndex = 'Schema\\Index\\Partition\\PartitionIndexReference';
         $roots[] = $reindex;
-        $properties[$reindex] = ['target' => [$constraintIndex, $indexReference], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindex] = ['target' => [$constraintIndex, $indexReference, $partitionIndex], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $properties[$constraintIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
         $methods[$constraintIndex] = ['__construct', 'quoted'];
         $methods[$reindex] = ['__construct', 'profileId', 'toString'];
@@ -1088,6 +1089,8 @@ if ($dialect !== 'sqlite') {
         $enumCases[$reindexKind] = ['BaseTable' => 'base-table', 'MaterializedView' => 'materialized-view'];
         $partitionRebuild = 'Schema\\Index\\Partition\\ReindexPartitionTable';
         $partitionRebuildKind = 'Schema\\Index\\Partition\\PartitionRebuildKind';
+        $properties[$partitionIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier'], 'kind' => [$partitionRebuildKind]];
+        $methods[$partitionIndex] = ['__construct', 'quoted'];
         $roots[] = $partitionRebuild;
         $properties[$partitionRebuild] = ['target' => ['Schema\\TableName'], 'kind' => [$partitionRebuildKind], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$partitionRebuild] = ['__construct', 'profileId', 'toString'];
@@ -1489,7 +1492,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v10.json', '340e891420f7847fd0ed2b7e8cb54bffbeb4b00dae74c055c56f8c6e294873db', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v11.json', '2b078e034033de50a95a7e4bfc07faa5ee204cef8fac79cb26072f77b550cf14', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1911,7 +1914,7 @@ try {
                 $members = $class->getMethods();
                 $returns = [
                     'resolve' => ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'],
-                    'resolveRebuild' => ['Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\IndexReference'],
+                    'resolveRebuild' => ['Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\IndexReference', 'Schema\\Index\\Partition\\PartitionIndexReference'],
                     'lookup' => ['?' . $platform . '\\Model\\Contract\\Index\\IndexDeclaration'],
                 ];
                 requireShape(count($members) === count($returns), 'Unexpected PostgreSQL index selector method count');
@@ -2053,7 +2056,7 @@ try {
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
-                    'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
+                    'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
                 || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',

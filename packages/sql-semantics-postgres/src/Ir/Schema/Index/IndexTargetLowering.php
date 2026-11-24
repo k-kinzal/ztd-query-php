@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionRebuildKind;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclaration;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclarationKind;
@@ -43,10 +45,10 @@ final class IndexTargetLowering
     }
 
     /**
-     * Identifies the checked ordinary or named key-constraint role for rebuilding.
+     * Identifies the checked declared physical or partition-index rebuild role.
      * @throws InvalidConstruction For an index outside the supported rebuild roles
      */
-    public function resolveRebuild(AnalysisContext $context, QualifiedName $name): IndexReference|ConstraintIndexReference
+    public function resolveRebuild(AnalysisContext $context, QualifiedName $name): IndexReference|ConstraintIndexReference|PartitionIndexReference
     {
         $match = $this->lookup($context, $name);
         Check::input($match !== null, 'The index selector requires a declared index.');
@@ -57,6 +59,8 @@ final class IndexTargetLowering
         return match ($match->kind) {
             IndexDeclarationKind::Ordinary => new IndexReference($schema, $index, $table),
             IndexDeclarationKind::KeyConstraint => new ConstraintIndexReference($schema, $index, $table),
+            IndexDeclarationKind::PartitionBranch => new PartitionIndexReference($schema, $index, $table, PartitionRebuildKind::Branch),
+            IndexDeclarationKind::PartitionLeaf => new PartitionIndexReference($schema, $index, $table, PartitionRebuildKind::Leaf),
             IndexDeclarationKind::Partitioned => throw new InvalidConstruction('This index rebuild requires a nonpartitioned index.'),
             IndexDeclarationKind::ExclusionConstraint => throw new InvalidConstruction('This index rebuild requires an ordinary or a primary or unique constraint index.'),
         };

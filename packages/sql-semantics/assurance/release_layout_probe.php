@@ -933,6 +933,25 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $boundKey->target::class === $key::class,
                 $boundKey->target->table->value, $boundKey->toString(), $withKey->toString(), $badDatabase,
             ];
+            $partition = $semantics->context([
+                'CREATE SCHEMA regional',
+                'CREATE TABLE public.groups (id integer) PARTITION BY RANGE (id)',
+                'CREATE TABLE regional.child PARTITION OF public.groups FOR VALUES FROM (0) TO (10)',
+                'CREATE INDEX branch_idx ON public.groups (id)',
+                'CREATE INDEX physical ON regional.child (id)',
+            ]);
+            $branch = $semantics->analyze('REINDEX INDEX public.branch_idx', $partition);
+            $physical = $semantics->analyze('REINDEX INDEX CONCURRENTLY regional.physical', $partition);
+            $partitionIndex = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference(
+                $physical->target->schema, $physical->target->index, $physical->target->table, $physical->target->kind,
+            );
+            $copy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                $partitionIndex, $physical->mode, $physical->release,
+            );
+            $details['postgresReindexPartitionIndex'] = [
+                $branch->target->kind->value, $branch->target->table->value, $branch->toString(),
+                $physical->target->kind->value, $physical->target->table->value, $physical->toString(), $copy->toString(),
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexTable') {
             $temporary = $semantics->context([

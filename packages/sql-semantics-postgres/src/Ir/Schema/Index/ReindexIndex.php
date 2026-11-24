@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -25,7 +26,7 @@ final class ReindexIndex implements SemanticsIR
      * Fixes the exact index, rebuild mode and PostgreSQL grammar profile.
      */
     public function __construct(
-        public readonly IndexReference|ConstraintIndexReference $target,
+        public readonly IndexReference|ConstraintIndexReference|PartitionIndexReference $target,
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
     ) {

@@ -38,7 +38,7 @@ def tree(item):
     high_zero = [[14, base + 7, None]]
     high_one = [[19, base - 6, "child"]]
     root = owner(item["root"], "fixture", [] if layout == "empty" else lower + high_zero + high_one,
-                 branch=True, key="root_key")
+                 branch=True, key=item.get("rootIndex", "root_key"))
     if layout == "empty":
         return [root, outside, decoy]
     low = owner("low", "fixture", lower, parent=root, bounds=(0, 10))

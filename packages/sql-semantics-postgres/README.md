@@ -63,6 +63,8 @@ For declared Boolean columns, `IndexTruthTest` also represents all six `IS [NOT]
 
 `REINDEX INDEX` publishes a `ReindexIndex` for a declared ordinary index or the physical index of an explicitly named primary or unique key. The value retains the target schema, index and owning table, and the effective `CONCURRENTLY` request after the option list. A concurrent request remains explicit for a temporary index because it changes whether PostgreSQL permits the command in a transaction. The separate `ConstraintIndexReference` role preserves the distinction between a rebuildable key index and an ordinary removal target.
 
+An explicitly named partition index is a `PartitionIndexReference`. A branch selects its attached physical index lineage, including indexes in child namespaces. A leaf rebuilds the selected physical index. The owning table's auxiliary and unrelated indexes remain unchanged.
+
 `REINDEX TABLE` returns a `ReindexTable` for a declared standalone application table, a table in `pg_temp` or a materialized view. The value retains the resolved owner, its relation kind and the effective concurrency request. The command selects that owner's indexes, including its TOAST index if present. As with a single-index rebuild, a concurrent request cannot run inside a transaction, including for a temporary table.
 
 `REINDEX TABLE` returns a `ReindexPartitionTable` when the resolved owner is a partitioned branch or an attached physical leaf. A branch selects the physical descendants beneath it, including descendants in a different schema. A leaf selects its own indexes and supports a standard rebuild within a transaction.
