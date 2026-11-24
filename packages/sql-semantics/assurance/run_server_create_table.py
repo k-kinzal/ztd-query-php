@@ -15,11 +15,14 @@ from sqlite_domain import RenderFault
 LABEL = "create-table"
 OBSERVER = "server_create_table_observer.php"
 CONTRACT = "b1c5f91edac3d4be6e304600ba2b480ee45497fd51e84ee90597f13a8ec6911c"
+ADMISSION = "ef0719629dd2016da90130d2370c5bc8707c516b465639dec296fdca5fbac089"
 
 
 def specifications():
     path, projection = TOOL / "server-create-table-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-create-table-contract-mismatch")
+    require(digest(TOOL / "server-create-table-temporary-admission-v1.json") == ADMISSION,
+            "server-create-table-admission-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 
 
@@ -27,6 +30,8 @@ def check_value(item, response):
     require(response["status"] == "constructed", "server-create-table-positive-rejected", response)
     require(response["profile"].startswith(item["release"] + "/"), "server-create-table-profile-mismatch", response)
     require(response["create"] == item["create"], "server-create-table-shape-mismatch", response)
+    if item["dialect"] == "mysql":
+        require(response["createKind"] == "table", "server-create-table-persistent-role-mismatch", response)
 
 
 def observer_request(item, sql):

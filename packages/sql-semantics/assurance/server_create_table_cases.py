@@ -69,8 +69,11 @@ def negatives(engine, tag):
     yield case(engine, tag, [good, good]), "cannot repeat a column name"
     table = SCHEMAS[engine] + ".ir_create_target" if engine == "mysql" else "ir_create_target"
     invalid_schema = "CREATE TABLE ir_create_target (c0 INTEGER)" if engine == "mysql" else "CREATE TABLE pg_temp.ir_create_target (c0 INTEGER)"
+    unsupported = (f"CREATE TEMPORARY TABLE {table} AS SELECT 1 AS c0", "requires an ordinary table with explicit columns")
+    if engine == "postgres":
+        unsupported = (f"CREATE TEMPORARY TABLE {table} (c0 INTEGER)", "persistent ordinary table")
     for sql, reason in (
-        (f"CREATE TEMPORARY TABLE {table} (c0 INTEGER)", "persistent ordinary table"),
+        unsupported,
         (invalid_schema, "named declaration schema" if engine == "mysql" else "absolute schema"),
     ):
         yield {"dialect": engine, "release": tag, "sql": sql, "declarations": []}, reason
