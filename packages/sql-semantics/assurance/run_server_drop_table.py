@@ -13,7 +13,7 @@ from sqlite_domain import RenderFault
 
 LABEL = "drop-table"
 OBSERVER = "server_drop_table_observer.php"
-CONTRACT = "506d7160b2e02d420a8ffb53c655593162740a00834dd1cef6441be6aa0f67cb"
+CONTRACT = "c3103b174dd492f3a69192ded77b43b6fe7a1eeb027145daa94cd2c29c54915c"
 
 
 def specifications():

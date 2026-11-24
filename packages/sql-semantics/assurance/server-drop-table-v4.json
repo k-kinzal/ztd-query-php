@@ -109,7 +109,7 @@
     "Name outside the role",
     "Wrong declaration kind",
     "Unknown optional schema",
-    "MySQL DROP TEMPORARY TABLE and PostgreSQL DROP SEQUENCE outside the checked persistent relation kinds"
+    "An undeclared MySQL temporary table and an unguarded PostgreSQL sequence known to be absent"
   ],
   "faults": [
     "Change a target to a different known table",
