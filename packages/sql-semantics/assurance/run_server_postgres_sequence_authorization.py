@@ -126,6 +126,8 @@ def refusals(tag):
     yield {**analyzed(absent), "complete": False}, None, refusal("A sequence selector cannot infer absence in an open relation namespace.")
     cases = [
         (item, [{"owner": {"name": "none"}}], "A sequence owner must identify a single role."),
+        (item, [{"owner": {"name": "public"}}], "A sequence owner must identify a single role."),
+        (item, [{"owner": {"name": "pg_unknown_owner"}}], "The stock sequence owner must exist in this release."),
         (item, [{"logging": "unlogged"}], "A present sequence authorization requires an owning role assignment."),
         (item, [{"logging": "unlogged"}, {"logging": "logged"}, {"owner": {"session": "CURRENT_USER"}}, {"logging": "unlogged"}],
          "A sequence logging prefix must request one consistent mode."),
