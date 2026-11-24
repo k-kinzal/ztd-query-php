@@ -12,7 +12,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnUnique;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\GeneratedStorage;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationRefused;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
@@ -99,7 +98,6 @@ final class AlterationProblems
         $obstacles = [
             [$column->primaryKey() !== null, AlterationObstacle::PrimaryKeyColumn],
             [$unique, AlterationObstacle::UniqueColumn],
-            [$column->generated()?->storage() === GeneratedStorage::Stored, AlterationObstacle::StoredColumn],
         ];
         foreach ($obstacles as [$present, $obstacle]) {
             if ($present) {

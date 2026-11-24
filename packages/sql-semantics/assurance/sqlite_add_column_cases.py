@@ -136,7 +136,7 @@ def negatives():
         ("ALTER TABLE main.ir_add ADD untyped", strict, "analysis-rejected", "STRICT"),
         ("ALTER TABLE main.ir_add ADD value INT PRIMARY KEY", ordinary, "analysis-rejected", "PRIMARY KEY"),
         ("ALTER TABLE main.ir_add ADD value INT UNIQUE", ordinary, "analysis-rejected", "UNIQUE"),
-        ("ALTER TABLE main.ir_add ADD value INT CHECK (value > 0)", ordinary, "rejected", "ordinary column addition"),
+        ("ALTER TABLE main.ir_add ADD value INT CHECK (value > 0)", ordinary, "rejected", "no complete column addition"),
         ("ALTER TABLE main.ir_add ADD value INT DEFAULT (1 + 2)", ordinary, "rejected", "closed literal operand"),
     ]:
         yield {"sql": sql, "declarations": catalog}, outcome, detail
@@ -217,11 +217,10 @@ def probe_values(item):
     return "A", "a "
 
 
-def collates(value, operand, item):
+def collates(value, operand, kind, strict, collation):
     if value is None:
         return None
-    _, kind, _, _, collation = item["column"]
-    operand = convert(operand, kind, item["strict"])
+    operand = convert(operand, kind, strict)
     if type(value) is str and type(operand) is str:
         if collation == "NOCASE":
             lower = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
@@ -234,7 +233,7 @@ def collates(value, operand, item):
 def state(item, added=False, written=()):
     heading = item["priorHeading"]
     result = {}
-    name, kind, policy, default, _ = item["column"]
+    name, kind, policy, default, collation = item["column"]
     for schema in SCHEMAS:
         strict = prior_strict(item, schema)
         fields = list(heading)
@@ -248,7 +247,8 @@ def state(item, added=False, written=()):
             value = old_default_value(item)
             rows = [(*row, value) for row in rows]
             rows.extend((ordinal, *([None] * (len(heading) - 1)), val) for ordinal, val in written)
-            equals = [[typed(row[0]), typed(collates(row[-1], "a", item)), typed(collates(row[-1], "A", item))] for row in rows]
+            equals = [[typed(row[0]), *(typed(collates(row[-1], key, kind, strict, collation)) for key in ("a", "A"))]
+                      for row in rows]
         result[schema] = {"root": [typed("table"), typed(item["table"]), typed(item["table"]), typed(2)],
                           "strict": strict, "fields": fields, "columns": normalized(columns),
                           "rows": [list(map(typed, row)) for row in rows], "equals": equals}

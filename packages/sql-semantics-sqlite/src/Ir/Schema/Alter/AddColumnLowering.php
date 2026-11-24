@@ -16,11 +16,12 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Collation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Generated;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\NotNull;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 
 /**
- * Publishes an ordinary appended column from resolved table and column facts.
+ * Publishes an appended column from resolved table and column facts.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
@@ -28,16 +29,17 @@ final class AddColumnLowering
 {
     /**
      * Exports the checked identity, declared heading, strictness and appended column.
-     * @throws InvalidConstruction When the column uses a constraint outside the ordinary-column domain
+     * @throws InvalidConstruction When the column uses an unrepresented constraint
      */
-    public function lower(BoundStatement $operation, AlterAddColumn $statement): AddColumn
+    public function lower(BoundStatement $operation, AlterAddColumn $statement): AddColumn|AddGeneratedColumn
     {
         [$schema, $name, $table] = (new AlterTargetLowering())->resolve($operation, $statement);
         foreach ($statement->column->constraints as $constraint) {
             Check::input(
                 $constraint instanceof Collation || $constraint instanceof DefaultExpression
-                    || $constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord || $constraint instanceof NotNull,
-                'This constraint has no complete ordinary column addition representation.',
+                    || $constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord || $constraint instanceof NotNull
+                    || $constraint instanceof Generated,
+                'This constraint has no complete column addition representation.',
             );
         }
 
@@ -52,6 +54,8 @@ final class AddColumnLowering
         $binding = new SourceBinding($operation, $statement, [...$heading, new Identifier($statement->column->name->value)]);
         $column = (new CreateColumnLowering())->lower($statement->column, $operation, $binding, $type->descriptor);
 
-        return new AddColumn($schema, $name, $heading, $strict, $column);
+        return $column->generated === null
+            ? new AddColumn($schema, $name, $heading, $strict, $column)
+            : new AddGeneratedColumn($schema, $name, $heading, $strict, $column);
     }
 }

@@ -537,6 +537,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Alter\\RenameTable'] = "ALTER TABLE $table RENAME TO renamed";
         $queries['Schema\\Alter\\RenameColumn'] = "ALTER TABLE $table RENAME COLUMN ID TO renamed";
         $queries['Schema\\Alter\\AddColumn'] = "ALTER TABLE $table ADD COLUMN added TEXT COLLATE NOCASE DEFAULT 'value'";
+        $queries['Schema\\Alter\\AddGeneratedColumn'] = "ALTER TABLE $table ADD total INTEGER AS (id + 7) STORED";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
         $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
@@ -1136,6 +1137,25 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['addColumn'] = [$result->schema->value, $result->table->value, array_column($direct->priorHeading, 'value'),
                 $result->strict, $result->column->name->value, $result->column->type->value, $result->column->collation->value,
                 $result->column->default->value, $refused, $direct->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddGeneratedColumn') {
+            $generation = $result->column->generated;
+            if (!$generation instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration
+                || !$generation->expression instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic
+                || !$generation->expression->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$generation->expression->right instanceof SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral) {
+                throw new RuntimeException('The installed generated column addition lost its checked input roles.');
+            }
+            $first = $result->priorHeading[0];
+            $heading = $result->priorHeading;
+            $heading[0] = &$first;
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn(
+                $result->schema, $result->table, $heading, $result->strict, $result->column,
+            );
+            $first = $result->column->name;
+            $details['addGeneratedColumn'] = [$result->schema->value, $result->table->value, array_column($direct->priorHeading, 'value'),
+                $result->strict, $result->column->name->value, $generation->mode->value, $generation->expression->operator->value,
+                $generation->expression->left->slot, $generation->expression->right->decimal, $direct->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

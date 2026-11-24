@@ -83,7 +83,7 @@ final class AlterationProblemsTest extends TestCase
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT AS (a) VIRTUAL NOT NULL'));
         self::assertSame([AlterationObstacle::UniqueColumn->name], $obstacles('ALTER TABLE t ADD b INT UNIQUE'));
         self::assertSame([AlterationObstacle::PrimaryKeyColumn->name], $obstacles('ALTER TABLE t ADD b INT PRIMARY KEY'));
-        self::assertSame([AlterationObstacle::StoredColumn->name], $obstacles('ALTER TABLE t ADD b INT AS (a) STORED'));
+        self::assertSame([], $obstacles('ALTER TABLE t ADD b INT AS (a) STORED'));
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT NOT NULL'));
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT NOT NULL DEFAULT NULL'));
         self::assertSame([DuplicateColumn::class], $obstacles('ALTER TABLE t ADD A INT'));

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v81.json"
-CONTRACT = "3f644af9c6bd67094786833e2e94c2f5f4633d2e1c6595e06f9016f6638d194b"
+CONTRACT_NAME = "release-layout-v82.json"
+CONTRACT = "6f5c205f1590fb913fb3c436af0ad451fd17892a99a65b829a3cd0bb796a7a91"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -580,6 +580,11 @@ def verify_probe(raw, catalog):
                 "main", "accounts", ["id"], False, "added", "TEXT", "NOCASE", "value", True,
                 """ALTER TABLE "main"."accounts" ADD COLUMN "added" TEXT DEFAULT 'value' COLLATE NOCASE""",
             ] and item["sql"] == item["addColumn"][-1], "installed-sqlite-add-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\AddGeneratedColumn"):
+            require(item.get("addGeneratedColumn") == [
+                "main", "accounts", ["id"], False, "total", "STORED", "+", 0, "7",
+                'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER GENERATED ALWAYS AS (("id" + 7)) STORED',
+            ] and item["sql"] == item["addGeneratedColumn"][-1], "installed-sqlite-add-generated-column-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

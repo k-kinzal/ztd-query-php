@@ -18,6 +18,5 @@ enum AlterationObstacle: string
 {
     case PrimaryKeyColumn = 'A PRIMARY KEY column cannot be added.';
     case UniqueColumn = 'A UNIQUE column cannot be added.';
-    case StoredColumn = 'A STORED generated column cannot be added.';
     case LastColumn = 'The only column of a table cannot be dropped.';
 }

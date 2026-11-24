@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Alter;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\DefinitionSource;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableDeclarationSql;
@@ -44,18 +43,8 @@ final class AddColumn implements SemanticsIR
         public readonly bool $strict,
         public readonly TableColumn $column,
     ) {
-        Check::input($schema->value !== '', 'An ALTER TABLE target needs a nonempty schema identifier.');
-        Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A column addition cannot target the reserved SQLite namespace.');
-        Check::input(count($priorHeading) < 2000, 'A column addition cannot exceed 2,000 declared columns.');
         $heading = Check::listOf($priorHeading, Identifier::class, 'A column addition requires a nonempty ordered prior heading of identifiers.', 1);
-        $keys = [];
-        foreach ($heading as $identifier) {
-            $key = $identifier->key();
-            Check::input(!isset($keys[$key]), 'The prior heading must have distinct declared names.');
-            $keys[$key] = true;
-        }
-        Check::input(!isset($keys[$column->name->key()]), 'The added column must have a distinct declared name.');
-        Check::input(!$strict || $column->type !== DeclaredDatatypeName::Untyped, 'A STRICT column addition requires a standard type.');
+        (new AppendColumnBounds())->check($schema, $table, $heading, $strict, $column);
         Check::input($column->generated === null, 'An ordinary column addition cannot have a generation expression.');
         $this->priorHeading = $heading;
     }

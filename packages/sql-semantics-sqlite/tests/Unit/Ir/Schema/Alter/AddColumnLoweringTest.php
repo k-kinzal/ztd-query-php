@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumnLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
@@ -28,5 +30,16 @@ final class AddColumnLoweringTest extends TestCase
         self::assertTrue($value->strict);
         self::assertSame(NotNullConflict::Fail, $value->column->notNull);
         self::assertNull($value->column->default);
+    }
+
+    public function testLowerResolvesAnInputToTheExistingGeneratedField(): void
+    {
+        $semantics = new Semantics();
+        $declarations = $semantics->context(['CREATE TABLE amounts (id INTEGER, previous INTEGER AS (id + 1))']);
+        $value = $semantics->analyze('ALTER TABLE amounts ADD total INTEGER AS (PREVIOUS + id) STORED', $declarations);
+
+        self::assertInstanceOf(AddGeneratedColumn::class, $value);
+        self::assertSame(Storage::Stored, $value->column->generated?->mode);
+        self::assertSame('ALTER TABLE "main"."amounts" ADD COLUMN "total" INTEGER GENERATED ALWAYS AS (("previous" + "id")) STORED', $value->toString());
     }
 }

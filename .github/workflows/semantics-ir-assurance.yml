@@ -201,6 +201,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-generated-columns-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-rename-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-add-column-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-add-generated-column-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-mutation-conflicts-evidence/

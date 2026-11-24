@@ -14,7 +14,7 @@ function nativeBoundaryContract(string $dialect): array
     $records = match ($dialect) {
         'sqlite' => [
             ['sqlite-rename-boundaries-v2.json', 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3'],
-            ['sqlite-add-column-boundaries-v1.json', 'b96c9e4c209fb61fae965a19e0df15e94f1fe827d2c8996f82c223322480f5c4'],
+            ['sqlite-add-column-boundaries-v2.json', 'ee88516a312ecd4d88d32785dd800c300db193bff1fbb097e17d7df7ee0e0028'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
             ['sqlite-query-scope-boundaries-v9.json', 'bda4f3f5e8f81d04f57629a4f47e81cb2ba2f8a5b2761ffaceb7e42692f68006'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],

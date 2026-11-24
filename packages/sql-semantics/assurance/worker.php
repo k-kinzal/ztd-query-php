@@ -64,6 +64,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
@@ -314,7 +315,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -733,24 +734,25 @@ function directSchemaColumn(array $slot): TableColumn
     );
 }
 
-function directAddColumn(array $input): AddColumn
+function directAddColumn(array $input): AddColumn|AddGeneratedColumn
 {
-    return new AddColumn(
-        new Identifier($input['schema']),
-        new Identifier($input['table']),
-        array_map(static fn ($part) => is_string($part) ? new Identifier($part) : $part, $input['priorHeading']),
-        $input['strict'],
-        directSchemaColumn($input['column']),
-    );
+    $schema = new Identifier($input['schema']);
+    $table = new Identifier($input['table']);
+    $heading = array_map(static fn ($part) => is_string($part) ? new Identifier($part) : $part, $input['priorHeading']);
+    $column = directSchemaColumn($input['column']);
+
+    return $input['operation'] === 'add-generated-column'
+        ? new AddGeneratedColumn($schema, $table, $heading, $input['strict'], $column)
+        : new AddColumn($schema, $table, $heading, $input['strict'], $column);
 }
 
-function observeAddColumn(AddColumn $value): array
+function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): array
 {
     $column = $value->column;
 
     return [
         'status' => 'constructed',
-        'operation' => 'add-column',
+        'operation' => $value instanceof AddGeneratedColumn ? 'add-generated-column' : 'add-column',
         'profile' => $value->profileId(),
         'schema' => $value->schema->value,
         'table' => $value->table->value,
@@ -761,7 +763,7 @@ function observeAddColumn(AddColumn $value): array
             $column->default === null ? null : observeOperand($column->default), $column->collation->value,
             ...($column->generated === null ? [] : [[$column->generated->mode->value, observeOperand($column->generated->expression)]]),
         ],
-        'sql' => $value->toString(),
+        ...($render ? ['sql' => $value->toString()] : []),
     ];
 }
 
@@ -791,7 +793,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'rename' => directRename($input),
-            ($input['operation'] ?? null) === 'add-column' => directAddColumn($input),
+            in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
@@ -807,8 +809,8 @@ function runCase(array $input): array
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     }
 
-    if ($value instanceof AddColumn) {
-        return observeAddColumn($value);
+    if ($value instanceof AddColumn || $value instanceof AddGeneratedColumn) {
+        return observeAddColumn($value, ($input['probe'] ?? null) !== 'add-generated-construction');
     }
     if ($value instanceof RenameTable || $value instanceof RenameColumn) {
         return observeRename($value);

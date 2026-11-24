@@ -382,13 +382,15 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Query\\CreatedColumn'] = ['__construct'];
     $properties['Schema\\Query\\CreatedColumnDeclaration'] = $methods['Schema\\Query\\CreatedColumnDeclaration'] = [];
     $enumCases['Schema\\Query\\CreatedColumnDeclaration'] = ['Untyped' => '', 'Integer' => 'INT', 'Numeric' => 'NUM', 'Real' => 'REAL', 'Text' => 'TEXT'];
-    array_push($roots, 'Schema\\Alter\\RenameTable', 'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\AddColumn');
-    array_push($internal, 'Schema\\Alter\\RenameLowering', 'Schema\\Alter\\AddColumnLowering', 'Schema\\Alter\\AlterTargetLowering');
+    array_push($roots, 'Schema\\Alter\\RenameTable', 'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\AddColumn', 'Schema\\Alter\\AddGeneratedColumn');
+    array_push($internal, 'Schema\\Alter\\RenameLowering', 'Schema\\Alter\\AddColumnLowering', 'Schema\\Alter\\AlterTargetLowering', 'Schema\\Alter\\AppendColumnBounds');
+    $pureCollaborators[] = 'Schema\\Alter\\AppendColumnBounds';
     $properties['Schema\\Alter\\AddColumn'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'priorHeading' => ['array'],
         'strict' => ['bool'], 'column' => ['Schema\\TableColumn'],
     ];
-    $methods['Schema\\Alter\\AddColumn'] = $methods['Select'];
+    $properties['Schema\\Alter\\AddGeneratedColumn'] = $properties['Schema\\Alter\\AddColumn'];
+    $methods['Schema\\Alter\\AddColumn'] = $methods['Schema\\Alter\\AddGeneratedColumn'] = $methods['Select'];
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
@@ -1077,7 +1079,7 @@ try {
     if ($dialect === 'sqlite') {
         $contracts = [
             'sqlite-rename-boundaries-v2.json' => 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3',
-            'sqlite-add-column-boundaries-v1.json' => 'b96c9e4c209fb61fae965a19e0df15e94f1fe827d2c8996f82c223322480f5c4',
+            'sqlite-add-column-boundaries-v2.json' => 'ee88516a312ecd4d88d32785dd800c300db193bff1fbb097e17d7df7ee0e0028',
         ];
         foreach ($contracts as $name => $digest) {
             $boundary = __DIR__ . '/' . $name;
@@ -1135,9 +1137,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v48.json';
+    $storagePath = __DIR__ . '/value-storage-v49.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '8545c60e671053c1a10f51fed1cf47233f5b8977b5ed09213401705b4dd875f2',
+        hash_file('sha256', $storagePath) === '394f363733f6b984dd591c36e8e9968909809c20d6e9edc724791fe67297c596',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1239,7 +1241,6 @@ try {
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\Like\\CreateTableLikeLowering' => 'Schema\\Like\\CreateTableLike',
                 'Schema\\Alter\\TableRenameLowering' => 'Schema\\Alter\\RenameTable',
-                'Schema\\Alter\\AddColumnLowering' => 'Schema\\Alter\\AddColumn',
                 'Schema\\Truncate\\TruncateLowering' => 'Schema\\Truncate\\TruncateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
                 'Schema\\View\\CreateViewLowering' => 'Schema\\View\\CreateView',
@@ -1254,6 +1255,13 @@ try {
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };
+            if ($short === 'Schema\\Alter\\AddColumnLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\AddColumn', 'Schema\\Alter\\AddGeneratedColumn'],
+                    'Unexpected SQLite column addition publication');
+            }
             if ($dialect === 'postgres' && $short === 'Schema\\DropRelationLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()

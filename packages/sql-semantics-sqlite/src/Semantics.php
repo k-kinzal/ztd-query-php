@@ -24,6 +24,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumnLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
@@ -141,7 +142,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|Transaction
+    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|Transaction
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -170,7 +171,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|Transaction>
+     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem
