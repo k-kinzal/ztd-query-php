@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Model\Facade;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 
@@ -41,6 +42,9 @@ final class SchemaMemberScope
             $path[] = $schema;
         }
 
+        $names = $outer->indexNamespace;
+        $namespace = new IndexNamespace([...$names->schemas, $schema], $names->indexes, $names->opaque, $names->partitionedTables);
+
         return new AnalysisContext(
             $outer->profile,
             $path,
@@ -49,7 +53,7 @@ final class SchemaMemberScope
             $outer->relationNames,
             $outer->columnNames,
             $schema,
-            $outer->indexNamespace,
+            $namespace,
             $outer->currentDatabase,
             $outer->tablespaces,
             $outer->roles,

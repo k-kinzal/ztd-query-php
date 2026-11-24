@@ -22,7 +22,7 @@ CONTRACT_NAME = "postgres-schema-tables-v1.json"
 CONTRACT = "a14a08e4b92bf519fd7637bf8b798ca2db8900ff34300e0cff3b553b304fa6d7"
 OBSERVER = "postgres_schema_tables_observer.py"
 AXES = ("memberShapes", "owner", "qualification", "active")
-NAME = "Schema tables require an unguarded, statically named namespace."
+NAME = "Schema tables and sequences require an unguarded, statically named namespace."
 CHILD = "A schema table must belong to its namespace and release."
 REPEAT = "A repeated schema table requires its own IF NOT EXISTS guard."
 ROLE = "CREATE SCHEMA elements require a checked namespace composition."
@@ -91,7 +91,7 @@ def negatives(tag):
     yield create(["tables", 0, "release"], "pg-17.2" if tag == "pg-16.6" else "pg-16.6"), refusal(CHILD)
     yield create(["tables", -1, "ifNotExists"], False), refusal(REPEAT)
     yield {**analyzed(item), "sql": "CREATE SCHEMA AUTHORIZATION CURRENT_USER CREATE TABLE data (n integer)"}, refusal(NAME)
-    yield {**analyzed(item), "sql": "CREATE SCHEMA making CREATE SEQUENCE feed"}, refusal(ROLE)
+    yield {**analyzed(item), "sql": "CREATE SCHEMA making CREATE VIEW feed AS SELECT 1"}, refusal(ROLE)
 
 
 def requests(_, tag, spec):

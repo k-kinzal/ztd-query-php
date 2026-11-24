@@ -38,7 +38,7 @@ An ordinary persistent `CREATE VIEW` returns `Ir\Schema\View\CreateView` with it
 
 `CREATE SCHEMA` publishes `Ir\Schema\Namespace\CreateSchema` for standalone declarations and declarations with checked ordinary heap tables. The value records the decoded name or derives it from its selected owner. Supply application owner names with role declarations in the analysis context, for example `CREATE ROLE reporting_owner`. PostgreSQL's effective role and session authorization are distinct inputs to the operation. A guarded duplicate retains the owner and objects of the already present namespace.
 
-A namespace with table members has a static name and an unguarded parent declaration. Each child retains its resolved namespace, ordered definitions and duplicate guard. A guarded repeated table name preserves the first table's heading and defaults. PostgreSQL applies the selected schema owner to every new table in the declaration.
+A namespace with table or unowned sequence members has a static name and an unguarded parent declaration. Each child retains its resolved namespace and duplicate guard. PostgreSQL creates sequences before tables and preserves the relative order within each phase. A guarded table can therefore preserve a same-name sequence. PostgreSQL applies the selected schema owner to every new member.
 
 `ALTER SCHEMA ... RENAME TO` and `ALTER SCHEMA ... OWNER TO` publish separate namespace operations. Both resolve the existing namespace from the supplied catalog. Rename keeps the namespace identity while changing its name. An owner change selects a declared named role or one of the two session authorization roles. PostgreSQL updates the namespace owner and its grants while keeping the original owners of tables and other contained objects.
 

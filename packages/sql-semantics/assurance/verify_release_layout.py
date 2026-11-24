@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v130.json"
-CONTRACT = "d570f7f3fbf11683cece66e7de2cd34afd91eeb7fa9cf0de7ee91e0d80c938f9"
+CONTRACT_NAME = "release-layout-v131.json"
+CONTRACT = "389f77afa9eae6ef9235a6fb9383b5e90ae8286770dbfbf749802e5e485de85e"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -330,6 +330,13 @@ def verify_probe(raw, catalog):
                 "public", "Ticket.棚", "Unlogged", "SMALLINT", "3", "10", True, True, emitted, True,
             ] and item["sql"] == emitted, "installed-postgres-create-sequence-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\CreateSchema"):
+            sequence_first = ('CREATE SCHEMA "Counter Batch" AUTHORIZATION CURRENT_USER'
+                              ' CREATE SEQUENCE "Counter Batch"."ticket" AS SMALLINT INCREMENT BY 1 MINVALUE 1'
+                              ' MAXVALUE 32767 START WITH 3 RESTART WITH 8 CACHE 1 NO CYCLE'
+                              ' CREATE TABLE IF NOT EXISTS "Counter Batch"."ticket" ("n" INTEGER NULL) USING heap')
+            require(item.get("postgresSchemaSequences") == [
+                "Counter Batch", "ticket", "3", "8", True, sequence_first, sequence_first, True,
+            ], "installed-postgres-schema-sequences-mismatch", item)
             emitted = 'CREATE SCHEMA IF NOT EXISTS "Tax.Reg" AUTHORIZATION "Tax Owner"'
             require(item.get("postgresCreateSchema") == [
                 "Tax.Reg", "Tax Owner", True, emitted, [None, "Effective", "CREATE SCHEMA AUTHORIZATION CURRENT_USER"],

@@ -130,6 +130,7 @@ CONTRACTS = {
     "postgres-schema-tables-v1.json": "a14a08e4b92bf519fd7637bf8b798ca2db8900ff34300e0cff3b553b304fa6d7",
     "postgres-alter-schema-v1.json": "ad8e64bdd9b855ab46749acc0575b686cc66592ee9a3eb49084d534e322198dc",
     "postgres-create-sequence-v3.json": "2456da29e44e0cb0758f2628a2ae7a783bd90752a599b54e062a43d9c96bd230",
+    "postgres-schema-sequences-v1.json": "14c708ed9d25f22dcfbc08276aabc2db0168b8f42f8ed9c39f7295739a63e198",
     "postgres-drop-view-v1.json": "f38844b5c9ed143cbd9b46e344f721b384c5ce9a969ec85d08e6319e95e8cd4d",
     "postgres-values-v3.json": "602fa84cd6517e5e56f7b4967669399194522ff952e36183d3acf17c08c9c3c8",
     "postgres-local-values-v2.json": "38b6cccb4b5a203d1a5e3414a924e97ba1f9977a5c8db67d396f999ed476b255",

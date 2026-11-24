@@ -33,8 +33,9 @@ final class CreateSchemaLowering
         $owner = (new SchemaOwnerLowering())->lower($context, $statement->authorization);
         $name = $statement->name === null ? null : new Identifier($statement->name->value);
         $resolved = $name ?? ($owner instanceof Identifier ? $owner : null);
+        $sequences = (new SchemaSequenceLowering())->lower($context, $statement, $resolved);
         $tables = (new SchemaTableLowering())->lower($context, $statement, $resolved);
 
-        return new CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables);
+        return new CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables, $sequences);
     }
 }

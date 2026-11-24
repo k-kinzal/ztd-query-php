@@ -14,6 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Facade\SchemaMemberScope;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable as ParsedCreateTable;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\CreateSequence as ParsedCreateSequence;
 
 /**
  * Resolves ordinary table declarations in the namespace being created.
@@ -32,7 +33,7 @@ final class SchemaTableLowering
         if ($schema->elements === []) {
             return [];
         }
-        Check::input($resolved !== null && !$schema->ifNotExists, 'Schema tables require an unguarded, statically named namespace.');
+        Check::input($resolved !== null && !$schema->ifNotExists, 'Schema tables and sequences require an unguarded, statically named namespace.');
         $name = new Name($resolved->value);
         $resolvedTables = [];
         $provided = [];
@@ -40,6 +41,9 @@ final class SchemaTableLowering
         $lowering = new CreateTableLowering();
         $scope = new SchemaMemberScope();
         foreach ($schema->elements as $element) {
+            if ($element instanceof ParsedCreateSequence) {
+                continue;
+            }
             Check::input($element instanceof ParsedCreateTable, 'CREATE SCHEMA elements require a checked namespace composition.');
             $binding = new BoundStatement($scope->bind($context, $name, $provided), $element);
             $table = $lowering->lower($binding, $element);

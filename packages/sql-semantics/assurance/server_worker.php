@@ -1312,9 +1312,16 @@ function constructPostgresCreateSchema(array $input): \SqlSemantics\Platform\Pos
             'dialect' => 'postgres', 'release' => $table['release'], 'create' => $table,
         ]);
     }
+    $sequences = [];
+    foreach ($spec['sequences'] ?? [] as $sequence) {
+        $sequences[] = constructPostgresSequence([
+            'dialect' => 'postgres', 'release' => $sequence['release'], 'createSequence' => $sequence,
+        ]);
+    }
 
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
-        $name, $owner, $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']), $tables,
+        $name, $owner, $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+        $tables, $sequences,
     );
 }
 
@@ -1326,6 +1333,11 @@ function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema
     return [
         'status' => 'constructed', 'profile' => $schema->profileId(), 'sql' => $schema->toString(),
         'createSchema' => ['name' => $schema->name?->value, 'owner' => $owner, 'ifNotExists' => $schema->ifNotExists],
+        'schemaSequences' => array_map(
+            static fn (\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence $sequence): array =>
+                ['release' => $sequence->release->value] + observePostgresSequence($sequence)['createSequence'],
+            $schema->sequences,
+        ),
         'schemaTables' => array_map(static function (\SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable $table): array {
             $namespace = 'SqlSemantics\\Platform\\PostgreSql\\Ir\\';
             return [

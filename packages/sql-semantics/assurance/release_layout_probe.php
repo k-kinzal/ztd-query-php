@@ -958,6 +958,30 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {
+            $composed = $semantics->analyze(
+                'CREATE SCHEMA "Counter Batch" CREATE TABLE IF NOT EXISTS ticket (n integer)'
+                . ' CREATE SEQUENCE ticket AS smallint START 3 RESTART 8',
+                $activeContext,
+            );
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $composed->name, $composed->owner, false, $composed->release, $composed->tables, $composed->sequences,
+            );
+            $sequence = $composed->sequences[0];
+            $invalid = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    new SqlSemantics\Platform\PostgreSql\Ir\Identifier('other'),
+                    release: $composed->release,
+                    sequences: [$sequence],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $invalid = $error->getMessage() === 'A schema sequence must belong to its namespace and release.';
+            }
+            $details['postgresSchemaSequences'] = [
+                $sequence->name->schema->value, $sequence->name->name->value, $sequence->parameters->start->decimal,
+                $sequence->parameters->initial->decimal, $composed->tables[0]->ifNotExists,
+                $composed->toString(), $rebuilt->toString(), $invalid,
+            ];
             $owner = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax Owner');
             $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');
             $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema($name, $owner, true, $result->release);

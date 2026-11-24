@@ -1,0 +1,136 @@
+{
+  "revision": "SemanticsIR/postgres-declaration-binding-sources-18",
+  "approval": "pending-human-review",
+  "related": "postgres-text-declarations-v2.json",
+  "artifacts": {
+    "src/Catalog.php": {
+      "sha256": "fcfb409908ee0030bf4d9d8aa8259c22c07cce63dde4bf5d915c32f19f4ef006",
+      "role": "Collect explicit cluster roles and placement names separately from local relation declarations."
+    },
+    "src/Platform.php": {
+      "sha256": "f0c6113a9da7f4b5658229f8d5ba25ab668e95dfaca2293ff03b7197b2d7f23e",
+      "role": "Carry exact declared role and table-space coordinates into the checked context."
+    },
+    "src/Rules/Table/Definition/ColumnTyping.php": {
+      "sha256": "815c39d2de3ae7fb83a7c88b16f42e508a4dbefc87067e16d871dff0365a3ed6",
+      "role": "Keep the type resolved by each declaration at its original position."
+    },
+    "src/Statement/Type/Designation/NamedDesignation.php": {
+      "sha256": "af507dac7740b51e4aa8598682a07b53074bd7f4309194320773ee1a6537483a",
+      "role": "Resolve a name before a native physical column is published."
+    },
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "4a0bbfe26fb9a036da698a5e6faf20f5a6b5342d9c31666076eaaa8911affd6b",
+      "role": "Validate distinct application role and placement coordinates and bind named owners against explicit or stock identities."
+    },
+    "src/Model/Contract/Index/IndexDeclaration.php": {
+      "sha256": "a1fc776a61ce32c2befbfe7c27062b8560bd3f9ce5bcf5dd608cb45bcb50b9ba",
+      "role": "Retain the nominal declared physical index and its typed ownership."
+    },
+    "src/Model/Contract/Index/IndexNamespace.php": {
+      "sha256": "26bbe1a4eb06a714470db5c0a37b32623ddfada5a3407c82b2a4b7b125709b8b",
+      "role": "Copy exact partition role declarations alongside the original namespace and index declarations."
+    },
+    "src/Model/Contract/Index/IndexSchemas.php": {
+      "sha256": "2de75d9a2c43a0d525ef62abb280d4660f26733e2f1e6124ee22aad450b0d6eb",
+      "role": "Distinguish stock and session-internal namespace names."
+    },
+    "src/Model/Contract/Index/StockIndexNames.php": {
+      "sha256": "c077403df9c7e92165509f2f29e75c6c69de41c8950f8eee5f12033538e6bea2",
+      "role": "Fix exact stock relation names for both releases."
+    },
+    "src/Lowering/Catalog/CatalogIndexes.php": {
+      "sha256": "71590a02845cd62a87ac537008e731c4211d2e38243c0436e0d3d3189f4aac02",
+      "role": "Collect the physical index ownership role of an explicit declaration, preserving branches and leaves."
+    },
+    "src/Model/Facade/Index/CatalogRelationCoordinates.php": {
+      "sha256": "8e1b24f7f44624b96b71de26bdb5aff062bbb9dfeabe9774b8eaffa06feefcd8",
+      "role": "Preserve absolute relation names at their declaration position."
+    },
+    "src/Model/Facade/Index/IndexCreationVisibility.php": {
+      "sha256": "5b4afc81440eb39ff62852b015011b1625d0281a2f636da524b03371037269bf",
+      "role": "Check exact index namespace and creation owner."
+    },
+    "src/Model/Facade/Index/IndexBinding.php": {
+      "sha256": "e082e08384c0e0e3c899e10e4d7e1833f9a40cc691395b88b9ce02052cd954c5",
+      "role": "Find a definite physical index coordinate and verify its declared owner before selecting an operation-specific role."
+    },
+    "src/Lowering/Catalog/TableIndexFacts.php": {
+      "sha256": "66377a676ac95c12911c5843f7942100db74116549dd32ee0ea741369d1d2672",
+      "role": "Distinguish a definite explicit key from exclusion, consolidation and opaque generated index names."
+    },
+    "src/Statement/Object/Drop.php": {
+      "sha256": "c69667f9f7f290816d3c4a818c7a1eb3efe2a4f98092f0002f771d772eb04bc0",
+      "role": "Keep parsed DROP INDEX binding and concurrent diagnostics on their designated route."
+    },
+    "src/Model/Contract/Index/InformationSchemaNames.php": {
+      "sha256": "af10d11c7117742aa125b3d6d4906fa1bfa7ed508b1c2285c9f4f91c55bbb317",
+      "role": "Fix the shared information schema relation names."
+    },
+    "src/Rules/Table/Definition/Indexes.php": {
+      "sha256": "02a8926dbe13026d1ed68b95f309a059214b2197278e50a6357ae4e3de15c213",
+      "role": "Bind index operands to the already resolved absolute table, including predicates written with qualifiers."
+    },
+    "src/Statement/Utility/Maintenance/Reindex.php": {
+      "sha256": "91a691f950cfdc556600de9856c3261a668f730cfb56caa8dcaf3cf58cce0f3a",
+      "role": "Read the effective last option after validating every written option."
+    },
+    "src/Rules/Utility/OptionArguments.php": {
+      "sha256": "2b8cd4fe40458d53caec707a289549f0fcaabfa3b7cfc197c7d0d591f73216fc",
+      "role": "Read typed native Boolean values and select the last exact occurrence."
+    },
+    "src/Rules/Utility/OptionRules.php": {
+      "sha256": "61d82e0c6fd09356a1e99fcb203e42ae61d8268c43eb872ed3a6be5cea507083",
+      "role": "Validate the native REINDEX option alphabet and Boolean values before publication."
+    },
+    "src/Model/Contract/Index/IndexDeclarationKind.php": {
+      "sha256": "a62bf954917e72c3f07ba6fc4a5af4ba49bf76c3b57284aed50e45617f18b0b2",
+      "role": "Keep explicit partition index roles distinct from ordinary, named key, exclusion and unresolved partition constraint indexes."
+    },
+    "src/Lowering/Catalog/TableGeneratedNames.php": {
+      "sha256": "47f88017debf88bf45f5fc9c82666d822382129c37f88f6db9355786aaece1a7",
+      "role": "Identify LIKE and serial declarations that introduce additional relation names."
+    },
+    "src/Model/Facade/StatementBinder.php": {
+      "sha256": "1d175fc95418e77df2c0048bac688289552e4ef9de7d8e6877065b032b207ae3",
+      "role": "Check every decoded relation and column catalog qualifier before any value binding or publication."
+    },
+    "src/LocalCatalogBinding.php": {
+      "sha256": "02f09383bdafe2800b09278ea5b23a7978c41e300c272ecf1b6ca32a943f02a3",
+      "role": "Compare explicit catalog identities exactly and require the declared current database."
+    },
+    "src/Model/Contract/Index/TablePartition.php": {
+      "sha256": "e53054762bd57f2f55da5444dbbc7268fcbd06554a72a18c2efbf449b175db2d",
+      "role": "Hold one absolute local partition coordinate and its declared role."
+    },
+    "src/Model/Contract/Index/TablePartitionRole.php": {
+      "sha256": "1beff1ea892cc1ce14f0ce929a7fec5ee010c7839c19b76e4147e45382565720",
+      "role": "Keep branch and attached physical leaf facts distinct."
+    },
+    "src/Statement/Catalog/Tablespace/CreateTablespace.php": {
+      "sha256": "6ec36a9a8b73e32fdb89e2128beedb3f1c96cf6943990bae30bb8b23da4efd89",
+      "role": "Use the decoded name from the parsed statement rather than a raw SQL declaration fragment."
+    },
+    "src/Model/Contract/StockRoles.php": {
+      "sha256": "0e56ce253f76f05d4c558a18c0f212688c9db626f74c2613e6329f030667e2df",
+      "role": "Fix the release-specific role catalog shared by reference binding and the public creation constructor."
+    },
+    "src/Statement/Catalog/Access/Role/CreateRole.php": {
+      "sha256": "a0f13832a1087cfa214f31263f2a127f0e8ea5615fc4dd45751bbe7fc34419b3",
+      "role": "Collect a parsed role declaration by decoded identity."
+    },
+    "src/Statement/Catalog/Schema/CreateSchema.php": {
+      "sha256": "545f315bd67b2834ed552a4a297b169e0a8cb041619b0d3bc9e3d4292e3093b4",
+      "role": "Preserve explicit ownership, omitted names, guard and subordinate statements for typed publication."
+    },
+    "src/Rules/Catalog/SchemaMember.php": {
+      "sha256": "2369756332890054a4057cc1be25a5dd92e22f0963a97284fb9365f3c803491c",
+      "role": "Use the shared transient namespace scope in parent binding."
+    },
+    "src/Model/Facade/SchemaMemberScope.php": {
+      "sha256": "2471e14fce263790ce875198c687c715c43efb10bd2a9dea76e80c9a720b883e",
+      "role": "Add the containing namespace to the exact name context for its checked declaration phases."
+    }
+  },
+  "revises": "postgres-declaration-binding-sources-v17.json"
+}

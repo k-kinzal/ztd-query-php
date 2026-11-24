@@ -608,6 +608,12 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if rule != "SeqOptElem" or alternative.split()[1] not in {"SEQUENCE", "LOGGED", "UNLOGGED"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-create-sequence-v3.json")
+            for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "CreateSeqStmt"):
+                for alternative in rules.get(rule, ()):
+                    if rule in ("CreateSchemaStmt", "CreateSeqStmt") or alternative in {
+                        "schema_stmt: CreateSeqStmt", "schema_stmt: CreateStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
+                    }:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-sequences-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",
