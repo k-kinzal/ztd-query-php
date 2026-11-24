@@ -498,6 +498,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $declarations[] = "CREATE VIEW main.removable AS SELECT id FROM $table";
     }
     if ($platform === 'PostgreSql') {
+        $storageDeclaration = 'CREATE TABLESPACE "cold ""archive""" LOCATION \'/sql-context/cold\'';
+        $declarations[] = $storageDeclaration;
         $declarations[] = "CREATE VIEW public.removable AS SELECT id FROM $table";
         $declarations[] = "CREATE MATERIALIZED VIEW public.snapshot AS SELECT id FROM $table";
     }
@@ -590,6 +592,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'PostgreSql') {
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
+        $queries['Schema\\Namespace\\DropSchema'] = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -610,17 +613,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     foreach ($queries as $role => $sql) {
         $activeContext = $context;
-        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Scope\\ReindexSchema') {
-            $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy']);
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
+            $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy', $storageDeclaration]);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSystemCatalogs'], true)) {
             $configured = new SqlSemantics\Platform\PostgreSql\Semantics(
                 currentDatabase: new SqlSemantics\Platform\PostgreSql\Ir\Identifier('billing.data'),
             );
-            $activeContext = $configured->context([]);
+            $activeContext = $configured->context([$storageDeclaration]);
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Partition\\ReindexPartitionTable') {
             $activeContext = $semantics->context([
+                $storageDeclaration,
                 'CREATE SCHEMA regional',
                 'CREATE TABLE public.partitioned_items (id integer) PARTITION BY RANGE (id)',
                 'CREATE TABLE regional.child PARTITION OF public.partitioned_items FOR VALUES FROM (0) TO (10)',
@@ -634,6 +638,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\DropIndex', 'Schema\\Index\\ReindexIndex'], true)) {
             $activeContext = $semantics->context([
+                $storageDeclaration,
                 'CREATE TABLE public.persistent_items (id integer)',
                 'CREATE INDEX removal ON public.persistent_items (id)',
                 'CREATE TEMP TABLE keyed (n integer)',
@@ -890,6 +895,24 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $field->toString(), $detachedField->toString(), $negated == $field->predicate,
             ];
         }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
+            [$present, $absent] = $result->targets;
+            $first = $present;
+            $targets = [&$first, $absent, $absent];
+            $constructed = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema($targets, true, true, $result->release);
+            $first = $absent;
+            $batch = $semantics->analyzeAll($sql . '; DROP SCHEMA decoy;', $activeContext);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema([$absent]);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage() === 'An absent schema removal target requires IF EXISTS.';
+            }
+            $details['postgresDropSchema'] = [
+                array_map(static fn ($target) => [$target->name->value, $target->present], $constructed->targets),
+                $result->ifExists, $result->cascade, $constructed->toString(), array_map(static fn ($value) => $value->toString(), $batch), $rejected,
+            ];
+        }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
             [$target, $absence] = $result->targets;
             $targets = [&$target, $absence];
@@ -921,6 +944,40 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresReindexVerbose'] = [
                 $reported::class === $result::class, $reported->verbose, $reported->toString(),
                 $quiet::class === $result::class, $quiet->verbose, $quiet->toString(),
+            ];
+            $placed = $semantics->analyze('REINDEX (TABLESPACE omitted, VERBOSE, TABLESPACE "cold ""archive""") ' . $suffix, $activeContext);
+            $placement = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace(
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('cold "archive"'),
+            );
+            $direct = match ($role) {
+                'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable' =>
+                    new ($result::class)($result->target, $result->mode, $result->release, true, $placement),
+                'Schema\\Index\\Partition\\ReindexPartitionTable' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable(
+                        $result->target, $result->kind, $result->mode, $result->release, true, $placement,
+                    ),
+                'Schema\\Index\\Scope\\ReindexSchema' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema(
+                        $result->schema, $result->mode, $result->release, true, $placement,
+                    ),
+                'Schema\\Index\\Scope\\ReindexDatabase' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase(
+                        $result->database, $result->mode, $result->release, true, $placement,
+                    ),
+                'Schema\\Index\\Scope\\ReindexSystemCatalogs' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs(
+                        $result->database, $result->release, true, $placement,
+                    ),
+            };
+            $rejected = false;
+            try {
+                $semantics->analyze('REINDEX (TABLESPACE pg_default, TABLESPACE undeclared_destination) ' . $suffix, $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = str_contains($error->getMessage(), 'requires a declared tablespace');
+            }
+            $details['postgresReindexPlacement'] = [
+                $placed::class === $result::class, $placed->tablespace?->name->value, $placed->verbose,
+                $placed->toString(), $direct->toString(), $rejected,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexIndex') {

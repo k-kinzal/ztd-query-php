@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v125.json"
-CONTRACT = "4f17c625d1d1518351ba09666dee5b63bbc81aa656ee7c459beb52b693abbe89"
+CONTRACT_NAME = "release-layout-v126.json"
+CONTRACT = "fe4dec882a2d44ba57a477c2cda45249903ca65a87faf4bda47cbe0aab7cb5f9"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -311,6 +311,15 @@ def verify_probe(raw, catalog):
             require(ordinary.startswith("REINDEX ") and item.get("postgresReindexVerbose") == [
                 True, True, "REINDEX (VERBOSE) " + ordinary.removeprefix("REINDEX "), True, False, ordinary,
             ], "installed-postgres-rebuild-reporting", item)
+            placed = 'REINDEX (VERBOSE, TABLESPACE "cold ""archive""") ' + ordinary.removeprefix("REINDEX ")
+            require(item.get("postgresReindexPlacement") == [True, 'cold "archive"', True, placed, placed, True],
+                    "installed-postgres-rebuild-placement", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\DropSchema"):
+            emitted = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE'
+            require(item.get("postgresDropSchema") == [
+                [["reporting.data", True], ["Absent", False], ["Absent", False]], True, True, emitted,
+                [emitted, 'DROP SCHEMA "decoy" RESTRICT'], True,
+            ] and item["sql"] == emitted, "installed-postgres-drop-schema-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\ReindexIndex"):
             rebuilt = 'REINDEX INDEX CONCURRENTLY "pg_temp"."removal"'
             require(item.get("postgresReindexIndex") == [
