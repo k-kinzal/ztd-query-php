@@ -13,12 +13,13 @@ from sqlite_domain import RenderFault
 
 LABEL = "drop-table"
 OBSERVER = "server_drop_table_observer.php"
-CONTRACT = "7eb385b083a3b17a19155a2644fdd58247c1271c42cac650232058e849911226"
+CONTRACT = "506d7160b2e02d420a8ffb53c655593162740a00834dd1cef6441be6aa0f67cb"
 
 
 def specifications():
-    path, projection = TOOL / "server-drop-table-v3.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "server-drop-table-v4.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION
+            and digest(TOOL / "server-drop-table-v3.json") == "7eb385b083a3b17a19155a2644fdd58247c1271c42cac650232058e849911226"
             and digest(TOOL / "server-drop-table-v2.json") == "e0ffff4fc165236fafb583316d1ff8f1ce0a17956089ded17bd65cfc9011b022", "server-drop-table-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 

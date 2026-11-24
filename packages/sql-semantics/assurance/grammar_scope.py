@@ -467,7 +467,7 @@ def inventory(root):
         for rule in drop:
             for alternative in rules.get(rule, []):
                 if any(related_token in alternative for related_token in ("table_or_tables", "object_type_any_name", ": TABLE")):
-                    related[alternative] = ("server-drop-table-v3.json",)
+                    related[alternative] = ("server-drop-table-v4.json",)
                     if mysql and "opt_temporary" in alternative:
                         related[alternative] += ("mysql-session-drop-table-v1.json",)
         if postgres:

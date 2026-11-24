@@ -256,7 +256,7 @@ Run `run_server_transaction.py` with the same options and pinned fixture setting
 
 ## Native table removal
 
-The [native DROP TABLE contract](server-drop-table-v3.json) covers ordered persistent table targets, IF EXISTS and PostgreSQL dependency policy. The observer records retained typed rows, dependent view survival and changes to an open transaction. Its fixed fixtures distinguish partial deletion on MySQL 5.6 or 5.7 from DROP with a missing target on newer InnoDB releases. PostgreSQL exercises both dependency options and restoration on rollback.
+The [native DROP TABLE contract](server-drop-table-v4.json) covers ordered persistent table targets, IF EXISTS and PostgreSQL dependency policy. The observer records retained typed rows, dependent view survival and changes to an open transaction. Its fixed fixtures distinguish partial deletion on MySQL 5.6 or 5.7 from DROP with a missing target on newer InnoDB releases. PostgreSQL exercises both dependency options and restoration on rollback.
 
 Run `run_server_drop_table.py` with the same native fixture options. Replay the pinned release set with `combine_server_drop_table_evidence.py` and the per-release `index.json` paths.
 

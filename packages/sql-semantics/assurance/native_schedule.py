@@ -136,7 +136,7 @@ NATIVE = {
     "insert": "server-insert-v1.json",
     "update": "server-update-v2.json",
     "transaction": "server-transaction-v1.json",
-    "drop_table": "server-drop-table-v3.json",
+    "drop_table": "server-drop-table-v4.json",
     "create_table": "server-create-table-v2.json",
     "postgres_create_text": "postgres-create-text-v1.json",
     "postgres_create_signed_defaults": "postgres-create-signed-defaults-v1.json",

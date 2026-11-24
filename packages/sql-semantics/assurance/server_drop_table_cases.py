@@ -66,7 +66,8 @@ def negatives(engine, tag):
         ("DROP TABLE IF EXISTS unknown_schema.ir_drop_a", "known explicit schema"),
         (f"DROP TEMPORARY TABLE {schema}.ir_drop_a" if engine == "mysql" else f"DROP SEQUENCE {schema}.ir_drop_sequence",
          {"exception": "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\SemanticException", "message": "does not exist"}
-         if engine == "mysql" else "supported persistent relation kind"),
+         if engine == "mysql" else {"exception": "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction",
+                                    "message": "An absent sequence selector requires IF EXISTS."}),
     ]:
         yield {"dialect": engine, "release": tag, "sql": sql, "declarations": [
             f"CREATE TABLE {schema}.ir_drop_a (value INTEGER)",
