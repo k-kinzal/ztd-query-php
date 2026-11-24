@@ -1490,9 +1490,8 @@ try {
             ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename, $statement instanceof \\'
                 . $platform . '\\Statement\\Table\\TruncateTable, $statement instanceof \\' . $platform . '\\Statement\\Utility\\Maintenance\\Reindex'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\ChangeOwner'
+                . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\SetSchema'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
-                . '$statement instanceof \\' . $platform . '\\Statement\\Object\\SetSchema && $statement->kind === \\'
-                . $platform . '\\Statement\\Name\\ObjectKind::Sequence => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Alter\\TruncateTable'
