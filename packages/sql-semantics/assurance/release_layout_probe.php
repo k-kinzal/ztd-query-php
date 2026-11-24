@@ -590,6 +590,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'PostgreSql') {
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
+        $queries['Schema\\Index\\Btree\\CreateIndex'] =
+            'CREATE UNIQUE INDEX "new index" ON ledger (wide DESC NULLS LAST, value ASC NULLS FIRST) INCLUDE (ready, ready) NULLS NOT DISTINCT';
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
         $queries['Schema\\View\\CreateMaterializedView'] = 'CREATE MATERIALIZED VIEW materialized_probe (n) AS VALUES (6) WITH NO DATA';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE UNLOGGED TABLE copy_probe (n) AS VALUES (6) WITH NO DATA';
@@ -602,6 +604,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     foreach ($queries as $role => $sql) {
         $activeContext = $context;
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Btree\\CreateIndex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE public.ledger (value integer, wide bigint, ready boolean)',
+                'CREATE INDEX existing ON public.ledger (value)',
+            ]);
+        }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
             $activeContext = $semantics->context([
                 'CREATE TABLE public.persistent_items (id integer)',
@@ -791,6 +799,23 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\RefreshMaterializedView') {
             $details['postgresRefreshMaterializedView'] = [$result->name->schema->value, $result->name->view->value, $result->withData];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Btree\\CreateIndex') {
+            $first = $result->keys[0];
+            $keys = [&$first, $result->keys[1]];
+            $reconstructed = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $result->table, $result->name, $keys, $result->included, $result->presence, $result->ifNotExists,
+                $result->unique, $result->nullsNotDistinct, $result->concurrently, $result->release,
+            );
+            $first = $result->keys[1];
+            $guarded = $semantics->analyze('CREATE INDEX IF NOT EXISTS existing ON ledger (ready)', $activeContext);
+            $details['postgresCreateBtree'] = [
+                $reconstructed->table->schema->value,
+                array_map(static fn ($kind) => $kind->value, $reconstructed->table->columnKinds),
+                array_map(static fn ($key) => [$key->slot, $key->order->value], $reconstructed->keys),
+                array_map(static fn ($inc) => $inc->slot, $reconstructed->included),
+                $reconstructed->presence->value, $reconstructed->toString(), $guarded->presence->value, $guarded->ifNotExists,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
             [$target, $absence] = $result->targets;

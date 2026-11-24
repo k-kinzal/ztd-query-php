@@ -504,6 +504,14 @@ def inventory(root):
                     if alternative in index_removal:
                         related[alternative] = (*related.get(alternative, ()), "postgres-drop-index-v1.json")
         if postgres:
+            for rule in ("IndexStmt", "opt_unique", "opt_concurrently", "index_params", "opt_include",
+                         "index_including_params", "opt_unique_null_treatment", "opt_asc_desc", "opt_nulls_order"):
+                for alternative in rules.get(rule, ()):
+                    related[alternative] = (*related.get(alternative, ()), "postgres-create-btree-v1.json")
+            for alternative in rules.get("index_elem", ()):
+                if alternative == "index_elem: ColId index_elem_options":
+                    related[alternative] = (*related.get(alternative, ()), "postgres-create-btree-v1.json")
+        if postgres:
             values_signatures = {
                 "simple_select: values_clause",
                 "values_clause: VALUES ( expr_list )",

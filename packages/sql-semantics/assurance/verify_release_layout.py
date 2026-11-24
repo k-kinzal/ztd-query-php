@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v110.json"
-CONTRACT = "c8deb275ce38faa300a63cce559b375f10f9f70ebb8d9ecf50646dbddc96de3e"
+CONTRACT_NAME = "release-layout-v111.json"
+CONTRACT = "4ddf0ce9d85366f5f8efebea8ac45229de42404104134fa08e2e330819282e95"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -279,6 +279,13 @@ def verify_probe(raw, catalog):
             require(item.get("postgresRefreshMaterializedView") == ["public", "snapshot", False]
                     and item["sql"] == 'REFRESH MATERIALIZED VIEW "public"."snapshot" WITH NO DATA',
                     "installed-postgres-refresh-materialized-view-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\Btree\\CreateIndex"):
+            emitted = ('CREATE UNIQUE INDEX "new index" ON "public"."ledger" USING btree '
+                       '("wide" DESC NULLS LAST, "value" ASC NULLS FIRST) INCLUDE ("ready", "ready") NULLS NOT DISTINCT')
+            require(item.get("postgresCreateBtree") == ["public", ["int4", "int8", "bool"],
+                                                       [[1, "DESC NULLS LAST"], [0, "ASC NULLS FIRST"]], [2, 2],
+                                                       "vacant", emitted, "occupied", True]
+                    and item["sql"] == emitted, "installed-postgres-create-btree-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\DropIndex"):
             emitted = 'DROP INDEX IF EXISTS "pg_temp"."removal", "absent_namespace"."idx" CASCADE'
             require(item.get("postgresDropIndex") == ["pg_temp", "removal", "keyed", "absent_namespace", True, emitted,

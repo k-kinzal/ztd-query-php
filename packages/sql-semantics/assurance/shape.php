@@ -1025,6 +1025,24 @@ if ($dialect !== 'sqlite') {
         $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
         $properties['Schema\\TableColumn']['default'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+        $btree = 'Schema\\Index\\Btree\\';
+        $btreeCreate = $btree . 'CreateIndex';
+        $roots[] = $btreeCreate;
+        array_push($internal, $btree . 'CreateIndexLowering', $btree . 'IndexTableLowering', $btree . 'IndexOperands');
+        $properties[$btreeCreate] = [
+            'keys' => ['array'], 'included' => ['array'], 'table' => ['TableSource'], 'name' => ['Identifier'],
+            'presence' => [$btree . 'IndexPresence'], 'ifNotExists' => ['bool'], 'unique' => ['bool'],
+            'nullsNotDistinct' => ['bool'], 'concurrently' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+        ];
+        $properties[$btree . 'IndexKey'] = ['slot' => ['int'], 'order' => [$btree . 'IndexOrder']];
+        $properties[$btree . 'IncludedColumn'] = ['slot' => ['int']];
+        $properties[$btree . 'IndexOrder'] = $methods[$btree . 'IndexOrder'] = [];
+        $properties[$btree . 'IndexPresence'] = $methods[$btree . 'IndexPresence'] = [];
+        $enumCases[$btree . 'IndexPresence'] = ['Vacant' => 'vacant', 'Occupied' => 'occupied'];
+        $enumCases[$btree . 'IndexOrder'] = ['AscendingNullsFirst' => 'ASC NULLS FIRST', 'AscendingNullsLast' => 'ASC NULLS LAST',
+            'DescendingNullsFirst' => 'DESC NULLS FIRST', 'DescendingNullsLast' => 'DESC NULLS LAST'];
+        $methods[$btreeCreate] = ['__construct', 'profileId', 'toString'];
+        $methods[$btree . 'IndexKey'] = $methods[$btree . 'IncludedColumn'] = ['__construct'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1311,6 +1329,8 @@ try {
                 . '\\Statement\\Table\\CreateTableAs, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform
                 . '\\Statement\\Table\\View\\CreateMaterializedView => (new \\'
                 . $prefix . 'Schema\\PersistentDeclarationLowering())->lower($operation, $statement),')
+        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\Index\\CreateIndex => (new \\'
+            . $prefix . 'Schema\\Index\\Btree\\CreateIndexLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres'
@@ -1424,7 +1444,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v3.json', '661e4f496ee1bced6e5c15760bf7d2a3e5c34c3a6fca1b543ce392f02572767b', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v4.json', '38e2c81aaad6cdd982f69d20471db2a4e7059205334a44c3322412153b862394', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1474,9 +1494,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v57.json';
+    $storagePath = __DIR__ . '/value-storage-v58.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'a51d73466d455d5e0eb49a08c6db36753cdc9c205043770bb83907b01a6ccbe1',
+        hash_file('sha256', $storagePath) === '6767950c1c0a41bdbd1aa277c6cb194cac9dd13cc95d47501248f20d62f3edad',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1628,6 +1648,8 @@ try {
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Schema\\Alter\\DropColumnLowering' => 'Schema\\Alter\\DropColumn',
                 'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
+                'Schema\\Index\\Btree\\CreateIndexLowering' => 'Schema\\Index\\Btree\\CreateIndex',
+                'Schema\\Index\\Btree\\IndexTableLowering' => 'TableSource',
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
                 'Schema\\Trigger\\Binding\\DropTriggerLowering' => 'Schema\\Trigger\\DropTrigger',
                 'Schema\\Trigger\\Binding\\TriggerRaiseLowering' => 'Schema\\Trigger\\Program\\TriggerRaise',
@@ -1805,6 +1827,17 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\AddColumn', 'Schema\\Alter\\AddGeneratedColumn'],
                     'Unexpected SQLite column addition publication');
             }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexOperands') {
+                $methodsByName = $class->getMethods();
+                $results = ['key' => 'Schema\\Index\\Btree\\IndexKey', 'covering' => 'Schema\\Index\\Btree\\IncludedColumn', 'slot' => 'int'];
+                requireShape(count($methodsByName) === count($results), 'Unexpected PostgreSQL B-tree operand method count');
+                foreach ($methodsByName as $member) {
+                    $method = $member->name->toString();
+                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === [($results[$method] ?? '')],
+                        'Unexpected PostgreSQL B-tree operand binding');
+                }
+            }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndexTargetLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
@@ -1930,7 +1963,7 @@ try {
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
-                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'], true)
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
                 || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',

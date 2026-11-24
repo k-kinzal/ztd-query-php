@@ -1000,6 +1000,56 @@ function observePostgresTruncate(object $value): array
         'truncateTable' => ['targets' => $targets, 'restart' => $value->restartIdentity, 'cascade' => $value->cascade]];
 }
 
+function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex
+{
+    $value = $input['createBtree'];
+    [$schema, $table, $names, $kinds, $only] = $value['table'];
+    $identifier = \SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+    $owner = new \SqlSemantics\Platform\PostgreSql\Ir\TableSource(
+        new $identifier($schema), new $identifier($table),
+        array_map(static fn (string $column) => new $identifier($column), $names),
+        $only,
+        array_map(\SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::from(...), $kinds),
+    );
+    $keys = [];
+    foreach ($value['keys'] as [$slot, $order]) {
+        $keys[] = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexKey(
+            $slot, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexOrder::from($order),
+        );
+    }
+    $included = [];
+    foreach ($value['included'] as $slot) {
+        $included[] = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IncludedColumn($slot);
+    }
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+        $owner, new $identifier($value['name']), $keys, $included,
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence::from($value['presence']),
+        $value['ifNotExists'], $value['unique'], $value['nullsNotDistinct'], $value['concurrently'],
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex $index): array
+{
+    $table = $index->table;
+    return [
+        'status' => 'constructed', 'profile' => $index->profileId(), 'sql' => $index->toString(),
+        'createBtree' => [
+            'table' => [
+                $table->schema->value, $table->table->value,
+                array_map(static fn ($name) => $name->value, $table->columns),
+                array_map(static fn ($kind) => $kind->value, $table->columnKinds), $table->only,
+            ],
+            'name' => $index->name->value,
+            'keys' => array_map(static fn ($key) => [$key->slot, $key->order->value], $index->keys),
+            'included' => array_map(static fn ($column) => $column->slot, $index->included),
+            'presence' => $index->presence->value, 'ifNotExists' => $index->ifNotExists,
+            'unique' => $index->unique, 'nullsNotDistinct' => $index->nullsNotDistinct, 'concurrently' => $index->concurrently,
+        ],
+    ];
+}
+
 function constructPostgresDropIndex(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex
 {
     $drop = $input['dropIndex'];
@@ -1298,6 +1348,7 @@ function observeStatement(array $input): array
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
+            isset($input['createBtree']) => constructPostgresBtree($input),
             isset($input['dropIndex']) => constructPostgresDropIndex($input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
@@ -1405,6 +1456,9 @@ function observeStatement(array $input): array
     }
     if ($dialect === 'postgres' && $value::class === $namespace . 'Schema\\Truncate\\TruncateTable') {
         return observePostgresTruncate($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex) {
+        return observePostgresBtree($value);
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex) {
         return observePostgresDropIndex($value);
