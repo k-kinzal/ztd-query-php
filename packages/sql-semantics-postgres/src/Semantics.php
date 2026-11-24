@@ -54,7 +54,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
-use SqlSemantics\Platform\PostgreSql\Model\Facade\Catalog;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Splitter;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete as ParsedDelete;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Model\Facade\Index;
+namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;

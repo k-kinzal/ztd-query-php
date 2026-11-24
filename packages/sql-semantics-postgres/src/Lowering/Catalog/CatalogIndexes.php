@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Model\Facade\Index;
+namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclaration;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogRelationCoordinates;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\IndexCreationVisibility;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable;

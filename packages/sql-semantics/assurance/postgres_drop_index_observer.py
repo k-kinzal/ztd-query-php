@@ -3,6 +3,7 @@
 import re
 import json
 import sys
+from platform import python_version
 
 from postgres_drop_index_cases import declaration_commands, qualified, quoted
 from postgres_libpq import LIB, Session
@@ -101,7 +102,7 @@ def main():
     with Session() as regular:
         settings = [regular.execute("SHOW " + name)[0][0] for name in (
             "server_version_num", "server_encoding", "client_encoding", "standard_conforming_strings", "search_path")]
-        print(json.dumps({"database": settings, "libpq": LIB.PQlibVersion(), "stock": sorted(regular.execute(STOCK))}), flush=True)
+        print(json.dumps({"database": settings, "python": python_version(), "libpq": LIB.PQlibVersion(), "stock": sorted(regular.execute(STOCK))}), flush=True)
 
         def run(data):
             if contains_temp(data):

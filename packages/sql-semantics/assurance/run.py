@@ -121,7 +121,7 @@ class Worker:
             self.deadline = time.monotonic() + self.startup_timeout
         try:
             self.environment = self.receive()
-            require("php" in self.environment, "worker-handshake", self.environment)
+            self.check_environment()
         except BaseException as failure:
             self.__exit__(None, None, None)
             if self.startup_timeout is not None and isinstance(failure, Failure) and failure.signal == "timeout":
@@ -130,6 +130,9 @@ class Worker:
         if self.startup_timeout is not None:
             self.deadline = time.monotonic() + self.execution_budget
         return self
+
+    def check_environment(self):
+        require("php" in self.environment, "worker-handshake", self.environment)
 
     def __exit__(self, *_):
         self.proc.stdin.close()

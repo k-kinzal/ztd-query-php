@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Model\Facade;
+namespace SqlSemantics\Platform\PostgreSql;
 
 use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
+use SqlSemantics\Platform\PostgreSql\Lowering\Catalog\CatalogIndexes;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogIndexes;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogRelationCoordinates;
-use SqlSemantics\Platform\PostgreSql\Platform;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 

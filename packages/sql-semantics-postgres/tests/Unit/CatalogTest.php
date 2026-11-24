@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Model\Facade;
+namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\PostgreSql\Model\Facade\Catalog;
+use SqlSemantics\Platform\PostgreSql\Catalog;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;

@@ -42,17 +42,22 @@ class Observer(Worker):
     def __init__(self, dialect, deadline, script="server_observer.php"):
         self.deadline = deadline
         self.startup_timeout = None
-        executable = "php" if script.endswith(".php") else "python3"
+        self.extension = Path(script).suffix
+        require(self.extension in (".php", ".py"), "observer-program-type", script)
+        executable = {".php": "php", ".py": "python3"}[self.extension]
         self.proc = subprocess.Popen(
             [executable, str(TOOL / script), dialect],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0,
         )
         self.buffer = b""
 
-    def __enter__(self):
-        super().__enter__()
-        require("database" in self.environment, "observer-handshake", self.environment)
-        return self
+    def check_environment(self):
+        if self.extension == ".php":
+            super().check_environment()
+        else:
+            require(isinstance(self.environment.get("python"), str) and type(self.environment.get("libpq")) is int
+                    and self.environment["libpq"] > 0, "observer-python-handshake")
+        require("database" in self.environment, "observer-handshake")
 
 
 def same(expected_value, actual_value):
