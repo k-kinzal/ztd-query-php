@@ -133,7 +133,9 @@ def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults, 
         checks = execute(args, specification, db)
         expected_rejections = (len(specification["negative"]) + len(specification.get("analysisNegative", ()))
                                + specification.get("scheduledRejections", 0))
-        require(checks["counts"].get("rejected", 0) == expected_rejections, "incomplete-domain-rejections")
+        observed_rejections = checks["counts"].get("rejected", 0)
+        require(observed_rejections == expected_rejections, "incomplete-domain-rejections",
+                {"contract": expected_rejections, "observed": observed_rejections})
         faults = check_faults(args, db)
         require(len(faults) == len(specification["faults"]), "incomplete-domain-faults")
     except Exception as failure:

@@ -14,8 +14,8 @@ from sqlite_reclaim_cases import (AUTOMATIC, INCREMENTAL, LIMIT_ERROR, MAXIMUM, 
 from sqlite_reclaim_fixture import populate, snapshot
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-reclaim-pragmas-v1.json"
-CONTRACT = "30f8b880b79308e646b56dee585b0c09f79bb512457fcad530d120e35f6b7c52"
+CONTRACT_NAME = "sqlite-reclaim-pragmas-v2.json"
+CONTRACT = "e182df950dd6973a4c9577379df07ba2c718d5ff0b8ca16de3aba07b5c9d78a3"
 FIXTURE = ""
 
 

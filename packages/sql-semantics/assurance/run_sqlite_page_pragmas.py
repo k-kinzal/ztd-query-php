@@ -15,8 +15,8 @@ from sqlite_page_cases import analysis, case, expected, finite_id, finite_ids, f
 from sqlite_page_fixture import KINDS, populate, snapshot, try_growth
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-page-pragmas-v1.json"
-CONTRACT = "312b2a2935c83fb19e43018cdfbcd8a052d92f60385bd7b9298431560b1557ea"
+CONTRACT_NAME = "sqlite-page-pragmas-v2.json"
+CONTRACT = "c2cbc5802be0f65bca2af3b25c3ee979aba12702785b4d81920c6bf9b8114164"
 FIXTURE = ""
 PRAGMAS = frozenset(name.encode() for name in KINDS)
 

@@ -1,0 +1,195 @@
+{
+  "revision": "SemanticsIR/sqlite-page-pragmas-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with UTF-8, stock pager, 4096-byte default pages and the stock 4294967294-page upper bound. Database state, file geometry, temporary opening and transaction mode are external inputs.",
+  "scope": "PRAGMA page_size, page_count and max_page_count with one resolved database.",
+  "additionalPublicRoots": [
+    "Maintenance/Page/PagePragma"
+  ],
+  "constructors": {
+    "Maintenance/Page/PagePragma": {
+      "role": "A selected database's page count read, page size read or request, or page limit read or request.",
+      "structure": "A closed PagePragmaKind, an absolute database Identifier and an optional RequestedPageSize or PageLimit.",
+      "conditions": "Only Size takes a RequestedPageSize. Only MaximumCount takes a PageLimit. A page count read has no setting. Implicit qualification binds main and an explicit qualifier resolves exactly.",
+      "meaning": "Select the native page measure or request. A page size write changes the connection's pending size at preparation and can change an empty selected pager immediately. A maximum count write applies at execution to the selected pager and respects its current size.",
+      "externalInterpretation": "The same attached database identities, connection state, pager geometry, read and write order, default page size and native file mode.",
+      "sql": "Emit the exact native pragma and absolute quoted schema. Use the typed argument spelling when a request is present.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Page/PagePragmaKind": {
+      "role": "A native pager operation identity.",
+      "structure": "One of Size, Count and MaximumCount.",
+      "conditions": "Only the three stock page operations are admitted.",
+      "meaning": "Select native sizing, counting or maximum-page accounting and the corresponding result shape.",
+      "sql": "Emit page_size, page_count or max_page_count.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Page/RequestedPageSize": {
+      "role": "The exact normalized signed input to the connection's pending page-size setting.",
+      "structure": "One signed 32-bit integer.",
+      "conditions": "The native input interval is -2147483648 through 2147483647. Values that cannot produce a physical page size still replace the previous pending request.",
+      "meaning": "Set the pending native size. The pager can apply a supported power of two between 512 and 65536 when its geometry permits.",
+      "sql": "Emit a signed decimal integer.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Page/PageLimit": {
+      "role": "The unsigned positive normalized native page-count limit.",
+      "structure": "A canonical ASCII decimal representing the unsigned limit independently of PHP integer width.",
+      "conditions": "The inclusive admission range is 1 through 4294967294.",
+      "meaning": "Set the requested count at execution. The actual limit cannot be less than the current page count.",
+      "sql": "Emit the exact unquoted positive decimal.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "rules": [
+    "page_count ignores a source argument. page_size without an argument reads size. A present page_size argument always writes the decoded native signed 32-bit prefix, with zero fallback. It returns no columns even when it cannot change current page size.",
+    "max_page_count uses the stock 64-bit decode. An initial unsigned 0x form consumes all hex digits and trailing nonempty text fails. A 16-digit magnitude with its high bit set is negative. Decimal decoding considers the initial span of plus, minus, ASCII space, LF, tab and digits, and at most one following byte. Within that span apply native signed decimal conversion and ASCII whitespace. Out-of-range or nonpositive input does not write. Clamp a valid positive input above 4294967294.",
+    "An explicit temp qualifier opens the temporary database. If unopened, its initial size can be inherited from the pending connection setting. If already populated, preparing a page_size write does not change its existing geometry.",
+    "A supported pending page size can affect a later VACUUM of a different file-backed database. The verifier observes both initial geometry and this later effect. An invalid replacement clears the effect of an earlier valid request on the fixed fixture.",
+    "Setting the page maximum occurs during stepping. Its quota can refuse a subsequent growth operation with native SQLITE_FULL and rollback that write. The quota remains a connection setting. All three native pragmas report readOnly classification in the fixture."
+  ],
+  "observations": [
+    "Compare preparation result names, exact typed stepped rows, native page opcode and database slot, no binding registrations, and the several before and after settings.",
+    "Compare physical page size and count against file header bytes on the populated file fixtures. Verify selected schema, temporary opening, state before stepping and later VACUUM behavior.",
+    "Use a separate bounded file growth witness with limit below the required large insert. Record exact runtime code, rollback and row values."
+  ],
+  "finite": {
+    "kinds": [
+      "page_size",
+      "page_count",
+      "max_page_count"
+    ],
+    "scopes": [
+      "implicit",
+      "main",
+      "temp",
+      "attached"
+    ],
+    "values": [
+      "absent",
+      "zero",
+      "floor",
+      "valid-size",
+      "larger-size",
+      "invalid-size",
+      "negative",
+      "uint-max",
+      "above-native",
+      "int64-max",
+      "int64-overflow",
+      "hex-trailing",
+      "prefix-tail",
+      "whitespace-stop"
+    ],
+    "initial": [
+      "empty",
+      "file-populated",
+      "temp-warm"
+    ],
+    "phases": [
+      "prepare",
+      "step"
+    ],
+    "identity": "All 1008 field, scope, source argument, initial pager state and evaluation phase coordinates, paired with direct construction and observed externally."
+  },
+  "exploration": {
+    "seeds": [
+      10973,
+      37019,
+      97159
+    ],
+    "casesPerSeed": 48,
+    "timeoutSeconds": 720,
+    "allowedExclusions": [],
+    "domain": "Vary exact signed and unsigned argument spellings, decimal and hexadecimal boundaries, pending size, initial pager state, explicit quoted database and evaluation phase."
+  },
+  "negative": [
+    "Direct page count with a setting",
+    "Wrong typed input for page size",
+    "Wrong typed input for maximum page count",
+    "Zero direct page limit",
+    "Noncanonical direct page limit",
+    "Overflowing direct page limit",
+    "Overflowing direct requested size"
+  ],
+  "faults": [
+    "Admit a setting for page count",
+    "Erase a page-size request",
+    "Use main instead of an attached qualifier",
+    "Accept an unsigned overflow without the native clamp",
+    "Decode an invalid maximum count using the signed 32-bit prefix rule",
+    "Convert an invalid page-size write into an ordinary read",
+    "Retain an earlier pending size by removing a zero fallback write"
+  ],
+  "open": [
+    "The bounded observer fixes ordinary file-backed and temporary pager fixtures. WAL resize behavior, alternative VFS and compile-time bounds are separately inventoried."
+  ],
+  "trust": [
+    "Pinned stock SQLite B-tree, pager and file header.",
+    "Independent native decode witness set and separated prepare and step observations.",
+    "Exact declared value shapes, guards and package distribution."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "fieldDriver": "0a12edf25ced3dab2f42ca19704ed97684a33504ddb904ffcf4f122a8f93a670",
+    "fieldCases": "a910bac4a9872f15eab4f4e8b729593bf1052de9ac30643c9eb899991b379762",
+    "tempDriver": "0f7dd68dbdee342d235d930496609a2b2010bf8094348910bf97eed6af04e45a",
+    "tempCases": "65e97186e862c4c247089f54002ae26113d2ef55dde2c428242b6e6cccafff17"
+  },
+  "revises": "sqlite-page-pragmas-v1.json",
+  "assuranceRevision": "Enumerate the separately executed direct and analyzed refusals individually. Retain all original refusals, inputs, observations, budgets and faults.",
+  "analysisNegative": [
+    "Unknown explicit database"
+  ]
+}

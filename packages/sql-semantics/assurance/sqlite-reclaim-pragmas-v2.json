@@ -1,0 +1,186 @@
+{
+  "revision": "SemanticsIR/sqlite-reclaim-pragmas-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with the stock auto-vacuum pager, UTF-8, ordinary attached files and transaction behavior. Existing geometry and file metadata are external state.",
+  "scope": "PRAGMA auto_vacuum and PRAGMA incremental_vacuum for one resolved native database.",
+  "additionalPublicRoots": [
+    "Maintenance/Reclaim/AutoVacuum",
+    "Maintenance/Reclaim/IncrementalVacuum"
+  ],
+  "constructors": {
+    "Maintenance/Reclaim/AutoVacuum": {
+      "role": "Read or request the automatic page reclamation mode of a resolved database.",
+      "structure": "An absolute Identifier and an optional VacuumMode.",
+      "conditions": "Only the closed mode is a write operand. Omitted qualification selects main. An explicit qualifier resolves before publication.",
+      "meaning": "Read the current mode or request the precise prepare-time and execution-time changes. A mode write updates the connection's pending choice for a later VACUUM. An already populated database can refuse immediate activation while retaining that pending choice.",
+      "externalInterpretation": "The same database identity, present pointer-map geometry, live connection history and transaction.",
+      "sql": "Emit auto_vacuum with the resolved quoted qualifier and, for a request, the exact mode code.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Reclaim/VacuumMode": {
+      "role": "The exact native auto-vacuum mode.",
+      "structure": "One of None, Full and Incremental.",
+      "conditions": "Only native codes zero, one and two are representable.",
+      "meaning": "Select native disabled, full or incremental auto-vacuum behavior.",
+      "sql": "Emit the corresponding native decimal code.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Reclaim/IncrementalVacuum": {
+      "role": "A bounded incremental reclamation of the selected database.",
+      "structure": "The same resolved Identifier and one PageReclaimLimit.",
+      "conditions": "The limit belongs to the positive signed native domain. No automatic-mode setting can occupy this role.",
+      "meaning": "Begin the native write operation and attempt up to the checked number of incremental reclamations. Preserve its exact zero-column output row count and transaction effect.",
+      "externalInterpretation": "The same database identity, live page layout, freelist, pager mode and transaction.",
+      "sql": "Emit incremental_vacuum with the resolved database and the checked limit. The native maximum may be expressed without an argument.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Reclaim/PageReclaimLimit": {
+      "role": "The positive native cap on incremental reclamation steps.",
+      "structure": "One integer between 1 and 2147483647 inclusive.",
+      "conditions": "A completed value only keeps a positive effective limit. An absent, invalid, overflowing or nonpositive source argument normalizes to 2147483647.",
+      "meaning": "Cap the number of native reclamation attempts and their emitted empty rows.",
+      "sql": "Emit the positive decimal limit or omit the argument for the stock maximum.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "rules": [
+    "The auto_vacuum argument accepts ASCII case-insensitive NONE, FULL and INCREMENTAL, or signed 32-bit native prefix conversion. Other values select NONE. A supplied argument always requests a mode. An absent argument is a read.",
+    "Automatic mode changes prepare-time pending state for a later file VACUUM. For the populated fixture, switching between already supported Full and Incremental changes the cached flag immediately and can write the incremental header cookie during stepping. Changing the pointer-map geometry of a populated file requires VACUUM.",
+    "A newly opened temporary schema starts in native None mode. The writes that start a B-tree transaction can initialize an empty database to one page. Observe current mode, physical header and remaining free pages separately.",
+    "The incremental limit uses signed 32-bit native prefix conversion on the decoded pragma argument. The default is 2147483647. Each successful native incremental step emits one row of width zero. For the single pointer-map fixture each removes one free page. None mode performs no reclamation. Full mode has already reclaimed the committed fixture's free pages.",
+    "Incremental reclamation rolls back with the surrounding transaction. Preparing or rolling back an automatic-mode request may leave its cached or pending setting observable before physical storage changes. Verify the exact original fixture phase and later file-compaction effect."
+  ],
+  "observations": [
+    "Compare no-column row multiplicity, preparation result names, typed stepped rows, read-only classification, actual native opcodes and schema slots.",
+    "Compare freelist, page count, mode, physical header bytes, unchanged logical rows and a later VACUUM. Independently observe a rollback with both native pragma families."
+  ],
+  "finite": {
+    "operations": [
+      "auto_vacuum",
+      "incremental_vacuum"
+    ],
+    "scopes": [
+      "implicit",
+      "main",
+      "attached",
+      "temp"
+    ],
+    "values": [
+      "absent",
+      "zero",
+      "one",
+      "two",
+      "three",
+      "negative",
+      "overrange",
+      "decoded-prefix",
+      "hex"
+    ],
+    "initial": [
+      "empty-none",
+      "filled-none",
+      "filled-full",
+      "filled-incremental"
+    ],
+    "phases": [
+      "prepare",
+      "step"
+    ],
+    "identity": "All 576 operation, scope, argument, physical fixture and execution-phase combinations, independently observed and paired with direct construction."
+  },
+  "exploration": {
+    "seeds": [
+      26573,
+      63241,
+      86483
+    ],
+    "casesPerSeed": 48,
+    "timeoutSeconds": 720,
+    "allowedExclusions": [],
+    "domain": "Vary signed and unsigned lexical spellings, mode words, quoted schema names, row populations, native limit and both phases."
+  },
+  "negative": [
+    "Direct zero reclaim limit",
+    "Direct negative reclaim limit",
+    "Direct overflowing reclaim limit"
+  ],
+  "faults": [
+    "Admit zero as a completed reclaim limit",
+    "Write a different automatic mode",
+    "Erase a supplied automatic mode",
+    "Reclaim pages from main instead of the attached database",
+    "Discard a finite reclaim limit",
+    "Treat a negative reclaim count as a positive cap",
+    "Assume an unknown explicit scope denotes main"
+  ],
+  "open": [
+    "The bounded physical fixture stays in one pointer-map region. Larger page layouts, alternate VFS and concurrent locking behaviors remain separate obligations."
+  ],
+  "trust": [
+    "Pinned SQLite B-tree and pager.",
+    "The independent single-pointer-map fixture model, physical header reader and separated prepare and step measurements.",
+    "Closed mode, positive interval and exact package distribution."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "ae2100957414c4e4acd832b6006aa93a620518dac7583c382518447ead110ac4",
+    "cases": "39d532d2ce39316357a50a46f40865fa1fdb2f9300755c22a93c2095afccf6d0"
+  },
+  "revises": "sqlite-reclaim-pragmas-v1.json",
+  "assuranceRevision": "Enumerate the separately executed direct and analyzed refusals individually. Retain all original refusals, inputs, observations, budgets and faults.",
+  "analysisNegative": [
+    "Unknown explicit automatic vacuum database",
+    "Unknown explicit incremental vacuum database"
+  ]
+}

@@ -15,8 +15,8 @@ from sqlite_cache_fixture import populate, snapshot, write_pressure
 from sqlite_domain import RenderFault, check_render_faults, run_domain
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-cache-pragmas-v1.json"
-CONTRACT = "b4cf15cf49ddeb3502284586b80d88abc9c38c61a0d5e5ad9cf228bfd8bd77a6"
+CONTRACT_NAME = "sqlite-cache-pragmas-v2.json"
+CONTRACT = "501085d843c8c8a63660bbbfe0cf546c54d36d1bdee5a2f0a566066d2c52f5c0"
 FIXTURE = ""
 NAMES = frozenset(map(str.encode, (LIVE, DEFAULT, SPILL)))
 

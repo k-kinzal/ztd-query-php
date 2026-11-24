@@ -14,8 +14,8 @@ from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 from sqlite_vacuum_cases import analysis, case, expected, finite_id, finite_ids, forms, negatives, requests, required, source
 from sqlite_vacuum_fixture import fixture, prepare
 
-CONTRACT_NAME = "sqlite-vacuum-v1.json"
-CONTRACT = "fec5920ad7e98305751e10ffc6fe1fa76648ed261e491aa94d640e17a6a9c312"
+CONTRACT_NAME = "sqlite-vacuum-v2.json"
+CONTRACT = "fa051d5e85a3402c1a4db62d672a20c770fd66c3c6d02e49606b25842960cd94"
 FIXTURE = ""
 ARCHIVE_NAME = re.compile(rb"vacuum_[0-9a-f]{16}")
 MASTER_FIELDS = frozenset((b"type", b"name", b"tbl_name", b"rootpage", b"sql", b"ROWID"))

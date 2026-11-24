@@ -1,0 +1,187 @@
+{
+  "revision": "SemanticsIR/sqlite-cache-pragmas-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with the stock pager, native default cache limit of -2000 and UTF-8. The physical comparisons use the measured 64-bit stock cache page overhead of 136 bytes.",
+  "scope": "PRAGMA cache_size, default_cache_size and cache_spill for resolved stock database pagers and their connection.",
+  "additionalPublicRoots": [
+    "Maintenance/Cache/CacheSize",
+    "Maintenance/Cache/DefaultCacheSize",
+    "Maintenance/Cache/CacheSpill"
+  ],
+  "constructors": {
+    "Maintenance/Cache/CacheSize": {
+      "role": "Read or set the current cache capacity of one resolved database.",
+      "structure": "An absolute Identifier and an optional CacheAmount.",
+      "conditions": "An omitted operand reads. A supplied signed capacity, including zero, is a prepare-time setting.",
+      "meaning": "Keep the schema's reported cache size and the pager's effective page capacity. A negative operand specifies KiB with native page overhead and the cache-page ceiling. The setting does not change the persistent cookie.",
+      "externalInterpretation": "The same database identity, native page size and stock cache configuration in the same connection.",
+      "sql": "Emit the selected database, cache_size and the exact signed decimal capacity when supplied."
+    },
+    "Maintenance/Cache/DefaultCacheSize": {
+      "role": "Read or set one native persistent default cache size.",
+      "structure": "An absolute Identifier and an optional DefaultCachePages.",
+      "conditions": "An absent operand reads the cookie through native normalization. A supplied setting is nonnegative and within signed 32-bit range.",
+      "meaning": "Set the current cache capacity at prepare time. Stepping writes the cache cookie. Rollback restores the cookie and leaves the local request in effect in the current connection. A zero cookie reports the stock default on a new connection.",
+      "externalInterpretation": "The same file or temporary pager, transaction and native initial default.",
+      "sql": "Emit the selected database, default_cache_size and the canonical nonnegative decimal request when supplied."
+    },
+    "Maintenance/Cache/CacheSpill": {
+      "role": "Read the selected pager threshold or change the connection spill switch and optionally that pager's threshold.",
+      "structure": "An absolute Identifier and an optional SpillMode or SpillThreshold.",
+      "conditions": "A mode alone changes only the connection switch. A numeric threshold can adjust the selected pager as well.",
+      "meaning": "Apply the compile-time scope and native argument effects. An enabled read reports the greater of current page capacity and pager spill threshold. A disabled read returns zero. Inside a transaction a flag update is observable by the getter immediately and does not propagate to already open pager flags.",
+      "externalInterpretation": "The same connection, transaction, selected native pager and physical geometry.",
+      "sql": "Emit the selected database with cache_spill and the checked mode or joint threshold operation."
+    },
+    "Maintenance/Cache/CacheAmount": {
+      "role": "A signed cache capacity in SQLite's native two-unit convention.",
+      "structure": "One signed 32-bit integer.",
+      "conditions": "The inclusive signed interval applies.",
+      "meaning": "Nonnegative counts are pages. Negative counts denote the absolute number of KiB.",
+      "sql": "Use the exact signed decimal number."
+    },
+    "Maintenance/Cache/DefaultCachePages": {
+      "role": "An exact persistent default request after native saturating absolute conversion.",
+      "structure": "One nonnegative signed 32-bit integer.",
+      "conditions": "Zero represents the explicit native default cookie reset.",
+      "meaning": "Set the page count and exact cookie payload.",
+      "sql": "Use the exact nonnegative decimal count."
+    },
+    "Maintenance/Cache/SpillMode": {
+      "role": "An unconditional native cache spilling switch.",
+      "structure": "One of Enabled or Disabled.",
+      "conditions": "The role never adjusts a database's existing threshold.",
+      "meaning": "Enable or disable dirty-page spilling for the connection.",
+      "sql": "Use the closed native ON or OFF value."
+    },
+    "Maintenance/Cache/SpillThreshold": {
+      "role": "An exact selected pager threshold paired with its connection switch effect.",
+      "structure": "One nonzero CacheAmount and one SpillMode.",
+      "conditions": "Disabling with a nonzero threshold is representable only for a positive multiple of 256.",
+      "meaning": "Update the selected pager's threshold with the native signed unit convention and apply the selected connection mode.",
+      "sql": "Use a signed decimal argument. For an enabled positive multiple of 256 use a quoted leading plus so the native boolean fallback enables while the native integer prefix still sets the threshold."
+    }
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "rules": [
+    "Database qualification is absolute when an operation publishes. Absent qualification selects main. An explicit name resolves before publishing.",
+    "Cache capacity uses the decoded signed 32-bit prefix, with zero on malformed or out-of-range input. The persistent quantity saturates the absolute value of INT32_MIN at INT32_MAX.",
+    "A spill operand first uses native 32-bit prefix conversion. A valid nonzero prefix updates the target pager even if the global flag is disabled. For a decoded argument beginning with an ASCII digit, only the low eight bits decide whether spilling is enabled. Otherwise, native ON, YES and TRUE enable, OFF, NO and FALSE disable, and the fallback is the nonzero parsed integer or true for an invalid argument.",
+    "A cold temporary pager starts with the native local name getter at zero and a pager capacity of -2000 KiB. The setup's last page-size request controls this pager's initial geometry. When a cache size is explicitly supplied, distinguish its effective capacity from the separately stored spill threshold.",
+    "The capacity conversion for the stock fixture is the floor of absolute KiB times 1024 divided by physical page bytes plus 136. Native caps only capacity-derived pages at one billion for negative requests. The spill threshold is not capped by that rule.",
+    "The stock getter of default_cache_size produces the column name cache_size. It returns -2000 on an empty or zero cookie. Persistent writes set the live capacity at prepare and write the cookie at step. The established cookie and reopened connection restore the prior default after rollback."
+  ],
+  "observations": [
+    "Compare operation and argument provenance, prepare-time result names and write classification, typed stepped output and native SetCookie, Transaction and read operand coordinates.",
+    "Observe the unchanged ordered fixture tables and rows, live capacity, effective selected and decoy spill getters, physical page-one bytes and result from a fresh connection.",
+    "After recording visible state, re-enable spilling to inspect the preserved underlying pager threshold. Observe actual cache-spill counts during a fixed eight-row write on both selected and decoy pagers with a capacity of six pages and an initial threshold of one page. Include requests before and within a transaction and verify retained data after rollback."
+  ],
+  "finite": {
+    "operations": [
+      "cache_size",
+      "default_cache_size",
+      "cache_spill"
+    ],
+    "scopes": [
+      "implicit",
+      "main",
+      "attached",
+      "temp"
+    ],
+    "values": [
+      "absent",
+      "zero",
+      "one",
+      "threshold",
+      "low-byte-zero",
+      "quoted-plus",
+      "negative",
+      "minimum",
+      "overflow",
+      "hex",
+      "true",
+      "false",
+      "fallback"
+    ],
+    "pageSizes": [
+      1024,
+      4096
+    ],
+    "initialSpilling": [
+      false,
+      true
+    ],
+    "phases": [
+      "prepare",
+      "step"
+    ],
+    "identity": "All 1248 finite coordinates, paired with direct construction and recovered from stock connection, pager, incoming argument and execution observations."
+  },
+  "exploration": {
+    "seeds": [
+      9263,
+      32771,
+      88037
+    ],
+    "casesPerSeed": 60,
+    "timeoutSeconds": 1080,
+    "allowedExclusions": [],
+    "domain": "Vary signed and unsigned spellings, native byte conversion, both scheduler phases, page size, quoted aliases, row contents and existing thresholds. Authored witnesses observe rollback, persistent versus live settings and dirty-page spilling."
+  },
+  "negative": [
+    "Signed cache capacity below the native interval",
+    "Signed cache capacity above the native interval",
+    "Negative persistent page default",
+    "Overflowing persistent page default",
+    "Zero joint spill threshold",
+    "Disabled negative threshold",
+    "Disabled positive threshold whose low byte is nonzero"
+  ],
+  "faults": [
+    "Allow an out-of-range signed cache capacity",
+    "Make a cache-capacity write a read",
+    "Write only the current capacity for the persistent operator",
+    "Write the persistent default on main instead of the requested pager",
+    "Lose a disabled threshold while preserving the disabled flag",
+    "Render positive spill amount 256 with the wrong connection flag",
+    "Disable all pagers by treating a leading-plus threshold as unsigned",
+    "Publish an unresolved explicit cache scope as main"
+  ],
+  "open": [
+    "Other VFS and custom page-cache implementations can change physical observations and remain separate obligations."
+  ],
+  "trust": [
+    "Pinned SQLite native code and build profile",
+    "Independent bounded file/header and cache-pressure observers",
+    "Closed value roles and exact distribution"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "ea46f452aa726758a4258f88e78840a641fded75c5e9b5b1e78f5bffe35e8801",
+    "cases": "ca358e95279b75979b6ab16455e2c38a892196e28a6843dbf6ac6d7cf94169ab",
+    "spillWrites": "c1af233983ab8863f8d899005c489b94d63964091ed2e15f58c3edfdc7edc96b",
+    "inTransaction": "a168cb4349c4b325d1383196a68b8417225cacfcb317193f103e7b4dc5886547"
+  },
+  "revises": "sqlite-cache-pragmas-v1.json",
+  "assuranceRevision": "Enumerate the separately executed direct and analyzed refusals individually. Retain all original refusals, inputs, observations, budgets and faults.",
+  "analysisNegative": [
+    "Unknown explicit current capacity scope",
+    "Unknown explicit persistent default scope",
+    "Unknown explicit cache spilling scope"
+  ]
+}
