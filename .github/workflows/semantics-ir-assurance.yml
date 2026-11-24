@@ -12,8 +12,63 @@ permissions:
   contents: read
 
 jobs:
-  initial-domain:
+  postgres-rebuild-lexical-proof:
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-26.04-arm
+    timeout-minutes: 15
+    steps:
+      - name: Validate the requested candidate identity
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+        run: test "${#CANDIDATE}" -eq 40 && [[ "$CANDIDATE" =~ ^[0-9a-f]+$ ]]
+      - name: Check out the acceptance proof and verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Check out the exact candidate as source data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.candidate }}
+          path: candidate
+          persist-credentials: false
+      - name: Install proof runtime and PHP parser dependencies
+        working-directory: trusted/packages/sql-semantics-sqlite
+        env:
+          COMPOSER_ROOT_VERSION: dev-main
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends bubblewrap php-cli php-mbstring php-xml composer
+          composer install --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
+      - name: Verify the official Lean toolchain archive
+        run: |
+          archive=lean-4.36.0-linux_aarch64.tar.zst
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://github.com/leanprover/lean4/releases/download/v4.36.0/$archive" -o "$RUNNER_TEMP/$archive"
+          echo "35471998152191ef809418ce5bf61f8fc5f209e5e3be05b48bdc4949fdb3e726  $RUNNER_TEMP/$archive" | sha256sum -c -
+          tar --zstd -C "$RUNNER_TEMP" -xf "$RUNNER_TEMP/$archive"
+      - name: Check the lexical proof and candidate PHP correspondence
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/verify_postgres_reindex_proof.py \
+            --candidate candidate --candidate-sha "$CANDIDATE" \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --lean "$RUNNER_TEMP/lean-4.36.0-linux_aarch64" \
+            --archive "$RUNNER_TEMP/lean-4.36.0-linux_aarch64.tar.zst" \
+            --out "$RUNNER_TEMP/postgres-reindex-proof"
+      - name: Preserve the lexical proof receipts and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgres-reindex-lexical-proof
+          path: ${{ runner.temp }}/postgres-reindex-proof/
+
+  initial-domain:
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    needs: postgres-rebuild-lexical-proof
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -130,6 +185,12 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/release-layout"
+      - name: Download the proof receipt from this workflow run
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: postgres-reindex-lexical-proof
+          path: ${{ runner.temp }}/postgres-reindex-proof
       - name: Compile the candidate evidence index
         if: ${{ !cancelled() }}
         env:
