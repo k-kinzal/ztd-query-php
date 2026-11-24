@@ -22,7 +22,7 @@ final class ViewDefinitionBounds
     /**
      * Checks the resolved definition and returns its width.
      */
-    public function width(Select|ValuesQuery $query, ViewName $name, ViewCheckOption $check): int
+    public function width(Select|ValuesQuery $query, ViewName $name, ViewCheckOption $check, bool $ordinaryViewSource = false): int
     {
         if ($query instanceof ValuesQuery) {
             Check::input($check === ViewCheckOption::None, 'A view check option requires a simple base-table projection.');
@@ -35,10 +35,12 @@ final class ViewDefinitionBounds
         );
         $source = $query->source;
         Check::input(
-            $source === null || ($source instanceof TableSource && $source->kind === ExternalRelationKind::BaseTable),
-            'CREATE VIEW requires no source or one persistent base table.'
+            $source === null || ($source instanceof TableSource && (
+                $source->kind === ExternalRelationKind::BaseTable || ($ordinaryViewSource && $source->kind === ExternalRelationKind::View)
+            )),
+            'CREATE VIEW requires no source or one supported persistent relation.'
         );
-        Check::input($check === ViewCheckOption::None || $source !== null, 'A view check option requires a simple base-table projection.');
+        Check::input($check === ViewCheckOption::None || ($source instanceof TableSource && $source->kind === ExternalRelationKind::BaseTable), 'A view check option requires a simple base-table projection.');
         if ($source !== null) {
             Check::input(
                 $source->schema->value !== 'pg_temp' && preg_match('/\Apg_(?:toast_)?temp_[0-9]+\z/D', $source->schema->value) === 0,

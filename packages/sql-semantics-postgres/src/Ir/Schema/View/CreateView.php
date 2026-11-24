@@ -42,7 +42,7 @@ final class CreateView implements SemanticsIR
         public readonly ViewCheckOption $checkOption = ViewCheckOption::None,
     ) {
         $heading = Check::listOf($columns, Identifier::class, 'A persistent view needs a nonempty ordered heading.', 1);
-        $width = (new ViewDefinitionBounds())->width($query, $name, $checkOption);
+        $width = (new ViewDefinitionBounds())->width($query, $name, $checkOption, true);
         (new ViewHeading())->check($heading, $width);
         $this->columns = $heading;
     }

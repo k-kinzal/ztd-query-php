@@ -623,7 +623,7 @@ def inventory(root):
                     if rule in ("CreateSchemaStmt", "ViewStmt") or alternative in {
                         "schema_stmt: ViewStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
                     }:
-                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-views-v3.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-views-v3.json", "postgres-schema-view-dependencies-v1.json")
             for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "IndexStmt"):
                 for alternative in rules.get(rule, ()):
                     if rule in ("CreateSchemaStmt", "IndexStmt") or alternative in {

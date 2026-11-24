@@ -1363,6 +1363,32 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $grant->access->grantor->reference(), $rebuilt->grants[0] === $grant,
                 $grantBatch->toString(), $rebuilt->toString(), $missing,
             ];
+            $chain = $semantics->analyze(
+                'CREATE SCHEMA "Chain Batch" CREATE VIEW source (n,mystery) AS SELECT 18,NULL'
+                . ' CREATE VIEW leaf (result) AS SELECT mystery FROM "Chain Batch".source',
+            );
+            [$upstream, $downstream] = $chain->views;
+            $closed = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $chain->name, $chain->owner, release: $chain->release, views: [$upstream, $downstream],
+            );
+            $future = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $chain->name, $chain->owner, release: $chain->release, views: [$downstream, $upstream],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $future = $error->getMessage() === 'A schema view must resolve its local view input to a preceding ordinary view.';
+            }
+            $external = $semantics->analyze(
+                'CREATE VIEW mirror AS SELECT note FROM public.upstream',
+                $semantics->context(['CREATE VIEW public.upstream (note) AS SELECT NULL']),
+            );
+            $source = $downstream->query->source;
+            $details['postgresSchemaViewDependencies'] = [
+                $source->kind->value, $source->schema->value, $source->table->value, $source->columns[0]->value,
+                $source->columnKind(0)->value, $downstream->columns[0]->value, $closed->toString(), $chain->toString(), $future,
+                $external->query->source->kind->value, $external->toString(),
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
             [$present, $absent] = $result->targets;

@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaRelationOrder;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -20,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 final class SchemaViewOrder
 {
     /**
-     * Checks unique view targets and each exact local base-table operand.
+     * Checks unique view targets and each exact local input against earlier member roles.
      * @param array<array-key, CreateTable|true> $occupied Checked earlier occupants
      * @param list<CreateView> $views
      * @return array<array-key, CreateTable|true> Occupants after the view phase
@@ -31,6 +30,7 @@ final class SchemaViewOrder
             return $occupied;
         }
         Check::input($name !== null && !$guard, 'Schema views require an unguarded, statically named namespace.');
+        $earlier = [];
         foreach ($views as $view) {
             Check::input(
                 $view->name->schema->value === $name->value && $view->query->release === $release,
@@ -41,18 +41,9 @@ final class SchemaViewOrder
             $source = $view->query instanceof Select ? $view->query->source : null;
             if ($source instanceof TableSource && $source->schema->value === $name->value) {
                 $local = $occupied[$source->table->value] ?? null;
-                Check::input($local instanceof CreateTable, 'A schema view must resolve its local input to a preceding base table.');
-                $fields = [];
-                foreach ($local->columns as $column) {
-                    $fields[$column->name->value] = SchemaRelationOrder::columnKind($column);
-                }
-                foreach ($source->columns as $slot => $column) {
-                    Check::input(
-                        isset($fields[$column->value]) && $fields[$column->value] === $source->columnKind($slot),
-                        'A schema view requires each local input field in the checked native kind.'
-                    );
-                }
+                SchemaViewInputs::check($source, $local instanceof CreateTable ? $local : null, $earlier[$source->table->value] ?? null);
             }
+            $earlier[$coordinate] = $view;
             $occupied[$coordinate] = true;
         }
 

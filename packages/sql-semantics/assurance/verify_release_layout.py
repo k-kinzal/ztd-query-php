@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v143.json"
-CONTRACT = "357ba54fe5ecafe2a4a4e4eec619b2157ab065090673fa73e745428577d1db2a"
+CONTRACT_NAME = "release-layout-v144.json"
+CONTRACT = "e9fdd16bd09a3a059a20cf148ab920bfab6b4dff2fe92f83be2baad92b70c4ad"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -437,6 +437,16 @@ def verify_probe(raw, catalog):
                 "Tax Owner", "Policy Batch", "feed", True, "SESSION_USER", '"PUBLIC"', "CURRENT_USER", True,
                 grants, grants, True,
             ], "installed-postgres-schema-sequence-grants-mismatch", item)
+            dependencies = ('CREATE SCHEMA "Chain Batch" AUTHORIZATION CURRENT_USER'
+                             ' CREATE VIEW "Chain Batch"."source" ("n", "mystery") AS'
+                             ' SELECT CAST(18 AS pg_catalog.int4) AS "?column?", NULL AS "?column?"'
+                             ' CREATE VIEW "Chain Batch"."leaf" ("result") AS'
+                             ' SELECT "__ztd_source"."mystery" AS "mystery" FROM "Chain Batch"."source" AS "__ztd_source"')
+            external = ('CREATE VIEW "public"."mirror" ("note") AS'
+                        ' SELECT "__ztd_source"."note" AS "note" FROM "public"."upstream" AS "__ztd_source"')
+            require(item.get("postgresSchemaViewDependencies") == [
+                "view", "Chain Batch", "source", "mystery", "text", "result", dependencies, dependencies, True, "view", external,
+            ], "installed-postgres-schema-view-dependencies-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\DropSchema"):
             emitted = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE'
             require(item.get("postgresDropSchema") == [

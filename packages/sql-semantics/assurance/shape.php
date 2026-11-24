@@ -1070,10 +1070,10 @@ if ($dialect !== 'sqlite') {
         $roots[] = $schemaCreation;
         array_push($internal, 'Schema\\Namespace\\CreateSchemaLowering', 'Schema\\Namespace\\SchemaTableLowering',
             'Schema\\Namespace\\SchemaSequenceLowering', 'Schema\\Namespace\\SchemaRelationOrder',
-            'Schema\\Namespace\\View\\SchemaViewLowering', 'Schema\\Namespace\\View\\SchemaViewOrder',
+            'Schema\\Namespace\\View\\SchemaViewLowering', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\View\\SchemaViewInputs',
             'Schema\\Namespace\\Index\\SchemaIndexLowering', 'Schema\\Namespace\\Index\\SchemaIndexOrder',
             'Schema\\Namespace\\Access\\SchemaGrantLowering', 'Schema\\Namespace\\Access\\SchemaGrantOrder');
-        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\Index\\SchemaIndexOrder', 'Schema\\Namespace\\Access\\SchemaGrantOrder');
+        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\Index\\SchemaIndexOrder', 'Schema\\Namespace\\Access\\SchemaGrantOrder', 'Schema\\Namespace\\View\\SchemaViewInputs');
         $properties[$schemaCreation] = [
             'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'], 'views' => ['array'], 'indexes' => ['array'], 'grants' => ['array'],
             'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
