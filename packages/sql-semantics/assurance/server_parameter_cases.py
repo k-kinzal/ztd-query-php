@@ -4,10 +4,23 @@ from itertools import product
 import json
 from random import Random
 
+from run import TOOL, digest, require
 from server_delete_cases import literal
 
 LAYOUTS = {"mysql": ((1,), (1, 2)), "postgres": ((1,), (1, 1), (1, 2), (2, 1), (2, 1, 2))}
 VALUES = (-2147483648, 0, 9, 2147483647, None)
+
+
+def reconcile_catalog_rejections(specification):
+    contract = TOOL / "native-context-diagnostics-v1.json"
+    require(digest(contract) == "7cd84797db58f6a90ece539e09461ac5ad064d24df7061ae0a3e666a012e8778",
+            "native-context-diagnostics-contract")
+    schedule = json.loads(contract.read_text())["postgres"][specification["revision"]]
+    key = "additionalPostgreSqlNegatives"
+    rejections = [*specification.get(key, ()), *schedule["added"]]
+    require(len(specification["negative"]) + len(rejections) == schedule["totalRejections"],
+            "native-context-diagnostics-rejection-balance", schedule)
+    return {**specification, key: rejections}
 
 
 def ref(position):

@@ -7,7 +7,7 @@ from evidence_transcript import canonical
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
 from run_server_join import main
-from server_parameter_cases import case, expected, finite_id, finite_ids, observation, ref, requests
+from server_parameter_cases import case, expected, finite_id, finite_ids, observation, reconcile_catalog_rejections, ref, requests
 from sqlite_domain import RenderFault
 
 LABEL = "parameter"
@@ -18,7 +18,7 @@ CONTRACT = "d3c7edac68d8e12993dccdddfaa42195c68defde2f4f778b6491b91856db6ab6"
 def specifications():
     path, projection = TOOL / "server-parameter-v6.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-parameter-contract-mismatch")
-    return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
+    return reconcile_catalog_rejections(json.loads(path.read_text())), json.loads(projection.read_text())["profiles"]
 
 
 def check_value(item, response):

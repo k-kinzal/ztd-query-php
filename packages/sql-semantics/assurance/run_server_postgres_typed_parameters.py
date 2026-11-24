@@ -9,6 +9,7 @@ from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
 from run_server_join import main
 from server_cases import observation
+from server_parameter_cases import reconcile_catalog_rejections
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-typed-parameters"
@@ -20,7 +21,7 @@ OBSERVER = "postgres_typed_parameter_observer.php"
 def specifications():
     path, projection = TOOL / CONTRACT_NAME, TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "postgres-typed-parameter-contract-mismatch")
-    return json.loads(path.read_text()), {"postgres": json.loads(projection.read_text())["profiles"]["postgres"]}
+    return reconcile_catalog_rejections(json.loads(path.read_text())), {"postgres": json.loads(projection.read_text())["profiles"]["postgres"]}
 
 
 def check_value(item, response):
