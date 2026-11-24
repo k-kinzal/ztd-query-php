@@ -601,6 +601,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Sequence\\Alter\\RenameSequence'] = 'ALTER SEQUENCE ticket RENAME TO "Next.Ticket"';
         $queries['Schema\\Sequence\\Alter\\MoveSequence'] = 'ALTER SEQUENCE public.ticket SET SCHEMA "Archive.棚"';
         $queries['Schema\\Sequence\\Alter\\ReconfigureSequence'] = 'ALTER SEQUENCE public.ticket RESTART OWNED BY NONE START 5 CYCLE';
+        $queries['Schema\\Sequence\\Alter\\SetSequenceLogging'] = 'ALTER SEQUENCE public.ticket SET LOGGED, SET UNLOGGED';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -627,7 +628,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\MoveSequence') {
             $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE SCHEMA "Archive.棚"']);
         }
-        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\ReconfigureSequence') {
+        if ($platform === 'PostgreSql' && in_array($role, [
+            'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\SetSequenceLogging',
+        ], true)) {
             $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket AS smallint']);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
@@ -989,6 +992,29 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->changes->restart->value, $result->changes->owner->value, $result->changes->cache,
                 $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
                 $guarded->changes, $guarded->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\SetSequenceLogging') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $mode = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging::class;
+            $type = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $first = $mode::Logged;
+            $inputs = [&$first, $mode::Unlogged];
+            $direct = new $type($source, $inputs, release: $result->release);
+            $first = $mode::Unlogged;
+            $guarded = $semantics->analyze('ALTER SEQUENCE IF EXISTS unused SET UNLOGGED, SET LOGGED', $activeContext);
+            $refused = false;
+            try {
+                new $type($source, [$mode::Logged, $mode::Unlogged, $mode::Logged], release: $result->release);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence logging prefix must request one consistent mode.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresSequenceLogging'] = [
+                $result->source->schema?->value, $result->source->name->value, array_column($result->modes, 'value'),
+                array_column($direct->modes, 'value'), $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
+                $guarded->modes, $guarded->toString(), $refused,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\RenameSequence') {

@@ -10,11 +10,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from check_fixture_launch_recovery import controls as launch_recovery_controls
+from check_native_boundaries import native_boundary_procedures
 from check_native_workflow import CONTRACT_NAME as WORKFLOW_CONTRACT, WORKFLOW, audit as audit_workflow, steps as workflow_steps
 from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
-from index_evidence import replay_grammar, verify_fixture_recovery, verify_sqlite_preflight
+from index_evidence import Evidence, replay_grammar, verify_fixture_recovery, verify_sqlite_preflight
 from run_native_matrix import RELEASE_ROW, release_fixtures, release_jobs
 from replay_sqlite_evidence import replay
 from replay_sqlite_faults import replay_registered
@@ -627,6 +628,24 @@ def native_fixture_controls():
     return observed
 
 
+def native_boundary_inventory_control(args, commit):
+    name = "omit-native-boundary-procedure"
+    folder = args.out / name
+    folder.mkdir()
+    evidence = Evidence(folder.resolve(), commit, None, TOOL)
+    healthy, removed = folder / "healthy.json", folder / "mutant.json"
+    status = "provisional-native-construction-shape"
+    procedures = native_boundary_procedures(TOOL)
+    write_json(healthy, {"candidate": commit, "status": status, "procedures": procedures})
+    evidence.artifact(healthy.name, status)
+    altered = dict(procedures)
+    del altered["value_storage.php"]
+    write_json(removed, {"candidate": commit, "status": status, "procedures": altered})
+    failure = observe_rejection(lambda: evidence.artifact(removed.name, status), "bundle-native-boundary-procedure-inventory")
+    return {"case": name, "signal": failure.signal, "healthy": digest(healthy), "mutant": digest(removed),
+            "omittedProcedure": "value_storage.php"}
+
+
 def assurance_revision_control(args):
     folder = args.out / "reduced-assurance-revision"
     before = folder / "previous" / "packages/sql-semantics/assurance"
@@ -780,7 +799,7 @@ def main():
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
-              + native_workflow_controls(args) + native_fixture_controls()
+              + native_workflow_controls(args) + native_fixture_controls() + [native_boundary_inventory_control(args, commit)]
               + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution)
               + [renderer_fault_transport_control(args)] + reduction_controls(args) + native_reduction_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")

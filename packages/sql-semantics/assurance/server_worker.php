@@ -1411,6 +1411,29 @@ function observePostgresReconfigureSequence(\SqlSemantics\Platform\PostgreSql\Ir
             ]]];
 }
 
+function constructPostgresSequenceLogging(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging
+{
+    $spec = $input['sequenceLogging'];
+    $modes = array_map(static fn (string $mode) => match ($mode) {
+        'logged' => \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging::Logged,
+        'unlogged' => \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging::Unlogged,
+        default => $mode,
+    }, $spec['modes']);
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging(
+        constructPostgresSequenceSelector($spec['source']), $modes, $spec['ifExists'],
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresSequenceLogging(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'sequenceLogging' => [
+        'source' => observePostgresSequenceSelector($value->source),
+        'modes' => array_map(static fn ($mode): string => strtolower($mode->value), $value->modes), 'ifExists' => $value->ifExists,
+    ]];
+}
+
 function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
 {
     $spec = $input['alterSchema'];
@@ -1831,6 +1854,7 @@ function observeStatement(array $input): array
             isset($input['renameSequence']) => constructPostgresRenameSequence($input),
             isset($input['moveSequence']) => constructPostgresMoveSequence($input),
             isset($input['reconfigureSequence']) => constructPostgresReconfigureSequence($input),
+            isset($input['sequenceLogging']) => constructPostgresSequenceLogging($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1877,6 +1901,9 @@ function observeStatement(array $input): array
     }
     if ($value::class === $namespace . 'Schema\\Sequence\\Alter\\ReconfigureSequence') {
         return observePostgresReconfigureSequence($value);
+    }
+    if ($value::class === $namespace . 'Schema\\Sequence\\Alter\\SetSequenceLogging') {
+        return observePostgresSequenceLogging($value);
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

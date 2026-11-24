@@ -1166,6 +1166,15 @@ if ($dialect !== 'sqlite') {
         $properties[$clearSequenceOwner] = $methods[$clearSequenceOwner] = [];
         $enumCases[$sequenceDefault] = ['Native' => 'native-default'];
         $enumCases[$clearSequenceOwner] = ['Remove' => 'remove'];
+        $setLogging = $sequence . 'Alter\\SetSequenceLogging';
+        $loggingMode = $sequence . 'Alter\\SequenceLogging';
+        $roots[] = $setLogging;
+        $internal[] = $sequence . 'Alter\\SetSequenceLoggingLowering';
+        $properties[$setLogging] = ['source' => [$sequenceDropTarget], 'modes' => ['array'], 'ifExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$setLogging] = ['__construct', 'profileId', 'toString'];
+        $properties[$loggingMode] = $methods[$loggingMode] = [];
+        $enumCases[$loggingMode] = ['Logged' => 'LOGGED', 'Unlogged' => 'UNLOGGED'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1515,6 +1524,7 @@ try {
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\ChangeOwner'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\SetSchema'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Table\\Sequence\\AlterSequence'
+                . ', $statement instanceof \\' . $platform . '\\Statement\\Table\\Alter\\AlterTable'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
@@ -1673,9 +1683,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v63.json';
+    $storagePath = __DIR__ . '/value-storage-v64.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '9f9b0432bc0468d332a3be88aab9cacb320dfd0a8f9499dbd30178b102b00acb',
+        hash_file('sha256', $storagePath) === 'ff778d1f6ad41f06ea3e0618e54b2e661cf33a0c73e5147ecee3f26025e7e248',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2114,7 +2124,7 @@ try {
                         'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
                         'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\DropSchema', 'Schema\\Namespace\\RenameSchema',
                         'Schema\\Sequence\\Alter\\MoveSequence', 'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\RenameSequence',
-                        'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Sequence\\Alter\\SetSequenceLogging', 'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {

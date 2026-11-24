@@ -9,6 +9,7 @@ from os.path import relpath
 import re
 
 from compare_assurance_revisions import review
+from check_native_boundaries import native_boundary_procedures
 from check_fixture_launch_recovery import CONTROL_CASES as NATIVE_FIXTURE_CONTROLS, verify_storage_control
 from check_native_workflow import audit as audit_workflow
 from checked_scalar_dispatch import certificate as dispatch_certificate
@@ -381,7 +382,9 @@ class Evidence:
             require(report["distribution"] == self.distribution, "bundle-runtime-mismatch", origin)
             self.checked(path.parent / "distribution.json", self.distribution)
         procedures = report.get("procedures", report.get("tools"))
-        if procedures is not None:
+        if status == "provisional-native-construction-shape":
+            require(procedures == native_boundary_procedures(self.tool_root), "bundle-native-boundary-procedure-inventory", origin)
+        elif procedures is not None:
             require(procedures and all(self.tools.get(name) == sha256 for name, sha256 in procedures.items()),
                     "bundle-artifact-tool-mismatch", origin)
         return item
@@ -507,6 +510,20 @@ def main():
     controls = evidence.artifact("assurance-controls/index.json", "verified")
     if controls:
         cases = json.loads((root / "assurance-controls/index.json").read_text())["controls"]
+        matches = [item for item in cases if item["case"] == "omit-native-boundary-procedure"]
+        require(len(matches) == 1, "bundle-missing-native-boundary-inventory-control")
+        control, = matches
+        folder = root / "assurance-controls" / control["case"]
+        healthy, _ = evidence.checked(folder / "healthy.json", control["healthy"])
+        mutant, _ = evidence.checked(folder / "mutant.json", control["mutant"])
+        full = json.loads(healthy.read_text())
+        expected = native_boundary_procedures(evidence.tool_root)
+        require(control["signal"] == "bundle-native-boundary-procedure-inventory"
+                and control["omittedProcedure"] == "value_storage.php" and full["candidate"] == identity
+                and full["status"] == "provisional-native-construction-shape" and full["procedures"] == expected
+                and json.loads(mutant.read_text()) == {
+                    **full, "procedures": {name: sha for name, sha in expected.items() if name != control["omittedProcedure"]},
+                }, "bundle-native-boundary-inventory-control")
         fixture_controls = [item for item in cases if item["case"] in NATIVE_FIXTURE_CONTROLS]
         require(len(fixture_controls) == len(NATIVE_FIXTURE_CONTROLS)
                 and {item["case"] for item in fixture_controls} == NATIVE_FIXTURE_CONTROLS.keys(), "bundle-missing-fixture-controls")

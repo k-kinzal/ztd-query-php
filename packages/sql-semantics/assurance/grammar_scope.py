@@ -633,6 +633,11 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if alternative not in ("SeqOptElem: LOGGED", "SeqOptElem: UNLOGGED", "SeqOptElem: SEQUENCE NAME_P any_name"):
                         related[alternative] = (*related.get(alternative, ()), "postgres-reconfigure-sequence-v5.json")
+            for rule in ("AlterTableStmt", "alter_table_cmds", "alter_table_cmd"):
+                for alternative in rules.get(rule, ()):
+                    if (alternative.startswith("AlterTableStmt: ALTER SEQUENCE ") or rule == "alter_table_cmds"
+                            or alternative in ("alter_table_cmd: SET LOGGED", "alter_table_cmd: SET UNLOGGED")):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-sequence-logging-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

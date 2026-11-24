@@ -157,6 +157,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-sequence-selectors-boundaries-v1.json', '3800a13937d55013b6eb40d44b4009cdad2243a90def3c86ab3580dbb7f66b45'],
             ['postgres-move-sequence-boundaries-v1.json', '6e8898c581ea3708f301c7c1f6830a670b9939d543f7113e6a050914d5173d8f'],
             ['postgres-reconfigure-sequence-boundaries-v1.json', '302db1bf96c4b4acc1983dca0a413837e6dd5364556360f2be3c55aadebcad9f'],
+            ['postgres-sequence-logging-boundaries-v1.json', '77b7a0b4813a47d22fc33a946d28da74b0c9cadcbb3485cb7491849f251c59b1'],
             ['postgres-sequence-owner-boundaries-v1.json', 'f2cf1601eef30496a6ff0a5bfc0d88a9f2291407006d45080d82fa8728cba536'],
         ],
         'sqlite' => [],

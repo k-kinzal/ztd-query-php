@@ -56,6 +56,8 @@ A namespace with table or unowned sequence members has a static name and an ungu
 
 Sequence reconfiguration stores one typed assignment for each requested generator option. Omitted options retain the corresponding settings under the native type-change rules. An explicit default resets a bound or restarts at the recorded start. A new `START` in the same statement supplies that start. `OWNED BY NONE` removes the owning-column dependency, and a named owner resolves to an exact column in the sequence's namespace.
 
+`ALTER SEQUENCE ... SET LOGGED` and `SET UNLOGGED` retain the ordered assignments. For a list of assignments, PostgreSQL requires each action before the last to agree with the sequence's current logging mode. Analysis rejects a prefix that requests mutually incompatible modes. Changing a temporary sequence's logging mode is invalid.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php
