@@ -1,0 +1,69 @@
+{
+  "revision": "SemanticsIR/postgres-schema-view-dependencies-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "scope": "Compose persistent ordinary views over earlier ordinary views, including closed multi-step local chains and exact external view operands. Cover a standalone ordinary view reading an independently declared persistent ordinary view. Replacing a preceding same-name view and CHECK OPTION traversal across view edges have separate obligations.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-createview.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/view.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/view.c"
+  ],
+  "constructors": {
+    "CreateSchema": {
+      "type": "Schema/Namespace/CreateSchema",
+      "role": "Validate view-to-view dependencies in the native member order.",
+      "structure": "Use the existing ordered view list. Each ordinary view source declares its kind, coordinate and exact consumed names and types.",
+      "conditions": "A local ordinary-view source must identify an earlier checked ordinary view. Compare the consumed field names and native types with the preceding view's effective heading. Direct construction rejects future, missing and wrong-kind relation edges.",
+      "meaning": "Every accepted local dependency resolves by prior membership and preserves physical heading positions. The containing schema still runs tables before views. An explicitly external ordinary view has the matching external definition.",
+      "sql": "Emit the resolved absolute source name and written member heading as checked SQL. Preserve relative order among the view members."
+    },
+    "CreateView": {
+      "type": "Schema/View/CreateView",
+      "role": "Declare an ordinary persistent view over a checked query, including a resolved persistent ordinary-view operand.",
+      "structure": "The resolved source kind and coordinate, consumed query operands, effective view heading and selected options.",
+      "conditions": "A resolved ordinary-view source is persistent, cannot be the view's own name and uses the no-CHECK-OPTION placement. The existing ordinary base-table and constant VALUES rules remain in force.",
+      "meaning": "Use the later view as a dependent query of the source object's exact column types and names. Unknown literals at a persistent native view output resolve to text before a later view reads that position.",
+      "sql": "Emit the same qualified source reference and fully represented defining query. The database creates the dependency without reading the original SQL spelling."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "owners": ["effective", "named"],
+    "providers": ["constant-values", "base-table", "external-view"],
+    "widths": [2, 3],
+    "transactional": [false, true],
+    "bound": "24 exact coordinates per construction route and release. Count every analyzed and direct coordinate separately."
+  },
+  "exploration": {
+    "seeds": [28319, 41911, 73417],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 230,
+    "allowedExclusions": [],
+    "structure": "Vary view tree depth, selected earlier view, source type, field order and aliases, Boolean predicates, duplicates, NULLs, qualification, namespaces, and quoted names."
+  },
+  "observations": [
+    "Ordered effective headings, native PostgreSQL types including unknown converted to text, duplicate and NULL rows, Boolean WHERE and independent table or external view rows.",
+    "Native rewrite dependency OIDs, exact source attribute positions, preservation of the independently declared same-name decoy in an external schema, and effects across transaction reversal.",
+    "Standalone publication over a declared ordinary view and the same source interpretation by directly constructing the result."
+  ],
+  "negative": [
+    "Analyze a native missing future view with explicit local qualification (42P01).",
+    "Direct view references a later local view.",
+    "Direct view claims a base-table identity for an earlier ordinary view.",
+    "Direct view uses a wrong native field kind from an earlier view.",
+    "Direct view consumes an unavailable field of an earlier view.",
+    "Unsupported CHECK OPTION on an ordinary-view source retains the checked base-table requirement."
+  ],
+  "faults": [
+    "Reverse the view phase and fail to create a dependent view.",
+    "Redirect a dependent view edge to a matching external heading with different rows.",
+    "Use the wrong consumed source field at a compatible result position."
+  ],
+  "trust": [
+    "The disposable service uses the pinned native profile and controlled external coordinates.",
+    "The observer reads actual dependencies and native results independently from PHP view lowering. Its oracle derives rows and selected field positions from the fixed view operands."
+  ]
+}
