@@ -332,7 +332,7 @@ The [PostgreSQL qualified index operation contract](postgres-index-catalog-bindi
 
 The [fixture isolation contract](native-postgres-fixture-isolation-v2.json) renews the trusted service's disposable `ir_fixture` database before the six observers that inspect database-wide state. Their receipts identify the container and record the database identity and native catalog census. Start focused runs with a freshly launched fixture. Collecting a full matrix requires each scheduled renewal receipt.
 
-The [PostgreSQL rebuild placement contract](postgres-reindex-tablespace-v1.json) checks the resolved destination, report and mode together. Its trusted service preparation creates two separate native table spaces. The observer independently checks relation and index placement before and after the command, including the pinned catalog policy. Run `run_server_postgres_reindex_tablespace.py` through the native matrix or replay its two release observations with `combine_server_postgres_reindex_tablespace_evidence.py`.
+The [PostgreSQL rebuild placement contract](postgres-reindex-tablespace-v2.json) checks the resolved destination, report and mode together. Its trusted service preparation creates two separate native table spaces. The observer independently checks relation and index placement before and after the command, including the pinned catalog policy. Run `run_server_postgres_reindex_tablespace.py` through the native matrix or replay its two release observations with `combine_server_postgres_reindex_tablespace_evidence.py`.
 
 
 

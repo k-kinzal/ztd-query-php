@@ -120,7 +120,7 @@ CONTRACTS = {
     "postgres-reindex-database-v2.json": "026c42cda0966a04adf26b3e416e3a5af9ff37538d04454d9e9c36741438e66f",
     "postgres-reindex-exclusion-index-v2.json": "edaf3da1f4463d9e8f39e63626df943e681d83f8390ee154b41a927b7207a9c7",
     "postgres-reindex-verbose-v1.json": "cdebb346ea3a7e8d2d05fd2d8577c124e2179dbfd8adb17a17fdc09ae9777675",
-    "postgres-reindex-tablespace-v1.json": "82f3464a67fa737ccce15b085eba6d47f36a69291b4f6d1ab5d661b30f629437",
+    "postgres-reindex-tablespace-v2.json": "979def3b0e84b55d3cb2d59b1c15db302aac721667c59c05fbc3b95e48d17754",
     "postgres-index-catalog-binding-v1.json": "c2f6d6e7a8f4e72cc90fc15daef3d6d3204538ec836ddece4c9a9453467ca128",
     "postgres-local-catalog-binding-v1.json": "855a3af17e33095b5a1603198d563d69a9b6ba373b879b716629f9a5b1ffc3ce",
     "postgres-create-btree-v1.json": "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629",

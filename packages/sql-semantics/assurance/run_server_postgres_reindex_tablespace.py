@@ -20,8 +20,8 @@ from run_server_postgres_create_btree import observation, prepare
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-reindex-tablespace"
-CONTRACT_NAME = "postgres-reindex-tablespace-v1.json"
-CONTRACT = "82f3464a67fa737ccce15b085eba6d47f36a69291b4f6d1ab5d661b30f629437"
+CONTRACT_NAME = "postgres-reindex-tablespace-v2.json"
+CONTRACT = "979def3b0e84b55d3cb2d59b1c15db302aac721667c59c05fbc3b95e48d17754"
 OBSERVER = "postgres_reindex_tablespace_observer.py"
 AXES = ("roles", "destinations", "reporting", "instructionForms")
 DIRECT_AXES = AXES[:-1]
@@ -136,6 +136,7 @@ def requests(_, tag, spec):
     for seed in spec["exploration"]["seeds"]:
         for ordinal, item in enumerate(generate(tag, seed, spec["exploration"]["casesPerSeed"])):
             yield f"seed/{seed}/{ordinal}", analyzed(item), item, None
+            yield f"direct-seed/{seed}/{ordinal}", direct(item), item, None
     for ordinal, (supplied, item, boundary) in enumerate(negatives(tag)):
         yield f"negative/{ordinal}", supplied, item, boundary
 

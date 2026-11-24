@@ -581,7 +581,7 @@ def inventory(root):
                     if rule in ("ReindexStmt", "CreateTableSpaceStmt") or alternative in (
                         "opt_reindex_option_list: ( utility_option_list )", "utility_option_elem: utility_option_name utility_option_arg",
                     ):
-                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-tablespace-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-tablespace-v2.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

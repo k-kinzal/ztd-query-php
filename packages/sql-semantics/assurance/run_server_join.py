@@ -131,7 +131,8 @@ def observe_finite_id(domain, engine, response, item, request):
 
 def seed_ids(specification):
     exploration = specification["exploration"]
-    return {f"seed/{seed}/{index}" for seed in exploration["seeds"] for index in range(exploration["casesPerSeed"])}
+    budgets = (("seed", exploration["casesPerSeed"]), ("direct-seed", exploration.get("directCasesPerSeed", 0)))
+    return {f"{group}/{seed}/{index}" for group, count in budgets for seed in exploration["seeds"] for index in range(count)}
 
 
 def direct_identities(domain, engine, specification, tag):
@@ -203,7 +204,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                         seen[observe_finite_id(domain, args.engine, response, item, current)] += 1
                     elif key.startswith("direct/") and observe_direct is not None:
                         direct[observe_direct(args.engine, response, item, current)] += 1
-                    elif key.startswith("seed/"):
+                    elif key.startswith(("seed/", "direct-seed/")):
                         domain.sample_forms(forms, response, args.engine, item)
                         if sample_native_forms is not None:
                             sample_native_forms(forms, actual, args.engine, item)
@@ -214,7 +215,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                         f"server-{label}-direct-finite-incomplete", list(direct.items()))
             if observe_direct is not None or getattr(domain, "COMPLETE_SEEDS", False):
                 expected_seeds = seed_ids(specification)
-                actual_seeds = {key for key, events in ledger.events.items() if key.startswith("seed/") and events[-1] == "compared"}
+                actual_seeds = {key for key, events in ledger.events.items() if key.startswith(("seed/", "direct-seed/")) and events[-1] == "compared"}
                 require(actual_seeds == expected_seeds, f"server-{label}-seed-budget", sorted(expected_seeds ^ actual_seeds))
             require(domain.required_forms(args.engine, tag) <= forms.keys(), f"server-{label}-exploration-incomplete",
                     sorted(domain.required_forms(args.engine, tag) - forms.keys()))

@@ -68,7 +68,7 @@ def replay(path, report, specification, domain=run_server_join):
                 seen[observe_finite_id(domain, engine, response, item, request)] += 1
             elif key.startswith("direct/") and observe_direct is not None:
                 direct[observe_direct(engine, response, item, request)] += 1
-            elif key.startswith("seed/"):
+            elif key.startswith(("seed/", "direct-seed/")):
                 domain.sample_forms(forms, response, engine, item)
                 if sample_native_forms is not None:
                     sample_native_forms(forms, witness, engine, item)
