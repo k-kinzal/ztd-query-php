@@ -61,6 +61,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList as ParsedMembership;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 
 /**
@@ -70,6 +71,13 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
  */
 final class ExpressionLowering
 {
+    /**
+     * Checks SQLite's planner-sensitive expression forms while compiling an index.
+     */
+    public function __construct(private readonly bool $indexSyntax = false)
+    {
+    }
+
     /**
      * Converts a scalar expression and resolves its column references.
      *
@@ -107,7 +115,7 @@ final class ExpressionLowering
             $expression instanceof ParsedNull => new NullLiteral(),
             $expression instanceof BindParameter && $expression->prefix === ParameterPrefix::Question => new Parameter($expression->label),
             $expression instanceof TruthWord => $this->truthWord($expression, $binding),
-            $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->scalarValue($expression),
+            $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord, $expression instanceof LiteralColumn => $binding->scalarValue($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
         };
     }
@@ -118,9 +126,13 @@ final class ExpressionLowering
      */
     public function conditional(ParsedCase|FunctionCall $expression, SourceBinding $binding): CaseExpression|Coalesce
     {
+        Check::input(
+            !$this->indexSyntax || !$expression instanceof FunctionCall || strcasecmp($expression->name->value, 'IFNULL') !== 0,
+            'The native IFNULL spelling has no complete index representation.',
+        );
         return $expression instanceof ParsedCase
             ? $this->choice($expression, $binding)
-            : (new CoalesceLowering())->lower($expression, $binding);
+            : (new CoalesceLowering())->lower($expression, $binding, $this);
     }
 
     /**
@@ -280,6 +292,12 @@ final class ExpressionLowering
             Affinity::Text => CastTarget::Text,
             Affinity::Blob => CastTarget::Blob,
         };
+        $written = $expression->target;
+        Check::input(
+            !$this->indexSyntax || ($written !== null && count($written->words) === 1 && $written->words[0]->bare()
+                && $written->words[0]->name->value === $target->value && $written->arguments === []),
+            'This native CAST spelling has no complete index representation.',
+        );
 
         return new CastExpression($target, $this->lower($expression->operand, $binding));
     }

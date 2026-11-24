@@ -539,6 +539,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Alter\\AddColumn'] = "ALTER TABLE $table ADD COLUMN added TEXT COLLATE NOCASE DEFAULT 'value'";
         $queries['Schema\\Alter\\AddGeneratedColumn'] = "ALTER TABLE $table ADD total INTEGER AS (id + 7) STORED";
         $queries['Schema\\Alter\\DropColumn'] = 'ALTER TABLE removable DROP COLUMN OLD';
+        $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
         $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
@@ -582,6 +583,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $semantics->context([
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.indexed_rows (code TEXT, id INTEGER)',
+                'CREATE TABLE temp.indexed_rows (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE)',
             ]);
         }
         $result = $semantics->analyze($sql, $activeContext);
@@ -1243,6 +1250,23 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
+            $term = $result->terms[0];
+            $keys = [&$term];
+            $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex(
+                $result->schema, $result->index, $result->table, $result->heading, $keys,
+                $result->where, $result->unique, $result->ifNotExists,
+            );
+            $term = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm(new SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0));
+            $expression = $detached->terms[0]->expression;
+            if (!$expression instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$detached->where instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership) {
+                throw new RuntimeException('The installed index lost its key and predicate roles.');
+            }
+            $details['createIndex'] = [$result->schema->value, $result->index->value, $result->table->value,
+                $expression->slot, $detached->terms[0]->descending, $detached->unique, $detached->ifNotExists,
+                array_column($detached->where->bindings, 'label'), $detached->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

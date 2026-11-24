@@ -1,0 +1,103 @@
+{
+  "revision": "SemanticsIR/sqlite-create-index-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Exact index constructors, ordered scoped key and predicate validation, and regular compiled publication.",
+  "rules": {
+    "Schema/Index/CreateIndex::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'An index requires a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($index->key(), 'sqlite_') && !str_starts_with($table->key(), 'sqlite_'), 'An index cannot use the reserved SQLite namespace.');",
+        "$columns = Check::listOf($heading, Identifier::class, 'An index requires a nonempty ordered declared heading.', 1);",
+        "$keys = Check::listOf($terms, IndexTerm::class, 'An index requires a nonempty ordered key list.', 1);",
+        "Check::input(count($columns) <= 2000 && count($keys) <= 2000, 'An index and its declared heading must fit the 2,000-column profile.');",
+        "$seen = [];",
+        "foreach ($columns as $column) {",
+        "    $name = $column->key();",
+        "    Check::input(!isset($seen[$name]), 'An index requires distinct declared column names.');",
+        "    $seen[$name] = true;",
+        "}",
+        "$operands = [];",
+        "foreach ($keys as $key) {",
+        "    $operands[] = [$key->expression, 0, 1];",
+        "}",
+        "if ($where !== null) {",
+        "    $operands[] = [$where, 0, 1];",
+        "}",
+        "(new ExpressionScope())->check([count($columns)], $operands, false);",
+        "$this->heading = $columns;",
+        "$this->terms = $keys;"
+      ]
+    },
+    "Schema/Index/CreateIndex::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Index/CreateIndex::toString": {
+      "common": [
+        "$expressions = new SelectSql(preserveEmptyMembership: true);",
+        "$source = new DefinitionSource($this->heading);",
+        "$keys = [];",
+        "foreach ($this->terms as $term) {",
+        "    $keys[] = $expressions->expression($term->expression, $source) . ($term->descending ? ' DESC' : ' ASC');",
+        "}",
+        "$where = $this->where === null ? '' : ' WHERE ' . $expressions->expression($this->where, $source);",
+        "",
+        "return 'CREATE ' . ($this->unique ? 'UNIQUE ' : '') . 'INDEX ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '')",
+        "    . $this->schema->quoted() . '.' . $this->index->quoted() . ' ON ' . $this->table->quoted()",
+        "    . ' (' . implode(', ', $keys) . ')' . $where;"
+      ]
+    },
+    "Schema/Index/CreateIndexLowering::lower": {
+      "common": [
+        "$context = $operation->context;",
+        "$comparison = NameComparison::AsciiInsensitive;",
+        "Check::input(",
+        "    $context->relationNames === $comparison && $context->columnNames === $comparison",
+        "        && isset($context->searchPath[1]) && $comparison->equal($context->searchPath[0]->value, 'temp')",
+        "        && $comparison->equal($context->searchPath[1]->value, 'main'),",
+        "    'CREATE INDEX requires SQLite identifier comparison and schema search order.',",
+        ");",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "Check::input(",
+        "    $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable && $resolution->table->complete,",
+        "    'CREATE INDEX requires a resolved ordinary table with a complete heading.',",
+        ");",
+        "$table = $resolution->table;",
+        "$names = [];",
+        "foreach ($table->columns as $column) {",
+        "    $names[] = new Identifier($column->name->value);",
+        "}",
+        "Check::input($names !== [], 'CREATE INDEX requires a declared table heading.');",
+        "$binding = new SourceBinding($operation, $statement, $names);",
+        "$expressions = new ExpressionLowering(indexSyntax: true);",
+        "$terms = [];",
+        "foreach ($statement->terms as $term) {",
+        "    Check::input($term->nulls === null, 'SQLite index keys cannot specify NULLS FIRST or NULLS LAST.');",
+        "    $expression = $expressions->lower($term->expression, $binding);",
+        "    Check::input(!$expression instanceof Parameter, 'An index expression cannot use a live parameter.');",
+        "    $terms[] = new IndexTerm($expression, $term->direction === SortDirection::Descending);",
+        "}",
+        "$where = $statement->where === null ? null : $expressions->lower($statement->where, $binding);",
+        "Check::input(!$where instanceof Parameter, 'A partial index cannot use a live parameter.');",
+        "",
+        "return new CreateIndex(",
+        "    new Identifier(($table->name->schema ?? $context->declarationSchema)->value),",
+        "    new Identifier($statement->name->name->value),",
+        "    new Identifier($table->name->name->value),",
+        "    $names,",
+        "    $terms,",
+        "    $where,",
+        "    $statement->unique,",
+        "    $statement->ifNotExists,",
+        ");"
+      ]
+    },
+    "Schema/Index/IndexTerm::__construct": {
+      "common": [
+        "$core = $expression instanceof CollatedExpression ? $expression->operand : $expression;",
+        "Check::input(!$core instanceof TextLiteral, 'A string in the native index name position must resolve to a declared column.');"
+      ]
+    }
+  }
+}

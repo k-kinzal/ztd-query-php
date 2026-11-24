@@ -706,6 +706,8 @@ The implicit appended CHECK fixture uses checked comparisons and observes failur
 
 The column removal fixture binds the declared old slot and checks local keys, conditions and generated dependencies before publication. It independently compares the compacted catalog, ordered typed rows, rowid aliases, integrity, later writes and rollback. It also observes native index rewriting under temp-table shadowing. Run `run_sqlite_drop_column.py` with the same SQLite fixture options. [SQLite column removal contract](sqlite-drop-column-v3.json)
 
+The index fixture compares a scoped ordinary or unique index and its optional partial expression. It observes ordered keys, collation, key type, NULL and duplicates, forced index reads, catalog state, numbered parameters and rollback. Run `run_sqlite_create_index.py` with the same SQLite fixture options. [SQLite index contract](sqlite-create-index-v4.json)
+
 ## SQLite literal defaults
 
 The [default record](sqlite-defaults-v4.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.

@@ -73,6 +73,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropView;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage as GeneratedStorage;
@@ -318,7 +320,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -743,6 +745,38 @@ function directSchemaColumn(array $slot): TableColumn
     );
 }
 
+function directCreateIndex(array $input): CreateIndex
+{
+    return new CreateIndex(
+        new Identifier($input['schema']),
+        new Identifier($input['index']),
+        new Identifier($input['table']),
+        array_map(static fn ($name) => is_string($name) ? new Identifier($name) : $name, $input['heading']),
+        array_map(static fn ($term) => is_array($term) ? new IndexTerm(operand($term[0]), $term[1]) : $term, $input['terms']),
+        $input['where'] === null ? null : operand($input['where']),
+        $input['unique'],
+        $input['ifNotExists'],
+    );
+}
+
+function observeCreateIndex(CreateIndex $value, bool $render): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-index',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'index' => $value->index->value,
+        'table' => $value->table->value,
+        'heading' => array_map(static fn (Identifier $name): string => $name->value, $value->heading),
+        'terms' => array_map(static fn (IndexTerm $term): array => [observeOperand($term->expression), $term->descending], $value->terms),
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'unique' => $value->unique,
+        'ifNotExists' => $value->ifNotExists,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
 function directDropColumn(array $input): DropColumn
 {
     return new DropColumn(
@@ -829,6 +863,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
+            ($input['operation'] ?? null) === 'create-index' => directCreateIndex($input),
             ($input['operation'] ?? null) === 'drop-column' => directDropColumn($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
@@ -845,6 +880,9 @@ function runCase(array $input): array
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     }
 
+    if ($value instanceof CreateIndex) {
+        return observeCreateIndex($value, ($input['probe'] ?? null) !== 'create-index-construction');
+    }
     if ($value instanceof DropColumn) {
         return observeDropColumn($value, ($input['probe'] ?? null) !== 'drop-column-construction');
     }

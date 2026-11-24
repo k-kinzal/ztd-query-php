@@ -14,6 +14,7 @@ function nativeBoundaryContract(string $dialect): array
     $records = match ($dialect) {
         'sqlite' => [
             ['sqlite-rename-boundaries-v2.json', 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3'],
+            ['sqlite-create-index-boundaries-v1.json', '0a0c16a74cda0d7598ad696581a4db0cbbe9050423e4512a75e0d042f54a2769'],
             ['sqlite-drop-column-boundaries-v1.json', 'cdb8c0184c1950dc37897c17c43a427e17216eceb66d27a54ed7beb0bb43b01e'],
             ['sqlite-add-column-boundaries-v5.json', 'b33bcc1f10e3cca71f4dfc4ce1b5e2098a4fc817abfb41acd78c212b5c2c7c76'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
@@ -22,8 +23,8 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-wildcard-boundaries-v4.json', '299d27d56b6190fbb5bc9e1c89704579155cdb1bf083b0bae5aa230577911c00'],
             ['sqlite-insert-slots-boundaries-v5.json', '55d984c88686949361c74660945cc67450c02a86b6a69c53aec6f079f46f87c0'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
-            ['sqlite-scalar-boundaries-v19.json', 'b35b867d0ef98bd06ad47f87d225b84fb26a6e334d797433d6c618b3d1db492d'],
-            ['sqlite-default-boundaries-v12.json', 'f90647e1f52d04d254da47c35202ba9370cf16911d659c2818f687b1545630bd'],
+            ['sqlite-scalar-boundaries-v20.json', '1cbde51d30ab9950ec89541685b352e7fec523192290c17a01c7d3a023ab8fc4'],
+            ['sqlite-default-boundaries-v13.json', '41a0a4d1dfaa73edf40cb5b8fafb702130fc0ce17a930661f13aaa3e03936b29'],
             ['sqlite-drop-view-boundaries-v1.json', '565bcb84c952123e8e1c311606be91b0f0e7a04e63833aa025ea883852df1f02'],
             ['sqlite-create-view-boundaries-v4.json', '98fe27cbdbf1c468c1c633c8449ad89002257aaa2826fd1e9af60f114f11caaa'],
             ['sqlite-mutation-returning-boundaries-v3.json', 'bf2ac57e17e98eeedb1b078271a5f02c7daef17aa3c33339af6e7909d64d350b'],
@@ -173,7 +174,7 @@ function checkNativeBoundaries(
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\NotNullConflict', 'Ir\\Schema\\DefaultLowering', 'Statement\\Type\\NumberSign', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow',
             'Ir\\Mutation\\UpdateConflict', 'Statement\\Expression\\ColumnUse', 'Statement\\Expression\\DoubleQuotedWord', 'Statement\\Query\\TableStar', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord', 'Statement\\Schema\\Table\\TableOptionKind', 'Statement\\Mutation\\MutationTarget',
-            'Ir\\Schema\\Alter\\RenameColumn', 'Ir\\Schema\\Alter\\RenameTable', 'Ir\\Schema\\Alter\\AlterTargetLowering', 'Ir\\Schema\\Alter\\DropColumn', 'Ir\\Schema\\Alter\\DropMember',
+            'Ir\\Schema\\Alter\\RenameColumn', 'Ir\\Schema\\Alter\\RenameTable', 'Ir\\Schema\\Alter\\AlterTargetLowering', 'Ir\\Schema\\Alter\\DropColumn', 'Ir\\Schema\\Alter\\DropMember', 'Ir\\Schema\\Index\\CreateIndex', 'Ir\\Schema\\Index\\IndexTerm',
             'Ir\\Schema\\CreateColumnLowering', 'Statement\\Schema\\AlterAddColumn', 'Model\\Statement\\Type\\Known',
             'Model\\Statement\\Declaration\\RelationKind', 'Model\\Statement\\Reference\\Table\\DeclaredTable',
             'Statement\\Schema\\AlterRenameColumn', 'Statement\\Schema\\AlterRenameTable',

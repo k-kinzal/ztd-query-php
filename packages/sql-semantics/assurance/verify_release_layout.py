@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v86.json"
-CONTRACT = "a6c1bd8192e97a913fbbc9fefaf89dcc52615c40209bbdae99e2a0544865d342"
+CONTRACT_NAME = "release-layout-v87.json"
+CONTRACT = "143c133f4b9490b39d0d9915808dd0aadea2f30e7feba39a34c2d4051eeebcb6"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,12 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Index\\CreateIndex"):
+            require(item.get("createIndex") == [
+                "temp", "indexed_tag", "indexed_rows", 1, True, True, True, ["09", "1"],
+                'CREATE UNIQUE INDEX IF NOT EXISTS "temp"."indexed_tag" ON "indexed_rows" ("code" DESC) '
+                'WHERE ((CASE WHEN ?09 THEN 0 WHEN ?1 THEN 0 END) NOT IN ())',
+            ] and item["sql"] == item["createIndex"][-1], "installed-sqlite-create-index-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

@@ -51,7 +51,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
  * found at the expression that holds it and at the query itself; the inside
  * of a subquery is not examined, as SQLite stops at the subquery. Terminates: the
  * expression is walked once with an explicit stack. Empty membership in
- * DEFAULT, CHECK and generated expressions discards its left operand before these
+ * a schema expression discards its left operand before these
  * semantic limits apply. Its lexical registrations survive separately.
  * Source: https://sqlite.org/lang_createtable.html#check_constraints,
  * https://sqlite.org/lang_createtable.html#the_default_clause,
@@ -140,8 +140,7 @@ final class Limits
     public function rejected(Scalar $expression, DefinitionPosition $position): array
     {
         $found = [];
-        $discard = $position === DefinitionPosition::CheckConstraint || $position === DefinitionPosition::GeneratedColumn;
-        foreach ($this->nodes($expression, $discard) as $node) {
+        foreach ($this->nodes($expression, true) as $node) {
             $construct = $this->classify($node);
             if ($construct !== null && in_array($construct, self::REJECTED[$position->name], true) && !in_array($construct, $found, true)) {
                 $found[] = $construct;

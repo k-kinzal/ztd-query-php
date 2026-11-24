@@ -133,6 +133,14 @@ final class SelectSqlTest extends TestCase
         self::assertSame('0', $renderer->foldedMembership(new FoldedMembership(false)));
     }
 
+    public function testFoldedMembershipRetainsItsNativeIndexShapeWithoutBindings(): void
+    {
+        $renderer = new SelectSql(preserveEmptyMembership: true);
+
+        self::assertSame('(0 NOT IN ())', $renderer->foldedMembership(new FoldedMembership(true)));
+        self::assertSame('(0 IN ())', $renderer->foldedMembership(new FoldedMembership(false)));
+    }
+
     public function testColumnKeepsTheCheckedOccurrenceAndSlot(): void
     {
         $from = new TableSource(new Identifier('main'), new Identifier('accounts'), [new Identifier('id'), new Identifier('tenant')]);

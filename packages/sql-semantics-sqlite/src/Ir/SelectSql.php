@@ -42,6 +42,13 @@ final class SelectSql
     private const CTE_NAME = '"__ztd_cte"';
 
     /**
+     * Retains empty membership syntax when emitting a native index definition.
+     */
+    public function __construct(private readonly bool $preserveEmptyMembership = false)
+    {
+    }
+
+    /**
      * Renders the SELECT, the join chain, the filter and the ordering in clause order.
      */
     public function render(Select $select, bool $requireWhere = false): string
@@ -215,6 +222,10 @@ final class SelectSql
     public function foldedMembership(FoldedMembership $expression): string
     {
         if ($expression->bindings === []) {
+            if ($this->preserveEmptyMembership) {
+                return $expression->matches ? '(0 NOT IN ())' : '(0 IN ())';
+            }
+
             return $expression->matches ? '1' : '0';
         }
         $branches = [];

@@ -399,6 +399,16 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Alter\\DropMember'] = ['__construct'];
     $roots[] = 'Schema\\Alter\\DropColumn';
     $internal[] = 'Schema\\Alter\\DropColumnLowering';
+    $indexOperands = array_values(array_diff($operands, ['Parameter']));
+    $properties['Schema\\Index\\CreateIndex'] = [
+        'schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier'], 'heading' => ['array'],
+        'terms' => ['array'], 'where' => [...$indexOperands, 'null'], 'unique' => ['bool'], 'ifNotExists' => ['bool'],
+    ];
+    $properties['Schema\\Index\\IndexTerm'] = ['expression' => $indexOperands, 'descending' => ['bool']];
+    $methods['Schema\\Index\\CreateIndex'] = $methods['Select'];
+    $methods['Schema\\Index\\IndexTerm'] = ['__construct'];
+    $roots[] = 'Schema\\Index\\CreateIndex';
+    $internal[] = 'Schema\\Index\\CreateIndexLowering';
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
@@ -1059,6 +1069,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropRelationLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateIndex => (new \\' . $prefix . 'Schema\\Index\\CreateIndexLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateView => (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
@@ -1120,8 +1131,9 @@ try {
     }
     $bindings = match ($dialect) {
         'sqlite' => [
-            ['sqlite-drop-column-binding-v1.json', '7ec48bed5da24d0aa6174f51dd5d4a46a336f3c63291e0fa731c26a937e7193f', 'Column removal binding'],
-            ['sqlite-folded-binding-sources-v5.json', 'f4359e72a52ca5ddd90e535671ab49a386c5c9aaef7f034d425923a62f82c334', 'Folded binding'],
+            ['sqlite-create-index-binding-v1.json', '1a41e92624fe1473383b7239fe79abb28048f4c1674e62d1248b91560450031f', 'Index binding'],
+            ['sqlite-drop-column-binding-v2.json', '646ee03d7cc6edc19ec64b800fd947105ff187363c8060025bda77e2b66f3f5e', 'Column removal binding'],
+            ['sqlite-folded-binding-sources-v6.json', '899bc660712ee6508953c31ea9ccd99cb43c663d75f32159a00658db97c60422', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1152,9 +1164,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v51.json';
+    $storagePath = __DIR__ . '/value-storage-v52.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'da88ab19f6561bd317176588e16abd7891d5d25d4573d70164653ea1b41e6da4',
+        hash_file('sha256', $storagePath) === '6cdf01c362f749327433b58ccf4f3b8e5baaa5ff9f625dc4be5eb8b9713214a3',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1193,6 +1205,20 @@ try {
         requireShape(count($classes) === 1 && $classes[0]->namespacedName->toString() === $prefix . $short, "Unexpected declared type in $short");
         $class = $classes[0];
         $observed[] = $short;
+        $sqliteMode = match ($short) {
+            'SelectSql' => 'preserveEmptyMembership',
+            'ExpressionLowering' => 'indexSyntax',
+            default => null,
+        };
+        if ($dialect === 'sqlite' && $sqliteMode !== null) {
+            $parameters = $class->getMethod('__construct')?->params ?? [];
+            $parameter = $parameters[0] ?? null;
+            requireShape(count($parameters) === 1 && $parameter->var->name === $sqliteMode
+                && $parameter->type instanceof PhpParser\Node\Identifier && $parameter->type->toString() === 'bool'
+                && $parameter->flags === (Stmt\Class_::MODIFIER_PRIVATE | Stmt\Class_::MODIFIER_READONLY)
+                && $parameter->default instanceof Expr\ConstFetch && $parameter->default->name->toLowerString() === 'false'
+                && !$parameter->byRef && !$parameter->variadic, "Unexpected SQLite index form parameter in $short");
+        }
         if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn') {
             $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
             $system = $constants[0]->consts[0] ?? null;
@@ -1267,6 +1293,7 @@ try {
                 'Schema\\Generation\\GeneratedLowering' => 'Schema\\Generation\\ColumnGeneration',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Schema\\Alter\\DropColumnLowering' => 'Schema\\Alter\\DropColumn',
+                'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
