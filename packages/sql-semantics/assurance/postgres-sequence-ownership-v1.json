@@ -1,0 +1,89 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-ownership-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "extends": "postgres-create-sequence-v3.json",
+  "scope": "A standalone native CREATE SEQUENCE with one resolved automatic owner-column dependency, using an eligible owner relation in its own namespace.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createsequence.html",
+    "https://www.postgresql.org/docs/17/sql-createsequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/sequence.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/sequence.c"
+  ],
+  "constructors": {
+    "SequenceOwner": {
+      "type": "Schema/Sequence/SequenceOwner",
+      "role": "Exact external relation and column identity for an automatic sequence dependency.",
+      "structure": "Immutable decoded namespace, relation and column identifiers; one native eligible relation kind.",
+      "conditions": "The coordinate is absolute. Session-relative placement uses the current pg_temp namespace. The external interpretation supplies the same declared relation and column under the same authorization.",
+      "meaning": "An automatic dependency on the selected native attribute, including an eligible system attribute when present.",
+      "sql": "Independently quote all three coordinates."
+    },
+    "SequenceOwnerKind": {
+      "type": "Schema/Sequence/SequenceOwnerKind",
+      "role": "A native kind that can receive a declared sequence dependency.",
+      "structure": "Ordinary table, foreign table, view, or partitioned table.",
+      "conditions": "Each case describes the corresponding native relation kind.",
+      "meaning": "Select the eligible attachment role and its exact external interpretation."
+    },
+    "CreateSequence": {
+      "type": "Schema/Sequence/CreateSequence",
+      "role": "The fully checked sequence generator with an optional automatic dependency.",
+      "structure": "The previous checked sequence value with an optional SequenceOwner.",
+      "conditions": "The owner and declaration use the same resolved namespace. The previous construction conditions continue to apply.",
+      "meaning": "Create the same generator and record the selected column dependency when supplied. PostgreSQL applies effective authorization equality and subsequent dependency deletion.",
+      "sql": "Emit a fully qualified OWNED BY clause when an owner is present."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "binding": [
+    "Resolve the first native eligible relation name in the written schema or visible search path, without skipping earlier incompatible kinds.",
+    "Verify native catalog qualification and bind the decoded declared column. Reject missing or ambiguous static targets before publication.",
+    "Derive the exact eligible relation kind, including partitioned tables. Preserve declared system attributes that can own a sequence.",
+    "Check the exact namespace equality at the owning sequence boundary. Owner role equality at execution is a native authorization condition.",
+    "Distinguish OWNED BY NONE from an unresolved selector and preserve duplicate-option rejection."
+  ],
+  "finite": {
+    "ownerRoles": ["table", "foreign", "view", "partitioned", "temporary-table"],
+    "columnRoles": ["leading", "trailing"],
+    "fixation": ["relative", "schema", "catalog"],
+    "guarded": [false, true],
+    "transactional": [false, true],
+    "bound": "120 analyzed and 120 directly constructed coordinates per release. Relative, schema-qualified and validated local-catalog syntax must resolve to the same target in the paired direct observations."
+  },
+  "exploration": {
+    "seeds": [4909, 28643, 64661],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 180,
+    "allowedExclusions": [],
+    "structure": "Vary column names and positions, decoded identifier quoting, typed generator defaults and limits, each owner relation kind, native namespace precedence and guard occupancy."
+  },
+  "observations": [
+    "Exact owner kind, namespace, relation and attribute name; generator shape, all prior unowned effects and actual auto dependency identity and attribute number.",
+    "Dependence on deletion of the selected attribute or view; unrelated same-name objects and unrelated attributes remain effective; rollback restores the dependency.",
+    "Guarded preexisting relations retain ownership. Native runtime authorization failures retain the other objects and report SQLSTATE 55000."
+  ],
+  "negativePolicy": "The former unsupported owned-by-column witness becomes a positive with its exact declared owner. An unresolved owner and independent wrong-kind, wrong-namespace and wrong-attribute witnesses retain construction boundary coverage.",
+  "negative": [
+    "Unresolved owning table, unresolved column or ambiguous relation binding.",
+    "Owner relation in another namespace or native catalog.",
+    "A materialized view or index at the selected earlier coordinate.",
+    "Malformed one-part or excessive ownership name.",
+    "Repeated OWNED BY choices.",
+    "Direct owner from the wrong resolved namespace."
+  ],
+  "faults": [
+    "Discard the automatic dependency.",
+    "Attach to the wrong existing named attribute.",
+    "Attach to a same-named competing relation."
+  ],
+  "open": [
+    "Nested CREATE SCHEMA references that depend on unrelated existing namespaces, ownership of identity sequences, ALTER SEQUENCE and guarded inputs whose invalid operands are skipped by a live existing target."
+  ],
+  "trust": [
+    "Exact PostgreSQL process_owned_by semantics and native PostgreSQL dependency observations.",
+    "Closed PHP shape, declaration lookup and typed column construction."
+  ]
+}
