@@ -32,6 +32,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\DropRestrictions;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Index\ConstraintIndexes;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
@@ -125,7 +126,7 @@ final class Platform
     }
 
     /**
-     * Identifies the parsed operand edges discarded by SQLite's empty membership rule.
+     * Identifies the parsed operand edges SQLite does not resolve.
      *
      * @param list<object> $objects The already audited syntax graph
      * @return array<int, string>
@@ -136,6 +137,9 @@ final class Platform
         foreach ($objects as $object) {
             if ($object instanceof InList && $object->items === []) {
                 $discarded[spl_object_id($object)] = 'operand';
+            }
+            if ($object instanceof Vacuum && $object->ignoresDestination() && $object->into !== null) {
+                $discarded[spl_object_id($object)] = 'into';
             }
         }
 

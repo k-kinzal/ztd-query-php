@@ -54,6 +54,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\MissingMetadataTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspectionKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumDestination;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumRegistrations;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget;
@@ -356,7 +359,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Vacuum|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -855,6 +858,37 @@ function observeInventoryPragma(InventoryPragma $value): array
     ];
 }
 
+function directVacuum(array $input): Vacuum
+{
+    $role = $input['destination'];
+    $destination = match ($role[0]) {
+        'absent' => null,
+        'evaluated' => new VacuumDestination(new ValueRow(array_map(operand(...), $role[1]))),
+        'registrations' => new VacuumRegistrations(array_map(static fn (string $label): Parameter => new Parameter($label), $role[1])),
+        'wrong-registration' => new VacuumRegistrations([new TextLiteral('wrong')]),
+    };
+
+    return new Vacuum(new Identifier($input['schema']), $destination);
+}
+
+function observeVacuum(Vacuum $value): array
+{
+    $destination = $value->destination;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'vacuum',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'destination' => match (true) {
+            $destination === null => ['absent'],
+            $destination instanceof VacuumDestination => ['evaluated', array_map(observeOperand(...), $destination->expression->values)],
+            $destination instanceof VacuumRegistrations => ['registrations', array_map(static fn (Parameter $parameter): string => $parameter->label, $destination->bindings)],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
 function directHeaderPragma(array $input): HeaderPragma
 {
     $field = HeaderCookie::tryFrom($input['field']) ?? HeaderReadField::from($input['field']);
@@ -1146,6 +1180,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
                 InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
             ),
+            ($input['operation'] ?? null) === 'vacuum' => directVacuum($input),
             ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
             ($input['operation'] ?? null) === 'integrity-audit' => directIntegrityAudit($input),
             ($input['operation'] ?? null) === 'foreign-key-audit' => directForeignKeyAudit($input),
@@ -1176,6 +1211,9 @@ function runCase(array $input): array
     }
     if ($value instanceof InventoryPragma) {
         return observeInventoryPragma($value);
+    }
+    if ($value instanceof Vacuum) {
+        return observeVacuum($value);
     }
     if ($value instanceof HeaderPragma) {
         return observeHeaderPragma($value);

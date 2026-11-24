@@ -7,6 +7,7 @@ namespace Tests\Unit\Statement\Maintenance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
 use SqlSemantics\Testing\Sqlite\Inspection;
@@ -29,6 +30,13 @@ final class VacuumTest extends TestCase
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testIgnoresDestinationForTheCaseEquivalentTemporaryName(): void
+    {
+        self::assertTrue((new Vacuum(new Name('TeMp')))->ignoresDestination());
+        self::assertFalse((new Vacuum(new Name('main')))->ignoresDestination());
+        self::assertFalse((new Vacuum())->ignoresDestination());
     }
 
     public function testRenderWritesTheSchemaAndTheTarget(): void

@@ -481,6 +481,16 @@ if ($dialect === 'sqlite') {
     $roots[] = 'Maintenance\\Header\\HeaderPragma';
     $internal[] = 'Maintenance\\Header\\HeaderPragmaLowering';
     $internal[] = 'Maintenance\\Argument\\NativePragmaInteger';
+    $properties['Maintenance\\Vacuum\\Vacuum'] = [
+        'schema' => ['Identifier'], 'destination' => ['Maintenance\\Vacuum\\VacuumDestination', 'Maintenance\\Vacuum\\VacuumRegistrations', 'null'],
+    ];
+    $properties['Maintenance\\Vacuum\\VacuumDestination'] = ['expression' => ['Rows\\ValueRow']];
+    $properties['Maintenance\\Vacuum\\VacuumRegistrations'] = ['bindings' => ['array']];
+    $methods['Maintenance\\Vacuum\\Vacuum'] = $methods['Select'];
+    $methods['Maintenance\\Vacuum\\VacuumDestination'] = $methods['Maintenance\\Vacuum\\VacuumRegistrations'] = ['__construct', 'toString'];
+    $roots[] = 'Maintenance\\Vacuum\\Vacuum';
+    $internal[] = 'Maintenance\\Vacuum\\VacuumLowering';
+    $internal[] = 'Expression\\Binding\\NumberedRegistrations';
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1194,7 +1204,8 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterDropColumn => (new \\' . $prefix . 'Schema\\Alter\\DropColumnLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Analyze,'
             . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Reindex,'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Pragma => (new \\' . $prefix . 'Maintenance\\MaintenanceLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Pragma,'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Maintenance\\Vacuum => (new \\' . $prefix . 'Maintenance\\MaintenanceLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -1254,12 +1265,12 @@ try {
             ['sqlite-create-index-binding-v2.json', '518f25e19be787f59726f4d9783d029c5a77bc6c5b8bb97103aeebbba3c7fd69', 'Index binding'],
             ['sqlite-index-expression-binding-v1.json', '0f51026989e87bb830f5a9fac584794e318c410fcc85744079e38839e8e7a255', 'Native index expression binding'],
             ['sqlite-drop-column-binding-v5.json', '84c88c4604e98b0312cb9e8fff9414a167abd363010ce5393fb24b70365f92fd', 'Column removal binding'],
-            ['sqlite-drop-index-binding-v4.json', '03224813338aa5ab9f25c66c61376b9c03314b742713723f86d4053ed0f3c082', 'Index removal binding'],
-            ['sqlite-constraint-index-binding-v2.json', 'da87d3492e3fa7c2075880f8cbd394dd6ee807ce45964455ee760c27b736c38a', 'Constraint index binding'],
-            ['sqlite-reindex-binding-v3.json', 'f6c733915370ed0d540ba772ea407498cb6277b94b79e1ce3fb6119b84a307d1', 'Reindex binding'],
-            ['sqlite-analyze-statistics-binding-v3.json', '4591a5f7005e1c2b57f41c8517d099dfc2f186324d7441bb2312628338dd6331', 'Analyze statistics binding'],
-            ['sqlite-flag-pragmas-binding-v2.json', '5a9ae5af4c00d83a4f02ad2e48b6d0cf649262fee90d4d7078c746a7c8f3cf53', 'Flag pragma binding'],
-            ['sqlite-folded-binding-sources-v9.json', 'e01e268edce43e74afafaeb6f8a4ae45e715c282756a440056ed384e8910d270', 'Folded binding'],
+            ['sqlite-drop-index-binding-v5.json', '40b2f91eb574a7cc31008ff4267cf1a7207485113be2d321137a797d5ab16bfd', 'Index removal binding'],
+            ['sqlite-constraint-index-binding-v3.json', '210b07c9a80932ca1df2c0010e38ff873c892eadf2dd8da46d1850fb88687848', 'Constraint index binding'],
+            ['sqlite-reindex-binding-v4.json', '1c3281dfe3c38103a40a60adb4895906058b37df832e214e692152de49f289c5', 'Reindex binding'],
+            ['sqlite-analyze-statistics-binding-v4.json', '12a5200663460d1e044ad0f0befc7c580ca8da0dfd0d678bf4c9dea146075e1e', 'Analyze statistics binding'],
+            ['sqlite-flag-pragmas-binding-v3.json', '22bc56b01907c3b3a4305b9b81c833d70aa1dfc9617d945ecb0f2d56641d9649', 'Flag pragma binding'],
+            ['sqlite-folded-binding-sources-v10.json', 'b6fd88b517829551074b5b575b5d907988c378395fcd29568960fa6bcc3750db', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1306,9 +1317,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v52.json';
+    $storagePath = __DIR__ . '/value-storage-v53.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '6cdf01c362f749327433b58ccf4f3b8e5baaa5ff9f625dc4be5eb8b9713214a3',
+        hash_file('sha256', $storagePath) === '3980c68b7793994cfafdec31e01cf43e4cf0a2958be68a462d4b5fb44d2cbb08',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1453,6 +1464,7 @@ try {
                 'Maintenance\\Metadata\\ForeignKeyAuditLowering' => 'Maintenance\\Metadata\\ForeignKeyAudit',
                 'Maintenance\\Integrity\\IntegrityAuditLowering' => 'Maintenance\\Integrity\\IntegrityAudit',
                 'Maintenance\\Header\\HeaderPragmaLowering' => 'Maintenance\\Header\\HeaderPragma',
+                'Maintenance\\Vacuum\\VacuumLowering' => 'Maintenance\\Vacuum\\Vacuum',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
@@ -1464,7 +1476,7 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
                         'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
-                        'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex',
+                        'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex', 'Maintenance\\Vacuum\\Vacuum',
                     ], 'Unexpected SQLite maintenance publication');
             }
             if ($short === 'Maintenance\\PragmaLowering' || $short === 'Maintenance\\Metadata\\TableMetadataLowering') {
@@ -1476,6 +1488,12 @@ try {
                 $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
+            }
+            if ($short === 'Expression\\Binding\\NumberedRegistrations') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'collect' && types($members[0]->returnType, $prefix, $short) === ['array'],
+                    'Unexpected SQLite lexical registration route');
             }
             if ($short === 'Maintenance\\Argument\\NativePragmaInteger') {
                 $members = $class->getMethods();

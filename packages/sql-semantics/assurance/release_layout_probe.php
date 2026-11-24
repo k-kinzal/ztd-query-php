@@ -549,6 +549,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
         $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
         $queries['Maintenance\\Header\\HeaderPragma'] = 'PRAGMA metadata.user_version = -2147483648';
+        $queries['Maintenance\\Vacuum\\Vacuum'] = 'VACUUM archive INTO ?002';
         $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
@@ -595,6 +596,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
             ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Header\\HeaderPragma') {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
@@ -1315,6 +1322,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
+            $skipped = $semantics->analyze('VACUUM temp INTO (missing + ?011)', $activeContext);
+            $operand = $result->destination;
+            if (!$operand instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumDestination
+                || !$operand->expression->values[0] instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter
+                || !$skipped instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum
+                || !$skipped->destination instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumRegistrations) {
+                throw new RuntimeException('The installed VACUUM lost an evaluated operand or inert registration.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum($result->schema, $operand);
+            $default = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum();
+            $details['vacuum'] = [$result->schema->value, $operand->expression->values[0]->label, $rebuilt->toString(),
+                $default->toString(), $skipped->schema->value, $skipped->destination->bindings[0]->label, $skipped->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Header\\HeaderPragma') {
             $readonly = $semantics->analyze("PRAGMA temp.data_version('ignored')", $activeContext);

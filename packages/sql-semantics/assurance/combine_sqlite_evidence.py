@@ -68,6 +68,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-fk-audit-evidence", "sqlite-foreign-key-audit-v1.json", 480, 1323, 7, 6),
     Domain("semantics-ir-sqlite-integrity-audit-evidence", "sqlite-integrity-audit-v2.json", 648, 1656, 10, 7),
     Domain("semantics-ir-sqlite-header-pragmas-evidence", "sqlite-header-pragmas-v1.json", 1920, 4204, 5, 7),
+    Domain("semantics-ir-sqlite-vacuum-evidence", "sqlite-vacuum-v1.json", 384, 1060, 7, 7),
     Domain("semantics-ir-sqlite-drop-column-evidence", "sqlite-drop-column-v3.json", 1440, 1523, 20, 5),
     Domain("semantics-ir-sqlite-add-generated-column-evidence", "sqlite-add-generated-column-v1.json", 1152, 1231, 13, 6),
     Domain("semantics-ir-sqlite-generated-columns-evidence", "sqlite-generated-columns-v2.json", 96, 211, 8, 4),
