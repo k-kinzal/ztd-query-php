@@ -1,0 +1,97 @@
+{
+  "revision": "SemanticsIR/sqlite-index-metadata-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with UTF-8, the native index and table namespaces, registered collations, builtin schema catalogs and stock VFS.",
+  "scope": "The index_info and index_xinfo pragmas for explicit and automatic indexes and the native PRIMARY KEY storage of WITHOUT ROWID tables, plus established absent and omitted selectors.",
+  "additionalPublicRoots": ["Maintenance/Metadata/IndexInspection"],
+  "constructors": {
+    "Maintenance/Metadata/IndexInspection": {
+      "role": "Select SQLite's simple or extended metadata for a resolved physical index or its proved absence.",
+      "structure": "One IndexInspectionKind and a closed choice of the absolute IndexTarget or EmptyIndexMetadata.",
+      "conditions": "Find a named index before attempting the WITHOUT ROWID table alias. Check qualified and unqualified names in their native scope and reject before publication if a competing namespace is open. Derive the physical primary index identity from the exact ordinary table declaration.",
+      "meaning": "Return a fixed typed heading and the selected index's ordered key positions, with native expression and rowid sentinels. Extended metadata also includes the native sort and collation information, key flags and auxiliary columns.",
+      "externalInterpretation": "Use the same table and index identities, schema order, indexed expressions, collation implementations, and physical storage mode.",
+      "sql": "Emit the exact operation. For a resolved index use its absolute database and index coordinates. For missing or omitted inputs keep the native empty-case qualifier and specified selector.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Metadata/IndexInspectionKind": {
+      "role": "Choose SQLite's basic or extended index metadata.",
+      "structure": "A closed index_info or index_xinfo enum.",
+      "conditions": "Use native ASCII name comparison when binding a SQL request.",
+      "meaning": "Basic reports only comparison keys. Extended includes the physical auxiliary layout and exact native attributes.",
+      "externalInterpretation": "The same native storage metadata supplies the key and auxiliary values.",
+      "sql": "Emit the selected pragma name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Metadata/EmptyIndexMetadata": {
+      "role": "A native index metadata read with no selector or a checked missing selector.",
+      "structure": "Optional explicit schema Identifier and optional decoded missing name Identifier.",
+      "conditions": "With a selector, establish that no named index or primary storage table matches. A context can leave the namespaces or hidden storage fact open, in which case the analyzer rejects. With no selector a known explicit qualifier may still open temp.",
+      "meaning": "Return the exact native headings with zero data rows. Preserve the operational effect of explicit database access.",
+      "externalInterpretation": "The same closed index namespace and ordinary storage definitions establish absence in the specified scope.",
+      "sql": "Emit the optional schema and optional known absence selector as identifiers at their native positions.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "SQLite scans all eligible index namespaces before it looks up a same-named WITHOUT ROWID table. An explicit schema restricts both passes. A matching ordinary rowid table is not a fallback index.",
+    "A WITHOUT ROWID table's physical primary index has the ordinal of the first registered equivalent native constraint signature. Key comparison uses column positions and collations in order. Equivalent signatures can share storage even when declared sort directions differ. PRIMARY KEY can reuse a preceding UNIQUE index's ordinal and direction.",
+    "The named autoindex and the WITHOUT ROWID table alias resolve to the same physical index and owner. Canonical SQL uses the absolute named index. Its resolved database slot and native rows must agree with the original alias.",
+    "The extended view of a rowid index can expose an auxiliary rowid field with column index -1 and name NULL. An expression key uses -2 and name NULL, but remains a key. WITHOUT ROWID extended storage yields both ordered key and auxiliary columns.",
+    "Pragma arguments are native decoded names. Numeric grammar operands keep the resulting text and grammar MINUS, while grammar PLUS is dropped. Explicit temp verification can open the native schema even when the result is empty."
+  ],
+  "observations": [
+    "Compare exact ordered headings and rows, integer position, negative sentinels, typed NULL names, collation names, direction, primary/auxiliary flag, table and index coordinates, absence of parameters and change count.",
+    "Observe the resolved native database slot independently through the index metadata program. Compare the active schemas and temp effect for both original and emitted statements.",
+    "Compare multiple indexed relations and same-named indexes whose layouts differ. Use WITHOUT ROWID fixtures with distinct PK and UNIQUE signatures and fixtures that reuse one physical index.",
+    "Keep the raw native request and authorizer arguments. A resolved absolute rendering can use a different spelling or explicit qualifier while selecting the same native physical database slot."
+  ],
+  "finite": {
+    "operations": ["index_info", "index_xinfo"],
+    "selectors": ["none", "named", "expression", "physical-primary", "primary-table", "same-name-index-before-table", "rowid-table", "missing"],
+    "scopes": ["implicit", "main", "temp", "attached"],
+    "primaryLayouts": ["separate", "equivalent", "inline", "different-collation"],
+    "storage": ["rowid", "without-rowid"],
+    "temporary": ["unopened", "with-index"],
+    "identity": "All 1,024 operation/selector/scope/layout/storage/temp coordinates, measured from native invocation, independent fixture definitions, and a checked resulting domain or absence."
+  },
+  "exploration": {
+    "seeds": [48623, 23981, 17053],
+    "casesPerSeed": 64,
+    "timeoutSeconds": 540,
+    "allowedExclusions": [],
+    "domain": "Vary quoted attached locations, ordinary and expression-index term order, shadowing, uniqueness origin, table storage kind and equivalent key signatures. Include independently authored duplicate primary terms, an equivalent UNIQUE declared after PRIMARY KEY, inline unique precedence and numeric name operands."
+  },
+  "negative": [
+    "Unknown explicit database",
+    "Open preceding index namespace",
+    "Unproved absence in an explicitly qualified incomplete catalog",
+    "Conflicting named index declarations",
+    "Opaque automatic-index namespace",
+    "Invalid direct index selection or mutable subject"
+  ],
+  "faults": [
+    "Choose the table fallback before a real index",
+    "Discard explicit access scope for an empty metadata lookup",
+    "Count an equivalent key as a second physical index",
+    "Use a different owner or primary storage ordinal",
+    "Emit basic instead of extended headings and rows",
+    "Accept an open namespace as established index absence"
+  ],
+  "open": [
+    "Unregistered native module storage, alternative SQLite builds and their extension-specific internal indices require separate evidence.",
+    "Very long native identifiers and unsupported declaration forms remain scoped by the recorded syntax and constructor inventory."
+  ],
+  "trust": [
+    "Pinned SQLite explicit and implicit index behavior and isolated native observer.",
+    "Independent key layout and physical index identity model.",
+    "Checked identity and relative namespace proof, exact projection and staged distribution."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "b60fa3c04f65cc31303c5c87696469c1707c9c6b6d97b182d5e3bde178a6bbf6",
+    "cases": "35ce123ed43dd51ee9ec3d8080351be2cfebcb3daccafd4db53576b6a61c0ea4",
+    "routines": ["sqlite3FindIndex", "sqlite3LocateTable", "sqlite3CreateIndex", "convertToWithoutRowidTable", "PragTyp_INDEX_INFO"]
+  }
+}
