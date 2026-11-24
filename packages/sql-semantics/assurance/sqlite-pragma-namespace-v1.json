@@ -1,0 +1,1421 @@
+{
+  "profiles": {
+    "darwin": {
+      "activeNames": [
+        "analysis_limit",
+        "application_id",
+        "auto_vacuum",
+        "automatic_index",
+        "busy_timeout",
+        "cache_size",
+        "cache_spill",
+        "case_sensitive_like",
+        "cell_size_check",
+        "checkpoint_fullfsync",
+        "collation_list",
+        "compile_options",
+        "count_changes",
+        "data_version",
+        "database_list",
+        "default_cache_size",
+        "defer_foreign_keys",
+        "empty_result_callbacks",
+        "encoding",
+        "foreign_key_check",
+        "foreign_key_list",
+        "foreign_keys",
+        "freelist_count",
+        "full_column_names",
+        "fullfsync",
+        "function_list",
+        "hard_heap_limit",
+        "ignore_check_constraints",
+        "incremental_vacuum",
+        "index_info",
+        "index_list",
+        "index_xinfo",
+        "integrity_check",
+        "journal_mode",
+        "journal_size_limit",
+        "legacy_alter_table",
+        "lock_proxy_file",
+        "locking_mode",
+        "max_page_count",
+        "mmap_size",
+        "module_list",
+        "optimize",
+        "page_count",
+        "page_size",
+        "pragma_list",
+        "query_only",
+        "quick_check",
+        "read_uncommitted",
+        "recursive_triggers",
+        "reverse_unordered_selects",
+        "schema_version",
+        "secure_delete",
+        "short_column_names",
+        "shrink_memory",
+        "soft_heap_limit",
+        "synchronous",
+        "table_info",
+        "table_list",
+        "table_xinfo",
+        "temp_store",
+        "temp_store_directory",
+        "threads",
+        "trusted_schema",
+        "user_version",
+        "wal_autocheckpoint",
+        "wal_checkpoint",
+        "writable_schema"
+      ],
+      "compileOptions": [
+        "ATOMIC_INTRINSICS=1",
+        "COMPILER=clang-21.0.0",
+        "DEFAULT_AUTOVACUUM",
+        "DEFAULT_CACHE_SIZE=-2000",
+        "DEFAULT_FILE_FORMAT=4",
+        "DEFAULT_JOURNAL_SIZE_LIMIT=-1",
+        "DEFAULT_MMAP_SIZE=0",
+        "DEFAULT_PAGE_SIZE=4096",
+        "DEFAULT_PCACHE_INITSZ=20",
+        "DEFAULT_RECURSIVE_TRIGGERS",
+        "DEFAULT_SECTOR_SIZE=4096",
+        "DEFAULT_SYNCHRONOUS=2",
+        "DEFAULT_WAL_AUTOCHECKPOINT=1000",
+        "DEFAULT_WAL_SYNCHRONOUS=2",
+        "DEFAULT_WORKER_THREADS=0",
+        "DIRECT_OVERFLOW_READ",
+        "MALLOC_SOFT_LIMIT=1024",
+        "MAX_ATTACHED=10",
+        "MAX_COLUMN=2000",
+        "MAX_COMPOUND_SELECT=500",
+        "MAX_DEFAULT_PAGE_SIZE=8192",
+        "MAX_EXPR_DEPTH=1000",
+        "MAX_FUNCTION_ARG=127",
+        "MAX_LENGTH=1000000000",
+        "MAX_LIKE_PATTERN_LENGTH=50000",
+        "MAX_MMAP_SIZE=0x7fff0000",
+        "MAX_PAGE_COUNT=0xfffffffe",
+        "MAX_PAGE_SIZE=65536",
+        "MAX_SQL_LENGTH=1000000000",
+        "MAX_TRIGGER_DEPTH=1000",
+        "MAX_VARIABLE_NUMBER=32766",
+        "MAX_VDBE_OP=250000000",
+        "MAX_WORKER_THREADS=8",
+        "MUTEX_PTHREADS",
+        "SYSTEM_MALLOC",
+        "TEMP_STORE=1",
+        "THREADSAFE=1"
+      ],
+      "librarySha256": "dc101e4ba23cceb1e24b307fb3dbdd85a96bddff47e1efb98bb1b742e892da91",
+      "source": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+      "version": "3.47.2"
+    },
+    "linux": {
+      "activeNames": [
+        "analysis_limit",
+        "application_id",
+        "auto_vacuum",
+        "automatic_index",
+        "busy_timeout",
+        "cache_size",
+        "cache_spill",
+        "case_sensitive_like",
+        "cell_size_check",
+        "checkpoint_fullfsync",
+        "collation_list",
+        "compile_options",
+        "count_changes",
+        "data_version",
+        "database_list",
+        "default_cache_size",
+        "defer_foreign_keys",
+        "empty_result_callbacks",
+        "encoding",
+        "foreign_key_check",
+        "foreign_key_list",
+        "foreign_keys",
+        "freelist_count",
+        "full_column_names",
+        "fullfsync",
+        "function_list",
+        "hard_heap_limit",
+        "ignore_check_constraints",
+        "incremental_vacuum",
+        "index_info",
+        "index_list",
+        "index_xinfo",
+        "integrity_check",
+        "journal_mode",
+        "journal_size_limit",
+        "legacy_alter_table",
+        "locking_mode",
+        "max_page_count",
+        "mmap_size",
+        "module_list",
+        "optimize",
+        "page_count",
+        "page_size",
+        "pragma_list",
+        "query_only",
+        "quick_check",
+        "read_uncommitted",
+        "recursive_triggers",
+        "reverse_unordered_selects",
+        "schema_version",
+        "secure_delete",
+        "short_column_names",
+        "shrink_memory",
+        "soft_heap_limit",
+        "synchronous",
+        "table_info",
+        "table_list",
+        "table_xinfo",
+        "temp_store",
+        "temp_store_directory",
+        "threads",
+        "trusted_schema",
+        "user_version",
+        "wal_autocheckpoint",
+        "wal_checkpoint",
+        "writable_schema"
+      ],
+      "compileOptions": [
+        "ATOMIC_INTRINSICS=1",
+        "COMPILER=gcc-15.2.0",
+        "DEFAULT_AUTOVACUUM",
+        "DEFAULT_CACHE_SIZE=-2000",
+        "DEFAULT_FILE_FORMAT=4",
+        "DEFAULT_JOURNAL_SIZE_LIMIT=-1",
+        "DEFAULT_MMAP_SIZE=0",
+        "DEFAULT_PAGE_SIZE=4096",
+        "DEFAULT_PCACHE_INITSZ=20",
+        "DEFAULT_RECURSIVE_TRIGGERS",
+        "DEFAULT_SECTOR_SIZE=4096",
+        "DEFAULT_SYNCHRONOUS=2",
+        "DEFAULT_WAL_AUTOCHECKPOINT=1000",
+        "DEFAULT_WAL_SYNCHRONOUS=2",
+        "DEFAULT_WORKER_THREADS=0",
+        "DIRECT_OVERFLOW_READ",
+        "MALLOC_SOFT_LIMIT=1024",
+        "MAX_ATTACHED=10",
+        "MAX_COLUMN=2000",
+        "MAX_COMPOUND_SELECT=500",
+        "MAX_DEFAULT_PAGE_SIZE=8192",
+        "MAX_EXPR_DEPTH=1000",
+        "MAX_FUNCTION_ARG=127",
+        "MAX_LENGTH=1000000000",
+        "MAX_LIKE_PATTERN_LENGTH=50000",
+        "MAX_MMAP_SIZE=0x7fff0000",
+        "MAX_PAGE_COUNT=0xfffffffe",
+        "MAX_PAGE_SIZE=65536",
+        "MAX_SQL_LENGTH=1000000000",
+        "MAX_TRIGGER_DEPTH=1000",
+        "MAX_VARIABLE_NUMBER=32766",
+        "MAX_VDBE_OP=250000000",
+        "MAX_WORKER_THREADS=8",
+        "MUTEX_PTHREADS",
+        "SYSTEM_MALLOC",
+        "TEMP_STORE=1",
+        "THREADSAFE=1"
+      ],
+      "librarySha256": "aac54092c871f8748e91ca1e35c54652e9a47b9d7d7ba267d47994d24e38c393",
+      "source": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+      "version": "3.47.2"
+    }
+  },
+  "required": {
+    "activate_extensions": {
+      "availability": [],
+      "declaredColumns": [
+        "activate_extensions"
+      ],
+      "family": "ACTIVATE_EXTENSIONS",
+      "flags": [],
+      "nativeArgument": "0"
+    },
+    "analysis_limit": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "analysis_limit"
+      ],
+      "family": "ANALYSIS_LIMIT",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "application_id": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "application_id"
+      ],
+      "family": "HEADER_VALUE",
+      "flags": [
+        "NoColumns1",
+        "Result0"
+      ],
+      "nativeArgument": "BTREE_APPLICATION_ID"
+    },
+    "auto_vacuum": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "auto_vacuum"
+      ],
+      "family": "AUTO_VACUUM",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "automatic_index": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "automatic_index"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_AutoIndex"
+    },
+    "busy_timeout": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "timeout"
+      ],
+      "family": "BUSY_TIMEOUT",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "cache_size": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "cache_size"
+      ],
+      "family": "CACHE_SIZE",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "cache_spill": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "cache_spill"
+      ],
+      "family": "CACHE_SPILL",
+      "flags": [
+        "Result0",
+        "SchemaReq",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "case_sensitive_like": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "case_sensitive_like"
+      ],
+      "family": "CASE_SENSITIVE_LIKE",
+      "flags": [
+        "NoColumns"
+      ],
+      "nativeArgument": "0"
+    },
+    "cell_size_check": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "cell_size_check"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_CellSizeCk"
+    },
+    "checkpoint_fullfsync": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "checkpoint_fullfsync"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_CkptFullFSync"
+    },
+    "collation_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "seq",
+        "name"
+      ],
+      "family": "COLLATION_LIST",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "compile_options": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "compile_options"
+      ],
+      "family": "COMPILE_OPTIONS",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "count_changes": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "count_changes"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_CountRows"
+    },
+    "data_store_directory": {
+      "availability": [],
+      "declaredColumns": [
+        "data_store_directory"
+      ],
+      "family": "DATA_STORE_DIRECTORY",
+      "flags": [
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "data_version": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "data_version"
+      ],
+      "family": "HEADER_VALUE",
+      "flags": [
+        "ReadOnly",
+        "Result0"
+      ],
+      "nativeArgument": "BTREE_DATA_VERSION"
+    },
+    "database_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "seq",
+        "name",
+        "file"
+      ],
+      "family": "DATABASE_LIST",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "default_cache_size": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "cache_size"
+      ],
+      "family": "DEFAULT_CACHE_SIZE",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "defer_foreign_keys": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "defer_foreign_keys"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_DeferFKs"
+    },
+    "empty_result_callbacks": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "empty_result_callbacks"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_NullCallback"
+    },
+    "encoding": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "encoding"
+      ],
+      "family": "ENCODING",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "foreign_key_check": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "table",
+        "rowid",
+        "parent",
+        "fkid"
+      ],
+      "family": "FOREIGN_KEY_CHECK",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "0"
+    },
+    "foreign_key_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "id",
+        "seq",
+        "table",
+        "from",
+        "to",
+        "on_update",
+        "on_delete",
+        "match"
+      ],
+      "family": "FOREIGN_KEY_LIST",
+      "flags": [
+        "NeedSchema",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "0"
+    },
+    "foreign_keys": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "foreign_keys"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_ForeignKeys"
+    },
+    "freelist_count": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "freelist_count"
+      ],
+      "family": "HEADER_VALUE",
+      "flags": [
+        "ReadOnly",
+        "Result0"
+      ],
+      "nativeArgument": "BTREE_FREE_PAGE_COUNT"
+    },
+    "full_column_names": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "full_column_names"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_FullColNames"
+    },
+    "fullfsync": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "fullfsync"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_FullFSync"
+    },
+    "function_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "name",
+        "builtin",
+        "type",
+        "enc",
+        "narg",
+        "flags"
+      ],
+      "family": "FUNCTION_LIST",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "hard_heap_limit": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "hard_heap_limit"
+      ],
+      "family": "HARD_HEAP_LIMIT",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "ignore_check_constraints": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "ignore_check_constraints"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_IgnoreChecks"
+    },
+    "incremental_vacuum": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "incremental_vacuum"
+      ],
+      "family": "INCREMENTAL_VACUUM",
+      "flags": [
+        "NeedSchema",
+        "NoColumns"
+      ],
+      "nativeArgument": "0"
+    },
+    "index_info": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "seqno",
+        "cid",
+        "name"
+      ],
+      "family": "INDEX_INFO",
+      "flags": [
+        "NeedSchema",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "0"
+    },
+    "index_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "seq",
+        "name",
+        "unique",
+        "origin",
+        "partial"
+      ],
+      "family": "INDEX_LIST",
+      "flags": [
+        "NeedSchema",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "0"
+    },
+    "index_xinfo": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "seqno",
+        "cid",
+        "name",
+        "desc",
+        "coll",
+        "key"
+      ],
+      "family": "INDEX_INFO",
+      "flags": [
+        "NeedSchema",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "1"
+    },
+    "integrity_check": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "integrity_check"
+      ],
+      "family": "INTEGRITY_CHECK",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "0"
+    },
+    "journal_mode": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "journal_mode"
+      ],
+      "family": "JOURNAL_MODE",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq"
+      ],
+      "nativeArgument": "0"
+    },
+    "journal_size_limit": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "journal_size_limit"
+      ],
+      "family": "JOURNAL_SIZE_LIMIT",
+      "flags": [
+        "Result0",
+        "SchemaReq"
+      ],
+      "nativeArgument": "0"
+    },
+    "legacy_alter_table": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "legacy_alter_table"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_LegacyAlter"
+    },
+    "lock_proxy_file": {
+      "availability": [
+        "darwin"
+      ],
+      "declaredColumns": [
+        "lock_proxy_file"
+      ],
+      "family": "LOCK_PROXY_FILE",
+      "flags": [
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "lock_status": {
+      "availability": [],
+      "declaredColumns": [
+        "database",
+        "status"
+      ],
+      "family": "LOCK_STATUS",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "locking_mode": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "locking_mode"
+      ],
+      "family": "LOCKING_MODE",
+      "flags": [
+        "Result0",
+        "SchemaReq"
+      ],
+      "nativeArgument": "0"
+    },
+    "max_page_count": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "max_page_count"
+      ],
+      "family": "PAGE_COUNT",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq"
+      ],
+      "nativeArgument": "0"
+    },
+    "mmap_size": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "mmap_size"
+      ],
+      "family": "MMAP_SIZE",
+      "flags": [],
+      "nativeArgument": "0"
+    },
+    "module_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "name"
+      ],
+      "family": "MODULE_LIST",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "optimize": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "optimize"
+      ],
+      "family": "OPTIMIZE",
+      "flags": [
+        "Result1",
+        "NeedSchema"
+      ],
+      "nativeArgument": "0"
+    },
+    "page_count": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "page_count"
+      ],
+      "family": "PAGE_COUNT",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq"
+      ],
+      "nativeArgument": "0"
+    },
+    "page_size": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "page_size"
+      ],
+      "family": "PAGE_SIZE",
+      "flags": [
+        "Result0",
+        "SchemaReq",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "parser_trace": {
+      "availability": [],
+      "declaredColumns": [
+        "parser_trace"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_ParserTrace"
+    },
+    "pragma_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "name"
+      ],
+      "family": "PRAGMA_LIST",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "query_only": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "query_only"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_QueryOnly"
+    },
+    "quick_check": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "quick_check"
+      ],
+      "family": "INTEGRITY_CHECK",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "0"
+    },
+    "read_uncommitted": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "read_uncommitted"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_ReadUncommit"
+    },
+    "recursive_triggers": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "recursive_triggers"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_RecTriggers"
+    },
+    "reverse_unordered_selects": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "reverse_unordered_selects"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_ReverseOrder"
+    },
+    "schema_version": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "schema_version"
+      ],
+      "family": "HEADER_VALUE",
+      "flags": [
+        "NoColumns1",
+        "Result0"
+      ],
+      "nativeArgument": "BTREE_SCHEMA_VERSION"
+    },
+    "secure_delete": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "secure_delete"
+      ],
+      "family": "SECURE_DELETE",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "short_column_names": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "short_column_names"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_ShortColNames"
+    },
+    "shrink_memory": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "shrink_memory"
+      ],
+      "family": "SHRINK_MEMORY",
+      "flags": [
+        "NoColumns"
+      ],
+      "nativeArgument": "0"
+    },
+    "soft_heap_limit": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "soft_heap_limit"
+      ],
+      "family": "SOFT_HEAP_LIMIT",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "sql_trace": {
+      "availability": [],
+      "declaredColumns": [
+        "sql_trace"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_SqlTrace"
+    },
+    "stats": {
+      "availability": [],
+      "declaredColumns": [
+        "tbl",
+        "idx",
+        "wdth",
+        "hght",
+        "flgs"
+      ],
+      "family": "STATS",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq"
+      ],
+      "nativeArgument": "0"
+    },
+    "synchronous": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "synchronous"
+      ],
+      "family": "SYNCHRONOUS",
+      "flags": [
+        "NeedSchema",
+        "Result0",
+        "SchemaReq",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "table_info": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "cid",
+        "name",
+        "type",
+        "notnull",
+        "dflt_value",
+        "pk"
+      ],
+      "family": "TABLE_INFO",
+      "flags": [
+        "NeedSchema",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "0"
+    },
+    "table_list": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "schema",
+        "name",
+        "type",
+        "ncol",
+        "wr",
+        "strict"
+      ],
+      "family": "TABLE_LIST",
+      "flags": [
+        "NeedSchema",
+        "Result1"
+      ],
+      "nativeArgument": "0"
+    },
+    "table_xinfo": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "cid",
+        "name",
+        "type",
+        "notnull",
+        "dflt_value",
+        "pk",
+        "hidden"
+      ],
+      "family": "TABLE_INFO",
+      "flags": [
+        "NeedSchema",
+        "Result1",
+        "SchemaOpt"
+      ],
+      "nativeArgument": "1"
+    },
+    "temp_store": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "temp_store"
+      ],
+      "family": "TEMP_STORE",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "temp_store_directory": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "temp_store_directory"
+      ],
+      "family": "TEMP_STORE_DIRECTORY",
+      "flags": [
+        "NoColumns1"
+      ],
+      "nativeArgument": "0"
+    },
+    "threads": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "threads"
+      ],
+      "family": "THREADS",
+      "flags": [
+        "Result0"
+      ],
+      "nativeArgument": "0"
+    },
+    "trusted_schema": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "trusted_schema"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_TrustedSchema"
+    },
+    "user_version": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "user_version"
+      ],
+      "family": "HEADER_VALUE",
+      "flags": [
+        "NoColumns1",
+        "Result0"
+      ],
+      "nativeArgument": "BTREE_USER_VERSION"
+    },
+    "vdbe_addoptrace": {
+      "availability": [],
+      "declaredColumns": [
+        "vdbe_addoptrace"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_VdbeAddopTrace"
+    },
+    "vdbe_debug": {
+      "availability": [],
+      "declaredColumns": [
+        "vdbe_debug"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_SqlTrace|SQLITE_VdbeListing|SQLITE_VdbeTrace"
+    },
+    "vdbe_eqp": {
+      "availability": [],
+      "declaredColumns": [
+        "vdbe_eqp"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_VdbeEQP"
+    },
+    "vdbe_listing": {
+      "availability": [],
+      "declaredColumns": [
+        "vdbe_listing"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_VdbeListing"
+    },
+    "vdbe_trace": {
+      "availability": [],
+      "declaredColumns": [
+        "vdbe_trace"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_VdbeTrace"
+    },
+    "wal_autocheckpoint": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "wal_autocheckpoint"
+      ],
+      "family": "WAL_AUTOCHECKPOINT",
+      "flags": [],
+      "nativeArgument": "0"
+    },
+    "wal_checkpoint": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "busy",
+        "log",
+        "checkpointed"
+      ],
+      "family": "WAL_CHECKPOINT",
+      "flags": [
+        "NeedSchema"
+      ],
+      "nativeArgument": "0"
+    },
+    "writable_schema": {
+      "availability": [
+        "darwin",
+        "linux"
+      ],
+      "declaredColumns": [
+        "writable_schema"
+      ],
+      "family": "FLAG",
+      "flags": [
+        "Result0",
+        "NoColumns1"
+      ],
+      "nativeArgument": "SQLITE_WriteSchema|SQLITE_NoSchemaError"
+    }
+  },
+  "revision": "SemanticsIR/sqlite-pragma-namespace-1",
+  "sourceArchiveSha256": "aa73d8748095808471deaa8e6f34aa700e37f2f787f4425744f53fdd15a89c40",
+  "sourceSha256": "b947b84b8c45d1513ecf2df8f46bf099d9f6d7a0acac0928061ddbb4ea6fe54b",
+  "status": "fixed-baseline-pending-human-review"
+}
