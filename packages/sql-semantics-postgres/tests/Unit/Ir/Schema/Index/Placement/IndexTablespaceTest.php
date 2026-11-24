@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Ir\Schema\Index\Placement;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 
+#[CoversClass(IndexTablespace::class)]
 final class IndexTablespaceTest extends TestCase
 {
     public function testPrefixPreservesQuotedNameAndReporting(): void

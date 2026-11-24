@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Ir\Schema\Index\Placement;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
+#[CoversClass(IndexTablespaceLowering::class)]
 final class IndexTablespaceLoweringTest extends TestCase
 {
     private const RELATIONS = [
