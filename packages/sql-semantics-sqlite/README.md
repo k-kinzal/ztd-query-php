@@ -50,6 +50,8 @@ The pager pragmas `page_size`, `page_count` and `max_page_count` return `PagePra
 
 The reclamation pragmas return `AutoVacuum` or `IncrementalVacuum`. An automatic mode request can affect a later file `VACUUM`. An incremental request keeps its effective positive limit and can return one zero-column row per reclaimed page.
 
+The cache pragmas return `CacheSize`, `DefaultCacheSize` or `CacheSpill`. A persistent size request changes the live capacity during preparation and writes the cache cookie when SQLite steps the statement. A spill threshold can also change the connection-wide switch. Both effects remain explicit in the value.
+
 `VACUUM` and `VACUUM INTO` return `Vacuum` with a resolved database and, where applicable, a source-free filename expression. SQLite skips rebuilding the temporary database and evaluating its filename. The IR retains any numbered slots and marker names that SQLite registers in that expression.
 
 `ATTACH` and `DETACH` return typed connection commands. A constant detachment name resolves against the analysis context. Numbered selector parameters keep their binding slots. The IR keeps the filename and key operands in order and carries no connection state.

@@ -44,6 +44,13 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\EmptyIndexMetadata;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheAmount;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCachePages;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillMode;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillThreshold;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderCookie;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderInteger;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
@@ -371,7 +378,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|Vacuum|Attach|Detach|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -901,6 +908,53 @@ function observePagePragma(PagePragma $value): array
     ];
 }
 
+function directSpillChange(?array $value): SpillMode|SpillThreshold|null
+{
+    if ($value === null) {
+        return null;
+    }
+
+    return match ($value[0]) {
+        'switch' => SpillMode::from($value[1]),
+        'threshold' => new SpillThreshold(new CacheAmount($value[1]), SpillMode::from($value[2])),
+    };
+}
+
+function directCachePragma(array $input): CacheSize|DefaultCacheSize|CacheSpill
+{
+    $schema = new Identifier($input['schema']);
+    $value = $input['value'];
+
+    return match ($input['kind']) {
+        'cache_size' => new CacheSize($schema, $value === null ? null : new CacheAmount($value)),
+        'default_cache_size' => new DefaultCacheSize($schema, $value === null ? null : new DefaultCachePages($value)),
+        'cache_spill' => new CacheSpill($schema, directSpillChange($value)),
+    };
+}
+
+function observeSpillChange(SpillMode|SpillThreshold|null $change): ?array
+{
+    return match (true) {
+        $change === null => null,
+        $change instanceof SpillMode => ['switch', $change->value],
+        $change instanceof SpillThreshold => ['threshold', $change->amount->value, $change->mode->value],
+    };
+}
+
+function observeCachePragma(CacheSize|DefaultCacheSize|CacheSpill $value): array
+{
+    [$name, $operand] = match (true) {
+        $value instanceof CacheSize => ['cache_size', $value->amount?->value],
+        $value instanceof DefaultCacheSize => ['default_cache_size', $value->capacity?->pages],
+        $value instanceof CacheSpill => ['cache_spill', observeSpillChange($value->change)],
+    };
+
+    return [
+        'status' => 'constructed', 'operation' => 'cache-pragma', 'profile' => $value->profileId(),
+        'kind' => $name, 'schema' => $value->schema->value, 'value' => $operand, 'sql' => $value->toString(),
+    ];
+}
+
 function directReclaimPragma(array $input): AutoVacuum|IncrementalVacuum
 {
     $schema = new Identifier($input['schema']);
@@ -1286,6 +1340,7 @@ function runCase(array $input): array
             ),
             ($input['operation'] ?? null) === 'page-pragma' => directPagePragma($input),
             ($input['operation'] ?? null) === 'reclaim-pragma' => directReclaimPragma($input),
+            ($input['operation'] ?? null) === 'cache-pragma' => directCachePragma($input),
             ($input['operation'] ?? null) === 'connection-command' => directConnectionCommand($input),
             ($input['operation'] ?? null) === 'vacuum' => directVacuum($input),
             ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
@@ -1321,6 +1376,9 @@ function runCase(array $input): array
     }
     if ($value instanceof PagePragma) {
         return observePagePragma($value);
+    }
+    if ($value instanceof CacheSize || $value instanceof DefaultCacheSize || $value instanceof CacheSpill) {
+        return observeCachePragma($value);
     }
     if ($value instanceof AutoVacuum || $value instanceof IncrementalVacuum) {
         return observeReclaimPragma($value);

@@ -525,6 +525,21 @@ if ($dialect === 'sqlite') {
     $enumCases['Maintenance\\Reclaim\\VacuumMode'] = ['None' => '0', 'Full' => '1', 'Incremental' => '2'];
     array_push($roots, 'Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum');
     $internal[] = 'Maintenance\\Reclaim\\ReclaimPragmaLowering';
+    $properties['Maintenance\\Cache\\CacheSize'] = ['schema' => ['Identifier'], 'amount' => ['?Maintenance\\Cache\\CacheAmount']];
+    $properties['Maintenance\\Cache\\DefaultCacheSize'] = ['schema' => ['Identifier'], 'capacity' => ['?Maintenance\\Cache\\DefaultCachePages']];
+    $properties['Maintenance\\Cache\\CacheSpill'] = [
+        'schema' => ['Identifier'], 'change' => ['Maintenance\\Cache\\SpillMode', 'Maintenance\\Cache\\SpillThreshold', 'null'],
+    ];
+    $properties['Maintenance\\Cache\\CacheAmount'] = ['value' => ['int']];
+    $properties['Maintenance\\Cache\\DefaultCachePages'] = ['pages' => ['int']];
+    $properties['Maintenance\\Cache\\SpillThreshold'] = ['amount' => ['Maintenance\\Cache\\CacheAmount'], 'mode' => ['Maintenance\\Cache\\SpillMode']];
+    $properties['Maintenance\\Cache\\SpillMode'] = $methods['Maintenance\\Cache\\SpillMode'] = [];
+    $methods['Maintenance\\Cache\\CacheSize'] = $methods['Maintenance\\Cache\\DefaultCacheSize'] = $methods['Maintenance\\Cache\\CacheSpill'] = $methods['Select'];
+    $methods['Maintenance\\Cache\\CacheAmount'] = $methods['Maintenance\\Cache\\DefaultCachePages'] = ['__construct'];
+    $methods['Maintenance\\Cache\\SpillThreshold'] = ['__construct', 'sqlArgument'];
+    $enumCases['Maintenance\\Cache\\SpillMode'] = ['Enabled' => 'ON', 'Disabled' => 'OFF'];
+    array_push($roots, 'Maintenance\\Cache\\CacheSize', 'Maintenance\\Cache\\CacheSpill', 'Maintenance\\Cache\\DefaultCacheSize');
+    array_push($internal, 'Maintenance\\Cache\\CachePragmaLowering', 'Maintenance\\Cache\\SpillArgument');
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1526,7 +1541,7 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
+                        'Maintenance\\Analyze', 'Maintenance\\Cache\\CacheSize', 'Maintenance\\Cache\\CacheSpill', 'Maintenance\\Cache\\DefaultCacheSize', 'Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
                         'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
                         'Maintenance\\Metadata\\TableListing', 'Maintenance\\Page\\PagePragma', 'Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum', 'Maintenance\\Reindex', 'Maintenance\\Vacuum\\Vacuum',
                     ], 'Unexpected SQLite maintenance publication');
@@ -1537,7 +1552,7 @@ try {
                 $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
                 $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
                 $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
-                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots, 'Maintenance\\Page\\PagePragma', 'Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum'] : $metadataRoots;
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\Cache\\CacheSize', 'Maintenance\\Cache\\CacheSpill', 'Maintenance\\Cache\\DefaultCacheSize', 'Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots, 'Maintenance\\Page\\PagePragma', 'Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum'] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
             }
@@ -1551,6 +1566,19 @@ try {
                     $method = $member->name->toString();
                     requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
                         && types($member->returnType, $prefix, $short) === ($expected[$method] ?? null), 'Unexpected SQLite connection route');
+                }
+            }
+            if ($short === 'Maintenance\\Cache\\CachePragmaLowering' || $short === 'Maintenance\\Cache\\SpillArgument') {
+                $members = $class->getMethods();
+                $expected = $short === 'Maintenance\\Cache\\CachePragmaLowering'
+                    ? ['lower' => ['Maintenance\\Cache\\CacheSize', 'Maintenance\\Cache\\CacheSpill', 'Maintenance\\Cache\\DefaultCacheSize'],
+                        'capacity' => ['Maintenance\\Cache\\CacheSize'], 'persistent' => ['Maintenance\\Cache\\DefaultCacheSize'],
+                        'spilling' => ['Maintenance\\Cache\\CacheSpill']]
+                    : ['read' => ['Maintenance\\Cache\\SpillMode', 'Maintenance\\Cache\\SpillThreshold']];
+                requireShape(count($members) === count($expected), 'Unexpected SQLite cache route count');
+                foreach ($members as $member) {
+                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === ($expected[$member->name->toString()] ?? null), 'Unexpected SQLite cache route');
                 }
             }
             if ($short === 'Maintenance\\Reclaim\\ReclaimPragmaLowering') {

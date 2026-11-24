@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v103.json"
-CONTRACT = "29cbc901194c2ec3d67a0f93cc179f53eefdf54954d5bb1b59e958a9bc3b66b8"
+CONTRACT_NAME = "release-layout-v104.json"
+CONTRACT = "745e9e7abea46e0fdc398579df4fc75c2129083e3b24a24f348e7209578240b0"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -624,6 +624,19 @@ def verify_probe(raw, catalog):
             require(item.get("vacuum") == [
                 "archive", "002", expect, 'VACUUM "main"', "temp", "011", 'VACUUM "temp" INTO (0 IN (?011))',
             ] and item["sql"] == expect, "installed-sqlite-vacuum-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Cache\\CacheSize"):
+            expected = 'PRAGMA "archive".cache_size(-128)'
+            require(item.get("cacheSize") == ["archive", -128, expected] and item["sql"] == expected,
+                    "installed-sqlite-live-cache-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Cache\\DefaultCacheSize"):
+            expected = 'PRAGMA "archive".default_cache_size(2147483647)'
+            require(item.get("defaultCacheSize") == ["archive", 2147483647, expected] and item["sql"] == expected,
+                    "installed-sqlite-default-cache-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Cache\\CacheSpill"):
+            expected = """PRAGMA "archive".cache_spill('+256')"""
+            require(item.get("cacheSpill") == [
+                "archive", 256, "ON", expected, 256, "OFF", 'PRAGMA "archive".cache_spill(256)',
+            ] and item["sql"] == expected, "installed-sqlite-cache-spill-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Reclaim\\AutoVacuum"):
             expected = 'PRAGMA "archive".auto_vacuum(2)'
             require(item.get("autoVacuum") == [

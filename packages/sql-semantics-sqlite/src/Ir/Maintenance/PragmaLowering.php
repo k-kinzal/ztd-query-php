@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance;
 
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CachePragmaLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderCookie;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragmaLowering;
@@ -44,7 +48,7 @@ final class PragmaLowering
      * Dispatches a known SQLite operation by its exact native identity.
      * @throws InvalidConstruction When the selected pragma family has no complete representation
      */
-    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum
+    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill
     {
         $name = Comparison::AsciiInsensitive->fold($statement->name->name->value);
         $kind = TableInspectionKind::tryFrom($name);
@@ -64,6 +68,10 @@ final class PragmaLowering
         $page = PagePragmaKind::tryFrom($name);
         if ($page !== null) {
             return (new PagePragmaLowering())->lower($operation, $statement, $page);
+        }
+
+        if (in_array($name, ['cache_size', 'default_cache_size', 'cache_spill'], true)) {
+            return (new CachePragmaLowering())->lower($operation, $statement, $name);
         }
 
         if ($name === 'auto_vacuum') {

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance;
 
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
@@ -32,7 +35,7 @@ final class MaintenanceLowering
     /**
      * Binds the command using its native maintenance rules.
      */
-    public function lower(BoundStatement $operation, ParsedAnalyze|ParsedReindex|Pragma|ParsedVacuum $statement): Analyze|Reindex|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|Vacuum
+    public function lower(BoundStatement $operation, ParsedAnalyze|ParsedReindex|Pragma|ParsedVacuum $statement): Analyze|Reindex|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum
     {
         return match (true) {
             $statement instanceof ParsedAnalyze => (new AnalyzeLowering())->lower($operation, $statement),

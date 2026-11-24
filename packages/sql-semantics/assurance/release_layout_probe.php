@@ -549,6 +549,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
         $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
         $queries['Maintenance\\Header\\HeaderPragma'] = 'PRAGMA metadata.user_version = -2147483648';
+        $queries['Maintenance\\Cache\\CacheSize'] = 'PRAGMA ARCHIVE.cache_size(-128)';
+        $queries['Maintenance\\Cache\\DefaultCacheSize'] = 'PRAGMA ARCHIVE.default_cache_size(-2147483648)';
+        $queries['Maintenance\\Cache\\CacheSpill'] = "PRAGMA ARCHIVE.cache_spill('+256')";
         $queries['Maintenance\\Reclaim\\AutoVacuum'] = 'PRAGMA ARCHIVE.auto_vacuum(INCREMENTAL)';
         $queries['Maintenance\\Reclaim\\IncrementalVacuum'] = 'PRAGMA ARCHIVE.incremental_vacuum(2)';
         $queries['Maintenance\\Page\\PagePragma'] = 'PRAGMA archive.max_page_count(4294967295)';
@@ -609,6 +612,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $configured->context([]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && str_starts_with($role, 'Maintenance\\Cache\\')) {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
                 searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
             );
@@ -1382,6 +1391,25 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $default = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum();
             $details['vacuum'] = [$result->schema->value, $operand->expression->values[0]->label, $rebuilt->toString(),
                 $default->toString(), $skipped->schema->value, $skipped->destination->bindings[0]->label, $skipped->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize) {
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize($result->schema, $result->amount);
+            $details['cacheSize'] = [$copy->schema->value, $copy->amount?->value, $copy->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize) {
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize($result->schema, $result->capacity);
+            $details['defaultCacheSize'] = [$copy->schema->value, $copy->capacity?->pages, $copy->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill) {
+            $disabled = $semantics->analyze('PRAGMA ARCHIVE.cache_spill(256)', $activeContext);
+            if (!$result->change instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillThreshold
+                || !$disabled instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill
+                || !$disabled->change instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillThreshold) {
+                throw new RuntimeException('The installed cache spill threshold lost its independent effect.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill($result->schema, $result->change);
+            $details['cacheSpill'] = [$result->schema->value, $result->change->amount->value, $result->change->mode->value,
+                $copy->toString(), $disabled->change->amount->value, $disabled->change->mode->value, $disabled->toString()];
         }
         if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum) {
             $reset = $semantics->analyze('PRAGMA auto_vacuum(3)', $activeContext);
