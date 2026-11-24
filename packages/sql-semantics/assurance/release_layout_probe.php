@@ -910,6 +910,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $concurrent->mode->value, $concurrent->toString(), $rejected,
             ];
         }
+        if ($platform === 'PostgreSql' && in_array($role, [
+            'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
+            'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\Scope\\ReindexSchema',
+            'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
+        ], true)) {
+            $suffix = substr($result->toString(), strlen('REINDEX '));
+            $reported = $semantics->analyze('REINDEX (VERBOSE FALSE, VERBOSE ON) ' . $suffix, $activeContext);
+            $quiet = $semantics->analyze('REINDEX (VERBOSE, VERBOSE OFF) ' . $suffix, $activeContext);
+            $details['postgresReindexVerbose'] = [
+                $reported::class === $result::class, $reported->verbose, $reported->toString(),
+                $quiet::class === $result::class, $quiet->verbose, $quiet->toString(),
+            ];
+        }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexIndex') {
             $absolute = $semantics->analyzeAll(
                 'REINDEX (CONCURRENTLY ON, CONCURRENTLY OFF) INDEX public.removal; REINDEX INDEX removal;',

@@ -34,6 +34,7 @@ final class ReindexPartitionTable implements SemanticsIR
         public readonly PartitionRebuildKind $kind,
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        public readonly bool $verbose = false,
     ) {
         Check::input(!IndexSchemas::system($target->schema->value), 'A partition rebuild requires an application schema.');
     }
@@ -51,6 +52,6 @@ final class ReindexPartitionTable implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();
+        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();
     }
 }

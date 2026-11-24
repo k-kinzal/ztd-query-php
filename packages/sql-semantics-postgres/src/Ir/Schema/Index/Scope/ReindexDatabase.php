@@ -29,6 +29,7 @@ final class ReindexDatabase implements SemanticsIR
         public readonly Identifier $database,
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        public readonly bool $verbose = false,
     ) {
     }
 
@@ -45,6 +46,6 @@ final class ReindexDatabase implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX DATABASE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->database->quoted();
+        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'DATABASE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->database->quoted();
     }
 }

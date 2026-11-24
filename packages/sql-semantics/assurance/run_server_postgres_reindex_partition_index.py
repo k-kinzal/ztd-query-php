@@ -175,7 +175,7 @@ def faults(_, tag):
     root = directory + "ReindexIndex.php"
     ordinary = trial(tag, "root-nested", False, False, "qualified")
     concurrent = trial(tag, "branch-remote", True, False, "qualified")
-    render = "return 'REINDEX INDEX ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+    render = "return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'INDEX ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
     return [
         RenderFault("postgres-partition-index-publish-wrong-role", directory + "IndexTargetLowering.php",
                     "IndexDeclarationKind::PartitionBranch => new PartitionIndexReference($schema, $index, $table, PartitionRebuildKind::Branch)",

@@ -25,6 +25,7 @@ def replay(path, report, specification, domain=run_server_join):
     observe_direct = getattr(domain, "direct_finite_id", None)
     seeds = set()
     observe_rejection = getattr(domain, 'observe_rejection', None)
+    sample_native_forms = getattr(domain, "sample_native_forms", None)
     refusals = Counter()
 
     def matched(key, kind):
@@ -68,6 +69,8 @@ def replay(path, report, specification, domain=run_server_join):
                 direct[observe_direct(engine, response, item, request)] += 1
             elif key.startswith("seed/"):
                 domain.sample_forms(forms, response, engine, item)
+                if sample_native_forms is not None:
+                    sample_native_forms(forms, witness, engine, item)
                 require(key not in seeds, f"server-{label}-duplicate-seed-case", key)
                 seeds.add(key)
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))

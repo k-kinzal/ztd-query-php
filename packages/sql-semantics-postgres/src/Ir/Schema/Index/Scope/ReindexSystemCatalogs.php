@@ -27,6 +27,7 @@ final class ReindexSystemCatalogs implements SemanticsIR
     public function __construct(
         public readonly Identifier $database,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        public readonly bool $verbose = false,
     ) {
     }
 
@@ -43,6 +44,6 @@ final class ReindexSystemCatalogs implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX SYSTEM ' . $this->database->quoted();
+        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'SYSTEM ' . $this->database->quoted();
     }
 }

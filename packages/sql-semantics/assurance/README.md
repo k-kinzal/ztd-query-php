@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v43.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v71.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -306,6 +306,10 @@ The [PostgreSQL partition table rebuild contract](postgres-reindex-partition-tab
 The [PostgreSQL named partition index rebuild contract](postgres-reindex-partition-index-v1.json) compares a resolved named branch or leaf index, its exact attachment lineage, and the auxiliary storage of its owning table. The leaf-only and branch-wide cases preserve unrelated index storage and verify the native transaction differences. Run `run_server_postgres_reindex_partition_index.py` on both pinned releases and replay with `combine_server_postgres_reindex_partition_index_evidence.py`.
 
 The [PostgreSQL database rebuild contract](postgres-reindex-database-v2.json) compares current-database and pinned system selectors against the full [stock index census](postgres-stock-reindex-catalog-v1.json). The observer measures independently named native relations, shared and auxiliary catalogs, same-session temporary relations and the exact exclusion-index warning. Run `run_server_postgres_reindex_database.py` on both pinned releases and replay with `combine_server_postgres_reindex_database_evidence.py`.
+
+The [PostgreSQL exclusion-index contract](postgres-reindex-exclusion-index-v2.json) checks the exact constraint and physical index link, rollback and exclusion enforcement with duplicate keys, NULL and a partial predicate. Run `run_server_postgres_reindex_exclusion_index.py` on both pinned releases and replay with `combine_server_postgres_reindex_exclusion_index_evidence.py`.
+
+The [PostgreSQL rebuild reporting contract](postgres-reindex-verbose-v1.json) checks effective `VERBOSE` through each resolved rebuild root and both public construction routes. The native observer records raw diagnostics, compares the report order and target names for each release, and measures changes to physical index identities. The resource-use comparison retains the structure of native CPU and elapsed-time details. The ledger includes the raw durations. Run `run_server_postgres_reindex_verbose.py` on both pinned releases and replay with `combine_server_postgres_reindex_verbose_evidence.py`.
 
 
 

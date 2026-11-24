@@ -28,6 +28,7 @@ final class ReindexTable implements SemanticsIR
         public readonly ReindexTableTarget $target,
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        public readonly bool $verbose = false,
     ) {
     }
 
@@ -44,6 +45,6 @@ final class ReindexTable implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();
+        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();
     }
 }

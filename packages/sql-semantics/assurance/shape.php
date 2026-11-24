@@ -1068,7 +1068,7 @@ if ($dialect !== 'sqlite') {
         $exclusionIndex = 'Schema\\Index\\ExclusionIndexReference';
         $partitionIndex = 'Schema\\Index\\Partition\\PartitionIndexReference';
         $roots[] = $reindex;
-        $properties[$reindex] = ['target' => [$constraintIndex, $exclusionIndex, $indexReference, $partitionIndex], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindex] = ['target' => [$constraintIndex, $exclusionIndex, $indexReference, $partitionIndex], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'verbose' => ['bool']];
         $properties[$constraintIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier']];
         $properties[$exclusionIndex] = $properties[$constraintIndex];
         $methods[$constraintIndex] = $methods[$exclusionIndex] = ['__construct', 'quoted'];
@@ -1076,13 +1076,13 @@ if ($dialect !== 'sqlite') {
         $reindexSchema = 'Schema\\Index\\Scope\\ReindexSchema';
         $roots[] = $reindexSchema;
         $internal[] = 'Schema\\Index\\Scope\\ReindexSchemaLowering';
-        $properties[$reindexSchema] = ['schema' => ['Identifier'], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindexSchema] = ['schema' => ['Identifier'], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'verbose' => ['bool']];
         $methods[$reindexSchema] = ['__construct', 'profileId', 'toString'];
         $reindexDatabase = 'Schema\\Index\\Scope\\ReindexDatabase';
         $reindexSystem = 'Schema\\Index\\Scope\\ReindexSystemCatalogs';
         array_push($roots, $reindexDatabase, $reindexSystem);
         $internal[] = 'Schema\\Index\\Scope\\ReindexDatabaseLowering';
-        $properties[$reindexSystem] = ['database' => ['Identifier'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindexSystem] = ['database' => ['Identifier'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'verbose' => ['bool']];
         $properties[$reindexDatabase] = $properties[$reindexSystem] + ['mode' => [$rebuildMode]];
         $methods[$reindexDatabase] = $methods[$reindexSystem] = ['__construct', 'profileId', 'toString'];
         $reindexTable = 'Schema\\Index\\ReindexTable';
@@ -1090,7 +1090,7 @@ if ($dialect !== 'sqlite') {
         $reindexKind = 'Schema\\Index\\ReindexTableKind';
         $roots[] = $reindexTable;
         $internal[] = 'Schema\\Index\\ReindexTableLowering';
-        $properties[$reindexTable] = ['target' => [$reindexOwner], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$reindexTable] = ['target' => [$reindexOwner], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'verbose' => ['bool']];
         $properties[$reindexOwner] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'kind' => [$reindexKind]];
         $methods[$reindexTable] = ['__construct', 'profileId', 'toString'];
         $methods[$reindexOwner] = ['__construct', 'quoted'];
@@ -1101,7 +1101,7 @@ if ($dialect !== 'sqlite') {
         $properties[$partitionIndex] = ['schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier'], 'kind' => [$partitionRebuildKind]];
         $methods[$partitionIndex] = ['__construct', 'quoted'];
         $roots[] = $partitionRebuild;
-        $properties[$partitionRebuild] = ['target' => ['Schema\\TableName'], 'kind' => [$partitionRebuildKind], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$partitionRebuild] = ['target' => ['Schema\\TableName'], 'kind' => [$partitionRebuildKind], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'verbose' => ['bool']];
         $methods[$partitionRebuild] = ['__construct', 'profileId', 'toString'];
         $properties[$partitionRebuildKind] = $methods[$partitionRebuildKind] = [];
         $enumCases[$partitionRebuildKind] = ['Branch' => 'branch', 'Leaf' => 'leaf'];
@@ -1501,7 +1501,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v11.json', '2b078e034033de50a95a7e4bfc07faa5ee204cef8fac79cb26072f77b550cf14', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v12.json', '57f8c260db394e12c7f40ea2c053f160e0571582246aa56627db45d444abfe6e', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],

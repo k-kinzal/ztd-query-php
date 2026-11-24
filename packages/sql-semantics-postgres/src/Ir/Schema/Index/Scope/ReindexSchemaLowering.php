@@ -31,15 +31,14 @@ final class ReindexSchemaLowering
         $profile = $context->profile;
         Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive, 'REINDEX SCHEMA requires the native PostgreSQL index profile.');
         Check::input($statement->target === ReindexTarget::Schema && $statement->object instanceof Name, 'REINDEX SCHEMA needs one schema name.');
-        foreach ($statement->options as $option) {
-            Check::input($option->option() === 'concurrently', 'A complete REINDEX SCHEMA accepts only concurrency options.');
-        }
+        Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
         Check::input((new IndexBinding())->known($context, $statement->object), 'REINDEX SCHEMA requires a declared schema.');
 
         return new ReindexSchema(
             new Identifier($statement->object->value),
             $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
             $profile->grammar,
+            $statement->reportsProgress(),
         );
     }
 }

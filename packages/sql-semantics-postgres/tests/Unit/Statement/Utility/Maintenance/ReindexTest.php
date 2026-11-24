@@ -62,6 +62,30 @@ final class ReindexTest extends TestCase
         self::assertTrue($concurrent->requestsConcurrentBuild());
     }
 
+    public function testReportsProgressUsesTheLastVerboseOption(): void
+    {
+        $inspection = new Inspection();
+        $enabled = $inspection->diagnose('REINDEX (VERBOSE 0, VERBOSE ON) INDEX app.lookup')->statement;
+        $disabled = $inspection->diagnose('REINDEX (VERBOSE, VERBOSE OFF) INDEX app.lookup')->statement;
+
+        self::assertInstanceOf(Reindex::class, $enabled);
+        self::assertInstanceOf(Reindex::class, $disabled);
+        self::assertTrue($enabled->reportsProgress());
+        self::assertFalse($disabled->reportsProgress());
+    }
+
+    public function testNamesTablespaceDetectsTheSeparateDestination(): void
+    {
+        $inspection = new Inspection();
+        $move = $inspection->diagnose('REINDEX (VERBOSE, TABLESPACE other) INDEX app.lookup')->statement;
+        $rebuild = $inspection->diagnose('REINDEX (VERBOSE) INDEX app.lookup')->statement;
+
+        self::assertInstanceOf(Reindex::class, $move);
+        self::assertInstanceOf(Reindex::class, $rebuild);
+        self::assertTrue($move->namesTablespace());
+        self::assertFalse($rebuild->namesTablespace());
+    }
+
     public function testDeriveStatementReportsASequence(): void
     {
         $semantics = new Inspection();

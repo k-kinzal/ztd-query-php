@@ -31,6 +31,7 @@ final class ReindexSchema implements SemanticsIR
         public readonly Identifier $schema,
         public readonly IndexRebuildMode $mode = IndexRebuildMode::Standard,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        public readonly bool $verbose = false,
     ) {
         Check::input(
             $schema->value !== 'pg_temp' && !IndexSchemas::system($schema->value) && !IndexSchemas::sessionInternal($schema->value),
@@ -51,6 +52,6 @@ final class ReindexSchema implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'REINDEX SCHEMA ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->schema->quoted();
+        return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'SCHEMA ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->schema->quoted();
     }
 }

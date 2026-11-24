@@ -100,7 +100,7 @@ def negatives(version):
     yield {**missing, "complete": False}, refusal("cannot infer absence in an open index namespace")
     yield {**request, "declarations": [*request["declarations"], request["declarations"][3]]}, refusal("conflicting index declarations")
     yield {**request, "sql": 'REINDEX DATABASE'}, refusal("requires a declared current database")
-    yield {**request, "sql": 'REINDEX (TABLESPACE pg_default) INDEX "fixture"."cover"'}, refusal("accepts only concurrency options")
+    yield {**request, "sql": 'REINDEX (TABLESPACE pg_default) INDEX "fixture"."cover"'}, refusal("cannot move indexes to a tablespace")
     yield {**request, "sql": """REINDEX (CONCURRENTLY 'yes') INDEX "fixture"."cover\""""}, refusal("concurrently", "SemanticException")
     yield {**request, "sql": 'REINDEX INDEX "other"."fixture"."cover"'}, refusal("requires the matching current database")
 

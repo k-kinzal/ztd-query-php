@@ -82,7 +82,7 @@ def negatives(tag):
     for name, command in NATIVE_REFUSALS.items():
         reason = refusal("concurrent", "SemanticException") if name == "concurrent-system" else refusal("must select the declared current database")
         yield {**good, "sql": command}, {**item, "nativeRejection": name}, reason
-    yield {**good, "sql": "REINDEX (TABLESPACE pg_default) DATABASE ir_fixture"}, None, refusal("accepts only concurrency options")
+    yield {**good, "sql": "REINDEX (TABLESPACE pg_default) DATABASE ir_fixture"}, None, refusal("cannot move indexes to a tablespace")
 
 
 def rejected_finite_ids(_, _tag):
@@ -227,9 +227,9 @@ def faults(_, tag):
     concurrent = trial(tag, "concurrent-database", "explicit", False, True)
     catalogs = trial(tag, "system-catalogs", "explicit", False, True)
     return [
-        RenderFault("postgres-database-rebuild-system", database, "'REINDEX DATABASE '", "'REINDEX SYSTEM '",
+        RenderFault("postgres-database-rebuild-system", database, "'DATABASE '", "'SYSTEM '",
                     ordinary, "meaning-mismatch"),
-        RenderFault("postgres-system-rebuild-application", system, "'REINDEX SYSTEM '", "'REINDEX DATABASE '",
+        RenderFault("postgres-system-rebuild-application", system, "'SYSTEM '", "'DATABASE '",
                     catalogs, "meaning-mismatch"),
         RenderFault("postgres-database-rebuild-discard-mode", database, "$this->mode === IndexRebuildMode::Concurrent", "false",
                     concurrent, "meaning-mismatch"),

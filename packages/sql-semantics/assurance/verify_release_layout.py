@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v124.json"
-CONTRACT = "54eb452db6fa96079d7ae9bcb3a6be3e8e92eb835f714686481461468836ebd9"
+CONTRACT_NAME = "release-layout-v125.json"
+CONTRACT = "4f17c625d1d1518351ba09666dee5b63bbc81aa656ee7c459beb52b693abbe89"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -302,6 +302,15 @@ def verify_probe(raw, catalog):
                      ' WHERE (NOT ("ready"))')
             require(item.get("postgresIndexBooleanValue") == ["NOT", 2, field, field, True],
                     "installed-postgres-index-boolean-value-mismatch", item)
+        if item["platform"] == "PostgreSql" and item["role"] in {
+            "Schema\\Index\\ReindexIndex", "Schema\\Index\\ReindexTable",
+            "Schema\\Index\\Partition\\ReindexPartitionTable", "Schema\\Index\\Scope\\ReindexSchema",
+            "Schema\\Index\\Scope\\ReindexDatabase", "Schema\\Index\\Scope\\ReindexSystemCatalogs",
+        }:
+            ordinary = item["sql"]
+            require(ordinary.startswith("REINDEX ") and item.get("postgresReindexVerbose") == [
+                True, True, "REINDEX (VERBOSE) " + ordinary.removeprefix("REINDEX "), True, False, ordinary,
+            ], "installed-postgres-rebuild-reporting", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\ReindexIndex"):
             rebuilt = 'REINDEX INDEX CONCURRENTLY "pg_temp"."removal"'
             require(item.get("postgresReindexIndex") == [

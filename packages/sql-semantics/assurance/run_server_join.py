@@ -146,6 +146,7 @@ def execute(args, specification, tag, worker, db, domain=None):
     seen, direct, forms = Counter(), Counter(), Counter()
     observe_direct = getattr(domain, "direct_finite_id", None)
     observe_rejection = getattr(domain, 'observe_rejection', None)
+    sample_native_forms = getattr(domain, "sample_native_forms", None)
     refusals = Counter()
     key = current = comparison = None
     batch = []
@@ -197,6 +198,8 @@ def execute(args, specification, tag, worker, db, domain=None):
                         direct[observe_direct(args.engine, response, item, current)] += 1
                     elif key.startswith("seed/"):
                         domain.sample_forms(forms, response, args.engine, item)
+                        if sample_native_forms is not None:
+                            sample_native_forms(forms, actual, args.engine, item)
             require(set(seen) == domain.finite_ids(args.engine, specification, tag) and set(seen.values()) == {1},
                     f"server-{label}-finite-incomplete", list(seen.items()))
             if observe_direct is not None:

@@ -33,13 +33,12 @@ final class ReindexIndexLowering
             $statement->target === ReindexTarget::Index && $statement->object instanceof QualifiedName,
             'A complete REINDEX needs a named index target.'
         );
-        foreach ($statement->options as $option) {
-            Check::input($option->option() === 'concurrently', 'A complete REINDEX INDEX accepts only concurrency options.');
-        }
+        Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
         return new ReindexIndex(
             (new IndexTargetLowering())->resolveRebuild($context, $statement->object),
             $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
             $context->profile->grammar,
+            $statement->reportsProgress(),
         );
     }
 }

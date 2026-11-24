@@ -91,7 +91,7 @@ def negatives(tag):
         ("pg_catalog", "base-table", "requires an application schema or pg_temp"),
     ):
         yield {**direct, "reindexTable": {**direct["reindexTable"], "target": [schema, "orders", kind]}}, refusal(message)
-    yield {**standard, "sql": 'REINDEX (TABLESPACE pg_default) TABLE "fixture"."orders"'}, refusal("accepts only concurrency options")
+    yield {**standard, "sql": 'REINDEX (TABLESPACE pg_default) TABLE "fixture"."orders"'}, refusal("cannot move indexes to a tablespace")
 
 
 def requests(_, tag, spec):
@@ -223,7 +223,7 @@ def faults(_, tag):
         RenderFault("postgres-table-reindex-lost-concurrency", root, "$this->mode === IndexRebuildMode::Concurrent",
                     "false", active, "meaning-mismatch"),
         RenderFault("postgres-table-reindex-first-index-only", root,
-                    "return 'REINDEX TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();",
+                    "return 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') . 'TABLE ' . ($this->mode === IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();",
                     "return 'REINDEX INDEX " + qualified("fixture", "by_key") + "';", two, "meaning-mismatch"),
     ]
 

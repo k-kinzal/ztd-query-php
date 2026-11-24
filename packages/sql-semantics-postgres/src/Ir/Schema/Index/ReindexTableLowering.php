@@ -36,9 +36,7 @@ final class ReindexTableLowering
         Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive, 'REINDEX TABLE requires the native PostgreSQL index profile.');
         Check::input($statement->target === ReindexTarget::Table && $statement->object instanceof QualifiedName
             && $statement->object->catalog === null, 'REINDEX TABLE needs a local schema and owner.');
-        foreach ($statement->options as $option) {
-            Check::input($option->option() === 'concurrently', 'A complete REINDEX TABLE accepts only concurrency options.');
-        }
+        Check::input(!$statement->namesTablespace(), 'A complete REINDEX cannot move indexes to a tablespace.');
         $resolution = $operation->facts->relation($statement)->table;
         Check::input($resolution instanceof DeclaredTable, 'REINDEX TABLE requires a resolved index owner.');
         $name = $resolution->table->name;
@@ -55,7 +53,7 @@ final class ReindexTableLowering
                 TablePartitionRole::Branch => PartitionRebuildKind::Branch,
                 TablePartitionRole::Leaf => PartitionRebuildKind::Leaf,
             };
-            return new ReindexPartitionTable(new TableName($namespace, $relation), $scope, $mode, $profile->grammar);
+            return new ReindexPartitionTable(new TableName($namespace, $relation), $scope, $mode, $profile->grammar, $statement->reportsProgress());
         }
 
         return new ReindexTable(
@@ -66,6 +64,7 @@ final class ReindexTableLowering
             ),
             $mode,
             $profile->grammar,
+            $statement->reportsProgress(),
         );
     }
 }

@@ -83,14 +83,16 @@ class Session:
     def __exit__(self, *_):
         LIB.PQfinish(self.connection)
 
-    def run(self, sql, describe=False):
+    def run(self, sql, describe=False, diagnostic_error=False):
         self.notices.clear()
         result = LIB.PQexec(self.connection, sql.encode("utf-8"))
         require(bool(result), "postgres-libpq-null-result")
         try:
             status = LIB.PQresultStatus(result)
             if status == 7:
-                return {"sqlState": notice_fields(result)[1], "command": None, "notices": list(self.notices), "rows": None}
+                fields = notice_fields(result)
+                return {"sqlState": fields[1], "command": None, "notices": list(self.notices), "rows": None,
+                        **({"error": fields} if diagnostic_error else {})}
             require(status in (1, 2), "postgres-libpq-result-status", status)
             rows = [
                 [None if LIB.PQgetisnull(result, r, k) else ascii_text(LIB.PQgetvalue(result, r, k))
@@ -99,6 +101,8 @@ class Session:
             ]
             observed = {"sqlState": "00000", "command": ascii_text(LIB.PQcmdStatus(result)),
                         "notices": list(self.notices), "rows": rows}
+            if diagnostic_error:
+                observed["error"] = None
             if describe:
                 observed["columns"] = [[ascii_text(LIB.PQfname(result, k)), LIB.PQftype(result, k)]
                                        for k in range(LIB.PQnfields(result))]

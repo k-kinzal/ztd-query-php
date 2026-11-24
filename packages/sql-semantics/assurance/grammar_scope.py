@@ -567,6 +567,14 @@ def inventory(root):
                                        "opt_reindex_option_list:", "opt_reindex_option_list: ( utility_option_list )",
                                        "opt_single_name:", "opt_single_name: name"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-database-v2.json")
+                        related[alternative] = (*related[alternative], "postgres-reindex-verbose-v1.json")
+            for rule in ("ReindexStmt", "reindex_target_relation"):
+                for alternative in rules.get(rule, ()):
+                    if alternative in rebuild | {
+                        "ReindexStmt: REINDEX opt_reindex_option_list SCHEMA opt_concurrently name",
+                        "reindex_target_relation: TABLE",
+                    }:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-verbose-v1.json")
         if postgres:
             for rule in ("qualified_name", "columnref", "indirection_el"):
                 for alternative in rules.get(rule, ()):

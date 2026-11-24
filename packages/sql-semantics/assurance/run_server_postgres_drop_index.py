@@ -269,7 +269,7 @@ def replay_fault(rule, record):
 def faults(_, tag):
     root = "sql-semantics-postgres/src/Ir/Schema/Index/"
     drop = root + "DropIndex.php"
-    lowering = root + "DropIndexTargetLowering.php"
+    lowering = root + "IndexTargetLowering.php"
     binding = "sql-semantics-postgres/src/Model/Facade/Index/IndexBinding.php"
     selected = case(tag, fixture("both"), [("front", "idx")])
     two = case(tag, fixture("both"), [("front", "idx"), ("later", "idx")])
@@ -291,7 +291,7 @@ def faults(_, tag):
                     concurrent, "meaning-mismatch"),
         RenderFault("drop-index-substitute-restrict", drop, "($this->cascade ? ' CASCADE' : ' RESTRICT')", "' RESTRICT'",
                     dependent, "meaning-mismatch"),
-        RenderFault("drop-index-change-absence-role", lowering, "$schema !== null && !$binding->known($context, $schema),",
+        RenderFault("drop-index-change-absence-role", lowering, "$schema !== null && !(new IndexBinding())->known($context, $schema),",
                     "false,", missing, "postgres-drop-index-binding", analyzed(missing)),
         RenderFault("drop-index-admit-concurrent-list", drop, "count($targets) === 1 && !$cascade", "!$cascade",
                     {"boundary": reason}, "postgres-drop-index-invalid-published", invalid),

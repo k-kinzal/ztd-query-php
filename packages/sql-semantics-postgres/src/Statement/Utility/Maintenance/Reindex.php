@@ -95,6 +95,22 @@ final class Reindex implements Statement
     }
 
     /**
+     * Resolves the last validated progress-reporting option.
+     */
+    public function reportsProgress(): bool
+    {
+        return (new OptionArguments())->enabled($this->options, 'verbose', false);
+    }
+
+    /**
+     * Tells whether the statement requests a destination tablespace.
+     */
+    public function namesTablespace(): bool
+    {
+        return (new OptionRules())->find($this->options, 'tablespace') !== null;
+    }
+
+    /**
      * Writes the request.
      */
     public function render(Output $out): void
