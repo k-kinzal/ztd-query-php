@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance;
 
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -21,7 +22,7 @@ final class MaintenanceLowering
     /**
      * Binds the command using its native maintenance rules.
      */
-    public function lower(BoundStatement $operation, ParsedAnalyze|ParsedReindex|Pragma $statement): Analyze|Reindex|FlagPragma|TableInspection|TableListing
+    public function lower(BoundStatement $operation, ParsedAnalyze|ParsedReindex|Pragma $statement): Analyze|Reindex|FlagPragma|InventoryPragma|TableInspection|TableListing
     {
         return match (true) {
             $statement instanceof ParsedAnalyze => (new AnalyzeLowering())->lower($operation, $statement),

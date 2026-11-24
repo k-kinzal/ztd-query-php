@@ -1,0 +1,134 @@
+{
+  "revision": "SemanticsIR/sqlite-table-metadata-boundaries-2",
+  "approval": "pending-human-review",
+  "scope": "Certify the exact metadata constructors, selector constraints and binding, system aliases and qualified read representation.",
+  "rules": {
+    "Maintenance/Metadata/CatalogTable::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Metadata/CatalogTable::name": {
+      "common": [
+        "return new Identifier($this->schema->key() === 'temp' ? 'sqlite_temp_master' : 'sqlite_master');"
+      ]
+    },
+    "Maintenance/Metadata/MissingMetadataTable::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Metadata/CatalogAliases::resolve": {
+      "common": [
+        "$key = $name->key();",
+        "if ($key === 'sqlite_schema' || $key === 'sqlite_master') {",
+        "    return new CatalogTable($schema ?? new Identifier('main'));",
+        "}",
+        "if (($key === 'sqlite_temp_schema' || $key === 'sqlite_temp_master') && ($schema === null || $schema->key() === 'temp')) {",
+        "    return new CatalogTable($schema ?? new Identifier('temp'));",
+        "}",
+        "return null;"
+      ]
+    },
+    "Maintenance/Metadata/CatalogAliases::isCatalogName": {
+      "common": [
+        "return $this->resolve($name, null) !== null;"
+      ]
+    },
+    "Maintenance/Metadata/CatalogAliases::permitsAbsence": {
+      "common": [
+        "$key = $name->key();",
+        "if ($this->resolve($name, $schema) !== null) {",
+        "    return false;",
+        "}",
+        "if (str_starts_with($key, 'sqlite_')) {",
+        "    return $key === 'sqlite_temp_schema' || $key === 'sqlite_temp_master';",
+        "}",
+        "if ($kind === TableInspectionKind::Columns || $kind === TableInspectionKind::ExtendedColumns) {",
+        "    return !str_starts_with($key, 'pragma_') && $key !== 'json_each' && $key !== 'json_tree';",
+        "}",
+        "return true;"
+      ]
+    },
+    "Maintenance/Metadata/TableInspection::__construct": {
+      "common": [
+        "$aliases = new CatalogAliases();",
+        "if ($target instanceof RelationTarget || $target instanceof CatalogTable) {",
+        "    Check::input($schema === null || $target->schema->key() === $schema->key(), 'The selected metadata table is outside the explicit schema.');",
+        "}",
+        "if ($target instanceof RelationTarget) {",
+        "    Check::input(!$aliases->isCatalogName($target->name), 'An internal SQLite schema table requires a catalog role.');",
+        "}",
+        "if ($target instanceof CatalogTable && $schema === null) {",
+        "    $database = $target->schema->key();",
+        "    Check::input($database === 'main' || $database === 'temp', 'An implicit metadata lookup cannot specify an attached schema catalog.');",
+        "}",
+        "if ($target instanceof MissingMetadataTable) {",
+        "    Check::input($aliases->permitsAbsence($kind, $target->name, $schema), 'This name cannot establish the absence of a native metadata table.');",
+        "}"
+      ]
+    },
+    "Maintenance/Metadata/TableInspection::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Metadata/TableInspection::toString": {
+      "common": [
+        "$qualifier = $this->schema === null ? '' : $this->schema->quoted() . '.';",
+        "$name = $this->target instanceof CatalogTable ? $this->target->name() : $this->target?->name;",
+        "$argument = $name === null ? '' : '(' . $name->quoted() . ')';",
+        "return 'PRAGMA ' . $qualifier . $this->kind->value . $argument;"
+      ]
+    },
+    "Maintenance/Metadata/TableListing::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Metadata/TableListing::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Metadata/TableListing::toString": {
+      "common": [
+        "$qualifier = $this->schema === null ? '' : $this->schema->quoted() . '.';",
+        "$argument = $this->nameFilter === null ? '' : '(' . $this->nameFilter->quoted() . ')';",
+        "return 'PRAGMA ' . $qualifier . 'table_list' . $argument;"
+      ]
+    },
+    "Maintenance/Metadata/TableMetadataLowering::lower": {
+      "common": [
+        "$value = $statement->value;",
+        "$argument = $value === null ? null : new Identifier($value instanceof PragmaNumber ? $value->nativeText() : $value->value);",
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema);",
+        "if ($kind === null) {",
+        "    return new TableListing($schema, $argument);",
+        "}",
+        "$target = $argument === null ? null : $this->target($operation->context, $argument, $schema);",
+        "return new TableInspection($kind, $target, $schema);"
+      ]
+    },
+    "Maintenance/Metadata/TableMetadataLowering::target": {
+      "common": [
+        "$catalog = (new CatalogAliases())->resolve($argument, $schema);",
+        "if ($catalog !== null) {",
+        "    return $catalog;",
+        "}",
+        "$lookup = new MaintenanceLookup();",
+        "$qualifier = $schema === null ? null : new Name($schema->value);",
+        "$name = new QualifiedName(new Name($argument->value), $qualifier);",
+        "$target = $lookup->relation($context, $name, $lookup->scopes($context, $qualifier));",
+        "if ($target === null) {",
+        "    Check::input($context->complete, 'Metadata lookup cannot prove absence in an open namespace.');",
+        "    return new MissingMetadataTable($argument);",
+        "}",
+        "$owners = $context->declared($name, new Name($target->schema->value));",
+        "Check::input($target->kind === ExternalRelationKind::View || $owners[0]->complete, 'Metadata inspection requires an ordinary table or view with a known kind.');",
+        "return $target;"
+      ]
+    }
+  },
+  "revises": "sqlite-table-metadata-boundaries-v1.json"
+}

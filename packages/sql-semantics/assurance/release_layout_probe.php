@@ -543,6 +543,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Reindex'] = 'REINDEX names';
         $queries['Maintenance\\Analyze'] = 'ANALYZE names';
         $queries['Maintenance\\FlagPragma'] = "PRAGMA Temp.Writable_Schema('reset')";
+        $queries['Maintenance\\Inventory\\InventoryPragma'] = 'PRAGMA Temp.function_list(+1)';
         $queries['Maintenance\\Metadata\\TableInspection'] = "PRAGMA table_xinfo(accounts)";
         $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
@@ -1302,6 +1303,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableListing') {
             $empty = $semantics->analyze("PRAGMA temp.table_list('')", $activeContext);
             $details['tableListing'] = [$result->schema?->value, $result->nameFilter?->value, $empty->nameFilter?->value, $empty->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Inventory\\InventoryPragma') {
+            $all = $semantics->analyze("PRAGMA PRAGMA_LIST('ignored')", $activeContext);
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma($result->kind, $result->schema);
+            $details['connectionInventory'] = [$result->kind->value, $result->schema?->value, $rebuilt->toString(),
+                $all->kind->value, $all->schema?->value, $all->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\FlagPragma') {
             $disabled = $semantics->analyze('PRAGMA automatic_index(256)', $activeContext);

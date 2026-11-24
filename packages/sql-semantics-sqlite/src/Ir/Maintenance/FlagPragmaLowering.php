@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance;
 
-use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -27,8 +26,8 @@ final class FlagPragmaLowering
         $qualified = $statement->name;
         $name = FlagName::tryFrom(Comparison::AsciiInsensitive->fold($qualified->name->value));
         Check::input($name !== null, 'This SQLite PRAGMA name has no complete flag representation.');
-        $schema = $qualified->schema === null ? null : (new MaintenanceLookup())->scopes($operation->context, $qualified->schema)[0];
+        $schema = (new PragmaScope())->resolve($operation->context, $qualified->schema);
 
-        return new FlagPragma($name, (new FlagArgument())->change($name, $statement->value), $schema === null ? null : new Identifier($schema->value));
+        return new FlagPragma($name, (new FlagArgument())->change($name, $statement->value), $schema);
     }
 }

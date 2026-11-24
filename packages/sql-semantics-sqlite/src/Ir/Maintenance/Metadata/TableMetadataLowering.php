@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata;
 use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\MaintenanceLookup;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\PragmaScope;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget;
 use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
@@ -30,11 +31,9 @@ final class TableMetadataLowering
      */
     public function lower(BoundStatement $operation, Pragma $statement, ?TableInspectionKind $kind): TableListing|TableInspection
     {
-        $qualifier = $statement->name->schema;
         $value = $statement->value;
         $argument = $value === null ? null : new Identifier($value instanceof PragmaNumber ? $value->nativeText() : $value->value);
-        $scope = $qualifier === null ? null : (new MaintenanceLookup())->scopes($operation->context, $qualifier)[0];
-        $schema = $scope === null ? null : new Identifier($scope->value);
+        $schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema);
         if ($kind === null) {
             return new TableListing($schema, $argument);
         }

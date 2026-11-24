@@ -48,9 +48,11 @@ def regenerate(source, compiler):
     with TemporaryDirectory(prefix="sqlite-native-registry-") as directory:
         root = Path(directory)
         copyfile(source, root / "sqlite3.c")
+        driver = root / "registry.c"
+        copyfile(DRIVER, driver)
         program = root / "registry"
         flags = ["-pthread", "-ldl", "-lm"] if sys.platform.startswith("linux") else []
-        subprocess.run([compiler, "-O0", "-I", str(root), str(DRIVER), "-o", str(program), *flags], check=True)
+        subprocess.run([compiler, "-O0", "-I", str(root), str(driver), "-o", str(program), *flags], check=True)
         return snapshot(subprocess.check_output([str(program)]))
 
 

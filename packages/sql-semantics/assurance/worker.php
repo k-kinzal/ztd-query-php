@@ -36,6 +36,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagChange;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagName;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\MissingMetadataTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
@@ -343,7 +345,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|TableInspection|TableListing|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|TableInspection|TableListing|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -830,6 +832,18 @@ function observeFlagPragma(FlagPragma $value): array
     ];
 }
 
+function observeInventoryPragma(InventoryPragma $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'connection-inventory',
+        'profile' => $value->profileId(),
+        'pragma' => $value->kind->value,
+        'schema' => $value->schema?->value,
+        'sql' => $value->toString(),
+    ];
+}
+
 function directTableMetadata(array $input): TableInspection|TableListing
 {
     $schema = $input['schema'] === null ? null : new Identifier($input['schema']);
@@ -1010,6 +1024,9 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
             ($input['operation'] ?? null) === 'create-index' => directCreateIndex($input),
+            ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
+                InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
+            ),
             ($input['operation'] ?? null) === 'table-metadata' => directTableMetadata($input),
             ($input['operation'] ?? null) === 'flag-pragma' => directFlagPragma($input),
             ($input['operation'] ?? null) === 'reindex' => new Reindex(maintenanceTarget($input['target'])),
@@ -1033,6 +1050,9 @@ function runCase(array $input): array
 
     if ($value instanceof CreateIndex) {
         return observeCreateIndex($value, ($input['probe'] ?? null) !== 'create-index-construction');
+    }
+    if ($value instanceof InventoryPragma) {
+        return observeInventoryPragma($value);
     }
     if ($value instanceof TableInspection || $value instanceof TableListing) {
         return observeTableMetadata($value);

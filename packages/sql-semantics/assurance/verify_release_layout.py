@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v94.json"
-CONTRACT = "31ed161098b3ebebc0d34521b7168b022227e96a90d6643f666abbae903afb60"
+CONTRACT_NAME = "release-layout-v95.json"
+CONTRACT = "4f0a9b6d3980e883c1094ca25fd7fbc3f2d8814f606bd7cfc0fbfda933eb048d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -619,6 +619,10 @@ def verify_probe(raw, catalog):
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Metadata\\TableListing"):
             require(item.get("tableListing") == ["main", "sqlite_master", "", 'PRAGMA "temp".table_list("")']
                     and item["sql"] == 'PRAGMA "main".table_list("sqlite_master")', "installed-sqlite-table-listing-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Inventory\\InventoryPragma"):
+            require(item.get("connectionInventory") == [
+                "function_list", "temp", 'PRAGMA "temp".function_list', "pragma_list", None, "PRAGMA pragma_list",
+            ] and item["sql"] == 'PRAGMA "temp".function_list', "installed-sqlite-connection-inventory-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\FlagPragma"):
             require(item.get("flagPragma") == [
                 "writable_schema", "RESET", "temp", 'PRAGMA "temp".writable_schema = RESET',

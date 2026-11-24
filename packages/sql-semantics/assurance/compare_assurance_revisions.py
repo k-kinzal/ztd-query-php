@@ -10,7 +10,7 @@ from pathlib import Path
 from run import digest, require, write_json
 
 CONTRACT_FAMILY = re.compile(r"^(.+)-v[0-9]+\.json$")
-TOOL_FORMATS = {".php", ".py", ".json", ".md"}
+TOOL_FORMATS = {".php", ".py", ".json", ".md", ".c"}
 SUPPORT_FILES = (
     ".github/workflows/semantics-ir-assurance.yml",
     ".github/workflows/semantics-ir-release-matrix.yml",
