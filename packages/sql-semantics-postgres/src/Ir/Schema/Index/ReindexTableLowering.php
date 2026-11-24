@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionRebuildKind;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\TablePartitionRole;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -25,7 +29,7 @@ final class ReindexTableLowering
     /**
      * Publishes a rebuild request for a checked standalone index owner.
      */
-    public function lower(BoundStatement $operation, Reindex $statement): ReindexTable
+    public function lower(BoundStatement $operation, Reindex $statement): ReindexTable|ReindexPartitionTable
     {
         $context = $operation->context;
         $profile = $context->profile;
@@ -41,15 +45,26 @@ final class ReindexTableLowering
         $kind = $resolution->table->kind;
         $schema = $name->schema ?? $context->declarationSchema;
         Check::input($name->catalog === null && ($kind === RelationKind::BaseTable || $kind === RelationKind::MaterializedView), 'REINDEX TABLE requires a local table or materialized view.');
-        Check::input(!$context->indexNamespace->partitioned($schema, $name->name), 'REINDEX TABLE requires a nonpartitioned owner.');
+        $partition = $context->indexNamespace->partitionRole($schema, $name->name);
+        $namespace = new Identifier($schema->value);
+        $relation = new Identifier($name->name->value);
+        $mode = $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard;
+        if ($partition !== null) {
+            Check::input($kind === RelationKind::BaseTable, 'A partition index owner requires a declared base table.');
+            $scope = match ($partition) {
+                TablePartitionRole::Branch => PartitionRebuildKind::Branch,
+                TablePartitionRole::Leaf => PartitionRebuildKind::Leaf,
+            };
+            return new ReindexPartitionTable(new TableName($namespace, $relation), $scope, $mode, $profile->grammar);
+        }
 
         return new ReindexTable(
             new ReindexTableTarget(
-                new Identifier($schema->value),
-                new Identifier($name->name->value),
+                $namespace,
+                $relation,
                 $kind === RelationKind::BaseTable ? ReindexTableKind::BaseTable : ReindexTableKind::MaterializedView,
             ),
-            $statement->requestsConcurrentBuild() ? IndexRebuildMode::Concurrent : IndexRebuildMode::Standard,
+            $mode,
             $profile->grammar,
         );
     }

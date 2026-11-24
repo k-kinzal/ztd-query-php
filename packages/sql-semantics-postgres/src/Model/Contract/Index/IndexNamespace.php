@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Model\Contract\Index;
 
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
@@ -34,7 +33,7 @@ final class IndexNamespace
     public readonly array $opaque;
 
     /**
-     * @var list<QualifiedName> Absolute coordinates of partitioned tables and their partitions
+     * @var list<TablePartition> Absolute table coordinates and declared partition roles
      */
     public readonly array $partitionedTables;
 
@@ -44,18 +43,14 @@ final class IndexNamespace
      * @param list<Name> $schemas
      * @param list<IndexDeclaration> $indexes
      * @param list<Name> $opaque
-     * @param list<QualifiedName> $partitionedTables
+     * @param list<TablePartition> $partitionedTables
      */
     public function __construct(array $schemas = [], array $indexes = [], array $opaque = [], array $partitionedTables = [])
     {
         $this->schemas = Check::listOf($schemas, Name::class, 'Known schemas must be identifiers.');
         $this->indexes = Check::listOf($indexes, IndexDeclaration::class, 'The index namespace requires index declarations.');
         $this->opaque = Check::listOf($opaque, Name::class, 'Open index schemas must be identifiers.');
-        $tables = Check::listOf($partitionedTables, QualifiedName::class, 'Partitioned relations need absolute names.');
-        foreach ($tables as $table) {
-            Check::input($table->schema !== null && $table->catalog === null, 'Partitioned relations need absolute local names.');
-        }
-        $this->partitionedTables = $tables;
+        $this->partitionedTables = Check::listOf($partitionedTables, TablePartition::class, 'Partitioned relations need absolute declarations.');
     }
 
     /**
@@ -81,12 +76,20 @@ final class IndexNamespace
      */
     public function partitioned(Name $schema, Name $relation): bool
     {
+        return $this->partitionRole($schema, $relation) !== null;
+    }
+
+    /**
+     * Returns the role of an exactly named partitioned branch or attached leaf.
+     */
+    public function partitionRole(Name $schema, Name $relation): ?TablePartitionRole
+    {
         foreach ($this->partitionedTables as $partitioned) {
-            if ($partitioned->schema?->value === $schema->value && $partitioned->name->value === $relation->value) {
-                return true;
+            if ($partitioned->schema->value === $schema->value && $partitioned->table->value === $relation->value) {
+                return $partitioned->role;
             }
         }
 
-        return false;
+        return null;
     }
 }

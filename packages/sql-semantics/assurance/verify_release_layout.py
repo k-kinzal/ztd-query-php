@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v120.json"
-CONTRACT = "dc143dd959ede074aa86fa659c2290641a4b22c08f828237c902c46d61cff9aa"
+CONTRACT_NAME = "release-layout-v121.json"
+CONTRACT = "474016674abdfaedb308a5fa6900aa403df244bac9c7fb090ee75ef91fbc18fd"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -322,6 +322,11 @@ def verify_probe(raw, catalog):
             emitted = 'REINDEX SCHEMA CONCURRENTLY "reporting.data"'
             require(item.get("postgresReindexSchema") == ["reporting.data", "concurrently", emitted, emitted]
                     and item["sql"] == emitted, "installed-postgres-reindex-schema-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\Partition\\ReindexPartitionTable"):
+            emitted = 'REINDEX TABLE CONCURRENTLY "public"."partitioned_items"'
+            require(item.get("postgresReindexPartitionTable") == [
+                "branch", "public", "partitioned_items", emitted, "leaf", "regional", "child", 'REINDEX TABLE "regional"."child"',
+            ] and item["sql"] == emitted, "installed-postgres-partition-reindex-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\DropIndex"):
             emitted = 'DROP INDEX IF EXISTS "pg_temp"."removal", "absent_namespace"."idx" CASCADE'
             require(item.get("postgresDropIndex") == ["pg_temp", "removal", "keyed", "absent_namespace", True, emitted,

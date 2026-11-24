@@ -17,8 +17,8 @@ from run_server_postgres_create_btree import check_preparation, observation, obs
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-reindex-table"
-CONTRACT_NAME = "postgres-reindex-table-v2.json"
-CONTRACT = "b0c19d7d6e033e2e9ee01097c2ad99ef174b159496ceb3a175199a2f093d30ca"
+CONTRACT_NAME = "postgres-reindex-table-v3.json"
+CONTRACT = "26afd147dc7107cdd66d72b39fd28a445b4b5a4236130815d555775e7998be5d"
 OBSERVER = "postgres_reindex_table_observer.py"
 AXES = ("owner", "concurrently", "active", "layout", "spelling")
 COMPARATOR_FAULTS = {
@@ -81,13 +81,10 @@ def negatives(tag):
     standard = analyzed(direct)
     view = {"dialect": "postgres", "release": tag, "declarations": ['CREATE VIEW public.y AS SELECT 1 AS id'],
             "sql": "REINDEX TABLE public.y"}
-    partitioned = {"dialect": "postgres", "release": tag,
-                   "declarations": ["CREATE TABLE public.y (id integer) PARTITION BY RANGE (id)"],
-                   "sql": "REINDEX TABLE public.y"}
     yield {**standard, "sql": 'REINDEX TABLE "fixture"."missing"'}, refusal("missing", "SemanticException")
     yield {**standard, "sql": 'REINDEX TABLE "other"."fixture"."orders"'}, refusal("requires the matching current database")
     yield view, refusal("materialized view", "SemanticException")
-    yield partitioned, refusal("requires a nonpartitioned owner")
+    yield {**standard, "sql": 'REINDEX TABLE "fixture"."missing"', "complete": False}, refusal("requires a resolved index owner")
     for schema, kind, message in (
         ("pg_temp_14", "base-table", "requires an application schema or pg_temp"),
         ("pg_temp", "materialized-view", "Only base tables are temporary index owners"),

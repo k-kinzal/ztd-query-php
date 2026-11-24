@@ -113,8 +113,9 @@ CONTRACTS = {
     "postgres-index-boolean-values-v1.json": "51a082173a7d404983a9ea5fb251ffceeb3b4e64f56c1a3960aa88ef2e93a374",
     "postgres-reindex-index-v1.json": "961195c02b9dd75c7a3f8bc8b5a93d3922b01620ddb23ae0da219ecdc54cf237",
     "postgres-reindex-constraint-index-v1.json": "38b45ec46b0da6a420a1fb61a5ebce316a8fd4313cc14e432e7cc479d16471ae",
-    "postgres-reindex-table-v2.json": "b0c19d7d6e033e2e9ee01097c2ad99ef174b159496ceb3a175199a2f093d30ca",
+    "postgres-reindex-table-v3.json": "26afd147dc7107cdd66d72b39fd28a445b4b5a4236130815d555775e7998be5d",
     "postgres-reindex-schema-v2.json": "68f45a1025c1116c904b0a4adabd7675b9f8d576a72112438492d6f6a16c5577",
+    "postgres-reindex-partition-table-v1.json": "4ac4a82c7f5da2cc4cd1daeb167738ad139c10d55e4f2fbed0c62257fe70b88e",
     "postgres-local-catalog-binding-v1.json": "855a3af17e33095b5a1603198d563d69a9b6ba373b879b716629f9a5b1ffc3ce",
     "postgres-create-btree-v1.json": "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629",
     "postgres-drop-index-v1.json": "d26bab1348dec92d608759e02d68f184ee28461aadbaf015e836f911dced5faa",
@@ -233,7 +234,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "b6b82f8b79aab65fbdcd7f0e77343789c6f83abb2e7183e73ee7472a969947fb"
+PUBLICATION = "48ede2d26f1e32f0a67eaf935b5cb00907cb4e83d5c3061a9d1bc7c96aef0cd7"
 
 
 def declared_constructors(dialects):
@@ -263,7 +264,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v69.json").read_bytes()
+    publication = (TOOL / "publication-v70.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

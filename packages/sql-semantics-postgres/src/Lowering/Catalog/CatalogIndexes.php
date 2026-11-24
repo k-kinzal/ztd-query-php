@@ -7,12 +7,13 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclaration;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclarationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\TablePartition;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\TablePartitionRole;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\CatalogRelationCoordinates;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\IndexCreationVisibility;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
@@ -34,7 +35,7 @@ final class CatalogIndexes
     /** @var list<IndexDeclaration> */
     private array $indexes = [];
 
-    /** @var array<string, QualifiedName> */
+    /** @var array<string, TablePartition> */
     private array $partitioned = [];
 
     /** @var array<string, true> */
@@ -67,8 +68,13 @@ final class CatalogIndexes
                 continue;
             }
             [$namespace, $name] = $coordinates->owner($binding, $item, $schema);
-            if ($item->partitioning !== null || $item->definition instanceof PartitionOf) {
-                $this->partitioned[$coordinates->key($namespace, $name)] = new QualifiedName($name, $namespace);
+            $partition = match (true) {
+                $item->partitioning !== null => TablePartitionRole::Branch,
+                $item->definition instanceof PartitionOf => TablePartitionRole::Leaf,
+                default => null,
+            };
+            if ($partition !== null) {
+                $this->partitioned[$coordinates->key($namespace, $name)] = new TablePartition($namespace, $name, $partition);
             }
             [$constraint, $unknown, $kind] = (new TableIndexFacts())->collect($item);
             if ($constraint !== null && $kind !== null) {

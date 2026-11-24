@@ -593,6 +593,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
+        $queries['Schema\\Index\\Partition\\ReindexPartitionTable'] = 'REINDEX TABLE CONCURRENTLY public.partitioned_items';
         $queries['Schema\\Index\\Btree\\CreateIndex'] =
             'CREATE UNIQUE INDEX "new index" ON ledger (wide DESC NULLS LAST, value ASC NULLS FIRST) INCLUDE (ready, ready) NULLS NOT DISTINCT';
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
@@ -609,6 +610,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $activeContext = $context;
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Scope\\ReindexSchema') {
             $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy']);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Partition\\ReindexPartitionTable') {
+            $activeContext = $semantics->context([
+                'CREATE SCHEMA regional',
+                'CREATE TABLE public.partitioned_items (id integer) PARTITION BY RANGE (id)',
+                'CREATE TABLE regional.child PARTITION OF public.partitioned_items FOR VALUES FROM (0) TO (10)',
+            ]);
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Btree\\CreateIndex') {
             $activeContext = $semantics->context([
@@ -953,6 +961,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             );
             $details['postgresReindexSchema'] = [
                 $result->schema->value, $result->mode->value, $result->toString(), $reassembled->toString(),
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Partition\\ReindexPartitionTable') {
+            $leaf = $semantics->analyze('REINDEX TABLE regional.child', $activeContext);
+            $reassembled = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable(
+                $result->target, $result->kind, $result->mode, $result->release,
+            );
+            $details['postgresReindexPartitionTable'] = [
+                $result->kind->value, $result->target->schema->value, $result->target->table->value, $reassembled->toString(),
+                $leaf->kind->value, $leaf->target->schema->value, $leaf->target->table->value, $leaf->toString(),
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {

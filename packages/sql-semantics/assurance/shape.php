@@ -1086,6 +1086,13 @@ if ($dialect !== 'sqlite') {
         $methods[$reindexOwner] = ['__construct', 'quoted'];
         $properties[$reindexKind] = $methods[$reindexKind] = [];
         $enumCases[$reindexKind] = ['BaseTable' => 'base-table', 'MaterializedView' => 'materialized-view'];
+        $partitionRebuild = 'Schema\\Index\\Partition\\ReindexPartitionTable';
+        $partitionRebuildKind = 'Schema\\Index\\Partition\\PartitionRebuildKind';
+        $roots[] = $partitionRebuild;
+        $properties[$partitionRebuild] = ['target' => ['Schema\\TableName'], 'kind' => [$partitionRebuildKind], 'mode' => [$rebuildMode], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$partitionRebuild] = ['__construct', 'profileId', 'toString'];
+        $properties[$partitionRebuildKind] = $methods[$partitionRebuildKind] = [];
+        $enumCases[$partitionRebuildKind] = ['Branch' => 'branch', 'Leaf' => 'leaf'];
         $properties[$rebuildMode] = $methods[$rebuildMode] = [];
         $enumCases[$rebuildMode] = ['Standard' => 'standard', 'Concurrent' => 'concurrently'];
         $properties[$indexRemoval] = ['targets' => ['array'], 'ifExists' => ['bool'], 'cascade' => ['bool'],
@@ -1482,7 +1489,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v9.json', '7db7cf53079be39293b44cd885ba6cfb91f839b82598839f2e21cfa1e94e7bbe', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v10.json', '340e891420f7847fd0ed2b7e8cb54bffbeb4b00dae74c055c56f8c6e294873db', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1916,9 +1923,12 @@ try {
             }
             if ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\ReindexIndexLowering', 'Schema\\Index\\Scope\\ReindexSchemaLowering', 'Schema\\Index\\ReindexTableLowering'], true)) {
                 $members = $class->getMethods();
+                $results = $short === 'Schema\\Index\\ReindexTableLowering'
+                    ? ['Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexTable']
+                    : [substr($short, 0, -strlen('Lowering'))];
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === [substr($short, 0, -strlen('Lowering'))],
+                    && types($members[0]->returnType, $prefix, $short) === $results,
                     'Unexpected PostgreSQL index rebuild publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\DropRelationLowering') {
@@ -1949,7 +1959,7 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
-                        'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable', 'Schema\\Index\\Scope\\ReindexSchema',
+                        'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable', 'Schema\\Index\\Scope\\ReindexSchema',
                         'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
@@ -2042,7 +2052,8 @@ try {
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex',
-                    'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget'], true)
+                    'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
+                    'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
                 || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',

@@ -295,11 +295,13 @@ The [PostgreSQL index rebuild contract](postgres-reindex-index-v1.json) compares
 
 The [PostgreSQL constraint-index rebuild contract](postgres-reindex-constraint-index-v1.json) checks the separately bound named key index and whether each preserved foreign key points to the current physical index. It probes primary, unique, NULL equality and deferrable enforcement. Run `run_server_postgres_reindex_constraint_index.py` on both releases and replay with `combine_server_postgres_reindex_constraint_index_evidence.py`.
 
-The [PostgreSQL owner-wide index rebuild contract](postgres-reindex-table-v2.json) checks the bound table or materialized view and each visible and TOAST index while preserving the heap, its typed rows and decoy catalog. It measures mode-specific notices, temporary physical rebuilding, concurrent transaction refusal, and rollback. Run `run_server_postgres_reindex_table.py` for each pinned release and replay with `combine_server_postgres_reindex_table_evidence.py`.
+The [PostgreSQL owner-wide index rebuild contract](postgres-reindex-table-v3.json) checks the bound table or materialized view and each visible and TOAST index while preserving the heap, its typed rows and decoy catalog. It measures mode-specific notices, temporary physical rebuilding, concurrent transaction refusal, and rollback. Run `run_server_postgres_reindex_table.py` for each pinned release and replay with `combine_server_postgres_reindex_table_evidence.py`.
 
 The [PostgreSQL catalog binding contract](postgres-local-catalog-binding-v1.json) verifies that a decoded current catalog qualifier resolves to the same local coordinate and scalar slot as the schema-qualified spelling. The native observer compares typed result headings, ordered rows, write effects and materialized snapshots. It also executes the original mismatched qualifiers and verifies their SQLSTATE and unchanged local state. Run `run_server_postgres_local_catalog.py` on both pinned releases and replay with `combine_server_postgres_local_catalog_evidence.py`.
 
 The [PostgreSQL schema rebuild contract](postgres-reindex-schema-v2.json) observes the complete selected native index set and an independent decoy. A partition attached across schemas keeps its catalog link while selection follows the actual namespace of each physical owner. Run `run_server_postgres_reindex_schema.py` on both pinned releases and replay with `combine_server_postgres_reindex_schema_evidence.py`.
+
+The [PostgreSQL partition table rebuild contract](postgres-reindex-partition-table-v1.json) distinguishes the selected branch or leaf, verifies every descendant and auxiliary index, and checks branch-wide and leaf-only transaction behavior. The observer verifies that parent and index links survive concurrent physical index replacement. Run `run_server_postgres_reindex_partition_table.py` on both pinned releases and replay with `combine_server_postgres_reindex_partition_table_evidence.py`.
 
 
 

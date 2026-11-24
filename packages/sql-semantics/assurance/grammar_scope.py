@@ -553,7 +553,8 @@ def inventory(root):
                         if rule != "opt_reindex_option_list":
                             related[alternative] = (*related[alternative], "postgres-reindex-constraint-index-v1.json")
                     if alternative in (rebuild - {"reindex_target_relation: INDEX"}) | {"reindex_target_relation: TABLE"}:
-                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-table-v2.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-reindex-table-v3.json")
+                        related[alternative] = (*related[alternative], "postgres-reindex-partition-table-v1.json")
                     if alternative in {"ReindexStmt: REINDEX opt_reindex_option_list SCHEMA opt_concurrently name",
                                        "opt_reindex_option_list:", "opt_reindex_option_list: ( utility_option_list )"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-schema-v2.json")

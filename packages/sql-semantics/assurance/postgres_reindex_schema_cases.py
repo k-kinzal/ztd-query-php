@@ -57,7 +57,8 @@ def owner_sql(owner):
         return f"CREATE MATERIALIZED VIEW {table} AS SELECT {fields} FROM (VALUES {literals(owner['rows'])}) AS entries({alias})"
     if "parent" in owner:
         left, right = owner["bounds"]
-        return f"CREATE TABLE {table} PARTITION OF {name(owner['parent'])} FOR VALUES FROM ({left}) TO ({right})"
+        children = " PARTITION BY RANGE (id)" if owner["kind"] == "p" else ""
+        return f"CREATE TABLE {table} PARTITION OF {name(owner['parent'])} FOR VALUES FROM ({left}) TO ({right}){children}"
     fields = ", ".join(f"{column} {typ}" for column, typ in cols)
     strategy = " PARTITION BY RANGE (id)" if owner["kind"] == "p" else ""
     return f"CREATE TABLE {table} ({fields}){strategy}"

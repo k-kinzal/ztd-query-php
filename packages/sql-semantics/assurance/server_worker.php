@@ -1160,6 +1160,19 @@ function observePostgresReindexTable(\SqlSemantics\Platform\PostgreSql\Ir\Schema
     ];
 }
 
+function constructPostgresReindexPartitionTable(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable
+{
+    $value = $input['reindexPartitionTable'];
+    [$schema, $owner] = $value['target'];
+    $name = \SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable(
+        new \SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName(new $name($schema), new $name($owner)),
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionRebuildKind::from($value['kind']),
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\IndexRebuildMode::from($value['mode']),
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
 function constructPostgresReindexSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema
 {
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema(
@@ -1472,6 +1485,7 @@ function observeStatement(array $input): array
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
+            isset($input['reindexPartitionTable']) => constructPostgresReindexPartitionTable($input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
@@ -1604,6 +1618,13 @@ function observeStatement(array $input): array
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema) {
         return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
             'reindexSchema' => ['schema' => $value->schema->value, 'mode' => $value->mode->value]];
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable) {
+        return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+            'reindexPartitionTable' => [
+                'target' => [$value->target->schema->value, $value->target->table->value],
+                'mode' => $value->mode->value, 'kind' => $value->kind->value,
+            ]];
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

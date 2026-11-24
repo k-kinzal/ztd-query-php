@@ -65,6 +65,8 @@ For declared Boolean columns, `IndexTruthTest` also represents all six `IS [NOT]
 
 `REINDEX TABLE` returns a `ReindexTable` for a declared standalone application table, a table in `pg_temp` or a materialized view. The value retains the resolved owner, its relation kind and the effective concurrency request. The command selects that owner's indexes, including its TOAST index if present. As with a single-index rebuild, a concurrent request cannot run inside a transaction, including for a temporary table.
 
+`REINDEX TABLE` returns a `ReindexPartitionTable` when the resolved owner is a partitioned branch or an attached physical leaf. A branch selects the physical descendants beneath it, including descendants in a different schema. A leaf selects its own indexes and supports a standard rebuild within a transaction.
+
 `REINDEX SCHEMA` returns a `ReindexSchema` for a declared persistent application schema. The value retains the exact namespace and mode, including when the schema has no eligible indexes. Native execution selects each physical owner in that namespace, including its TOAST index. PostgreSQL requires a top-level command for this scope in both rebuild modes.
 
 A persistent heap `CREATE MATERIALIZED VIEW` returns `Ir\Schema\View\CreateMaterializedView` with its effective ordered heading, checked defining query and explicit initial population policy. `REFRESH MATERIALIZED VIEW` returns `Ir\Schema\View\RefreshMaterializedView` for a resolved materialized relation. Include the target's declaration in the context when analyzing a refresh. `WITH NO DATA` makes the snapshot unscannable until a populated refresh. Concurrent refresh and custom storage settings are outside this complete IR domain.
