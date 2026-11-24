@@ -1,0 +1,122 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-varchar-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-create-table-as-source-v1.json",
+    "mysql-varchar-slots-v2.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "existingRoles": [
+    "Schema/Query/CreateTableAs",
+    "Select",
+    "TableSource",
+    "From/TextColumnReference",
+    "From/Varchar",
+    "From/TextCollation",
+    "Predicate/NullTest"
+  ],
+  "constructors": {},
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Keep the InnoDB, native name and lexical profile and the same external source declaration. The checked text role uses the stock utf8mb4_bin collation.",
+  "structure": "One physical checked table source, with a projecting TextColumnReference owning its native Varchar slot. Existing source-free and signed cases remain unchanged. A text field may be used with IS NULL or IS NOT NULL.",
+  "conditions": "For any projection containing a text reference, bound the logical record by charging each selected VARCHAR once per projected occurrence. Charge four bytes per declared character plus one length byte for a maximum body of at most 255 bytes and two otherwise. Reserve eight bytes for every other expression and one null bit per output. Reject a total above 65535 before publication. Column roles, heading and prior projection conditions remain enforced. The budget protects logical shape. Physical allocation and page configuration remain native environment conditions.",
+  "meaning": "Copy the selected field's native VARCHAR length, charset, collation, default and nullability according to the same external declaration, with exact values, duplicate multiplicities and native write effects. Distinctness may choose any whole-row representative of one PAD SPACE equivalence class. Text ordering compares virtual U+0020 padded values under the fixed binary collation, and ties obey the source contract's peer group relation.",
+  "sql": "Render each resolved VARCHAR operand as its checked physical reference, preserving its output name and occurrence. Emit the existing qualified projection, exact filter and row bounds.",
+  "observations": [
+    "Compare inherited type, lengths 0 and 8, zero-length defaults, NULL and Unicode values, and repeated text fields.",
+    "Use differently valued schemas and lifetime overlays to detect incorrect binding. Preserve actual bytes in stored values. Compare row bags, positional selection, collation peers and allowed whole-row DISTINCT representatives.",
+    "Compare native transaction, existence and rollback effects with the previous independent model.",
+    "Measure the native 65535-byte logical layout and 65536-byte overflow using two repeated VARCHAR(8191) fields and either two or three VARCHAR(0) fields. The over-bound role fails before publication."
+  ],
+  "finite": {
+    "schema": [
+      "primary",
+      "decoy"
+    ],
+    "topology": [
+      "persistent",
+      "shadow"
+    ],
+    "destinationKind": [
+      "table",
+      "temporary-table"
+    ],
+    "layout": [
+      "text",
+      "mixed"
+    ],
+    "distinct": [
+      false,
+      true
+    ],
+    "predicate": [
+      "all",
+      "present"
+    ],
+    "identities": 64,
+    "completeness": "Recover the source coordinate, lifetime, output shape, destination namespace, predicate and distinctness from the observed checked value. Compare each fixture identity once."
+  },
+  "exploration": {
+    "seeds": [
+      617,
+      7343,
+      89317
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary text and signed positions, zero-width fields, repeated projections, text NULL tests, padding representatives, source lifetime and schema, guard, target collision, ordered and unordered LIMIT, and lengths on both sides of the byte-prefix transition."
+  },
+  "analysis": [
+    "Source text reference with a declared binary collation and default",
+    "Qualified and unqualified text references resolve the same physical field",
+    "Select signed and text values with native positional ordering and a NULL test",
+    "Resolved temporary text field shadows the persistent source",
+    "Observe a repeated wide field and zero-width fields at the exact logical limit"
+  ],
+  "negative": [
+    "Logical record of 65536 bytes",
+    "Direct text field cast to a disallowed expression role",
+    "Direct signed slot through a text reference",
+    "Analyzed text field without known native collation",
+    "View source with a valid text projection"
+  ],
+  "priorAdmission": "The source contract's previous direct text projection refusal becomes a positive direct case with matching native source definitions. Replace that refusal in the source suite with an independently disallowed text expression role. Preserve all source cases, budgets, and exact output observations.",
+  "faults": [
+    "Render the other resolved text field",
+    "Replace the selected source schema",
+    "Discard a text NULL test",
+    "Omit DISTINCT under the binary PAD SPACE collation",
+    "Ignore the logical row-size check",
+    "Drop the checked positional bound"
+  ],
+  "guarantees": {
+    "P01": "The actual native field is resolved, and its type role, capacity, collation and nullability are structured.",
+    "P02": "The checked projection owns field placement. The checked table declaration owns the projected row width and heading.",
+    "P03": "Keep immutable source references and type roles, without external declarations, parser or context.",
+    "P04": "Compose selected text values and the source storage role with the native table construction.",
+    "P05": "Use the same closed readonly graph and checked immutable Varchar role.",
+    "P06": "Compare native type and row effects over the exact release and collation, with logically bounded complete values."
+  },
+  "trust": [
+    "Stock MySQL under the stated language and external table conditions",
+    "Independent native storage extraction and PAD SPACE comparator",
+    "The audited graph and per-occurrence record budget"
+  ],
+  "open": [
+    "Other charsets, collations and text expression roles, larger layouts that rely on narrower signed fields or known native allocation, and other unfinished grammar alternatives."
+  ],
+  "calibrationSha256": "7b452f3a6055e9ae430b50c6f98171c222a1445c908ddd2e63803324042c3340"
+}
