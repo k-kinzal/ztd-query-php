@@ -47,6 +47,8 @@ final class SelectSql
         $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
         if ($source !== null) {
             $sql .= ' FROM ' . $this->from($source);
+        } elseif ($select->release === GrammarRelease::MySql5651 && $select->orderBy !== []) {
+            $sql .= ' FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single`';
         } elseif (($select->release === GrammarRelease::MySql5651 || $select->release === GrammarRelease::MySql5744)
             && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {
             $sql .= ' FROM DUAL';

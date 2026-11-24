@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\Order;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
@@ -58,6 +59,20 @@ final class SelectSqlTest extends TestCase
         );
 
         self::assertSame('SELECT 1 AS `a` FROM DUAL WHERE FALSE', (new SelectSql())->render($select));
+    }
+
+    public function testRenderPreservesSourceFreeOrderingOnMySql56(): void
+    {
+        $select = new Select(
+            [new ResultColumn(new IntegerLiteral('17'), new Identifier('n'))],
+            release: GrammarRelease::MySql5651,
+            orderBy: [new Order(1, true)],
+        );
+
+        self::assertSame(
+            'SELECT 17 AS `n` FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single` ORDER BY 1 DESC',
+            (new SelectSql())->render($select)
+        );
     }
 
     public function testExpressionKeepsNegativeValues(): void

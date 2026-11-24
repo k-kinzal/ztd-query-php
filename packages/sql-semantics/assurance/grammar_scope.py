@@ -538,6 +538,18 @@ def inventory(root):
                 "create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( LIKE table_ident )",
             }:
                 related[alternative] = (*related.get(alternative, ()), "mysql-create-like-v1.json")
+            query_backed = {
+                "create2: opt_create_table_options opt_create_partitioning create3",
+                "create3: opt_duplicate opt_as create_select union_clause",
+                "create3: opt_duplicate opt_as create_select opt_union_clause",
+                "create_select: SELECT_SYM select_options select_item_list opt_select_from",
+                "create_select: SELECT_SYM select_options select_item_list table_expression",
+                "create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident opt_create_table_options_etc",
+                "opt_duplicate_as_qe: as_create_query_expression",
+                "as_create_query_expression: AS query_expression_with_opt_locking_clauses",
+            }
+            for alternative in signatures & query_backed:
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-table-as-v1.json")
         if mysql:
             declarations = {
                 "field_spec: field_ident type opt_attribute",

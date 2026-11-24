@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
 use SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike;
 use SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLikeLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs;
+use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAsLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\CreateViewLowering;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
@@ -26,8 +28,9 @@ final class CreateRelationLowering
     public function lower(
         BoundStatement $operation,
         ParsedCreateTable|ParsedCreateTableLike|ParsedCreateView $statement,
-    ): CreateTable|CreateTableLike|CreateView {
+    ): CreateTable|CreateTableLike|CreateTableAs|CreateView {
         return match (true) {
+            $statement instanceof ParsedCreateTable && $statement->query !== null => (new CreateTableAsLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTableLike => (new CreateTableLikeLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateView => (new CreateViewLowering())->lower($operation, $statement),

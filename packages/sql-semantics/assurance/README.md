@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v38.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v41.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -292,6 +292,8 @@ The [MySQL session table removal contract](mysql-session-drop-table-v1.json) com
 The [MySQL table declaration namespace contract](mysql-session-create-table-v1.json) compares temporary and persistent InnoDB declarations. The observer checks ordered columns and primary keys, namespace-specific collision, default insertion, transaction effects and the view of a fresh session after the owner disconnects. Run `run_server_mysql_session_create_table.py` and `combine_server_mysql_session_create_table_evidence.py` on all nine pinned releases.
 
 The [MySQL table definition copy contract](mysql-create-like-v1.json) checks both resolved operands of `CREATE TABLE … LIKE` across permanent and session-local namespaces. Observe the empty copy, preserved column and index definitions, allocation and foreign-key behavior, and rollback. Run `run_server_mysql_create_like.py` and `combine_server_mysql_create_like_evidence.py` on all nine pinned releases.
+
+The [MySQL query-backed table contract](mysql-create-table-as-v1.json) checks source-free integer, Boolean and NULL projections. The native observer compares exact inferred storage, ordered names, values, both table namespaces, existence policy, rollback and owner disconnect. Run `run_server_mysql_create_table_as.py` and `combine_server_mysql_create_table_as_evidence.py` for all nine pinned releases. The [MySQL 5.6 source-free ordering rule](mysql-source-free-order-v1.json) retains positional ordering by rendering an independent one-row source. Its source SQL rejection and direct output checks are recorded by the same suite. The [integer width observation](mysql-create-table-as-integer-width-v1.json) records the threshold on both legacy and modern MySQL profiles.
 
 The [PostgreSQL truncation contract](postgres-truncate-v1.json) observes duplicate target order, inherited rows, transitive foreign-key effects, the lifetime of owned sequence state and before/after callback order. Run `run_server_postgres_truncate.py` and `combine_server_postgres_truncate_evidence.py` on both pinned releases.
 

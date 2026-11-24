@@ -830,6 +830,11 @@ if ($dialect !== 'sqlite') {
         $properties[$copy] = ['destination' => [$identity], 'source' => [$identity], 'ifNotExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$copy] = ['__construct', 'profileId', 'toString'];
+        $createAs = 'Schema\\Query\\CreateTableAs';
+        $roots[] = $createAs;
+        $internal[] = 'Schema\\Query\\CreateTableAsLowering';
+        $properties[$createAs] = ['target' => [$identity], 'query' => ['Select'], 'ifNotExists' => ['bool']];
+        $methods[$createAs] = ['__construct', 'profileId', 'toString'];
         $absent = 'Schema\\Identity\\AbsentDropTarget';
         $properties[$absent] = ['name' => [$tableName]];
         $methods[$absent] = ['__construct', 'quoted'];
@@ -1279,6 +1284,8 @@ try {
             if ($short === 'Schema\\CreateRelationLowering') {
                 $members = $class->getMethods();
                 $body = 'return match (true) {'
+                    . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable && $statement->query !== null => (new \\'
+                    . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
                     . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\'
                     . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
                     . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTableLike => (new \\'
@@ -1288,7 +1295,7 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\CreateTable', 'Schema\\Like\\CreateTableLike', 'Schema\\View\\CreateView',
+                        'Schema\\CreateTable', 'Schema\\Like\\CreateTableLike', 'Schema\\Query\\CreateTableAs', 'Schema\\View\\CreateView',
                     ]
                     && $printer->prettyPrint($members[0]->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)),
                     'Unexpected MySQL declaration publication');

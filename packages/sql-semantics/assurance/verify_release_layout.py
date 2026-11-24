@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v79.json"
-CONTRACT = "1905b18351a905b2640d694f6c5d35c0edbab1c5c74251eef9eec715e40225e7"
+CONTRACT_NAME = "release-layout-v80.json"
+CONTRACT = "329b158815c71b0bb343f0e023465c3a148f20c5d331341010ab313357e447e7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -464,6 +464,13 @@ def verify_probe(raw, catalog):
             temporary = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`scratch` (`n` SMALLINT NOT NULL DEFAULT -7) ENGINE=InnoDB"
             require(item.get("mysqlSessionCreateTable") == ["app", "scratch", "temporary-table", True, temporary, temporary],
                     "installed-mysql-session-declaration-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
+            create_as = ("CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`result_probe` ENGINE=InnoDB "
+                         "AS SELECT CAST(17 AS SIGNED) AS `n`, NULL AS `absent`")
+            require(item.get("mysqlCreateTableAs") == ["app", "result_probe", "temporary-table", True, ["n", "absent"],
+                    "SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast",
+                    "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb",
+                    create_as, create_as, True], "installed-mysql-create-table-as-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Like\\CreateTableLike"):
             copy = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`copy_probe` LIKE `app`.`accounts`"
             require(item.get("mysqlCreateLike") == ["app", "copy_probe", "temporary-table", "app", "accounts",

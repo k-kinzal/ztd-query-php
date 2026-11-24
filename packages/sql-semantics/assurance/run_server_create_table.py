@@ -8,7 +8,7 @@ from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
 from run_server_join import main
 from server_cases import SCHEMAS
-from server_create_table_cases import TYPES, case, expected, finite_id, finite_ids, observation, requests
+from server_create_table_cases import TYPES, case, expected, finite_id, finite_ids, negatives, observation, requests
 from server_delete_cases import literal
 from sqlite_domain import RenderFault
 
@@ -16,13 +16,20 @@ LABEL = "create-table"
 OBSERVER = "server_create_table_observer.php"
 CONTRACT = "b1c5f91edac3d4be6e304600ba2b480ee45497fd51e84ee90597f13a8ec6911c"
 ADMISSION = "ef0719629dd2016da90130d2370c5bc8707c516b465639dec296fdca5fbac089"
+QUERY_ADMISSION = "a10a0af3b78e1307374fc41a20ace5c5639659e43197a7caa61b23d1a5d9bd95"
 
 
 def specifications():
     path, projection = TOOL / "server-create-table-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-create-table-contract-mismatch")
-    require(digest(TOOL / "server-create-table-temporary-admission-v1.json") == ADMISSION,
-            "server-create-table-admission-mismatch")
+    previous = TOOL / "server-create-table-temporary-admission-v1.json"
+    query = TOOL / "mysql-create-table-as-v1.json"
+    require(digest(previous) == ADMISSION and digest(query) == QUERY_ADMISSION, "server-create-table-admission-mismatch")
+    admission = json.loads(query.read_text())["sharedAdmission"]
+    request, signal = list(negatives("mysql", "mysql-8.4.7"))[2]
+    same(json.loads(previous.read_text())["changedMySqlCase"]["replacementNegativeSql"], admission["previousSql"])
+    same(admission["replacementNegativeSql"], request["sql"])
+    same(admission["replacementNegativeSignal"], signal)
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 
 

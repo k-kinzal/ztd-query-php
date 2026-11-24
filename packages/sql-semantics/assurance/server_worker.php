@@ -890,6 +890,28 @@ function observeMysqlTableIdentity(object $identity): array
     return [$identity->name->schema->value, $identity->name->table->value, $identity->kind->value];
 }
 
+function constructMysqlCreateAs(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Schema\\Query\\CreateTableAs';
+    $definition = $input['mysqlCreateTableAs'];
+    return new $statement(
+        mysqlTableIdentity($namespace, $definition['target']),
+        constructSelect($platform, $definition['query'] + ['dialect' => 'mysql', 'release' => $input['release']]),
+        $definition['ifNotExists'],
+    );
+}
+
+function observeMysqlCreateAs(string $namespace, object $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlCreateTableAs' => [
+            'target' => observeMysqlTableIdentity($value->target), 'ifNotExists' => $value->ifNotExists,
+            'query' => observeSetQuery($namespace, $value->query, 'mysql'),
+        ],
+    ];
+}
+
 function constructMysqlCreateLike(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -1208,6 +1230,7 @@ function observeStatement(array $input): array
             isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['createLike']) => constructMysqlCreateLike($platform, $input),
+            isset($input['mysqlCreateTableAs']) => constructMysqlCreateAs($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -1243,6 +1266,9 @@ function observeStatement(array $input): array
                 'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
             ],
         ];
+    }
+    if ($dialect === 'mysql' && $value::class === $namespace . 'Schema\\Query\\CreateTableAs') {
+        return observeMysqlCreateAs($namespace, $value);
     }
     if ($value::class === $namespace . 'Schema\\Like\\CreateTableLike') {
         return observeMysqlCreateLike($value);

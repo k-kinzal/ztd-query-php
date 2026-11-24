@@ -552,6 +552,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'MySql') {
         $queries['Schema\\View\\CreateView'] = 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW app.answer (value) AS SELECT 42 AS original';
         $queries['Schema\\Like\\CreateTableLike'] = 'CREATE TEMPORARY TABLE IF NOT EXISTS app.copy_probe (LIKE app.accounts)';
+        $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TEMPORARY TABLE IF NOT EXISTS app.result_probe AS SELECT CAST(17 AS SIGNED) AS n, NULL AS absent';
         $queries['Schema\\View\\DropView'] = 'DROP VIEW IF EXISTS app.absent_view CASCADE';
         $queries['Schema\\Alter\\RenameTable'] = 'RENAME TABLE app.accounts TO app.staged, app.staged TO app.archived';
         $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE app.accounts';
@@ -671,6 +672,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);
             $details['mysqlPrimaryKey'] = observeMysqlPrimaryKey($semantics);
             $details['mysqlSessionCreateTable'] = observeMysqlSessionCreateTable($semantics);
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Query\\CreateTableAs') {
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($result->target, $result->query, $result->ifNotExists);
+            $first = $result->query->columns[0];
+            $rejected = false;
+            try {
+                $duplicate = new SqlSemantics\Platform\MySql\Ir\Select([$first, $first]);
+                new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($result->target, $duplicate);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage() === 'CREATE TABLE AS cannot repeat a column name.';
+            }
+            $details['mysqlCreateTableAs'] = [$result->target->name->schema->value, $result->target->name->table->value,
+                $result->target->kind->value, $result->ifNotExists, array_column(array_column($result->query->columns, 'name'), 'value'),
+                $first->expression::class, $result->profileId(), $result->toString(), $direct->toString(), $rejected];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Like\\CreateTableLike') {
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->source, true);
