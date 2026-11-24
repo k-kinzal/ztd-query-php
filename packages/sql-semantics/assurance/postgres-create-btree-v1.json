@@ -1,0 +1,279 @@
+{
+  "revision": "SemanticsIR/postgres-create-btree-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF8, native parameters and standard-conforming strings, named B-tree indexes on ordinary declared base tables with physical integer, bigint or Boolean columns.",
+  "scope": "Explicit named B-tree indexes whose keys and payload are direct column occurrences. Cover persistent and local temporary targets, optional ONLY, native concurrency, name availability and guards, duplicate occurrences and effective ordering.",
+  "additionalPublicRoots": [
+    "Schema/Index/Btree/CreateIndex"
+  ],
+  "constructors": {
+    "Schema/Index/Btree/CreateIndex": {
+      "role": "A resolved ordinary PostgreSQL B-tree creation with a precisely ordered key and covering layout.",
+      "structure": "Absolute ordinary TableSource identity and resolved columns, explicit local name, nonempty ordered list of IndexKey, an ordered list of IncludedColumn, availability, guard, uniqueness, null equivalence, locking mode and the fixed release.",
+      "conditions": "An ordinary base table in an application schema or pg_temp has a resolved complete heading in the supported type domain. Each referenced slot exists and has a B-tree role. The combined key and INCLUDE occurrence count is at most 32. An occupied name requires IF NOT EXISTS. Payload columns and key columns may repeat.",
+      "meaning": "Create the represented B-tree on the exact relation, subject to native transaction, ownership and data rules. The occupied-name guard leaves the original relation or index unchanged and retains the notice and the native lock route.",
+      "sql": "Emit CREATE with the selected UNIQUE, CONCURRENTLY and IF NOT EXISTS clauses, quote the unqualified index identifier and resolved table, emit USING btree, every ordered key and covering occurrence, and the native NULLS policy.",
+      "externalInterpretation": "The same stock PostgreSQL release, native identifier and parameter mode, absolute relation namespace, declared column headings, built-in integer and Boolean B-tree classes and live temporary schema. Data and access/transaction state remain native evaluation inputs.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/Btree/IndexKey": {
+      "role": "One ordered key position of a B-tree index.",
+      "structure": "A nonnegative parent table column slot and one effective IndexOrder.",
+      "conditions": "The containing index supplies a type-checked slot. Repeated key slots are distinct occurrences.",
+      "meaning": "Compare the values of that physical column using its stock B-tree operator class, direction and NULL ordering.",
+      "sql": "Quote the indexed heading member of the supplied parent and emit explicit direction and NULL ordering.",
+      "externalInterpretation": "The same stock PostgreSQL release, native identifier and parameter mode, absolute relation namespace, declared column headings, built-in integer and Boolean B-tree classes and live temporary schema. Data and access/transaction state remain native evaluation inputs.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/Btree/IncludedColumn": {
+      "role": "A covering payload position in the PostgreSQL B-tree.",
+      "structure": "A nonnegative physical slot of the indexed table.",
+      "conditions": "The containing index supplies a type-checked slot. An included column may repeat and may also be a key.",
+      "meaning": "Store the payload occurrence as an included value. It contributes no sort or uniqueness component.",
+      "sql": "Quote the corresponding resolved column within the ordered INCLUDE list.",
+      "externalInterpretation": "The same stock PostgreSQL release, native identifier and parameter mode, absolute relation namespace, declared column headings, built-in integer and Boolean B-tree classes and live temporary schema. Data and access/transaction state remain native evaluation inputs.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/Btree/IndexOrder": {
+      "role": "The effective ordering of a PostgreSQL B-tree index key.",
+      "structure": "Ascending or descending paired with NULLS FIRST or NULLS LAST.",
+      "conditions": "A closed native enum; unspecified SQL chooses ASC and NULLS LAST, or NULLS FIRST for DESC.",
+      "meaning": "Establish ordering and NULL placement for that position. Both independent bits are observed in pg_index.indoption.",
+      "sql": "Emit the selected explicit direction and null placement.",
+      "externalInterpretation": "The same stock PostgreSQL release, native identifier and parameter mode, absolute relation namespace, declared column headings, built-in integer and Boolean B-tree classes and live temporary schema. Data and access/transaction state remain native evaluation inputs.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/Btree/IndexPresence": {
+      "role": "Availability of the requested index name in the table's relation namespace.",
+      "structure": "A closed choice between a known vacant name and a known occupied name.",
+      "conditions": "Publication with an occupied name requires IF NOT EXISTS. The position is known from the external namespace and cannot be inferred from an open catalog.",
+      "meaning": "A vacant name can receive the representation; an occupied relation or index produces the native guarded notice and retains its state.",
+      "sql": "The root emits the presence guard and original local name under the same namespace interpretation.",
+      "externalInterpretation": "The same stock PostgreSQL release, native identifier and parameter mode, absolute relation namespace, declared column headings, built-in integer and Boolean B-tree classes and live temporary schema. Data and access/transaction state remain native evaluation inputs.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Identifier",
+    "TableSource",
+    "From/ColumnKind",
+    "From/ExternalRelationKind"
+  ],
+  "rules": [
+    "Resolve the indexed relation before checking slots. Use its absolute namespace for the name created by CREATE INDEX. Check actual shadowing in the shared relation namespace, including pg_temp, and refuse uncertain open namespaces.",
+    "A named CREATE INDEX against a known occupied relation name is admissible with IF NOT EXISTS. Preserve the name, guard and represented requested operation so the native session gives the notice and retains the original catalog and data.",
+    "Bind direct key columns and included covering columns to exact physical ordinals. Recognize independent direction and NULL order, store the native resolved B-tree role for each supported type, and retain repeated key, included and cross-list occurrences in their submitted order.",
+    "Duplicates and NULL comparison are independent of key order and cover data. NULLS NOT DISTINCT is a catalog property even when the index is not unique. The uniqueness effect is checked against the native existing table rows and subsequent inserts.",
+    "The 32-member maximum includes the key and covering occurrences. Only known ordinary base tables and the current pg_temp are admitted. CONCURRENTLY retains its native transaction restriction even when the indexed table is temporary."
+  ],
+  "observations": [
+    "Absolute owner and indexed namespace, typed positions, type-default operator classes, attnum list, included heading, flags, key and total cardinality, direction and NULL ordering.",
+    "SQLSTATE, exact notice fields, server catalog and status including indisvalid, whether a previous covered relation or index survived, protected data and a subsequent duplicate/NULL insert witness.",
+    "Autocommit creation, outstanding transaction restrictions and ordinary rollback with exact temp scope. Lock behavior of the native selected command remains subject to runtime state."
+  ],
+  "finite": {
+    "keys": [
+      [
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ]
+    ],
+    "firstOrder": [
+      "default",
+      "ascending-nulls-first",
+      "descending-default",
+      "descending-nulls-last"
+    ],
+    "included": [
+      [],
+      [
+        2
+      ],
+      [
+        0
+      ],
+      [
+        2,
+        2
+      ]
+    ],
+    "uniqueNullPolicies": [
+      [
+        false,
+        "default"
+      ],
+      [
+        false,
+        "distinct"
+      ],
+      [
+        false,
+        "not-distinct"
+      ],
+      [
+        true,
+        "default"
+      ],
+      [
+        true,
+        "not-distinct"
+      ]
+    ],
+    "targetScopes": [
+      "persistent",
+      "temporary"
+    ],
+    "concurrently": [
+      false,
+      true
+    ],
+    "transaction": [
+      false,
+      true
+    ],
+    "guard": [
+      false,
+      true
+    ],
+    "occupancy": [
+      "vacant",
+      "existing-index",
+      "existing-table"
+    ],
+    "identity": "Per release exhaust the independent 320 key/shape coordinates and the 48 availability/concurrency coordinates. All key coordinates and 32 route coordinates are admissible, including their specified runtime failures. Require paired direct and analyzed construction and compare the original where applicable. For the other 16 native unguarded collisions verify typed rejection and the specified original SQLSTATE, including transaction-error precedence."
+  },
+  "boundaries": [
+    "32 members accepted",
+    "33 members rejected",
+    "Repeated order exactly preserved",
+    "Different named owner selected by temp shadow",
+    "ONLY on ordinary table",
+    "Name containing a double quote"
+  ],
+  "exploration": {
+    "seeds": [
+      12227,
+      49669,
+      97613
+    ],
+    "casesPerSeed": 40,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": [],
+    "domain": "Vary ordered and repeated direct slots, mixed key types, NULL ordering per position, reserved and quoted names, sparse or repeated covering layouts, guards, transaction route and namespace competitors."
+  },
+  "negative": [
+    "Empty key list",
+    "33 total components",
+    "Negative key slot",
+    "Absent key slot",
+    "Absent included slot",
+    "Occupied name without guard",
+    "Unresolved or wrong-kind target",
+    "Unresolved key binding",
+    "Open namespace absence",
+    "Partitioned target"
+  ],
+  "faults": [
+    "Wrong indexed coordinate",
+    "Reverse or duplicate-drop key order",
+    "Lose covered payload",
+    "Reverse NULL placement",
+    "Erase native uniqueness",
+    "Lose NULLS NOT DISTINCT",
+    "Lose CONCURRENTLY",
+    "Lose IF NOT EXISTS",
+    "Admit too many occurrences"
+  ],
+  "calibration": {
+    "driver": "b80febccb418ef391e8088d4f5acf70156aef1922dea59c94dc8b4c3bd2088f6",
+    "queryPack": "5bf49b9a59d369793c4c18b9f58d75ba304d1e8717d5fc8db3a6d8b3bc2b9840",
+    "16.6": {
+      "stdout": "016bca0aa864a4a4a9ff1977b7662c81b57c876588b7eeda3369528247db057a",
+      "stderr": "464845cf8b574f23c1f522d0c1db7a98be100db26a4bb9a790f82c4880f57203"
+    },
+    "17.2": {
+      "stdout": "6b9e4d99513bc4843b3b36242cbc8334953867746fbe4a116b4680d57aef3226",
+      "stderr": "44006d3633a3ec5b6012c597b40f4319ba70a198aeb63519eda4a8742e1c14a1"
+    }
+  },
+  "trust": [
+    "Pinned native database images and B-tree catalog fields, immutable value roles, the verified ordered copy and distinct observer/evaluator."
+  ],
+  "open": [
+    "Anonymous index naming, expression or partial indexes, partitioned parents and partitions, user-supplied collations and operator classes, materialized owners, non-B-tree methods, custom tablespaces and storage modifiers remain in the frozen whole-language inventory."
+  ]
+}
