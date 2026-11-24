@@ -981,6 +981,26 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->parameters->storage->value, $result->parameters->start->decimal, $result->parameters->initial->decimal,
                 $result->ifNotExists, $result == $direct, $direct->toString(), $refused,
             ];
+            $declared = $semantics->context(['CREATE TABLE public.ledger (id integer, tag text)']);
+            $bound = $semantics->analyze('CREATE SEQUENCE public.owner_ticket AS smallint OWNED BY ledger.tag', $declared);
+            $owner = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner(
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'),
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('ledger'),
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('tag'),
+            );
+            $owned = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence(
+                $bound->name, $bound->parameters, release: $bound->release, owner: $owner,
+            );
+            $badColumn = false;
+            try {
+                $semantics->analyze('CREATE SEQUENCE public.other_ticket OWNED BY ledger.unknown', $declared);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $badColumn = $error->getMessage() === 'Sequence ownership requires one declared column.';
+            }
+            $details['postgresSequenceOwner'] = [
+                $bound->owner->schema->value, $bound->owner->relation->value, $bound->owner->column->value,
+                $bound->owner->kind->value, $bound == $owned, $owned->toString(), $badColumn,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {
             $composed = $semantics->analyze(

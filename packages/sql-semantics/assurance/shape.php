@@ -1093,13 +1093,15 @@ if ($dialect !== 'sqlite') {
         $sequenceName = $sequence . 'SequenceName';
         $sequenceParameters = $sequence . 'SequenceParameters';
         $sequencePersistence = $sequence . 'SequencePersistence';
+        $sequenceOwner = $sequence . 'Ownership\\SequenceOwner';
+        $sequenceOwnerKind = $sequence . 'Ownership\\SequenceOwnerKind';
         $roots[] = $sequenceCreate;
         array_push($internal, $sequence . 'CreateSequenceLowering', $sequence . 'SequenceOptionLowering',
-            $sequence . 'SequenceOptionsLowering', $sequence . 'SequenceIntegerOrder');
+            $sequence . 'SequenceOptionsLowering', $sequence . 'SequenceIntegerOrder', $sequence . 'Ownership\\SequenceOwnerLowering');
         $pureCollaborators[] = $sequence . 'SequenceIntegerOrder';
         $properties[$sequenceCreate] = ['name' => [$sequenceName], 'parameters' => [$sequenceParameters],
             'persistence' => [$sequencePersistence], 'ifNotExists' => ['bool'],
-            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'owner' => ['?' . $sequenceOwner]];
         $properties[$sequenceName] = ['schema' => ['Identifier'], 'name' => ['Identifier']];
         $properties[$sequenceParameters] = ['storage' => ['Schema\\IntegerStorage'], 'cycle' => ['bool']];
         foreach (['increment', 'minimum', 'maximum', 'start', 'initial', 'cache'] as $operand) {
@@ -1112,6 +1114,11 @@ if ($dialect !== 'sqlite') {
         $methods[$sequenceName] = ['__construct', 'quoted'];
         $methods[$sequenceParameters] = ['__construct'];
         $methods[$sequencePersistence] = ['temporary'];
+        $properties[$sequenceOwner] = ['schema' => ['Identifier'], 'relation' => ['Identifier'], 'column' => ['Identifier'],
+            'kind' => [$sequenceOwnerKind]];
+        $methods[$sequenceOwner] = ['__construct', 'quoted'];
+        $properties[$sequenceOwnerKind] = $methods[$sequenceOwnerKind] = [];
+        $enumCases[$sequenceOwnerKind] = ['BaseTable' => 'table', 'ForeignTable' => 'foreign', 'View' => 'view', 'PartitionedTable' => 'partitioned'];
         $sequenceDrop = $sequence . 'DropSequence';
         $sequenceDropTarget = $sequence . 'SequenceDropTarget';
         $sequenceDropPresence = $sequence . 'SequenceDropPresence';
@@ -2163,7 +2170,7 @@ try {
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema', 'Schema\\Sequence\\SequenceName',
-                    'Schema\\Sequence\\SequenceDropTarget',
+                    'Schema\\Sequence\\SequenceDropTarget', 'Schema\\Sequence\\Ownership\\SequenceOwner',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')

@@ -512,6 +512,22 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-create-sequence-evidence"
+      - name: Compare PostgreSQL sequence owner-column dependencies
+        if: ${{ !cancelled() && matrix.engine == 'postgres' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_postgres_sequence_owner.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-postgres-sequence-owner-evidence"
       - name: Compare PostgreSQL sequence removal and dependent defaults
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -2346,6 +2362,12 @@ jobs:
         with:
           name: native-postgres-create-sequence-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-create-sequence-evidence/
+      - name: Preserve PostgreSQL sequence owner observations and any failure
+        if: ${{ always() && matrix.engine == 'postgres' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-postgres-sequence-owner-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-postgres-sequence-owner-evidence/
       - name: Preserve PostgreSQL sequence removal observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

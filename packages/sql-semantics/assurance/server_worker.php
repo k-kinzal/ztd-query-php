@@ -1245,10 +1245,20 @@ function constructPostgresSequence(array $input): \SqlSemantics\Platform\Postgre
         new \SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral($spec['cache']),
         $spec['cycle'],
     );
+    $owner = null;
+    if (isset($spec['owner'])) {
+        [$namespace, $relation, $column, $kind] = $spec['owner'];
+        $owner = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner(
+            new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($namespace),
+            new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($relation),
+            new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($column),
+            \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwnerKind::from($kind),
+        );
+    }
 
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence(
         $name, $numbers, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePersistence::from($spec['persistence']),
-        $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+        $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']), $owner,
     );
 }
 
@@ -1259,6 +1269,8 @@ function observePostgresSequence(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Seq
         'createSequence' => [
             'target' => [$value->name->schema->value, $value->name->name->value],
             'persistence' => $value->persistence->value, 'ifNotExists' => $value->ifNotExists,
+            'owner' => $value->owner === null ? null
+                : [$value->owner->schema->value, $value->owner->relation->value, $value->owner->column->value, $value->owner->kind->value],
             'storage' => $numbers->storage->value, 'increment' => $numbers->increment->decimal,
             'minimum' => $numbers->minimum->decimal, 'maximum' => $numbers->maximum->decimal,
             'start' => $numbers->start->decimal, 'initial' => $numbers->initial->decimal,

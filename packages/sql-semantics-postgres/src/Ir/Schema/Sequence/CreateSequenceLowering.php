@@ -41,8 +41,8 @@ final class CreateSequenceLowering
         $namespace = $written ?? ($persistence->temporary() ? new Name('pg_temp') : $context->declarationSchema);
         Check::input($namespace->value === 'pg_temp' || (new IndexBinding())->known($context, $namespace), 'CREATE SEQUENCE requires a declared local namespace.');
         $name = new SequenceName(new Identifier($namespace->value), new Identifier($statement->name->name->value));
-        $parameters = (new SequenceOptionsLowering())->lower($context, $statement->options);
+        [$parameters, $owner] = (new SequenceOptionsLowering())->lower($context, $statement->options);
 
-        return new CreateSequence($name, $parameters, $persistence, $statement->ifNotExists, $context->profile->grammar);
+        return new CreateSequence($name, $parameters, $persistence, $statement->ifNotExists, $context->profile->grammar, $owner);
     }
 }

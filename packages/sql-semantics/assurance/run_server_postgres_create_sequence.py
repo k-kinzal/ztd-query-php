@@ -114,7 +114,7 @@ def refusals(tag):
         (base, f"CREATE SEQUENCE {name} INCREMENT 1.5", "22P02", refusal("A sequence option requires a signed decimal integer.")),
         (base, f"CREATE SEQUENCE absent_database.{name}", "0A000", refusal("An explicit PostgreSQL catalog requires the matching current database.")),
         (base, f"CREATE TEMP SEQUENCE {name}", "42P16", refusal("cannot create temporary relation in non-temporary schema", "SemanticException")),
-        (base, f"CREATE SEQUENCE {name} OWNED BY ir_sequence_fixture.owner.id", None, refusal("Sequence ownership requires a checked column reference.")),
+        (base, f"CREATE SEQUENCE {name} OWNED BY ir_sequence_fixture.owner.missing", None, refusal("Sequence ownership requires one declared column.")),
         (temporary, "CREATE UNLOGGED SEQUENCE pg_temp.ticket", "42P16", refusal("only temporary relations may be created in temporary schemas", "SemanticException")),
     ]
     for index, (item, command, state, boundary) in enumerate(commands):

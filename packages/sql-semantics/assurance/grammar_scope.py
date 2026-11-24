@@ -608,6 +608,10 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if rule != "SeqOptElem" or alternative.split()[1] not in {"SEQUENCE", "LOGGED", "UNLOGGED"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-create-sequence-v3.json")
+            for rule in ("CreateSeqStmt", "SeqOptElem", "any_name"):
+                for alternative in rules.get(rule, ()):
+                    if rule != "SeqOptElem" or alternative == "SeqOptElem: OWNED BY any_name":
+                        related[alternative] = (*related.get(alternative, ()), "postgres-sequence-ownership-v3.json")
             for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "CreateSeqStmt"):
                 for alternative in rules.get(rule, ()):
                     if rule in ("CreateSchemaStmt", "CreateSeqStmt") or alternative in {

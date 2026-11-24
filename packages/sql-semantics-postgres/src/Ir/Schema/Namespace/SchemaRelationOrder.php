@@ -30,6 +30,7 @@ final class SchemaRelationOrder
         );
         $seen = [];
         foreach ($sequences as $sequence) {
+            Check::input($sequence->owner === null, 'A schema sequence cannot depend on a relation created after its sequence phase.');
             Check::input(
                 $sequence->name->schema->value === $name?->value && $sequence->release === $release,
                 'A schema sequence must belong to its namespace and release.'

@@ -1,0 +1,206 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-owner-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check resolved column dependency roles and the unchanged generator options and phase boundaries.",
+  "rules": {
+    "Schema/Sequence/Ownership/SequenceOwner::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A sequence owner cannot use a numbered temporary namespace.');"
+      ]
+    },
+    "Schema/Sequence/Ownership/SequenceOwner::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->relation->quoted() . '.' . $this->column->quoted();"
+      ]
+    },
+    "Schema/Sequence/Ownership/SequenceOwnerLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$width = count($owner->parts);",
+        "$column = $owner->last();",
+        "if ($width === 1 && $column->value === 'none') {",
+        "    return null;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($width >= 2 && $width <= 4, 'Sequence ownership requires NONE or an exact relation column.');",
+        "$reference = (new \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName(array_slice($owner->parts, 0, -1)))->qualified();",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($reference !== null, 'Sequence ownership requires a local relation column.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($reference->catalog === null || $reference->catalog->value === $context->currentDatabase?->value, 'An explicit PostgreSQL catalog requires the matching current database.');",
+        "$relation = $this->find($context, $reference);",
+        "$schema = $relation->name->schema ?? $context->declarationSchema;",
+        "$fields = $relation->matchingColumns($column->value, \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($fields) === 1, 'Sequence ownership requires one declared column.');",
+        "$kind = match ($relation->kind) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable => $context->indexNamespace->partitionRole($schema, $relation->name->name) === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\TablePartitionRole::Branch ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwnerKind::PartitionedTable : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwnerKind::BaseTable,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::ForeignTable => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwnerKind::ForeignTable,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::View => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwnerKind::View,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::MaterializedView, \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::Sequence => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('Sequence ownership requires an eligible table-like relation.'),",
+        "};",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwner(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($relation->name->name->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($fields[0]->name->value), $kind);"
+      ]
+    },
+    "Schema/Sequence/Ownership/SequenceOwnerLowering::find": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "foreach ($reference->schema === null ? $context->searchPath : [$reference->schema] as $schema) {",
+        "    $this->checkIndexes($context, $schema, $reference->name);",
+        "    $possible = $context->declared($reference, $schema);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($possible) <= 1, 'Sequence ownership cannot resolve conflicting relation declarations.');",
+        "    if ($possible !== []) {",
+        "        return $possible[0];",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->complete && !$context->indexNamespace->hasUnknownNames($schema) && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\StockIndexNames::contains($context->profile->grammar, $schema, $reference->name), 'Sequence ownership requires a definite declared relation.');",
+        "}",
+        "throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('Sequence ownership requires a definite declared relation.');"
+      ]
+    },
+    "Schema/Sequence/Ownership/SequenceOwnerLowering::checkIndexes": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "foreach ($context->indexNamespace->indexes as $index) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($index->schema->value !== $schema->value || $index->index->value !== $owner->value, 'Sequence ownership requires an eligible table-like relation.');",
+        "}"
+      ]
+    },
+    "Schema/Sequence/SequenceOptionLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceNumber) {",
+        "    $written = $option->value->text();",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(preg_match('/\\A-?[0-9]+\\z/D', $written) === 1, 'A sequence option requires a signed decimal integer.');",
+        "    $magnitude = ltrim(ltrim($written, '-'), '0');",
+        "    $decimal = $magnitude === '' ? '0' : ($written[0] === '-' ? '-' : '') . $magnitude;",
+        "    return [$option->kind->value, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($decimal)];",
+        "}",
+        "if ($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceAs) {",
+        "    $type = $option->type->typeFact($context, false);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Type\\Known, 'A sequence requires a resolved native integer storage type.');",
+        "    return ['AS', match ($type->descriptor) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int2 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int4 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int8 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide,",
+        "        default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A sequence requires a resolved native integer storage type.'),",
+        "    }];",
+        "}",
+        "if ($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlag) {",
+        "    return match ($option->kind) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Cycle => ['CYCLE', true],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::NoCycle => ['CYCLE', false],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::NoMinValue => ['MINVALUE', null],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::NoMaxValue => ['MAXVALUE', null],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Restart => ['RESTART', null],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Logged, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Unlogged => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('Sequence creation declares persistence before SEQUENCE.'),",
+        "    };",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceReference && $option->owned, 'Sequence creation requires a checked owner option.');",
+        "return ['OWNED BY', (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwnerLowering())->lower($context, $option->name)];"
+      ]
+    },
+    "Schema/Sequence/SequenceOptionsLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$read = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceOptionLowering();",
+        "$seen = [];",
+        "$numbers = [];",
+        "$type = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide;",
+        "$cycle = false;",
+        "$owner = null;",
+        "foreach ($options as $option) {",
+        "    [$key, $value] = $read->lower($context, $option);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'A sequence option may be specified only once.');",
+        "    $seen[$key] = true;",
+        "    match (true) {",
+        "        $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage => $type = $value,",
+        "        $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral => $numbers[$key] = $value,",
+        "        $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwner => $owner = $value,",
+        "        is_bool($value) => $cycle = $value,",
+        "        $value === null => null,",
+        "    };",
+        "}",
+        "return [new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceParameters($type, $numbers['INCREMENT'] ?? new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('1'), $numbers['MINVALUE'] ?? null, $numbers['MAXVALUE'] ?? null, $numbers['START'] ?? null, $numbers['RESTART'] ?? null, $numbers['CACHE'] ?? new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('1'), $cycle), $owner];"
+      ]
+    },
+    "Schema/Sequence/CreateSequenceLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SEQUENCE requires the native PostgreSQL sequence profile.');",
+        "$written = $statement->name->schema;",
+        "$persistence = match ($statement->persistence) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Permanent => $written?->value === 'pg_temp' ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Temporary : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Permanent,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Unlogged => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Unlogged,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Temporary, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Temp, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::LocalTemporary, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::LocalTemp => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Temporary,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::GlobalTemporary, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::GlobalTemp => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::GlobalTemporary,",
+        "};",
+        "$namespace = $written ?? ($persistence->temporary() ? new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name('pg_temp') : $context->declarationSchema);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($namespace->value === 'pg_temp' || (new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding())->known($context, $namespace), 'CREATE SEQUENCE requires a declared local namespace.');",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceName(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($namespace->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->name->value));",
+        "[$parameters, $owner] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceOptionsLowering())->lower($context, $statement->options);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\CreateSequence($name, $parameters, $persistence, $statement->ifNotExists, $context->profile->grammar, $owner);"
+      ]
+    },
+    "Schema/Sequence/CreateSequence::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($name->schema->value === 'pg_temp') === $persistence->temporary(), 'A sequence namespace must agree with its temporary storage.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($owner === null || $owner->schema->value === $name->schema->value, 'A sequence owner must belong to the same namespace.');"
+      ]
+    },
+    "Schema/Sequence/CreateSequence::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$storage = $this->persistence->value === '' ? '' : $this->persistence->value . ' ';",
+        "$numbers = $this->parameters;",
+        "$restart = $numbers->initial->decimal === $numbers->start->decimal ? '' : ' RESTART WITH ' . $numbers->initial->decimal;",
+        "return 'CREATE ' . $storage . 'SEQUENCE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->name->quoted() . ' AS ' . $numbers->storage->value . ' INCREMENT BY ' . $numbers->increment->decimal . ' MINVALUE ' . $numbers->minimum->decimal . ' MAXVALUE ' . $numbers->maximum->decimal . ' START WITH ' . $numbers->start->decimal . $restart . ' CACHE ' . $numbers->cache->decimal . ($numbers->cycle ? ' CYCLE' : ' NO CYCLE') . ($this->owner === null ? '' : ' OWNED BY ' . $this->owner->quoted());"
+      ]
+    },
+    "Schema/Namespace/SchemaRelationOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequences === [] && $tables === [] || $name !== null && !$guard, 'Schema tables and sequences require an unguarded, statically named namespace.');",
+        "$seen = [];",
+        "foreach ($sequences as $sequence) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->owner === null, 'A schema sequence cannot depend on a relation created after its sequence phase.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->name->schema->value === $name?->value && $sequence->release === $release, 'A schema sequence must belong to its namespace and release.');",
+        "    $coordinate = $sequence->name->name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$coordinate]) || $sequence->ifNotExists, 'A repeated schema sequence requires its own IF NOT EXISTS guard.');",
+        "    $seen[$coordinate] = true;",
+        "}",
+        "foreach ($tables as $table) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->target->schema->value === $name?->value && $table->release === $release, 'A schema table must belong to its namespace and release.');",
+        "    $coordinate = $table->target->table->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$coordinate]) || $table->ifNotExists, 'A repeated schema table requires its own IF NOT EXISTS guard.');",
+        "    $seen[$coordinate] = true;",
+        "}"
+      ]
+    }
+  }
+}

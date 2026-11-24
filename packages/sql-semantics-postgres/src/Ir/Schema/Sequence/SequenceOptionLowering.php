@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwnerLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -28,7 +30,7 @@ final class SequenceOptionLowering
     /**
      * Interprets the supported option forms without evaluating arbitrary expressions.
      *
-     * @return array{string, IntegerStorage|WideIntegerLiteral|bool|null}
+     * @return array{string, IntegerStorage|WideIntegerLiteral|SequenceOwner|bool|null}
      * @throws InvalidConstruction When an option has an unresolved or unsupported role
      */
     public function lower(AnalysisContext $context, SequenceOption $option): array
@@ -62,9 +64,8 @@ final class SequenceOptionLowering
                 SequenceFlagKind::Logged, SequenceFlagKind::Unlogged => throw new InvalidConstruction('Sequence creation declares persistence before SEQUENCE.'),
             };
         }
-        Check::input($option instanceof SequenceReference && $option->owned && count($option->name->parts) === 1
-            && $option->name->parts[0]->value === 'none', 'Sequence ownership requires a checked column reference.');
+        Check::input($option instanceof SequenceReference && $option->owned, 'Sequence creation requires a checked owner option.');
 
-        return ['OWNED BY', null];
+        return ['OWNED BY', (new SequenceOwnerLowering())->lower($context, $option->name)];
     }
 }

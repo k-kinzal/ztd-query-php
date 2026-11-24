@@ -49,7 +49,7 @@ def resolved(item):
 def direct(item):
     body = {field: None if item[field] is None else str(item[field]) for field in NUMBERS}
     body.update(target=item["target"], ifNotExists=item["guard"], storage=item["kind"].upper(),
-                persistence=MODES[item["persistence"]][0], cycle=item["cycle"])
+                persistence=MODES[item["persistence"]][0], cycle=item["cycle"], owner=item.get("ownership"))
     return {"dialect": "postgres", "release": item["release"], "createSequence": body}
 
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -30,10 +31,15 @@ final class CreateSequence implements SemanticsIR
         public readonly SequencePersistence $persistence = SequencePersistence::Permanent,
         public readonly bool $ifNotExists = false,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        public readonly ?SequenceOwner $owner = null,
     ) {
         Check::input(
             ($name->schema->value === 'pg_temp') === $persistence->temporary(),
             'A sequence namespace must agree with its temporary storage.'
+        );
+        Check::input(
+            $owner === null || $owner->schema->value === $name->schema->value,
+            'A sequence owner must belong to the same namespace.'
         );
     }
 
@@ -58,6 +64,7 @@ final class CreateSequence implements SemanticsIR
             . ' AS ' . $numbers->storage->value . ' INCREMENT BY ' . $numbers->increment->decimal
             . ' MINVALUE ' . $numbers->minimum->decimal . ' MAXVALUE ' . $numbers->maximum->decimal
             . ' START WITH ' . $numbers->start->decimal . $restart . ' CACHE ' . $numbers->cache->decimal
-            . ($numbers->cycle ? ' CYCLE' : ' NO CYCLE');
+            . ($numbers->cycle ? ' CYCLE' : ' NO CYCLE')
+            . ($this->owner === null ? '' : ' OWNED BY ' . $this->owner->quoted());
     }
 }

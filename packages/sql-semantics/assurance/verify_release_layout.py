@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v132.json"
-CONTRACT = "1464b42a8bff0dc0e6c7d9b6237b3c897d9c0afed8c83b121ff4ae135308bef9"
+CONTRACT_NAME = "release-layout-v133.json"
+CONTRACT = "37f96a30ff20f674043108e4e658f294eaef5bd58150905858417522fc2336e4"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -335,6 +335,11 @@ def verify_probe(raw, catalog):
             require(item.get("postgresCreateSequence") == [
                 "public", "Ticket.棚", "Unlogged", "SMALLINT", "3", "10", True, True, emitted, True,
             ] and item["sql"] == emitted, "installed-postgres-create-sequence-mismatch", item)
+            owner_sql = ('CREATE SEQUENCE "public"."owner_ticket" AS SMALLINT INCREMENT BY 1 MINVALUE 1'
+                         ' MAXVALUE 32767 START WITH 1 CACHE 1 NO CYCLE OWNED BY "public"."ledger"."tag"')
+            require(item.get("postgresSequenceOwner") == [
+                "public", "ledger", "tag", "table", True, owner_sql, True,
+            ], "installed-postgres-sequence-owner-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\CreateSchema"):
             sequence_first = ('CREATE SCHEMA "Counter Batch" AUTHORIZATION CURRENT_USER'
                               ' CREATE SEQUENCE "Counter Batch"."ticket" AS SMALLINT INCREMENT BY 1 MINVALUE 1'
