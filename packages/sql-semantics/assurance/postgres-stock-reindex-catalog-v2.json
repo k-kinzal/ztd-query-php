@@ -1,0 +1,254 @@
+{
+  "revision": "SemanticsIR/postgres-stock-reindex-catalog-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "postgres-stock-reindex-catalog-v1.json",
+    "sha256": "12fcaadd6c956399516fd7c13fd591e418edb3fd88f53ec9bb4d8539228a9f93"
+  },
+  "scope": "Preserve the full exact native stock catalog for each observed Linux architecture of the pinned PostgreSQL images. Recognize differences only at the four enumerated installation-allocated information_schema table, TOAST and index identities.",
+  "builds": {
+    "16.6": {
+      "amd64": {
+        "serverBuild": "PostgreSQL 16.6 (Debian 16.6-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+        "informationSchemaToast": [
+          [
+            "information_schema",
+            "sql_features",
+            "13393",
+            "pg_toast_13393",
+            "13396",
+            "pg_toast_13393_index",
+            "13397",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_implementation_info",
+            "13398",
+            "pg_toast_13398",
+            "13401",
+            "pg_toast_13398_index",
+            "13402",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_parts",
+            "13403",
+            "pg_toast_13403",
+            "13406",
+            "pg_toast_13403_index",
+            "13407",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_sizing",
+            "13408",
+            "pg_toast_13408",
+            "13411",
+            "pg_toast_13408_index",
+            "13412",
+            "p",
+            "f",
+            "t"
+          ]
+        ],
+        "image": "sha256:557fea37a744d5f4c8faab304b0a90858b53ab119735a88c131fd19dab802f36"
+      },
+      "arm64": {
+        "serverBuild": "PostgreSQL 16.6 (Debian 16.6-1.pgdg120+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+        "informationSchemaToast": [
+          [
+            "information_schema",
+            "sql_features",
+            "13396",
+            "pg_toast_13396",
+            "13399",
+            "pg_toast_13396_index",
+            "13400",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_implementation_info",
+            "13401",
+            "pg_toast_13401",
+            "13404",
+            "pg_toast_13401_index",
+            "13405",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_parts",
+            "13406",
+            "pg_toast_13406",
+            "13409",
+            "pg_toast_13406_index",
+            "13410",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_sizing",
+            "13411",
+            "pg_toast_13411",
+            "13414",
+            "pg_toast_13411_index",
+            "13415",
+            "p",
+            "f",
+            "t"
+          ]
+        ],
+        "image": "sha256:557fea37a744d5f4c8faab304b0a90858b53ab119735a88c131fd19dab802f36"
+      }
+    },
+    "17.2": {
+      "amd64": {
+        "serverBuild": "PostgreSQL 17.2 (Debian 17.2-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+        "informationSchemaToast": [
+          [
+            "information_schema",
+            "sql_features",
+            "13399",
+            "pg_toast_13399",
+            "13402",
+            "pg_toast_13399_index",
+            "13403",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_implementation_info",
+            "13404",
+            "pg_toast_13404",
+            "13407",
+            "pg_toast_13404_index",
+            "13408",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_parts",
+            "13409",
+            "pg_toast_13409",
+            "13412",
+            "pg_toast_13409_index",
+            "13413",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_sizing",
+            "13414",
+            "pg_toast_13414",
+            "13417",
+            "pg_toast_13414_index",
+            "13418",
+            "p",
+            "f",
+            "t"
+          ]
+        ],
+        "image": "sha256:3267c505060a0052e5aa6e5175a7b41ab6b04da2f8c4540fc6e98a37210aa2d3"
+      },
+      "arm64": {
+        "serverBuild": "PostgreSQL 17.2 (Debian 17.2-1.pgdg120+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+        "informationSchemaToast": [
+          [
+            "information_schema",
+            "sql_features",
+            "13402",
+            "pg_toast_13402",
+            "13405",
+            "pg_toast_13402_index",
+            "13406",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_implementation_info",
+            "13407",
+            "pg_toast_13407",
+            "13410",
+            "pg_toast_13407_index",
+            "13411",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_parts",
+            "13412",
+            "pg_toast_13412",
+            "13415",
+            "pg_toast_13412_index",
+            "13416",
+            "p",
+            "f",
+            "t"
+          ],
+          [
+            "information_schema",
+            "sql_sizing",
+            "13417",
+            "pg_toast_13417",
+            "13420",
+            "pg_toast_13417_index",
+            "13421",
+            "p",
+            "f",
+            "t"
+          ]
+        ],
+        "image": "sha256:3267c505060a0052e5aa6e5175a7b41ab6b04da2f8c4540fc6e98a37210aa2d3"
+      }
+    }
+  },
+  "toastSlots": [
+    "schema",
+    "heap",
+    "heapOid",
+    "toast",
+    "toastOid",
+    "index",
+    "indexOid",
+    "persistence",
+    "shared",
+    "valid"
+  ],
+  "measurements": [
+    "Native pg_catalog.version() supplies the exact build identity and the full census selects its declared stock layout.",
+    "Record the four actual heap-TOAST-index edges before and after each comparison. Each allowed build still has an exact expected catalog, including the decoded physical index names, owner OIDs and valid/shared fields.",
+    "Compare physical identity and files within the same fixture and retain the mandatory mutation witnesses, observations, finite enumerations, seeds and budgets. Reject any unregistered build or additional stock difference."
+  ],
+  "calibration": "Four disposable pinned native images measured by architecture and exact release. The explicit bootstrap database and the fresh template0 copy had identical heap, TOAST and index identities on each build.",
+  "sources": [
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/catalog/information_schema.sql",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/catalog/information_schema.sql",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/utils/adt/version.c"
+  ]
+}
