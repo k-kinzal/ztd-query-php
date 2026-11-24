@@ -1,0 +1,132 @@
+{
+  "revision": "SemanticsIR/postgres-index-truth-tests-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-boolean-index-predicate-v1.json",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings, native parameters, named local B-tree on a bound ordinary or temporary table.",
+  "scope": "Bind and emit the six native scalar Boolean truth tests of physical Boolean columns, both singly and as leaves in checked partial B-tree predicates.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Index/Btree/IndexTruthTest": {
+      "role": "A two-valued test of the true, false or unknown state of a Boolean column in an index predicate.",
+      "structure": "One nonnegative physical column slot and exactly one existing TruthOperator enum case.",
+      "conditions": "At completed index construction the column slot exists in the owner and has the native Boolean kind. Bound parsed operands resolve a single occurrence of a Boolean column of the indexed table. No other value source can inhabit this leaf.",
+      "meaning": "IS TRUE, IS FALSE and IS UNKNOWN select exactly the true, false and NULL states respectively. Their three negated variants select the complement of each state. Compound parents combine these non-null results with their unchanged Boolean rules.",
+      "sql": "Use the exact quoted column name from the bound owner followed by the checked native truth-test keyword sequence, with explicit surrounding parentheses.",
+      "externalInterpretation": "The same pinned PostgreSQL release and language profile, owner and physical Boolean column kind, key layout and row sequence, transaction state and declared index namespace.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "amendedConstructors": {
+    "Schema/Index/Btree/CreateIndex": "Accept a checked index truth test as a direct predicate and validate all Boolean as well as all scalar NULL test leaves against the owner.",
+    "Schema/Index/Btree/IndexBooleanPredicate": "The ordered operands may contain scalar NULL tests, Boolean truth tests and further Boolean nodes. Prior arity and meaning remain in force."
+  },
+  "existingRoles": [
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Index/Btree/IndexBooleanPredicate",
+    "Schema/Index/Btree/NullIndexPredicate",
+    "Predicate/TruthOperator"
+  ],
+  "rules": [
+    "The six closed truth operations map the three Boolean states to a Boolean result. No operation produces SQL NULL.",
+    "Unqualified, relation-qualified and schema-qualified spellings resolve to the same physical column slot when they identify the same occurrence.",
+    "Meaning follows the enclosing partial B-tree uniqueness and visible command-effect rules, with the additional leaf membership."
+  ],
+  "observations": [
+    "Ordered leaves and their exact physical slots and truth operator, and the same enclosing profile, index state and physical metadata.",
+    "Distinct true, false and unknown assignments of both native Boolean fields, including membership of stored native predicates for declined unique builds via a disposable nonunique witness.",
+    "Exact status and affected rows, physical order, notices, later writes reusing the same key, and transaction rollback."
+  ],
+  "finite": {
+    "forms": [
+      "plain",
+      "negated",
+      "and-null",
+      "or-truth"
+    ],
+    "operators": [
+      "IS TRUE",
+      "IS NOT TRUE",
+      "IS FALSE",
+      "IS NOT FALSE",
+      "IS UNKNOWN",
+      "IS NOT UNKNOWN"
+    ],
+    "slots": [
+      2,
+      3
+    ],
+    "qualifiers": [
+      "local",
+      "relation",
+      "schema"
+    ],
+    "identity": "On each release consume all 144 ordered coordinates via public direct construction and analyzed SQL including the three binding spellings. Use column layout [label:int4, state:int4, p:bool, q:bool]. State membership enumerates the lexicographic product of true, false and unknown. State n has key label n modulo 4. The fixed future row shares label zero with a different pair of Boolean states. Compare complete exact typing, label multiplicities, retained truth mask and native statuses."
+  },
+  "exploration": {
+    "seeds": [
+      8209,
+      60631,
+      151673
+    ],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": [],
+    "domain": "Generate mixed NULL and native Boolean leaves in ordered trees of varying depth, with varying truth operation, owner slot, identifier spelling, key direction, included fields, temporary and persistent owner, uniqueness, transaction and concurrency."
+  },
+  "negative": [
+    "Negative truth slot, missing owner slot and an integer field in a truth-test slot",
+    "Foreign qualifier and missing parsed column",
+    "Direct or nested truth test of a non-Boolean column",
+    "Unresolved parameter or a non-column truth operand"
+  ],
+  "faults": [
+    "Accept a truth slot whose owner field is not Boolean",
+    "Render the other Boolean field",
+    "Substitute IS NOT FALSE for IS TRUE",
+    "Substitute IS NOT UNKNOWN for IS UNKNOWN"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/indexes-partial.html"
+  ],
+  "trust": [
+    "The fixed six-row truth table over native Boolean states, independently observed PostgreSQL catalog expression and exact writes, and the source-audited PHP binding, constructor and renderer.",
+    "The trusted runner observes the graph and the native PostgreSQL effects, records both comparison sides and independently replays the full scheduled finite domain. Whole-model claims remain bounded by the fixed active contracts and known dependencies."
+  ],
+  "open": [
+    "Unwrapped nullable operands, non-column truth tests, other scalar predicates, and wider index grammar remain in the fixed whole-language inventory."
+  ],
+  "calibration": {
+    "driver": "8344215918faafe54d298b291c33f7302a1847cfc27f09a4a5e6dc47c8ec6ff8",
+    "referenceComparison": "21aa4b7745e0e1ed02ecd622b47fef85c78761a9d3d416e36dc7bc2bd7947f07",
+    "queryPack": "f60e3fd2387ecc047e489fdd473b9a449ac1ce14ad5c7dbb8572f78303d7b180",
+    "nativeMembershipAndEffects": "35307de6a90a0900a216fbb1c362557a2d3be46444bd4290804e9c7abd8b3a08",
+    "nativeProfiles": 34,
+    "uniqueBuildAccepted": 72,
+    "duplicateBuildRefused": 72,
+    "subsequentDuplicateRefused": 15,
+    "16.6": {
+      "stdout": "4486b0a621a331e0c83028d949849ecadeac6be17dd251f5e582a165f3457a2d",
+      "stderr": "bc1b1db4f13e16ad11a840731bf3a2ee6c84cbb81519347944ec21121b123d6b"
+    },
+    "17.2": {
+      "stdout": "048c6dd0fd636a15f43d0e24858b4b2586c7493c7d1e78bd4f38c13f039d8b80",
+      "stderr": "d15d300773f6f19dd0eb94aebe289f7b0749db340a297b84e8ddd6648b23339a"
+    }
+  }
+}
