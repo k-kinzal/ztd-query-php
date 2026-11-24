@@ -23,7 +23,9 @@ def specifications():
     require(len(finite_ids("postgres", record, "pg-17.2")) == record["finite"]["identities"], "postgres-delete-returning-domain-size")
     previous = record["predecessorCheck"]
     same(previous["previousWitness"], next(positives("pg-17.2"))[0]["sql"])
-    same(previous["replacementWitness"], list(negatives("postgres", "pg-17.2"))[-1][0]["sql"])
+    replacement = [rejection for request, rejection in negatives("postgres", "pg-17.2")
+                   if request.get("sql") == previous["replacementWitness"]]
+    same(["Complete PostgreSQL DELETE requires"], replacement)
     return record, {"postgres": json.loads(projection.read_text())["profiles"]["postgres"]}
 
 
