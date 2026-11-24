@@ -133,7 +133,7 @@ CONTRACTS = {
     "postgres-sequence-ownership-v3.json": "69b0863ad0e50adf7a9139d57c2e578f7bb5e972425c1b67b6f77d69206b59ec",
     "postgres-drop-sequence-v3.json": "dcf87dc6000d6cd99acb91edb79d618d3f8b62ef15e4bb2987383ce20231c924",
     "postgres-move-sequence-v1.json": "24c7fe38fbb38791b13d6881dafb951000e415708bb53977ca17c1cb832d0328",
-    "postgres-reconfigure-sequence-v4.json": "f3ee61261a6749bd5cf8781523f562b143220f65b0323518773afbfbb37ead87",
+    "postgres-reconfigure-sequence-v5.json": "450292a076f75dbc9e455cb7894325b4f28b3adc5eace78dbf86b4b1b48584be",
     "postgres-rename-sequence-v1.json": "cbc29f97151b369e1572a4aecf2585b5fc970cf3ff41569920f5c9d3f22ef2b4",
     "postgres-schema-sequences-v1.json": "14c708ed9d25f22dcfbc08276aabc2db0168b8f42f8ed9c39f7295739a63e198",
     "postgres-drop-view-v1.json": "f38844b5c9ed143cbd9b46e344f721b384c5ce9a969ec85d08e6319e95e8cd4d",

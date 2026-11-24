@@ -23,8 +23,8 @@ from run_server_postgres_drop_sequence import check_preparation
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-reconfigure-sequence"
-CONTRACT_NAME = "postgres-reconfigure-sequence-v4.json"
-CONTRACT = "f3ee61261a6749bd5cf8781523f562b143220f65b0323518773afbfbb37ead87"
+CONTRACT_NAME = "postgres-reconfigure-sequence-v5.json"
+CONTRACT = "450292a076f75dbc9e455cb7894325b4f28b3adc5eace78dbf86b4b1b48584be"
 OBSERVER = "postgres_reconfigure_sequence_observer.py"
 AXES = ("roles", "assignments", "guard", "transactional")
 ABSENT = refusal("An absent sequence selector requires IF EXISTS.")
@@ -72,11 +72,12 @@ def direct_finite_id(_, observed, item, request):
     return key
 
 
-def generated(tag, seed, count):
+def generated(tag, seed, count, original_count):
     rng = Random(seed)
     roles = list(ROLES)
     rng.shuffle(roles)
-    for i in range(count):
+    require(count == original_count + 1, "postgres-reconfigure-sequence-increment-witness-budget")
+    for i in range(original_count):
         role = roles[i % len(roles)]
         family = ASSIGNMENTS[(i + seed) % len(ASSIGNMENTS)]
         common = {"base": rng.randrange(4, 55), "quoted_name": bool(rng.getrandbits(1)),
@@ -101,6 +102,18 @@ def generated(tag, seed, count):
         if role in PRESENT and bool(set(item["changes"]) - {"owner"}) and (item["warm"] or "restart" in item["changes"]):
             item["probeValues"] = 3
         yield item
+
+    role = rng.choice(PRESENT)
+    step = rng.choice((-7, -3, -1, 1, 2, 5, 8))
+    changes = {"increment": str(step), "cache": str(rng.randrange(1, 5))}
+    if rng.getrandbits(1):
+        changes["restart"] = str(rng.randrange(4, 18))
+    item = trial(
+        tag, role, "numeric-configuration", bool(rng.getrandbits(1)), bool(rng.getrandbits(1)),
+        base=rng.randrange(4, 55), quoted_name=bool(rng.getrandbits(1)), catalog=bool(rng.getrandbits(1)),
+        warm=bool(rng.getrandbits(1)), varied=changes, reversed_options=bool(rng.getrandbits(1)),
+    )
+    yield {**item, "probeValues": 4}
 
 
 def edges(tag):
@@ -177,7 +190,7 @@ def requests(_, tag, spec):
         yield f"edge/{label}", analyzed(item), item, None
     options = spec["exploration"]
     for seed in options["seeds"]:
-        for index, item in enumerate(generated(tag, seed, options["casesPerSeed"])):
+        for index, item in enumerate(generated(tag, seed, options["casesPerSeed"], options["originalCasesPerSeed"])):
             yield f"seed/{seed}/{index}", analyzed(item), item, None
             yield f"direct-seed/{seed}/{index}", direct(item), item, None
     for ordinal, (request, item, rejected) in enumerate(refusals(tag)):

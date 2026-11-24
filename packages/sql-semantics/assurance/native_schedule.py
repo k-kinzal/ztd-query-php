@@ -49,7 +49,7 @@ NATIVE = {
     "postgres_drop_sequence": "postgres-drop-sequence-v3.json",
     "postgres_rename_sequence": "postgres-rename-sequence-v1.json",
     "postgres_move_sequence": "postgres-move-sequence-v1.json",
-    "postgres_reconfigure_sequence": "postgres-reconfigure-sequence-v4.json",
+    "postgres_reconfigure_sequence": "postgres-reconfigure-sequence-v5.json",
     "postgres_create_btree": "postgres-create-btree-v1.json",
     "postgres_partial_btree": "postgres-partial-btree-v1.json",
     "postgres_boolean_index_predicate": "postgres-boolean-index-predicate-v1.json",
