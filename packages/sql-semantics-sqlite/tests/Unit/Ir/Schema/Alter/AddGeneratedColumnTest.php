@@ -21,30 +21,30 @@ final class AddGeneratedColumnTest extends TestCase
 {
     public function testToStringUsesTheExactPriorSlotAndStorageClass(): void
     {
-        $value = $this->value();
-
-        self::assertSame('ALTER TABLE "temp"."entries" ADD COLUMN "computed" INTEGER GENERATED ALWAYS AS ("peer""slot") STORED', $value->toString());
-    }
-
-    public function testProfileIdIdentifiesThePinnedSqliteProfile(): void
-    {
-        self::assertSame('sqlite-3.47.2/utf8/short-column-names/numbered-parameters', $this->value()->profileId());
-    }
-
-    private function value(): AddGeneratedColumn
-    {
         $column = new TableColumn(
             new Identifier('computed'),
             DeclaredDatatypeName::Integer,
             generated: new ColumnGeneration(Storage::Stored, new ColumnReference(1)),
         );
-
-        return new AddGeneratedColumn(
+        $value = new AddGeneratedColumn(
             new Identifier('temp'),
             new Identifier('entries'),
             [new Identifier('id'), new Identifier('peer"slot')],
             true,
             $column,
         );
+
+        self::assertSame('ALTER TABLE "temp"."entries" ADD COLUMN "computed" INTEGER GENERATED ALWAYS AS ("peer""slot") STORED', $value->toString());
+    }
+
+    public function testProfileIdIdentifiesThePinnedSqliteProfile(): void
+    {
+        $column = new TableColumn(
+            new Identifier('computed'),
+            generated: new ColumnGeneration(Storage::Virtual, new ColumnReference(0)),
+        );
+        $value = new AddGeneratedColumn(new Identifier('main'), new Identifier('entries'), [new Identifier('id')], false, $column);
+
+        self::assertSame('sqlite-3.47.2/utf8/short-column-names/numbered-parameters', $value->profileId());
     }
 }
