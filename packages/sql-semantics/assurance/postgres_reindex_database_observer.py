@@ -8,6 +8,7 @@ from postgres_libpq import LIB, Session
 from postgres_reindex_cases import qualified, quoted
 from postgres_reindex_database_cases import DATABASE, FORMS, NATIVE_REFUSALS, STATUS, fixture, owners, sql
 from postgres_reindex_table_observer import read_owner
+from postgres_stock_catalog import observe as stock_catalog
 
 CATALOG = """SELECT pg_catalog.json_build_array(n.nspname, c.relname, owner.relname,
     owner.oid::text, owner.relisshared, owner.relpersistence, i.indisvalid, i.indisexclusion,
@@ -38,7 +39,7 @@ def snapshot(db, item):
         elif data[0].startswith("pg_toast_temp_"):
             data[0] = "pg_toast_temp"
         catalog.append(data)
-    return {"owners": tables, "catalog": sorted(catalog)}
+    return {"owners": tables, "catalog": sorted(catalog), "stockCatalog": stock_catalog(db)}
 
 
 def observe(db, request):

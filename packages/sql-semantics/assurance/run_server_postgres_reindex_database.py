@@ -9,7 +9,8 @@ from evidence_transcript import canonical
 from postgres_create_btree_cases import refusal
 from postgres_reindex_cases import qualified
 from postgres_reindex_database_cases import DATABASE, FIRST_APPLICATION, FORMS, NATIVE_REFUSALS, STATUS
-from postgres_reindex_database_cases import analyzed, expected_owners, outcome, owners, physical_changes, sql, stock, trial
+from postgres_reindex_database_cases import analyzed, expected_owners, outcome, owners, physical_changes, sql, trial
+from postgres_stock_catalog import build, check as check_stock, controls as stock_controls, layout
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_drop_table import specifications as drop_contract
@@ -145,10 +146,12 @@ def check_catalog(item, first, last):
     same(len(first["catalog"]), len(before))
     same(len(last["catalog"]), len(settled))
     same(sorted(before), sorted(settled))
+    same(first["stockCatalog"]["build"], last["stockCatalog"]["build"])
     for catalog in (first, last):
         pinned = sorted(entry[:8] for entry in catalog["catalog"] if int(entry[3]) < FIRST_APPLICATION)
         app = sorted(entry for entry in catalog["catalog"] if int(entry[3]) >= FIRST_APPLICATION)
-        same(stock(item["release"]), pinned)
+        identities = {(row[0], row[1]): [row[3], row[8]] for row in catalog["catalog"]}
+        same(check_stock(item["release"], catalog["stockCatalog"], identities), pinned)
         same(requested_app_indexes(item, catalog), app)
     for name, metadata in before.items():
         after = settled[name]
@@ -200,7 +203,9 @@ def controls():
     same([True,True], physical_changes(concurrent, "p", "13200", False))
     same([False,False], physical_changes(concurrent, "p", "16385", True))
     same([True,False], physical_changes(concurrent, "t", "16387", False))
-    return {"system-follows-pinned-owner": stock("pg-17.2")[:2], "application-retains-exclusion": outcome(concurrent)["notices"]}
+    pinned, _ = layout("pg-17.2", build("pg-17.2", "amd64"))
+    return {"system-follows-pinned-owner": pinned[:2], "application-retains-exclusion": outcome(concurrent)["notices"],
+            "stock-build-identity": stock_controls()}
 
 
 def fault_probe(item, response, db):

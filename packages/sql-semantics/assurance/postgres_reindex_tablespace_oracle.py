@@ -2,7 +2,7 @@
 
 from postgres_reindex_tablespace_cases import STORAGE_WARNING, source_space
 from postgres_reindex_verbose_cases import outcome as rebuild_outcome
-from postgres_reindex_verbose_oracle import check_fixture, check_storage, observed_notices, trace
+from postgres_reindex_verbose_oracle import check_catalogs, check_fixture, check_storage, observed_notices, trace
 from run import Failure, require
 from run_server import same
 
@@ -60,6 +60,7 @@ def check_observation(item, actual, command):
     try:
         same(target, {key: actual[key] for key in target})
         before = actual["before"]
+        check_catalogs(item, before, actual["during"], actual["settled"])
         check_fixture(item, before)
         check_initial(item, before)
         if target["sqlState"] != "00000":

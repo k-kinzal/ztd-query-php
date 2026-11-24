@@ -4,8 +4,9 @@ from collections import defaultdict, deque
 import re
 
 from postgres_reindex_cases import qualified
-from postgres_reindex_database_cases import FIRST_APPLICATION, FIRST_UNPINNED, stock
+from postgres_reindex_database_cases import FIRST_APPLICATION, FIRST_UNPINNED
 from postgres_reindex_verbose_cases import coordinates, outcome, table_data
+from postgres_stock_catalog import check as check_stock
 from run import Failure, require
 from run_server import same
 
@@ -108,15 +109,24 @@ def observed_notices(frames):
     return converted
 
 
+def check_catalogs(item, first, *others):
+    for phase in (first, *others):
+        if phase is None:
+            continue
+        same(first["stockCatalog"]["build"], phase["stockCatalog"]["build"])
+        identities = {identity(index): [str(index["owner"]), str(index["id"])] for index in phase["indexes"]}
+        catalog = check_stock(item["release"], phase["stockCatalog"], identities)
+        expected = [list(entry[:2]) + [int(entry[3]), entry[6], entry[7]] for entry in catalog]
+        obtained = [[index["schema"], index["name"], index["owner"], index["valid"], index["exclusion"]]
+                    for index in phase["indexes"] if index["owner"] < FIRST_APPLICATION]
+        same(sorted(expected), sorted(obtained))
+
+
 def check_fixture(item, first):
     owners = {identity(owner): owner for owner in first["owners"]}
     indexes = {identity(index): index for index in first["indexes"]}
     data = table_data(item)
     same({qualified(*name): [list(row) for row in values] for name, values in data.items()}, first["rows"])
-    expected = [list(entry[:2]) + [int(entry[3]), entry[6], entry[7]] for entry in stock(item["release"])]
-    obtained = [[index["schema"], index["name"], index["owner"], index["valid"], index["exclusion"]]
-                for index in first["indexes"] if index["owner"] < FIRST_APPLICATION]
-    same(sorted(expected), sorted(obtained))
     for namespace, roles in (("fixture", (item["tables"]["source"], item["tables"]["leaves"][0])),
                              ("remote", (item["tables"]["leaves"][1],)),
                              ("pg_temp", (item["tables"]["temp"],))):
@@ -151,6 +161,7 @@ def check_observation(item, actual, sql):
     try:
         same(target, {key: actual[key] for key in target})
         initial = actual["before"]
+        check_catalogs(item, initial, actual["during"], actual["settled"])
         check_fixture(item, initial)
         if target["sqlState"] != "00000":
             same([], actual["notices"])

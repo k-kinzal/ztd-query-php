@@ -1,18 +1,13 @@
 """Interpret database-wide rebuild selectors over the fixed stock and application fixtures."""
 
-import json
-
 from postgres_reindex_cases import qualified, quoted
 from postgres_reindex_schema_cases import index
 from postgres_reindex_table_cases import literals
-from run import TOOL, digest, require
 
 DATABASE = "ir_fixture"
 STATUS = "database-rebuild"
 FIRST_UNPINNED = 12000
 FIRST_APPLICATION = 16384
-STOCK_FILE = "postgres-stock-reindex-catalog-v1.json"
-STOCK_DIGEST = "12fcaadd6c956399516fd7c13fd591e418edb3fd88f53ec9bb4d8539228a9f93"
 NATIVE_REFUSALS = {
     "foreign-database": "REINDEX DATABASE other",
     "foreign-system": "REINDEX SYSTEM other",
@@ -99,12 +94,6 @@ def fixture(item):
             result.extend([f"CREATE {mode}TABLE {target} (id integer, note text)", f"INSERT INTO {target} VALUES {rows}"])
         result.append(f"CREATE INDEX {key} ON {target} (id)")
     return result
-
-
-def stock(release):
-    path = TOOL / STOCK_FILE
-    require(digest(path) == STOCK_DIGEST, "postgres-reindex-stock-catalog")
-    return json.loads(path.read_text())["releases"][release.removeprefix("pg-")]
 
 
 def expected_owners(item):

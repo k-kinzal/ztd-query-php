@@ -9,6 +9,7 @@ from postgres_create_btree_observer import data_literal, decoded_rows, literal, 
 from postgres_libpq import LIB, Session
 from postgres_reindex_cases import qualified
 from postgres_reindex_verbose_cases import DATABASE, STATUS, declarations, emitted, query, refusal_query, table_data
+from postgres_stock_catalog import observe as stock_catalog
 
 OWNERS = """SELECT n.nspname, c.relname, c.oid::text, c.relpersistence, c.reltoastrelid::text
 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
@@ -64,7 +65,7 @@ def snapshot(db, item):
                for schema, name, oid, file, owner, valid, exclusion, unique in db.execute(INDEXES)]
     rows = {qualified(schema, name): decoded_rows(db.execute(rows_query(qualified(schema, name), "id"))[0][0])
             for schema, name in table_data(item)}
-    return {"owners": owners, "indexes": indexes, "links": db.execute(LINKS), "rows": rows}
+    return {"owners": owners, "indexes": indexes, "links": db.execute(LINKS), "rows": rows, "stockCatalog": stock_catalog(db)}
 
 
 def observe_prepared(db, item, sql):
