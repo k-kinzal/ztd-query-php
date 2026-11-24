@@ -8,7 +8,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * Catalog identity of an explicit SQLite index on a declared table.
+ * Catalog identity of an SQLite index on a declared table.
  *
  * @visibility SqlSemantics
  */
@@ -23,6 +23,7 @@ final class Index
         public readonly Name $schema,
         public readonly Name $name,
         public readonly Name $table,
+        public readonly bool $removable = true,
     ) {
     }
 }

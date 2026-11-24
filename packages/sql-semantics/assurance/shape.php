@@ -1144,9 +1144,10 @@ try {
         'sqlite' => [
             ['sqlite-create-index-binding-v2.json', '518f25e19be787f59726f4d9783d029c5a77bc6c5b8bb97103aeebbba3c7fd69', 'Index binding'],
             ['sqlite-index-expression-binding-v1.json', '0f51026989e87bb830f5a9fac584794e318c410fcc85744079e38839e8e7a255', 'Native index expression binding'],
-            ['sqlite-drop-column-binding-v3.json', 'a3270087ab9e5dd4431c69bc869fdc11291cfcf080c8288a71bcf4863c7142be', 'Column removal binding'],
-            ['sqlite-drop-index-binding-v2.json', 'f2c396bef0faf725b781bb844c74b2dcc6b99472bd0d05125eb901494572004c', 'Index removal binding'],
-            ['sqlite-folded-binding-sources-v7.json', 'fde16c4d2ced975234793b158ea8608dc9f2c625a012a1dc1d234407abc46178', 'Folded binding'],
+            ['sqlite-drop-column-binding-v4.json', '61cf124acd1c6c4a5a923f6721fdaf701d63b3a5f4f2665c2a8a3a643885f15c', 'Column removal binding'],
+            ['sqlite-drop-index-binding-v3.json', 'e96dccf114b72f782c4c7eb8bf108629c442393a73689c008eb1fd09bce55d96', 'Index removal binding'],
+            ['sqlite-constraint-index-binding-v1.json', '792ea111ed9e254c8f883e33ee6b33b2afa7d9fdd2317575e15864ae935ae63e', 'Constraint index binding'],
+            ['sqlite-folded-binding-sources-v8.json', '96f3f69296855ca2cf8b6047b4026cf8d9c6688c4dd94a8cb86139f5e20ef350', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1165,15 +1166,31 @@ try {
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
     };
+    $providedBindings = [];
+    $bindingDependencies = [];
     foreach ($bindings as [$name, $digest, $label]) {
         $bindingRecord = __DIR__ . '/' . $name;
         requireShape(hash_file('sha256', $bindingRecord) === $digest, "$label contract differs from its recorded revision");
-        $bindingSources = json_decode(file_get_contents($bindingRecord), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
+        $record = json_decode(file_get_contents($bindingRecord), true, 512, JSON_THROW_ON_ERROR);
+        $bindingSources = $record['artifacts'];
+        $bindingDependencies[$name] = $record['sharedBindings'] ?? [];
         foreach ($bindingSources as $path => $approved) {
             $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
             $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
             requireShape(is_file($file) && hash_file('sha256', $file) === $approved['sha256'], "$label source differs in $path");
             $checkedBindingSources[$path] = $approved;
+            $providedBindings[$name][$path] = $approved['sha256'];
+        }
+    }
+    $checkedBindingDependencies = [];
+    foreach ($bindingDependencies as $consumer => $requirements) {
+        foreach ($requirements as $source => $requirement) {
+            $provider = $requirement['contract'];
+            requireShape(
+                ($providedBindings[$provider][$source] ?? null) === $requirement['sha256'],
+                "Binding dependency differs: $consumer references $source in $provider"
+            );
+            $checkedBindingDependencies[$consumer][$source] = $requirement;
         }
     }
     $base = $package . '/src/Ir';
@@ -1539,7 +1556,8 @@ try {
     sort($expectedBoundaries);
     requireShape($checkedBoundaries === $expectedBoundaries, 'Native boundary coverage differs');
     echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields, 'checkedBoundaries' => $checkedBoundaries,
-        'checkedBindingSources' => (object) $checkedBindingSources, 'checkedValues' => (object) $checkedValues, 'checkedDispatch' => $checkedDispatch]) . "\n";
+        'checkedBindingSources' => (object) $checkedBindingSources,
+        'checkedBindingDependencies' => (object) $checkedBindingDependencies, 'checkedValues' => (object) $checkedValues, 'checkedDispatch' => $checkedDispatch]) . "\n";
 } catch (RuntimeException $failure) {
     echo json_encode(['status' => 'shape-mismatch', 'message' => $failure->getMessage()]) . "\n";
     exit(1);

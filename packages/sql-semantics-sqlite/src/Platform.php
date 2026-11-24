@@ -29,10 +29,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\DropRestrictions;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Index\ConstraintIndexes;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
 
 /**
  * Wires the SQLite grammar releases, lowering rules and spelling rules into the analysis.
@@ -154,10 +156,17 @@ final class Platform
      * @param list<string>|null $searchPath
      * @param list<Table> $tables
      * @param list<Index> $indexes
+     * @param list<Name>|null $opaqueIndexSchemas
      * @throws InvalidArgumentException When the path does not start with main
      */
-    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, array $indexes = []): AnalysisContext
-    {
+    public function context(
+        LanguageProfile $profile,
+        ?array $searchPath,
+        array $tables,
+        bool $complete,
+        array $indexes = [],
+        ?array $opaqueIndexSchemas = null,
+    ): AnalysisContext {
         $schemas = $searchPath ?? ['main'];
         if ($schemas !== [] && strcasecmp($schemas[0], 'temp') === 0) {
             array_shift($schemas);
@@ -170,7 +179,17 @@ final class Platform
             $path[] = new Name($schema);
         }
 
-        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $path[1], $indexes);
+        return new AnalysisContext(
+            $profile,
+            $path,
+            $tables,
+            $complete,
+            Comparison::AsciiInsensitive,
+            Comparison::AsciiInsensitive,
+            $path[1],
+            $indexes,
+            $opaqueIndexSchemas,
+        );
     }
 
     /**
@@ -209,6 +228,36 @@ final class Platform
         Check::input(!str_starts_with($comparison->fold($definition->name->name->value), 'sqlite_'), 'An ordinary index cannot belong to the reserved SQLite namespace.');
 
         return new Index($owner->table->name->schema ?? $binding->context->declarationSchema, $definition->name->name, $owner->table->name->name);
+    }
+
+    /**
+     * Exports the protected native index names of an ordinary table declaration.
+     *
+     * @return list<Index>|null Null when module or opaque key rules leave the implicit names unknown
+     */
+    public function constraintIndexes(BoundStatement $binding): ?array
+    {
+        $definition = $binding->statement;
+        if ($definition instanceof CreateVirtualTable) {
+            return null;
+        }
+        if (!$definition instanceof CreateTable) {
+            return [];
+        }
+        $count = (new ConstraintIndexes())->count($definition);
+        if ($count === null) {
+            return null;
+        }
+
+        $owner = $binding->facts->declarations[0]->name;
+        $schema = $owner->schema ?? $binding->context->declarationSchema;
+        $indexes = [];
+        for ($ordinal = 1; $ordinal <= $count; $ordinal++) {
+            $name = new Name('sqlite_autoindex_' . $owner->name->value . '_' . $ordinal);
+            $indexes[] = new Index($schema, $name, $owner->name, false);
+        }
+
+        return $indexes;
     }
 
     /**

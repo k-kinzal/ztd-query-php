@@ -38,9 +38,14 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
     public readonly array $tables;
 
     /**
-     * @var list<Index> The explicit index declarations in the order supplied
+     * @var list<Index> The explicit and implicit index declarations in catalog order
      */
     public readonly array $indexes;
+
+    /**
+     * @var list<Name>|null The opaque automatic-index namespaces, or null when their scope is unknown
+     */
+    public readonly ?array $opaqueIndexSchemas;
 
     /**
      * @var non-empty-list<Name> The schemas searched for an unqualified relation name, in precedence order
@@ -60,7 +65,8 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
      * @param Comparison $relationNames How relation and schema names are compared
      * @param Comparison $columnNames How column names are compared
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
-     * @param list<Index> $indexes Explicit index declarations with absolute table owners
+     * @param list<Index> $indexes Index declarations with absolute table owners
+     * @param list<Name>|null $opaqueIndexSchemas Schemas with incomplete automatic index declarations
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -71,6 +77,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         public readonly Comparison $columnNames = Comparison::Sensitive,
         ?Name $declarationSchema = null,
         array $indexes = [],
+        ?array $opaqueIndexSchemas = null,
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
@@ -81,6 +88,8 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         $this->searchPath = $path;
         $this->tables = array_values($unique);
         $this->indexes = Check::listOf($indexes, Index::class, 'Context indexes are an ordered list of index declarations.');
+        $this->opaqueIndexSchemas = $opaqueIndexSchemas === null ? null
+            : Check::listOf($opaqueIndexSchemas, Name::class, 'Opaque index namespaces are an ordered list of schema names.');
         $this->declarationSchema = $declarationSchema ?? $path[0];
     }
 
@@ -104,7 +113,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
     }
 
     /**
-     * Finds explicit index declarations with the selected name and schema.
+     * Finds index declarations with the selected name and schema.
      *
      * @return list<Index>
      */
@@ -124,5 +133,25 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         }
 
         return $matches;
+    }
+
+    /**
+     * Checks whether every automatic index name is known in the selected namespace.
+     */
+    public function knowsConstraintIndexes(?Name $schema): bool
+    {
+        if ($this->opaqueIndexSchemas === null) {
+            return false;
+        }
+        if ($schema === null) {
+            return $this->opaqueIndexSchemas === [];
+        }
+        foreach ($this->opaqueIndexSchemas as $opaque) {
+            if ($this->relationNames->equal($schema->value, $opaque->value)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -122,6 +122,8 @@ def checked_methods(guard, dialect, role):
             ("mysql", "Schema/Alter/RenameTable"), ("mysql", "From/Varchar"), ("mysql", "From/TextColumnReference"), ("mysql", "TableSource"),
             ("sqlite", "Predicate/FoldedMembership"), ("sqlite", "Schema/Generation/ColumnGeneration"), ("sqlite", "Schema/View/CreateView"), ("postgres", "Expression/WideIntegerLiteral"),
             ("postgres", "Expression/BuiltinCast"),
+            ("sqlite", "Schema/Index/CreateIndex"), ("sqlite", "Schema/Index/DropIndex"),
+            ("sqlite", "Schema/Index/IndexReference"), ("sqlite", "Schema/Index/MissingIndex"),
         } else {}),
     }
 

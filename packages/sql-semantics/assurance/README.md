@@ -710,7 +710,9 @@ The index fixture compares a scoped ordinary or unique index and its optional pa
 
 The index expression spelling fixture compares native CAST names and binary IFNULL against independently authored SQLite SQL. It observes literal conversion, exact partial index matching, expression key search and typed results. Both the original and rendered CREATE INDEX run on the same pinned engine. Run `run_sqlite_index_expression_spelling.py` with the SQLite fixture options. [SQLite index expression spelling contract](sqlite-index-expression-spelling-v1.json)
 
-The index removal fixture compares the selected object and owner, catalog and statistics removal, original and subsequent typed table state, constrained writes, rollback, and the schemas verified by an IF EXISTS no-op. Run \`run_sqlite_drop_index.py\` with the SQLite fixture options. [SQLite index removal contract](sqlite-drop-index-v2.json)
+The index removal fixture compares the selected object and owner, catalog and statistics removal, original and subsequent typed table state, constrained writes, rollback, and the schemas verified by an IF EXISTS no-op. Run \`run_sqlite_drop_index.py\` with the SQLite fixture options. [SQLite index removal contract](sqlite-drop-index-v3.json)
+
+The constraint index fixture compares the native original and generated absence selectors. It records protected PRIMARY KEY and UNIQUE indexes, including WITHOUT ROWID storage, along with separate direct checks for each watched absence. Run \`run_sqlite_constraint_index_names.py\` using the SQLite fixture options. [SQLite constraint index contract](sqlite-constraint-index-names-v2.json)
 
 ## SQLite literal defaults
 

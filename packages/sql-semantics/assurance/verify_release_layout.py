@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v89.json"
-CONTRACT = "2d46914ef20723036de8552a8b287150a5c4ed18f9f3f6f9c9536ce7699bdc29"
+CONTRACT_NAME = "release-layout-v90.json"
+CONTRACT = "d6e16683ad84b0f92cce60bea0d41151b20c6b421b8b73f337fb01f508ea278f"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -616,6 +616,9 @@ def verify_probe(raw, catalog):
                 "temp", "tAg", "local_rows", 'DROP INDEX "temp"."tAg"', "", 'DROP INDEX IF EXISTS ""."later"',
                 None, 'DROP INDEX IF EXISTS "later"', True,
             ] and item["sql"] == item["dropIndex"][3], "installed-sqlite-drop-index-mismatch", item)
+            require(item.get("constraintIndexNames") == [
+                True, 'DROP INDEX IF EXISTS "main"."sqlite_autoindex_known_index_3"', True,
+            ], "installed-sqlite-constraint-index-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Index\\CreateIndex"):
             require(item.get("createIndex") == [
                 "temp", "indexed_tag", "indexed_rows", 1, True, True, True, ["09", "1"],

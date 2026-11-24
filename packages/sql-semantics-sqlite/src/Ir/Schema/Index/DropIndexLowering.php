@@ -37,7 +37,7 @@ final class DropIndexLowering
         );
 
         $name = new Identifier($drop->name->name->value);
-        Check::input(!str_starts_with($name->key(), 'sqlite_'), 'DROP INDEX requires an application-defined index name.');
+        $reserved = str_starts_with($name->key(), 'sqlite_');
         $schema = $drop->name->schema;
 
         foreach ($schema === null ? $path : [$schema] as $location) {
@@ -45,6 +45,7 @@ final class DropIndexLowering
             Check::input(count($matches) <= 1, 'Conflicting declared indexes share the selected coordinate.');
             if ($matches !== []) {
                 $index = $matches[0];
+                Check::input($index->removable, 'SQLite cannot drop a UNIQUE or PRIMARY KEY constraint index.');
                 $target = new IndexReference(
                     new Identifier($index->schema->value),
                     new Identifier($index->name->value),
@@ -57,6 +58,7 @@ final class DropIndexLowering
         }
 
         Check::input($context->complete && $drop->ifExists, 'DROP INDEX requires a resolved index or a known guarded absence.');
+        Check::input(!$reserved || $context->knowsConstraintIndexes($schema), 'A reserved index absence needs a complete implicit index namespace.');
 
         return new DropIndex(new MissingIndex($name, $schema === null ? null : new Identifier($schema->value)), true);
     }

@@ -46,4 +46,15 @@ final class DropIndexLoweringTest extends TestCase
         self::assertTrue($drop->ifExists);
         self::assertSame('DROP INDEX IF EXISTS "lost"', $drop->toString());
     }
+
+    public function testLowerPublishesAReservedAbsenceAfterAnExactRowidAlias(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context(['CREATE TABLE items (id INTEGER PRIMARY KEY)']);
+        $drop = $semantics->analyze('DROP INDEX IF EXISTS main.sqlite_autoindex_items_1', $context);
+
+        self::assertInstanceOf(DropIndex::class, $drop);
+        self::assertInstanceOf(MissingIndex::class, $drop->target);
+        self::assertSame('DROP INDEX IF EXISTS "main"."sqlite_autoindex_items_1"', $drop->toString());
+    }
 }

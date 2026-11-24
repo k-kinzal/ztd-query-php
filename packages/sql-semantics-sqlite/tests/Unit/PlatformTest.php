@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Index;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Platform;
@@ -248,5 +249,18 @@ final class PlatformTest extends TestCase
         self::assertNotNull($declaration);
         self::assertSame(['temp', 'by_code', 'items'], [$declaration->schema->value, $declaration->name->value, $declaration->table->value]);
         self::assertNull($platform->indexDeclaration($inspection->diagnose('SELECT 1')->binding()));
+    }
+
+    public function testConstraintIndexesRetainTheWithoutRowidPrimaryKeyName(): void
+    {
+        $binding = (new Inspection())->diagnose('CREATE TABLE main.members (id INTEGER PRIMARY KEY, code UNIQUE) WITHOUT ROWID')->binding();
+        $indexes = (new Platform())->constraintIndexes($binding);
+
+        self::assertNotNull($indexes);
+        self::assertSame(
+            ['sqlite_autoindex_members_1', 'sqlite_autoindex_members_2'],
+            array_map(static fn (Index $index): string => $index->name->value, $indexes)
+        );
+        self::assertFalse($indexes[1]->removable);
     }
 }

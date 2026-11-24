@@ -1287,6 +1287,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropIndex'] = [$target->schema->value, $target->name->value, $target->table->value,
                 $direct->toString(), $absent->target->schema?->value, $absent->toString(),
                 $unqualified->target->schema?->value, $unqualified->toString(), $refused];
+            $constraints = $semantics->context([
+                'CREATE TABLE main.known_index (id INTEGER PRIMARY KEY, code TEXT UNIQUE) WITHOUT ROWID',
+            ]);
+            $missing = $semantics->analyze('DROP INDEX IF EXISTS main.sqlite_autoindex_known_index_3', $constraints);
+            $protected = false;
+            try {
+                $semantics->analyze('DROP INDEX IF EXISTS main.sqlite_autoindex_known_index_2', $constraints);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $protected = str_contains($error->getMessage(), 'cannot drop a UNIQUE or PRIMARY KEY constraint index');
+            }
+            $details['constraintIndexNames'] = [
+                $missing->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex,
+                $missing->toString(), $protected,
+            ];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
             $term = $result->terms[0];

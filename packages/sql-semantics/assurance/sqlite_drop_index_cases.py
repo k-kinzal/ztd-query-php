@@ -243,7 +243,7 @@ def negatives():
     yield analysis(value, "DROP INDEX tag", complete=False), "rejected", "cannot skip an open schema"
     yield analysis(value, "DROP INDEX MAIN.tag", extra=("CREATE INDEX main.tag ON main_rows(slot)",)), "rejected", "Conflicting declared indexes"
     yield {**analysis(value, "DROP INDEX MAIN.tag"), "foreignProfile": True}, "rejected", "must match the selected language profile"
-    yield analysis(value, "DROP INDEX IF EXISTS main.sqlite_autoindex_main_rows_1"), "rejected", "application-defined index name"
+    yield analysis(value, "DROP INDEX IF EXISTS main.sqlite_autoindex_main_rows_1"), "rejected", "cannot drop a UNIQUE or PRIMARY KEY constraint index"
 
 
 def forms(measured):

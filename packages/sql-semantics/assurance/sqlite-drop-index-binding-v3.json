@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-index-binding-3",
+  "approval": "pending-human-review",
+  "scope": "Connect DROP INDEX publication to the fixed SQLite index namespace and transient catalog.",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Index.php": {
+      "sha256": "40a03753224cbc3e3c92efdaa3777ccd62b396c00cc2be7e890b88cbef5ed440",
+      "role": "Absolute catalog schema, name and owner."
+    },
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "968c8da20dbdcc6275200880a4f87845e16c7f2684862aa4bd54a6a47c40ccec",
+      "role": "Immutable index collection and closed owner lookup in an exact schema."
+    },
+    "src/Model/Contract/SearchPath.php": {
+      "sha256": "54a339a92309d80b7d1928a1b63a467a0bf82930062f8496b44ea95a5810b347",
+      "role": "Explicit attachment order, including the empty decoded schema name."
+    },
+    "src/Statement/Schema/Drop.php": {
+      "sha256": "852b8d7edc0a7b575c93792e01e676aac99f54732ece92b09820db3a944cd488",
+      "role": "Identify the separate index case in the typed grammar."
+    }
+  },
+  "extends": "sqlite-drop-index-binding-v2.json",
+  "sharedBindings": {
+    "src/Platform.php": {
+      "contract": "sqlite-folded-binding-sources-v8.json",
+      "sha256": "c3a44e69384bf4322b7156146a05f4b2bba9dc2b3de6494892e871671b2bc8d8",
+      "role": "Export the bound owner and carry indexes in their fixed declaration context."
+    },
+    "src/Model/Facade/Catalog.php": {
+      "contract": "sqlite-drop-column-binding-v4.json",
+      "sha256": "a17eb69e0fa1869e52d0a9f2f66e9a98f6823fd24be778c8db6c5cbdb247fd65",
+      "role": "Collect and retain each application-defined index identity from its bound SQL declaration."
+    },
+    "src/Lowering/Definition/SchemaRule.php": {
+      "contract": "sqlite-create-index-binding-v2.json",
+      "sha256": "92b74ef0fd5b1f49809957f7db728ec13ae672271b475e728b1b4adb96460e41",
+      "role": "Match the SQLite grammar production and preserve exact name and guard."
+    }
+  },
+  "change": "Track protected names and opaque automatic-index schemas through the checked catalog and keep shared declaration source checks."
+}

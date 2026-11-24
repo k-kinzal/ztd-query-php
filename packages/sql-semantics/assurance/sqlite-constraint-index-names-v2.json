@@ -1,0 +1,171 @@
+{
+  "revision": "SemanticsIR/sqlite-constraint-index-names-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2, UTF-8, built-in collations, fixed identifier comparison, ordinary CREATE TABLE with or without rowid, three attached-schema coordinates.",
+  "scope": "Determine which native automatic constraint index names exist before analyzing DROP INDEX. Distinguish protected indexes and guarded absence.",
+  "constructors": {
+    "Schema/Index/DropIndex": {
+      "role": "Publish an ordinary resolved removal or a checked guarded absence. Protect existing native UNIQUE and PRIMARY KEY indexes.",
+      "structure": "An absolute IndexReference or a MissingIndex with the exact optional schema, and the native guard.",
+      "conditions": "A known constraint index is not removable. A reserved target can yield a MissingIndex only when its selected search scope establishes absence. An incomplete implicit namespace cannot establish absence.",
+      "meaning": "Repeat the pinned SQLite protected-index decision and retain the native no-op verification scope of genuinely missing names.",
+      "externalInterpretation": "For equivalent declared key structures and the same attachment order, the native automatic index names and lookup agree.",
+      "sql": "Use the checked optional schema and exact index name in DROP INDEX IF EXISTS when the index is absent.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/MissingIndex": {
+      "role": "Carry the exact guarded-absence selector, including names in SQLite's reserved namespace.",
+      "structure": "An immutable decoded name with an optional immutable schema Identifier.",
+      "conditions": "The transient catalog establishes the missing index, including the implicit namespace when relevant.",
+      "meaning": "Select the same native schema verification scope and make no catalog or row changes.",
+      "externalInterpretation": "The external catalog preserves the observed absence and attachment coordinates.",
+      "sql": "Quote the selector as an ordinary identifier and retain its optional qualification.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "rules": [
+    "An ordinary table can have generated constraint index names sqlite_autoindex_{decoded table name}_{ordinal}. The ordinals are consecutive starting at one.",
+    "Equivalent UNIQUE and PRIMARY KEY slots with the same ordered collation vector share one index. Ignore direction for this comparison. Preserve repeated slots and their order before native WITHOUT ROWID adjustments.",
+    "An ordinary rowid alias consumes no automatic index. Use the exact standard INTEGER type and inline versus table PRIMARY KEY ordering rule. A WITHOUT ROWID primary key consumes or reuses one index even when its name has no SQLite schema table row.",
+    "Inline constraints use the column's effective collation, including a later COLLATE clause. Explicit outer term collation overrides the inherited one.",
+    "The transient model may retain the implicit index declarations. Completed values retain an absolute application-defined reference or the exact checked absence, and never retain declaration context.",
+    "When a supplied definition cannot establish its automatic names, record index-namespace incompleteness. Reject a reserved-name absence within an incomplete selected scope."
+  ],
+  "observations": [
+    "Independently compare exact protected versus absent names with native DROP INDEX IF EXISTS preparation, PRAGMA index_list and SQLite schema state.",
+    "Observe protected WITHOUT ROWID primary indexes even when physically represented by their tables, and compare distinct slot, collation and order witnesses.",
+    "Compare typed guarded absence through public analysis and direct construction, verify native opcode transaction scope and absence of schema, stats or row effects.",
+    "Exercise absence we previously refused, as well as exact rejection of known implicit indexes. Known wrong native refusals, constructor errors or unauthorized target changes fail the observation."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp",
+      "extension"
+    ],
+    "tables": [
+      "items",
+      "",
+      "old \"列\"_2"
+    ],
+    "layouts": [
+      "rowid-alias",
+      "inline-desc",
+      "table-desc-alias",
+      "same-key",
+      "shared-without-rowid",
+      "without-rowid-duplicate-terms",
+      "distinct-collations",
+      "reverse-columns",
+      "later-column-collation",
+      "two-equivalent-effects",
+      "no-keys",
+      "distinct-exact-type"
+    ],
+    "ordinals": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "identity": "All 540 requested coordinates, including 153 protected and 387 absent on the fixed native shapes. Obtain schema, table and definition from native metadata, the tested ordinal from the checked request and validated outcome. Positive coordinates compare analysis and direct construction."
+  },
+  "exploration": {
+    "seeds": [
+      10133,
+      44257,
+      69263
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 360,
+    "allowedExclusions": [],
+    "domain": "Combine inline and table constraint declarations, ordered or repeated slots, conflicting and matching sort directions, collation roles, rowid mechanics, generated implicit identifiers and namespace qualification.",
+    "minimumObserved": {
+      "protected": 48,
+      "absent": 48,
+      "unqualified": 24
+    }
+  },
+  "negative": [
+    "Guarded reference to a native protected index",
+    "Unconditional reference to an actually absent generated index name",
+    "Reserved name in an open catalog",
+    "Reserved absence with incomplete native declarations",
+    "Direct unguarded MissingIndex construction"
+  ],
+  "faults": [
+    "Count an ordinary INTEGER PRIMARY KEY rowid alias",
+    "Ignore a WITHOUT ROWID primary index",
+    "Treat equivalent native constraints as different index identities",
+    "Use a single collation for every key term",
+    "Publish a protected index as an absence",
+    "Treat a partially established implicit namespace as complete"
+  ],
+  "open": [
+    "Virtual module and nonstandard native collation semantics and external schema configurations require their own catalog identity contracts. Supported constructors cannot use them to infer absence."
+  ],
+  "trust": [
+    "Pinned SQLite engine and comparison, primary key and index source routines.",
+    "Independent typed protected and absent outcomes, observed native indexes and schema verification.",
+    "Native-bound construction, finite case identity and distribution audits."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "nativeCases": "4c5c99fb9ddf17cfe2f16adf7401a72d3918332b6f08dd976b92b2c8623b5e3a",
+    "driver": "942dff5ad0cfae39c4fda6845ba66a01bf5b8926613338045fd609ee147847c5",
+    "engineRoutines": [
+      "sqlite3AddPrimaryKey",
+      "sqlite3AddCollateType",
+      "sqlite3CreateIndex",
+      "convertToWithoutRowidTable",
+      "sqlite3FindIndex"
+    ]
+  },
+  "extends": "sqlite-constraint-index-names-v1.json",
+  "scheduledRejections": 203,
+  "schedule": {
+    "finiteOutcomes": {
+      "protected": 153,
+      "absent": 387
+    },
+    "explorationOutcomes": {
+      "protected": 48,
+      "absent": 48
+    },
+    "authoredOutcomes": {
+      "protected": 2,
+      "absent": 2
+    },
+    "directConstructEachAbsence": true,
+    "sourceFaults": 6
+  },
+  "change": "Record fixed native refusal counts separately from invalid construction controls, pair each absence with direct construction, and retain the raw before and after native states."
+}

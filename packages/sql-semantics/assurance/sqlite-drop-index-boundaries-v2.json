@@ -1,0 +1,70 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-index-boundaries-2",
+  "approval": "pending-human-review",
+  "scope": "Verify index removal and the immutable checked present or absent roles, including the optional selector and lifetime invariant.",
+  "rules": {
+    "Schema/Index/DropIndex::__construct": {
+      "common": [
+        "Check::input($ifExists || $target instanceof IndexReference, 'An absent DROP INDEX target requires IF EXISTS.');"
+      ]
+    },
+    "Schema/Index/DropIndex::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Index/DropIndex::toString": {
+      "common": [
+        "return 'DROP INDEX ' . ($this->ifExists ? 'IF EXISTS ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Index/IndexReference::__construct": {
+      "common": [
+        "Check::input(!str_starts_with($name->key(), 'sqlite_'), 'An ordinary index cannot belong to the reserved SQLite namespace.');"
+      ]
+    },
+    "Schema/Index/IndexReference::quoted": {
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->name->quoted();"
+      ]
+    },
+    "Schema/Index/MissingIndex::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/MissingIndex::quoted": {
+      "common": [
+        "return ($this->schema === null ? '' : $this->schema->quoted() . '.') . $this->name->quoted();"
+      ]
+    },
+    "Schema/Index/DropIndexLowering::lower": {
+      "common": [
+        "Check::input($drop->object === SchemaObjectKind::Index, 'An index removal requires the DROP INDEX operation.');",
+        "$context = $operation->context;",
+        "$comparison = NameComparison::AsciiInsensitive;",
+        "$path = $context->searchPath;",
+        "Check::input($context->relationNames === $comparison && isset($path[1]) && $comparison->equal($path[0]->value, 'temp') && $comparison->equal($path[1]->value, 'main'), 'DROP INDEX requires SQLite comparison and schema search order.');",
+        "$name = new Identifier($drop->name->name->value);",
+        "$reserved = str_starts_with($name->key(), 'sqlite_');",
+        "$schema = $drop->name->schema;",
+        "foreach ($schema === null ? $path : [$schema] as $location) {",
+        "    $matches = $context->indexesAt($drop->name->name, $location);",
+        "    Check::input(count($matches) <= 1, 'Conflicting declared indexes share the selected coordinate.');",
+        "    if ($matches !== []) {",
+        "        $index = $matches[0];",
+        "        Check::input($index->removable, 'SQLite cannot drop a UNIQUE or PRIMARY KEY constraint index.');",
+        "        $target = new IndexReference(new Identifier($index->schema->value), new Identifier($index->name->value), new Identifier($index->table->value));",
+        "        return new DropIndex($target, $drop->ifExists);",
+        "    }",
+        "    Check::input($schema !== null || $context->complete, 'Unqualified DROP INDEX cannot skip an open schema.');",
+        "}",
+        "Check::input($context->complete && $drop->ifExists, 'DROP INDEX requires a resolved index or a known guarded absence.');",
+        "Check::input(!$reserved || $context->knowsConstraintIndexes($schema), 'A reserved index absence needs a complete implicit index namespace.');",
+        "return new DropIndex(new MissingIndex($name, $schema === null ? null : new Identifier($schema->value)), true);"
+      ]
+    }
+  },
+  "extends": "sqlite-drop-index-boundaries-v1.json",
+  "change": "Require the selected native constraint index to be removable and allow a reserved absence only with a complete implicit namespace."
+}

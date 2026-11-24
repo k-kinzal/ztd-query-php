@@ -38,6 +38,7 @@ final class Catalog
         $binder = new StatementBinder($this->parser);
         $tables = [];
         $indexes = [];
+        $opaqueIndexSchemas = [];
         foreach ($declarations ?? [] as $sql) {
             $scope = $platform->context($this->profile, $this->searchPath, $tables, false);
             $binding = $binder->resolve($sql, $scope);
@@ -48,9 +49,24 @@ final class Catalog
             }
             Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation or an index.');
             array_push($tables, ...$platform->declarations($binding));
+            $constraints = $platform->constraintIndexes($binding);
+            if ($constraints === null) {
+                foreach ($binding->facts->declarations as $owner) {
+                    $opaqueIndexSchemas[] = $owner->name->schema ?? $scope->declarationSchema;
+                }
+            } else {
+                array_push($indexes, ...$constraints);
+            }
         }
 
-        return $platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete, $indexes);
+        return $platform->context(
+            $this->profile,
+            $this->searchPath,
+            $tables,
+            $declarations !== null && $complete,
+            $indexes,
+            $opaqueIndexSchemas,
+        );
     }
 
     /**

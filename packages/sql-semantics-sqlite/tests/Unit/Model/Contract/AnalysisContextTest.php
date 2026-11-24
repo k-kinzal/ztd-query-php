@@ -136,4 +136,14 @@ final class AnalysisContextTest extends TestCase
         self::assertSame('records', $matches[0]->table->value);
         self::assertSame('TAG', $matches[0]->name->value);
     }
+
+    public function testKnowsConstraintIndexesLimitsAnOpaqueModuleToItsOwnSchema(): void
+    {
+        $context = (new Semantics())->context(['CREATE VIRTUAL TABLE temp.terms USING fts5(term)']);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+
+        self::assertTrue($context->knowsConstraintIndexes(new Name('main')));
+        self::assertFalse($context->knowsConstraintIndexes(new Name('TEMP')));
+        self::assertFalse($context->knowsConstraintIndexes(null));
+    }
 }

@@ -15,8 +15,8 @@ from sqlite_drop_index_cases import (
 from sqlite_engine import Database, ObserverAuthorizationError
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-drop-index-v2.json"
-CONTRACT = "8ad84aec0f95a530c0f06432595c8d7d62ad92da10fe9a1a891dbe27427b5490"
+CONTRACT_NAME = "sqlite-drop-index-v3.json"
+CONTRACT = "50d18761f064c86d44b621cd90c8a012e9d9edc8ddbb3849ccb1921f5dfa9d78"
 FIXTURE = ""
 DROP_ACTIONS = frozenset((10, 12))
 CATALOG_FIELDS = frozenset((b"name", b"type", b"rootpage"))
