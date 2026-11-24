@@ -149,7 +149,7 @@ def refusals(tag):
 
 
 def requests(_, tag, spec):
-    negative = rejected_finite_ids(spec, tag)
+    negative = unguarded_grid(spec)
     for ordinal, key in enumerate(grid(spec)):
         plan, *factors = key
         item = trial(tag, plan, *factors, coordinate=[list(plan), *factors])
