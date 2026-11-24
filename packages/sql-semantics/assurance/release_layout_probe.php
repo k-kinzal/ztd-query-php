@@ -1308,6 +1308,33 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $view === $rebuilt->views[0], $namespaceView->toString(), $rebuilt->toString(), $unbound,
                 $qualifiedView == $namespaceView,
             ];
+            $indexBatch = $semantics->analyze(
+                'CREATE SCHEMA "Index Batch" CREATE UNIQUE INDEX picked ON ledger (amount DESC) NULLS NOT DISTINCT WHERE enabled'
+                . ' CREATE INDEX IF NOT EXISTS seen ON ledger (amount) CREATE VIEW seen AS SELECT 1'
+                . ' CREATE TABLE ledger (id integer, amount bigint, enabled boolean)',
+            );
+            [$fresh, $guarded] = $indexBatch->indexes;
+            $member = $fresh;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $indexBatch->name, $indexBatch->owner, release: $indexBatch->release, tables: $indexBatch->tables,
+                views: $indexBatch->views, indexes: [&$member, $guarded],
+            );
+            $member = $guarded;
+            $mismatched = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $indexBatch->name, $indexBatch->owner, release: $indexBatch->release, tables: $indexBatch->tables,
+                    indexes: [$guarded],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $mismatched = $error->getMessage() === 'A schema index must retain the actual presence of its name.';
+            }
+            $details['postgresSchemaIndexes'] = [
+                $fresh->table->schema->value, $fresh->table->table->value, $fresh->name->value,
+                $fresh->keys[0]->slot, $fresh->keys[0]->order->value, $fresh->table->columnKind(1)->value,
+                $fresh === $rebuilt->indexes[0], $fresh->presence->value, $guarded->presence->value,
+                $indexBatch->toString(), $rebuilt->toString(), $mismatched,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
             [$present, $absent] = $result->targets;

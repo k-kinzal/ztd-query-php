@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View;
 
-use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\BooleanStorage;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\CharacterStorage;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaRelationOrder;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -25,23 +21,16 @@ final class SchemaViewOrder
 {
     /**
      * Checks unique view targets and each exact local base-table operand.
-     * @param list<CreateSequence> $sequences
-     * @param list<CreateTable> $tables
+     * @param array<array-key, CreateTable|true> $occupied Checked earlier occupants
      * @param list<CreateView> $views
+     * @return array<array-key, CreateTable|true> Occupants after the view phase
      */
-    public static function check(?Identifier $name, bool $guard, GrammarRelease $release, array $sequences, array $tables, array $views): void
+    public static function check(?Identifier $name, bool $guard, GrammarRelease $release, array $occupied, array $views): array
     {
         if ($views === []) {
-            return;
+            return $occupied;
         }
         Check::input($name !== null && !$guard, 'Schema views require an unguarded, statically named namespace.');
-        $occupied = [];
-        foreach ($sequences as $sequence) {
-            $occupied[$sequence->name->name->value] = true;
-        }
-        foreach ($tables as $table) {
-            $occupied[$table->target->table->value] ??= $table;
-        }
         foreach ($views as $view) {
             Check::input(
                 $view->name->schema->value === $name->value && $view->query->release === $release,
@@ -55,13 +44,7 @@ final class SchemaViewOrder
                 Check::input($local instanceof CreateTable, 'A schema view must resolve its local input to a preceding base table.');
                 $fields = [];
                 foreach ($local->columns as $column) {
-                    $fields[$column->name->value] = match ($column->storage) {
-                        IntegerStorage::Standard => ColumnKind::Int4,
-                        IntegerStorage::Wide => ColumnKind::Int8,
-                        CharacterStorage::Text => ColumnKind::Text,
-                        BooleanStorage::Boolean => ColumnKind::Boolean,
-                        IntegerStorage::Small => null,
-                    };
+                    $fields[$column->name->value] = SchemaRelationOrder::columnKind($column);
                 }
                 foreach ($source->columns as $slot => $column) {
                     Check::input(
@@ -72,5 +55,7 @@ final class SchemaViewOrder
             }
             $occupied[$coordinate] = true;
         }
+
+        return $occupied;
     }
 }

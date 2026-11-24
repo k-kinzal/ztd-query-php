@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v141.json"
-CONTRACT = "3e12a6d966ee48757a1e18d0da47788d4e95c981e0ef996103fdaa5e8e56913e"
+CONTRACT_NAME = "release-layout-v142.json"
+CONTRACT = "c1101288d741db1c716a6de4797814fc091df5c68be81c11e8725d2eec2ae098"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -418,6 +418,16 @@ def verify_probe(raw, catalog):
             require(item.get("postgresSchemaViews") == [
                 "View Batch", "feed", "Number", "View Batch", "child", "n", "int4", True, view, view, True, True,
             ], "installed-postgres-schema-views-mismatch", item)
+            indexes = ('CREATE SCHEMA "Index Batch" AUTHORIZATION CURRENT_USER'
+                       ' CREATE TABLE "Index Batch"."ledger" ("id" INTEGER NULL, "amount" BIGINT NULL, "enabled" pg_catalog.bool NULL) USING heap'
+                       ' CREATE VIEW "Index Batch"."seen" ("?column?") AS SELECT CAST(1 AS pg_catalog.int4) AS "?column?"'
+                       ' CREATE UNIQUE INDEX "picked" ON "Index Batch"."ledger" USING btree ("amount" DESC NULLS FIRST)'
+                       ' NULLS NOT DISTINCT WHERE ("enabled")'
+                       ' CREATE INDEX IF NOT EXISTS "seen" ON "Index Batch"."ledger" USING btree ("amount" ASC NULLS LAST)')
+            require(item.get("postgresSchemaIndexes") == [
+                "Index Batch", "ledger", "picked", 1, "DESC NULLS FIRST", "int8", True, "vacant", "occupied",
+                indexes, indexes, True,
+            ], "installed-postgres-schema-indexes-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\DropSchema"):
             emitted = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE'
             require(item.get("postgresDropSchema") == [

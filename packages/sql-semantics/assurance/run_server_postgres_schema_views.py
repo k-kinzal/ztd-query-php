@@ -136,6 +136,7 @@ def requests(engine, tag, spec):
 
 
 def check_value(item, response):
+    same([], response.get("schemaIndexes"))
     same(["constructed", item["release"] + "/utf8/standard-conforming-strings/native"],
          [response.get("status"), response.get("profile")])
     schema = direct(item)["createSchema"]

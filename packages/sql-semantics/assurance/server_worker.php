@@ -1655,9 +1655,16 @@ function constructPostgresCreateSchema(array $input): \SqlSemantics\Platform\Pos
         ]) : $view;
     }
 
+    $indexes = [];
+    foreach ($spec['indexes'] ?? [] as $index) {
+        $indexes[] = is_array($index) ? constructPostgresBtree([
+            'dialect' => 'postgres', 'release' => $index['release'], 'createBtree' => $index,
+        ]) : $index;
+    }
+
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
         $name, $owner, $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
-        $tables, $sequences, $views,
+        $tables, $sequences, $views, $indexes,
     );
 }
 
@@ -1690,6 +1697,11 @@ function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema
             static fn (\SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView $view): array =>
                 ['release' => $view->query->release->value] + observePostgresCreateView($view),
             $schema->views,
+        ),
+        'schemaIndexes' => array_map(
+            static fn (\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex $index): array =>
+                ['release' => $index->release->value] + observePostgresBtree($index, false)['createBtree'],
+            $schema->indexes,
         ),
     ];
 }

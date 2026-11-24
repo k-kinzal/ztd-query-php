@@ -1070,10 +1070,11 @@ if ($dialect !== 'sqlite') {
         $roots[] = $schemaCreation;
         array_push($internal, 'Schema\\Namespace\\CreateSchemaLowering', 'Schema\\Namespace\\SchemaTableLowering',
             'Schema\\Namespace\\SchemaSequenceLowering', 'Schema\\Namespace\\SchemaRelationOrder',
-            'Schema\\Namespace\\View\\SchemaViewLowering', 'Schema\\Namespace\\View\\SchemaViewOrder');
-        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder');
+            'Schema\\Namespace\\View\\SchemaViewLowering', 'Schema\\Namespace\\View\\SchemaViewOrder',
+            'Schema\\Namespace\\Index\\SchemaIndexLowering', 'Schema\\Namespace\\Index\\SchemaIndexOrder');
+        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder', 'Schema\\Namespace\\Index\\SchemaIndexOrder');
         $properties[$schemaCreation] = [
-            'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'], 'views' => ['array'],
+            'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'], 'views' => ['array'], 'indexes' => ['array'],
             'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
         ];
@@ -1742,9 +1743,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v68.json';
+    $storagePath = __DIR__ . '/value-storage-v69.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '44937b6ef57be7cab064f50b2b80e83e98d71cfd48814153388361557a7746ca',
+        hash_file('sha256', $storagePath) === '75425cd6733c2872026ee13e6f6ddbd33835c90128157f2f539adbb5f41e77a7',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

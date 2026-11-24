@@ -23,8 +23,12 @@ final class CreateIndexLowering
     /**
      * Resolves owner, scope, presence and direct column operands.
      */
-    public function lower(BoundStatement $operation, ParsedCreateIndex $statement): CreateIndex
-    {
+    public function lower(
+        BoundStatement $operation,
+        ParsedCreateIndex $statement,
+        ?Identifier $memberNamespace = null,
+        ?IndexPresence $memberPresence = null,
+    ): CreateIndex {
         $context = $operation->context;
         Check::input($context->profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive
             && $context->columnNames === Comparison::Sensitive, 'CREATE INDEX requires the native PostgreSQL index profile.');
@@ -33,13 +37,18 @@ final class CreateIndexLowering
             && $statement->options === [] && $statement->tablespace === null,
             'CREATE INDEX needs a named ordinary B-tree without additional index options.'
         );
-        $target = (new IndexTableLowering())->lower($operation, $statement);
-        $schema = new Name($target->schema->value);
-        $occupied = (new IndexCreationVisibility())->occupied($context, $context->indexNamespace->indexes, $statement->name, $schema);
-        Check::input(
-            $occupied || ($context->complete && !$context->indexNamespace->hasUnknownNames($schema)),
-            'CREATE INDEX cannot infer name availability in an open index namespace.'
-        );
+        Check::input(($memberNamespace === null) === ($memberPresence === null), 'A schema index requires its namespace and name occupancy together.');
+        $target = (new IndexTableLowering())->lower($operation, $statement, $memberNamespace);
+        $presence = $memberPresence;
+        if ($presence === null) {
+            $schema = new Name($target->schema->value);
+            $occupied = (new IndexCreationVisibility())->occupied($context, $context->indexNamespace->indexes, $statement->name, $schema);
+            Check::input(
+                $occupied || ($context->complete && !$context->indexNamespace->hasUnknownNames($schema)),
+                'CREATE INDEX cannot infer name availability in an open index namespace.'
+            );
+            $presence = $occupied ? IndexPresence::Occupied : IndexPresence::Vacant;
+        }
         $operands = new IndexOperands();
         $keys = [];
         $included = [];
@@ -55,7 +64,7 @@ final class CreateIndexLowering
             new Identifier($statement->name->value),
             $keys,
             $included,
-            $occupied ? IndexPresence::Occupied : IndexPresence::Vacant,
+            $presence,
             $statement->ifNotExists,
             $statement->unique,
             $statement->nullsDistinct === false,

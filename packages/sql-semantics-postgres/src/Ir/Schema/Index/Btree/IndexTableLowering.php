@@ -28,7 +28,7 @@ final class IndexTableLowering
      *
      * @throws InvalidConstruction When a declared physical type is outside the B-tree profile
      */
-    public function lower(BoundStatement $operation, CreateIndex $statement): TableSource
+    public function lower(BoundStatement $operation, CreateIndex $statement, ?Identifier $memberNamespace = null): TableSource
     {
         $resolution = $operation->facts->relation($statement)->table;
         Check::input($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable
@@ -38,7 +38,9 @@ final class IndexTableLowering
         $schema = $table->name->schema ?? $context->declarationSchema;
         Check::input($table->name->catalog === null
             && !$context->indexNamespace->partitioned($schema, $table->name->name), 'A B-tree needs a local nonpartitioned table.');
-        if ($statement->table->name->schema === null) {
+        if ($memberNamespace !== null) {
+            Check::input($schema->value === $memberNamespace->value, 'A schema index must target its own namespace.');
+        } elseif ($statement->table->name->schema === null) {
             (new IndexCreationVisibility())->verifyPath($context, $context->indexNamespace->indexes, $table->name->name, $schema);
         }
         $columns = [];
