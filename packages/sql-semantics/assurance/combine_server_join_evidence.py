@@ -13,7 +13,7 @@ from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, diges
 from renderer_fault_dispatch import verify as verify_fault_dispatch
 from run_server import check_profile, check_transport, rejects, same
 import run_server_join
-from run_server_join import negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
+from run_server_join import check_fault_obligations, negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -157,6 +157,9 @@ def combine(candidate, checkout, paths, output, domain):
         require(raw["eventsDigest"] == digest(ledger), f"server-{label}-evidence-ledger-mismatch", str(path))
         check_profile(*role, SimpleNamespace(environment=raw["observerEnvironment"]))
         same(domain.controls(), raw["comparatorControls"])
+        if getattr(domain, "COMPARATOR_FAULTS", None):
+            comparator_faults = check_fault_obligations(specification, raw["engine"], domain, raw["comparatorControls"], raw["faults"])
+            same(comparator_faults, raw["comparatorFaults"])
         domain.check_preparation(raw["engine"], raw["observerEnvironment"], raw["observerPreparation"])
         results = replay(ledger, raw, specification, domain)
         dispatch = check_faults(path.parent, raw, manifest, checkout, domain)
@@ -164,6 +167,7 @@ def combine(candidate, checkout, paths, output, domain):
         releases[role] = {"index": relpath(path, output.parent), "indexDigest": digest(path), "eventsDigest": digest(ledger),
                           "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "faultDispatch": dispatch,
                           "execution": results,
+                          **({"comparatorFaults": raw["comparatorFaults"]} if "comparatorFaults" in raw else {}),
                           **({"directFinite": len(raw["directFiniteIds"])} if "directFiniteIds" in raw else {}),
                           **({"rejectedFinite": len(raw["rejectedFiniteIds"])} if "rejectedFiniteIds" in raw else {})}
     verify_candidate(checkout, candidate, manifest)

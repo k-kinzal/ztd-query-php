@@ -21,6 +21,9 @@ CONTRACT = "38b45ec46b0da6a420a1fb61a5ebce316a8fd4313cc14e432e7cc479d16471ae"
 COMPLETE_SEEDS = True
 AXES = ("kind", "concurrently", "active", "spelling")
 ROWS = [[1, 20, True], [2, 19, False]]
+COMPARATOR_FAULTS = {
+    "Accept a stale reconstructed foreign-key index link as valid evidence": "stale-foreign-index-link",
+}
 
 
 def specifications():

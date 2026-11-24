@@ -1465,7 +1465,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v7.json', 'd760fd110daeb6da2e5f4f0b22ed2efdd12b6c3db1c3306f3d0fd974575016f2', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v8.json', '967c091c59cc11f3c55325cd38c5c85b37cf9d6e7a5878a4d0641a1925217567', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],

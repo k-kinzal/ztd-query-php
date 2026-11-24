@@ -247,6 +247,19 @@ def faults(engine, tag):
     ]
 
 
+def check_fault_obligations(specification, engine, domain, controls, applied):
+    """Reconcile applied mutations and explicitly registered comparator witnesses."""
+    registrations = specification["faults"] + specification.get("dialectFaults", {}).get(engine, [])
+    comparator_faults = getattr(domain, "COMPARATOR_FAULTS", {})
+    for description, key in comparator_faults.items():
+        require(registrations.count(description) == 1 and key in controls and controls[key],
+                f"server-{domain.LABEL}-missing-comparator-fault", key)
+    require(len(set(comparator_faults.values())) == len(comparator_faults)
+            and len(applied) + len(comparator_faults) == len(registrations),
+            f"server-{domain.LABEL}-faults-incomplete")
+    return sorted(comparator_faults.values())
+
+
 def main(domain):
     label = domain.LABEL
     specification, profiles = domain.specifications()
@@ -283,8 +296,9 @@ def main(domain):
             if fault_probe is None:
                 fault_probe = lambda item, value, observer: probe(item, value, observer, domain)
             result["faults"] = check_render_faults(args, db, mutations, fault_probe, script="server_worker.php")
-            registered_faults = len(specification["faults"]) + len(specification.get("dialectFaults", {}).get(args.engine, ()))
-            require(len(result["faults"]) == registered_faults, f"server-{label}-faults-incomplete")
+            comparator_faults = check_fault_obligations(specification, args.engine, domain, comparator_controls, result["faults"])
+            if comparator_faults:
+                result["comparatorFaults"] = comparator_faults
     except Exception as error:
         write_json(args.out / "run-failure.json", {
             "candidate": commit, "contract": domain.CONTRACT, "engine": args.engine, "release": args.release,
@@ -302,7 +316,8 @@ def main(domain):
         f"# Native {args.engine} {args.release} {label} evidence\n\nCandidate `{commit}`.\n\n"
         f"All {len(result['finiteIds'])} finite identities observed. The ledger recorded "
         f"{result['execution']['compared']} comparisons and {result['execution']['rejected']} specified rejections. "
-        f"All {len(result['faults'])} registered faults were detected.\n\n[Evidence index](index.json) · [Events](events.jsonl)\n"
+        f"Detected {len(result['faults'])} applied mutations and {len(comparator_faults)} registered comparator faults.\n\n"
+        "[Evidence index](index.json) · [Events](events.jsonl)\n"
     )
     print(args.out)
 
