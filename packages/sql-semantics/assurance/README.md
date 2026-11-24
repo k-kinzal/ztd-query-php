@@ -112,6 +112,13 @@ The initial and relational SQLite schedules retain the full input and measured f
 
 To run the complete native release matrix locally, keep the trusted archive's workflow file next to its `packages/` directory. Install PDO MySQL and PDO PostgreSQL for the observer. The launcher starts a disposable pinned database per release, binds the server to loopback and runs the candidate through the isolated PHP worker. It records per-domain exit outcomes and retains the raw runs for independent replay.
 
+The pinned MySQL 5.6.51 and 5.7.44 images use Linux amd64. On an ARM64 controller with an amd64 executor, preload these exact manifests before starting the matrix. The launcher reads the installed image architecture when it starts each fixture.
+
+```sh
+docker pull --platform linux/amd64 mysql@sha256:20575ecebe6216036d25dab5903808211f1e9ba63dc7825ac20cb975e34cfcae
+docker pull --platform linux/amd64 mysql@sha256:4bc6bc963e6d8443453676cae56536f4b8156d78bae03c0145cbe47c2aad73bb
+```
+
 ```sh
 python3 "$verifier/run_native_matrix.py" --candidate "$candidate" --candidate-sha "$candidate_sha" \
   --tool-autoload "$tool_autoload" --evidence-root "$evidence"
