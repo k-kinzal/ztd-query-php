@@ -1,0 +1,135 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-signed-declarations-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-create-table-as-v1.json",
+    "mysql-create-table-as-source-v1.json",
+    "mysql-create-table-as-varchar-v1.json",
+    "mysql-create-signed-v2.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "existingRoles": [
+    "Schema/Query/CreateTableAs",
+    "Schema/TableColumn",
+    "Schema/IntegerStorage",
+    "Select",
+    "ResultColumn"
+  ],
+  "constructors": {},
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Same native MySQL InnoDB, utf8mb4, exact relation comparison and empty SQL mode. Keep the release-specific field display widths and exact native warnings.",
+  "structure": "Optional owned ordered TableColumn definitions, a checked Select and target TableIdentity with the existing guard. A nonempty explicit list belongs to a source-free result. Folded declaration names decide which selected fields override the native inferred storage.",
+  "conditions": "Every explicit element is a distinct named signed type with a checked literal default or no written default. Neither keys, generated expressions, duplicate policy, table partitions nor text declarations are admitted here. The union of explicit and projected names has at most 128 fields. A source-backed creation retains the earlier form with no explicit column definitions.",
+  "meaning": "Create columns specified only in the declaration first in declaration order. Place every selected column next in projection order using its selected spelling. A matching declaration overrides storage, nullability and the default. Apply the declared-only defaults and selected value conversions under the pinned non-strict semantics. The nullable target keeps NULL, a required target converts selected NULL to zero and reports warning 1048, and a signed field clips a value to its storage interval with warning 1264. Preparing a required declaration-only field without a default emits warning 1364 even for an empty projection. Source-free projection contributes zero or one row.",
+  "sql": "Render each checked explicit TableColumn once in its declaration position before the InnoDB storage clause and the exact SELECT. An empty explicit layout emits the same valid query-backed form.",
+  "observations": [
+    "Ordered names, native physical types and legacy display widths, nullability, actual defaults and values in both scopes.",
+    "Preserve zero and one row, defaulted and clipped values, typed versus bare NULL, warning codes, severity, text and order. The missing-default warnings precede projected conversions. Conversion warnings follow projection order.",
+    "Distinguish guarded and required collisions. Keep prior rows, namespace and the owning transaction behavior, rollback and disconnect.",
+    "Compare original authored and canonical SQL to the same independent field and effect prediction."
+  ],
+  "finite": {
+    "destinationKind": [
+      "table",
+      "temporary-table"
+    ],
+    "topology": [
+      "absent",
+      "persistent",
+      "temporary",
+      "shadow"
+    ],
+    "ifNotExists": [
+      false,
+      true
+    ],
+    "declaration": [
+      "append",
+      "override",
+      "required-prefix",
+      "mixed"
+    ],
+    "body": [
+      "zero-rows",
+      "values",
+      "null"
+    ],
+    "identities": 192,
+    "completeness": "Recover the actual destination, guard, explicit column role, ordered query heading and population branch from each closed value, and check every expected identity once with its observed fixture."
+  },
+  "exploration": {
+    "seeds": [
+      701,
+      2519,
+      15461
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary both namespace kinds, declaration and projection order, signed widths, case-folded matches, defaults and nullability, numeric storage limits, authored versus inferred names and multi-warning order."
+  },
+  "analysis": [
+    "The original explicit-column negative under CTAS becomes a native positive",
+    "Case-folded selection uses the selected spelling and the declared storage",
+    "A declaration-only field with no default warns for an empty SELECT",
+    "A folded required override converts a selected NULL",
+    "A qualified temporary target with reordered override fields and clamped values"
+  ],
+  "negative": [
+    "Non-list explicit definitions",
+    "Wrong explicit element type",
+    "Duplicate explicit heading after ASCII folding",
+    "Combined layout wider than 128",
+    "Text override in the signed declaration domain",
+    "Explicit declarations with a resolved source",
+    "Named primary key with a query",
+    "Explicit duplicate policy"
+  ],
+  "replacesPreviousNegative": {
+    "contract": "mysql-create-table-as-v1.json",
+    "condition": "Analyzed explicit definition with a SELECT",
+    "previousSql": "CREATE TABLE ir_create_target (other INT) AS SELECT 1 AS c0",
+    "newExpectation": "Observe the original authored positive, its new column and row.",
+    "replacement": "Require refusal of a query-backed table with a primary key. Preserve all original finite and seeded cases and other typed refusals."
+  },
+  "faults": [
+    "Move declaration-only fields",
+    "Drop an explicit override",
+    "Replace required nullability",
+    "Render a different declared default",
+    "Skip the explicit folded-name check",
+    "Skip the combined field-count check"
+  ],
+  "guarantees": {
+    "P01": "Both namespaces and the declaration and selection positions are explicit.",
+    "P02": "The owning construction boundary checks the closed list, normalized unique names, signed native roles and union size.",
+    "P03": "The immutable model retains structural definitions, query and resolved target only.",
+    "P04": "Native materialization composes declared-only defaults, physical overrides and checked query roles.",
+    "P05": "Verified list ownership and sealed children apply to the new layout.",
+    "P06": "Compare the emitted structure with independent native effects under the same signed, non-strict profile."
+  },
+  "trust": [
+    "Native InnoDB create and insert-conversion semantics",
+    "Independent observation of warnings and state",
+    "Checked Combine behavior and immutable supplied schema"
+  ],
+  "open": [
+    "Explicit definitions over table-backed selection, character overrides, generated columns, checks, keys, and full grammar coverage."
+  ],
+  "calibrationSha256": "4ff5c63045a2314a3b831c0a3d5516382067ac7db0068ad9ec021b4a19dca5e8",
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-select.html"
+  ]
+}
