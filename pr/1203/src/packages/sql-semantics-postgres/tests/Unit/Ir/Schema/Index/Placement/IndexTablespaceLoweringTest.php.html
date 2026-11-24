@@ -46,9 +46,9 @@
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\AnalysisException</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespaceLowering</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Semantics</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">IndexTablespaceLowering</span>::<span class="tok-kw">class</span>)]</span>
@@ -79,18 +79,13 @@
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            <span class="tok-str">&#039;CREATE INDEX event_key ON app.events (id)&#039;</span>,</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        ]);</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">try</span> {</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;REINDEX (TABLESPACE pg_default, TABLESPACE missing_archive) INDEX app.event_key&#039;</span>, <span class="tok-var">$context</span>);</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">InvalidConstruction</span> <span class="tok-var">$failure</span>) {</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>            <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(<span class="tok-str">&#039;requires a declared tablespace&#039;</span>, <span class="tok-var">$failure</span>-&gt;<span class="tok-id">getMessage</span>());</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>            <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        }</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-id">self</span>::<span class="tok-id">fail</span>(<span class="tok-str">&#039;An unresolved placement was published.&#039;</span>);</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    }</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>}</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">AnalysisException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;requires a declared tablespace&#039;</span>);</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;REINDEX (TABLESPACE pg_default, TABLESPACE missing_archive) INDEX app.event_key&#039;</span>, <span class="tok-var">$context</span>);</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    }</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>}</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

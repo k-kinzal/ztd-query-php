@@ -46,35 +46,38 @@
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndexLowering</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropViewLowering</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Object\Drop</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Dispatches persistent table and view removals by their native object kind.</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * @visibility SqlSemantics\Platform\PostgreSql</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DropRelationLowering</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>{</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * Publishes the owning checked relation removal.</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @throws InvalidConstruction When the statement has no supported relation kind</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">BoundStatement</span> <span class="tok-var">$operation</span>, <span class="tok-id">Drop</span> <span class="tok-var">$statement</span>): <span class="tok-id">DropIndex</span>|<span class="tok-id">DropTable</span>|<span class="tok-id">DropView</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    {</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">kind</span>) {</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>            <span class="tok-id">ObjectKind</span>::<span class="tok-id">Index</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">DropIndexLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>),</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>            <span class="tok-id">ObjectKind</span>::<span class="tok-id">Table</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">DropTableLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>),</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>            <span class="tok-id">ObjectKind</span>::<span class="tok-id">View</span>, <span class="tok-id">ObjectKind</span>::<span class="tok-id">MaterializedView</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">DropViewLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>),</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidConstruction</span>(<span class="tok-str">&#039;The complete DROP requires a supported persistent relation kind.&#039;</span>),</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        };</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>}</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchemaLowering</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropViewLowering</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Object\Drop</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * Dispatches persistent table and view removals by their native object kind.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * @visibility SqlSemantics\Platform\PostgreSql</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DropRelationLowering</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>{</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * Publishes the owning checked relation removal.</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @throws InvalidConstruction When the statement has no supported relation kind</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">BoundStatement</span> <span class="tok-var">$operation</span>, <span class="tok-id">Drop</span> <span class="tok-var">$statement</span>): <span class="tok-id">DropIndex</span>|<span class="tok-id">DropSchema</span>|<span class="tok-id">DropTable</span>|<span class="tok-id">DropView</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    {</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">kind</span>) {</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>            <span class="tok-id">ObjectKind</span>::<span class="tok-id">Index</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">DropIndexLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>),</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-id">ObjectKind</span>::<span class="tok-id">Schema</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">DropSchemaLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>),</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>            <span class="tok-id">ObjectKind</span>::<span class="tok-id">Table</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">DropTableLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>),</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>            <span class="tok-id">ObjectKind</span>::<span class="tok-id">View</span>, <span class="tok-id">ObjectKind</span>::<span class="tok-id">MaterializedView</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">DropViewLowering</span>())-&gt;<span class="tok-id">lower</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>),</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidConstruction</span>(<span class="tok-str">&#039;The complete DROP requires a supported persistent relation kind.&#039;</span>),</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        };</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    }</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>}</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
