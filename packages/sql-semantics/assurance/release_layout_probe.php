@@ -602,6 +602,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Sequence\\Alter\\MoveSequence'] = 'ALTER SEQUENCE public.ticket SET SCHEMA "Archive.棚"';
         $queries['Schema\\Sequence\\Alter\\ReconfigureSequence'] = 'ALTER SEQUENCE public.ticket RESTART OWNED BY NONE START 5 CYCLE';
         $queries['Schema\\Sequence\\Alter\\SetSequenceLogging'] = 'ALTER SEQUENCE public.ticket SET LOGGED, SET UNLOGGED';
+        $queries['Schema\\Sequence\\Authorization\\AlterSequenceAuthorization'] = 'ALTER SEQUENCE public.ticket SET LOGGED, OWNER TO "Tax Owner", OWNER TO SESSION_USER, SET UNLOGGED';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -632,6 +633,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\SetSequenceLogging',
         ], true)) {
             $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket AS smallint']);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization') {
+            $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE ROLE "Tax Owner"']);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
             $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy', $storageDeclaration]);
@@ -1015,6 +1019,33 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->source->schema?->value, $result->source->name->value, array_column($result->modes, 'value'),
                 array_column($direct->modes, 'value'), $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
                 $guarded->modes, $guarded->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $mode = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging::class;
+            $type = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization::class;
+            $action = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequenceAuthorizationAction::class;
+            $owner = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal::class;
+            $roleToken = SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $first = new $action($mode::Logged);
+            $inputs = [&$first, new $action(new $owner(new $name('Tax Owner'))), new $action(new $owner($roleToken::Session)), new $action($mode::Unlogged)];
+            $direct = new $type($source, $inputs, release: $result->release);
+            $first = new $action($mode::Unlogged);
+            $guarded = $semantics->analyze('ALTER SEQUENCE IF EXISTS unused OWNER TO role_not_declared', $activeContext);
+            $refused = false;
+            try {
+                new $type($source, [new $action($mode::Unlogged)], release: $result->release);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A present sequence authorization requires an owning role assignment.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresSequenceAuthorization'] = [
+                $result->source->schema?->value, $result->source->name->value,
+                array_map(static fn ($item): string => $item->toString(), $direct->actions),
+                $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
+                $guarded->actions, $guarded->toString(), $refused,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\RenameSequence') {

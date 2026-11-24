@@ -58,6 +58,8 @@ Sequence reconfiguration stores one typed assignment for each requested generato
 
 `ALTER SEQUENCE ... SET LOGGED` and `SET UNLOGGED` retain the ordered assignments. For a list of assignments, PostgreSQL requires each action before the last to agree with the sequence's current logging mode. Analysis rejects a prefix that requests mutually incompatible modes. Changing a temporary sequence's logging mode is invalid.
 
+`ALTER SEQUENCE ... OWNER TO` retains each owner assignment in order, including when combined with logging assignments. Declare a named role with `CREATE ROLE` in the analysis context. `CURRENT_ROLE` and `CURRENT_USER` select the effective role, while `SESSION_USER` selects the authenticated role. PostgreSQL uses the proposed owner to update the sequence's privileges, so intermediate assignments can affect privileges even when the final owner is the same. In a guarded statement with a verified absent sequence, PostgreSQL skips the action list.
+
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
 ```php

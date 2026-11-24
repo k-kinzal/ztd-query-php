@@ -1175,6 +1175,21 @@ if ($dialect !== 'sqlite') {
         $methods[$setLogging] = ['__construct', 'profileId', 'toString'];
         $properties[$loggingMode] = $methods[$loggingMode] = [];
         $enumCases[$loggingMode] = ['Logged' => 'LOGGED', 'Unlogged' => 'UNLOGGED'];
+        $loggingPrefix = $sequence . 'Alter\\Logging\\SequenceLoggingPrefix';
+        $authorization = $sequence . 'Authorization\\AlterSequenceAuthorization';
+        $authorizationAction = $sequence . 'Authorization\\SequenceAuthorizationAction';
+        $principal = $sequence . 'Authorization\\SequencePrincipal';
+        $roots[] = $authorization;
+        array_push($internal, $loggingPrefix, $sequence . 'Alter\\Logging\\SequenceLoggingModeLowering',
+            $sequence . 'Authorization\\SequenceActionsLowering', $sequence . 'Authorization\\SequenceAuthorizationLowering');
+        $pureCollaborators[] = $loggingPrefix;
+        $properties[$authorization] = ['source' => [$sequenceDropTarget], 'actions' => ['array'], 'ifExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$authorization] = ['__construct', 'profileId', 'toString'];
+        $properties[$authorizationAction] = ['value' => [$loggingMode, $principal]];
+        $methods[$authorizationAction] = ['__construct', 'toString'];
+        $properties[$principal] = ['owner' => ['Identifier', 'Schema\\Namespace\\SchemaSessionRole']];
+        $methods[$principal] = ['__construct', 'checkRelease', 'toString'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1683,9 +1698,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v64.json';
+    $storagePath = __DIR__ . '/value-storage-v65.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'ff778d1f6ad41f06ea3e0618e54b2e661cf33a0c73e5147ecee3f26025e7e248',
+        hash_file('sha256', $storagePath) === '04754aa9c4c7343c5180bd37dfc8caf4c0ca44a5a818004105fa4d40a90cd036',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2124,7 +2139,8 @@ try {
                         'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
                         'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\DropSchema', 'Schema\\Namespace\\RenameSchema',
                         'Schema\\Sequence\\Alter\\MoveSequence', 'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\RenameSequence',
-                        'Schema\\Sequence\\Alter\\SetSequenceLogging', 'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Sequence\\Alter\\SetSequenceLogging', 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization',
+                        'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {
@@ -2215,7 +2231,8 @@ try {
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
-                || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner'], true)
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',
+                    'Schema\\Sequence\\Authorization\\SequencePrincipal'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\StockRoles')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',

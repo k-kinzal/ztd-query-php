@@ -1,0 +1,216 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-authorization-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Validate the exact action family publication, ordered detached authorization list, role selectors and shared logging prefix rule.",
+  "rules": {
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\ChangeOwner, $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename && $statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaAlterLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\SetSchema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\MoveSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\AlterSequence => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\ReconfigureSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequenceActionsLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => match ($statement->target) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSchemaLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabaseLowering())->lower($operation, $statement),",
+        "    },",
+        "};"
+      ]
+    },
+    "Schema/Sequence/Alter/SetSequenceLogging::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$source->checkProfile($release);",
+        "if ($source->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($source->schema?->value !== 'pg_temp', 'Changing sequence logging requires a persistent source.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($modes !== [], 'A present sequence requires at least one logging assignment.');",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($ifExists, 'An absent sequence selector requires IF EXISTS.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($modes === [], 'An absent sequence cannot carry logging assignments.');",
+        "}",
+        "$detached = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($modes, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceLogging::class, 'Sequence logging needs an ordered list of modes.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\Logging\\SequenceLoggingPrefix::check($detached);",
+        "$this->modes = $detached;"
+      ]
+    },
+    "Schema/Sequence/Alter/SetSequenceLoggingLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTarget::Sequence && $context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'Sequence logging requires ALTER SEQUENCE and the native naming profile.');",
+        "$source = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceTargetLowering())->lower($context, $statement->relation->name, $statement->ifExists);",
+        "$modes = [];",
+        "foreach ($statement->commands as $command) {",
+        "    $modes[] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\Logging\\SequenceLoggingModeLowering())->lower($command);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SetSequenceLogging($source, $source->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing ? $modes : [], $statement->ifExists, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Sequence/Alter/Logging/SequenceLoggingModeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($command instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableAction, 'Sequence logging requires SET LOGGED or SET UNLOGGED.');",
+        "return match ($command->kind) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::SetLogged => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceLogging::Logged,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::SetUnlogged => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceLogging::Unlogged,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::SetWithoutOids, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::SetWithoutCluster, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::NotOf, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::EnableRowSecurity, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::DisableRowSecurity, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::ForceRowSecurity, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::NoForceRowSecurity, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::EnableAllTriggers, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::EnableUserTriggers, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::DisableAllTriggers, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind::DisableUserTriggers => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('Sequence logging requires SET LOGGED or SET UNLOGGED.'),",
+        "};"
+      ]
+    },
+    "Schema/Sequence/Alter/Logging/SequenceLoggingPrefix::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "foreach ($modes as $offset => $mode) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($offset + 1 === count($modes) || $mode === $modes[0], 'A sequence logging prefix must request one consistent mode.');",
+        "}"
+      ]
+    },
+    "Schema/Sequence/Authorization/AlterSequenceAuthorization::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$source->checkProfile($release);",
+        "$detached = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($actions, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequenceAuthorizationAction::class, 'Sequence authorization needs an ordered action list.');",
+        "if ($source->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing) {",
+        "    $logging = [];",
+        "    $principal = false;",
+        "    foreach ($detached as $action) {",
+        "        if ($action->value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceLogging) {",
+        "            $logging[] = $action->value;",
+        "        } else {",
+        "            $action->value->checkRelease($release);",
+        "            $principal = true;",
+        "        }",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($principal, 'A present sequence authorization requires an owning role assignment.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($logging === [] || $source->schema?->value !== 'pg_temp', 'Changing sequence logging requires a persistent source.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\Logging\\SequenceLoggingPrefix::check($logging);",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($ifExists, 'An absent sequence selector requires IF EXISTS.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($detached === [], 'An absent sequence cannot carry authorization actions.');",
+        "}",
+        "$this->actions = $detached;"
+      ]
+    },
+    "Schema/Sequence/Authorization/AlterSequenceAuthorization::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Sequence/Authorization/AlterSequenceAuthorization::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$clauses = [];",
+        "foreach ($this->actions as $action) {",
+        "    $clauses[] = $action->toString();",
+        "}",
+        "return 'ALTER SEQUENCE ' . ($this->ifExists ? 'IF EXISTS ' : '') . $this->source->quoted() . ' ' . ($clauses === [] ? 'OWNER TO CURRENT_USER' : implode(', ', $clauses));"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequenceAuthorizationAction::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Sequence/Authorization/SequenceAuthorizationAction::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceLogging ? 'SET ' . $this->value->value : $this->value->toString();"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequencePrincipal::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier || $owner->value !== 'public' && $owner->value !== 'none', 'A sequence owner must identify a single role.');"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequencePrincipal::checkRelease": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$owner = $this->owner;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier || !str_starts_with($owner->value, 'pg_') || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\StockRoles::contains($release, $owner->value), 'The stock sequence owner must exist in this release.');"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequencePrincipal::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$name = $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;",
+        "return 'OWNER TO ' . $name;"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequenceAuthorizationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTarget::Sequence && $context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'Sequence authorization requires ALTER SEQUENCE and the native naming profile.');",
+        "$source = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceTargetLowering())->lower($context, $statement->relation->name, $statement->ifExists);",
+        "$present = $source->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing;",
+        "$actions = [];",
+        "$owners = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering();",
+        "$logging = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\Logging\\SequenceLoggingModeLowering();",
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\OwnerTo) {",
+        "        if ($present) {",
+        "            $actions[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequenceAuthorizationAction(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequencePrincipal($owners->lower($context, $command->owner)));",
+        "        }",
+        "    } else {",
+        "        $actions[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequenceAuthorizationAction($logging->lower($command));",
+        "    }",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\AlterSequenceAuthorization($source, $present ? $actions : [], $statement->ifExists, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequenceActionsLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\OwnerTo) {",
+        "        return (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequenceAuthorizationLowering())->lower($operation, $statement);",
+        "    }",
+        "}",
+        "return (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SetSequenceLoggingLowering())->lower($operation, $statement);"
+      ]
+    }
+  }
+}

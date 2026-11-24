@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v137.json"
-CONTRACT = "585fc0aecd23c21c31d6313703c56d4ab607ee4c1c6f9d228450794d4dc1f9b1"
+CONTRACT_NAME = "release-layout-v138.json"
+CONTRACT = "4e28dd2c5ddc0ec84b102b57969a4974718d61217f217dff99cb15cb76fc85a7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -329,6 +329,12 @@ def verify_probe(raw, catalog):
             modes = ["LOGGED", "UNLOGGED"]
             require(item.get("postgresSequenceLogging") == ["public", "ticket", modes, modes, emitted, True, True, [], guarded, True]
                     and item["sql"] == emitted, "installed-postgres-sequence-logging-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\Authorization\\AlterSequenceAuthorization"):
+            actions = ["SET LOGGED", 'OWNER TO "Tax Owner"', "OWNER TO SESSION_USER", "SET UNLOGGED"]
+            emitted = 'ALTER SEQUENCE "public"."ticket" ' + ", ".join(actions)
+            guarded = 'ALTER SEQUENCE IF EXISTS "unused" OWNER TO CURRENT_USER'
+            require(item.get("postgresSequenceAuthorization") == ["public", "ticket", actions, emitted, True, True, [], guarded, True]
+                    and item["sql"] == emitted, "installed-postgres-sequence-authorization-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Sequence\\Alter\\ReconfigureSequence"):
             emitted = 'ALTER SEQUENCE "public"."ticket" START WITH 5 RESTART CYCLE OWNED BY NONE'
             guarded = 'ALTER SEQUENCE IF EXISTS "unused" RESTART'

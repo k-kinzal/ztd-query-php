@@ -27,7 +27,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ReconfigureSequenc
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ReconfigureSequenceLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLoggingLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequenceActionsLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Truncate\TruncateTable;
@@ -57,13 +58,13 @@ final class RelationChangeLowering
     public function lower(
         BoundStatement $operation,
         ParsedDrop|ParsedReindex|ParsedRename|ParsedTruncateTable|ParsedChangeOwner|ParsedSetSchema|ParsedAlterSequence|ParsedAlterTable $statement,
-    ): ChangeSchemaOwner|DropIndex|DropSchema|DropSequence|DropTable|DropView|MoveSequence|ReconfigureSequence|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|SetSequenceLogging|TruncateTable {
+    ): AlterSequenceAuthorization|ChangeSchemaOwner|DropIndex|DropSchema|DropSequence|DropTable|DropView|MoveSequence|ReconfigureSequence|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|SetSequenceLogging|TruncateTable {
         return match (true) {
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedChangeOwner, $statement instanceof ParsedRename && $statement->kind === ObjectKind::Schema => (new SchemaAlterLowering())->lower($operation, $statement),
             $statement instanceof ParsedSetSchema => (new MoveSequenceLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterSequence => (new ReconfigureSequenceLowering())->lower($operation, $statement),
-            $statement instanceof ParsedAlterTable => (new SetSequenceLoggingLowering())->lower($operation, $statement),
+            $statement instanceof ParsedAlterTable => (new SequenceActionsLowering())->lower($operation, $statement),
             $statement instanceof ParsedRename => (new RenameLowering())->lower($operation, $statement),
             $statement instanceof ParsedTruncateTable => (new TruncateLowering())->lower($operation, $statement),
             $statement instanceof ParsedReindex => match ($statement->target) {

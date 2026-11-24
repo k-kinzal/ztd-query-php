@@ -1434,6 +1434,51 @@ function observePostgresSequenceLogging(\SqlSemantics\Platform\PostgreSql\Ir\Sch
     ]];
 }
 
+function constructPostgresSequenceAuthorization(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization
+{
+    $spec = $input['sequenceAuthorization'];
+    $actions = [];
+    foreach ($spec['actions'] as $action) {
+        if (!is_array($action)) {
+            $actions[] = $action;
+            continue;
+        }
+        if (isset($action['logging'])) {
+            $value = \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging::from(strtoupper($action['logging']));
+        } else {
+            $owner = $action['owner'];
+            $principal = isset($owner['name'])
+                ? new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($owner['name'])
+                : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::from($owner['session']);
+            $value = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal($principal);
+        }
+        $actions[] = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequenceAuthorizationAction($value);
+    }
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization(
+        constructPostgresSequenceSelector($spec['source']), $actions, $spec['ifExists'],
+        \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresSequenceAuthorization(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization $value): array
+{
+    $encoded = [];
+    foreach ($value->actions as $action) {
+        $operation = $action->value;
+        if ($operation instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging) {
+            $encoded[] = ['logging' => strtolower($operation->value)];
+        } else {
+            $principal = $operation->owner;
+            $encoded[] = ['owner' => [$principal instanceof \SqlSemantics\Platform\PostgreSql\Ir\Identifier ? 'name' : 'session' => $principal->value]];
+        }
+    }
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'sequenceAuthorization' => [
+        'source' => observePostgresSequenceSelector($value->source), 'actions' => $encoded, 'ifExists' => $value->ifExists,
+    ]];
+}
+
 function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
 {
     $spec = $input['alterSchema'];
@@ -1855,6 +1900,7 @@ function observeStatement(array $input): array
             isset($input['moveSequence']) => constructPostgresMoveSequence($input),
             isset($input['reconfigureSequence']) => constructPostgresReconfigureSequence($input),
             isset($input['sequenceLogging']) => constructPostgresSequenceLogging($input),
+            isset($input['sequenceAuthorization']) => constructPostgresSequenceAuthorization($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1904,6 +1950,9 @@ function observeStatement(array $input): array
     }
     if ($value::class === $namespace . 'Schema\\Sequence\\Alter\\SetSequenceLogging') {
         return observePostgresSequenceLogging($value);
+    }
+    if ($value::class === $namespace . 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization') {
+        return observePostgresSequenceAuthorization($value);
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

@@ -638,6 +638,13 @@ def inventory(root):
                     if (alternative.startswith("AlterTableStmt: ALTER SEQUENCE ") or rule == "alter_table_cmds"
                             or alternative in ("alter_table_cmd: SET LOGGED", "alter_table_cmd: SET UNLOGGED")):
                         related[alternative] = (*related.get(alternative, ()), "postgres-sequence-logging-v1.json")
+            for rule in ("AlterTableStmt", "alter_table_cmds", "alter_table_cmd", "RoleSpec"):
+                for alternative in rules.get(rule, ()):
+                    if (alternative.startswith("AlterTableStmt: ALTER SEQUENCE ") or rule == "alter_table_cmds"
+                            or alternative in ("alter_table_cmd: OWNER TO RoleSpec", "alter_table_cmd: SET LOGGED",
+                                               "alter_table_cmd: SET UNLOGGED", "RoleSpec: NonReservedWord",
+                                               "RoleSpec: CURRENT_ROLE", "RoleSpec: CURRENT_USER", "RoleSpec: SESSION_USER")):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-sequence-authorization-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

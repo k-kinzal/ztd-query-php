@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\Logging\SequenceLoggingPrefix;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePresence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
@@ -48,12 +49,7 @@ final class SetSequenceLogging implements SemanticsIR
             Check::input($modes === [], 'An absent sequence cannot carry logging assignments.');
         }
         $detached = Check::listOf($modes, SequenceLogging::class, 'Sequence logging needs an ordered list of modes.');
-        foreach ($detached as $offset => $mode) {
-            Check::input(
-                $offset + 1 === count($detached) || $mode === $detached[0],
-                'A sequence logging prefix must request one consistent mode.'
-            );
-        }
+        SequenceLoggingPrefix::check($detached);
         $this->modes = $detached;
     }
 
