@@ -4,9 +4,7 @@ import json
 
 from postgres_reindex_lexical_link import PHP_SOURCE, verify_spelling
 from run import TOOL, digest, require
-from verify_postgres_reindex_proof import CHECKERS, CONTRACT_DIGEST, FORMAL, SOLUTION_DIGEST, load_contract
-
-CONTROLS = {"weakened-theorem": "theorem statement do not match", "unfinished-proof": "sorryAx"}
+from verify_postgres_reindex_proof import CHECKERS, CONTRACT_DIGEST, FORMAL, PROOF_CONTROLS, PROOF_SOURCES, load_contract
 
 
 def command(evidence, directory, identity, expected_exit):
@@ -45,21 +43,23 @@ def index_lexical_proof(evidence, manifest):
     proof_dir = folder / "proof"
     for name, checksum in contract["contractArtifacts"].items():
         evidence.checked(proof_dir / name, checksum)
-    evidence.checked(proof_dir / "Solution.lean", SOLUTION_DIGEST)
-    evidence.checked(proof_dir / "export-Challenge.ndjson", proof["challenge"])
-    _, proof_link = evidence.checked(proof_dir / "export-Solution.ndjson", proof["proof"])
+    for name, checksum in PROOF_SOURCES.items():
+        evidence.checked(proof_dir / name, checksum)
+    evidence.checked(proof_dir / f"export-{config['challenge_module']}.ndjson", proof["challenge"])
+    evidence.checked(folder / "base-challenge/export-Challenge.ndjson", proof["baseChallenge"])
+    _, proof_link = evidence.checked(proof_dir / f"export-{config['solution_module']}.ndjson", proof["proof"])
     measured = command(evidence, proof_dir, proof["comparison"], 0)
     require(all(f"{kernel} kernel accepts the solution" in measured for kernel in CHECKERS),
             "bundle-postgres-proof-kernel-receipt", proof_link)
 
-    require(proof["controls"].keys() == CONTROLS.keys(), "bundle-postgres-proof-control-scope", origin)
-    for name, signal in CONTROLS.items():
+    require(proof["controls"].keys() == PROOF_CONTROLS.keys(), "bundle-postgres-proof-control-scope", origin)
+    for name, (file, signal) in PROOF_CONTROLS.items():
         result = proof["controls"][name]
         altered = folder / name
-        require(result["original"] == SOLUTION_DIGEST and result["mutant"] != SOLUTION_DIGEST
+        require(result["file"] == file and result["original"] == PROOF_SOURCES[file] and result["mutant"] != result["original"]
                 and result["expected"] == result["observed"] == signal,
                 "bundle-postgres-proof-control-identity", name)
-        evidence.checked(altered / "Solution.lean", result["mutant"])
+        evidence.checked(altered / file, result["mutant"])
         evidence.checked(altered / "injected.diff", result["patch"])
         require(signal in command(evidence, altered, result["diagnostics"], 1), "bundle-postgres-proof-control-receipt", name)
     delimiter, _ = evidence.checked(folder / "php-delimiter/result.json", report["phpControl"])

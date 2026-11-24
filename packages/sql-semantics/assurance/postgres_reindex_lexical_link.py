@@ -64,6 +64,16 @@ def verify_spelling(manifest, shape_result, specification):
     require(lexemes == wanted, "postgres-reindex-lexical-token-correspondence", sorted(lexemes))
     require('def quote : Char := \'"\'\n' in specification.read_text(), "postgres-reindex-lexical-quote-correspondence")
 
+    placement_source = specification.with_name("PlacementSpec.lean").read_text()
+    tokens = {
+        "".join(ast.literal_eval(array)) for array in re.findall(
+            r"\[\s*'[A-Z (),]'\s*(?:,\s*'[A-Z (),]'\s*)*\]", placement_source
+        )
+    }
+    wanted_placement = {"REINDEX ", "REINDEX (TABLESPACE ", "REINDEX (VERBOSE, TABLESPACE "}
+    require(tokens == wanted_placement and "')' :: ' ' ::" in placement_source,
+            "postgres-relocation-lexical-token-correspondence", sorted(tokens))
+
     checked = set(shape_result["checkedBoundaries"])
     templates, receipts = {}, {}
     for name in TEMPLATES:
@@ -80,4 +90,4 @@ def verify_spelling(manifest, shape_result, specification):
     files.add(f"{PHP_SOURCE}/Schema/Index/IndexRebuildMode.php")
     return {"methods": required, "files": {name: manifest[name] for name in sorted(files)}, "templates": receipts,
             "lexemes": sorted(lexemes), "constructorPrecondition": "Identifier::__construct",
-            "headPrecondition": "No explicit tablespace", "destinationPrecondition": "Identifier component"}
+            "placementLexemes": sorted(tokens), "placementPrecondition": "Resolved native tablespace with a checked identifier"}

@@ -616,7 +616,7 @@ def main():
         lines.append("The native constructor audit also contains a symbolic derivation for every ordinary MySQL signed storage interval under its listed premises.")
     if lexical is not None:
         relative = relpath(root / lexical["receipt"]["file"], output)
-        lines.append(f"The [PostgreSQL rebuild spelling proof]({relative}) links the two kernel-checked lexical theorems to candidate PHP.")
+        lines.append(f"The [PostgreSQL rebuild spelling proof]({relative}) links the three kernel-checked lexical theorems to candidate PHP.")
     if previous is not None:
         lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")
