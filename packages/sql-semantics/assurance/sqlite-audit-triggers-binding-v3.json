@@ -1,0 +1,78 @@
+{
+  "revision": "SemanticsIR/sqlite-audit-triggers-binding-3",
+  "approval": "pending-human-review",
+  "scope": "Fix parsed trigger leaf and owner selection, watched shape, trigger environment and write-target source.",
+  "artifacts": {
+    "src/Rules/Mutation/TriggerFacts.php": {
+      "methods": [
+        "derive"
+      ],
+      "sha256": "58a8275bb8b30117a60a5fcb9cce8e7d3fc0c1472425e165c31bfded5631aaa0"
+    },
+    "src/Statement/Mutation/MutationTarget.php": {
+      "methods": [
+        "deriveRelation"
+      ],
+      "sha256": "ec01983ab8da6c6201b1e75482919ddaf6642360b2e368949a5585c0e1cd514f"
+    },
+    "src/Lowering/Query/QueryCommands.php": {
+      "methods": [
+        "lower"
+      ],
+      "sha256": "0845d77ba0abfe45a96206eceeac754c4c06831968e284696a5eb842974d4100"
+    },
+    "src/Lowering/Trigger/TriggerRule.php": {
+      "methods": [
+        "create",
+        "timing",
+        "event",
+        "when",
+        "program",
+        "step",
+        "target"
+      ],
+      "sha256": "43fb28fad01f2c534cd762c6783e79ab7bc66be9e99cdc80b63ebc69d0d9e29f"
+    },
+    "src/Model/Resolution/TriggerNamespace.php": {
+      "methods": [
+        "owner",
+        "watched",
+        "validatePath",
+        "known"
+      ],
+      "sha256": "938a0149f190a8a44af516b2d84c7a66567aa7401114d8199a1d9e1a5595def3"
+    },
+    "src/Ir/SourceBinding.php": {
+      "methods": [
+        "reference",
+        "resolved",
+        "write",
+        "slot",
+        "implicitWrites",
+        "source"
+      ],
+      "sha256": "c24392a1272270fcb2ca2087612deeac351c9055b70a7c9c4747a3181a4a800a"
+    },
+    "src/Statement/Mutation/Update.php": {
+      "methods": [
+        "deriveWithin"
+      ],
+      "sha256": "28e7ac504daf014b4996e15bd775b7d1b796a374f0672caafb277c823cc30f3a"
+    },
+    "src/Statement/Mutation/Delete.php": {
+      "methods": [
+        "deriveWithin"
+      ],
+      "sha256": "743e96ba2efbaf55e9340039900c80e0221f957a23d8b5d0a838bb397964a2c4"
+    },
+    "src/Rules/Mutation/MutationScope.php": {
+      "methods": [
+        "open",
+        "assign"
+      ],
+      "sha256": "20a99f4b7f6684eceaf52cd775986e428db46899379886478c006d381ea2f6b1"
+    }
+  },
+  "extends": "sqlite-audit-triggers-binding-v2.json",
+  "change": "Tie native mutation occurrence binding, assignment and predicate selection to the same resolved trigger scope."
+}

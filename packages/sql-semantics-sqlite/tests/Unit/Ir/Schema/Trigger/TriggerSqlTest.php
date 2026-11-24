@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerSql;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -36,6 +37,7 @@ final class TriggerSqlTest extends TestCase
         $result = $dialect->analyze('CREATE TRIGGER tr UPDATE ON t BEGIN INSERT OR REPLACE INTO audit (b,a) VALUES (OLD.id,NEW.id); END', $context);
 
         self::assertInstanceOf(CreateTrigger::class, $result);
+        self::assertInstanceOf(TriggerInsert::class, $result->program[0]);
         self::assertSame(
             'INSERT OR REPLACE INTO "audit" ("b", "a") VALUES (OLD."id", NEW."id")',
             (new TriggerSql())->insertion($result->program[0], $result->watched)
@@ -46,5 +48,16 @@ final class TriggerSqlTest extends TestCase
     {
         $source = new TableSource(new Identifier('main'), new Identifier('t'), [new Identifier('needs"quote')]);
         self::assertSame('NEW."needs""quote"', (new TriggerSql())->field(new TriggerField(RowImage::New, 0), $source));
+    }
+
+    public function testValueEmitsTheFixedNativeNullToken(): void
+    {
+        $table = new TableSource(
+            new Identifier('main'),
+            new Identifier('watched'),
+            [new Identifier('id')],
+        );
+
+        self::assertSame('NULL', (new TriggerSql())->value(new \SqlSemantics\Platform\Sqlite\Ir\NullLiteral(), $table));
     }
 }

@@ -57,7 +57,7 @@ final class SemanticsTest extends TestCase
     {
         $semantics = new Semantics();
         $context = $semantics->context(['CREATE TABLE records (a)']);
-        $this->expectExceptionMessage('A checked trigger program currently requires VALUES insertions.');
+        $this->expectExceptionMessage('A checked trigger body requires INSERT VALUES, UPDATE or DELETE actions.');
 
         $semantics->analyze('CREATE TRIGGER t AFTER INSERT ON records BEGIN SELECT 1; END', $context);
     }

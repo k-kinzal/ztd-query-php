@@ -584,6 +584,26 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Trigger\\Removal\\TriggerReference'] = $methods['Schema\\Trigger\\Removal\\MissingTrigger'] = ['__construct', 'quoted'];
     $roots[] = 'Schema\\Trigger\\DropTrigger';
     $internal[] = 'Schema\\Trigger\\Binding\\DropTriggerLowering';
+    $mutationPrefix = 'Schema\\Trigger\\Mutation\\';
+    $mutationFilter = [$mutationPrefix . 'TriggerEquality', $mutationPrefix . 'TriggerTargetNullTest', 'Schema\\Trigger\\TriggerCondition', 'null'];
+    $properties[$mutationPrefix . 'TriggerAssignment'] = [
+        'column' => ['int'], 'value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', $mutationPrefix . 'TriggerTargetField', 'Schema\\Trigger\\TriggerField'],
+    ];
+    $properties[$mutationPrefix . 'TriggerTargetField'] = ['column' => ['int']];
+    $properties[$mutationPrefix . 'TriggerEquality'] = ['target' => [$mutationPrefix . 'TriggerTargetField'], 'image' => ['Schema\\Trigger\\TriggerField'], 'targetFirst' => ['bool']];
+    $properties[$mutationPrefix . 'TriggerTargetNullTest'] = ['target' => [$mutationPrefix . 'TriggerTargetField'], 'isNull' => ['bool']];
+    $properties[$mutationPrefix . 'TriggerUpdate'] = [
+        'destination' => ['Schema\\Trigger\\TriggerDestination'], 'assignments' => ['array'], 'where' => $mutationFilter, 'conflict' => ['Mutation\\UpdateConflict'],
+    ];
+    $properties[$mutationPrefix . 'TriggerDelete'] = ['destination' => ['Schema\\Trigger\\TriggerDestination'], 'where' => $mutationFilter];
+    foreach (['TriggerAssignment', 'TriggerTargetField', 'TriggerEquality', 'TriggerTargetNullTest', 'TriggerUpdate', 'TriggerDelete'] as $role) {
+        $methods[$mutationPrefix . $role] = ['__construct'];
+    }
+    $mutationHelpers = array_map(static fn ($role) => $mutationPrefix . $role, ['TriggerActionFields', 'TriggerActions', 'TriggerMutationScope', 'TriggerMutationSql']);
+    array_push($pureCollaborators, ...$mutationHelpers);
+    array_push($internal, ...$mutationHelpers);
+    array_push($internal, 'Schema\\Trigger\\Binding\\TriggerMutationLowering', 'Schema\\Trigger\\Binding\\TriggerMutationOperands',
+        'Schema\\Trigger\\Binding\\TriggerTargetLowering');
     $internal[] = 'Schema\\DefinitionLowering';
     array_push($internal, 'Schema\\Trigger\\TriggerSql', 'Schema\\Trigger\\TriggerChecks',
         'Schema\\Trigger\\Binding\\TriggerLowering', 'Schema\\Trigger\\Binding\\TriggerStepLowering', 'Schema\\Trigger\\Binding\\TriggerOperands');
@@ -1372,8 +1392,8 @@ try {
             ['sqlite-flag-pragmas-binding-v4.json', '7947b1414c41c211ca79ae102b8e576afdc7b91effcf5539f6aa7dc18c1ddb61', 'Flag pragma binding'],
             ['sqlite-folded-binding-sources-v11.json', 'c0878a2e8b2d4c0f27659feba880e10cccd398f4d13d2ba4063d630ee495003d', 'Folded binding'],
             ['sqlite-connection-commands-binding-v1.json', '4e048dce7881dd175ff0be0b027010a69e1b8c4d495e09f4d7329bfb7073aed9', 'Connection operand binding'],
-            ['sqlite-audit-triggers-binding-v2.json', '610ce46ce341b884b7103cb555ab3f8f7e2f7a223fce0e37c1aab0df12e2a0e4', 'SQLite trigger binding'],
-            ['sqlite-drop-triggers-binding-v1.json', '36b7fa54327fde21b52ae3e4c733a8b7eadb24747f29319ad83844b15e6c0453', 'SQLite trigger removal binding'],
+            ['sqlite-audit-triggers-binding-v3.json', '483de39e0271b9ce2f8aa07e337637fb50bf27acfb8b82578ce197bfd912ab37', 'SQLite trigger binding'],
+            ['sqlite-drop-triggers-binding-v2.json', 'b1e6afecd1ce9403f743b8dd2a1b8144dd26cd9938134cfa3af399291c966b23', 'SQLite trigger removal binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1420,9 +1440,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v54.json';
+    $storagePath = __DIR__ . '/value-storage-v55.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '2d251097ea69a7cd6594d26a76d4b1501523cde0b0130c620079c13e5704f9b4',
+        hash_file('sha256', $storagePath) === 'bfebcd9a1d3bc3e0b1a41bc385880bc78f5b1ce5be71ce65084aea3596b43b27',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1642,11 +1662,22 @@ try {
                     ], 'Unexpected SQLite declaration publication route');
             }
             if ($short === 'Schema\\Trigger\\Binding\\TriggerLowering' || $short === 'Schema\\Trigger\\Binding\\TriggerStepLowering'
-                || $short === 'Schema\\Trigger\\Binding\\TriggerOperands') {
+                || $short === 'Schema\\Trigger\\Binding\\TriggerOperands' || $short === 'Schema\\Trigger\\Binding\\TriggerTargetLowering'
+                || $short === 'Schema\\Trigger\\Binding\\TriggerMutationLowering' || $short === 'Schema\\Trigger\\Binding\\TriggerMutationOperands') {
                 $expected = match ($short) {
                     'Schema\\Trigger\\Binding\\TriggerLowering' => ['lower' => ['Schema\\Trigger\\CreateTrigger'],
-                        'watched' => ['TableSource'], 'selectors' => ['array'], 'schema' => ['Identifier']],
+                        'watched' => ['TableSource'], 'selectors' => ['array'], 'schema' => ['Identifier'], 'program' => ['array']],
                     'Schema\\Trigger\\Binding\\TriggerStepLowering' => ['lower' => ['Schema\\Trigger\\TriggerInsert']],
+                    'Schema\\Trigger\\Binding\\TriggerTargetLowering' => ['lower' => ['array']],
+                    'Schema\\Trigger\\Binding\\TriggerMutationLowering' => ['lower' => ['Schema\\Trigger\\Mutation\\TriggerDelete', 'Schema\\Trigger\\Mutation\\TriggerUpdate'],
+                        'conflict' => ['Mutation\\UpdateConflict']],
+                    'Schema\\Trigger\\Binding\\TriggerMutationOperands' => [
+                        '__construct' => null,
+                        'value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Schema\\Trigger\\Mutation\\TriggerTargetField', 'Schema\\Trigger\\TriggerField'],
+                        'field' => ['Schema\\Trigger\\Mutation\\TriggerTargetField', 'Schema\\Trigger\\TriggerField'],
+                        'filter' => ['Schema\\Trigger\\Mutation\\TriggerEquality', 'Schema\\Trigger\\Mutation\\TriggerTargetNullTest', 'Schema\\Trigger\\TriggerCondition', 'null'],
+                        'nullTest' => ['Schema\\Trigger\\Mutation\\TriggerTargetNullTest', 'Schema\\Trigger\\TriggerCondition'],
+                    ],
                     'Schema\\Trigger\\Binding\\TriggerOperands' => [
                         'value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Schema\\Trigger\\TriggerField'],
                         'field' => ['Schema\\Trigger\\TriggerField'], 'condition' => ['?Schema\\Trigger\\TriggerCondition'],
@@ -1656,9 +1687,24 @@ try {
                 $members = $class->getMethods();
                 requireShape(count($members) === count($expected), 'Unexpected SQLite trigger binding route count');
                 foreach ($members as $member) {
-                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
-                        && types($member->returnType, $prefix, $short) === ($expected[$member->name->toString()] ?? null),
+                    $name = $member->name->toString();
+                    requireShape($member->isPublic() && !$member->isStatic() && array_key_exists($name, $expected)
+                        && ($member->returnType === null ? null : types($member->returnType, $prefix, $short)) === $expected[$name],
                         'Unexpected SQLite trigger binding route');
+                    if ($name === '__construct') {
+                        $parameters = [];
+                        foreach ($member->params as $param) {
+                            requireShape($param->flags === (Class_::MODIFIER_READONLY | Class_::MODIFIER_PRIVATE)
+                                && !$param->byRef && !$param->variadic && $param->default === null,
+                                'A transient trigger operand binder needs exact readonly promotion');
+                            $parameters[$param->var->name] = $param->type?->toString();
+                        }
+                        requireShape($parameters === [
+                            'operation' => $platform . '\\Model\\Facade\\BoundStatement',
+                            'source' => $platform . '\\Statement\\Trigger\\TriggerTable',
+                            'watched' => $prefix . 'TableSource', 'target' => $prefix . 'SourceBinding',
+                        ], 'A transient trigger operand binder has unexpected dependencies');
+                    }
                 }
             }
             if ($short === 'Maintenance\\Reclaim\\ReclaimPragmaLowering') {
@@ -1851,6 +1897,8 @@ try {
                     || ($dialect === 'sqlite' && $short === 'Connection\\AttachmentName' && $call->name->toString() === 'explode')
                     || ($dialect === 'sqlite' && in_array($short, ['Schema\\Trigger\\TriggerChecks', 'Schema\\Trigger\\TriggerDestination', 'Schema\\Trigger\\TriggerInsert', 'Schema\\Trigger\\TriggerUpdateName', 'Schema\\Trigger\\TriggerSql'], true)
                         && in_array($call->name->toString(), ['in_array', 'is_int', 'strtoupper'], true))
+                    || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerUpdate' && $call->name->toString() === 'in_array')
+                    || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerMutationSql' && $call->name->toString() === 'strtoupper')
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')

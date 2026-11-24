@@ -8,6 +8,9 @@ use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerMutationSql;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 /**
@@ -40,8 +43,12 @@ final class TriggerSql
         $when = $condition === null ? '' : ' WHEN ' . $this->field($condition->field, $watched)
             . ($condition->isNull ? ' IS NULL' : ' IS NOT NULL');
         $steps = [];
+        $mutation = new TriggerMutationSql();
         foreach ($trigger->program as $step) {
-            $steps[] = $this->insertion($step, $watched) . ';';
+            $steps[] = match (true) {
+                $step instanceof TriggerInsert => $this->insertion($step, $watched),
+                $step instanceof TriggerUpdate, $step instanceof TriggerDelete => $mutation->action($step, $watched),
+            } . ';';
         }
 
         return $declaration . ' ' . $events . ' ON ' . $watched->schema->quoted() . '.' . $watched->table->quoted()
@@ -58,18 +65,25 @@ final class TriggerSql
         $values = [];
         foreach ($step->fields as $field) {
             $columns[] = $target->columns[$field->column]->quoted();
-            $value = $field->value;
-            $values[] = match (true) {
-                $value instanceof TriggerField => $this->field($value, $watched),
-                $value instanceof IntegerLiteral => $value->decimal,
-                $value instanceof TextLiteral => $value->toString(),
-                $value instanceof NullLiteral => 'NULL',
-            };
+            $values[] = $this->value($field->value, $watched);
         }
         $policy = $step->conflict === InsertConflict::Inherit ? '' : ' OR ' . strtoupper($step->conflict->value);
 
         return 'INSERT' . $policy . ' INTO ' . $target->table->quoted()
             . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')';
+    }
+
+    /**
+     * Emits a scalar literal or bound active image without inspecting the original syntax.
+     */
+    public function value(IntegerLiteral|TextLiteral|NullLiteral|TriggerField $value, TableSource $watched): string
+    {
+        return match (true) {
+            $value instanceof TriggerField => $this->field($value, $watched),
+            $value instanceof IntegerLiteral => $value->decimal,
+            $value instanceof TextLiteral => $value->toString(),
+            $value instanceof NullLiteral => 'NULL',
+        };
     }
 
     /**

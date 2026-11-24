@@ -224,6 +224,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-cache-pragmas-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-audit-triggers-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-drop-triggers-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-trigger-mutations-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-implicit-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/

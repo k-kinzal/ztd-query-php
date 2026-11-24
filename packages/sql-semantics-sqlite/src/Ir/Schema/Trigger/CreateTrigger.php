@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerActions;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -12,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * A resolved SQLite row trigger with an ordered insertion program.
+ * A resolved SQLite row trigger with an ordered mutation program.
  *
  * @visibility public
  * @example Emitting a resolved trigger definition
@@ -26,7 +29,7 @@ final class CreateTrigger implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<TriggerInsert> The actions in native execution order
+     * @var non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete> The actions in native execution order
      */
     public readonly array $program;
 
@@ -37,7 +40,7 @@ final class CreateTrigger implements SemanticsIR
 
     /**
      * Validates the absolute trigger placement and all composed program references.
-     * @param list<TriggerInsert> $program The trigger actions
+     * @param list<TriggerInsert|TriggerUpdate|TriggerDelete> $program The trigger actions
      * @param list<TriggerUpdateName> $selectors The UPDATE OF selectors, when supplied
      * @throws InvalidConstruction When the trigger composition cannot be represented faithfully
      */
@@ -55,7 +58,7 @@ final class CreateTrigger implements SemanticsIR
     ) {
         $checks = new TriggerChecks();
         $checks->placement($schema, $name, $placement, $watched, $timing);
-        $actions = Check::listOf($program, TriggerInsert::class, 'A trigger needs a nonempty ordered insertion program.', 1);
+        $actions = (new TriggerActions())->copy($program);
         $columns = Check::listOf($selectors, TriggerUpdateName::class, 'A trigger needs an ordered list of UPDATE OF selectors.');
         $checks->selectors($columns, $event, $watched);
         if ($condition !== null) {

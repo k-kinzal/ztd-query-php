@@ -27,6 +27,7 @@ import run_sqlite_reclaim_pragmas as reclaim_pragmas
 import run_sqlite_cache_pragmas as cache_pragmas
 import run_sqlite_audit_triggers as audit_triggers
 import run_sqlite_drop_triggers as drop_triggers
+import run_sqlite_trigger_mutations as trigger_mutations
 import run_sqlite_create_index as create_index
 import run_sqlite_index_expression_spelling as index_spelling
 import run_sqlite_appended_checks as appended_checks
@@ -156,6 +157,7 @@ DOMAINS = {
     cache_pragmas.CONTRACT_NAME: (cache_pragmas, cache_pragmas.FIXTURE),
     audit_triggers.CONTRACT_NAME: (audit_triggers, audit_triggers.FIXTURE),
     drop_triggers.CONTRACT_NAME: (drop_triggers, drop_triggers.FIXTURE),
+    trigger_mutations.CONTRACT_NAME: (trigger_mutations, trigger_mutations.FIXTURE),
     create_index.CONTRACT_NAME: (create_index, create_index.FIXTURE),
     index_spelling.CONTRACT_NAME: (index_spelling, index_spelling.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
@@ -223,6 +225,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                cache_pragmas: cache_pragmas.NativeDatabase,
                audit_triggers: audit_triggers.TriggerDatabase,
                drop_triggers: drop_triggers.NativeDatabase,
+               trigger_mutations: trigger_mutations.NativeDatabase,
                create_index: create_index.IndexDatabase,
                index_spelling: index_spelling.SpellingIndexDatabase,
                appended_checks: appended_checks.CheckedAdditionDatabase,

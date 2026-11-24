@@ -1452,6 +1452,33 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['auditTrigger'] = [$result->watched->schema->value, $step->destination->table->schema->value,
                 $old->image->value, $old->column, $new->image->value, $new->column,
                 $result->selectors[0]->selector, $future->value, $result->condition?->isNull, $copy->toString()];
+            $mutation = $semantics->analyze(
+                'CREATE TRIGGER archive.alter_journal AFTER UPDATE ON watched BEGIN UPDATE OR IGNORE journal SET prior=OLD.payload, current=NEW.payload WHERE current=OLD.payload; DELETE FROM journal WHERE NEW.payload=journal.prior; END',
+                $activeContext,
+            );
+            if (!$mutation instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger) {
+                throw new RuntimeException('The installed trigger mutation was not published.');
+            }
+            [$update, $delete] = $mutation->program;
+            if (!$update instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate
+                || !$delete instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete
+                || !$update->where instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerEquality
+                || !$delete->where instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerEquality) {
+                throw new RuntimeException('The installed trigger mutation lost its ordered action or equality roles.');
+            }
+            $actions = [
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate(
+                    $update->destination, $update->assignments, $update->where, $update->conflict,
+                ),
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete($delete->destination, $delete->where),
+            ];
+            $mutationCopy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $mutation->schema, $mutation->name, $mutation->placement, $mutation->watched,
+                $mutation->timing, $mutation->event, $actions,
+            );
+            $details['mutationTrigger'] = [$update->destination->table->schema->value, $update->conflict->value,
+                $update->where->target->column, $update->where->targetFirst, $delete->where->target->column, $delete->where->targetFirst,
+                $delete->where->image->image->value, $delete->where->image->column, $mutation->toString(), $mutationCopy->toString()];
         }
         if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize) {
             $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize($result->schema, $result->amount);

@@ -139,6 +139,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'sqlite-trigger-action-copy') {
+            requireShape($short === 'Schema\\Trigger\\CreateTrigger' && $property === 'program'
+                && in_array('Schema/Trigger/CreateTrigger::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'actions',
+                'SQLite trigger action order requires the verified closed copy.');
+
+            continue;
+        }
+
         if ($rule === 'sqlite-trigger-writable-copy') {
             requireShape($short === 'Schema\\Trigger\\TriggerDestination' && $property === 'writable'
                 && in_array('Schema/Trigger/TriggerDestination::__construct', $checkedBoundaries, true)

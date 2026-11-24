@@ -34,7 +34,7 @@ KIND_ERROR = "INSTEAD OF watches a view"
 RESERVED_ERROR = "cannot use the reserved SQLite prefix"
 SELECTOR_ERROR = "declared column position or a known absent name"
 FIELD_ERROR = "must write distinct available slots"
-PROGRAM_ERROR = "nonempty ordered insertion program"
+PROGRAM_ERROR = "nonempty list of ordered actions"
 DESTINATION_ERROR = "needs one consistent native scope"
 
 

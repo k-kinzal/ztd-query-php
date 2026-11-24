@@ -7,7 +7,10 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Binding;
 use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerEvent;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerPlacement;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerTiming;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerUpdateName;
@@ -21,7 +24,9 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedTriggerDelete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedTriggerUpdate;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger as ParsedTrigger;
 
 /**
@@ -57,12 +62,7 @@ final class TriggerLowering
         $event = TriggerEvent::from($statement->event->value);
         $timing = $statement->timing === null ? TriggerTiming::Before : TriggerTiming::from($statement->timing->value);
         $test = (new TriggerOperands())->condition($operation, $statement->table, $watched, $statement->when);
-        $steps = [];
-        $lower = new TriggerStepLowering();
-        foreach ($statement->steps as $step) {
-            Check::input($step instanceof InsertRows, 'A checked trigger program currently requires VALUES insertions.');
-            $steps[] = $lower->lower($operation, $statement->table, $watched, $step);
-        }
+        $steps = $this->program($operation, $statement, $watched);
 
         return new CreateTrigger(
             $owner,
@@ -76,6 +76,28 @@ final class TriggerLowering
             $test,
             $statement->ifNotExists
         );
+    }
+
+    /**
+     * Lowers each supported action in written order.
+     *
+     * @return non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete>
+     * @throws InvalidConstruction When the action has no checked trigger representation
+     */
+    public function program(BoundStatement $operation, ParsedTrigger $statement, TableSource $watched): array
+    {
+        $actions = [];
+        $insert = new TriggerStepLowering();
+        $mutation = new TriggerMutationLowering();
+        foreach ($statement->steps as $step) {
+            $actions[] = match (true) {
+                $step instanceof InsertRows => $insert->lower($operation, $statement->table, $watched, $step),
+                $step instanceof ParsedTriggerUpdate, $step instanceof ParsedTriggerDelete => $mutation->lower($operation, $statement->table, $watched, $step),
+                default => throw new InvalidConstruction('A checked trigger body requires INSERT VALUES, UPDATE or DELETE actions.'),
+            };
+        }
+
+        return $actions;
     }
 
     /**

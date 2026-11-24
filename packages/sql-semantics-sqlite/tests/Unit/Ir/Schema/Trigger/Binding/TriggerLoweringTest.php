@@ -61,4 +61,17 @@ final class TriggerLoweringTest extends TestCase
         self::assertInstanceOf(CreateTrigger::class, $result);
         self::assertSame('archive', $result->schema->value);
     }
+
+    public function testProgramKeepsMixedMutationStepsInSourceOrder(): void
+    {
+        $semantics = new Semantics();
+        $declarations = $semantics->context(['CREATE TABLE watched (id)', 'CREATE TABLE audit (id)']);
+        $result = $semantics->analyze('CREATE TRIGGER tr INSERT ON watched BEGIN UPDATE audit SET id=NEW.id; DELETE FROM audit; END', $declarations);
+
+        self::assertInstanceOf(CreateTrigger::class, $result);
+        self::assertSame([
+            \SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate::class,
+            \SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete::class,
+        ], array_map(static fn (object $step): string => $step::class, $result->program));
+    }
 }

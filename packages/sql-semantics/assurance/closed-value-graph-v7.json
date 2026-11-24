@@ -1,0 +1,147 @@
+{
+  "revision": "SemanticsIR/closed-value-graph-7",
+  "approval": "pending-human-review",
+  "obligations": [
+    "P03",
+    "P05"
+  ],
+  "claim": "For every completed role in the audited inventory, every retained instance field is initialized at successful construction. Traversing any number of retained child edges reaches only immutable scalars, checked reference-free lists, the sealed native release enums, or another role with the same checked guarantee.",
+  "argument": "Readonly fields and enum singletons fix one node. A detached list retains only the elements admitted by its verified copy operation. Apply those facts along each finite path from the root. Type cycles only identify which checked rule applies along an edge. This argument applies to every constructible finite graph of these roles and uses no database observations as premises.",
+  "primitiveTypes": [
+    "bool",
+    "false",
+    "float",
+    "int",
+    "null",
+    "string",
+    "true"
+  ],
+  "externalValues": {
+    "mysql": {
+      "name": "SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease",
+      "source": "packages/sql-semantics-mysql/src/Model/Contract/GrammarRelease.php",
+      "sha256": "75eaec6d58f306bf1890ee56b000f36bade97e7a8e4a3c694311eb854b08e246"
+    },
+    "postgres": {
+      "name": "SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\GrammarRelease",
+      "source": "packages/sql-semantics-postgres/src/Model/Contract/GrammarRelease.php",
+      "sha256": "9a98bdfe3347444ba78707fcabe7cb3d4db4fc1d7c076c2a9bbbbe8a676f0655"
+    },
+    "sqlite": {
+      "name": "SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\GrammarRelease",
+      "source": "packages/sql-semantics-sqlite/src/Model/Contract/GrammarRelease.php",
+      "sha256": "67d40746092d7f6f4109343afb7dc8b20d0fb20c75530f9d86ff5bf7a902e22a"
+    }
+  },
+  "specialLists": {
+    "closed-scalar-copy": {
+      "owner": "Rows/ValueRow",
+      "field": "values",
+      "template": "Rows/ValueRowOperand::checked",
+      "elements": [
+        "Arithmetic",
+        "Expression/CaseExpression",
+        "Expression/CastExpression",
+        "Expression/CollatedExpression",
+        "Expression/Concatenation",
+        "Expression/UnaryExpression",
+        "IntegerLiteral",
+        "Literal/BlobLiteral",
+        "Literal/HexIntegerLiteral",
+        "Literal/RealLiteral",
+        "Literal/TextLiteral",
+        "NullLiteral",
+        "Parameter",
+        "Predicate/BetweenTest",
+        "Predicate/Comparison",
+        "Predicate/FoldedMembership",
+        "Predicate/Logical",
+        "Predicate/MembershipTest",
+        "Predicate/Pattern/PatternTest",
+        "Predicate/TruthTest"
+      ]
+    },
+    "ordered-table-key-copy": {
+      "owner": "Schema/CreateTable",
+      "field": "keys",
+      "template": "Schema/Key/TableKeyLayout::check",
+      "elements": [
+        "Schema/Key/PrimaryKey",
+        "Schema/Key/UniqueKey"
+      ]
+    },
+    "native-slot-copy": {
+      "owner": "TableSource",
+      "field": "columnTypes",
+      "template": "TableSource::__construct",
+      "elements": [
+        "From/ColumnKind",
+        "From/Varchar"
+      ]
+    },
+    "native-assignment-copy": {
+      "owner": "Mutation/Update",
+      "field": "assignments",
+      "template": "Mutation/Update::__construct",
+      "elements": [
+        "Mutation/UpdateAssignment",
+        "Mutation/TextUpdateAssignment"
+      ]
+    },
+    "native-drop-target-copy": {
+      "owner": "Schema/DropTable",
+      "field": "targets",
+      "template": "Schema/DropTable::__construct",
+      "elements": [
+        "Schema/Identity/TableIdentity",
+        "Schema/Identity/AbsentDropTarget"
+      ]
+    },
+    "sqlite-trigger-writable-copy": {
+      "owner": "Schema/Trigger/TriggerDestination",
+      "field": "writable",
+      "template": "Schema/Trigger/TriggerDestination::__construct",
+      "elements": [
+        "int"
+      ]
+    },
+    "sqlite-trigger-action-copy": {
+      "owner": "Schema/Trigger/CreateTrigger",
+      "field": "program",
+      "template": "Schema/Trigger/Mutation/TriggerActions::copy",
+      "elements": [
+        "Schema/Trigger/TriggerInsert",
+        "Schema/Trigger/Mutation/TriggerUpdate",
+        "Schema/Trigger/Mutation/TriggerDelete"
+      ]
+    }
+  },
+  "negativeControls": [
+    "Omit one role while retaining its production source and the independent inventory",
+    "Add a stored edge to a type outside the checked closed set",
+    "Erase the detached-copy rule while retaining the array property",
+    "Change the source digest of the external grammar release enum",
+    "Keep a nonpromoted readonly field uninitialized at the constructor boundary",
+    "Erase the verified constructor boundary for the native typed assignment union",
+    "Erase the verified constructor boundary for the MySQL table-removal target union",
+    "Erase the verified constructor boundary for the detached list of writable trigger slots",
+    "Erase the verified copy boundary for the detached list of trigger actions"
+  ],
+  "trust": [
+    "PHP 8.1+ readonly, enum, argument, reference and save/load semantics for normal public paths",
+    "Pinned Snapshot and Check primitives and the complete source shape checker",
+    "A candidate-independent verifier archive and actual candidate source digest"
+  ],
+  "open": [
+    "Semantic correctness of field contents, completeness of admissible SQL and behavior of runtime interpretation. PHP reflection and the ability to rewrite trusted code are outside normal construction paths."
+  ],
+  "internalValues": {
+    "mysql": [],
+    "postgres": [],
+    "sqlite": [
+      "Schema/Predicate/DefinitionSource"
+    ]
+  },
+  "extends": "closed-value-graph-v6.json",
+  "amendment": "Admit the closed ordered trigger action union only when the root constructor and its exact detached copy method are verified."
+}

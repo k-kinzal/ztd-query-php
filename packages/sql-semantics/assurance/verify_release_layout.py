@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v106.json"
-CONTRACT = "9f11d0b624dab8549644d05caa23eedada26df2ab66abff26aa6bbaa4968ced7"
+CONTRACT_NAME = "release-layout-v107.json"
+CONTRACT = "e6a597c5b684bdd52f5e956a14a355e162710b40d2e5a3a7540519169e867436"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -637,6 +637,11 @@ def verify_probe(raw, catalog):
                         'INSERT INTO "journal" ("prior", "current") VALUES (OLD."payload", NEW."payload"); END')
             require(item.get("auditTrigger") == ["archive", "archive", "OLD", 1, "NEW", 1, 1, "future", False, expected]
                     and item["sql"] == expected, "installed-sqlite-audit-trigger-mismatch", item)
+            mutation = ('CREATE TRIGGER "archive"."alter_journal" AFTER UPDATE ON "archive"."watched" BEGIN '
+                        'UPDATE OR IGNORE "journal" SET "prior" = OLD."payload", "current" = NEW."payload" '
+                        'WHERE ("current" = OLD."payload"); DELETE FROM "journal" WHERE (NEW."payload" = "prior"); END')
+            require(item.get("mutationTrigger") == ["archive", "ignore", 1, True, 0, False, "NEW", 1, mutation, mutation],
+                    "installed-sqlite-trigger-mutation-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Cache\\CacheSize"):
             expected = 'PRAGMA "archive".cache_size(-128)'
             require(item.get("cacheSize") == ["archive", -128, expected] and item["sql"] == expected,

@@ -6,15 +6,12 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Binding;
 
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertTargetLowering;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerDestination;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField;
-use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable;
@@ -37,18 +34,7 @@ final class TriggerStepLowering
             'A checked trigger insertion needs one VALUES tuple without RETURNING or UPSERT.'
         );
         $into = $step->into;
-        $binding = new SourceBinding($operation, $into->target);
-        $resolved = $operation->facts->relation($into->target)->table;
-        Check::input($resolved instanceof DeclaredTable && $resolved->table->complete, 'A trigger insertion needs a complete destination declaration.');
-        foreach ($resolved->table->columns as $column) {
-            $binding->slot(0, $column);
-        }
-        $target = $binding->source();
-        Check::input($target instanceof TableSource, 'A trigger insertion needs a resolved destination.');
-        $available = [];
-        foreach ($binding->implicitWrites() as $slot) {
-            $available[] = $slot->slot;
-        }
+        [$binding, $destination] = (new TriggerTargetLowering())->lower($operation, $into->target);
         $selected = (new InsertTargetLowering())->lower($binding, $into, false);
         $values = $step->rows->rows[0]->values;
         Check::input(count($selected) === count($values), 'A trigger insertion needs exactly one value for each checked destination slot.');
@@ -66,6 +52,6 @@ final class TriggerStepLowering
             ConflictResolution::Replace => InsertConflict::Replace,
         };
 
-        return new TriggerInsert(new TriggerDestination($target, $available), $fields, $policy);
+        return new TriggerInsert($destination, $fields, $policy);
     }
 }

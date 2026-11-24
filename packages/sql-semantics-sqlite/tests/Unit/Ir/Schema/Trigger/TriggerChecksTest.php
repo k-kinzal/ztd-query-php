@@ -77,4 +77,15 @@ final class TriggerChecksTest extends TestCase
 
         self::assertSame("archive\0a.b", (new TriggerChecks())->identity($table));
     }
+
+    public function testInsertionImagesContinuesToResolveAgainstTheWatchedRow(): void
+    {
+        $table = new TableSource(new Identifier('main'), new Identifier('watched'), [new Identifier('id')]);
+        $field = new TriggerInsertField(0, new TriggerField(RowImage::New, 0));
+        $action = new TriggerInsert(new TriggerDestination($table, [0]), [$field]);
+
+        (new TriggerChecks())->insertionImages($action, TriggerEvent::Insert, $table);
+
+        self::assertSame($field, $action->fields[0]);
+    }
 }

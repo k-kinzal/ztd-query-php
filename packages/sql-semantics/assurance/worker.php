@@ -143,6 +143,12 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\MissingTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerAssignment;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerEquality;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerTargetField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerTargetNullTest;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerVerification;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
@@ -947,6 +953,38 @@ function directTriggerInsert(array $input): TriggerInsert
     );
 }
 
+function triggerAssignmentOperand(array $spec): TriggerField|IntegerLiteral|TextLiteral|NullLiteral|TriggerTargetField
+{
+    return $spec[0] === 'local' ? new TriggerTargetField($spec[1]) : triggerOperand($spec);
+}
+
+function directTriggerFilter(?array $input): TriggerEquality|TriggerTargetNullTest|TriggerCondition|null
+{
+    if ($input === null) {
+        return null;
+    }
+
+    return match ($input[0]) {
+        'equal' => new TriggerEquality(new TriggerTargetField($input[1]), triggerField($input[2]), $input[3]),
+        'local-null' => new TriggerTargetNullTest(new TriggerTargetField($input[1]), $input[2]),
+        'image-null' => new TriggerCondition(triggerField($input[1]), $input[2]),
+    };
+}
+
+function directTriggerAction(array $input): TriggerInsert|TriggerUpdate|TriggerDelete|NullLiteral
+{
+    return match ($input['action'] ?? 'insert') {
+        'insert' => directTriggerInsert($input),
+        'update' => new TriggerUpdate(
+            new TriggerDestination(source($input['table']), $input['writable']),
+            array_map(static fn (array $field): TriggerAssignment => new TriggerAssignment($field[0], triggerAssignmentOperand($field[1])), $input['assignments']),
+            directTriggerFilter($input['where']), UpdateConflict::from($input['conflict']),
+        ),
+        'delete' => new TriggerDelete(new TriggerDestination(source($input['table']), $input['writable']), directTriggerFilter($input['where'])),
+        'invalid' => new NullLiteral(),
+    };
+}
+
 function directTrigger(array $input): CreateTrigger
 {
     $condition = $input['condition'];
@@ -957,7 +995,7 @@ function directTrigger(array $input): CreateTrigger
 
     return new CreateTrigger(new Identifier($input['schema']), new Identifier($input['name']),
         TriggerPlacement::from($input['placement']), source($input['watched']), TriggerTiming::from($input['timing']),
-        TriggerEvent::from($input['event']), array_map(directTriggerInsert(...), $input['program']), $selectors,
+        TriggerEvent::from($input['event']), array_map(directTriggerAction(...), $input['program']), $selectors,
         $condition === null ? null : new TriggerCondition(triggerField($condition[0]), $condition[1]), $input['ifNotExists']);
 }
 
@@ -983,7 +1021,42 @@ function observeTriggerInsert(TriggerInsert $value): array
         'fields' => $fields, 'conflict' => $value->conflict->value];
 }
 
-function observeTrigger(CreateTrigger $value): array
+function observeTriggerAssignmentOperand(TriggerField|IntegerLiteral|TextLiteral|NullLiteral|TriggerTargetField $operand): array
+{
+    return match (true) {
+        $operand instanceof TriggerField => observeTriggerField($operand),
+        $operand instanceof IntegerLiteral => ['integer', $operand->decimal],
+        $operand instanceof TextLiteral => ['text', $operand->value],
+        $operand instanceof NullLiteral => ['null'],
+        $operand instanceof TriggerTargetField => ['local', $operand->column],
+    };
+}
+
+function observeTriggerAction(TriggerInsert|TriggerUpdate|TriggerDelete $action): array
+{
+    if ($action instanceof TriggerInsert) {
+        return observeTriggerInsert($action);
+    }
+    $filter = $action->where;
+    return [
+        'action' => $action instanceof TriggerUpdate ? 'update' : 'delete',
+        'table' => observeSource($action->destination->table), 'writable' => $action->destination->writable,
+        'where' => match (true) {
+            $filter === null => null,
+            $filter instanceof TriggerEquality => ['equal', $filter->target->column, observeTriggerField($filter->image), $filter->targetFirst],
+            $filter instanceof TriggerTargetNullTest => ['local-null', $filter->target->column, $filter->isNull],
+            $filter instanceof TriggerCondition => ['image-null', observeTriggerField($filter->field), $filter->isNull],
+        },
+        ...($action instanceof TriggerUpdate ? [
+            'assignments' => array_map(static fn (TriggerAssignment $field): array => [
+                $field->column, observeTriggerAssignmentOperand($field->value),
+            ], $action->assignments),
+            'conflict' => $action->conflict->value,
+        ] : []),
+    ];
+}
+
+function observeTrigger(CreateTrigger $value, bool $render): array
 {
     $condition = $value->condition;
     $selectors = [];
@@ -997,8 +1070,8 @@ function observeTrigger(CreateTrigger $value): array
         'schema' => $value->schema->value, 'name' => $value->name->value, 'placement' => $value->placement->value,
         'watched' => observeSource($value->watched), 'timing' => $value->timing->value, 'event' => $value->event->value,
         'selectors' => $selectors, 'condition' => $condition === null ? null : [observeTriggerField($condition->field), $condition->isNull],
-        'program' => array_map(observeTriggerInsert(...), $value->program), 'ifNotExists' => $value->ifNotExists,
-        'sql' => $value->toString(),
+        'program' => array_map(observeTriggerAction(...), $value->program), 'ifNotExists' => $value->ifNotExists,
+        ...($render ? ['sql' => $value->toString()] : []),
     ];
 }
 
@@ -1505,7 +1578,7 @@ function runCase(array $input): array
         return observePagePragma($value);
     }
     if ($value instanceof CreateTrigger) {
-        return observeTrigger($value);
+        return observeTrigger($value, ($input['probe'] ?? null) !== 'trigger-program-construction');
     }
     if ($value instanceof CacheSize || $value instanceof DefaultCacheSize || $value instanceof CacheSpill) {
         return observeCachePragma($value);

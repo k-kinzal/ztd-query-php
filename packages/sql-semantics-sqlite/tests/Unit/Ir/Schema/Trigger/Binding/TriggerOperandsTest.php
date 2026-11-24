@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Binding\TriggerOperands;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 #[CoversClass(TriggerOperands::class)]
@@ -25,6 +26,7 @@ final class TriggerOperandsTest extends TestCase
         $trigger = $dialect->analyze('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO audit VALUES ((-8)); END', $context);
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
+        self::assertInstanceOf(TriggerInsert::class, $trigger->program[0]);
         self::assertInstanceOf(IntegerLiteral::class, $trigger->program[0]->fields[0]->value);
         self::assertSame('-8', $trigger->program[0]->fields[0]->value->decimal);
     }
@@ -36,6 +38,7 @@ final class TriggerOperandsTest extends TestCase
         $trigger = $dialect->analyze('CREATE TRIGGER tr UPDATE ON t BEGIN INSERT INTO audit VALUES (OLD.DATA); END', $context);
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
+        self::assertInstanceOf(TriggerInsert::class, $trigger->program[0]);
         self::assertInstanceOf(TriggerField::class, $trigger->program[0]->fields[0]->value);
         self::assertSame(RowImage::Old, $trigger->program[0]->fields[0]->value->image);
         self::assertSame(1, $trigger->program[0]->fields[0]->value->column);
@@ -60,6 +63,7 @@ final class TriggerOperandsTest extends TestCase
         $trigger = $dialect->analyze('CREATE TRIGGER tr DELETE ON t BEGIN INSERT INTO audit VALUES (((OLD.id))); END', $context);
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
+        self::assertInstanceOf(TriggerInsert::class, $trigger->program[0]);
         self::assertInstanceOf(TriggerField::class, $trigger->program[0]->fields[0]->value);
         self::assertSame(0, $trigger->program[0]->fields[0]->value->column);
     }

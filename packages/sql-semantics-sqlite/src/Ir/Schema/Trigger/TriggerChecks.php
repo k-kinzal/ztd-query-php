@@ -6,6 +6,9 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerActionFields;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -85,7 +88,7 @@ final class TriggerChecks
 
     /**
      * Checks native destination binding and the scope of all row operand uses.
-     * @param non-empty-list<TriggerInsert> $program The ordered actions
+     * @param non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete> $program The ordered actions
      * @throws InvalidConstruction When the program contradicts its native scope or layout
      */
     public function program(array $program, TriggerPlacement $placement, TableSource $watched, TriggerEvent $event): void
@@ -116,10 +119,22 @@ final class TriggerChecks
             );
             $scopes[$name] = $scope;
             $destinations[$identity] = $signature;
-            foreach ($step->fields as $field) {
-                if ($field->value instanceof TriggerField) {
-                    $this->field($field->value, $event, $watched);
-                }
+            if ($step instanceof TriggerInsert) {
+                $this->insertionImages($step, $event, $watched);
+            } else {
+                (new TriggerActionFields())->check($step, $event, $watched);
+            }
+        }
+    }
+
+    /**
+     * Verifies the image uses of an INSERT VALUES action.
+     */
+    public function insertionImages(TriggerInsert $step, TriggerEvent $event, TableSource $watched): void
+    {
+        foreach ($step->fields as $field) {
+            if ($field->value instanceof TriggerField) {
+                $this->field($field->value, $event, $watched);
             }
         }
     }
