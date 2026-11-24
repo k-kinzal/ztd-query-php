@@ -547,6 +547,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Metadata\\TableInspection'] = "PRAGMA table_xinfo(accounts)";
         $queries['Maintenance\\Metadata\\IndexInspection'] = 'PRAGMA index_xinfo(storage_table)';
         $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
+        $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
         $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
@@ -592,6 +593,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $semantics->context([
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Integrity\\IntegrityAudit') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.integrity_child(id INT)',
+                'CREATE TEMP TABLE integrity_child(id INT)',
             ]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\ForeignKeyAudit') {
@@ -1301,6 +1308,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Integrity\\IntegrityAudit') {
+            $target = $result->target;
+            $bounded = $semantics->analyze('PRAGMA main.integrity_check(-2)', $activeContext);
+            $catalog = $semantics->analyze('PRAGMA quick_check(sqlite_temp_schema)', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$bounded instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit
+                || !$bounded->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityLimit
+                || !$catalog instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit
+                || !$catalog->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable) {
+                throw new RuntimeException('The installed integrity audit lost its native target or budget.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit($result->kind, $target, $result->schema);
+            $details['integrityAudit'] = [$result->kind->value, $target->schema->value, $target->name->value, $result->schema?->value,
+                $rebuilt->toString(), $bounded->target->value, $bounded->toString(),
+                $catalog->target->schema->value, $catalog->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\ForeignKeyAudit') {
             $target = $result->target;

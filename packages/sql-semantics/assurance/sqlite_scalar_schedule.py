@@ -19,9 +19,11 @@ class ScalarSchedule(NamedTuple):
     comparator_controls: Callable
 
 
-def execute_schedule(args, specification, db, worker_factory, schedule, observe=probe, *, measured_input=None):
+def execute_schedule(args, specification, db, worker_factory, schedule, observe=probe, *, measured_input=None,
+                     paired_finite=None):
     domain, settings = specification["finite"], specification["exploration"]
     seen, observed = Counter(), Counter()
+    awaiting_direct, checked_direct = {}, set()
     comparator = schedule.comparator_controls()
     key = current = None
     with (args.out / "events.jsonl").open("w") as stream, worker_factory(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
@@ -33,7 +35,19 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
                 measurement = observe(item, reply, db, ledger, key, original=current.get("sql"))
                 measured = reply if measured_input is None else measured_input(reply, measurement)
                 if key.startswith("finite/"):
-                    seen[schedule.finite_id(measured, domain)] += 1
+                    coordinate = schedule.finite_id(measured, domain)
+                    seen[coordinate] += 1
+                    if paired_finite is not None:
+                        ordinal = key.removeprefix("finite/")
+                        require(ordinal not in awaiting_direct, "sqlite-scalar-duplicate-finite-ordinal", key)
+                        awaiting_direct[ordinal] = (coordinate, paired_finite(measured))
+                if paired_finite is not None and key.startswith("direct/") and key[7:].isdigit():
+                    ordinal = key[7:]
+                    require(ordinal in awaiting_direct, "sqlite-scalar-unpaired-direct-finite", key)
+                    coordinate, counterpart = awaiting_direct.pop(ordinal)
+                    require(paired_finite(measured) == counterpart and coordinate not in checked_direct,
+                            "sqlite-scalar-direct-finite-mismatch", key)
+                    checked_direct.add(coordinate)
                 if key.startswith("seed/"):
                     observed.update(schedule.observed_forms(measured))
             for index, (current, status, reason) in enumerate(schedule.negatives()):
@@ -55,6 +69,9 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
                         "sqlite-scalar-negative-boundary", reply)
                 ledger.record(key, "rejected", response=reply)
             require(seen.keys() == schedule.finite_ids(domain) and set(seen.values()) == {1}, "sqlite-scalar-finite-incomplete", sorted(seen))
+            if paired_finite is not None:
+                require(not awaiting_direct and checked_direct == seen.keys(), "sqlite-scalar-direct-finite-incomplete",
+                        {"pending": sorted(awaiting_direct), "direct": sorted(checked_direct)})
             missing = schedule.required_forms(domain) - observed.keys()
             require(not missing, "sqlite-scalar-unobserved-forms", sorted(missing))
             counts = complete_observations(ledger, settings)
@@ -66,5 +83,8 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
             write_json(args.out / "counterexample.json",
                        {"id": key, "original": current, "signal": signal, "failure": str(error), "detail": detail, "shrunk": None})
             raise
-        return {"counts": counts, "finiteIds": sorted(seen), "forms": dict(observed), "php": worker.environment,
-                "controls": comparator}
+        checks = {"counts": counts, "finiteIds": sorted(seen), "forms": dict(observed), "php": worker.environment,
+                  "controls": comparator}
+        if paired_finite is not None:
+            checks["directFiniteIds"] = sorted(checked_direct)
+        return checks

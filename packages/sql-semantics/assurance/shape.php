@@ -454,6 +454,19 @@ if ($dialect === 'sqlite') {
     $methods['Maintenance\\Metadata\\ForeignKeyAudit'] = $methods['Select'];
     $roots[] = 'Maintenance\\Metadata\\ForeignKeyAudit';
     $internal[] = 'Maintenance\\Metadata\\ForeignKeyAuditLowering';
+    $properties['Maintenance\\Integrity\\IntegrityAudit'] = [
+        'kind' => ['Maintenance\\Integrity\\IntegrityKind'],
+        'target' => ['Maintenance\\Integrity\\IntegrityLimit', 'Maintenance\\Metadata\\CatalogTable', 'Maintenance\\RelationTarget'],
+        'schema' => ['?Identifier'],
+    ];
+    $properties['Maintenance\\Integrity\\IntegrityLimit'] = ['value' => ['int']];
+    $properties['Maintenance\\Integrity\\IntegrityKind'] = $methods['Maintenance\\Integrity\\IntegrityKind'] = [];
+    $methods['Maintenance\\Integrity\\IntegrityAudit'] = $methods['Select'];
+    $methods['Maintenance\\Integrity\\IntegrityLimit'] = ['__construct'];
+    $enumCases['Maintenance\\Integrity\\IntegrityKind'] = ['Full' => 'integrity_check', 'Quick' => 'quick_check'];
+    $roots[] = 'Maintenance\\Integrity\\IntegrityAudit';
+    $internal[] = 'Maintenance\\Integrity\\IntegrityAuditLowering';
+    $internal[] = 'Maintenance\\Integrity\\IntegrityNumber';
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1334,6 +1347,16 @@ try {
                 && $parameter->default instanceof Expr\ConstFetch && $parameter->default->name->toLowerString() === 'false'
                 && !$parameter->byRef && !$parameter->variadic, "Unexpected SQLite index form parameter in $short");
         }
+        if ($short === 'Maintenance\\Integrity\\IntegrityLimit') {
+            $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
+            $present = [];
+            foreach ($constants as $constant) {
+                requireShape(count($constant->consts) === 1 && $constant->isPublic(), 'Unexpected SQLite integrity constant');
+                $definition = $constant->consts[0];
+                $present[$definition->name->toString()] = $printer->prettyPrintExpr($definition->value);
+            }
+            requireShape($present === ['DEFAULT_VALUE' => '100', 'MAX_VALUE' => '2147483647'], 'The SQLite integrity range differs');
+        }
         if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn') {
             $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
             $system = $constants[0]->consts[0] ?? null;
@@ -1414,6 +1437,7 @@ try {
                 'Maintenance\\AnalyzeLowering' => 'Maintenance\\Analyze',
                 'Maintenance\\FlagPragmaLowering' => 'Maintenance\\FlagPragma',
                 'Maintenance\\Metadata\\ForeignKeyAuditLowering' => 'Maintenance\\Metadata\\ForeignKeyAudit',
+                'Maintenance\\Integrity\\IntegrityAuditLowering' => 'Maintenance\\Integrity\\IntegrityAudit',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
@@ -1423,7 +1447,7 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma',
+                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
                         'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
                         'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex',
                     ], 'Unexpected SQLite maintenance publication');
@@ -1434,9 +1458,15 @@ try {
                 $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
                 $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
                 $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
-                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
+            }
+            if ($short === 'Maintenance\\Integrity\\IntegrityNumber') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'limit' && types($members[0]->returnType, $prefix, $short) === ['?int'],
+                    'Unexpected SQLite integrity report budget route');
             }
             if ($short === 'Maintenance\\Metadata\\IndexMetadataLowering') {
                 $members = $class->getMethods();

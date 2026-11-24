@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance;
 
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAuditLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit;
@@ -31,7 +34,7 @@ final class PragmaLowering
      * Dispatches a known SQLite operation by its exact native identity.
      * @throws InvalidConstruction When the selected pragma family has no complete representation
      */
-    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|ForeignKeyAudit|IndexInspection|TableInspection|TableListing
+    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing
     {
         $name = Comparison::AsciiInsensitive->fold($statement->name->name->value);
         $kind = TableInspectionKind::tryFrom($name);
@@ -39,6 +42,10 @@ final class PragmaLowering
             return (new TableMetadataLowering())->lower($operation, $statement, $kind);
         }
 
+        $integrity = IntegrityKind::tryFrom($name);
+        if ($integrity !== null) {
+            return (new IntegrityAuditLowering())->lower($operation, $statement, $integrity);
+        }
         if ($name === 'foreign_key_check') {
             return (new ForeignKeyAuditLowering())->lower($operation, $statement);
         }

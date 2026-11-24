@@ -40,6 +40,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\EmptyIndexMetadata;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityLimit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspectionKind;
@@ -349,7 +352,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -848,6 +851,38 @@ function observeInventoryPragma(InventoryPragma $value): array
     ];
 }
 
+function directIntegrityAudit(array $input): IntegrityAudit
+{
+    $role = $input['target'];
+    $target = match ($role[0]) {
+        'limit' => new IntegrityLimit($role[1]),
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+        'catalog' => new CatalogTable(new Identifier($role[1])),
+    };
+    $schema = $input['schema'];
+
+    return new IntegrityAudit(IntegrityKind::from($input['pragma']), $target, $schema === null ? null : new Identifier($schema));
+}
+
+function observeIntegrityAudit(IntegrityAudit $value): array
+{
+    $target = $value->target;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'integrity-audit',
+        'profile' => $value->profileId(),
+        'pragma' => $value->kind->value,
+        'schema' => $value->schema?->value,
+        'target' => match (true) {
+            $target instanceof IntegrityLimit => ['limit', $target->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+            $target instanceof CatalogTable => ['catalog', $target->schema->value],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
 function directForeignKeyAudit(array $input): ForeignKeyAudit
 {
     $role = $input['target'];
@@ -1086,6 +1121,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
                 InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
             ),
+            ($input['operation'] ?? null) === 'integrity-audit' => directIntegrityAudit($input),
             ($input['operation'] ?? null) === 'foreign-key-audit' => directForeignKeyAudit($input),
             ($input['operation'] ?? null) === 'index-metadata' => directIndexMetadata($input),
             ($input['operation'] ?? null) === 'table-metadata' => directTableMetadata($input),
@@ -1114,6 +1150,9 @@ function runCase(array $input): array
     }
     if ($value instanceof InventoryPragma) {
         return observeInventoryPragma($value);
+    }
+    if ($value instanceof IntegrityAudit) {
+        return observeIntegrityAudit($value);
     }
     if ($value instanceof ForeignKeyAudit) {
         return observeForeignKeyAudit($value);

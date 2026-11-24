@@ -215,6 +215,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-inventory-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-index-metadata-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-fk-audit-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-integrity-audit-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-implicit-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
