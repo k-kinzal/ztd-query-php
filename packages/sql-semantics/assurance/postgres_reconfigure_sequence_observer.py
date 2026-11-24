@@ -44,7 +44,9 @@ def snapshot(db, item):
         oid = value["oid"]
         filenode, = db.execute(f"SELECT pg_catalog.pg_relation_filenode({oid}::regclass)")[0]
         observed[role] = {"value": value, "file": int(filenode), "ownership": ownership(db, oid)}
-    return {**consumer(db, item), "sequences": observed}
+    temporary = db.execute("SELECT nspname, oid FROM pg_catalog.pg_namespace WHERE oid=pg_catalog.pg_my_temp_schema()")
+    (name, oid), = temporary
+    return {**consumer(db, item), "sequences": observed, "temporaryNamespace": [name, int(oid)]}
 
 
 def permitted(item, command):

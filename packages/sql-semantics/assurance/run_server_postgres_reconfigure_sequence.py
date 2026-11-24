@@ -5,6 +5,7 @@ from itertools import product
 import json
 import os
 from random import Random
+import re
 import sys
 
 from native_postgres_fixture import ENV as FIXTURE_CONTAINER
@@ -22,8 +23,8 @@ from run_server_postgres_drop_sequence import check_preparation
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-reconfigure-sequence"
-CONTRACT_NAME = "postgres-reconfigure-sequence-v3.json"
-CONTRACT = "102c177a72b82203b7890c14f567fdb5b4f09664f9942196b06f9bca4fa9d704"
+CONTRACT_NAME = "postgres-reconfigure-sequence-v4.json"
+CONTRACT = "f3ee61261a6749bd5cf8781523f562b143220f65b0323518773afbfbb37ead87"
 OBSERVER = "postgres_reconfigure_sequence_observer.py"
 AXES = ("roles", "assignments", "guard", "transactional")
 ABSENT = refusal("An absent sequence selector requires IF EXISTS.")
@@ -196,9 +197,16 @@ def observer_request(item, command):
 
 
 def project(record):
-    return {**{key: value for key, value in record.items() if key not in ("consumerOid", "sequences")},
+    name, _ = record["temporaryNamespace"]
+
+    def coordinate(edge):
+        if edge is None or edge[0] != name:
+            return edge
+        return ["pg_temp", *edge[1:]]
+
+    return {**{key: value for key, value in record.items() if key not in ("consumerOid", "sequences", "temporaryNamespace")},
             "sequences": {role: {"value": {key: value for key, value in detail["value"].items() if key not in ("oid", "ownership")},
-                                 "ownership": detail["ownership"]} for role, detail in record["sequences"].items()}}
+                                 "ownership": coordinate(detail["ownership"])} for role, detail in record["sequences"].items()}}
 
 
 def check_observation(item, actual, command):
@@ -209,13 +217,17 @@ def check_observation(item, actual, command):
                 else actual[key] for key in model}
     require(measured == model, "meaning-mismatch", witness)
     before = actual["before"]
+    temporary = before["temporaryNamespace"]
+    require(re.fullmatch(r"pg_temp_[0-9]+", temporary[0]) and type(temporary[1]) is int and temporary[1] > 0,
+            "sequence-reconfigure-session-namespace", witness)
     ids = [before["consumerOid"], *(value["value"]["oid"] for value in before["sequences"].values())]
     require(len(ids) == len(set(ids)) and all(type(value) is int and value > 0 for value in ids), "meaning-mismatch", witness)
     for phase in ("before", "during", "settled"):
         record = actual[phase]
         if record is None:
             continue
-        require(record["consumerOid"] == before["consumerOid"], "meaning-mismatch", witness)
+        require(record["consumerOid"] == before["consumerOid"] and record["temporaryNamespace"] == temporary,
+                "meaning-mismatch", witness)
         for role, value in record["sequences"].items():
             prior = before["sequences"][role]
             moving_file = model["rewritten"] and role == active_role(item) and (phase == "during" or phase == "settled" and not item["active"])
@@ -256,25 +268,50 @@ def required_forms(*_):
             "shape/existing", "shape/missing-sequence", "shape/missing-namespace"}
 
 
-def controls():
-    item = trial("pg-17.2", "local", "start-and-restart", False, True, warm=True)
+def fixture_receipt(item):
     healthy = deepcopy({**expected(item), "error": None})
+    updated = active_role(item)
     for phase in ("before", "during", "settled"):
         state = healthy[phase]
         state["consumerOid"] = 19
+        state["temporaryNamespace"] = ["pg_temp_3", 29]
         for index, (role, detail) in enumerate(state["sequences"].items(), 30):
             detail["value"]["oid"] = index
             detail["value"]["ownership"] = []
-            detail["file"] = index + (200 if role == "local" and phase == "during" else 100)
+            edge = detail["ownership"]
+            if edge is not None:
+                if edge[0] == "pg_temp":
+                    edge[0] = state["temporaryNamespace"][0]
+                detail["value"]["ownership"].append([str(3 * index), str(edge[-2]), edge[-1]])
+            detail["file"] = index + (200 if healthy["rewritten"] and role == updated and phase == "during" else 100)
+    return healthy
+
+
+def rejected_observation(item, change):
+    healthy = fixture_receipt(item)
     check_observation(item, healthy, sql(item))
     broken = deepcopy(healthy)
-    broken["during"]["sequences"]["local"]["value"]["tuple"][0] += 1
+    change(broken)
     try:
         check_observation(item, broken, sql(item))
     except Failure as error:
         same("meaning-mismatch", error.signal)
-        return {"wrong-initial-value": error.detail}
-    raise Failure("postgres-reconfigure-sequence-ignored-restart")
+        return error.detail
+    raise Failure("postgres-reconfigure-sequence-ignored-change")
+
+
+def controls():
+    restart = trial("pg-17.2", "local", "start-and-restart", False, True, warm=True)
+    owner = trial("pg-17.2", "temporary", "owner-link", False, True)
+
+    def alter_start(record):
+        record["during"]["sequences"]["local"]["value"]["tuple"][0] += 1
+
+    def alter_namespace(record):
+        record["during"]["sequences"]["temporary"]["ownership"][0] = "pg_temp_99"
+
+    return {"wrong-initial-value": rejected_observation(restart, alter_start),
+            "wrong-session-namespace": rejected_observation(owner, alter_namespace)}
 
 
 def check_fault_witness(item, witness):
