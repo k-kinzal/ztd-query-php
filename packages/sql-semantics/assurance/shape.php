@@ -1137,6 +1137,12 @@ if ($dialect !== 'sqlite') {
         $properties[$sequenceRename] = ['source' => [$sequenceDropTarget], 'destination' => ['Identifier'], 'ifExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$sequenceRename] = ['__construct', 'profileId', 'toString'];
+        $sequenceMove = $sequence . 'Alter\\MoveSequence';
+        $roots[] = $sequenceMove;
+        $internal[] = $sequence . 'Alter\\MoveSequenceLowering';
+        $properties[$sequenceMove] = ['source' => [$sequenceDropTarget], 'destination' => ['?Identifier'], 'ifExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$sequenceMove] = ['__construct', 'profileId', 'toString'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1485,6 +1491,8 @@ try {
                 . $platform . '\\Statement\\Table\\TruncateTable, $statement instanceof \\' . $platform . '\\Statement\\Utility\\Maintenance\\Reindex'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Object\\ChangeOwner'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
+                . '$statement instanceof \\' . $platform . '\\Statement\\Object\\SetSchema && $statement->kind === \\'
+                . $platform . '\\Statement\\Name\\ObjectKind::Sequence => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Alter\\TruncateTable'
@@ -2082,7 +2090,8 @@ try {
                         'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
                         'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
                         'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\DropSchema', 'Schema\\Namespace\\RenameSchema',
-                        'Schema\\Sequence\\Alter\\RenameSequence', 'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Sequence\\Alter\\MoveSequence', 'Schema\\Sequence\\Alter\\RenameSequence',
+                        'Schema\\Sequence\\DropSequence', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\RelationDeclarationLowering') {
@@ -2178,7 +2187,7 @@ try {
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema', 'Schema\\Sequence\\SequenceName',
-                    'Schema\\Sequence\\SequenceSelector', 'Schema\\Sequence\\Ownership\\SequenceOwner',
+                    'Schema\\Sequence\\SequenceSelector', 'Schema\\Sequence\\Ownership\\SequenceOwner', 'Schema\\Sequence\\Alter\\MoveSequence',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')

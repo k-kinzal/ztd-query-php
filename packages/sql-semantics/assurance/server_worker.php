@@ -1330,6 +1330,23 @@ function observePostgresRenameSequence(\SqlSemantics\Platform\PostgreSql\Ir\Sche
             'destination' => $value->destination->value, 'ifExists' => $value->ifExists]];
 }
 
+function constructPostgresMoveSequence(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\MoveSequence
+{
+    $spec = $input['moveSequence'];
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\MoveSequence(
+        constructPostgresSequenceSelector($spec['source']),
+        $spec['destination'] === null ? null : new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['destination']),
+        $spec['ifExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
+    );
+}
+
+function observePostgresMoveSequence(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\MoveSequence $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'moveSequence' => ['source' => observePostgresSequenceSelector($value->source),
+            'destination' => $value->destination?->value, 'ifExists' => $value->ifExists]];
+}
+
 function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
 {
     $spec = $input['alterSchema'];
@@ -1748,6 +1765,7 @@ function observeStatement(array $input): array
             isset($input['createSequence']) => constructPostgresSequence($input),
             isset($input['dropSequence']) => constructPostgresDropSequence($input),
             isset($input['renameSequence']) => constructPostgresRenameSequence($input),
+            isset($input['moveSequence']) => constructPostgresMoveSequence($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1788,6 +1806,9 @@ function observeStatement(array $input): array
     }
     if ($value::class === $namespace . 'Schema\\Sequence\\Alter\\RenameSequence') {
         return observePostgresRenameSequence($value);
+    }
+    if ($value::class === $namespace . 'Schema\\Sequence\\Alter\\MoveSequence') {
+        return observePostgresMoveSequence($value);
     }
     if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
         return observeGrouped($namespace, $value, $input['dialect']);

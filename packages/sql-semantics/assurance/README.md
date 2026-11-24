@@ -355,6 +355,8 @@ The [PostgreSQL sequence removal contract](postgres-drop-sequence-v3.json) fixes
 
 The [PostgreSQL sequence rename contract](postgres-rename-sequence-v1.json) observes native relation identity, generator state, referring defaults, destination conflicts and rollback. Run run_server_postgres_rename_sequence.py for both pinned services and replay with combine_server_postgres_rename_sequence_evidence.py.
 
+The [PostgreSQL sequence move contract](postgres-move-sequence-v1.json) observes the before, during, and restored namespaces, OID and filenode, the owned-column edge, the default's exact referenced OID, retained rows, and native diagnostics. Run `run_server_postgres_move_sequence.py` for both pinned services and reconcile the receipts with `combine_server_postgres_move_sequence_evidence.py`.
+
 The [PostgreSQL namespace sequence contract](postgres-schema-sequences-v1.json) covers native sequence and table phases inside CREATE SCHEMA. Both child lists are checked through direct construction and analyzed publication. The native observer verifies generator state, defaults, ownership, guarded collisions and rollback. Run run_server_postgres_schema_sequences.py for both PostgreSQL releases and replay using combine_server_postgres_schema_sequences_evidence.py.
 
 The [fixture isolation contract](native-postgres-fixture-isolation-v2.json) renews the trusted service's disposable `ir_fixture` database before the six observers that inspect database-wide state. Their receipts identify the container and record the database identity and native catalog census. Start focused runs with a freshly launched fixture. Collecting a full matrix requires each scheduled renewal receipt.

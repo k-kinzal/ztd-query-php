@@ -49,6 +49,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\RelationDeclarationLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\MoveSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence;
@@ -77,9 +78,11 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete as ParsedDele
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows as ParsedInsert;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect as ParsedInsertQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update as ParsedUpdate;
+use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\ChangeOwner as ParsedChangeOwner;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop as ParsedDrop;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Rename as ParsedRename;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\SetSchema as ParsedSetSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery as ParsedParenthesized;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression as ParsedWith;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
@@ -181,7 +184,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
+    public function analyze(string $sql, ?Context $context = null): ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|MoveSequence|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -197,6 +200,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateTableAs, $statement instanceof ParsedCreateView, $statement instanceof ParsedCreateMaterializedView, $statement instanceof ParsedCreateIndex, $statement instanceof ParsedCreateSchema, $statement instanceof ParsedCreateSequence => (new RelationDeclarationLowering())->lower($operation, $statement),
             $statement instanceof ParsedRefreshMaterializedView => (new RefreshMaterializedViewLowering())->lower($operation, $statement),
             $statement instanceof ParsedDrop, $statement instanceof ParsedRename, $statement instanceof ParsedTruncateTable, $statement instanceof ParsedReindex, $statement instanceof ParsedChangeOwner => (new RelationChangeLowering())->lower($operation, $statement),
+            $statement instanceof ParsedSetSchema && $statement->kind === ObjectKind::Sequence => (new RelationChangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
@@ -210,7 +214,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
+     * @return list<ChangeSchemaOwner|Compound|CreateIndex|CreateMaterializedView|CreateSchema|CreateSequence|CreateTable|CreateTableAs|CreateView|Delete|DropIndex|DropSchema|DropSequence|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|MoveSequence|RecursiveSeries|RefreshMaterializedView|ReindexDatabase|ReindexIndex|ReindexPartitionTable|ReindexSchema|ReindexSystemCatalogs|ReindexTable|RenameColumn|RenameSchema|RenameSequence|RenameTable|Select|Transaction|TruncateTable|Update|ValuesQuery|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

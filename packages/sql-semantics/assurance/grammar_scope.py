@@ -626,6 +626,9 @@ def inventory(root):
             for alternative in rules.get("RenameStmt", ()):
                 if alternative.startswith("RenameStmt: ALTER SEQUENCE "):
                     related[alternative] = (*related.get(alternative, ()), "postgres-rename-sequence-v1.json")
+            for alternative in rules.get("AlterObjectSchemaStmt", ()):
+                if alternative.startswith("AlterObjectSchemaStmt: ALTER SEQUENCE "):
+                    related[alternative] = (*related.get(alternative, ()), "postgres-move-sequence-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

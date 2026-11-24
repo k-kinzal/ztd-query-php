@@ -599,6 +599,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Sequence\\CreateSequence'] = 'CREATE UNLOGGED SEQUENCE IF NOT EXISTS public."Ticket.棚" AS smallint INCREMENT 2 START 3 RESTART 10 CACHE 2 CYCLE';
         $queries['Schema\\Sequence\\DropSequence'] = 'DROP SEQUENCE IF EXISTS ticket, pg_temp.ticket, public.absent, unknown CASCADE';
         $queries['Schema\\Sequence\\Alter\\RenameSequence'] = 'ALTER SEQUENCE ticket RENAME TO "Next.Ticket"';
+        $queries['Schema\\Sequence\\Alter\\MoveSequence'] = 'ALTER SEQUENCE public.ticket SET SCHEMA "Archive.棚"';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -621,6 +622,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $activeContext = $context;
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\DropSequence', 'Schema\\Sequence\\Alter\\RenameSequence'], true)) {
             $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE TEMP SEQUENCE ticket']);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\MoveSequence') {
+            $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE SCHEMA "Archive.棚"']);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
             $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy', $storageDeclaration]);
@@ -935,6 +939,26 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['postgresChangeSchemaOwner'] = [
                 $result->schema->value, $result->owner->value, $direct->toString(), $session->owner->name, $session->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\MoveSequence') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\MoveSequence(
+                $source, new $name('Archive.棚'), release: $result->release,
+            );
+            $checked = $semantics->analyze('ALTER SEQUENCE IF EXISTS missing.ticket SET SCHEMA unused', $activeContext);
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SEQUENCE public.ticket SET SCHEMA unused', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence move requires a declared destination namespace.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresMoveSequence'] = [
+                $result->source->schema?->value, $result->source->name->value, $result->source->presence->value,
+                $result->destination?->value, $direct->toString(), $direct == $result, $batch === [] ? false : $batch[0] == $direct,
+                $checked->destination, $checked->toString(), $refused,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\RenameSequence') {
