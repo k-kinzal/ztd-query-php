@@ -25,6 +25,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableMetadataLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragmaKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragmaLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\ReclaimPragmaLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
@@ -41,7 +44,7 @@ final class PragmaLowering
      * Dispatches a known SQLite operation by its exact native identity.
      * @throws InvalidConstruction When the selected pragma family has no complete representation
      */
-    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma
+    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum
     {
         $name = Comparison::AsciiInsensitive->fold($statement->name->name->value);
         $kind = TableInspectionKind::tryFrom($name);
@@ -61,6 +64,13 @@ final class PragmaLowering
         $page = PagePragmaKind::tryFrom($name);
         if ($page !== null) {
             return (new PagePragmaLowering())->lower($operation, $statement, $page);
+        }
+
+        if ($name === 'auto_vacuum') {
+            return (new ReclaimPragmaLowering())->automatic($operation, $statement);
+        }
+        if ($name === 'incremental_vacuum') {
+            return (new ReclaimPragmaLowering())->incremental($operation, $statement);
         }
 
         if ($name === 'foreign_key_check') {

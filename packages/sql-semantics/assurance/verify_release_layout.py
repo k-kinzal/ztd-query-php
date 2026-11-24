@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v102.json"
-CONTRACT = "93975dd4b4ce097851e3ec659ad770b5eebd8b3b925f99cad63461ddb5e4f13d"
+CONTRACT_NAME = "release-layout-v103.json"
+CONTRACT = "29cbc901194c2ec3d67a0f93cc179f53eefdf54954d5bb1b59e958a9bc3b66b8"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -624,6 +624,16 @@ def verify_probe(raw, catalog):
             require(item.get("vacuum") == [
                 "archive", "002", expect, 'VACUUM "main"', "temp", "011", 'VACUUM "temp" INTO (0 IN (?011))',
             ] and item["sql"] == expect, "installed-sqlite-vacuum-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Reclaim\\AutoVacuum"):
+            expected = 'PRAGMA "archive".auto_vacuum(2)'
+            require(item.get("autoVacuum") == [
+                "archive", "2", expected, "0", 'PRAGMA "main".auto_vacuum(0)',
+            ] and item["sql"] == expected, "installed-sqlite-auto-vacuum-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Reclaim\\IncrementalVacuum"):
+            expected = 'PRAGMA "archive".incremental_vacuum(2)'
+            require(item.get("incrementalVacuum") == [
+                "archive", 2, expected, 2147483647, 'PRAGMA "temp".incremental_vacuum',
+            ] and item["sql"] == expected, "installed-sqlite-incremental-vacuum-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Page\\PagePragma"):
             expect = 'PRAGMA "archive".max_page_count(4294967294)'
             require(item.get("pagePragma") == [

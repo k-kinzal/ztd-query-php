@@ -516,6 +516,15 @@ if ($dialect === 'sqlite') {
     $enumCases['Maintenance\\Page\\PagePragmaKind'] = ['Size' => 'page_size', 'Count' => 'page_count', 'MaximumCount' => 'max_page_count'];
     $roots[] = 'Maintenance\\Page\\PagePragma';
     array_push($internal, 'Maintenance\\Page\\PagePragmaLowering', 'Maintenance\\Page\\PageLimitArgument');
+    $properties['Maintenance\\Reclaim\\AutoVacuum'] = ['schema' => ['Identifier'], 'mode' => ['?Maintenance\\Reclaim\\VacuumMode']];
+    $properties['Maintenance\\Reclaim\\IncrementalVacuum'] = ['schema' => ['Identifier'], 'limit' => ['Maintenance\\Reclaim\\PageReclaimLimit']];
+    $properties['Maintenance\\Reclaim\\PageReclaimLimit'] = ['pages' => ['int']];
+    $properties['Maintenance\\Reclaim\\VacuumMode'] = $methods['Maintenance\\Reclaim\\VacuumMode'] = [];
+    $methods['Maintenance\\Reclaim\\AutoVacuum'] = $methods['Maintenance\\Reclaim\\IncrementalVacuum'] = $methods['Select'];
+    $methods['Maintenance\\Reclaim\\PageReclaimLimit'] = ['__construct'];
+    $enumCases['Maintenance\\Reclaim\\VacuumMode'] = ['None' => '0', 'Full' => '1', 'Incremental' => '2'];
+    array_push($roots, 'Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum');
+    $internal[] = 'Maintenance\\Reclaim\\ReclaimPragmaLowering';
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1400,6 +1409,13 @@ try {
                 && $parameter->default instanceof Expr\ConstFetch && $parameter->default->name->toLowerString() === 'false'
                 && !$parameter->byRef && !$parameter->variadic, "Unexpected SQLite index form parameter in $short");
         }
+        if ($short === 'Maintenance\\Reclaim\\PageReclaimLimit') {
+            $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
+            $definition = $constants[0]->consts[0] ?? null;
+            requireShape(count($constants) === 1 && count($constants[0]->consts) === 1 && $constants[0]->isPublic()
+                && $definition->name->toString() === 'MAXIMUM' && $printer->prettyPrintExpr($definition->value) === '2147483647',
+                'The SQLite incremental vacuum limit differs');
+        }
         if ($short === 'Maintenance\\Page\\PageLimit') {
             $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
             $definition = $constants[0]->consts[0] ?? null;
@@ -1512,7 +1528,7 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
                         'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
-                        'Maintenance\\Metadata\\TableListing', 'Maintenance\\Page\\PagePragma', 'Maintenance\\Reindex', 'Maintenance\\Vacuum\\Vacuum',
+                        'Maintenance\\Metadata\\TableListing', 'Maintenance\\Page\\PagePragma', 'Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum', 'Maintenance\\Reindex', 'Maintenance\\Vacuum\\Vacuum',
                     ], 'Unexpected SQLite maintenance publication');
             }
             if ($short === 'Maintenance\\PragmaLowering' || $short === 'Maintenance\\Metadata\\TableMetadataLowering') {
@@ -1521,7 +1537,7 @@ try {
                 $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
                 $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
                 $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
-                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots, 'Maintenance\\Page\\PagePragma'] : $metadataRoots;
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots, 'Maintenance\\Page\\PagePragma', 'Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum'] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
             }
@@ -1535,6 +1551,16 @@ try {
                     $method = $member->name->toString();
                     requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
                         && types($member->returnType, $prefix, $short) === ($expected[$method] ?? null), 'Unexpected SQLite connection route');
+                }
+            }
+            if ($short === 'Maintenance\\Reclaim\\ReclaimPragmaLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 2, 'Unexpected SQLite reclamation route count');
+                $expected = ['automatic' => 'Maintenance\\Reclaim\\AutoVacuum', 'incremental' => 'Maintenance\\Reclaim\\IncrementalVacuum'];
+                foreach ($members as $member) {
+                    requireShape($member->isPublic() && !$member->isStatic() && $member->returnType !== null
+                        && types($member->returnType, $prefix, $short) === [$expected[$member->name->toString()] ?? null],
+                        'Unexpected SQLite reclamation publication route');
                 }
             }
             if ($short === 'Maintenance\\Page\\PageLimitArgument') {

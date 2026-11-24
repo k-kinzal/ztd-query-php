@@ -549,6 +549,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
         $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
         $queries['Maintenance\\Header\\HeaderPragma'] = 'PRAGMA metadata.user_version = -2147483648';
+        $queries['Maintenance\\Reclaim\\AutoVacuum'] = 'PRAGMA ARCHIVE.auto_vacuum(INCREMENTAL)';
+        $queries['Maintenance\\Reclaim\\IncrementalVacuum'] = 'PRAGMA ARCHIVE.incremental_vacuum(2)';
         $queries['Maintenance\\Page\\PagePragma'] = 'PRAGMA archive.max_page_count(4294967295)';
         $queries['Maintenance\\Vacuum\\Vacuum'] = 'VACUUM archive INTO ?002';
         $queries['Connection\\Attach'] = 'ATTACH ?002 AS reports KEY ?007';
@@ -607,6 +609,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $configured->context([]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && in_array($role, ['Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum'], true)) {
             $configured = new SqlSemantics\Platform\Sqlite\Semantics(
                 searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
             );
@@ -1374,6 +1382,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $default = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum();
             $details['vacuum'] = [$result->schema->value, $operand->expression->values[0]->label, $rebuilt->toString(),
                 $default->toString(), $skipped->schema->value, $skipped->destination->bindings[0]->label, $skipped->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum) {
+            $reset = $semantics->analyze('PRAGMA auto_vacuum(3)', $activeContext);
+            if (!$reset instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum) {
+                throw new RuntimeException('The installed auto-vacuum lost its explicit mode request.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum($result->schema, $result->mode);
+            $details['autoVacuum'] = [$result->schema->value, $result->mode?->value, $copy->toString(), $reset->mode?->value, $reset->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum) {
+            $default = $semantics->analyze('PRAGMA temp.incremental_vacuum(-1)', $activeContext);
+            if (!$default instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum) {
+                throw new RuntimeException('The installed incremental vacuum lost its native maximum.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum($result->schema, $result->limit);
+            $details['incrementalVacuum'] = [$result->schema->value, $result->limit->pages, $copy->toString(), $default->limit->pages, $default->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Page\\PagePragma') {
             $pending = $semantics->analyze('PRAGMA temp.page_size(DEFAULT)', $activeContext);

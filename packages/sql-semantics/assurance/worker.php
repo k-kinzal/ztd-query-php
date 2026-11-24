@@ -62,6 +62,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PageLimit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragmaKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\RequestedPageSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\PageReclaimLimit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\VacuumMode;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumDestination;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumRegistrations;
@@ -367,7 +371,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|Vacuum|Attach|Detach|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|Vacuum|Attach|Detach|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -897,6 +901,30 @@ function observePagePragma(PagePragma $value): array
     ];
 }
 
+function directReclaimPragma(array $input): AutoVacuum|IncrementalVacuum
+{
+    $schema = new Identifier($input['schema']);
+    $value = $input['value'];
+
+    return match ($input['kind']) {
+        'auto_vacuum' => new AutoVacuum($schema, $value === null ? null : VacuumMode::from($value)),
+        'incremental_vacuum' => new IncrementalVacuum($schema, new PageReclaimLimit($value)),
+    };
+}
+
+function observeReclaimPragma(AutoVacuum|IncrementalVacuum $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'reclaim-pragma',
+        'profile' => $value->profileId(),
+        'kind' => $value instanceof AutoVacuum ? 'auto_vacuum' : 'incremental_vacuum',
+        'schema' => $value->schema->value,
+        'value' => $value instanceof AutoVacuum ? $value->mode?->value : $value->limit->pages,
+        'sql' => $value->toString(),
+    ];
+}
+
 function connectionName(array $raw): AttachmentName|Parameter
 {
     $value = operand($raw);
@@ -1257,6 +1285,7 @@ function runCase(array $input): array
                 InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
             ),
             ($input['operation'] ?? null) === 'page-pragma' => directPagePragma($input),
+            ($input['operation'] ?? null) === 'reclaim-pragma' => directReclaimPragma($input),
             ($input['operation'] ?? null) === 'connection-command' => directConnectionCommand($input),
             ($input['operation'] ?? null) === 'vacuum' => directVacuum($input),
             ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
@@ -1292,6 +1321,9 @@ function runCase(array $input): array
     }
     if ($value instanceof PagePragma) {
         return observePagePragma($value);
+    }
+    if ($value instanceof AutoVacuum || $value instanceof IncrementalVacuum) {
+        return observeReclaimPragma($value);
     }
     if ($value instanceof Attach || $value instanceof Detach) {
         return observeConnectionCommand($value);
