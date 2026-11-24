@@ -1126,11 +1126,11 @@ function constructPostgresReindex(array $input): \SqlSemantics\Platform\PostgreS
     );
 }
 
-function observePostgresReindex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex $value): array
+function observePostgresReindex(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex $value, bool $render): array
 {
     $target = $value->target;
     return [
-        'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $render ? $value->toString() : null,
         'reindex' => [
             'target' => [$target->schema->value, $target->index->value, $target->table->value],
             'mode' => $value->mode->value,
@@ -1635,7 +1635,7 @@ function observeStatement(array $input): array
         return observePostgresDropIndex($value);
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex) {
-        return observePostgresReindex($value);
+        return observePostgresReindex($value, !($input['constructionOnly'] ?? false));
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable) {
         return observePostgresReindexTable($value);
