@@ -1032,11 +1032,11 @@ function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql
     );
 }
 
-function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex $index): array
+function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex $index, bool $render): array
 {
     $table = $index->table;
     return [
-        'status' => 'constructed', 'profile' => $index->profileId(), 'sql' => $index->toString(),
+        'status' => 'constructed', 'profile' => $index->profileId(), 'sql' => $render ? $index->toString() : null,
         'createBtree' => [
             'table' => [
                 $table->schema->value, $table->table->value,
@@ -1461,7 +1461,7 @@ function observeStatement(array $input): array
         return observePostgresTruncate($value);
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex) {
-        return observePostgresBtree($value);
+        return observePostgresBtree($value, !($input['constructionOnly'] ?? false));
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex) {
         return observePostgresDropIndex($value);

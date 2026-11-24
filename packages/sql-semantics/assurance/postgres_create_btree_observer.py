@@ -9,22 +9,22 @@ from postgres_create_btree_cases import declarations, qualified, quoted
 from postgres_libpq import LIB, Session
 from run import require
 
-CATALOG = """SELECT i.indisunique::text, i.indnullsnotdistinct::text,
+CATALOG = """SELECT pg_catalog.json_build_array(i.indisunique::text, i.indnullsnotdistinct::text,
        i.indisvalid::text, i.indisready::text, i.indislive::text,
        i.indnkeyatts::text, i.indnatts::text, i.indkey::text, i.indoption::text, i.indcollation::text,
        a.amname, n.nspname, c.relname, r.relname,
        (SELECT pg_catalog.json_agg(op.opcname ORDER BY x.n)
         FROM pg_catalog.unnest(i.indclass::oid[]) WITH ORDINALITY AS x(oid, n)
         JOIN pg_catalog.pg_opclass op ON op.oid=x.oid)::text,
-       pg_catalog.pg_get_expr(i.indpred, i.indrelid, false)
+       pg_catalog.pg_get_expr(i.indpred, i.indrelid, false))
 FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON c.oid=i.indexrelid
 JOIN pg_catalog.pg_class r ON r.oid=i.indrelid
 JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
 JOIN pg_catalog.pg_am a ON a.oid=c.relam
 WHERE i.indexrelid=pg_catalog.to_regclass({index}) AND i.indrelid=pg_catalog.to_regclass({table})
 """
-ATTRIBUTE = """SELECT a.attname, t.typname FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_type t ON t.oid=a.atttypid
-WHERE a.attrelid=pg_catalog.to_regclass({relation}) AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum"""
+ATTRIBUTE = """SELECT pg_catalog.json_agg(pg_catalog.json_build_array(a.attname, t.typname) ORDER BY a.attnum) FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_type t ON t.oid=a.atttypid
+WHERE a.attrelid=pg_catalog.to_regclass({relation}) AND a.attnum>0 AND NOT a.attisdropped"""
 
 
 def literal(value):
@@ -91,12 +91,10 @@ def observed_predicate(expression):
     return [name, form[2] is not None]
 
 
-def indexed(db, table, index, scope):
-    rows = db.execute(CATALOG.format(index=data_literal(index), table=data_literal(table)))
-    if not rows:
+def indexed(raw, scope):
+    if raw is None:
         return None
-    require(len(rows) == 1, "postgres-btree-observer-index-identity", rows)
-    row = rows[0]
+    row = json.loads(raw)
     unique, nulls, valid, ready, live = (value == "true" for value in row[:5])
     key_count, member_count = map(int, row[5:7])
     positions, orders, collations = (list(map(int, value.split())) for value in row[7:10])
@@ -111,24 +109,37 @@ def indexed(db, table, index, scope):
     }
 
 
-def table_rows(db, table, order):
-    rows = db.execute(f"""SELECT pg_catalog.json_agg(sub ORDER BY {order})
-                       FROM (SELECT * FROM {table}) AS sub""")[0][0]
-    return [list(row.values()) for row in json.loads(rows)]
+def rows_query(table, order):
+    return f"""SELECT pg_catalog.json_agg(sub ORDER BY {order})
+               FROM (SELECT * FROM {table}) AS sub"""
+
+
+def decoded_rows(raw):
+    return [list(row.values()) for row in json.loads(raw)]
 
 
 def snapshot(db, trial):
     table, index, order = chosen(trial)
     scope, name, _, _, _ = trial["createBtree"]["table"]
-    contestant = None
-    if trial["occupancy"] == "existing-table":
-        contestant = {"name": trial["createBtree"]["name"], "rows": table_rows(db, index, "decoy")}
-    shape = db.execute(ATTRIBUTE.format(relation=data_literal(table)))
-    marker = [int(row[0]) for row in db.execute("SELECT n FROM public.ir_btree_marker ORDER BY n")]
+    occupant = trial["occupancy"] == "existing-table"
+    queries = [
+        ATTRIBUTE.format(relation=data_literal(table)),
+        rows_query(table, order),
+        'SELECT pg_catalog.json_agg(n ORDER BY n) FROM public.ir_btree_marker',
+        rows_query("fixture.orders", "decoy") if scope == "pg_temp" else "SELECT NULL",
+        rows_query(index, "decoy") if occupant else "SELECT NULL",
+        CATALOG.format(index=data_literal(index), table=data_literal(table)),
+    ]
+    # All six views of the fixture share one database snapshot and one client round trip.
+    heading, rows, marker, decoy, competitor, catalog = db.execute(
+        "SELECT " + ", ".join(f"({query})" for query in queries)
+    )[0]
+    contestant = {"name": trial["createBtree"]["name"], "rows": decoded_rows(competitor)} if occupant else None
+
     return {
-        "owner": [scope, name, shape], "rows": table_rows(db, table, order),
-        "otherRows": table_rows(db, "fixture.orders", "decoy") if scope == "pg_temp" else None,
-        "marker": marker, "competitor": contestant, "index": indexed(db, table, index, scope),
+        "owner": [scope, name, json.loads(heading)], "rows": decoded_rows(rows),
+        "otherRows": None if decoy is None else decoded_rows(decoy), "marker": json.loads(marker),
+        "competitor": contestant, "index": indexed(catalog, scope),
     }
 
 

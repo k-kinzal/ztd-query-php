@@ -169,7 +169,7 @@ def faults(_, tag):
                     "!$this->predicate->negated ? ' IS NOT NULL)'", partial, "meaning-mismatch"),
         RenderFault("postgres-partial-btree-admit-absent-null-column", source,
                     "$predicate === null || isset($table->columns[$predicate->slot])", "true",
-                    {"boundary": boundary}, INVALID, invalid),
+                    {"boundary": boundary}, INVALID, {**invalid, "constructionOnly": True}),
     ]
 
 
