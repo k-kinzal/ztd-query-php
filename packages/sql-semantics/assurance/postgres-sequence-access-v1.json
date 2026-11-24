@@ -1,0 +1,129 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-access-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": [
+    "Schema/Sequence/Access/GrantSequenceAccess",
+    "Schema/Sequence/Access/RevokeSequenceAccess"
+  ],
+  "scope": "Object privileges on explicitly named sequences and all sequences in explicitly named schemas. Other object kinds and the ON TABLE form remain open.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-grant.html",
+    "https://www.postgresql.org/docs/17/sql-grant.html",
+    "https://www.postgresql.org/docs/16/sql-revoke.html",
+    "https://www.postgresql.org/docs/17/sql-revoke.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/catalog/aclchk.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/catalog/aclchk.c"
+  ],
+  "constructors": {
+    "GrantSequenceAccess": {
+      "type": "Schema/Sequence/Access/GrantSequenceAccess",
+      "role": "Grant sequence privileges with or without the right to grant them.",
+      "structure": "A SequenceAccess and an explicit grant option.",
+      "conditions": "Refuse an effective grant option to PUBLIC on a nonempty sequence list. A grant consisting only of legacy RULE has no effective rights. For schema-wide operations, object occupancy is evaluated in the fixed native execution environment.",
+      "meaning": "Grant exactly the requested privileges on the selected objects to the selected grantee roles. Add grant rights when specified. Preserve catalog null ACL and materialized ACL distinctions and the authorized native grantor.",
+      "sql": "Emit GRANT, ordered privilege names or ALL, an exact sequence target, TO with the checked grantee list, WITH GRANT OPTION when present, and the explicit GRANTED BY role when given."
+    },
+    "RevokeSequenceAccess": {
+      "type": "Schema/Sequence/Access/RevokeSequenceAccess",
+      "role": "Remove privileges or only the right to grant them.",
+      "structure": "A SequenceAccess, a grant-option-only flag, and a closed dependent grant behavior.",
+      "conditions": "Check the shared access roles. Derive dependent grant behavior from CASCADE or RESTRICT. Absent behavior selects RESTRICT.",
+      "meaning": "Remove privileges from grants attributed to the native grantor. With grant-option-only, retain the privilege itself. Block dependent effects under RESTRICT. Recursively remove unsupported grants under CASCADE while preserving independent grants.",
+      "sql": "Emit REVOKE, optional GRANT OPTION FOR, checked privileges, ON, FROM and GRANTED BY roles, and the exact dependency behavior."
+    },
+    "SequenceAccess": {
+      "type": "Schema/Sequence/Access/SequenceAccess",
+      "role": "Carry the common privilege, target and authorization operands.",
+      "structure": "A closed target union, a detached ordered rights list, a detached nonempty recipient list, an optional single grantor and the exact release and lexical profile.",
+      "conditions": "Check nominal stock roles and explicit named sequence occupancy for the release. All rights are represented by an empty rights list. Nonempty rights lists use the closed right enum. Role lists retain duplicate spellings where aliases refer to the same authorization.",
+      "meaning": "Resolve each nominal grantee and grantor under the same external role and catalog binding. Distinguish grantee CURRENT_ROLE or CURRENT_USER, SESSION_USER, named roles and PUBLIC. GRANTED BY requires the effective native user, which can be checked at execution.",
+      "sql": "Render the common clauses from the semantic operands without SQL fragments or re-resolution."
+    },
+    "NamedSequences": {
+      "type": "Schema/Sequence/Access/NamedSequences",
+      "role": "Address a nonempty ordered list of definitely existing sequence identities.",
+      "structure": "A detached nonempty list of exact SequenceSelector values in the existing role.",
+      "conditions": "Each source resolves to a sequence. A missing source or conflicting stock occupancy is rejected. Explicit catalog spelling requires the matching analysis database.",
+      "meaning": "Apply the statement to the named relation identities, including repeated references and the current session's logical temporary namespace.",
+      "sql": "Emit SEQUENCE followed by the checked and independently qualified references."
+    },
+    "SequencesInSchemas": {
+      "type": "Schema/Sequence/Access/SequencesInSchemas",
+      "role": "Address the sequence members of already identified schemas.",
+      "structure": "A detached nonempty ordered list of schema identifiers.",
+      "conditions": "Analyze requires declared schema identities, including any selected temporary session schema. The members are chosen by the explicit schema-set operator at runtime. Reject physically numbered temporary namespaces.",
+      "meaning": "Select all native sequence relations in the named namespaces. The relation set may be empty or change with database state. Other relation kinds are untouched.",
+      "sql": "Emit ALL SEQUENCES IN SCHEMA followed by each decoded namespace identity."
+    },
+    "SequenceGrantee": {
+      "type": "Schema/Sequence/Access/SequenceGrantee",
+      "role": "Select one nominal role, one native session role or the universal PUBLIC role as a recipient.",
+      "structure": "A closed union of SequencePrincipal and UniversalGrantee.",
+      "conditions": "The universal recipient is distinct from decoded quoted names such as uppercase PUBLIC. Only a single principal can be a grantor.",
+      "meaning": "Choose an explicitly granted or revoked authorization identity, or the native universal recipient that covers every authorization.",
+      "sql": "Emit the closed keyword or the native spelling for the selected principal."
+    },
+    "UniversalGrantee": {
+      "type": "Schema/Sequence/Access/UniversalGrantee",
+      "role": "Identify native PUBLIC.",
+      "structure": "A single enum value.",
+      "conditions": "This operand is a recipient only.",
+      "meaning": "Select the PostgreSQL universal authorization, represented independently of ordinary role names.",
+      "sql": "Emit PUBLIC."
+    },
+    "SequenceRight": {
+      "type": "Schema/Sequence/Access/SequenceRight",
+      "role": "Identify a single sequence privilege or the accepted inert legacy privilege.",
+      "structure": "Closed enum SELECT, UPDATE, USAGE and RULE.",
+      "conditions": "No column list. ALL is a distinct aggregate at the common access boundary.",
+      "meaning": "Select the native sequence SELECT, UPDATE or USAGE ACL bit. RULE requests no bits.",
+      "sql": "Emit the enum's native token."
+    },
+    "SequenceGrantDependency": {
+      "type": "Schema/Sequence/Access/SequenceGrantDependency",
+      "role": "Handle privileges that depend on a revoked permission to grant.",
+      "structure": "Closed CASCADE and RESTRICT enum.",
+      "conditions": "This operand applies only to a revoke.",
+      "meaning": "Either recursively remove affected dependent grants or fail if they exist.",
+      "sql": "Emit the native behavior keyword."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "operations": ["grant", "grant-option", "restrict", "cascade-option"],
+    "targets": ["local", "cross-schema-list", "temporary", "all-in-two", "all-in-empty"],
+    "rights": ["usage", "ordered-read-write", "all", "rule"],
+    "transactional": [false, true],
+    "bound": "160 exact coordinates per release per construction route. Compare the directly constructed and analyzed values and their native effects. Typed refusals are separately scheduled through both routes."
+  },
+  "exploration": {
+    "seeds": [9187, 31051, 64901],
+    "casesPerSeed": 18,
+    "directCasesPerSeed": 18,
+    "timeoutSecondsPerRelease": 280,
+    "allowedExclusions": [],
+    "structure": "Vary and combine privilege sequences, resolved targets and schemas, recipient lists, escaped names, repeated operands, nominal and session grantors, current authorization, existing grant chains, independent alternative grants and transaction state. Observe dependent revocation, restriction, PUBLIC fanout and zero-target ACL behavior."
+  },
+  "observations": [
+    "Exact ordered operation and operand facts, including grantor and recipient identities, repeated targets, privilege kind and dependency action.",
+    "Affected and unaffected identities, generator metadata and values, table rows and dependencies, grantor/grantee OID identities and exploded ACL grants and grant options, null ACL versus materialized ACL, and shared dependencies.",
+    "Dependent grant removal versus independent grant survival, state while active and after rollback, server error or warning status and command tag."
+  ],
+  "negative": [
+    "Unresolved sequence, schema, grantee or grantor. Foreign catalog, wrong relation kind, unknown or column privilege, reserved role and PUBLIC grantor.",
+    "Invalid list shape or foreign value, missing target or recipient, and effective WITH GRANT OPTION to PUBLIC on explicitly named sequences."
+  ],
+  "faults": [
+    "Select a same-named decoy sequence.",
+    "Confuse authenticated and effective role.",
+    "Drop the ability to grant from a grant.",
+    "Remove the option-only restriction from a revoke.",
+    "Replace CASCADE with RESTRICT."
+  ],
+  "trust": [
+    "The equivalent database has the external schema, sequence and authorization identities selected during analysis.",
+    "Catalog occupancy for schema-wide actions, session roles, effective privileges and ACL graph are native execution inputs. The bounded native oracle uses an independently computed grant graph, including rollback and retained ACL observations."
+  ]
+}
