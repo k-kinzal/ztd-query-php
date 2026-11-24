@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Recording the positions supplied by the tuple
  *     $field = new \SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField(1, new \SqlSemantics\Platform\Sqlite\Ir\NullLiteral());
- *     (new \SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow([$field]))->columns() // => [1]
+ *     (new \SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow([$field]))->fields[0]->column // => 1
  */
 final class TriggerInsertRow
 {
@@ -41,17 +41,19 @@ final class TriggerInsertRow
     }
 
     /**
-     * Returns the tuple's exact writable positions in order.
-     *
-     * @return non-empty-list<int>
+     * Tests whether both tuples supply the same destination positions in order.
      */
-    public function columns(): array
+    public function hasSameHeading(self $other): bool
     {
-        $positions = [];
-        foreach ($this->fields as $field) {
-            $positions[] = $field->column;
+        if (count($this->fields) !== count($other->fields)) {
+            return false;
+        }
+        foreach ($this->fields as $index => $field) {
+            if ($field->column !== $other->fields[$index]->column) {
+                return false;
+            }
         }
 
-        return $positions;
+        return true;
     }
 }

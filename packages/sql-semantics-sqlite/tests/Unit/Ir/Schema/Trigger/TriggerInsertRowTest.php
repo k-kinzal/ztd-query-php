@@ -15,13 +15,15 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow;
 #[Small]
 final class TriggerInsertRowTest extends TestCase
 {
-    public function testColumnsFollowsTheWrittenOrderOfTheTuple(): void
+    public function testHasSameHeadingComparesOrderedPositions(): void
     {
         $last = new TriggerInsertField(3, new NullLiteral());
         $first = new TriggerInsertField(1, new NullLiteral());
         $row = new TriggerInsertRow([$last, $first]);
 
-        self::assertSame([3, 1], $row->columns());
+        self::assertTrue($row->hasSameHeading(new TriggerInsertRow([$last, $first])));
+        self::assertFalse($row->hasSameHeading(new TriggerInsertRow([$first, $last])));
+        self::assertFalse($row->hasSameHeading(new TriggerInsertRow([$first])));
         self::assertSame([$last, $first], $row->fields);
     }
 }

@@ -42,12 +42,12 @@ final class TriggerInsert
         public readonly InsertConflict $conflict = InsertConflict::Inherit,
     ) {
         $tuples = Check::listOf($rows, TriggerInsertRow::class, 'A trigger insertion needs a nonempty ordered row list.', 1);
-        $heading = $tuples[0]->columns();
-        foreach ($heading as $position) {
-            Check::input(in_array($position, $destination->writable, true), 'A trigger insertion must write distinct available slots of its destination.');
+        $heading = $tuples[0];
+        foreach ($heading->fields as $field) {
+            Check::input(in_array($field->column, $destination->writable, true), 'A trigger insertion must write distinct available slots of its destination.');
         }
         foreach ($tuples as $tuple) {
-            Check::input($tuple->columns() === $heading, 'Every trigger insertion tuple needs the same ordered writable heading.');
+            Check::input($heading->hasSameHeading($tuple), 'Every trigger insertion tuple needs the same ordered writable heading.');
         }
         $this->rows = $tuples;
     }

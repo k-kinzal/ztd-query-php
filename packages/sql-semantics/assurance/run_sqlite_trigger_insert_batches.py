@@ -201,7 +201,7 @@ def check_faults(args, db, runner=check_render_faults):
         RenderFault("reuse-first-trigger-tuple-operand", render, "$values[] = $this->value($field->value, $watched);",
                     "$values[] = $this->value($index > 0 && $field->column === 1 ? $step->rows[0]->fields[1]->value : $field->value, $watched);",
                     success, meaning),
-        RenderFault("admit-changing-trigger-batch-heading", root + "TriggerInsert.php", "$tuple->columns() === $heading",
+        RenderFault("admit-changing-trigger-batch-heading", root + "TriggerInsert.php", "$heading->hasSameHeading($tuple)",
                     "true", changed, invalid),
         RenderFault("skip-last-trigger-image-check", root + "TriggerChecks.php", "foreach ($step->rows as $tuple)",
                     "foreach (array_slice($step->rows, 0, 1) as $tuple)", missing, invalid),

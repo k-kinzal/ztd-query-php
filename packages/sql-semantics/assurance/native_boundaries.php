@@ -37,7 +37,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-page-pragmas-boundaries-v1.json', 'ed7e3038312119441140352f56dd43b274520c30903b6a4dfef5e912ab8e4c21'],
             ['sqlite-reclaim-pragmas-boundaries-v1.json', 'e7c3d5b7a1822b1d5bace8754a23892a324b1d433609b57f35e7ac529a05b6fa'],
             ['sqlite-cache-pragmas-boundaries-v1.json', '60c4f0af764fdd137ed5b34c7cf9d9812506d3901d1017a6443f28ce26202597'],
-            ['sqlite-audit-triggers-boundaries-v4.json', 'edb840f9718a617d5098abd12b027205922111cb21a9d92b29ec946300b85d6f'],
+            ['sqlite-audit-triggers-boundaries-v5.json', '1116347e6d71b6a5427583c0248413c56da7ec96c158f4cc9aad6a22c14370e3'],
             ['sqlite-drop-triggers-boundaries-v1.json', 'ddfc78cbd257a9fa1b449c08f6e85eb3f1d114eca6529256636a42babbd9634c'],
             ['sqlite-foreign-key-audit-boundaries-v1.json', '5bb678946a4c64f0af472a44d15418550166719cb920683f240fd3dd9991b085'],
             ['sqlite-index-metadata-boundaries-v1.json', '321a0506e38a0841cdefa822858153626c4c2697a529eb78530719b21d735dec'],

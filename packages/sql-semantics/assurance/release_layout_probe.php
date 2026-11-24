@@ -1527,7 +1527,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $batch->schema, $batch->name, $batch->placement, $batch->watched, $batch->timing, $batch->event,
                 [new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert($insert->destination, $tuples, $insert->conflict)],
             );
-            $details['batchTrigger'] = [$insert->conflict->value, array_map(static fn ($tuple) => $tuple->columns(), $tuples),
+            $details['batchTrigger'] = [$insert->conflict->value, array_map(static fn ($tuple) => array_map(static fn ($field) => $field->column, $tuple->fields), $tuples),
                 $batch->toString(), $batchCopy->toString()];
             $interrupt = $semantics->analyze(
                 'CREATE TRIGGER archive.interrupt_journal AFTER UPDATE ON watched BEGIN SELECT RAISE(FAIL, OLD.payload) WHERE NEW.payload IS NOT NULL; END',

@@ -556,7 +556,7 @@ if ($dialect === 'sqlite') {
     ];
     $properties['Schema\\Trigger\\TriggerUpdateName'] = ['selector' => ['Identifier', 'int']];
     $properties['Schema\\Trigger\\TriggerInsertRow'] = ['fields' => ['array']];
-    $methods['Schema\\Trigger\\TriggerInsertRow'] = ['__construct', 'columns'];
+    $methods['Schema\\Trigger\\TriggerInsertRow'] = ['__construct', 'hasSameHeading'];
     $methods['Schema\\Trigger\\CreateTrigger'] = $methods['Select'];
     foreach (['TriggerField', 'TriggerCondition', 'TriggerDestination', 'TriggerInsert', 'TriggerInsertField', 'TriggerUpdateName'] as $role) {
         $methods['Schema\\Trigger\\' . $role] = ['__construct'];
