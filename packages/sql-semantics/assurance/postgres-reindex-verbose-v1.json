@@ -1,0 +1,91 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-verbose-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-reindex-index-v1.json",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings, native parameters and the C diagnostic locale. Reporting is independent of the resolved target and requested locking mode.",
+  "scope": "Preserve effective VERBOSE on every resolved PostgreSQL REINDEX root, including named, ordinary and partitioned targets, schema, database, system catalogs and the current session's temporary owners.",
+  "additionalPublicRoots": [],
+  "constructors": {},
+  "amendedConstructors": {
+    "Schema/Index/ReindexIndex": "Add the effective Boolean progress-reporting operand, including exclusion-owned, key-owned, branch and leaf targets.",
+    "Schema/Index/ReindexTable": "Add the effective Boolean progress-reporting operand for standalone tables, temporary tables and materialized views.",
+    "Schema/Index/Partition/ReindexPartitionTable": "Add the effective Boolean progress-reporting operand for a partition branch or leaf.",
+    "Schema/Index/Scope/ReindexSchema": "Add the effective Boolean progress-reporting operand for the declared application schema, including an empty namespace.",
+    "Schema/Index/Scope/ReindexDatabase": "Add the effective Boolean progress-reporting operand for the declared current database.",
+    "Schema/Index/Scope/ReindexSystemCatalogs": "Add the effective Boolean progress-reporting operand for the declared current database's system catalogs."
+  },
+  "rules": [
+    "The public value retains one readonly Boolean. Omitted and effectively false report via the ordinary native diagnostic policy. Effective true renders the canonical parenthesized VERBOSE option before the target selector.",
+    "Analysis applies last occurrence to VERBOSE. The omitted Boolean means true. Integers 0 and 1 and the case-insensitive Boolean words false, off, true and on follow the native option grammar. Invalid values cannot publish even when a later occurrence would override them.",
+    "Reporting does not change the target selection, transaction boundary, native SQLSTATE, lock request or persistent catalog effects. Emit no progress report when the native operation does not reach a rebuild, including a vacant schema.",
+    "On the same release and external reference interpretation, preserve progress report occurrences, order, severity, SQLSTATE, native target names and which reports carry a resource detail.",
+    "Actual CPU and elapsed durations in a resource detail are run-dependent. Retain the raw detail in evidence and compare the presence and structure of the three numeric measurements. No arbitrary detail, hint, report or warning is discarded.",
+    "Standard per-index reports name the unqualified index. True persistent concurrent rebuilding has qualified reports. Temporary owners follow the standard physical path and native reporting even when requested concurrently.",
+    "Standard PostgreSQL 16.6 reports primary owner indexes before TOAST indexes. PostgreSQL 17.2 reports the same related TOAST indexes first. Compare the exact sequence per release."
+  ],
+  "observations": [
+    "Readonly effective reporting operand, resolved target structure and requested concurrency in directly constructed and analyzed IR.",
+    "Ordered informational, warning and error frames, exact stable message and hint text, resource-detail shape, native SQLSTATE, command status and transaction state.",
+    "Index selection, attachment and owning relation identity, physical OID and file transitions, stable fixture rows and rollback."
+  ],
+  "finite": {
+    "role": ["ordinary-index", "temporary-index", "branch-index", "leaf-index", "ordinary-table", "temporary-table", "partition-branch", "partition-leaf", "ordinary-schema", "vacant-schema", "database", "system"],
+    "form": ["absent", "bare", "true", "false", "one", "zero", "last-on", "last-off", "option-combined", "keyword-combined"],
+    "active": [false, true],
+    "identity": "The declared System role has no concurrent operand. Visit all 236 remaining ordered coordinates per release through direct and analyzed construction together with the independently measured refusal of a system concurrency option. Each analyzed good value compares the authored original and emitted SQL. Include all measured native 25001 runtime refusals for completed IR."
+  },
+  "exploration": {
+    "seeds": [16453, 66029, 180233],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 540,
+    "allowedExclusions": [],
+    "domain": "Cross the runtime role, reporting form, transaction, native concurrency, identifier spelling and fixture identity. Vary physical lineage, owner participation and at least the relative positions and number of index reports. Require both reporting policies and native status classes, and all target roles and option forms across seeded trials."
+  },
+  "negative": [
+    "Reject malformed integer VERBOSE option",
+    "Reject malformed text VERBOSE option",
+    "Reject a malformed earlier occurrence followed by a valid VERBOSE",
+    "Reject concurrent system rebuilding even with VERBOSE",
+    "Reject an unsupported tablespace selector even with VERBOSE"
+  ],
+  "faults": [
+    "Erase reporting from emitted SQL",
+    "Invert the effective reporting in emitted SQL",
+    "Use the first reporting occurrence instead of the last",
+    "Drop the selector's concurrent mode when verbose is enabled",
+    "Ignore a missing or changed diagnostic frame in the comparator"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html",
+    "https://github.com/postgres/postgres/blob/REL_16_6/src/backend/commands/define.c",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/commands/indexcmds.c",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/catalog/index.c"
+  ],
+  "trust": [
+    "Independent PostgreSQL versions and catalogs, independently evaluated option folding and reporting trace, exact installed source checker, immutable target role inference and declared external references."
+  ],
+  "open": [
+    "Tablespace movement, implicit or generated constraint references, and physical situations outside the admitted reconstruction and reporting domain remain in the whole-language inventory."
+  ],
+  "calibration": {
+    "driver": "1c158f91e3520a377fd89b68d7fefedb018f062002a14af49fe95c97896dc1e3",
+    "fixtures": "0ab3daaa31464c3de830b0595c1346c148b1a0b341e77a3dcfec770e26355e5c",
+    "queryPack": "e55586b3331384afe7724d6d7279e0afb1e8575ed7d81867b942ffc942393ce2",
+    "referenceComparison": "12e1bf95bde5380b5fe885da35f6fb25b095a91c9c82b3cadc19fa56af88b46b",
+    "successPerRelease": 166,
+    "prohibitedInTransactionPerRelease": 70,
+    "infoReportsPerRelease": 1284,
+    "16.6": {
+      "stdout": "c9e14df26e858fec7be8325f4202f0b478c87fd615f84d4c8954b157a107008b",
+      "stderr": "5f5e7ee627bdbd89e8798e2fff6ae943d61ed14388bfd18fecd18be1094b3b30",
+      "transitions": "121acc6f82d0e659b63d91981bb44f82b6e896d81d736bae5f6f864bd52562bd"
+    },
+    "17.2": {
+      "stdout": "00e296e66769bdf9ab2ae854cc6ceed462438989fe5604f3087c198712efae1e",
+      "stderr": "d054b8d527cd8b6313b68cc10dbe0a84af3e4b1520be57525f75d7d8f1704940",
+      "transitions": "32e2c81d6b62f593b582611fbdeba229b6c4aebdaff7a0b45542e6b095ca5866"
+    }
+  }
+}
