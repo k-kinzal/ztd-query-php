@@ -238,9 +238,8 @@ def faults(_, tag):
                     "$table->columns[3]->quoted() . ')'", reading, "meaning-mismatch"),
         RenderFault("postgres-index-boolean-value-force-truth", source, bare,
                     "$table->columns[$node->slot]->quoted() . ' IS TRUE)'", nullable, "meaning-mismatch"),
-        RenderFault("postgres-index-boolean-value-collapse-unknown-under-not", source,
-                    "$sql .= '(' . $node->operator->value . ' ';\n                $pending[] = ')';",
-                    "$sql .= '(' . $node->operator->value . ' (';\n                $pending[] = ' IS TRUE))';",
+        RenderFault("postgres-index-boolean-value-collapse-unknown-under-not", source, bare,
+                    "$table->columns[$node->slot]->quoted() . ' AND ' . $table->columns[$node->slot]->quoted() . ' IS NOT NULL)'",
                     negation, "meaning-mismatch"),
     ]
 
