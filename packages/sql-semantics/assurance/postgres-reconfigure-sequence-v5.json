@@ -1,0 +1,139 @@
+{
+  "revision": "SemanticsIR/postgres-reconfigure-sequence-5",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Sequence/Alter/ReconfigureSequence"
+  ],
+  "scope": "ALTER SEQUENCE with generator and column-ownership options in the native sequence option list, and its guarded absent-source outcome.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-altersequence.html",
+    "https://www.postgresql.org/docs/17/sql-altersequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/sequence.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/sequence.c"
+  ],
+  "constructors": {
+    "ReconfigureSequence": {
+      "type": "Schema/Sequence/Alter/ReconfigureSequence",
+      "role": "Apply checked option assignments to the existing resolved sequence, or issue the native guarded absence notice.",
+      "structure": "Resolved SequenceSelector, optional SequenceChanges, existence guard, exact grammar release.",
+      "conditions": "A present selector requires one or more changes and a named owning column must share the selected schema. A missing selector requires the guard and carries no evaluated options. Enforce the native stock name rules in both roles.",
+      "meaning": "Keep sequence identity and incoming references. Apply the option-list rule to the current native generator and dependencies under the same external interpretation. A guarded missing selection stops before the server inspects option values.",
+      "sql": "Emit the closed ALTER SEQUENCE selector followed by options in the generator interpretation order, or the inert RESTART spelling required to express a guarded no-op."
+    },
+    "SequenceChanges": {
+      "type": "Schema/Sequence/Alter/SequenceChanges",
+      "role": "Hold a nonempty set of typed generator and ownership assignments.",
+      "structure": "Separate nullable slots for AS, INCREMENT, MINVALUE, MAXVALUE, START, RESTART, CACHE, CYCLE, and OWNED BY. Signed decimal atoms, resolved integer storage, explicit default operands, Boolean cycle state, resolved owner/reference removal.",
+      "conditions": "Reject repeated written slots when the sequence exists. A direct value admits exactly one assignment per slot. Enforce nonzero increment, positive cache, all limits and positions decidable from the operands, and one or more assignments.",
+      "meaning": "An omitted option leaves its role unchanged except for native type-induced resetting of retained bounds. Default MINVALUE and MAXVALUE use the resulting increment and storage. Explicit START sets the recorded start. Bare RESTART uses the effective start of this same operation. Explicit RESTART uses its value. Ownership sets or removes the auto-dependency in the sequence namespace. If an AS assignment detects that the previously recorded bound equals the old width boundary, a reset uses the corresponding new type limit even when the resulting increment has the opposite sign.",
+      "sql": "Use keywords for omission-independent choices and a separately quoted owner reference. Render each explicit signed operand exactly once, with no SQL fragment fields."
+    },
+    "SequenceResetOperand": {
+      "type": "Schema/Sequence/Alter/SequenceResetOperand",
+      "role": "Select the native default operand of one bound or one restart.",
+      "structure": "One closed default case used at one of the three explicitly typed slots.",
+      "conditions": "The parent slot assigns the interpretation.",
+      "meaning": "The bound slots recalculate their native default. The restart slot reads the effective recorded start. If an AS assignment detects that the previously recorded bound equals the old width boundary, a reset uses the corresponding new type limit even when the resulting increment has the opposite sign.",
+      "sql": "The respective slot emits NO MINVALUE, NO MAXVALUE or RESTART."
+    },
+    "ClearSequenceOwner": {
+      "type": "Schema/Sequence/Alter/ClearSequenceOwner",
+      "role": "Remove the previously established owner-column dependency.",
+      "structure": "One closed clear-ownership case.",
+      "conditions": "The field is different from omission and a resolved named owner.",
+      "meaning": "Detach an ordinary automatic owning-column dependency, subject to the native constraints on internal identity dependencies.",
+      "sql": "Emit OWNED BY NONE."
+    }
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ],
+  "finite": {
+    "roles": [
+      "local",
+      "other",
+      "temporary",
+      "missing-scoped",
+      "missing-bare",
+      "missing-namespace"
+    ],
+    "assignments": [
+      "restart-at-start",
+      "explicit-restart",
+      "start-and-restart",
+      "numeric-configuration",
+      "reset-bounds",
+      "owner-link",
+      "owner-clear"
+    ],
+    "guard": [
+      false,
+      true
+    ],
+    "transactional": [
+      false,
+      true
+    ],
+    "bound": "168 product coordinates per release. Require 126 analyzed and 126 direct accepts, 42 typed unguarded absent refusals from each route, and a native SQL witness for each refused coordinate."
+  },
+  "exploration": {
+    "seeds": [
+      173,
+      49811,
+      59029
+    ],
+    "casesPerSeed": 17,
+    "directCasesPerSeed": 17,
+    "timeoutSecondsPerRelease": 210,
+    "allowedExclusions": [],
+    "structure": "Construct changing combinations of type, signed bounds, increment, cache, start, restart, cycling and ownership. Vary omitted versus default operands, written option order, pre-state, evaluated and unevaluated references, exact source selection, and rollback. Include a resolved signed increment in the extra seed case and vary its value, relation, cached state and companion restart and cache.",
+    "originalCasesPerSeed": 16
+  },
+  "observations": [
+    "Identity and placement, type, exact parameter values, tuple state, last generated value, next values, and cache and wrap behavior.",
+    "Distinguish a file rewrite and rollback from an option update that preserves the file. Check referencing defaults, owning-column position, dependency replacement and removal.",
+    "Use equivalent external catalog, authorization and sequence runtime state for each observation. Preserve native failures caused by current bounds or existing dependencies and preserve the no-op notice before absent targets inspect options.",
+    "Record the physical temporary namespace name and OID selected by pg_my_temp_schema() in each phase. An ownership coordinate maps to pg_temp only when its physical namespace is that exact temporary namespace."
+  ],
+  "negative": [
+    "Duplicate option slots, zero increments, and nonpositive cache.",
+    "Explicit bounds in an invalid order, a bound outside explicit type storage, and an explicit start or restart outside a known bound.",
+    "Missing or forbidden owning column, cross-namespace resolved owner, and identity-only sequence name on a present source.",
+    "Foreign database and wrong-kind selector, open absence without closure, unguarded absence, no effective changes for a present source, and an absent source with change operands."
+  ],
+  "faults": [
+    "Move the same option assignments to the same-named decoy source.",
+    "Use the explicit recorded start assignment as a restart when it was not requested.",
+    "Drop an explicitly changed role whose previous value is observably different.",
+    "Remove the guard from an absent source."
+  ],
+  "open": [
+    "ALTER SEQUENCE SET LOGGED or UNLOGGED and OWNER TO are separate statement roles.",
+    "Historical ALTER TABLE spellings and identity sequence modification are separate grammar cases."
+  ],
+  "trust": [
+    "Role binding requires declared namespaces and relation identity. Current mutable generator settings and cached sequence values belong to the runtime database state.",
+    "The fixed native sequence state observation and libpq diagnostic forms are checked separately on PostgreSQL 16.6 and 17.2."
+  ],
+  "revises": "postgres-reconfigure-sequence-v4.json",
+  "changeFromV1": "Add both extreme-bound precedence witnesses measured on PostgreSQL 16.6 and 17.2. Preserve the original finite product, seeds, budget, fault obligations, and exclusion policy.",
+  "edges": [
+    "Old SMALLINT maximum equals its type maximum. AS INTEGER INCREMENT -1 NO MAXVALUE retains the new type maximum 2147483647 and admits a positive START.",
+    "Old SMALLINT minimum equals its type minimum. AS INTEGER INCREMENT 1 NO MINVALUE retains the new type minimum -2147483648 and admits a negative START."
+  ],
+  "changeFromV2": "Name the public reset operand consistently with the PHP type naming rules. Preserve all evaluation rules and fixed observations.",
+  "changeFromV3": "Fix the observation of a temporary owner coordinate by recording the active backend namespace OID and name. Compare the checked pg_temp alias against exactly that namespace. Preserve all role, case and fault inventories.",
+  "changeFromV4": "Preserve every first sixteen generated cases and append one resolved signed-increment witness per seed and construction path. Keep the fixed 210-second deadline, mandatory assignment-role coverage, finite product, observations and exclusions."
+}
