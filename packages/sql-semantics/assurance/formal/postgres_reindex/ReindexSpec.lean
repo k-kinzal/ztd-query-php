@@ -92,7 +92,9 @@ def payload (head : Head) (text : Text) : Option Target := do
       | _ => none
     | _ => none
   else
-    if tail = [] then some (.one first) else none
+    match tail with
+    | [] => some (.one first)
+    | _ => none
 
 def identify (text : Text) : Option (Head × Target) :=
   match consumeHead text with
