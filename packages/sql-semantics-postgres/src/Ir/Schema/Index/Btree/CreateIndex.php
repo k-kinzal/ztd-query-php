@@ -54,7 +54,7 @@ final class CreateIndex implements SemanticsIR
         public readonly bool $nullsNotDistinct = false,
         public readonly bool $concurrently = false,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
-        public readonly NullIndexPredicate|IndexTruthTest|IndexBooleanPredicate|null $predicate = null,
+        public readonly NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate|null $predicate = null,
     ) {
         Check::input($table->kind === ExternalRelationKind::BaseTable && !IndexSchemas::system($table->schema->value)
             && !IndexSchemas::sessionInternal($table->schema->value), 'A B-tree needs a resolved ordinary application or temporary table.');

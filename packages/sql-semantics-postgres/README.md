@@ -57,6 +57,8 @@ Combine these conditions with `AND`, `OR` and `NOT`. Each `IndexBooleanPredicate
 
 For declared Boolean columns, `IndexTruthTest` also represents all six `IS [NOT] TRUE`, `IS [NOT] FALSE` and `IS [NOT] UNKNOWN` forms. Use `WHERE ready IS NOT FALSE` to include the true and NULL states in a partial index. The root checks that the selected physical column has native Boolean type.
 
+`IndexBooleanColumn` represents a Boolean field as written in `WHERE ready` or `WHERE NOT ready`. A plain field can evaluate to unknown. It retains its role through logical composition and SQL rendering, so callers can use the same partial index predicate for `ON CONFLICT` inference.
+
 A persistent heap `CREATE MATERIALIZED VIEW` returns `Ir\Schema\View\CreateMaterializedView` with its effective ordered heading, checked defining query and explicit initial population policy. `REFRESH MATERIALIZED VIEW` returns `Ir\Schema\View\RefreshMaterializedView` for a resolved materialized relation. Include the target's declaration in the context when analyzing a refresh. `WITH NO DATA` makes the snapshot unscannable until a populated refresh. Concurrent refresh and custom storage settings are outside this complete IR domain.
 
 `CREATE TABLE AS` returns `Ir\Schema\Query\CreateTableAs` for a persistent native heap table. It preserves the resolved name and defining query, the ordered catalog heading, optional collision handling and logged or unlogged storage. `WITH DATA` copies the query's rows once. `WITH NO DATA` creates an empty writable table with the same heading. Temporary targets, custom storage and commit actions are outside this complete IR domain.

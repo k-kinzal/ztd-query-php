@@ -3,6 +3,7 @@
 from itertools import product
 
 from postgres_drop_index_cases import qualified, quoted
+from postgres_index_inference import infer_conflict
 from run import require
 
 SOURCE = "orders"
@@ -67,6 +68,8 @@ def route_case(tag, scope, concurrently, transaction, guard, occupied):
 def predicate_sql(predicate, field):
     if len(predicate) == 2:
         slot, test = predicate
+        if test == "column":
+            return "(" + field(slot) + ")"
         if isinstance(test, str):
             return "(" + field(slot) + " " + test + ")"
         return "(" + field(slot) + (" IS NOT NULL)" if test else " IS NULL)")
@@ -133,23 +136,37 @@ def analyzed(item, *, unqualified=False):
             "schemaPath": PATH, "declarations": declarations(item)}
 
 
-def qualifies(predicate, row):
+def predicate_value(predicate, row):
     if predicate is None:
         return True
     if len(predicate) == 2:
         slot, test = predicate
+        if test == "column":
+            cell = row[slot]
+            require(cell is None or type(cell) is bool, "postgres-btree-oracle-boolean-column", [predicate, row])
+            return cell
         if isinstance(test, str):
             prefix, value = test.rsplit(" ", 1)
             require(prefix in ("IS", "IS NOT") and value in TRUTH_VALUES, "postgres-btree-oracle-truth-test", test)
             return (row[slot] is TRUTH_VALUES[value]) == (prefix == "IS")
         return (row[slot] is not None) == test
     operator, left, right = predicate
+    one = predicate_value(left, row)
     if operator == "NOT":
-        return not qualifies(left, row)
+        return None if one is None else not one
+    two = predicate_value(right, row)
     if operator == "AND":
-        return all(qualifies(side, row) for side in (left, right))
+        if one is False or two is False:
+            return False
+        return None if one is None or two is None else True
     require(operator == "OR", "postgres-btree-oracle-operator", predicate)
-    return any(qualifies(side, row) for side in (left, right))
+    if one is True or two is True:
+        return True
+    return None if one is None or two is None else False
+
+
+def qualifies(predicate, row):
+    return predicate_value(predicate, row) is True
 
 
 def conflicts(keys, rows, nulls_not_distinct, predicate):
@@ -247,6 +264,11 @@ def expected(item):
     }
     if item.get("observeMembership"):
         result["membership"] = [qualifies(index["predicate"], row) for row in item["rows"]]
+    if item.get("observeTruthValues"):
+        result["truthValues"] = [predicate_value(index["predicate"], row) for row in item["rows"]]
+    if "conflictProbe" in item:
+        definition, request, prospective = item["conflictProbe"]
+        result["inference"] = infer_conflict(definition, request, qualifies(index["predicate"], prospective))
     return result
 
 

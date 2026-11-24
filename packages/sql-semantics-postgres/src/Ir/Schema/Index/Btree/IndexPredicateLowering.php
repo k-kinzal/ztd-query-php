@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 
 /**
- * Resolves a partial B-tree condition to logical nodes and two-valued column tests.
+ * Resolves a partial B-tree condition to logical nodes, Boolean fields and column tests.
  *
  * @visibility SqlSemantics
  */
@@ -33,8 +33,10 @@ final class IndexPredicateLowering
      *
      * @throws InvalidConstruction When the predicate does not use a physical column
      */
-    public function lower(BoundStatement $operation, CreateIndex $statement): NullIndexPredicate|IndexTruthTest|IndexBooleanPredicate|null
-    {
+    public function lower(
+        BoundStatement $operation,
+        CreateIndex $statement,
+    ): NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate|null {
         return $statement->where === null ? null : $this->node($operation, $statement, $statement->where);
     }
 
@@ -42,8 +44,11 @@ final class IndexPredicateLowering
      * Preserves the parsed operator, grouping and ordered operands.
      * @throws InvalidConstruction When a terminal is outside the checked column roles
      */
-    public function node(BoundStatement $operation, CreateIndex $statement, Scalar $condition): NullIndexPredicate|IndexTruthTest|IndexBooleanPredicate
-    {
+    public function node(
+        BoundStatement $operation,
+        CreateIndex $statement,
+        Scalar $condition,
+    ): NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
         }
@@ -60,6 +65,9 @@ final class IndexPredicateLowering
         }
         if ($condition instanceof BooleanTest) {
             return new IndexTruthTest($this->slot($operation, $statement, $condition->operand), TruthOperator::from($condition->kind->value));
+        }
+        if ($condition instanceof ColumnReference) {
+            return new IndexBooleanColumn($this->slot($operation, $statement, $condition));
         }
         Check::input($condition instanceof NullTest, 'A partial B-tree needs a direct scalar column NULL test.');
 

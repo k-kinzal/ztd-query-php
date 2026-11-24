@@ -857,6 +857,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $truth->predicate->slot, $truth->predicate->operator->value,
                 $truth->toString(), $copy->toString(), $test == $truth->predicate,
             ];
+            $field = $semantics->analyze('CREATE INDEX "field probe" ON ledger (wide) WHERE NOT ledger.ready', $activeContext);
+            $value = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn(2);
+            $negated = new $node($logical::Not, $value);
+            $detachedField = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $field->table, $field->name, $field->keys, release: $field->release, predicate: $negated,
+            );
+            $details['postgresIndexBooleanValue'] = [
+                $field->predicate->operator->value, $field->predicate->left->slot,
+                $field->toString(), $detachedField->toString(), $negated == $field->predicate,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
             [$target, $absence] = $result->targets;

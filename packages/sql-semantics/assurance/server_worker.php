@@ -1000,12 +1000,15 @@ function observePostgresTruncate(object $value): array
         'truncateTable' => ['targets' => $targets, 'restart' => $value->restartIdentity, 'cascade' => $value->cascade]];
 }
 
-function constructPostgresIndexPredicate(?array $predicate): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate|null
+function constructPostgresIndexPredicate(?array $predicate): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate|null
 {
     if ($predicate === null) {
         return null;
     }
     if (is_int($predicate[0])) {
+        if ($predicate[1] === 'column') {
+            return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn($predicate[0]);
+        }
         if (is_string($predicate[1])) {
             return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest(
                 $predicate[0], \SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator::from($predicate[1]),
@@ -1021,7 +1024,7 @@ function constructPostgresIndexPredicate(?array $predicate): \SqlSemantics\Platf
     );
 }
 
-function observePostgresIndexPredicate(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate|null $predicate): ?array
+function observePostgresIndexPredicate(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate|null $predicate): ?array
 {
     if ($predicate === null) {
         return null;
@@ -1031,6 +1034,9 @@ function observePostgresIndexPredicate(\SqlSemantics\Platform\PostgreSql\Ir\Sche
     }
     if ($predicate instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest) {
         return [$predicate->slot, $predicate->operator->value];
+    }
+    if ($predicate instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn) {
+        return [$predicate->slot, 'column'];
     }
 
     return [

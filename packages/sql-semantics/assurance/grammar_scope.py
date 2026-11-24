@@ -534,6 +534,13 @@ def inventory(root):
                     if rule == "IndexStmt" or alternative in truth_filters:
                         related[alternative] = (*related.get(alternative, ()), "postgres-index-truth-tests-v1.json")
         if postgres:
+            native_column_predicates = {"c_expr: columnref", "columnref: ColId", "columnref: ColId indirection",
+                                        "a_expr: a_expr AND a_expr", "a_expr: a_expr OR a_expr", "a_expr: NOT a_expr"}
+            for rule in ("IndexStmt", "c_expr", "columnref", "a_expr"):
+                for alternative in rules.get(rule, ()):
+                    if rule == "IndexStmt" or alternative in native_column_predicates:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-index-boolean-values-v1.json")
+        if postgres:
             values_signatures = {
                 "simple_select: values_clause",
                 "values_clause: VALUES ( expr_list )",

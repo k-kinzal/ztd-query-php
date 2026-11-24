@@ -5,7 +5,8 @@ from platform import python_version
 import re
 import sys
 
-from postgres_create_btree_cases import declarations, qualified, quoted
+from postgres_create_btree_cases import declarations, predicate_sql, qualified, quoted
+from postgres_index_inference import EXPRESSIONS
 from postgres_libpq import LIB, Session
 from run import require
 
@@ -41,8 +42,9 @@ def data_literal(value):
     return "'" + value.replace("'", "''") + "'"
 
 
-def admit_condition(expression, fields):
-    atom = rf"{fields} IS (?:NOT )?(?:NULL|TRUE|FALSE|UNKNOWN)"
+def admit_condition(expression, fields, allow_bare=False):
+    test = r" IS (?:NOT )?(?:NULL|TRUE|FALSE|UNKNOWN)"
+    atom = rf"{fields}(?:{test})?" if allow_bare else fields + test
     token = rf"(?:{atom}|AND|OR|NOT|[()]| )"
     return re.fullmatch(rf"{token}+", expression) is not None
 
@@ -62,7 +64,9 @@ def admitted_command(command, data):
     pattern = rf"CREATE (?:UNIQUE )?INDEX (?:CONCURRENTLY )?(?:IF NOT EXISTS )?{ident} ON (?:ONLY )?{target} USING btree {key_list}{payload}(?: NULLS (?:NOT )?DISTINCT)?{where}"
 
     match = re.fullmatch(pattern, command)
-    if match is not None and (match["condition"] is None or admit_condition(match["condition"], field)):
+    if match is not None and (
+        match["condition"] is None or admit_condition(match["condition"], field, trial.get("observeTruthValues"))
+    ):
         return match
     return None
 
@@ -100,19 +104,20 @@ def observed_predicate(expression):
     return [name, form[2] is not None]
 
 
-def native_membership(db, trial, expression):
+def native_truth_values(db, trial, expression):
     _, _, columns, _, _ = trial["createBtree"]["table"]
     if expression is None:
         return [True] * len(trial["rows"])
     fields = "(?:" + "|".join(re.escape(form) for name in columns for form in (quoted(name), name)
                              if form.startswith('"') or re.fullmatch(r"[a-z_][a-z_0-9]*", form)) + ")"
-    require(admit_condition(expression, fields), "postgres-btree-native-predicate-form", expression)
+    nullable = trial.get("observeTruthValues")
+    require(admit_condition(expression, fields, nullable), "postgres-btree-native-predicate-form", expression)
     table, _, order = chosen(trial)
     raw = db.execute(f"SELECT pg_catalog.json_agg(({expression}) ORDER BY {order}) FROM {table}")[0][0]
-    membership = json.loads(raw)
-    require(len(membership) == len(trial["rows"]) and all(type(value) is bool for value in membership),
-            "postgres-btree-native-predicate-result", membership)
-    return membership
+    truth = json.loads(raw)
+    require(len(truth) == len(trial["rows"]) and all(type(value) is bool or (nullable and value is None) for value in truth),
+            "postgres-btree-native-predicate-result", truth)
+    return truth
 
 
 def indexed(db, raw, trial, scope):
@@ -126,7 +131,7 @@ def indexed(db, raw, trial, scope):
 
     predicate = row[15]
     if predicate is not None:
-        predicate = (native_membership(db, trial, predicate) if trial.get("observeMembership")
+        predicate = ([value is True for value in native_truth_values(db, trial, predicate)] if trial.get("observeMembership")
                      else observed_predicate(predicate))
     return {
         "schema": "pg_temp" if scope == "pg_temp" and schema.startswith("pg_temp_") else schema,
@@ -195,9 +200,28 @@ def observe_membership(db, trial, condition):
     witness = qualified(scope, name)
     expression = db.execute("SELECT pg_catalog.pg_get_expr(indpred, indrelid, false) FROM pg_catalog.pg_index "
                             f"WHERE indexrelid=pg_catalog.to_regclass({data_literal(witness)})")[0][0]
-    result = native_membership(db, trial, expression)
+    result = native_truth_values(db, trial, expression)
     db.execute("ROLLBACK")
     return result
+
+
+def observe_conflict_inference(db, trial):
+    index = trial["createBtree"]
+    _, request, row = trial["conflictProbe"]
+    require(len(index["keys"]) == 1 and not trial["transaction"], "postgres-inference-fixture-layout")
+    table, _, _ = chosen(trial)
+    columns = index["table"][2]
+    key = quoted(columns[index["keys"][0][0]])
+    condition = predicate_sql(EXPRESSIONS[request], lambda slot: quoted(columns[slot]))
+    values = ", ".join(map(literal, row))
+    db.execute("BEGIN")
+    result = db.run(
+        f"WITH written AS (INSERT INTO {table} VALUES ({values})"
+        f" ON CONFLICT ({key}) WHERE {condition} DO NOTHING RETURNING {key})"
+        " SELECT pg_catalog.count(*) FROM written"
+    )
+    db.execute("ROLLBACK")
+    return {"sqlState": result["sqlState"], "insertCount": None if result["rows"] is None else int(result["rows"][0][0])}
 
 
 def observe(db, data):
@@ -217,6 +241,7 @@ def observe(db, data):
     after = snapshot(db, trial) if success or not active else None
     probes_available = success or (trial.get("probeFailedBuild") and not active and result["sqlState"] == "23505")
     probe = detect_conflict(db, trial) if probes_available else None
+    inference = observe_conflict_inference(db, trial) if "conflictProbe" in trial and success else None
     if active:
         db.execute("ROLLBACK")
     observed = {
@@ -225,7 +250,11 @@ def observe(db, data):
         **{name: result[name] for name in ("sqlState", "command", "notices")},
     }
     if membership is not None:
-        observed["membership"] = membership
+        observed["membership"] = [value is True for value in membership]
+        if trial.get("observeTruthValues"):
+            observed["truthValues"] = membership
+    if "conflictProbe" in trial:
+        observed["inference"] = inference
     return observed
 
 

@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest;
@@ -95,6 +96,18 @@ final class IndexPredicateLoweringTest extends TestCase
             new IndexBooleanPredicate(LogicalOperator::And, new IndexTruthTest(1, TruthOperator::IsUnknown), new IndexTruthTest(2, TruthOperator::IsNotTrue)),
             $index->predicate,
         );
+        self::assertEquals($index, $analyzer->analyze($index->toString(), $context));
+    }
+
+    public function testLowerRetainsABareBooleanFieldAndItsNegation(): void
+    {
+        $analyzer = new Semantics();
+        $context = $analyzer->context(['CREATE TABLE public.orders (id integer, ready boolean)']);
+        $index = $analyzer->analyze('CREATE INDEX selected ON orders (id) WHERE NOT public.orders.ready', $context);
+
+        self::assertInstanceOf(CreateIndex::class, $index);
+        self::assertEquals(new IndexBooleanPredicate(LogicalOperator::Not, new IndexBooleanColumn(1)), $index->predicate);
+        self::assertStringEndsWith(' WHERE (NOT ("ready"))', $index->toString());
         self::assertEquals($index, $analyzer->analyze($index->toString(), $context));
     }
 }

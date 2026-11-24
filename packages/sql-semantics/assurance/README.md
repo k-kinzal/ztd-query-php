@@ -289,6 +289,9 @@ The [PostgreSQL composed partial-index contract](postgres-boolean-index-predicat
 
 The [PostgreSQL index truth-test contract](postgres-index-truth-tests-v1.json) covers all six native tests of two independently nullable Boolean fields and checks bound column identity under each supported qualification. It compares the stored truth mask, uniqueness and a prospective row with a repeated key and different Boolean values, including after a failed build. Run `run_server_postgres_index_truth_tests.py` for both pinned releases and replay with `combine_server_postgres_index_truth_tests_evidence.py`.
 
+The [PostgreSQL nullable Boolean index contract](postgres-index-boolean-values-v1.json) checks the exact true, false and unknown states of bare fields and their logical parents. It also checks the effects of `ON CONFLICT` for the fixed arbiter matrix, including callers that distinguish a bare field from `IS TRUE` even when both predicates select the same rows. Run `run_server_postgres_index_boolean_values.py` on both releases and replay with `combine_server_postgres_index_boolean_values_evidence.py`.
+
+
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.
 
 The [MySQL truncation contract](mysql-truncate-v2.json) checks exact persistent and session-owned targets. Two connections observe the namespace distinction, matching declarations, referential restrictions, generated identities and transaction effects. Run `run_server_mysql_truncate.py` and `combine_server_mysql_truncate_evidence.py` on all nine pinned releases.

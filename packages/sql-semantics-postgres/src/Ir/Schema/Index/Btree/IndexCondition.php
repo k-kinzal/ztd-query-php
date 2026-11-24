@@ -18,15 +18,17 @@ final class IndexCondition
     /**
      * Checks all leaf slots at the complete index boundary.
      */
-    public static function check(TableSource $table, NullIndexPredicate|IndexTruthTest|IndexBooleanPredicate $predicate): void
-    {
+    public static function check(
+        TableSource $table,
+        NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate $predicate,
+    ): void {
         $pending = [$predicate];
         while ($pending !== []) {
             $node = array_pop($pending);
             if ($node instanceof NullIndexPredicate) {
                 Check::input(isset($table->columns[$node->slot]), 'A partial B-tree predicate must refer to a column of the indexed table.');
-            } elseif ($node instanceof IndexTruthTest) {
-                Check::input(($table->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean, 'An index truth test needs a Boolean column of the indexed table.');
+            } elseif ($node instanceof IndexTruthTest || $node instanceof IndexBooleanColumn) {
+                Check::input(($table->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean, 'A partial index Boolean operand needs a Boolean column of the indexed table.');
             } else {
                 $pending[] = $node->left;
                 if ($node->right !== null) {
@@ -39,8 +41,10 @@ final class IndexCondition
     /**
      * Emits an explicitly grouped WHERE clause from the checked roles.
      */
-    public static function sql(TableSource $table, NullIndexPredicate|IndexTruthTest|IndexBooleanPredicate $predicate): string
-    {
+    public static function sql(
+        TableSource $table,
+        NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate $predicate,
+    ): string {
         $pending = [$predicate];
         $sql = ' WHERE ';
         while ($pending !== []) {
@@ -51,6 +55,8 @@ final class IndexCondition
                 $sql .= '(' . $table->columns[$node->slot]->quoted() . ($node->negated ? ' IS NOT NULL)' : ' IS NULL)');
             } elseif ($node instanceof IndexTruthTest) {
                 $sql .= '(' . $table->columns[$node->slot]->quoted() . ' ' . $node->operator->value . ')';
+            } elseif ($node instanceof IndexBooleanColumn) {
+                $sql .= '(' . $table->columns[$node->slot]->quoted() . ')';
             } elseif ($node->right === null) {
                 $sql .= '(' . $node->operator->value . ' ';
                 $pending[] = ')';

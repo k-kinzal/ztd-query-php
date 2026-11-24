@@ -110,6 +110,7 @@ CONTRACTS = {
     "postgres-partial-btree-v1.json": "b0af12a3006af20f6a3f304251e134b44816c8952c3f0cada6b54ed9eeb9c876",
     "postgres-boolean-index-predicate-v1.json": "b9f964d7e2d8b0102584a0ee0322140340942beea0efe9ddf97ef168da0474e5",
     "postgres-index-truth-tests-v1.json": "7c0995045b9c80f57461da353da10591ccf776d996e6d0bfded88a519fe662b2",
+    "postgres-index-boolean-values-v1.json": "51a082173a7d404983a9ea5fb251ffceeb3b4e64f56c1a3960aa88ef2e93a374",
     "postgres-create-btree-v1.json": "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629",
     "postgres-drop-index-v1.json": "d26bab1348dec92d608759e02d68f184ee28461aadbaf015e836f911dced5faa",
     "postgres-drop-view-v1.json": "f38844b5c9ed143cbd9b46e344f721b384c5ce9a969ec85d08e6319e95e8cd4d",
