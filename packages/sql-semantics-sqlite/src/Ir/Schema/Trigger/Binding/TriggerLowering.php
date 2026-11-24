@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerPlacement;
@@ -27,6 +28,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedTriggerDelete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedTriggerUpdate;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger as ParsedTrigger;
 
 /**
@@ -81,7 +83,7 @@ final class TriggerLowering
     /**
      * Lowers each supported action in written order.
      *
-     * @return non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete>
+     * @return non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise>
      * @throws InvalidConstruction When the action has no checked trigger representation
      */
     public function program(BoundStatement $operation, ParsedTrigger $statement, TableSource $watched): array
@@ -89,11 +91,13 @@ final class TriggerLowering
         $actions = [];
         $insert = new TriggerStepLowering();
         $mutation = new TriggerMutationLowering();
+        $raise = new TriggerRaiseLowering();
         foreach ($statement->steps as $step) {
             $actions[] = match (true) {
+                $step instanceof ParsedSelect => $raise->lower($operation, $statement->table, $watched, $step),
                 $step instanceof InsertRows => $insert->lower($operation, $statement->table, $watched, $step),
                 $step instanceof ParsedTriggerUpdate, $step instanceof ParsedTriggerDelete => $mutation->lower($operation, $statement->table, $watched, $step),
-                default => throw new InvalidConstruction('A checked trigger body requires INSERT VALUES, UPDATE or DELETE actions.'),
+                default => throw new InvalidConstruction('A checked trigger body requires INSERT VALUES, UPDATE, DELETE or SELECT RAISE actions.'),
             };
         }
 

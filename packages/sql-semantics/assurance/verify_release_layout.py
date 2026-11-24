@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v108.json"
-CONTRACT = "848c46d130e01372ff79f32caa653cc07bfebfdf9510cfb054337580c45e42a2"
+CONTRACT_NAME = "release-layout-v109.json"
+CONTRACT = "26584760e2cda842ab21a24a170e9abe120be4a181482cad4f3969ef0de8bd81"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -647,6 +647,10 @@ def verify_probe(raw, catalog):
                      '(NULL, OLD."payload"); END')
             require(item.get("batchTrigger") == ["fail", [[1, 0], [1, 0]], batch, batch],
                     "installed-sqlite-trigger-batch-mismatch", item)
+            interruption = ('CREATE TRIGGER "archive"."interrupt_journal" AFTER UPDATE ON "archive"."watched" '
+                            'BEGIN SELECT RAISE(FAIL, OLD."payload") WHERE NEW."payload" IS NOT NULL; END')
+            require(item.get("interruptTrigger") == ["FAIL", "OLD", 1, "NEW", 1, False, interruption, interruption],
+                    "installed-sqlite-trigger-raise-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Cache\\CacheSize"):
             expected = 'PRAGMA "archive".cache_size(-128)'
             require(item.get("cacheSize") == ["archive", -128, expected] and item["sql"] == expected,

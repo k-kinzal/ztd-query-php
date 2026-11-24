@@ -586,6 +586,15 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Trigger\\Removal\\TriggerReference'] = $methods['Schema\\Trigger\\Removal\\MissingTrigger'] = ['__construct', 'quoted'];
     $roots[] = 'Schema\\Trigger\\DropTrigger';
     $internal[] = 'Schema\\Trigger\\Binding\\DropTriggerLowering';
+    $properties['Schema\\Trigger\\Program\\TriggerRaise'] = [
+        'policy' => ['Schema\\Trigger\\Program\\TriggerRaisePolicy'],
+        'message' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Schema\\Trigger\\TriggerField', 'null'],
+        'where' => ['?Schema\\Trigger\\TriggerCondition'],
+    ];
+    $methods['Schema\\Trigger\\Program\\TriggerRaise'] = ['__construct'];
+    $properties['Schema\\Trigger\\Program\\TriggerRaisePolicy'] = $methods['Schema\\Trigger\\Program\\TriggerRaisePolicy'] = [];
+    $enumCases['Schema\\Trigger\\Program\\TriggerRaisePolicy'] = ['Ignore' => 'IGNORE', 'Fail' => 'FAIL', 'Abort' => 'ABORT', 'Rollback' => 'ROLLBACK'];
+    $internal[] = 'Schema\\Trigger\\Binding\\TriggerRaiseLowering';
     $mutationPrefix = 'Schema\\Trigger\\Mutation\\';
     $mutationFilter = [$mutationPrefix . 'TriggerEquality', $mutationPrefix . 'TriggerTargetNullTest', 'Schema\\Trigger\\TriggerCondition', 'null'];
     $properties[$mutationPrefix . 'TriggerAssignment'] = [
@@ -1394,8 +1403,8 @@ try {
             ['sqlite-flag-pragmas-binding-v4.json', '7947b1414c41c211ca79ae102b8e576afdc7b91effcf5539f6aa7dc18c1ddb61', 'Flag pragma binding'],
             ['sqlite-folded-binding-sources-v11.json', 'c0878a2e8b2d4c0f27659feba880e10cccd398f4d13d2ba4063d630ee495003d', 'Folded binding'],
             ['sqlite-connection-commands-binding-v1.json', '4e048dce7881dd175ff0be0b027010a69e1b8c4d495e09f4d7329bfb7073aed9', 'Connection operand binding'],
-            ['sqlite-audit-triggers-binding-v4.json', 'fc61876080256375f095a8bcd1ca1aa39f0778d2501aa9d81d5d8a3ff6906eff', 'SQLite trigger binding'],
-            ['sqlite-drop-triggers-binding-v3.json', '7dc082cb9ceb3ec053d08609bdad7435705211d37ade3e71b7a78ca0eb29d20d', 'SQLite trigger removal binding'],
+            ['sqlite-audit-triggers-binding-v5.json', '25a87a37c6dcaff9704a9cb2c2d014855eef17e89c97b1545bee43d28da28f90', 'SQLite trigger binding'],
+            ['sqlite-drop-triggers-binding-v4.json', 'f19956198c9bfaf7146f83dc80f9aea9550d4d6b11f182631ef847434cee16a3', 'SQLite trigger removal binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1606,6 +1615,7 @@ try {
                 'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
                 'Schema\\Trigger\\Binding\\DropTriggerLowering' => 'Schema\\Trigger\\DropTrigger',
+                'Schema\\Trigger\\Binding\\TriggerRaiseLowering' => 'Schema\\Trigger\\Program\\TriggerRaise',
                 'Maintenance\\ReindexLowering' => 'Maintenance\\Reindex',
                 'Maintenance\\AnalyzeLowering' => 'Maintenance\\Analyze',
                 'Maintenance\\FlagPragmaLowering' => 'Maintenance\\FlagPragma',

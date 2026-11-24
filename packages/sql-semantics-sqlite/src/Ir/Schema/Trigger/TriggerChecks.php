@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerActionFields;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -88,7 +89,7 @@ final class TriggerChecks
 
     /**
      * Checks native destination binding and the scope of all row operand uses.
-     * @param non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete> $program The ordered actions
+     * @param non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise> $program The ordered actions
      * @throws InvalidConstruction When the program contradicts its native scope or layout
      */
     public function program(array $program, TriggerPlacement $placement, TableSource $watched, TriggerEvent $event): void
@@ -99,6 +100,10 @@ final class TriggerChecks
         $scopes = [];
         $destinations = [];
         foreach ($program as $step) {
+            if ($step instanceof TriggerRaise) {
+                $this->raiseImages($step, $event, $watched);
+                continue;
+            }
             $table = $step->destination->table;
             $identity = $this->identity($table);
             $scope = $table->schema->key();
@@ -138,6 +143,19 @@ final class TriggerChecks
                     $this->field($field->value, $event, $watched);
                 }
             }
+        }
+    }
+
+    /**
+     * Verifies the watched images used in a control action.
+     */
+    public function raiseImages(TriggerRaise $step, TriggerEvent $event, TableSource $watched): void
+    {
+        if ($step->message instanceof TriggerField) {
+            $this->field($step->message, $event, $watched);
+        }
+        if ($step->where !== null) {
+            $this->field($step->where->field, $event, $watched);
         }
     }
 

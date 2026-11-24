@@ -77,6 +77,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-drop-triggers-evidence", "sqlite-drop-triggers-v4.json", 364, 832, 228, 8),
     Domain("semantics-ir-sqlite-trigger-mutations-evidence", "sqlite-trigger-mutations-v2.json", 2160, 4472, 23, 12),
     Domain("semantics-ir-sqlite-trigger-insert-batches-evidence", "sqlite-trigger-insert-batches-v1.json", 576, 1248, 13, 9),
+    Domain("semantics-ir-sqlite-trigger-raise-evidence", "sqlite-trigger-raise-v1.json", 936, 1968, 14, 10),
     Domain("semantics-ir-sqlite-drop-column-evidence", "sqlite-drop-column-v3.json", 1440, 1523, 20, 5),
     Domain("semantics-ir-sqlite-add-generated-column-evidence", "sqlite-add-generated-column-v1.json", 1152, 1231, 13, 6),
     Domain("semantics-ir-sqlite-generated-columns-evidence", "sqlite-generated-columns-v2.json", 96, 211, 8, 4),

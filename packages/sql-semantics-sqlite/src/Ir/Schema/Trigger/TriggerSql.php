@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerMutationSql;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 /**
@@ -46,6 +47,7 @@ final class TriggerSql
         $mutation = new TriggerMutationSql();
         foreach ($trigger->program as $step) {
             $steps[] = match (true) {
+                $step instanceof TriggerRaise => $this->raise($step, $watched),
                 $step instanceof TriggerInsert => $this->insertion($step, $watched),
                 $step instanceof TriggerUpdate, $step instanceof TriggerDelete => $mutation->action($step, $watched),
             } . ';';
@@ -77,6 +79,19 @@ final class TriggerSql
 
         return 'INSERT' . $policy . ' INTO ' . $target->table->quoted()
             . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $rows);
+    }
+
+    /**
+     * Emits the native control policy, checked message and optional row-image test.
+     */
+    public function raise(TriggerRaise $step, TableSource $watched): string
+    {
+        $condition = $step->where;
+        $message = $step->message === null ? '' : ', ' . $this->value($step->message, $watched);
+        $filter = $condition === null ? '' : ' WHERE ' . $this->field($condition->field, $watched)
+            . ($condition->isNull ? ' IS NULL' : ' IS NOT NULL');
+
+        return 'SELECT RAISE(' . $step->policy->value . $message . ')' . $filter;
     }
 
     /**

@@ -1499,6 +1499,26 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             );
             $details['batchTrigger'] = [$insert->conflict->value, array_map(static fn ($tuple) => $tuple->columns(), $tuples),
                 $batch->toString(), $batchCopy->toString()];
+            $interrupt = $semantics->analyze(
+                'CREATE TRIGGER archive.interrupt_journal AFTER UPDATE ON watched BEGIN SELECT RAISE(FAIL, OLD.payload) WHERE NEW.payload IS NOT NULL; END',
+                $activeContext,
+            );
+            if (!$interrupt instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger
+                || !$interrupt->program[0] instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise) {
+                throw new RuntimeException('The installed trigger interruption was not published.');
+            }
+            $control = $interrupt->program[0];
+            if (!$control->message instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField || $control->where === null) {
+                throw new RuntimeException('The installed trigger interruption lost its checked image fields.');
+            }
+            $interruptCopy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $interrupt->schema, $interrupt->name, $interrupt->placement, $interrupt->watched,
+                $interrupt->timing, $interrupt->event,
+                [new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise($control->policy, $control->message, $control->where)],
+            );
+            $details['interruptTrigger'] = [$control->policy->value, $control->message->image->value,
+                $control->message->column, $control->where->field->image->value, $control->where->field->column,
+                $control->where->isNull, $interrupt->toString(), $interruptCopy->toString()];
         }
         if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize) {
             $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize($result->schema, $result->amount);

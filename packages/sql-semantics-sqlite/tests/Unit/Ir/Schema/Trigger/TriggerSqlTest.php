@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaisePolicy;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
@@ -59,5 +61,13 @@ final class TriggerSqlTest extends TestCase
         );
 
         self::assertSame('NULL', (new TriggerSql())->value(new \SqlSemantics\Platform\Sqlite\Ir\NullLiteral(), $table));
+    }
+
+    public function testRaiseEmitsThePolicyAndBoundMessage(): void
+    {
+        $table = new TableSource(new Identifier('main'), new Identifier('watched'), [new Identifier('text')]);
+        $action = new TriggerRaise(TriggerRaisePolicy::Abort, new TriggerField(RowImage::Old, 0));
+
+        self::assertSame('SELECT RAISE(ABORT, OLD."text")', (new TriggerSql())->raise($action, $table));
     }
 }

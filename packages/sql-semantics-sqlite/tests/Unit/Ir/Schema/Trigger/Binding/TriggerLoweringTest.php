@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Binding\TriggerLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
@@ -27,6 +28,7 @@ final class TriggerLoweringTest extends TestCase
 
         self::assertInstanceOf(CreateTrigger::class, $result);
         self::assertSame('archive', $result->watched->schema->value);
+        self::assertInstanceOf(TriggerInsert::class, $result->program[0]);
         self::assertSame('archive', $result->program[0]->destination->table->schema->value);
     }
 

@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaisePolicy;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerChecks;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerDestination;
@@ -88,5 +90,14 @@ final class TriggerChecksTest extends TestCase
         (new TriggerChecks())->insertionImages($action, TriggerEvent::Insert, $table);
 
         self::assertSame($field, $action->rows[0]->fields[0]);
+    }
+
+    public function testRaiseImagesRefusesACrossEventMessage(): void
+    {
+        $table = new TableSource(new Identifier('main'), new Identifier('watched'), [new Identifier('id')]);
+        $step = new TriggerRaise(TriggerRaisePolicy::Fail, new TriggerField(RowImage::Old, 0));
+        $this->expectExceptionMessage('available event image and declared watched position');
+
+        (new TriggerChecks())->raiseImages($step, TriggerEvent::Insert, $table);
     }
 }

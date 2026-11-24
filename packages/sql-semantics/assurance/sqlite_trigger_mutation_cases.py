@@ -330,7 +330,7 @@ def negatives():
     step = update["program"][0]
     mask = delete["program"][0]
     yield selected(program=[]), "rejected", "needs a nonempty list of ordered actions"
-    yield selected(program=[{"action": "invalid"}]), "rejected", "contains only resolved ordered mutation actions"
+    yield selected(program=[{"action": "invalid"}]), "rejected", "contains only resolved ordered actions"
     yield selected(program={"1": step}), "rejected", "needs a nonempty list of ordered actions"
     yield selected(program=[{**step, "where": ["local-null", -1, True]}]), "rejected", "field position cannot be negative"
     yield selected(program=[{**step, "where": ["local-null", 4, False]}]), "rejected", LOCAL_ERROR

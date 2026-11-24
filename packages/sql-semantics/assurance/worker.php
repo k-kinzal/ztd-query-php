@@ -152,6 +152,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerVerification;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaisePolicy;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerCondition;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerDestination;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerEvent;
@@ -976,7 +978,7 @@ function directTriggerFilter(?array $input): TriggerEquality|TriggerTargetNullTe
     };
 }
 
-function directTriggerAction(array $input): TriggerInsert|TriggerUpdate|TriggerDelete|NullLiteral
+function directTriggerAction(array $input): TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise|NullLiteral
 {
     return match ($input['action'] ?? 'insert') {
         'insert' => directTriggerInsert($input),
@@ -986,6 +988,11 @@ function directTriggerAction(array $input): TriggerInsert|TriggerUpdate|TriggerD
             directTriggerFilter($input['where']), UpdateConflict::from($input['conflict']),
         ),
         'delete' => new TriggerDelete(new TriggerDestination(source($input['table']), $input['writable']), directTriggerFilter($input['where'])),
+        'raise' => new TriggerRaise(
+            TriggerRaisePolicy::from($input['policy']),
+            $input['message'] === null ? null : triggerOperand($input['message']),
+            $input['where'] === null ? null : new TriggerCondition(triggerField($input['where'][0]), $input['where'][1]),
+        ),
         'invalid' => new NullLiteral(),
     };
 }
@@ -1035,10 +1042,17 @@ function observeTriggerAssignmentOperand(TriggerField|IntegerLiteral|TextLiteral
     };
 }
 
-function observeTriggerAction(TriggerInsert|TriggerUpdate|TriggerDelete $action): array
+function observeTriggerAction(TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise $action): array
 {
     if ($action instanceof TriggerInsert) {
         return observeTriggerInsert($action);
+    }
+    if ($action instanceof TriggerRaise) {
+        return [
+            'action' => 'raise', 'policy' => $action->policy->value,
+            'message' => $action->message === null ? null : observeTriggerAssignmentOperand($action->message),
+            'where' => $action->where === null ? null : [observeTriggerField($action->where->field), $action->where->isNull],
+        ];
     }
     $filter = $action->where;
     return [

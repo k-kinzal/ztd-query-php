@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerActions;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -29,7 +30,7 @@ final class CreateTrigger implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete> The actions in native execution order
+     * @var non-empty-list<TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise> The actions in native execution order
      */
     public readonly array $program;
 
@@ -40,7 +41,7 @@ final class CreateTrigger implements SemanticsIR
 
     /**
      * Validates the absolute trigger placement and all composed program references.
-     * @param list<TriggerInsert|TriggerUpdate|TriggerDelete> $program The trigger actions
+     * @param list<TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise> $program The trigger actions
      * @param list<TriggerUpdateName> $selectors The UPDATE OF selectors, when supplied
      * @throws InvalidConstruction When the trigger composition cannot be represented faithfully
      */

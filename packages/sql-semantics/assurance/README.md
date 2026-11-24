@@ -716,6 +716,8 @@ The SQLite trigger mutation fixture checks ordered INSERT, UPDATE and DELETE act
 
 The SQLite trigger batch fixture distinguishes a single ordered VALUES insertion from separate operations. It checks exact change deltas, typed row state, ordered effects, native constraint failures and caller rollback under inner and outer conflict policies. Run `run_sqlite_trigger_insert_batches.py` with the SQLite fixture options. [SQLite trigger batch contract](sqlite-trigger-insert-batches-v1.json)
 
+The SQLite trigger interruption fixture checks source-free SELECT RAISE actions with NULL guards and checked message values. It compares precise diagnostics, earlier and later trigger effects, the write that activated the trigger and rollback of a separate transaction marker. Run `run_sqlite_trigger_raise.py` with the SQLite fixture options. [SQLite trigger interruption contract](sqlite-trigger-raise-v1.json)
+
 The SQLite trigger removal fixture compares installation identity, schema verification, unaffected sibling definitions, rollback and later firing. For every required missing name in the finite matrix, it compares a native preparation diagnostic with the typed construction refusal. Run `run_sqlite_drop_triggers.py` with the SQLite fixture options. [SQLite trigger removal contract](sqlite-drop-triggers-v4.json)
 
 The constraint index fixture compares the native original and generated absence selectors. It records protected PRIMARY KEY and UNIQUE indexes, including WITHOUT ROWID storage, along with separate direct checks for each watched absence. Run \`run_sqlite_constraint_index_names.py\` using the SQLite fixture options. [SQLite constraint index contract](sqlite-constraint-index-names-v2.json)
