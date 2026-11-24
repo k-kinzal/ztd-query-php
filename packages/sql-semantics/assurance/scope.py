@@ -190,7 +190,7 @@ CONTRACTS = {
     "sqlite-auto-rowid-v1.json": "530a93ca4c873c4560f3401a65d5aeb396a2ff5275881c76c4a089e39e89d4c7",
     "sqlite-create-as-v5.json": "06b5c313bc7d216a77787303c104b7bcc9fb8cab1f494eeaaa922b330ed1a372",
     "sqlite-create-table-v3.json": "a2e7d433392ad397b62f58e5e0dc45f2307c591ad9d59c5317b49362545390c3",
-    "sqlite-drop-column-v2.json": "819f5e655f586aa2494e485461118468e81939a6af8cd5d08ee778f958376050",
+    "sqlite-drop-column-v3.json": "ec3c4a2625f4ecca94d5b40bbbf25ed6394295f4e4f38c69167cab66e78a1fac",
     "sqlite-add-generated-column-v1.json": "606754be160a3039b0a6e8fc2a52314b00f2bc5055ecc7f59a1fd0436c627a60",
     "sqlite-appended-column-checks-v2.json": "d51fd4ee7cda94276cf5e9156ce139a8ca793c1383e2e9f75d0d2e90bd9dd75f",
     "sqlite-appended-implicit-checks-v1.json": "8a3b2d3ffb466f8ca0087ca18bdcebd1a6e448ae2801ee79792bdc1626520e4f",

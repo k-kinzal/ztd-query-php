@@ -75,7 +75,7 @@ RELATED_SQLITE_DOMAINS = {
     "cmd: ALTER TABLE fullname RENAME TO nm": ("sqlite-rename-v4.json",),
     "cmd: ALTER TABLE fullname RENAME kwcolumn_opt nm TO nm": ("sqlite-rename-v4.json",),
     "cmd: ALTER TABLE add_column_fullname ADD kwcolumn_opt columnname carglist": ("sqlite-add-column-v3.json", "sqlite-add-generated-column-v1.json", "sqlite-appended-column-checks-v2.json", "sqlite-appended-implicit-checks-v1.json"),
-    "cmd: ALTER TABLE fullname DROP kwcolumn_opt nm": ("sqlite-drop-column-v2.json",),
+    "cmd: ALTER TABLE fullname DROP kwcolumn_opt nm": ("sqlite-drop-column-v3.json",),
     "add_column_fullname: fullname": ("sqlite-add-column-v3.json", "sqlite-add-generated-column-v1.json", "sqlite-appended-column-checks-v2.json", "sqlite-appended-implicit-checks-v1.json"),
     "cmd: create_table create_table_args": ("sqlite-create-table-v3.json", "sqlite-defaults-v4.json", "sqlite-computed-column-default-v3.json", "sqlite-not-null-conflict-v2.json", "sqlite-strict-tables-v2.json", "sqlite-primary-keys-v2.json", "sqlite-unique-keys-v1.json", "sqlite-create-as-v5.json", "sqlite-named-checks-v4.json", "sqlite-generated-columns-v2.json"),
     "generated: LP expr RP ID": ("sqlite-generated-columns-v2.json",),

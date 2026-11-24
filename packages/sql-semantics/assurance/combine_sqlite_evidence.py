@@ -55,7 +55,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-add-column-evidence", "sqlite-add-column-v3.json", 2496, 2580, 18, 6),
     Domain("semantics-ir-sqlite-appended-checks-evidence", "sqlite-appended-column-checks-v2.json", 512, 591, 11, 6),
     Domain("semantics-ir-sqlite-appended-implicit-checks-evidence", "sqlite-appended-implicit-checks-v1.json", 1536, 1618, 9, 6),
-    Domain("semantics-ir-sqlite-drop-column-evidence", "sqlite-drop-column-v2.json", 1440, 1523, 20, 5),
+    Domain("semantics-ir-sqlite-drop-column-evidence", "sqlite-drop-column-v3.json", 1440, 1523, 20, 5),
     Domain("semantics-ir-sqlite-add-generated-column-evidence", "sqlite-add-generated-column-v1.json", 1152, 1231, 13, 6),
     Domain("semantics-ir-sqlite-generated-columns-evidence", "sqlite-generated-columns-v2.json", 96, 211, 8, 4),
     Domain("semantics-ir-sqlite-implicit-checks-evidence", "sqlite-implicit-checks-v1.json", 192, 297, 6, 4),

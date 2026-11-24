@@ -15,8 +15,8 @@ from sqlite_drop_column_cases import (
 from sqlite_engine import Database, ObserverAuthorizationError, typed
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-drop-column-v2.json"
-CONTRACT = "819f5e655f586aa2494e485461118468e81939a6af8cd5d08ee778f958376050"
+CONTRACT_NAME = "sqlite-drop-column-v3.json"
+CONTRACT = "ec3c4a2625f4ecca94d5b40bbbf25ed6394295f4e4f38c69167cab66e78a1fac"
 FUNCTIONS = frozenset((b"like", b"sqlite_rename_test", b"sqlite_rename_quotefix", b"sqlite_drop_column"))
 CATALOG_FIELDS = frozenset((b"name", b"type", b"sql", b"tbl_name"))
 INVALID = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\InvalidConstruction"
