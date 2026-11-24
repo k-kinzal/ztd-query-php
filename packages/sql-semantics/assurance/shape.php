@@ -1084,7 +1084,7 @@ try {
     if ($dialect === 'sqlite') {
         $contracts = [
             'sqlite-rename-boundaries-v2.json' => 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3',
-            'sqlite-add-column-boundaries-v3.json' => 'bcd82d1a6f7197fd39f31d4fe94f282408b5b4edb3e12017e2d5e2be62c51c1b',
+            'sqlite-add-column-boundaries-v4.json' => '08e585bee1cd4f78ee3586c02e6ed4635bbcf18d39e278a30fb859a8d188006a',
         ];
         foreach ($contracts as $name => $digest) {
             $boundary = __DIR__ . '/' . $name;
