@@ -594,6 +594,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
         $queries['Schema\\Namespace\\CreateSchema'] = 'CREATE SCHEMA IF NOT EXISTS "Tax.Reg" AUTHORIZATION "Tax Owner"';
         $queries['Schema\\Namespace\\DropSchema'] = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE';
+        $queries['Schema\\Namespace\\RenameSchema'] = 'ALTER SCHEMA "Tax.Reg" RENAME TO "Archive.2025"';
+        $queries['Schema\\Namespace\\ChangeSchemaOwner'] = 'ALTER SCHEMA "Tax.Reg" OWNER TO "Tax Owner"';
         $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
         $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
         $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
@@ -619,6 +621,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {
             $activeContext = $semantics->context(['CREATE USER "Tax Owner"']);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Namespace\\RenameSchema', 'Schema\\Namespace\\ChangeSchemaOwner'], true)) {
+            $activeContext = $semantics->context(['CREATE USER "Tax Owner"', 'CREATE TABLE "Tax.Reg".ledger (id integer)']);
         }
         if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSystemCatalogs'], true)) {
             $configured = new SqlSemantics\Platform\PostgreSql\Semantics(
@@ -897,6 +902,33 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresIndexBooleanValue'] = [
                 $field->predicate->operator->value, $field->predicate->left->slot,
                 $field->toString(), $detachedField->toString(), $negated == $field->predicate,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\RenameSchema') {
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');
+            $destination = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Archive.2025');
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema($name, $destination, $result->release);
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SCHEMA unrelated RENAME TO pending', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'ALTER SCHEMA requires a declared source namespace.';
+            }
+            $details['postgresRenameSchema'] = [$result->schema->value, $result->destination->value, $direct->toString(), $refused];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\ChangeSchemaOwner') {
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');
+            $owner = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax Owner');
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner($name, $owner, $result->release);
+            $session = $semantics->analyze('ALTER SCHEMA "Tax.Reg" OWNER TO SESSION_USER', $activeContext);
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SCHEMA "Tax.Reg" OWNER TO unrelated', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A named schema owner requires a declared role.';
+            }
+            $details['postgresChangeSchemaOwner'] = [
+                $result->schema->value, $result->owner->value, $direct->toString(), $session->owner->name, $session->toString(), $refused,
             ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {

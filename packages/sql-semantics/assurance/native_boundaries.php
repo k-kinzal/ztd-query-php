@@ -151,6 +151,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-drop-schema-boundaries-v1.json', '901b88c9b2800cac32e1dbdd1b5eeb8a853e9629c07d4e155f2516d7dca88792'],
             ['postgres-create-schema-boundaries-v1.json', '2bbd48c77b335de5a3df39d59edb6b1669e056fc116148300dcee22098c446a4'],
             ['postgres-schema-tables-boundaries-v2.json', '8c0ddbbc8b0438a20197e0fdfb41ec5c08c1681b39fb47651940c2318b676975'],
+            ['postgres-alter-schema-boundaries-v1.json', '5b16fc076c9d419c4fc179162ce235c011ecf7c9e98c5e1b634a0460eff4bf57'],
         ],
         'sqlite' => [],
     };

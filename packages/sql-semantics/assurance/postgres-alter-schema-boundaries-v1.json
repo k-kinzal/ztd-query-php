@@ -1,0 +1,107 @@
+{
+  "revision": "SemanticsIR/postgres-alter-schema-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-schema-tables-boundaries-v2.json",
+  "scope": "Check both namespace changes, published owner resolution and exact identifier output.",
+  "rules": {
+    "Schema/Namespace/CreateSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
+        "$owner = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering())->lower($context, $statement->authorization);",
+        "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
+        "$resolved = $name ?? ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $owner : null);",
+        "$tables = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaTableLowering())->lower($context, $statement, $resolved);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables);"
+      ]
+    },
+    "Schema/Namespace/RenameSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value !== 'pg_temp' && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A schema rename requires a persistent namespace.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value !== $destination->value && !str_starts_with($destination->value, 'pg_'), 'A schema rename requires a distinct unreserved destination.');"
+      ]
+    },
+    "Schema/Namespace/RenameSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'ALTER SCHEMA ' . $this->schema->quoted() . ' RENAME TO ' . $this->destination->quoted();"
+      ]
+    },
+    "Schema/Namespace/ChangeSchemaOwner::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value !== 'pg_temp' && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A schema owner change requires a persistent namespace.');",
+        "if ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!str_starts_with($owner->value, 'pg_') || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\StockRoles::contains($release, $owner->value), 'The stock schema owner must exist in this release.');",
+        "}"
+      ]
+    },
+    "Schema/Namespace/ChangeSchemaOwner::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$owner = $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;",
+        "return 'ALTER SCHEMA ' . $this->schema->quoted() . ' OWNER TO ' . $owner;"
+      ]
+    },
+    "Schema/Namespace/SchemaAlterLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema, 'A namespace change requires ALTER SCHEMA.');",
+        "$context = $operation->context;",
+        "$target = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaTargetLowering())->lower($context, $statement->object);",
+        "$release = $context->profile->grammar;",
+        "if ($statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\RenameSchema($target, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->newName->value), $release);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\ChangeSchemaOwner($target, (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering())->lower($context, $statement->owner), $release);"
+      ]
+    },
+    "Schema/Namespace/SchemaOwnerLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$principal = $role?->name;",
+        "if ($principal !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->knowsRole($principal->value), 'A named schema owner requires a declared role.');",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($principal->value);",
+        "}",
+        "return match ($role?->kind) {",
+        "    null, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentRole, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::CurrentUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Effective,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::SessionUser => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSessionRole::Session,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Named, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Everyone => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A schema requires a single owner.'),",
+        "};"
+      ]
+    },
+    "Schema/Namespace/SchemaTargetLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'ALTER SCHEMA requires the native PostgreSQL namespace profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($reference instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\UnqualifiedName, 'ALTER SCHEMA requires an unqualified namespace selector.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input((new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding())->known($context, $reference->name), 'ALTER SCHEMA requires a declared source namespace.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($reference->name->value);"
+      ]
+    }
+  }
+}

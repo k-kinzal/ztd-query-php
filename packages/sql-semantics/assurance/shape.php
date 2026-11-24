@@ -1076,6 +1076,15 @@ if ($dialect !== 'sqlite') {
         $methods[$schemaCreation] = ['__construct', 'profileId', 'toString'];
         $properties[$schemaSession] = $methods[$schemaSession] = [];
         $enumCases[$schemaSession] = ['Effective' => 'CURRENT_USER', 'Session' => 'SESSION_USER'];
+        $schemaRename = 'Schema\\Namespace\\RenameSchema';
+        $schemaOwnership = 'Schema\\Namespace\\ChangeSchemaOwner';
+        array_push($roots, $schemaRename, $schemaOwnership);
+        array_push($internal, 'Schema\\Namespace\\SchemaAlterLowering', 'Schema\\Namespace\\SchemaOwnerLowering', 'Schema\\Namespace\\SchemaTargetLowering');
+        $properties[$schemaRename] = ['schema' => ['Identifier'], 'destination' => ['Identifier'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$schemaOwnership] = ['schema' => ['Identifier'], 'owner' => ['Identifier', $schemaSession],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$schemaRename] = $methods[$schemaOwnership] = ['__construct', 'profileId', 'toString'];
         $indexRemoval = 'Schema\\Index\\DropIndex';
         $indexReference = 'Schema\\Index\\IndexReference';
         $indexMissing = 'Schema\\Index\\MissingIndex';
@@ -1418,6 +1427,9 @@ try {
                 . $prefix . 'Schema\\RelationDeclarationLowering())->lower($operation, $statement),')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
+        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\ChangeOwner, $statement instanceof \\'
+            . $platform . '\\Statement\\Object\\Rename && $statement->kind === \\' . $platform . '\\Statement\\Name\\ObjectKind::Schema => (new \\'
+            . $prefix . 'Schema\\Namespace\\SchemaAlterLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename, $statement instanceof \\'
                 . $platform . '\\Statement\\Table\\TruncateTable, $statement instanceof \\' . $platform . '\\Statement\\Utility\\Maintenance\\Reindex'
@@ -2106,9 +2118,11 @@ try {
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
-                || ($dialect === 'postgres' && $short === 'Schema\\Namespace\\CreateSchema' && $name->toString() === $platform . '\\Model\\Contract\\StockRoles')
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner'], true)
+                    && $name->toString() === $platform . '\\Model\\Contract\\StockRoles')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
                     'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
+                    'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')

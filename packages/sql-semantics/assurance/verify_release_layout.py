@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v128.json"
-CONTRACT = "d591659a0c7a80024b22cde550a5fb238734eb4591ba3e69d117b7cef0d2944b"
+CONTRACT_NAME = "release-layout-v129.json"
+CONTRACT = "d8b64017a27ace0aeab19a862b9e3b18fb98cfce8f29c784955f041fa2bf98f8"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -314,6 +314,15 @@ def verify_probe(raw, catalog):
             placed = 'REINDEX (VERBOSE, TABLESPACE "cold ""archive""") ' + ordinary.removeprefix("REINDEX ")
             require(item.get("postgresReindexPlacement") == [True, 'cold "archive"', True, placed, placed, True],
                     "installed-postgres-rebuild-placement", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\RenameSchema"):
+            emitted = 'ALTER SCHEMA "Tax.Reg" RENAME TO "Archive.2025"'
+            require(item.get("postgresRenameSchema") == ["Tax.Reg", "Archive.2025", emitted, True]
+                    and item["sql"] == emitted, "installed-postgres-rename-schema-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\ChangeSchemaOwner"):
+            emitted = 'ALTER SCHEMA "Tax.Reg" OWNER TO "Tax Owner"'
+            require(item.get("postgresChangeSchemaOwner") == [
+                "Tax.Reg", "Tax Owner", emitted, "Session", 'ALTER SCHEMA "Tax.Reg" OWNER TO SESSION_USER', True,
+            ] and item["sql"] == emitted, "installed-postgres-schema-owner-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\CreateSchema"):
             emitted = 'CREATE SCHEMA IF NOT EXISTS "Tax.Reg" AUTHORIZATION "Tax Owner"'
             require(item.get("postgresCreateSchema") == [

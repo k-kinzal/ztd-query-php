@@ -40,6 +40,8 @@ An ordinary persistent `CREATE VIEW` returns `Ir\Schema\View\CreateView` with it
 
 A namespace with table members has a static name and an unguarded parent declaration. Each child retains its resolved namespace, ordered definitions and duplicate guard. A guarded repeated table name preserves the first table's heading and defaults. PostgreSQL applies the selected schema owner to every new table in the declaration.
 
+`ALTER SCHEMA ... RENAME TO` and `ALTER SCHEMA ... OWNER TO` publish separate namespace operations. Both resolve the existing namespace from the supplied catalog. Rename keeps the namespace identity while changing its name. An owner change selects a declared named role or one of the two session authorization roles. PostgreSQL updates the namespace owner and its grants while keeping the original owners of tables and other contained objects.
+
 `DROP SCHEMA` returns an ordered list of resolved namespace selectors in `Ir\Schema\Namespace\DropSchema`. Supply explicit `CREATE SCHEMA` declarations when your catalog contains empty schemas. An absent selector requires an explicit complete catalog and `IF EXISTS`. The value keeps repeats, the guard and `CASCADE` or `RESTRICT`. PostgreSQL applies the dependency policy to objects in the selected namespaces and their dependents.
 
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.

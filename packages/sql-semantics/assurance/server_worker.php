@@ -1228,6 +1228,39 @@ function constructPostgresDatabaseRebuild(array $input): \SqlSemantics\Platform\
     };
 }
 
+function constructPostgresAlterSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner
+{
+    $spec = $input['alterSchema'];
+    $name = new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['schema']);
+    $release = \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']);
+    if ($spec['destination'] !== null) {
+        return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema(
+            $name, new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['destination']), $release,
+        );
+    }
+    $owner = isset($spec['owner']['named'])
+        ? new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($spec['owner']['named'])
+        : \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::from($spec['owner']['session']);
+
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner($name, $owner, $release);
+}
+
+function observePostgresAlterSchema(
+    \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema|\SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner $value,
+): array {
+    if ($value instanceof \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema) {
+        $destination = $value->destination->value;
+        $owner = null;
+    } else {
+        $destination = null;
+        $owner = $value->owner instanceof \SqlSemantics\Platform\PostgreSql\Ir\Identifier
+            ? ['named' => $value->owner->value] : ['session' => $value->owner->value];
+    }
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'alterSchema' => ['schema' => $value->schema->value, 'destination' => $destination, 'owner' => $owner]];
+}
+
 function constructPostgresCreateSchema(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema
 {
     $spec = $input['createSchema'];
@@ -1597,6 +1630,7 @@ function observeStatement(array $input): array
             isset($input['dropIndex']) => constructPostgresDropIndex($input),
             isset($input['createSchema']) => constructPostgresCreateSchema($input),
             isset($input['dropSchema']) => constructPostgresDropSchema($input),
+            isset($input['alterSchema']) => constructPostgresAlterSchema($input),
             isset($input['reindex']) => constructPostgresReindex($input),
             isset($input['reindexTable']) => constructPostgresReindexTable($input),
             isset($input['reindexSchema']) => constructPostgresReindexSchema($input),
@@ -1727,6 +1761,10 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema) {
         return observePostgresCreateSchema($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema
+        || $value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner) {
+        return observePostgresAlterSchema($value);
     }
     if ($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex) {
         return observePostgresDropIndex($value);

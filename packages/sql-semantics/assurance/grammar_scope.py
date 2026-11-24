@@ -600,6 +600,10 @@ def inventory(root):
                         "schema_stmt: CreateStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
                     } or rule == "CreateStmt" and alternative.startswith("CreateStmt: CREATE OptTemp TABLE "):
                         related[alternative] = (*related.get(alternative, ()), "postgres-schema-tables-v1.json")
+            for rule in ("RenameStmt", "AlterOwnerStmt", "RoleSpec"):
+                for alternative in rules.get(rule, ()):
+                    if rule == "RoleSpec" or alternative.startswith(rule + ": ALTER SCHEMA "):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-alter-schema-v1.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",
