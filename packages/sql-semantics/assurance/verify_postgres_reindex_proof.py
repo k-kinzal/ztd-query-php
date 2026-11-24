@@ -39,8 +39,8 @@ def load_contract():
     return contract, config
 
 
-def measured(command, folder, label):
-    stdout = folder / (label + ".out")
+def measured(command, folder, label, stdout_suffix=".out"):
+    stdout = folder / (label + stdout_suffix)
     stderr = folder / (label + ".err")
     with stdout.open("wb") as output, stderr.open("wb") as errors:
         try:
@@ -72,7 +72,7 @@ def build_and_export(folder, toolchain, bwrap, config, modules):
         require(rc == 0, "postgres-reindex-formal-build", {"module": module, "diagnostics": errors.name})
     for module in modules:
         rc, _, errors = measured([*sandbox, str(binaries / "leanexport"), module, "--",
-                                   *config["theorem_names"], *PRIMITIVES], folder, "export-" + module)
+                                   *config["theorem_names"], *PRIMITIVES], folder, "export-" + module, ".ndjson")
         require(rc == 0, "postgres-reindex-formal-export", {"module": module, "diagnostics": errors.name})
 
 
@@ -92,7 +92,7 @@ def compare(folder, toolchain, challenge):
     write_json(chosen, active)
     return measured(
         [str(toolchain / "bin/lake"), "comparator", "--config", str(chosen),
-         "--challenge-from-export", str(challenge), "--solution-from-export", str(folder / "export-Solution.out")],
+         "--challenge-from-export", str(challenge), "--solution-from-export", str(folder / "export-Solution.ndjson")],
         folder, "compare",
     )
 
@@ -102,7 +102,7 @@ def proof_checks(args, contract, config, bwrap):
     control = args.out / "proof"
     stage(control, source)
     build_and_export(control, args.lean, bwrap, config, ("Challenge", "Solution"))
-    challenge = control / "export-Challenge.out"
+    challenge = control / "export-Challenge.ndjson"
     rc, output, errors = compare(control, args.lean, challenge)
     transcript = output.read_text() + errors.read_text()
     require(rc == 0 and "Sandbox disabled" not in transcript and
@@ -139,7 +139,7 @@ def proof_checks(args, contract, config, bwrap):
         }
     return {
         "theorems": config["theorem_names"], "allowedAxioms": [], "checkedKernels": list(CHECKERS), "controls": controls,
-        "challenge": digest(challenge), "proof": digest(control / "export-Solution.out"),
+        "challenge": digest(challenge), "proof": digest(control / "export-Solution.ndjson"),
         "comparison": digest(control / "compare.command.json"),
         "exportPrimitives": list(PRIMITIVES), "sandbox": "bubblewrap with no network and no mounted candidate source",
         "toolchain": contract["toolchain"],
