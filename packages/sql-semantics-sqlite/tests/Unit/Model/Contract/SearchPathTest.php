@@ -22,16 +22,16 @@ final class SearchPathTest extends TestCase
         self::assertSame(['main', 'aux'], $path->schemas);
     }
 
-    public function testSchemasRefuseAnEmptyName(): void
+    public function testSchemasKeepAnEmptyAttachedName(): void
     {
-        $this->expectExceptionMessage('A search path names at least one schema and no empty name.');
+        $path = new SearchPath('main', '');
 
-        new SearchPath('main', '');
+        self::assertSame(['main', ''], $path->schemas);
     }
 
     public function testSchemasRefuseAnEmptyPath(): void
     {
-        $this->expectExceptionMessage('A search path names at least one schema and no empty name.');
+        $this->expectExceptionMessage('A search path names at least one schema.');
 
         new SearchPath();
     }

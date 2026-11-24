@@ -27,12 +27,12 @@ final class CatalogTest extends TestCase
         self::assertSame('accounts', $context->tables[0]->name->name->value);
     }
 
-    public function testBuildRejectsSqlThatDeclaresNoRelation(): void
+    public function testBuildRejectsSqlWithoutACatalogDeclaration(): void
     {
         $platform = Platform::shared();
         $profile = (new Semantics())->profile();
         $catalog = new Catalog($profile, null, $platform->parser($profile));
-        $this->expectExceptionMessage('A catalog definition must declare a relation.');
+        $this->expectExceptionMessage('A catalog definition must declare a relation or an index.');
 
         $catalog->build(['SELECT 1'], true);
     }

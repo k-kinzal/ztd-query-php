@@ -206,6 +206,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-drop-column-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-create-index-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-index-expression-spelling-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-drop-index-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-appended-implicit-checks-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/

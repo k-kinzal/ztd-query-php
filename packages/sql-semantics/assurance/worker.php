@@ -75,7 +75,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexReference;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropView;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage as GeneratedStorage;
@@ -96,6 +99,8 @@ use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\SavepointName;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\Transaction;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionCommand;
+use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
@@ -326,10 +331,18 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Transaction
 {
-    $semantics = new Semantics();
-    return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
+    $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
+    $semantics = new Semantics(searchPath: $path);
+    $catalogAnalyzer = ($input['foreignProfile'] ?? false)
+        ? new Semantics(parameters: ParameterStyle::Named, searchPath: $path)
+        : $semantics;
+    $context = isset($input['catalogComplete'])
+        ? $catalogAnalyzer->context($input['declarations'], $input['catalogComplete'])
+        : $catalogAnalyzer->context($input['declarations'] ?: null);
+
+    return $semantics->analyze($input['sql'], $context);
 }
 
 function directDelete(array $input): Delete
@@ -783,6 +796,33 @@ function observeCreateIndex(CreateIndex $value, bool $render): array
     ];
 }
 
+function directDropIndex(array $input): DropIndex
+{
+    $name = new Identifier($input['name']);
+    $target = match ($input['targetRole']) {
+        'installed' => new IndexReference(new Identifier($input['schema']), $name, new Identifier($input['table'])),
+        'absent' => new MissingIndex($name, $input['schema'] === null ? null : new Identifier($input['schema'])),
+    };
+
+    return new DropIndex($target, $input['ifExists']);
+}
+
+function observeDropIndex(DropIndex $value, bool $render): array
+{
+    $target = $value->target;
+    return [
+        'status' => 'constructed',
+        'operation' => 'drop-index',
+        'profile' => $value->profileId(),
+        'targetRole' => $target instanceof IndexReference ? 'installed' : 'absent',
+        'schema' => $target->schema?->value,
+        'name' => $target->name->value,
+        'table' => $target instanceof IndexReference ? $target->table->value : null,
+        'ifExists' => $value->ifExists,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
 function directDropColumn(array $input): DropColumn
 {
     return new DropColumn(
@@ -870,6 +910,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
             ($input['operation'] ?? null) === 'create-index' => directCreateIndex($input),
+            ($input['operation'] ?? null) === 'drop-index' => directDropIndex($input),
             ($input['operation'] ?? null) === 'drop-column' => directDropColumn($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
@@ -888,6 +929,9 @@ function runCase(array $input): array
 
     if ($value instanceof CreateIndex) {
         return observeCreateIndex($value, ($input['probe'] ?? null) !== 'create-index-construction');
+    }
+    if ($value instanceof DropIndex) {
+        return observeDropIndex($value, ($input['probe'] ?? null) !== 'drop-index-construction');
     }
     if ($value instanceof DropColumn) {
         return observeDropColumn($value, ($input['probe'] ?? null) !== 'drop-column-construction');

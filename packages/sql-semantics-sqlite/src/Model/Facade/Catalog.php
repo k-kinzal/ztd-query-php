@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Platform;
 
 /**
- * Builds dialect-owned binding contexts from relation definitions.
+ * Builds dialect-owned binding contexts from relation and index definitions.
  *
  * @visibility SqlSemantics
  */
@@ -37,14 +37,20 @@ final class Catalog
         $platform = Platform::shared();
         $binder = new StatementBinder($this->parser);
         $tables = [];
+        $indexes = [];
         foreach ($declarations ?? [] as $sql) {
             $scope = $platform->context($this->profile, $this->searchPath, $tables, false);
             $binding = $binder->resolve($sql, $scope);
-            Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation.');
+            $index = $platform->indexDeclaration($binding);
+            if ($index !== null) {
+                $indexes[] = $index;
+                continue;
+            }
+            Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation or an index.');
             array_push($tables, ...$platform->declarations($binding));
         }
 
-        return $platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete);
+        return $platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete, $indexes);
     }
 
     /**

@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/sqlite-folded-binding-sources-7",
+  "scope": "Audit full transient syntax, then derive binding coverage over native occurrence edges. DEFAULT, CHECK and generated diagnostics preserve marker registrations outside the discarded operand. Read catalog type names from the actual type tokens when generation keywords are parsed as type words.",
+  "artifacts": {
+    "src/Platform.php": {
+      "methods": [
+        "discardedBindings",
+        "syntaxOutput"
+      ],
+      "sha256": "3c1a0e49e9e56ee9fd7cfded54633f8220132f3bb24796ded8fc6aeb014aedae"
+    },
+    "src/Model/Validation/Publication.php": {
+      "methods": [
+        "facts"
+      ],
+      "sha256": "a6d9d099bb2128da3cb5673f7946e27dc164988e74097ac4c0feaca14ebb3e58"
+    },
+    "src/Model/Validation/ValueGraph.php": {
+      "methods": [
+        "objects",
+        "members"
+      ],
+      "sha256": "6d0bb350b464b16e6309311e043cfe13393fc5e4b6665f54d0d1af80fa88899f"
+    },
+    "src/Statement/Expression/Subquery/InList.php": {
+      "methods": [
+        "deriveScalar",
+        "render"
+      ],
+      "sha256": "bf7df45c9a9ab74cc16ad9142ec109b241966f07dd1233b212d5d35870a58430"
+    },
+    "src/Rules/Definition/Expression/Limits.php": {
+      "methods": [
+        "nodes",
+        "rejected",
+        "nonConstant"
+      ],
+      "sha256": "e5174d049295d2c173b88728acb6b5d133a3983f77543f0d21bc81889d279412",
+      "role": "Reject live schema constructs while dropping the empty-membership operand before semantic limits, including in both index roles. Preserve inert lexical registrations."
+    },
+    "src/Lowering/Definition/ColumnRule.php": {
+      "methods": [
+        "column"
+      ],
+      "sha256": "37608de8b62acf6a2e70eb744aa901defb1415e82e7dc06853346a339e10437b"
+    },
+    "src/Rules/Definition/TableDeclaration.php": {
+      "methods": [
+        "domains",
+        "table"
+      ],
+      "sha256": "d332a6f287f09f13d250d1ea7f7fe801eb6912d394af6f3725a8be2aef86a030"
+    },
+    "src/Rules/Definition/TypeRecording.php": {
+      "methods": [
+        "domain",
+        "written",
+        "stripped",
+        "firstRun",
+        "quotedWord"
+      ],
+      "sha256": "31f8d30ac99de4bf94ee7ba9ce36d7ada84f713ce1c506b10c41853c8f48061c"
+    },
+    "src/Statement/Schema/Column/ColumnDefinition.php": {
+      "methods": [
+        "__construct",
+        "render"
+      ],
+      "sha256": "f6aedb7c228d71765dc024e876e40f77eecc7a2edd175d0e3d91275b840bdf5d"
+    },
+    "src/Statement/Schema/Column/Generated.php": {
+      "methods": [
+        "storage",
+        "deriveConstraint"
+      ],
+      "sha256": "9ee9b1d0da335a260cd001eb3ad1d314ea69a316482e6ceefbe192fb05357bd0"
+    }
+  },
+  "extends": "sqlite-folded-binding-sources-v6.json",
+  "change": "The platform can collect explicit index declarations and retain an independent index catalog. The prior folded-membership projection and the checked layout handling remain in the method scope."
+}

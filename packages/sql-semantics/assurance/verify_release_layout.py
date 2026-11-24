@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v88.json"
-CONTRACT = "a53a54f6c19d3af66335b3911320ba263b8671fc23731fd0449bb8c422f04cae"
+CONTRACT_NAME = "release-layout-v89.json"
+CONTRACT = "2d46914ef20723036de8552a8b287150a5c4ed18f9f3f6f9c9536ce7699bdc29"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,11 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Index\\DropIndex"):
+            require(item.get("dropIndex") == [
+                "temp", "tAg", "local_rows", 'DROP INDEX "temp"."tAg"', "", 'DROP INDEX IF EXISTS ""."later"',
+                None, 'DROP INDEX IF EXISTS "later"', True,
+            ] and item["sql"] == item["dropIndex"][3], "installed-sqlite-drop-index-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Index\\CreateIndex"):
             require(item.get("createIndex") == [
                 "temp", "indexed_tag", "indexed_rows", 1, True, True, True, ["09", "1"],

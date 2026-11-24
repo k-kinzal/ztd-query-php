@@ -539,6 +539,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Alter\\AddColumn'] = "ALTER TABLE $table ADD COLUMN added TEXT COLLATE NOCASE DEFAULT 'value'";
         $queries['Schema\\Alter\\AddGeneratedColumn'] = "ALTER TABLE $table ADD total INTEGER AS (id + 7) STORED";
         $queries['Schema\\Alter\\DropColumn'] = 'ALTER TABLE removable DROP COLUMN OLD';
+        $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX tag';
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
@@ -583,6 +584,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $semantics->context([
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\DropIndex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.indexed_rows (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE temp.local_rows (id INTEGER PRIMARY KEY)',
+                'CREATE INDEX main.Tag ON indexed_rows(id)',
+                'CREATE INDEX temp.tAg ON local_rows(id)',
             ]);
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
@@ -1250,6 +1259,34 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\DropIndex') {
+            $target = $result->target;
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexReference) {
+                throw new RuntimeException('The installed DROP INDEX lost its absolute index target.');
+            }
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex(
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexReference(
+                    new SqlSemantics\Platform\Sqlite\Ir\Identifier('temp'),
+                    new SqlSemantics\Platform\Sqlite\Ir\Identifier('tAg'),
+                    new SqlSemantics\Platform\Sqlite\Ir\Identifier('local_rows'),
+                ),
+            );
+            $absent = $semantics->analyze('DROP INDEX IF EXISTS ""."later"', $activeContext);
+            $unqualified = $semantics->analyze('DROP INDEX IF EXISTS "later"', $activeContext);
+            if (!$absent->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex
+                || !$unqualified->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex) {
+                throw new RuntimeException('The installed DROP INDEX lost the guarded absence.');
+            }
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex($absent->target);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = str_contains($error->getMessage(), 'requires IF EXISTS');
+            }
+            $details['dropIndex'] = [$target->schema->value, $target->name->value, $target->table->value,
+                $direct->toString(), $absent->target->schema?->value, $absent->toString(),
+                $unqualified->target->schema?->value, $unqualified->toString(), $refused];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
             $term = $result->terms[0];

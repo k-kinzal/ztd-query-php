@@ -234,4 +234,19 @@ final class PlatformTest extends TestCase
     {
         self::assertSame(Platform::shared(), Platform::shared());
     }
+
+    public function testIndexDeclarationExportsTheBoundAbsoluteOwner(): void
+    {
+        $inspection = new Inspection();
+        $binding = $inspection->diagnose(
+            'CREATE INDEX temp.by_code ON items(code)',
+            [$inspection->inspect('CREATE TABLE temp.items (code TEXT)')]
+        )->binding();
+        $platform = new Platform();
+        $declaration = $platform->indexDeclaration($binding);
+
+        self::assertNotNull($declaration);
+        self::assertSame(['temp', 'by_code', 'items'], [$declaration->schema->value, $declaration->name->value, $declaration->table->value]);
+        self::assertNull($platform->indexDeclaration($inspection->diagnose('SELECT 1')->binding()));
+    }
 }

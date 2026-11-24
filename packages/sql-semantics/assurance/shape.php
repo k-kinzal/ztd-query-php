@@ -411,6 +411,13 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Index\\IndexTerm'] = ['__construct'];
     $roots[] = 'Schema\\Index\\CreateIndex';
     $internal[] = 'Schema\\Index\\CreateIndexLowering';
+    $properties['Schema\\Index\\DropIndex'] = ['target' => ['Schema\\Index\\IndexReference', 'Schema\\Index\\MissingIndex'], 'ifExists' => ['bool']];
+    $properties['Schema\\Index\\IndexReference'] = ['schema' => ['Identifier'], 'name' => ['Identifier'], 'table' => ['Identifier']];
+    $properties['Schema\\Index\\MissingIndex'] = ['schema' => ['?Identifier'], 'name' => ['Identifier']];
+    $methods['Schema\\Index\\DropIndex'] = $methods['Select'];
+    $methods['Schema\\Index\\IndexReference'] = $methods['Schema\\Index\\MissingIndex'] = ['__construct', 'quoted'];
+    $roots[] = 'Schema\\Index\\DropIndex';
+    $internal[] = 'Schema\\Index\\DropIndexLowering';
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
@@ -1069,6 +1076,8 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertRows, $statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertSelect, $statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertDefaults => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop && $statement->object === \\'
+            . $platform . '\\Statement\\Schema\\SchemaObjectKind::Index => (new \\' . $prefix . 'Schema\\Index\\DropIndexLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropRelationLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateIndex => (new \\' . $prefix . 'Schema\\Index\\CreateIndexLowering())->lower($operation, $statement),'
@@ -1133,10 +1142,11 @@ try {
     }
     $bindings = match ($dialect) {
         'sqlite' => [
-            ['sqlite-create-index-binding-v1.json', '1a41e92624fe1473383b7239fe79abb28048f4c1674e62d1248b91560450031f', 'Index binding'],
+            ['sqlite-create-index-binding-v2.json', '518f25e19be787f59726f4d9783d029c5a77bc6c5b8bb97103aeebbba3c7fd69', 'Index binding'],
             ['sqlite-index-expression-binding-v1.json', '0f51026989e87bb830f5a9fac584794e318c410fcc85744079e38839e8e7a255', 'Native index expression binding'],
-            ['sqlite-drop-column-binding-v2.json', '646ee03d7cc6edc19ec64b800fd947105ff187363c8060025bda77e2b66f3f5e', 'Column removal binding'],
-            ['sqlite-folded-binding-sources-v6.json', '899bc660712ee6508953c31ea9ccd99cb43c663d75f32159a00658db97c60422', 'Folded binding'],
+            ['sqlite-drop-column-binding-v3.json', 'a3270087ab9e5dd4431c69bc869fdc11291cfcf080c8288a71bcf4863c7142be', 'Column removal binding'],
+            ['sqlite-drop-index-binding-v1.json', '7cd4881ed8154ec6f55ea399dea10ec77338e81929e4d44069e75c55bb49b9fc', 'Index removal binding'],
+            ['sqlite-folded-binding-sources-v7.json', 'fde16c4d2ced975234793b158ea8608dc9f2c625a012a1dc1d234407abc46178', 'Folded binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1297,6 +1307,7 @@ try {
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Schema\\Alter\\DropColumnLowering' => 'Schema\\Alter\\DropColumn',
                 'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
+                'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,

@@ -16,17 +16,22 @@ use SqlSemantics\Platform\Sqlite\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Index;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\DropRestrictions;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 
 /**
@@ -148,9 +153,10 @@ final class Platform
      *
      * @param list<string>|null $searchPath
      * @param list<Table> $tables
+     * @param list<Index> $indexes
      * @throws InvalidArgumentException When the path does not start with main
      */
-    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, array $indexes = []): AnalysisContext
     {
         $schemas = $searchPath ?? ['main'];
         if ($schemas !== [] && strcasecmp($schemas[0], 'temp') === 0) {
@@ -164,7 +170,7 @@ final class Platform
             $path[] = new Name($schema);
         }
 
-        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $path[1]);
+        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $path[1], $indexes);
     }
 
     /**
@@ -185,6 +191,24 @@ final class Platform
             static fn (Table $table): Table => $removal->attach($definition, $binding->facts, $table),
             $binding->facts->declarations,
         );
+    }
+
+    /**
+     * Exports an explicit index identity once its ordinary owner has resolved.
+     */
+    public function indexDeclaration(BoundStatement $binding): ?Index
+    {
+        $definition = $binding->statement;
+        if (!$definition instanceof CreateIndex) {
+            return null;
+        }
+
+        $owner = $binding->facts->relation($definition)->table;
+        Check::input($owner instanceof DeclaredTable && $owner->table->kind === RelationKind::BaseTable, 'An index declaration requires a resolved ordinary table.');
+        $comparison = Comparison::AsciiInsensitive;
+        Check::input(!str_starts_with($comparison->fold($definition->name->name->value), 'sqlite_'), 'An ordinary index cannot belong to the reserved SQLite namespace.');
+
+        return new Index($owner->table->name->schema ?? $binding->context->declarationSchema, $definition->name->name, $owner->table->name->name);
     }
 
     /**

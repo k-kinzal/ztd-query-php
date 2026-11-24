@@ -37,6 +37,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropView;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndexLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndexLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAsLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\View\CreateView;
@@ -73,6 +75,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTab
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTableAs as ParsedCreateTableAs;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView as ParsedCreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind;
 
 /**
  * Binds SQL under a fixed dialect profile and publishes complete semantic values.
@@ -121,10 +124,10 @@ final class Semantics implements Analyzer
     }
 
     /**
-     * Builds a context from explicit SQL relation definitions.
+     * Builds a context from explicit relation and index definitions.
      *
      * Null describes an open catalog. An explicit list can enumerate the entire catalog.
-     * @param array<array-key, mixed>|null $declarations An ordered list of SQL relation definitions
+     * @param array<array-key, mixed>|null $declarations An ordered list of relation and index definitions
      */
     public function context(?array $declarations = null, bool $complete = true): Context
     {
@@ -148,7 +151,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|Transaction
+    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Transaction
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -162,6 +165,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedInsert, $statement instanceof ParsedInsertSelect, $statement instanceof ParsedInsertDefaults => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
             $statement instanceof ValuesClause => (new ValuesLowering())->lower($operation, $statement),
+            $statement instanceof Drop && $statement->object === SchemaObjectKind::Index => (new DropIndexLowering())->lower($operation, $statement),
             $statement instanceof Drop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateIndex => (new CreateIndexLowering())->lower($operation, $statement),
@@ -179,7 +183,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|Transaction>
+     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

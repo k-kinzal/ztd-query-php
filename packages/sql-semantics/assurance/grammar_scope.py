@@ -72,6 +72,7 @@ RELATED_SQLITE_DOMAINS = {
     "cmd: createkw temp VIEW ifnotexists nm dbnm eidlist_opt AS select": ("sqlite-create-view-v2.json", "sqlite-create-view-grouped-v1.json", "sqlite-create-view-compound-v1.json", "sqlite-create-view-local-v1.json"),
     "cmd: DROP VIEW ifexists fullname": ("sqlite-drop-view-v1.json",),
     "cmd: DROP TABLE ifexists fullname": ("sqlite-drop-table-v1.json",),
+    "cmd: DROP INDEX ifexists fullname": ("sqlite-drop-index-v2.json",),
     "cmd: ALTER TABLE fullname RENAME TO nm": ("sqlite-rename-v4.json",),
     "cmd: ALTER TABLE fullname RENAME kwcolumn_opt nm TO nm": ("sqlite-rename-v4.json",),
     "cmd: ALTER TABLE add_column_fullname ADD kwcolumn_opt columnname carglist": ("sqlite-add-column-v3.json", "sqlite-add-generated-column-v1.json", "sqlite-appended-column-checks-v2.json", "sqlite-appended-implicit-checks-v1.json"),

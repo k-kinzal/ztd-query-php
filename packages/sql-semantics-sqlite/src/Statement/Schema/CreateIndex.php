@@ -43,8 +43,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * A string literal written as a term, under parentheses and at most one
  * COLLATE clause, is the name of an indexed column (LiteralColumn,
  * SQLITE-LITERAL-COLUMN-001); a plain string literal term is refused at
- * construction. Indexes are not part of a declaration context: the statement
- * provides no declaration, and whether the index name is free is not a fact.
+ * construction. The catalog can register a bound index by its absolute index
+ * and owner names. The statement itself leaves the context unchanged.
  * Source: https://sqlite.org/lang_createindex.html, https://sqlite.org/partialindex.html,
  * https://sqlite.org/expridx.html. Status: Implemented.
  *

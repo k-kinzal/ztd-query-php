@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AnalysisContext::class)]
@@ -117,5 +118,22 @@ final class AnalysisContextTest extends TestCase
         self::assertTrue($context->complete);
         self::assertSame([$table], $context->declared(new QualifiedName(new Name('T')), new Name('main')));
         self::assertFalse($semantics->context()->complete);
+    }
+
+    public function testIndexesAtUsesTheRequestedSchemaAndNativeNameMatching(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context([
+            'CREATE TABLE main.items(code TEXT)',
+            'CREATE TABLE temp.records(code TEXT)',
+            'CREATE INDEX main.Tag ON items(code)',
+            'CREATE INDEX temp.TAG ON records(code)',
+        ]);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+        $matches = $context->indexesAt(new Name('Tag'), new Name('TEMP'));
+
+        self::assertCount(1, $matches);
+        self::assertSame('records', $matches[0]->table->value);
+        self::assertSame('TAG', $matches[0]->name->value);
     }
 }
