@@ -375,7 +375,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_up
   --out &quot;$update_evidence&quot;</code></pre>
 </div><div class="doc-block" data-diff="added"><p>The reference evaluator computes each effective assignment from the old row. The fixture includes duplicates, NULLs, a generated column and two same-named targets with distinct conflict policies. Comparisons preserve the typed contents of both targets and the OLD and NEW trigger values. Skipped rows and statement rollback are observable. Numbered parameter labels are checked in written assignment order, including a superseded assignment.</p>
 </div><div class="doc-block" data-diff="added"><h3>SQLite DROP TABLE effects</h3>
-</div><div class="doc-block" data-diff="added"><p>Run the <span class="md-target" title="sqlite-drop-table-v1.json">DROP TABLE effect contract</span> with the same engine:</p>
+</div><div class="doc-block" data-diff="added"><p>Run the <span class="md-target" title="sqlite-drop-table-v2.json">DROP TABLE effect contract</span> with the same engine:</p>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code>drop_table_evidence=$(mktemp -d)/sqlite-drop-table-evidence
 PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_drop_table.py \
   --candidate /path/to/candidate \
