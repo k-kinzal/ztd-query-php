@@ -1,0 +1,98 @@
+{
+  "revision": "SemanticsIR/postgres-create-sequence-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": ["Schema/Sequence/CreateSequence"],
+  "profile": "Native UTF-8 PostgreSQL with precisely checked signed integer storage and local namespace binding.",
+  "scope": "A standalone PostgreSQL sequence declaration with native integer options and no table-column ownership. Covers permanent, unlogged and session-local sequence storage.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createsequence.html",
+    "https://www.postgresql.org/docs/17/sql-createsequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/sequence.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/sequence.c"
+  ],
+  "constructors": {
+    "SequenceName": {
+      "type": "Schema/Sequence/SequenceName",
+      "role": "The selected absolute namespace and decoded name of a sequence declaration.",
+      "structure": "Two immutable PostgreSQL identifiers. The specific session namespace is represented by pg_temp.",
+      "invariants": ["A physical backend-numbered temporary namespace is outside the public coordinate."],
+      "meaning": "Interpret the coordinates in the same database or in its current temporary namespace."
+    },
+    "SequencePersistence": {
+      "type": "Schema/Sequence/SequencePersistence",
+      "role": "Storage lifetime and logging choice.",
+      "structure": "Permanent, unlogged or session temporary.",
+      "invariants": ["Temporary storage belongs to the current session's temporary namespace."],
+      "meaning": "Retain native storage and lifetime behaviors."
+    },
+    "SequenceParameters": {
+      "type": "Schema/Sequence/SequenceParameters",
+      "role": "A closed sequence generator parameter set.",
+      "structure": "Integer storage, nonzero signed increment, minimum, maximum, catalog start, initial restart, positive cache and cycle mode.",
+      "invariants": [
+        "All numeric parameters are exact normalized signed 64-bit values.",
+        "The selected type contains the minimum and maximum. The minimum is strictly less than the maximum.",
+        "Catalog start and initial restart are both inside the inclusive limits.",
+        "Absent bounds use the type limits and the native direction-dependent defaults. Missing catalog start uses the initial bound for the chosen direction. Missing restart uses catalog start.",
+        "The increment and cache are bigint option operands independent of the narrower declared sequence type."
+      ],
+      "meaning": "Provide the initial sequence state and parameters seen by native nextval. Respect cache, increment, cycle and limit policies."
+    },
+    "CreateSequence": {
+      "type": "Schema/Sequence/CreateSequence",
+      "role": "A sequence declaration with checked creation coordinates.",
+      "structure": "A SequenceName, SequenceParameters, SequencePersistence, guarded creation flag and grammar release.",
+      "invariants": ["The namespace and persistence agree. The database interpretation supplies the named persistent namespace or the current temporary namespace."],
+      "meaning": "Create and initialize the native sequence owned by the effective role. Preserve a prior relation on guarded occupancy. Preserve atomic failure and rollback.",
+      "sql": "Quote the decoded coordinates. Emit fixed builtin integer storage, explicitly resolved options and the separately resolved initial restart when it differs from the catalog start."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "binding": [
+    "Choose the persistent declaration namespace independently of the current SQL text after analysis. Resolve any explicit local database qualifier against the declared current database.",
+    "Resolve the builtin sequence storage in the same analysis context and preserve its exact signed width.",
+    "Check option uniqueness after pairing flag and numeric forms that affect the same option.",
+    "Decode sequence integer tokens without floating-point conversion. Recognize explicit OWNED BY NONE as absence of ownership.",
+    "Keep sequence declaration guards distinct from the generator's numeric policy."
+  ],
+  "finite": {
+    "types": ["smallint", "integer", "bigint"],
+    "directions": [1, -1],
+    "policies": ["default", "explicit", "restart"],
+    "persistence": ["permanent", "unlogged", "temporary"],
+    "bound": "54 analyzed and 54 directly constructed coordinates per release. Independently enumerate every storage, direction, option and persistence combination."
+  },
+  "exploration": {
+    "seeds": [3491, 27179, 60413],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Explore width and endpoint roles, explicit or inferred bounds, long paths to rollover, exact restart, increment wider than the storage limit, cache, temporary alias, unlogged and permanent storage, quoted names, guard and occupancy."
+  },
+  "observations": [
+    "Published sequence coordinate, exact type, persistence, bounds, catalog start, restart, increment, cache, cycle and guard.",
+    "Native catalog and generated value types, initial last_value, log count and is_called, values generated from startup and cycling or exhaustion, occupied target, unrelated fixture sequence and rollback.",
+    "Exact native diagnostic class, SQLSTATE, command status and transaction state."
+  ],
+  "edgeWitnesses": ["Exact signed 64-bit endpoints", "Temporary alias without explicit TEMP keyword", "Explicit NONE ownership", "Guarded occupied sequence and guarded ordinary relation", "Catalog start differing from initial restart"],
+  "negative": [
+    "Zero increment or nonpositive cache",
+    "Reversed or equal limits",
+    "A limit outside the selected storage width",
+    "A start or restart outside the limits",
+    "Conflicting written option forms",
+    "A decimal fraction or exponent in a native integer option",
+    "A name in an unrelated catalog or unresolved schema",
+    "A temporary mode with a persistent namespace",
+    "An ownership reference requiring additional table-column binding"
+  ],
+  "faults": ["Erase the explicit restart", "Fold the signed increment to the opposite direction", "Discard cycling"],
+  "open": [
+    "OWNED BY a table column, sequence ALTER/DROP, sequence relation embedding inside CREATE SCHEMA, and operands skipped by a native existing-object guard despite being invalid for creation.",
+    "Nondecimal NumericOnly spellings beyond those decoded as typed integer values by the inspected parser."
+  ],
+  "trust": ["Fixed PostgreSQL type, sequence and namespace rules", "Exact PHP constructor and lowering shape", "Independent native catalog and generator observations"]
+}
