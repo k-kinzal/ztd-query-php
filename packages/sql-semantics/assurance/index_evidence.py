@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 
 from compare_assurance_revisions import review
+from check_fixture_launch_recovery import CONTROL_CASES as NATIVE_FIXTURE_CONTROLS
 from check_native_workflow import audit as audit_workflow
 from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import certificate
@@ -19,12 +20,32 @@ from native_schedule import NATIVE, SINGLE_ENGINE, release_subset, reports as na
 from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
 from replay_native_boundary_faults import replay as replay_native_faults
-from run_native_matrix import FIXTURE_STARTUP_SECONDS, RUNNER_SECONDS, release_fixtures, release_jobs
+from run_native_matrix import FIXTURE_STARTUP_SECONDS, PORT_COLLISION, PORT_RECOVERY, RUNNER_SECONDS, release_fixtures, release_jobs
 from run_server import projection_publication
 from run_sqlite_matrix import RUNNER_SECONDS as SQLITE_RUNNER_SECONDS, job_schedule as sqlite_jobs
 from scope import CONTRACTS
 from run import IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, runtime_catalog, verify_probe
+
+
+def verify_fixture_recovery(result, key):
+    entry = result.get("failedLaunch")
+    if entry is None:
+        return
+    name, failure = entry["containerName"], entry["failure"]
+    collision = PORT_COLLISION.search(failure["stderr"])
+    require(entry["contract"] == PORT_RECOVERY and re.fullmatch(r"ztd-ir-fixture-[0-9a-f]{32}", name)
+            and failure["exitCode"] == 125 and isinstance(failure["stdout"], str)
+            and collision and 0 < int(collision[1]) <= 65535, "bundle-native-fixture-original-launch", key)
+    if "retriedAs" in entry:
+        new_name = entry["retriedAs"]
+        inspect = entry["inspect"]
+        require(new_name != name and re.fullmatch(r"ztd-ir-fixture-[0-9a-f]{32}", new_name)
+                and inspect["exitCode"] == 1 and inspect["stdout"] == ""
+                and re.search(r"no such (?:container|object):", inspect["stderr"], re.IGNORECASE)
+                and "recoveryWithheld" not in result, "bundle-native-fixture-retry-boundary", key)
+    else:
+        require(result["status"] == "incomplete" and not result["executions"], "bundle-native-fixture-invalid-recovery", key)
 
 
 SQLITE = {
@@ -198,6 +219,7 @@ class Evidence:
         require(report["distribution"] == self.distribution
                 and report["workflowDigest"] == digest(workflow)
                 and report["recursiveContractDigest"] == CONTRACTS[series.name] == digest(series)
+                and report["fixtureRecoveryContractDigest"] == PORT_RECOVERY == self.tools["native-fixture-port-recovery-v1.json"]
                 and report["launcherDigest"] == self.tools["run_native_matrix.py"],
                 "bundle-native-launch-identity", origin)
         self.checked(path.parent / "distribution.json", self.distribution)
@@ -223,6 +245,7 @@ class Evidence:
                     and result["setupTimeoutSeconds"] == FIXTURE_STARTUP_SECONDS
                     and result["runnerTimeoutSeconds"] == RUNNER_SECONDS,
                     "bundle-native-launch-schedule", key)
+            verify_fixture_recovery(result, key)
             success = (result["failure"] is None and "cleanupFailure" not in result and executed == planned
                        and all(entry["outcome"] == "exited" and entry["exitCode"] == 0 for entry in result["executions"]))
             require(result["status"] == record["status"] == ("observed" if success else "incomplete"),
@@ -470,6 +493,14 @@ def main():
     controls = evidence.artifact("assurance-controls/index.json", "verified")
     if controls:
         cases = json.loads((root / "assurance-controls/index.json").read_text())["controls"]
+        fixture_controls = [item for item in cases if item["case"] in NATIVE_FIXTURE_CONTROLS]
+        require(len(fixture_controls) == len(NATIVE_FIXTURE_CONTROLS)
+                and {item["case"] for item in fixture_controls} == NATIVE_FIXTURE_CONTROLS.keys(), "bundle-missing-fixture-controls")
+        for item in fixture_controls:
+            key, receipt = item["case"], item["observed"]["receipt"]
+            require(receipt["status"] == NATIVE_FIXTURE_CONTROLS[key]
+                    and item["signal"] == f"native-fixture-{receipt['status']}", "bundle-native-fixture-control-status", key)
+            verify_fixture_recovery(receipt, key)
         selected = {item["case"]: item for item in cases if item["case"] in NATIVE_REDUCTION_CONTROLS}
         require(selected.keys() == NATIVE_REDUCTION_CONTROLS.keys(), "bundle-missing-native-reduction-controls")
         for name, item in selected.items():

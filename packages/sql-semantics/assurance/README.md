@@ -102,7 +102,7 @@ python3 "$verifier/collect_native_replays.py" --layout release --candidate "$can
   --candidate-root "$candidate" --evidence-root "$evidence"
 ```
 
-The container launch, image check, local endpoint discovery and native PDO profile qualification share the fixed 900-second setup deadline. The launcher records the failure phase and cleans up its named fixture after an interrupted launch. The fixture probe ledger retains every startup attempt. The launcher begins the domain budgets after observing the fixed server profile.
+The container launch, image check, local endpoint discovery and native PDO profile qualification share the fixed 900-second setup deadline. The launcher records the failure phase and cleans up its named fixture after an interrupted launch. The fixture probe ledger retains every startup attempt. The launcher begins the domain budgets after observing the fixed server profile. The [fixture launch recovery policy](native-fixture-port-recovery-v1.json) allows one new launch after a specific RootlessKit loopback port collision and a native check that the failed container is absent. The original failure remains in the receipt. Run `check_fixture_launch_recovery.py` to exercise the recovery and incomplete outcomes.
 
 The native launcher records the source and unique match for every scheduled renderer fault in `native-launch/renderer-fault-sources.json`. It continues running the scheduled domains and records an incomplete matrix if any fault cannot be applied. The individual runtime ledgers still require a healthy control and the exact detection signal.
 

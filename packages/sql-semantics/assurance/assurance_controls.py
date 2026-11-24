@@ -9,11 +9,12 @@ import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
+from check_fixture_launch_recovery import controls as launch_recovery_controls
 from check_native_workflow import CONTRACT_NAME as WORKFLOW_CONTRACT, WORKFLOW, audit as audit_workflow, steps as workflow_steps
 from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
-from index_evidence import replay_grammar, verify_sqlite_preflight
+from index_evidence import replay_grammar, verify_fixture_recovery, verify_sqlite_preflight
 from run_native_matrix import RELEASE_ROW, release_fixtures, release_jobs
 from replay_sqlite_evidence import replay
 from replay_sqlite_faults import replay_registered
@@ -608,6 +609,24 @@ def native_workflow_controls(args):
 
 
 
+def native_fixture_controls():
+    observed = launch_recovery_controls()
+    for outcome in observed:
+        verify_fixture_recovery(outcome["observed"]["receipt"], outcome["case"])
+    healthy = observed[0]["observed"]["receipt"]
+    faults = {
+        "reuse-original-fixture-name": ("retriedAs", healthy["failedLaunch"]["containerName"], "bundle-native-fixture-retry-boundary"),
+        "omit-failed-launch-exit": ("failure", {**healthy["failedLaunch"]["failure"], "exitCode": 0}, "bundle-native-fixture-original-launch"),
+        "claim-existing-fixture-was-absent": ("inspect", {**healthy["failedLaunch"]["inspect"], "exitCode": 0}, "bundle-native-fixture-retry-boundary"),
+    }
+    for name, (field, value, signal) in faults.items():
+        changed = copy.deepcopy(healthy)
+        changed["failedLaunch"][field] = value
+        rejected = observe_rejection(lambda: verify_fixture_recovery(changed, name), signal)
+        observed.append({"case": name, "signal": rejected.signal, "altered": changed})
+    return observed
+
+
 def assurance_revision_control(args):
     folder = args.out / "reduced-assurance-revision"
     before = folder / "previous" / "packages/sql-semantics/assurance"
@@ -761,7 +780,7 @@ def main():
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
-              + native_workflow_controls(args)
+              + native_workflow_controls(args) + native_fixture_controls()
               + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution)
               + [renderer_fault_transport_control(args)] + reduction_controls(args) + native_reduction_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")

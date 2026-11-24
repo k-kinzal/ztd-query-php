@@ -22,6 +22,8 @@ from run_server import CONTRACT as PROJECTION, check_profile
 from run_server_delete import version_tag
 from scope import CONTRACTS
 
+PORT_RECOVERY = "b26ae212606640f07c92c9ad48774964a96116a3adb07a05958b09813a3e4ee9"
+PORT_COLLISION = re.compile(r"RootlessKit PortManager\.AddPort\(\): listen tcp4 127\.0\.0\.1:([0-9]{1,5}): bind: address already in use")
 FIXTURE_STARTUP_SECONDS = 900
 RUNNER_SECONDS = 3600
 PORTS = {"mysql": 3306, "postgres": 5432}
@@ -67,6 +69,29 @@ def release_jobs(profile, series):
 
 def docker(*arguments, timeout=60):
     return subprocess.run(["docker", *arguments], capture_output=True, text=True, check=True, timeout=timeout).stdout.strip()
+
+
+def command_failure(error):
+    return {"exitCode": error.returncode, "stdout": error.stdout, "stderr": error.stderr}
+
+
+def absent_fixture(error):
+    message = error.stderr.casefold()
+    return error.returncode == 1 and ("no such object:" in message or "no such container:" in message)
+
+
+def recoverable_port_collision(error):
+    message = PORT_COLLISION.search(error.stderr)
+    return error.returncode == 125 and message is not None and 0 < int(message[1]) <= 65535
+
+
+def fixture_port_recovery():
+    path = TOOL / "native-fixture-port-recovery-v1.json"
+    require(digest(path) == PORT_RECOVERY, "native-fixture-port-recovery-contract")
+    conditions = json.loads(path.read_text())["conditions"]
+    require(conditions["phase"] == "container-launch" and conditions["commandExit"] == 125
+            and conditions["maximumRetries"] == 1 and conditions["setupTimeoutSeconds"] == FIXTURE_STARTUP_SECONDS,
+            "native-fixture-port-recovery-conditions")
 
 
 def image_identity(name):
@@ -186,8 +211,29 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         start = time.monotonic()
         deadline = start + FIXTURE_STARTUP_SECONDS
         phase = "container-launch"
-        container = docker("run", "--rm", "--pull=never", "--name", launch_name, "--platform", f"linux/{arch}", "--detach",
-                           "--publish", f"127.0.0.1::{port}", *flags, image, timeout=startup_remaining(deadline))
+        fixture_port_recovery()
+        for attempt in range(2):
+            try:
+                container = docker("run", "--rm", "--pull=never", "--name", launch_name, "--platform", f"linux/{arch}", "--detach",
+                                   "--publish", f"127.0.0.1::{port}", *flags, image, timeout=startup_remaining(deadline))
+            except subprocess.CalledProcessError as error:
+                if attempt != 0 or not recoverable_port_collision(error):
+                    raise
+                failed_launch = {"contract": PORT_RECOVERY, "containerName": launch_name, "failure": command_failure(error)}
+                receipt["failedLaunch"] = failed_launch
+                try:
+                    container = docker("inspect", "--format", "{{.Id}}", launch_name, timeout=startup_remaining(deadline))
+                except subprocess.CalledProcessError as lookup:
+                    if not absent_fixture(lookup):
+                        receipt["recoveryWithheld"] = command_failure(lookup)
+                        raise error from lookup
+                    launch_name = f"ztd-ir-fixture-{uuid4().hex}"
+                    failed_launch.update(inspect=command_failure(lookup), retriedAs=launch_name)
+                else:
+                    receipt["recoveryWithheld"] = {"container": container}
+                    raise
+            else:
+                break
         phase = "fixture-ready"
         require(docker("inspect", "--format", "{{.Image}}", container, timeout=startup_remaining(deadline)) == identity,
                 "native-launch-running-image", key)
@@ -208,14 +254,13 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
     except (Failure, OSError, ValueError, subprocess.SubprocessError) as error:
         receipt["failure"] = {"phase": phase, "type": type(error).__name__, "detail": str(error)}
         if isinstance(error, subprocess.CalledProcessError):
-            receipt["failure"].update(exitCode=error.returncode, stdout=error.stdout, stderr=error.stderr)
+            receipt["failure"].update(command_failure(error))
         if container is None and phase == "container-launch":
             # The daemon may have assigned the known name before the client timed out.
             try:
                 container = docker("inspect", "--format", "{{.Id}}", launch_name)
             except subprocess.CalledProcessError as lookup:
-                lookup_error = lookup.stderr.casefold()
-                if "no such object:" not in lookup_error and "no such container:" not in lookup_error:
+                if not absent_fixture(lookup):
                     receipt["cleanupFailure"] = lookup.stderr
             except (OSError, subprocess.SubprocessError) as cleanup:
                 receipt["cleanupFailure"] = str(cleanup)
@@ -322,6 +367,7 @@ def main():
         "workflowDigest": digest(workflow),
         "workflowRouteAudit": {"path": routes.name, "sha256": digest(routes)},
         "recursiveContractDigest": digest(recursive),
+        "fixtureRecoveryContractDigest": PORT_RECOVERY,
         "launcherDigest": digest(Path(__file__)),
         "rendererFaultSources": {"path": anchors.name, "digest": digest(anchors), "status": anchor_report["status"]},
         "omittedProfiles": sorted(profiles.keys() - selected),
