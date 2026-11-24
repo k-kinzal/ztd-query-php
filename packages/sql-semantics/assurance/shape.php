@@ -737,11 +737,6 @@ if ($dialect !== 'sqlite') {
         'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
     ];
     $methods['Schema\\CreateTable'] = $methods['Select'];
-    $properties['Schema\\ColumnDefaultExpression'] = ['expression' => [
-        'Arithmetic', 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\Concatenation',
-        'Expression\\Nulls\\Coalesce', 'Expression\\UnaryExpression', 'Predicate\\FoldedMembership',
-    ]];
-    $methods['Schema\\ColumnDefaultExpression'] = ['__construct'];
     $properties['Schema\\TableColumn'] = [
         'name' => ['Identifier'], 'storage' => ['Schema\\IntegerStorage'], 'nullable' => ['bool'],
         'default' => ['IntegerLiteral', 'NullLiteral', 'null'],

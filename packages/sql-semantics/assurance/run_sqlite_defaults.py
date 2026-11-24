@@ -156,7 +156,7 @@ def check_faults(args, db, runner=check_render_faults):
     null = case([["value", "BLOB", False, ["null"]]], table=TABLE)
     integer = case([["value", "INTEGER", False, ["integer", "7"]]], table=TABLE)
     blob = case([["value", "BLOB", False, ["blob", "00FF"]]], table=TABLE)
-    render = "' DEFAULT ' . $expressions->expression($column->default, null)"
+    render = "' DEFAULT ' . $expressions->expression($operand, null)"
     return runner(args, db, [
         RenderFault("omit-default-clause", column, " . $default . $collation . $generation;", " . $collation . $generation;", null, "meaning-mismatch"),
         RenderFault("replace-default-with-null", column, render, "' DEFAULT NULL'", integer, "meaning-mismatch"),
