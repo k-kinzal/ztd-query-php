@@ -1,0 +1,160 @@
+{
+  "revision": "SemanticsIR/postgres-drop-sequence-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Sequence/DropSequence"
+  ],
+  "scope": "Native DROP SEQUENCE with ordered resolved local coordinate selectors and explicitly known absences, including current-session sequences and a fixed stock namespace census.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-dropsequence.html",
+    "https://www.postgresql.org/docs/17/sql-dropsequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/tablecmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/tablecmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/catalog/dependency.c"
+  ],
+  "constructors": {
+    "SequenceDropPresence": {
+      "type": "Schema/Sequence/SequenceDropPresence",
+      "role": "The resolved occupancy role of a selector.",
+      "structure": "An existing generator, absent sequence with visible namespace selection, or absent explicitly named persistent namespace.",
+      "conditions": "An absence is admitted only with a guard at the statement boundary.",
+      "meaning": "Distinguish the selected native generator from known absence and preserve the distinction between each form of native absence."
+    },
+    "SequenceDropTarget": {
+      "type": "Schema/Sequence/SequenceDropTarget",
+      "role": "One ordered sequence removal selector.",
+      "structure": "Exact decoded object name, namespace or unqualified absence and occupancy role.",
+      "conditions": "An existing target holds an absolute native coordinate. Missing namespaces are explicitly named. Numbered temporary and TOAST namespaces are outside the domain. The session alias is admitted for existing sequences and declared allocated-scope member absence.",
+      "meaning": "Use the same external resolved generator, or the same established absence and namespace interpretation.",
+      "sql": "Quote exact coordinates and retain the unqualified form of a resolved absent name."
+    },
+    "DropSequence": {
+      "type": "Schema/Sequence/DropSequence",
+      "role": "One finished ordered generator removal.",
+      "structure": "A nonempty detached ordered list of SequenceDropTarget, IF EXISTS, dependency policy and release.",
+      "conditions": "An absent target requires a guard. Repeated names agree on occupancy and selectors in the same namespace agree on namespace presence.",
+      "meaning": "Remove selected sequence relations and, on CASCADE, native dependent defaults. Roll back atomically on failure and preserve duplicate/NULL rows and unrelated objects.",
+      "sql": "Emit DROP SEQUENCE and fixed ordered selectors, guard and dependency policy."
+    }
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ],
+  "binding": [
+    "Resolve written local catalog qualifiers by comparing the exact declared database and discard the validated redundant qualifier.",
+    "Search the given native namespace path in order. Earlier declared or stock wrong-kind relations and named indices block a search. Unknown earlier relation occupancy and absence in open contexts prevent publication.",
+    "Recognize an allocated session temporary namespace only from a declaration in that namespace. An absent explicitly selected persistent namespace requires a complete declaration context."
+  ],
+  "finite": {
+    "targetPlans": [
+      [
+        "local"
+      ],
+      [
+        "temporary"
+      ],
+      [
+        "other"
+      ],
+      [
+        "local",
+        "local",
+        "other"
+      ],
+      [
+        "missing-relation"
+      ],
+      [
+        "missing-schema"
+      ],
+      [
+        "unqualified-missing"
+      ],
+      [
+        "temporary",
+        "missing-relation",
+        "other",
+        "unqualified-missing"
+      ]
+    ],
+    "guarded": [
+      false,
+      true
+    ],
+    "cascade": [
+      false,
+      true
+    ],
+    "transactional": [
+      false,
+      true
+    ],
+    "dependentDefault": [
+      false,
+      true
+    ],
+    "bound": "128 total coordinates, 96 accepted analyzed and 96 accepted direct coordinates per release. The 32 absent unguarded coordinates each exercise analyzed and direct refusal with one paired native SQLSTATE observation."
+  },
+  "exploration": {
+    "seeds": [
+      4703,
+      27691,
+      54877
+    ],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 180,
+    "allowedExclusions": [],
+    "structure": "Vary length 1–6, repeated and mixed path roles, quoted coordinates, temporary and persistent same-name targets, guard, dependencies and rollback."
+  },
+  "negative": [
+    "Wrong sequence kind even with a guard.",
+    "Foreign catalog qualifier.",
+    "An absent qualified or unqualified selector in an open context.",
+    "Ambiguous matching declarations.",
+    "An unqualified selector shadowed by a declared index.",
+    "An unqualified selector shadowed by a stock relation.",
+    "A physical numbered temporary namespace.",
+    "An explicit missing pg_temp member without independent allocation evidence.",
+    "An empty direct selector list.",
+    "An inconsistent repeated occupancy role.",
+    "Contradictory namespace presence across direct targets.",
+    "An existing direct selector without an absolute namespace."
+  ],
+  "observations": [
+    "Absolute coordinates, order, repetition, absence mode and dependency policy.",
+    "Native ordered notices, exact SQLSTATE, command and transaction state, schema and generator identities, physical sequence tuple, and rollback.",
+    "Default dependency retention or deletion, unaffected table and its row bag and types, duplicate and NULL values, unaffected competing sequence in the search path."
+  ],
+  "edgeWitnesses": [
+    "A three-part name checked against the native current database.",
+    "The temporary generator wins a same-name unqualified selection.",
+    "A missing relation in a declared allocated temporary schema.",
+    "Quoted schema and sequence identifiers containing periods and quotes."
+  ],
+  "faults": [
+    "Permute the ordered selector list with distinct missing diagnostics.",
+    "Resolve a selected persistent name to the same-named decoy namespace.",
+    "Change CASCADE into RESTRICT."
+  ],
+  "open": [
+    "Unallocated pg_temp namespace selection and explicit physical TOAST and numbered session schemas.",
+    "Nondefault stock catalog builds and equivalent nondefault lexical profiles."
+  ],
+  "trust": [
+    "Pinned stock PostgreSQL occupancy measured separately and compared to the checked StockIndexNames implementation.",
+    "Exact PHP shape and constructor rules, with independent oracle and native observations."
+  ]
+}
