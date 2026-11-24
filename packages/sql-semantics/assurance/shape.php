@@ -2167,7 +2167,8 @@ try {
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
-                || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && in_array($name->toString(), [
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\DropIndex', 'Schema\\Sequence\\DropSequence'], true)
+                    && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',
                     $platform . '\\Model\\Statement\\Identifier\\Name',
                 ], true)),

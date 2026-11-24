@@ -45,7 +45,7 @@ NATIVE = {
     "postgres_schema_sequences": "postgres-schema-sequences-v1.json",
     "postgres_alter_schema": "postgres-alter-schema-v1.json",
     "postgres_create_sequence": "postgres-create-sequence-v3.json",
-    "postgres_drop_sequence": "postgres-drop-sequence-v1.json",
+    "postgres_drop_sequence": "postgres-drop-sequence-v2.json",
     "postgres_create_btree": "postgres-create-btree-v1.json",
     "postgres_partial_btree": "postgres-partial-btree-v1.json",
     "postgres_boolean_index_predicate": "postgres-boolean-index-predicate-v1.json",

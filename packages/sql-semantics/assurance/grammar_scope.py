@@ -618,7 +618,7 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if rule in ("any_name_list", "opt_drop_behavior") or alternative.startswith("DropStmt: DROP drop_type_name ") \
                             or alternative == "drop_type_name: SEQUENCE":
-                        related[alternative] = (*related.get(alternative, ()), "postgres-drop-sequence-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-drop-sequence-v2.json")
         if postgres:
             index_catalog = {
                 "qualified_name: ColId indirection",

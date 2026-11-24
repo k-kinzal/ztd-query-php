@@ -19,8 +19,8 @@ from run_server_postgres_create_btree import check_preparation as check_libpq
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-drop-sequence"
-CONTRACT_NAME = "postgres-drop-sequence-v1.json"
-CONTRACT = "50c6dc068ff1c8388c200b54080c3e3da0251239507ed94e91c85346595cd89a"
+CONTRACT_NAME = "postgres-drop-sequence-v2.json"
+CONTRACT = "f38188b0bc46081ce844d9973cfc678d13b8aa5c6122720b51927de37fbd5226"
 STOCK_NAME = "postgres-drop-sequence-stock-v1.json"
 STOCK = "dcbf5a63db6b9156d42a69547f9595f885432531ec8fafaa89832652bb64bdb4"
 OBSERVER = "postgres_drop_sequence_observer.py"
@@ -142,6 +142,10 @@ def refusals(tag):
     unqualified = direct(value)
     unqualified["dropSequence"]["targets"][0][0] = None
     yield unqualified, None, refusal("A sequence selector requires an absolute namespace.")
+    for target in (["pg_catalog", "pg_class", "existing"], [None, "pg_class", "missing-sequence"]):
+        wrong_role = direct(value)
+        wrong_role["dropSequence"]["targets"] = [target]
+        yield wrong_role, None, refusal("A stock non-sequence relation cannot be a sequence removal target.")
 
 
 def requests(_, tag, spec):
@@ -206,11 +210,11 @@ def check_observation(item, actual, command):
 def observe_rejection(_, item, actual, command):
     same(sql(item), command)
     check_observation(item, actual, command)
-    return ("edge", item["negative"]) if "negative" in item else coordinates(item)
+    return ("edge", item["negative"]) if "negative" in item else ("finite", coordinates(item))
 
 
 def rejected_finite_ids(spec, _tag):
-    return unguarded_grid(spec) | {("edge", label) for label in ("wrong-kind", "foreign-catalog", "declared-index", "stock-relation")}
+    return {("finite", key) for key in unguarded_grid(spec)} | {("edge", label) for label in ("wrong-kind", "foreign-catalog", "declared-index", "stock-relation")}
 
 
 def sample_forms(forms, reply, _engine, item):

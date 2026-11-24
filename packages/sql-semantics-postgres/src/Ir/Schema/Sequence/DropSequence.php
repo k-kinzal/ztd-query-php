@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\StockIndexNames;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -43,6 +45,10 @@ final class DropSequence implements SemanticsIR
             $presence = $target->presence;
             Check::input($presence === SequenceDropPresence::Existing || $ifExists, 'An absent sequence removal target requires IF EXISTS.');
             $namespace = $target->schema?->value;
+            Check::input(
+                !StockIndexNames::contains($release, new Name($namespace ?? 'pg_catalog'), new Name($target->name->value)),
+                'A stock non-sequence relation cannot be a sequence removal target.'
+            );
             $key = ($namespace ?? '') . "\0" . $target->name->value;
             Check::input(!isset($seen[$key]) || $seen[$key] === $presence, 'Sequence removal cannot disagree about a named target.');
             $seen[$key] = $presence;
