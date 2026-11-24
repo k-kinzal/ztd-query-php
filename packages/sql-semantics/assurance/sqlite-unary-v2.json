@@ -1,0 +1,153 @@
+{
+  "revision": "SemanticsIR/sqlite-unary-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 under the closed scalar profile and declared ordinary-table affinities and collations.",
+  "existingRoles": [
+    "Arithmetic",
+    "ArithmeticOperator",
+    "Predicate/Comparison",
+    "Predicate/ComparisonOperator",
+    "NullLiteral",
+    "Select",
+    "Rows/ValuesQuery"
+  ],
+  "constructors": {
+    "UnaryExpression": {
+      "type": "Expression/UnaryExpression",
+      "role": "One prefix scalar operation with a single scoped operand",
+      "structure": [
+        "closed operator",
+        "one closed scalar operand"
+      ],
+      "conditions": "The owning statement checks the operand and its descendants against its visible slots and the scalar budgets. Negative formation of the minimum hexadecimal literal is rejected, including intervening unary plus.",
+      "meaning": "Apply the selected prefix operation under the native scalar and affinity rules. Preserve computed negation as a prefix operator. Contexts that extract existing-row defaults distinguish it from binary subtraction.",
+      "sql": "Emit a parenthesized prefix expression with its single operand."
+    },
+    "UnaryKind": {
+      "type": "Expression/UnaryKind",
+      "role": "Closed SQLite prefix operation",
+      "values": [
+        "+",
+        "-",
+        "NOT",
+        "~"
+      ],
+      "meaning": "Plus keeps the operand value and storage class. Minus keeps SQLite's signed literal formation or computed negation, including overflow and real zero sign. NOT returns an integer truth value or NULL. Bit complement inverts a signed 64-bit word and retains NULL.",
+      "sql": "Use the fixed prefix token with a separating space."
+    }
+  },
+  "admission": [
+    "Resolve a directly signed numeric literal, including grouped literals and intervening unary plus, to its native literal storage role. A written negative hexadecimal minimum remains an invalid literal.",
+    "Resolve computed numeric negation to a checked native minus prefix. Binary subtraction from zero remains a distinct arithmetic operation with its native behavior.",
+    "Resolve ISNULL to the NULL-safe IS comparison with NULL. Resolve NOTNULL and NOT NULL to the NULL-safe IS NOT comparison with NULL."
+  ],
+  "observations": [
+    "Typed results, signed zero, overflow, missing bindings, NULL results and exact result names.",
+    "Unary plus removes INTEGER column affinity while preserving applicable NOCASE comparison on a text column.",
+    "A generic computed negation and the sign of a numeric literal retain their independently observed storage and signed-zero effects.",
+    "Compare direct negative REAL zero and retain a legal subtraction-from-zero witness for the minimum hexadecimal operand. Keep both native lexical and computed signs as distinct cases in the specified field roles."
+  ],
+  "finite": {
+    "roots": [
+      "select",
+      "values"
+    ],
+    "operators": [
+      "plus",
+      "negate",
+      "complement",
+      "not",
+      "is-null",
+      "is-not-null"
+    ],
+    "atoms": [
+      [
+        "null"
+      ],
+      [
+        "integer",
+        "-9223372036854775808"
+      ],
+      [
+        "integer",
+        "-7"
+      ],
+      [
+        "integer",
+        "0"
+      ],
+      [
+        "integer",
+        "9"
+      ],
+      [
+        "real",
+        "0",
+        "0",
+        null,
+        true
+      ],
+      [
+        "real",
+        "0",
+        "5",
+        null,
+        false
+      ],
+      [
+        "text",
+        "8z"
+      ],
+      [
+        "blob",
+        "FF"
+      ],
+      [
+        "parameter",
+        "02"
+      ]
+    ],
+    "identity": "Recover both root and the six operation roles from the actual constructed values and exhaust the 120 finite tuples."
+  },
+  "exploration": {
+    "seeds": [
+      6553,
+      17597,
+      27043
+    ],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 160,
+    "allowedExclusions": [],
+    "structure": "Generate nested prefix, negation and NULL tests across values and projection roots, with bound parameters and declared columns."
+  },
+  "negative": [
+    "Reference outside the unary scope",
+    "Absent reference beneath a composed unary operand",
+    "Native-invalid negative hexadecimal minimum",
+    "Unary depth beyond the admitted bound",
+    "Direct negative formation of the minimum hexadecimal literal"
+  ],
+  "faults": [
+    "Erase unary plus with an affinity-changing witness",
+    "Replace NOT with complement",
+    "Reverse a NULL test",
+    "Erase unary signs in a distinguishing computation"
+  ],
+  "trust": [
+    "Pinned SQLite engine and direct typed observation",
+    "Independent assignment of scalar roles and the unary, comparison and signed arithmetic rules"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_expr.html",
+    "https://sqlite.org/datatype3.html#affinity_of_expressions",
+    "https://sqlite.org/datatype3.html#assigning_collating_sequences_from_sql"
+  ],
+  "extends": "sqlite-unary-v1.json",
+  "addedWitnesses": {
+    "computedDefaultMismatchDigest": "e9b53521abde639537933769f1e20170b5a5847dd782d33d0e0c8c58a9814d91",
+    "observation": "A populated ordinary ALTER target accepts a nested negative default or negative NULL with native prefix SQL. Replacing the prefix by subtraction from zero makes the native ALTER fail. The computed default domain retains both originals."
+  }
+}
