@@ -1,0 +1,101 @@
+{
+  "revision": "SemanticsIR/sqlite-header-pragmas-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with UTF-8, stock pager and schema-version pragmas, ordinary connection and transaction behavior. Prepare-time defensive configuration and pager state are part of the external database interpretation.",
+  "scope": "PRAGMA application_id, user_version, schema_version, freelist_count and data_version.",
+  "additionalPublicRoots": ["Maintenance/Header/HeaderPragma"],
+  "constructors": {
+    "Maintenance/Header/HeaderPragma": {
+      "role": "One native read or write of database header metadata or a connection-local data version.",
+      "structure": "An exact database identifier, a closed HeaderCookie or HeaderReadField, and an optional HeaderInteger write operand.",
+      "conditions": "Only HeaderCookie permits a write operand. Analysis must establish an explicit database qualifier or bind implicit access to main. Read-only native fields accept an optional source argument and ignore it.",
+      "meaning": "Read the selected field or request the exact write on the selected database. Writes obey transactions. The schema cookie write opens a write transaction even when native defensive mode suppresses the update.",
+      "externalInterpretation": "Use the same physical database, attachment identity, connection history, defensive mode at SQL preparation, pager state and active transaction.",
+      "sql": "Emit PRAGMA with an absolute quoted database and the native field name. Emit a signed decimal argument only for a write.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Header/HeaderCookie": {
+      "role": "A writable native file header field.",
+      "structure": "One of ApplicationId, UserVersion and SchemaVersion.",
+      "conditions": "Only the three native writable header fields are admitted.",
+      "meaning": "Select a native signed cookie. SchemaVersion additionally follows the native schema cache and defensive rules.",
+      "sql": "Emit application_id, user_version or schema_version as selected.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Header/HeaderReadField": {
+      "role": "A read-only native page count or data version.",
+      "structure": "One of FreelistCount and DataVersion.",
+      "conditions": "Only the two read-only header pragma fields are admitted.",
+      "meaning": "Read the number of free pages or the current connection-local data version of the selected database.",
+      "sql": "Emit freelist_count or data_version as selected without an argument.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Header/HeaderInteger": {
+      "role": "A normalized signed cookie write value.",
+      "structure": "One PHP integer.",
+      "conditions": "The inclusive admission range is -2147483648 through 2147483647.",
+      "meaning": "Supply the native signed 32-bit value written to the selected field.",
+      "sql": "Emit a signed decimal integer in the write argument.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "An unqualified operation selects main. An explicit known database selects only that native database. An explicit temp target opens the temporary database even when merely reading an empty header.",
+    "Writable fields without an argument and all read-only field forms return exactly one integer in a named result column. A writable field with any present argument is a write, even when conversion yields zero. The write returns no columns and has native write-transaction classification.",
+    "Use native signed decimal or unsigned hexadecimal integer-prefix conversion on the decoded argument. A decimal sign is accepted. An explicit signed text prefix selects decimal parsing and therefore reads a following hexadecimal-looking value as signed zero. Numeric unary plus has already been removed by the grammar. A decimal or hexadecimal prefix may be followed by other characters. No prefix, initial whitespace or a value outside the signed native range produces zero.",
+    "Observe signed schema, user and application cookies at SQLite page-one offsets 40, 60 and 68. Observe the freelist page count at offset 36. Rollback restores the selected cookie and changes to no other cookie are allowed. A defensive schema write retains the original cookie and still takes a write transaction.",
+    "A fresh in-memory database has connection-local data version one in these fixtures. An observed external commit advances the reading connection's data version. A commit by the same connection does not advance its own data version. External header changes also appear to another connection.",
+    "The pinned runtime's locking, corruption and I/O behavior depends on external state. No concrete node keeps a database, native handle, original argument, parser object or analysis context."
+  ],
+  "observations": [
+    "Compare exact result names, typed rows, read and write classification, parameter shape, data changes, selected transaction slot, storage cookie opcode and complete signed operand.",
+    "Compare actual SQLite serialized header bytes and row populations of all initialized schemas before, after and after rollback. Observe opening temp without using a read that opens it during measurement.",
+    "Run an authored file-backed second-connection sequence for data_version and observe both local and external data and header commits."
+  ],
+  "finite": {
+    "fields": ["application_id", "user_version", "schema_version", "freelist_count", "data_version"],
+    "scopes": ["implicit", "main", "temp", "attached"],
+    "arguments": ["read", "signed", "zero", "minimum", "maximum", "positive-overflow", "negative-overflow", "hexadecimal", "signed-hexadecimal", "decimal-prefix", "quoted-prefix", "invalid-text"],
+    "defensive": [false, true],
+    "transaction": [false, true],
+    "temp": ["unopened", "warm"],
+    "identity": "All 1920 coordinates, validated by the native input, resolved database and field, literal result, and measured fixture configuration. Pair each analyzed coordinate with its direct structure and native observation."
+  },
+  "exploration": {
+    "seeds": [67961, 50993, 32633],
+    "casesPerSeed": 60,
+    "timeoutSeconds": 720,
+    "allowedExclusions": [],
+    "domain": "Vary signed and unsigned prefixes, Unicode and quoted database identifiers, alternate SQL forms, header counters, reusable transactions and both defensive settings."
+  },
+  "negative": [
+    "Direct positive overflow",
+    "Direct negative overflow",
+    "Direct setter for the read-only data version",
+    "Direct setter for read-only freelist count",
+    "An unknown database qualifier"
+  ],
+  "faults": [
+    "Admit a direct signed overflow",
+    "Permit a write operand on an immutable read field",
+    "Always access main for an attached field",
+    "Write the same cookie for all writable fields",
+    "Treat invalid source text as a read instead of a write of zero",
+    "Drop the write operand",
+    "Parse a negative hexadecimal spelling as a negative integer"
+  ],
+  "open": [
+    "The header oracle fixes ordinary SQLite pager and file semantics. Unlisted storage error paths, alternate compile-time flags and multi-process access schedules are separate assurance domains."
+  ],
+  "trust": [
+    "Pinned SQLite implementation and database file-header format.",
+    "Independent prefix corpus and native storage observation through sqlite3_serialize.",
+    "Closed field roles, exact distribution and independently replayed finite coordinates."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "f275ca26031a46eb9d2426f44ca65f2e1859afee416caaf0a0bc52b04c998e7f",
+    "cases": "670021280bd573fe3d3addab34ea7a79bb8c93980e081d14fe98f5b8d354c74a"
+  }
+}
