@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v41.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v42.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -693,6 +693,8 @@ The [SQLite CREATE VIEW contract](sqlite-create-view-v2.json) checks view declar
 The [SQLite DROP VIEW contract](sqlite-drop-view-v1.json) verifies the selected view's schema under temp/main collisions. It compares owned-trigger removal, catalog membership, dependent reads and unchanged underlying data. The finite identities use both the actual IR and the verified catalog before removal. Run `run_sqlite_drop_view.py` with the same fixture arguments.
 
 The rename fixture checks qualified table identity, both column rewrite modes, stored rows, schema dependencies and rollback. It obtains native keyword spellings from the SQLite C API and measures all legal and rejected bare destinations. The view and trigger cases retain native refusal outcomes and distinguish a changed index role under temp-table shadowing. Run `run_sqlite_rename.py` with the same SQLite fixture options. [SQLite rename contract](sqlite-rename-v4.json)
+
+The ordinary column addition fixture measures changes to the resolved table while a same-named table in the other schema stays observable. It compares the prior heading, byte-preserving default reads and inserts, NOT NULL conflict behavior, collation, native diagnostics, and rollback. The fixed finite domain crosses schema, table population, declared type and STRICT mode, literal default, and NULL policy. The separate analyzed cases include native counterexamples for folding the exponent marker of a REAL default in a TEXT column. Run `run_sqlite_add_column.py` with the same SQLite fixture options. [SQLite column addition contract](sqlite-add-column-v2.json)
 
 ## SQLite literal defaults
 

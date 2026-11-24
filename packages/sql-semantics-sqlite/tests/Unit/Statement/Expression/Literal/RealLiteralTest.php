@@ -54,9 +54,9 @@ final class RealLiteralTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    public function testRenderWritesThePartsWithALowerCaseExponentMarker(): void
+    public function testRenderPreservesTheExponentMarker(): void
     {
-        self::assertSame('SELECT 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50e-3 AS c5, 1e+2 AS c6', (new Inspection())->inspect('select 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50E-3 AS c5, 1E+2 AS c6')->toString());
+        self::assertSame('SELECT 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50E-3 AS c5, 1E+2 AS c6', (new Inspection())->inspect('select 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50E-3 AS c5, 1E+2 AS c6')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

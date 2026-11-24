@@ -1,0 +1,93 @@
+{
+  "revision": "SemanticsIR/sqlite-add-column-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Exact checked storage, runtime publication, ordinary table identity, parsed constraints and closed emission for the registered add-column contract.",
+  "rules": {
+    "Schema/Alter/AddColumn::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'An ALTER TABLE target needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A column addition cannot target the reserved SQLite namespace.');",
+        "Check::input(count($priorHeading) < 2000, 'A column addition cannot exceed 2,000 declared columns.');",
+        "$heading = Check::listOf($priorHeading, Identifier::class, 'A column addition requires a nonempty ordered prior heading of identifiers.', 1);",
+        "$keys = [];",
+        "foreach ($heading as $identifier) {",
+        "    $key = $identifier->key();",
+        "    Check::input(!isset($keys[$key]), 'The prior heading must have distinct declared names.');",
+        "    $keys[$key] = true;",
+        "}",
+        "Check::input(!isset($keys[$column->name->key()]), 'The added column must have a distinct declared name.');",
+        "Check::input(!$strict || $column->type !== DeclaredDatatypeName::Untyped, 'A STRICT column addition requires a standard type.');",
+        "Check::input($column->generated === null, 'An ordinary column addition cannot have a generation expression.');",
+        "$this->priorHeading = $heading;"
+      ]
+    },
+    "Schema/Alter/AddColumn::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Alter/AddColumn::toString": {
+      "common": [
+        "$definition = (new TableDeclarationSql())->column($this->column, new SelectSql(), new DefinitionSource([$this->column->name]));",
+        "",
+        "return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted() . ' ADD COLUMN ' . $definition;"
+      ]
+    },
+    "Schema/Alter/AddColumnLowering::lower": {
+      "common": [
+        "[$schema, $name, $table] = (new AlterTargetLowering())->resolve($operation, $statement);",
+        "foreach ($statement->column->constraints as $constraint) {",
+        "    Check::input(",
+        "        $constraint instanceof ParsedCollation || $constraint instanceof DefaultExpression",
+        "            || $constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord || $constraint instanceof NotNull,",
+        "        'This constraint has no complete ordinary column addition representation.',",
+        "    );",
+        "}",
+        "",
+        "$type = $operation->facts->relation($statement)->shape->slots[count($table->columns)]->type ?? null;",
+        "Check::invariant($type instanceof Known && $type->descriptor instanceof ColumnDomain, 'The new member has its resolved SQLite declared domain.');",
+        "$strict = $type->descriptor->strict;",
+        "$heading = [];",
+        "foreach ($table->columns as $column) {",
+        "    Check::input($column->type instanceof ColumnDomain && $column->type->strict === $strict, 'A column addition requires a resolved and consistent table type mode.');",
+        "    $heading[] = new Identifier($column->name->value);",
+        "}",
+        "$binding = new SourceBinding($operation, $statement, [...$heading, new Identifier($statement->column->name->value)]);",
+        "$column = (new CreateColumnLowering())->lower($statement->column, $operation, $binding, $type->descriptor);",
+        "",
+        "return new AddColumn($schema, $name, $heading, $strict, $column);"
+      ]
+    },
+    "Schema/Alter/AlterTargetLowering::resolve": {
+      "common": [
+        "$comparison = NameComparison::AsciiInsensitive;",
+        "$path = $operation->context->searchPath;",
+        "Check::input(",
+        "    $operation->context->relationNames === $comparison && $operation->context->columnNames === $comparison",
+        "        && isset($path[1]) && $comparison->equal($path[0]->value, 'temp') && $comparison->equal($path[1]->value, 'main'),",
+        "    'ALTER TABLE requires SQLite identifier comparison and schema search order.',",
+        ");",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "Check::input(",
+        "    $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable && $resolution->table->complete,",
+        "    'ALTER TABLE requires a resolved ordinary table with a complete declaration.',",
+        ");",
+        "$table = $resolution->table;",
+        "",
+        "return [",
+        "    new Identifier(($table->name->schema ?? $operation->context->declarationSchema)->value),",
+        "    new Identifier($table->name->name->value),",
+        "    $table,",
+        "];"
+      ]
+    }
+  },
+  "artifacts": {
+    "src/Model/Resolution/TableLookup.php": "5edb3f51ad243d93443cf6a512eccfc312d02fa9203d3f7a6828cd5bd1570bc6",
+    "src/Rules/Definition/AlterationProblems.php": "ff3deb03d24132d8669d8499525be98a3a9b554cf5758cc7aca3431298a02511",
+    "src/Statement/Schema/AlterAddColumn.php": "209aefbf227e8a3e4e17cc38fd5b3cd12cd4d79d645cfd373e32feb87ee6dae2",
+    "src/Lowering/Definition/SchemaRule.php": "92b74ef0fd5b1f49809957f7db728ec13ae672271b475e728b1b4adb96460e41",
+    "src/Lowering/Leaf/LiteralRule.php": "7cde00d30ea97526eb7d62d761c159a94926222da41e651199ad5d46340a2765",
+    "src/Statement/Expression/Literal/RealLiteral.php": "206f1f202d2884669312f3e7ce8c4c034ae87eec5263cfecef77b50f297814a9"
+  }
+}

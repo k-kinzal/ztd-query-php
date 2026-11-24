@@ -63,6 +63,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
@@ -139,7 +140,7 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
         'text' => new TextLiteral($input[1]),
         'text-bytes' => new TextLiteral(hex2bin($input[1])),
         'blob' => new BlobLiteral($input[1]),
-        'real' => new RealLiteral($input[1], $input[2], $input[3], $input[4]),
+        'real' => new RealLiteral($input[1], $input[2], $input[3], $input[4], $input[5] ?? false),
         'hex' => new HexIntegerLiteral($input[1], $input[2]),
         'null' => new NullLiteral(),
         'parameter' => new Parameter($input[1]),
@@ -178,7 +179,8 @@ function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastEx
         $value instanceof IntegerLiteral => ['integer', $value->decimal],
         $value instanceof TextLiteral => ['text', $value->value],
         $value instanceof BlobLiteral => ['blob', $value->hex],
-        $value instanceof RealLiteral => ['real', $value->whole, $value->fraction, $value->exponent, $value->negative],
+        $value instanceof RealLiteral => ['real', $value->whole, $value->fraction, $value->exponent, $value->negative,
+            ...($value->uppercaseExponent ? [true] : [])],
         $value instanceof HexIntegerLiteral => ['hex', $value->digits, $value->negated],
         $value instanceof NullLiteral => ['null'],
         $value instanceof Parameter => ['parameter', $value->label],
@@ -312,7 +314,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -488,18 +490,7 @@ function directCreateTable(array $input): CreateTable
     return new CreateTable(
         new Identifier($input['schema']),
         new Identifier($input['table']),
-        array_map(static fn (array $slot): TableColumn => new TableColumn(
-            new Identifier($slot[0]),
-            DeclaredDatatypeName::from($slot[1]),
-            match ($slot[2]) {
-                false => null,
-                true => NotNullConflict::Abort,
-                default => NotNullConflict::tryFrom($slot[2]) ?? $slot[2],
-            },
-            isset($slot[3]) ? operand($slot[3]) : null,
-            Collation::from($slot[4] ?? 'BINARY'),
-            isset($slot[5]) ? new ColumnGeneration(GeneratedStorage::from($slot[5][0]), operand($slot[5][1])) : null,
-        ), $input['columns']),
+        array_map(directSchemaColumn(...), $input['columns']),
         $input['ifNotExists'],
         $input['strict'] ?? false,
         $input['withoutRowid'] ?? false,
@@ -726,6 +717,54 @@ function directRename(array $input): RenameTable|RenameColumn
         : new RenameColumn($schema, $table, new Identifier($input['column']), $destination, $input['quoteReferences']);
 }
 
+function directSchemaColumn(array $slot): TableColumn
+{
+    return new TableColumn(
+        new Identifier($slot[0]),
+        DeclaredDatatypeName::from($slot[1]),
+        match ($slot[2]) {
+            false => null,
+            true => NotNullConflict::Abort,
+            default => NotNullConflict::tryFrom($slot[2]) ?? $slot[2],
+        },
+        isset($slot[3]) ? operand($slot[3]) : null,
+        Collation::from($slot[4] ?? 'BINARY'),
+        isset($slot[5]) ? new ColumnGeneration(GeneratedStorage::from($slot[5][0]), operand($slot[5][1])) : null,
+    );
+}
+
+function directAddColumn(array $input): AddColumn
+{
+    return new AddColumn(
+        new Identifier($input['schema']),
+        new Identifier($input['table']),
+        array_map(static fn ($part) => is_string($part) ? new Identifier($part) : $part, $input['priorHeading']),
+        $input['strict'],
+        directSchemaColumn($input['column']),
+    );
+}
+
+function observeAddColumn(AddColumn $value): array
+{
+    $column = $value->column;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'add-column',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'priorHeading' => array_map(static fn (Identifier $name): string => $name->value, $value->priorHeading),
+        'strict' => $value->strict,
+        'column' => [
+            $column->name->value, $column->type->value, $column->notNull?->value ?? false,
+            $column->default === null ? null : observeOperand($column->default), $column->collation->value,
+            ...($column->generated === null ? [] : [[$column->generated->mode->value, observeOperand($column->generated->expression)]]),
+        ],
+        'sql' => $value->toString(),
+    ];
+}
+
 function observeRename(RenameTable|RenameColumn $value): array
 {
     return [
@@ -752,6 +791,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'rename' => directRename($input),
+            ($input['operation'] ?? null) === 'add-column' => directAddColumn($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
@@ -767,6 +807,9 @@ function runCase(array $input): array
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     }
 
+    if ($value instanceof AddColumn) {
+        return observeAddColumn($value);
+    }
     if ($value instanceof RenameTable || $value instanceof RenameColumn) {
         return observeRename($value);
     }

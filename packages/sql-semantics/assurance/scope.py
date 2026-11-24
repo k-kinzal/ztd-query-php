@@ -190,10 +190,11 @@ CONTRACTS = {
     "sqlite-auto-rowid-v1.json": "530a93ca4c873c4560f3401a65d5aeb396a2ff5275881c76c4a089e39e89d4c7",
     "sqlite-create-as-v5.json": "06b5c313bc7d216a77787303c104b7bcc9fb8cab1f494eeaaa922b330ed1a372",
     "sqlite-create-table-v3.json": "a2e7d433392ad397b62f58e5e0dc45f2307c591ad9d59c5317b49362545390c3",
+    "sqlite-add-column-v2.json": "27dba9aac4062ed92f1795d8bf89c9ea2a27b8749dfdeac9105bae7c7e4fbe48",
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "a73fe51f9c2394d3227d9b24f3fde6cc77408db9c6e777ee17cf5c6aba99420b"
+PUBLICATION = "cbb8303592231de812b3fd519e5e0063d0235f09ca419db858a3952e9f0de586"
 
 
 def declared_constructors(dialects):
@@ -223,7 +224,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v41.json").read_bytes()
+    publication = (TOOL / "publication-v42.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

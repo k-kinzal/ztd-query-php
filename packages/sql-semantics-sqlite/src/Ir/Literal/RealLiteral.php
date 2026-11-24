@@ -23,16 +23,19 @@ final class RealLiteral
      * @param string|null $fraction The digits after the point, or null without a point
      * @param string|null $exponent The optionally signed exponent digits
      * @param bool $negative Whether the literal has a minus sign
+     * @param bool $uppercaseExponent Whether a TEXT column's old-row fallback sees an uppercase exponent marker
      */
     public function __construct(
         public readonly string $whole,
         public readonly ?string $fraction,
         public readonly ?string $exponent = null,
         public readonly bool $negative = false,
+        public readonly bool $uppercaseExponent = false,
     ) {
         Check::input(preg_match('/\A[0-9]*\z/', $whole) === 1 && preg_match('/\A[0-9]*\z/', $fraction ?? '') === 1, 'REAL significand parts must be decimal digits.');
         Check::input($whole !== '' || ($fraction !== null && $fraction !== ''), 'REAL literal requires at least one significand digit.');
         Check::input($exponent === null || preg_match('/\A[+-]?[0-9]+\z/', $exponent) === 1, 'REAL exponent must contain optionally signed decimal digits.');
+        Check::input(!$uppercaseExponent || $exponent !== null, 'An uppercase REAL exponent marker needs exponent digits.');
         if ($fraction === null && $exponent === null) {
             $digits = ltrim($whole, '0');
             $boundary = $negative ? '9223372036854775808' : '9223372036854775807';
@@ -47,6 +50,6 @@ final class RealLiteral
     {
         return ($this->negative ? '-' : '') . $this->whole
             . ($this->fraction === null ? '' : '.' . $this->fraction)
-            . ($this->exponent === null ? '' : 'e' . $this->exponent);
+            . ($this->exponent === null ? '' : ($this->uppercaseExponent ? 'E' : 'e') . $this->exponent);
     }
 }

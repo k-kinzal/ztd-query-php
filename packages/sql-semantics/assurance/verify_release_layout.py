@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v80.json"
-CONTRACT = "329b158815c71b0bb343f0e023465c3a148f20c5d331341010ab313357e447e7"
+CONTRACT_NAME = "release-layout-v81.json"
+CONTRACT = "3f644af9c6bd67094786833e2e94c2f5f4633d2e1c6595e06f9016f6638d194b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -575,6 +575,11 @@ def verify_probe(raw, catalog):
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\RenameColumn"):
             require(item.get("rename") == ["main", "accounts", "id", "renamed", False],
                     "installed-column-rename-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\AddColumn"):
+            require(item.get("addColumn") == [
+                "main", "accounts", ["id"], False, "added", "TEXT", "NOCASE", "value", True,
+                """ALTER TABLE "main"."accounts" ADD COLUMN "added" TEXT DEFAULT 'value' COLLATE NOCASE""",
+            ] and item["sql"] == item["addColumn"][-1], "installed-sqlite-add-column-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

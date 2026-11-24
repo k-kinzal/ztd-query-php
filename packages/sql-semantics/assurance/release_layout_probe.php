@@ -536,6 +536,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\View\\CreateView'] = 'CREATE VIEW view_result("true") AS SELECT id FROM accounts';
         $queries['Schema\\Alter\\RenameTable'] = "ALTER TABLE $table RENAME TO renamed";
         $queries['Schema\\Alter\\RenameColumn'] = "ALTER TABLE $table RENAME COLUMN ID TO renamed";
+        $queries['Schema\\Alter\\AddColumn'] = "ALTER TABLE $table ADD COLUMN added TEXT COLLATE NOCASE DEFAULT 'value'";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
         $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
@@ -1119,6 +1120,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\RenameColumn') {
             $details['rename'] = [$result->schema->value, $result->table->value, $result->column->value,
                 $result->destination->value, $result->quoteReferences];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddColumn') {
+            $first = $result->priorHeading[0];
+            $heading = $result->priorHeading;
+            $heading[0] = &$first;
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn($result->schema, $result->table, $heading, $result->strict, $result->column);
+            $first = $result->column->name;
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn($result->schema, $result->table, [$first], $result->strict, $result->column);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction) {
+                $refused = true;
+            }
+            $details['addColumn'] = [$result->schema->value, $result->table->value, array_column($direct->priorHeading, 'value'),
+                $result->strict, $result->column->name->value, $result->column->type->value, $result->column->collation->value,
+                $result->column->default->value, $refused, $direct->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

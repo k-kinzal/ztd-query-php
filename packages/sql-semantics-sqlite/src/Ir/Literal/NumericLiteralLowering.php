@@ -30,7 +30,7 @@ final class NumericLiteralLowering
             return new HexIntegerLiteral($digits === '' ? '0' : $digits, $negative);
         }
         if ($scalar instanceof ParsedReal) {
-            return new RealLiteral($scalar->whole, $scalar->fraction, $scalar->exponent, $negative);
+            return new RealLiteral($scalar->whole, $scalar->fraction, $scalar->exponent, $negative, $scalar->uppercaseExponent);
         }
 
         $digits = ltrim($scalar->digits, '0');

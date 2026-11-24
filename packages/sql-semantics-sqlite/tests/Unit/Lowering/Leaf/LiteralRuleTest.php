@@ -129,7 +129,7 @@ final class LiteralRuleTest extends TestCase
 
             return [$column->expression->whole, $column->expression->fraction, $column->expression->exponent];
         }, $operation->statement->columns));
-        self::assertSame('SELECT .5 AS c1, 1e5 AS c2, 1e+5 AS c3, 1.5e-3 AS c4, .5e2 AS c5, 1.e3 AS c6', $operation->toString());
+        self::assertSame('SELECT .5 AS c1, 1e5 AS c2, 1E+5 AS c3, 1.5e-3 AS c4, .5e2 AS c5, 1.e3 AS c6', $operation->toString());
     }
 
     public function testNumberDropsTheDigitSeparatorsOfARealToken(): void

@@ -1,0 +1,85 @@
+{
+  "revision": "SemanticsIR/sqlite-rename-boundaries-2",
+  "approval": "pending-human-review",
+  "scope": "Fix SQLite rename source lookups, declared-column binding, rewrite-mode extraction, destination token validation, and emission.",
+  "rules": {
+    "Schema/Alter/RenameTable::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'An ALTER TABLE target needs a nonempty schema identifier.');",
+        "Check::input(",
+        "    !str_starts_with($table->key(), 'sqlite_') && !str_starts_with($destination->key(), 'sqlite_'),",
+        "    'A table rename cannot use the reserved SQLite namespace.',",
+        ");",
+        "Check::input($table->key() !== $destination->key(), 'A table rename requires a distinct destination name.');"
+      ]
+    },
+    "Schema/Alter/RenameTable::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Alter/RenameTable::toString": {
+      "common": [
+        "return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted() . ' RENAME TO ' . $this->destination->quoted();"
+      ]
+    },
+    "Schema/Alter/RenameColumn::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'An ALTER TABLE target needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A column rename cannot target the reserved SQLite namespace.');",
+        "Check::input(",
+        "    $quoteReferences || (",
+        "        preg_match('/\\A[A-Za-z_\\x80-\\xff][A-Za-z0-9_$\\x80-\\xff]*\\z/', $destination->value) === 1",
+        "        && !str_starts_with($destination->value, \"\\xEF\\xBB\\xBF\")",
+        "        && !in_array(strtr($destination->value, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), self::RESERVED_DESTINATIONS, true)",
+        "    ),",
+        "    'A bare rename destination requires one admitted SQLite identifier token.',",
+        ");"
+      ]
+    },
+    "Schema/Alter/RenameColumn::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Alter/RenameColumn::toString": {
+      "common": [
+        "$destination = $this->quoteReferences ? $this->destination->quoted() : $this->destination->value;",
+        "",
+        "return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted()",
+        "    . ' RENAME COLUMN ' . $this->column->quoted() . ' TO ' . $destination;"
+      ]
+    },
+    "Schema/Alter/RenameLowering::lower": {
+      "common": [
+        "[$schema, $name, $table] = (new AlterTargetLowering())->resolve($operation, $statement);",
+        "$destination = new Identifier($statement->newName->value);",
+        "",
+        "if ($statement instanceof AlterRenameTable) {",
+        "    return new RenameTable($schema, $name, $destination);",
+        "}",
+        "",
+        "return new RenameColumn($schema, $name, $this->column($table, $statement->column), $destination, $statement->quoteReferences);"
+      ]
+    },
+    "Schema/Alter/RenameLowering::column": {
+      "common": [
+        "$match = null;",
+        "foreach ($table->columns as $column) {",
+        "    if (NameComparison::AsciiInsensitive->equal($column->name->value, $name->value)) {",
+        "        Check::input($match === null, 'A column rename requires one declared source column.');",
+        "        $match = new Identifier($column->name->value);",
+        "    }",
+        "}",
+        "Check::input($match !== null, 'A column rename requires one declared source column.');",
+        "",
+        "return $match;"
+      ]
+    }
+  },
+  "artifacts": {
+    "src/Lowering/Definition/SchemaRule.php": "92b74ef0fd5b1f49809957f7db728ec13ae672271b475e728b1b4adb96460e41",
+    "src/Statement/Schema/AlterRenameColumn.php": "b2ff35789e13719afa66aef87ff8f2f130f6fb0fce2a924a092bfc4a0d236fd4"
+  },
+  "extends": "sqlite-rename-boundaries-v1.json"
+}

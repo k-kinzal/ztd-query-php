@@ -284,7 +284,7 @@ if ($dialect === 'sqlite') {
     $enumCases['Expression\\CastTarget'] = ['Integer' => 'INTEGER', 'Real' => 'REAL', 'Numeric' => 'NUMERIC', 'Text' => 'TEXT', 'Blob' => 'BLOB'];
     $properties['Literal\\BlobLiteral'] = ['hex' => ['string']];
     $properties['Literal\\HexIntegerLiteral'] = ['digits' => ['string'], 'negated' => ['bool']];
-    $properties['Literal\\RealLiteral'] = ['whole' => ['string'], 'fraction' => ['?string'], 'exponent' => ['?string'], 'negative' => ['bool']];
+    $properties['Literal\\RealLiteral'] = ['whole' => ['string'], 'fraction' => ['?string'], 'exponent' => ['?string'], 'negative' => ['bool'], 'uppercaseExponent' => ['bool']];
     $properties['Literal\\TextLiteral'] = ['value' => ['string']];
     foreach (['Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral', 'Literal\\TextLiteral'] as $literal) {
         $methods[$literal] = ['__construct'];
@@ -382,8 +382,13 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Query\\CreatedColumn'] = ['__construct'];
     $properties['Schema\\Query\\CreatedColumnDeclaration'] = $methods['Schema\\Query\\CreatedColumnDeclaration'] = [];
     $enumCases['Schema\\Query\\CreatedColumnDeclaration'] = ['Untyped' => '', 'Integer' => 'INT', 'Numeric' => 'NUM', 'Real' => 'REAL', 'Text' => 'TEXT'];
-    array_push($roots, 'Schema\\Alter\\RenameTable', 'Schema\\Alter\\RenameColumn');
-    $internal[] = 'Schema\\Alter\\RenameLowering';
+    array_push($roots, 'Schema\\Alter\\RenameTable', 'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\AddColumn');
+    array_push($internal, 'Schema\\Alter\\RenameLowering', 'Schema\\Alter\\AddColumnLowering', 'Schema\\Alter\\AlterTargetLowering');
+    $properties['Schema\\Alter\\AddColumn'] = [
+        'schema' => ['Identifier'], 'table' => ['Identifier'], 'priorHeading' => ['array'],
+        'strict' => ['bool'], 'column' => ['Schema\\TableColumn'],
+    ];
+    $methods['Schema\\Alter\\AddColumn'] = $methods['Select'];
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
@@ -1042,6 +1047,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateView => (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterAddColumn => (new \\' . $prefix . 'Schema\\Alter\\AddColumnLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -1069,16 +1075,19 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     if ($dialect === 'sqlite') {
-        $renameBoundary = __DIR__ . '/sqlite-rename-boundaries-v1.json';
-        requireShape(
-            hash_file('sha256', $renameBoundary) === '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f',
-            'SQLite rename boundary contract differs from its fixed revision'
-        );
-        $renameSources = json_decode(file_get_contents($renameBoundary), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
-        foreach ($renameSources as $path => $expected) {
-            $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
-            $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
-            requireShape(is_file($file) && hash_file('sha256', $file) === $expected, "SQLite rename binding source differs: $path");
+        $contracts = [
+            'sqlite-rename-boundaries-v2.json' => 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3',
+            'sqlite-add-column-boundaries-v1.json' => 'b96c9e4c209fb61fae965a19e0df15e94f1fe827d2c8996f82c223322480f5c4',
+        ];
+        foreach ($contracts as $name => $digest) {
+            $boundary = __DIR__ . '/' . $name;
+            requireShape(hash_file('sha256', $boundary) === $digest, 'SQLite ALTER TABLE boundary contract differs from its fixed revision');
+            $sources = json_decode(file_get_contents($boundary), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
+            foreach ($sources as $path => $expected) {
+                $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
+                $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
+                requireShape(is_file($file) && hash_file('sha256', $file) === $expected, "SQLite ALTER TABLE binding source differs: $path");
+            }
         }
     }
     $checkedBindingSources = [];
@@ -1126,9 +1135,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v47.json';
+    $storagePath = __DIR__ . '/value-storage-v48.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '16954cccfec3161a503dad04633c7b228d8c94198a56193e43a1beded7fa2106',
+        hash_file('sha256', $storagePath) === '8545c60e671053c1a10f51fed1cf47233f5b8977b5ed09213401705b4dd875f2',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1230,6 +1239,7 @@ try {
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\Like\\CreateTableLikeLowering' => 'Schema\\Like\\CreateTableLike',
                 'Schema\\Alter\\TableRenameLowering' => 'Schema\\Alter\\RenameTable',
+                'Schema\\Alter\\AddColumnLowering' => 'Schema\\Alter\\AddColumn',
                 'Schema\\Truncate\\TruncateLowering' => 'Schema\\Truncate\\TruncateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
                 'Schema\\View\\CreateViewLowering' => 'Schema\\View\\CreateView',

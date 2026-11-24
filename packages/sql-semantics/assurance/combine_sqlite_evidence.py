@@ -52,6 +52,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-create-as-evidence", "sqlite-create-as-v5.json", 576, 674, 5, 4),
     Domain("semantics-ir-sqlite-strict-tables-evidence", "sqlite-strict-tables-v2.json", 312, 390, 4, 4),
     Domain("semantics-ir-sqlite-rename-evidence", "sqlite-rename-v4.json", 48, 245, 68, 5),
+    Domain("semantics-ir-sqlite-add-column-evidence", "sqlite-add-column-v2.json", 2496, 2580, 18, 6),
     Domain("semantics-ir-sqlite-generated-columns-evidence", "sqlite-generated-columns-v2.json", 96, 211, 8, 4),
     Domain("semantics-ir-sqlite-implicit-checks-evidence", "sqlite-implicit-checks-v1.json", 192, 297, 6, 4),
     Domain("semantics-ir-sqlite-folded-checks-evidence", "sqlite-folded-checks-v1.json", 72, 175, 4, 4),
