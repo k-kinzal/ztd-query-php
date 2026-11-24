@@ -182,7 +182,7 @@ def faults(engine):
             Fault("collapse-vacuum-marker-output", "Maintenance/Vacuum/VacuumRegistrations::toString",
                   "return '(0 IN (' . implode(', ', $markers) . '))';", "return '0';"),
             Fault("misclassify-temp-vacuum-operand", "Platform::discardedBindings",
-                  "$object->ignoresDestination() && $object->into !== null", "false"),
+                  "$object->ignoresDestination() && $object->into !== null", "false", "src/Platform.php"),
             Fault("ignore-drop-view-kind", "Schema/DropLowering::lower",
                   "$resolution->table->kind === $kind", "true"),
             Fault("allow-reserved-drop-view", "Schema/DropView::__construct",
