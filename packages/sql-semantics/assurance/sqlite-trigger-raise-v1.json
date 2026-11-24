@@ -1,0 +1,205 @@
+{
+  "revision": "SemanticsIR/sqlite-trigger-raise-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Stock SQLite 3.47.2, UTF-8 and ordinary trigger scope. The grammar supports expression messages. Default fixture trigger recursion policy.",
+  "scope": "A one-result, source-free SELECT RAISE inside the ordered checked trigger program. Support optional row-image IS NULL or IS NOT NULL filters and a typed scalar literal or row-image message.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Trigger/Program/TriggerRaise": {
+      "role": "A source-free trigger SELECT whose single expression interrupts its native activation.",
+      "structure": "A closed policy, one optional typed message expression, and an optional checked row-image NULL test.",
+      "conditions": "IGNORE has no message. FAIL, ABORT and ROLLBACK each hold one expression. The enclosing trigger checks the availability and positions of every message and condition row-image field.",
+      "meaning": "Evaluate the optional test. On activation, stop according to the native trigger policy. The position among other actions determines what has executed. Native FAIL preserves earlier changes, IGNORE ends the program without an error, ABORT rolls back the statement and ROLLBACK can end an explicit transaction.",
+      "sql": "Emit SELECT RAISE with the exact policy, a checked expression where required and the optional native WHERE test.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ],
+      "externalInterpretation": "Same pinned SQLite semantics for one trigger activation, attached search path, transaction lifetime and surrounding statement and trigger effects."
+    },
+    "Schema/Trigger/Program/TriggerRaisePolicy": {
+      "role": "The control effect of an active SQLite RAISE.",
+      "structure": "IGNORE, FAIL, ABORT or ROLLBACK.",
+      "conditions": "The action's constructor matches the message presence to its policy. Each enum value has one native effect.",
+      "meaning": "Represent the exact error and rollback policy under the external native statement and transaction.",
+      "sql": "Emit the exact policy token.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ],
+      "externalInterpretation": "Same pinned SQLite semantics for one trigger activation, attached search path, transaction lifetime and surrounding statement and trigger effects."
+    }
+  },
+  "existingRoles": [
+    "Schema/Trigger/CreateTrigger",
+    "Schema/Trigger/TriggerCondition",
+    "Schema/Trigger/TriggerField",
+    "Schema/Trigger/TriggerInsert"
+  ],
+  "rules": [
+    "Only a source-free SELECT with one projected RAISE and no other evaluation clauses is admitted. A projected alias does not affect the checked condition or the trigger effect.",
+    "Message evaluation preserves the decoded text, integer or NULL value or resolved row image. SQLite evaluates the permitted values with its normal runtime string conversion, including an empty message for SQL NULL.",
+    "RAISE IGNORE preserves earlier trigger effects and suppresses the remaining actions. An outer INSERT's row exists if its AFTER trigger reached IGNORE.",
+    "RAISE FAIL emits the native constraint error and preserves earlier effects. ABORT rolls back this statement's effects but leaves an existing transaction open. ROLLBACK aborts the transaction when one is present.",
+    "The explicit RAISE control action is retained even under a different outer INSERT conflict policy. A false WHERE prevents both interruption and message evaluation.",
+    "Nested RAISE inside larger expressions, query sources, aggregation, windowing, sorting and limiting remain listed in the whole-language inventory."
+  ],
+  "observations": [
+    "Actual selected policy, message role and typed value, active row-image scope, WHERE evaluation, ordered child effects and the presence of the interrupted row.",
+    "Runtime return or exact constraint diagnostic including text versus empty message, total changes, earlier and later state, transaction marker and autocommit transition.",
+    "Scope-qualified catalogs and watched/destination rows, builtin authorizer ownership and surviving rollback state."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp",
+      "archive"
+    ],
+    "timings": [
+      "BEFORE",
+      "AFTER"
+    ],
+    "actions": [
+      [
+        "IGNORE",
+        "absent"
+      ],
+      [
+        "FAIL",
+        "literal"
+      ],
+      [
+        "FAIL",
+        "text"
+      ],
+      [
+        "FAIL",
+        "null"
+      ],
+      [
+        "FAIL",
+        "integer"
+      ],
+      [
+        "ABORT",
+        "literal"
+      ],
+      [
+        "ABORT",
+        "text"
+      ],
+      [
+        "ABORT",
+        "null"
+      ],
+      [
+        "ABORT",
+        "integer"
+      ],
+      [
+        "ROLLBACK",
+        "literal"
+      ],
+      [
+        "ROLLBACK",
+        "text"
+      ],
+      [
+        "ROLLBACK",
+        "null"
+      ],
+      [
+        "ROLLBACK",
+        "integer"
+      ]
+    ],
+    "conditions": [
+      "unconditional",
+      "selected",
+      "not-selected"
+    ],
+    "transaction": [
+      false,
+      true
+    ],
+    "outer": [
+      "inherit",
+      "IGNORE"
+    ],
+    "identity": "Check all 936 coordinates in fixed Cartesian order through both direct and analyzed construction. Recover the effect and guard shape from the complete IR and check the scope, typed message, selected branch and transaction from native observation."
+  },
+  "exploration": {
+    "seeds": [
+      12343,
+      58951,
+      87991
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 420,
+    "allowedExclusions": [],
+    "domain": "Vary placement, phase, available row images, text and signed integer or NULL messages, guards, caller transaction, outer policy, several ordered surrounding operations and Unicode, quoted names."
+  },
+  "negative": [
+    "IGNORE with a message",
+    "FAIL without a message",
+    "ABORT without a message",
+    "ROLLBACK without a message",
+    "RAISE message with an unavailable row image",
+    "RAISE message with an out-of-range watched slot",
+    "RAISE guard with an unavailable row image",
+    "RAISE guard with an out-of-range watched slot"
+  ],
+  "analysisNegative": [
+    "Standalone SELECT RAISE outside a trigger",
+    "RAISE SELECT with an actual input relation",
+    "RAISE SELECT with an additional projection",
+    "RAISE SELECT with a LIMIT that changes evaluation",
+    "RAISE with an unresolved message column",
+    "RAISE with a prepared parameter in the message"
+  ],
+  "faults": [
+    "Ignore the WHERE guard",
+    "Invert the row-image NULL test",
+    "Substitute FAIL for ABORT",
+    "Substitute ABORT for ROLLBACK",
+    "Convert IGNORE to an error",
+    "Use a constant error message",
+    "Use the wrong watched field for the message",
+    "Run a later action before the raise",
+    "Permit the IGNORE policy to carry a message",
+    "Skip the message row-image availability check"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "929a3f1b21ee9adeee59c67cb4267e2aa7807ae3aa20c97fd20632f2b3244661",
+    "observations": "a6e764ecbed37d0ae0407b561ddfae514eddbabf768da9a80fb6000b823b6175",
+    "coordinates": 936
+  },
+  "trust": [
+    "Pinned SQLite effect and value ABI, attached fixture and approved boundary facts, independent typed state transition, and the verified closed value graph and release layout."
+  ],
+  "open": [
+    "The completed rule focuses on one source-free program action. Whole-language completeness and variants with arbitrary message expressions or query-source-dependent control are still open."
+  ]
+}
