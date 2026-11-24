@@ -5,6 +5,7 @@ from difflib import unified_diff
 from hashlib import sha256
 import json
 from pathlib import Path
+from os.path import relpath
 import re
 
 from compare_assurance_revisions import review
@@ -14,6 +15,7 @@ from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import certificate
 from constructor_trace import check_scope, trace
 from evidence_transcript import events as execution_events
+from formal_reindex_evidence import index_lexical_proof
 from grammar_scope import inventory as grammar_inventory
 from native_counterexample_reduction import CONTROL_RESULTS as NATIVE_REDUCTION_CONTROLS, DIGEST as NATIVE_REDUCTION_DIGEST
 from native_schedule import NATIVE, SINGLE_ENGINE, release_subset, reports as native_reports
@@ -520,6 +522,13 @@ def main():
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
     staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest, classes, checkout)
     role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
+    lexical = index_lexical_proof(evidence, manifest)
+    if lexical is not None:
+        for method in lexical["methods"]:
+            role = "SqlSemantics\\Platform\\PostgreSql\\Ir\\" + method.partition("::")[0].replace("/", "\\")
+            linked = role_trace["constructors"][role]
+            linked.setdefault("lexicalProof", {"receipt": lexical["receipt"], "coveredMethods": []})
+            linked["lexicalProof"]["coveredMethods"].append(method)
     require(base.get("activeDeclarations") == role_trace["activeDeclarations"], "bundle-constructor-declaration-receipt")
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)
@@ -537,6 +546,7 @@ def main():
         "sqliteFaultPreflight": preflight[1] if preflight else None,
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
         "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],
+        "postgresReindexLexicalProof": lexical,
         "observedBranchRules": rule_link, "requiredBranchStatuses": statuses,
         "missingEvidence": evidence.missing, "humanReview": "pending", "acceptanceProtection": "unverified",
         "requiredScope": base["scope"], "unresolved": base["open"],
@@ -597,6 +607,9 @@ def main():
         lines.append("The native constructor audit also links each checked scalar dispatch to the field types of its listed callers.")
         lines.append("The [native boundary fault replay](native-boundary-fault-replay.json) links all required source patches and raw rejections.")
         lines.append("The native constructor audit also contains a symbolic derivation for every ordinary MySQL signed storage interval under its listed premises.")
+    if lexical is not None:
+        relative = relpath(root / lexical["receipt"]["file"], output)
+        lines.append(f"The [PostgreSQL rebuild spelling proof]({relative}) links the two kernel-checked lexical theorems to candidate PHP.")
     if previous is not None:
         lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")
