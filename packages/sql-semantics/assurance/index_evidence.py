@@ -18,6 +18,7 @@ from evidence_transcript import events as execution_events
 from formal_reindex_evidence import index_lexical_proof
 from grammar_scope import inventory as grammar_inventory
 from native_counterexample_reduction import CONTROL_RESULTS as NATIVE_REDUCTION_CONTROLS, DIGEST as NATIVE_REDUCTION_DIGEST
+from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, verify_link as verify_fixture
 from native_schedule import NATIVE, SINGLE_ENGINE, release_subset, reports as native_reports
 from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
@@ -354,6 +355,12 @@ class Evidence:
                 else:
                     releases[release] = self.raw(path.parent / receipt["index"], receipt["indexDigest"],
                                                  "events.jsonl", receipt["eventsDigest"], report["contract"], self.tools)
+                    if domain in FIXTURE_DOMAINS:
+                        source, _, raw = self.record(path.parent / receipt["index"])
+                        fixture = receipt.get("fixtureIsolation")
+                        require(fixture == raw.get("fixtureIsolation"), "bundle-postgres-fixture-replay-link", release)
+                        verify_fixture(source.parent, fixture, domain, release.split(" ")[1], required=True)
+                        releases[release]["fixtureIsolation"] = self.checked(source.parent / fixture["file"], fixture["sha256"])[1]
             domains[domain] = {"replay": origin, "contract": contract, "releases": releases, "execution": report["execution"], "missing": missing}
             if unavailable:
                 domains[domain]["unavailableProfiles"] = unavailable

@@ -75,9 +75,10 @@ def negatives(engine, tag, specification):
     }
     if engine == "postgres":
         boundary = specification["unresolvedPostgreSqlCast"]
-        yield {"dialect": engine, "release": tag, "sql": boundary["sql"], "declarations": []}, {
-            "exception": boundary["exception"], "message": boundary["message"],
-        }
+        request = {"dialect": engine, "release": tag, "sql": boundary["sql"]}
+        failure = {"exception": boundary["exception"], "message": boundary["message"]}
+        yield {**request, "declarations": [], "complete": False}, failure
+        yield {**request, "declarations": ["CREATE TEMP TABLE text (x integer)"]}, failure
     if engine == "mysql":
         yield case(engine, tag, [ref(2), ref(1)], [0, 1]), signal
         yield case(engine, tag, [ref(1), ref(1)], [0]), signal

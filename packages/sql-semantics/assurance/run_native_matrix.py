@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from check_native_workflow import audit as audit_workflow
+from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, ENV as FIXTURE_CONTAINER, IMAGES as POSTGRES_IMAGES
 from native_schedule import NATIVE, SINGLE_ENGINE, release_subset
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION, check_profile
@@ -46,6 +47,7 @@ def release_fixtures(workflow, projection):
         repository = "container-registry.oracle.com/mysql/community-server" if key == ("mysql", "9.1.0") else engine
         require(key in expected and key not in releases and image.split("@")[0] == repository and int(port) == PORTS[engine],
                 "native-launch-unregistered-fixture", (key, port, image))
+        require(engine != "postgres" or POSTGRES_IMAGES[version] == image, "native-launch-postgres-fixture-image", key)
         releases[key] = {"engine": engine, "release": version, "port": int(port), "image": image}
     require(releases.keys() == expected, "native-launch-fixture-release-set", sorted(expected - releases.keys()))
     return releases
@@ -171,17 +173,18 @@ def check_fixture_connection(engine, release, environment, deadline, path):
             time.sleep(min(1, startup_remaining(deadline)))
 
 
-def run_jobs(jobs, args, raw, logs, environment, result):
+def run_jobs(jobs, args, raw, logs, environment, result, container):
     for domain, runner, flags in jobs:
         path = logs / f"{domain}.log"
         entry = {"domain": domain, "runner": runner, "runnerDigest": digest(TOOL / runner), "log": path.name}
         result.append(entry)
+        job_environment = {**environment, FIXTURE_CONTAINER: container} if domain in FIXTURE_DOMAINS else environment
         with path.open("w") as output:
             try:
                 run = subprocess.run(
                     [sys.executable, str(TOOL / runner), "--candidate", str(args.candidate),
                      "--tool-autoload", str(args.tool_autoload), *flags, "--out", str(raw / domain)],
-                    env=environment, stdout=output, stderr=subprocess.STDOUT, timeout=RUNNER_SECONDS, check=False,
+                    env=job_environment, stdout=output, stderr=subprocess.STDOUT, timeout=RUNNER_SECONDS, check=False,
                 )
                 entry.update(outcome="exited", exitCode=run.returncode)
             except subprocess.TimeoutExpired:
@@ -250,7 +253,7 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         receipt["observedProfile"] = profile
         receipt["startupSeconds"] = round(time.monotonic() - start, 3)
         phase = "execution"
-        run_jobs(jobs, args, raw, logs, environment, receipt["executions"])
+        run_jobs(jobs, args, raw, logs, environment, receipt["executions"], container)
     except (Failure, OSError, ValueError, subprocess.SubprocessError) as error:
         receipt["failure"] = {"phase": phase, "type": type(error).__name__, "detail": str(error)}
         if isinstance(error, subprocess.CalledProcessError):

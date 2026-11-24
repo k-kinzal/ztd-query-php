@@ -5,6 +5,7 @@ import json
 import re
 from pathlib import Path
 
+from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, ENV as FIXTURE_CONTAINER, fixed_contract
 from run import TOOL, digest, require
 from scope import CONTRACTS
 
@@ -89,6 +90,7 @@ def route_index(authorized_steps):
 def audit(workflow, plan):
     document = TOOL / CONTRACT_NAME
     require(digest(document) == CONTRACT, "native-workflow-contract-mismatch")
+    fixed_contract()
     authorized_steps = steps(workflow.read_text())
     for ref, role in (("${{ github.workflow_sha }}", "trusted"), ("${{ inputs.candidate }}", "candidate")):
         checkouts = [step for step in authorized_steps if field(step, "path", 10) == role]
@@ -117,13 +119,17 @@ def audit(workflow, plan):
         require(field(step, "working-directory") is None and field(step, "shell") is None
                 and field(step, "ENGINE", 10) == "${{ matrix.engine }}" and field(step, "RELEASE", 10) == "${{ matrix.release }}",
                 "native-workflow-runner-environment", domain)
+        isolation = field(step, FIXTURE_CONTAINER, 10)
+        expected_isolation = "${{ job.services.database.id }}" if domain in FIXTURE_DOMAINS else None
+        require(isolation == expected_isolation, "native-workflow-postgres-fixture-route", domain)
         require(field(upload, "path", 10) == "${{ runner.temp }}/" + out + "/", "native-workflow-artifact-path", domain)
         run_status = "success()" if domain == "projection" else "!cancelled()"
         compared = selected_profiles(step, run_status, plan)
         preserved = selected_profiles(upload, "always()", plan)
         require(compared == sorted(profiles) == preserved, "native-workflow-route-selection",
                 {"domain": domain, "expected": sorted(profiles), "compared": compared, "preserved": preserved})
-        routes[domain] = {"runner": runner, "output": out, "artifact": artifact, "profiles": [list(p) for p in compared]}
+        routes[domain] = {"runner": runner, "output": out, "artifact": artifact, "profiles": [list(p) for p in compared],
+                          **({"fixtureIsolation": isolation} if isolation else {})}
     return {"contract": CONTRACT, "checker": digest(Path(__file__)), "workflow": digest(workflow), "routes": routes}
 
 

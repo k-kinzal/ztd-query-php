@@ -2,12 +2,14 @@
 
 import argparse
 import json
+import os
 import sys
 import time
 from collections import Counter
 from pathlib import Path
 
 from native_counterexample_reduction import record as record_reduction
+from native_postgres_fixture import ENV as FIXTURE_CONTAINER, renew as renew_fixture
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION
 from run_server import Observer, check_profile, check_transport, rejects, responses, same
@@ -282,9 +284,14 @@ def main(domain):
     write_json(args.out / "distribution.json", manifest)
     tag = version_tag(args.engine, args.release)
     mutations = domain.faults(args.engine, tag)
+    container = os.environ.get(FIXTURE_CONTAINER)
+    fixture = None
     try:
         comparator_controls = domain.controls()
         structure = shape(args, dialect=args.engine)
+        if container is not None:
+            require(args.engine == "postgres" and not args.local, "postgres-fixture-isolated-runner-required")
+            fixture = renew_fixture(label.replace("-", "_"), args.release, container, args.out / "fixture-isolation.json")
         deadline = time.monotonic() + specification["exploration"]["timeoutSecondsPerRelease"]
         with Observer(args.engine, deadline, domain.OBSERVER) as db:
             check_profile(args.engine, args.release, db)
@@ -314,6 +321,7 @@ def main(domain):
         "contract": domain.CONTRACT, "distribution": digest(args.out / "distribution.json"), "toolDigests": tools(),
         "engine": args.engine, "release": args.release, "isolation": "none" if args.local else IMAGE,
         "shape": structure, "eventsDigest": digest(args.out / "events.jsonl"), **result,
+        **({"fixtureIsolation": fixture} if fixture else {}),
     })
     (args.out / "summary.md").write_text(
         f"# Native {args.engine} {args.release} {label} evidence\n\nCandidate `{commit}`.\n\n"

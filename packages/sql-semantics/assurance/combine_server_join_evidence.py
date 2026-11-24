@@ -9,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from evidence_transcript import canonical, events, load_replay_contract
+from native_postgres_fixture import verify_link as verify_fixture
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from renderer_fault_dispatch import verify as verify_fault_dispatch
 from run_server import check_profile, check_transport, rejects, same
@@ -138,7 +139,7 @@ def check_faults(path, report, distribution, checkout, domain):
     return dispatch
 
 
-def combine(candidate, checkout, paths, output, domain):
+def combine(candidate, checkout, paths, output, domain, require_fixture_reset=False):
     label = domain.LABEL
     load_replay_contract()
     specification, profiles = domain.specifications()
@@ -153,6 +154,7 @@ def combine(candidate, checkout, paths, output, domain):
         require(raw["status"] == f"provisional-server-{label}" and raw["candidate"] == candidate
                 and raw["candidateIdentityContract"] == IDENTITY_CONTRACT and raw["contract"] == domain.CONTRACT
                 and raw["isolation"] == IMAGE and raw["toolDigests"] == registered_tools, f"server-{label}-evidence-target-mismatch", str(path))
+        verify_fixture(path.parent, raw.get("fixtureIsolation"), label.replace("-", "_"), role[1], require_fixture_reset)
         distribution = path.parent / "distribution.json"
         require(raw["distribution"] == digest(distribution), f"server-{label}-evidence-manifest-mismatch", str(path))
         verify_distribution(json.loads(distribution.read_text()), manifest)
@@ -170,6 +172,7 @@ def combine(candidate, checkout, paths, output, domain):
         releases[role] = {"index": relpath(path, output.parent), "indexDigest": digest(path), "eventsDigest": digest(ledger),
                           "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "faultDispatch": dispatch,
                           "execution": results,
+                          **({"fixtureIsolation": raw["fixtureIsolation"]} if "fixtureIsolation" in raw else {}),
                           **({"comparatorFaults": raw["comparatorFaults"]} if "comparatorFaults" in raw else {}),
                           **({"directFinite": len(raw["directFiniteIds"])} if "directFiniteIds" in raw else {}),
                           **({"rejectedFinite": len(raw["rejectedFiniteIds"])} if "rejectedFiniteIds" in raw else {})}
@@ -187,13 +190,14 @@ def main(domain):
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--candidate-root", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--require-fixture-reset", action="store_true")
     parser.add_argument("indexes", type=Path, nargs="+")
     args = parser.parse_args()
     candidate = args.candidate_root.resolve()
     paths = [path.resolve() for path in args.indexes]
     output = args.out.resolve()
     require(all(path != candidate and candidate not in path.parents for path in [output, *paths]), "evidence-directory-inside-candidate")
-    combine(args.candidate, candidate, paths, output, domain)
+    combine(args.candidate, candidate, paths, output, domain, args.require_fixture_reset)
 
 
 if __name__ == "__main__":

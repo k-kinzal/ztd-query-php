@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS
 from native_schedule import NATIVE, reports
 from run import TOOL, digest, require, write_json
 
@@ -18,6 +19,8 @@ def collect(candidate, checkout, raw, layout, output):
         receipt, log = output / f"{domain}.json", output / f"{domain}.log"
         command = [sys.executable, str(TOOL / script), "--candidate", candidate,
                    "--candidate-root", str(checkout), "--out", str(receipt)]
+        if domain in FIXTURE_DOMAINS:
+            command.append("--require-fixture-reset")
         for path in unavailable:
             command.extend(["--unavailable", str(path)])
         with log.open("w") as destination:

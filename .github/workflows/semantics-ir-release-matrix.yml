@@ -555,6 +555,7 @@ jobs:
       - name: Compare PostgreSQL schema-wide index rebuilds
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
           PYTHONDONTWRITEBYTECODE: '1'
           ENGINE: ${{ matrix.engine }}
           RELEASE: ${{ matrix.release }}
@@ -570,6 +571,7 @@ jobs:
       - name: Compare PostgreSQL partition owner rebuilds and physical descendants
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
           PYTHONDONTWRITEBYTECODE: '1'
           ENGINE: ${{ matrix.engine }}
           RELEASE: ${{ matrix.release }}
@@ -585,6 +587,7 @@ jobs:
       - name: Compare PostgreSQL named partition index lineage rebuilds
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
           PYTHONDONTWRITEBYTECODE: '1'
           ENGINE: ${{ matrix.engine }}
           RELEASE: ${{ matrix.release }}
@@ -600,6 +603,7 @@ jobs:
       - name: Compare PostgreSQL database and system catalog rebuilds
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
           PYTHONDONTWRITEBYTECODE: '1'
           ENGINE: ${{ matrix.engine }}
           RELEASE: ${{ matrix.release }}
@@ -630,6 +634,7 @@ jobs:
       - name: Compare PostgreSQL rebuild reporting
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
+          ZTD_IR_POSTGRES_FIXTURE_CONTAINER: ${{ job.services.database.id }}
           PYTHONDONTWRITEBYTECODE: '1'
           ENGINE: ${{ matrix.engine }}
           RELEASE: ${{ matrix.release }}

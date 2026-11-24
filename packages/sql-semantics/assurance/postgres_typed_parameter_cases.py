@@ -10,6 +10,7 @@ from server_cases import analyzed, observation
 from server_parameter_cases import case
 
 OIDS = {"int4": "23", "int8": "20", "bool": "16"}
+PARAMETER_OIDS = OIDS | {"text": "25"}
 EDGES = {"int4": ("int4", "int8", "bool"), "int8": ("int8", "int4"), "bool": ("bool", "int4")}
 
 
@@ -136,7 +137,9 @@ def negatives(tag):
     yield select(tag, [ref(2, "int8")], [0, 0]), "contiguous bound slots"
     yield analyzed("postgres", "SELECT $1::bigint AS a0, $1::boolean AS a1", version=tag), "no direct cast between bigint and boolean"
     yield analyzed("postgres", "SELECT $1::boolean AS a0, $1::bigint AS a1", version=tag), "no direct cast between bigint and boolean"
-    yield analyzed("postgres", "SELECT CAST($1 AS text) AS a0", schemas=False, version=tag), "The cast must resolve to a scalar pg_catalog target."
+    text = analyzed("postgres", "SELECT CAST($1 AS text) AS a0", schemas=False, version=tag)
+    yield {**text, "complete": False}, "The cast must resolve to a scalar pg_catalog target."
+    yield {**text, "declarations": ["CREATE TEMP TABLE text (x integer)"]}, "The cast must resolve to a scalar pg_catalog target."
 
 
 def requests(_, tag, specification):
@@ -148,6 +151,9 @@ def requests(_, tag, specification):
             yield f"seed/{seed}/{index}", record, record, None
     for index, (sql, record) in enumerate(analyzed_cases(tag)):
         yield f"analysis/{index}", analyzed("postgres", sql, version=tag), record, None
+    for index, value in enumerate(("bound '値'", None)):
+        request = analyzed("postgres", "SELECT CAST($1 AS text) AS a0", schemas=False, version=tag)
+        yield f"closed-catalog-text/{index}", request, select(tag, [ref(1, "text")], [value]), None
     for index, (request, reason) in enumerate(negatives(tag)):
         yield f"negative/{index}", request, None, {"exception": EXCEPTION, "message": reason}
 
@@ -207,7 +213,7 @@ def expected(item):
     signature = inputs(item)
     bindings = item["bindings"]
     assert set(signature) == set(range(1, len(bindings) + 1))
-    oids = [OIDS[signature[index]] for index in range(1, len(bindings) + 1)]
+    oids = [PARAMETER_OIDS[signature[index]] for index in range(1, len(bindings) + 1)]
     try:
         values, fields = measured(item, bindings)
     except OverflowError:

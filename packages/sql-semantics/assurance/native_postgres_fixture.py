@@ -1,0 +1,121 @@
+"""Renew the disposable fixture before observers that measure database-wide state."""
+
+import json
+import os
+import re
+import subprocess
+import time
+
+from run import TOOL, digest, require, write_json
+
+NAME = "native-postgres-fixture-isolation-v1.json"
+CONTRACT = "13cdc0c0a4c73e8414057b8b3babae220c6a1e9db8f8a0a7c3202f4ee83aac3e"
+ENV = "ZTD_IR_POSTGRES_FIXTURE_CONTAINER"
+IMAGES = {
+    "16.6": "postgres@sha256:557fea37a744d5f4c8faab304b0a90858b53ab119735a88c131fd19dab802f36",
+    "17.2": "postgres@sha256:3267c505060a0052e5aa6e5175a7b41ab6b04da2f8c4540fc6e98a37210aa2d3",
+}
+DOMAINS = frozenset({
+    "postgres_reindex_schema", "postgres_reindex_partition_table", "postgres_reindex_partition_index",
+    "postgres_reindex_database", "postgres_reindex_verbose",
+})
+TIMEOUT = 45
+MAINTENANCE = "postgres"
+DATABASE = "ir_fixture"
+COMMANDS = (f"DROP DATABASE {DATABASE}", f"CREATE DATABASE {DATABASE} TEMPLATE template0")
+IDENTITY = "SELECT oid::text FROM pg_catalog.pg_database WHERE datname='ir_fixture' AND datdba=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname='postgres')"
+CENSUS = """SELECT current_database(), current_setting('server_version_num'),
+  (SELECT oid::text FROM pg_catalog.pg_database WHERE datname=current_database()),
+  (SELECT count(*) FROM pg_catalog.pg_namespace WHERE nspname NOT IN ('pg_catalog','pg_toast','information_schema','public')),
+  (SELECT count(*) FROM pg_catalog.pg_class WHERE oid>=16384 OR relnamespace='public'::pg_catalog.regnamespace),
+  (SELECT count(*) FROM pg_catalog.pg_inherits)"""
+
+
+def fixed_contract():
+    path = TOOL / NAME
+    require(digest(path) == CONTRACT, "postgres-fixture-contract-digest")
+    definition = json.loads(path.read_text())
+    setup = definition["setup"]
+    require(set(definition["domains"]) == DOMAINS and set(definition["releases"]) == IMAGES.keys()
+            and setup["timeoutSeconds"] == TIMEOUT and list(COMMANDS) == setup["commands"],
+            "postgres-fixture-contract-scope")
+
+
+def check_container(container, image, port, identity):
+    mapping = identity["NetworkSettings"]["Ports"].get("5432/tcp") or []
+    require(identity["Id"] == container and identity["Config"]["Image"] == image and identity["State"]["Running"] is True
+            and {"POSTGRES_DB=ir_fixture", "POSTGRES_PASSWORD=ir_fixture"} <= set(identity["Config"]["Env"])
+            and any(entry["HostPort"] == port for entry in mapping),
+            "postgres-fixture-container-authority", {"container": container, "image": image, "port": port})
+
+
+def verify_report(record, domain, release):
+    fixed_contract()
+    require(record["contract"] == CONTRACT and record["domain"] == domain and domain in DOMAINS
+            and record["release"] == release and record["image"] == IMAGES[release]
+            and re.fullmatch(r"[0-9a-f]{64}", record["container"])
+            and re.fullmatch(r"[1-9][0-9]{0,4}", record["port"]) and int(record["port"]) <= 65535,
+            "postgres-fixture-report-identity", domain)
+    commands = record["commands"]
+    for action, database, statements in (("before", MAINTENANCE, (IDENTITY,)), ("renew", MAINTENANCE, COMMANDS),
+                                         ("after", DATABASE, (CENSUS,))):
+        receipt = commands[action]
+        require(receipt["exit"] == 0 and receipt["database"] == database and receipt["sql"] == list(statements)
+                and receipt["stderr"] == "", "postgres-fixture-command-failed", {"action": action, "receipt": receipt})
+    before = commands["before"]["stdout"].strip()
+    fields = commands["after"]["stdout"].strip().split("|")
+    major, minor = map(int, release.split("."))
+    version = str(major * 10000 + minor)
+    require(re.fullmatch(r"[1-9][0-9]*", before) and len(fields) == 6 and fields[:2] == [DATABASE, version]
+            and re.fullmatch(r"[1-9][0-9]*", fields[2]) and fields[2] != before and fields[3:] == ["0", "0", "0"]
+            and commands["renew"]["stdout"].splitlines() == ["DROP DATABASE", "CREATE DATABASE"],
+            "postgres-fixture-not-pristine", {"before": before, "after": fields, "domain": domain})
+
+
+def renew(domain, release, container, out):
+    fixed_contract()
+    dsn = os.environ.get("ZTD_IR_POSTGRES_DSN", "")
+    endpoint = re.fullmatch(r"pgsql:host=127[.]0[.]0[.]1;port=([1-9][0-9]{0,4});dbname=ir_fixture", dsn)
+    require(domain in DOMAINS and release in IMAGES and re.fullmatch(r"[0-9a-f]{64}", container)
+            and endpoint is not None and int(endpoint[1]) <= 65535
+            and os.environ.get("ZTD_IR_POSTGRES_USER") == "postgres"
+            and os.environ.get("ZTD_IR_POSTGRES_PASSWORD") == "ir_fixture",
+            "postgres-fixture-invalid-authority", domain)
+    deadline = time.monotonic() + TIMEOUT
+
+    def call(*argv):
+        remaining = deadline - time.monotonic()
+        require(remaining > 0, "postgres-fixture-timeout", domain)
+        return subprocess.run(["docker", *argv], capture_output=True, text=True, timeout=remaining, check=False)
+
+    probe = call("container", "inspect", container)
+    require(probe.returncode == 0, "postgres-fixture-inspect", probe.stderr)
+    identity, = json.loads(probe.stdout)
+    port, image = endpoint[1], IMAGES[release]
+    check_container(container, image, port, identity)
+    record = {"contract": CONTRACT, "domain": domain, "release": release, "image": image, "container": container,
+              "port": port, "commands": {}}
+    for action, database, statements in (("before", MAINTENANCE, (IDENTITY,)), ("renew", MAINTENANCE, COMMANDS),
+                                         ("after", DATABASE, (CENSUS,))):
+        flags = [flag for statement in statements for flag in ("-c", statement)]
+        reply = call("exec", "--user", "postgres", container, "psql", "-X", "-A", "-t", "-U", "postgres",
+                     "-v", "ON_ERROR_STOP=1", "-d", database, *flags)
+        record["commands"][action] = {"database": database, "sql": list(statements), "stdout": reply.stdout,
+                                      "stderr": reply.stderr, "exit": reply.returncode}
+        write_json(out, record)
+        require(reply.returncode == 0 and not reply.stderr, "postgres-fixture-command-failed", record["commands"][action])
+        if action == "before":
+            require(re.fullmatch(r"[1-9][0-9]*", reply.stdout.strip()), "postgres-fixture-owner", reply.stdout)
+    verify_report(record, domain, release)
+    return {"file": out.name, "sha256": digest(out)}
+
+
+def verify_link(directory, link, domain, release, required):
+    if link is None:
+        require(not required, "postgres-fixture-report-required", domain)
+        return
+    require(domain in DOMAINS and link["file"] == "fixture-isolation.json", "postgres-fixture-report-location", domain)
+    source = directory / link["file"]
+    require(source.is_file() and source.resolve().parent == directory and digest(source) == link["sha256"],
+            "postgres-fixture-report-digest", domain)
+    verify_report(json.loads(source.read_text()), domain, release)
