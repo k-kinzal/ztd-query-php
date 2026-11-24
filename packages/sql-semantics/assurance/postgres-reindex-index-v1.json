@@ -1,0 +1,160 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-index-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings, native parameter spelling and the named ordinary local index namespace.",
+  "scope": "Rebuild one resolved index identified by absolute schema, index and owner coordinates. Retain the requested standard or concurrent action, including the concurrent precondition on a temporary index.",
+  "additionalPublicRoots": [
+    "Schema/Index/ReindexIndex"
+  ],
+  "constructors": {
+    "Schema/Index/ReindexIndex": {
+      "role": "The complete statement to rebuild one ordinary persistent or temporary index.",
+      "structure": "One checked IndexReference, one effective requested IndexRebuildMode and one native grammar release.",
+      "conditions": "The public value accepts only the closed target and mode types. The analyzer resolves a definite ordinary index and its owner against the declared namespace and rejects missing, conflicting, unknown or wrong-kind targets. The parsed statement is REINDEX INDEX with no options other than native CONCURRENTLY flags.",
+      "meaning": "Rebuild the physical index while retaining its effective definition, indexed table contents and other indexes. Standard rebuilding replaces storage without replacing the index identity. Persistent concurrent rebuilding can replace the index catalog identity. A requested concurrent command is forbidden inside a transaction block even when the temporary index rebuild itself uses the standard path.",
+      "sql": "Write REINDEX INDEX, optional CONCURRENTLY for the requested effective mode, and two independently quoted decoded names for the absolute selected index.",
+      "externalInterpretation": "The same native release, index at the bound absolute coordinate, matching table owner, same index flags and table data, search path and transaction state.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/IndexRebuildMode": {
+      "role": "Closed reindex request mode governing native execution and preconditions.",
+      "structure": "Exactly Standard and Concurrent enum choices.",
+      "conditions": "The parsed CONCURRENTLY keyword supplies the last enabled occurrence. With no keyword the last named Boolean option supplies its value, including omitted explicit true. Without either the request is standard.",
+      "meaning": "Standard rebuild uses the current index identity. Persistent concurrent requests can swap the identity when they succeed and have a different transaction restriction. Temporary physical execution stays standard even if concurrent was requested.",
+      "sql": "The standard mode uses REINDEX INDEX. The concurrent mode writes REINDEX INDEX CONCURRENTLY.",
+      "externalInterpretation": "The same native profile, fixed index owner, validity and transaction state during the command.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/Index/IndexReference"
+  ],
+  "rules": [
+    "Resolve the intended ordinary index in native relation search order. An explicitly qualified form names exactly that namespace.",
+    "Preserve whether concurrent execution was requested after evaluating the ordered Boolean options.",
+    "Compare physical identity and filenode changes as relations between snapshots, because assigned OID values depend on the fixture and are not fixed constants.",
+    "In a transaction an ordinary rebuild can be observed and then rolled back. A requested concurrent rebuild in a transaction is rejected with 25001 before reallocation."
+  ],
+  "observations": [
+    "Closed target and effective requested mode, SQLSTATE and command success, exact phase of transaction rollback, complete table rows and physical index positions, stored predicate, uniqueness, NULL policy, index readiness and storage settings.",
+    "Preservation of same-named decoy indexes and tables, the exact relational comparison of index OID and filenode across phases, and the subsequent uniqueness behavior on participating and nonparticipating rows."
+  ],
+  "finite": {
+    "scopes": [
+      "fixture",
+      "pg_temp"
+    ],
+    "forms": [
+      "ordinary",
+      "keyword",
+      "option-enabled",
+      "option-disabled"
+    ],
+    "transactions": [
+      false,
+      true
+    ],
+    "spellings": [
+      "absolute",
+      "local"
+    ],
+    "policies": [
+      "plain",
+      "unique",
+      "unique-null-equal"
+    ],
+    "filtered": [
+      false,
+      true
+    ],
+    "identity": "Consume all 192 ordered trial coordinates per pinned release through direct and analyzed publication. Verify index identity and storage changes in exact phase order. Use a distinct persistent decoy and a persistent same-name shadow for temporary targets.",
+    "supplemental": "Measure both enablement and disablement through ordered repeated Boolean options, and explicit keyword precedence when both forms occur."
+  },
+  "exploration": {
+    "seeds": [
+      6553,
+      27539,
+      81707
+    ],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": [],
+    "domain": "Vary local and persistent scopes, quoted names, owner fields, index order, INCLUDE positions, NULL policy, filter and concurrent/transaction combinations across independent native fixtures."
+  },
+  "negative": [
+    "Unknown index",
+    "Unknown explicitly named schema",
+    "Existing table used as an index",
+    "Open index namespace cannot settle lookup",
+    "Ambiguous duplicate index definition",
+    "Unsupported reindex target role",
+    "Unsupported tablespace option",
+    "Malformed Boolean value for concurrently"
+  ],
+  "faults": [
+    "Emit a different qualified index namespace",
+    "Suppress the concurrent keyword",
+    "Add the concurrent keyword to a standard rebuild",
+    "Allow a missing index to publish"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html"
+  ],
+  "trust": [
+    "The closed typed index coordinates and construction source audit, the independently measured catalog phase transitions and write probes, the fixed stock PostgreSQL and libpq profiles, and the independent replay ledger.",
+    "Persistent concurrent rebuilding may encounter runtime failures, permissions and competing transactions. The finite fixture exercises its successful identity transition and the explicit transaction precondition."
+  ],
+  "open": [
+    "Constraint-backed indexes, partitioned indexes, other REINDEX target roles, VERBOSE and tablespace relocation remain in the fixed whole-language inventory."
+  ],
+  "calibration": {
+    "driver": "7286d0903815101d54942f08dffc69ce6ec02d4994f0a6b66b51f3b142bd20d4",
+    "referenceComparison": "6c00fa076893d2f7f1a9db566caedcb049d2b07f6c7640f64e2ee2efda652876",
+    "queryPack": "12d9c06b259d5886f151b45b6ac6cec60401d988eee7ff180391b16dad10aab9",
+    "orderAndRejectionQueryPack": "f562f5f3319358fd13fef0b084121988bd14a61354847445b29b3fc6c343b1c2",
+    "nativeTransitions": "0c94a9f0220d48fb14942b89bb13bf3b474cb71bcf930a300065d6ea85266efe",
+    "standardPhysicalRebuilds": 120,
+    "concurrentPhysicalRebuilds": 24,
+    "prohibitedInTransaction": 48,
+    "16.6": {
+      "stdout": "b2f21ec50906b20b790b6538857a07e26fd3661ea514e932d86a2ad065e63a3d",
+      "stderr": "5cefeafc4c81189a9f17a06fb14b1b0338b1871df5025ba4f2cc64bf9ec41290",
+      "option.stdout": "9775700c45dfc2d94f39657eaaebbbf8f0bdd315645371c3ed6cd849dd528c5a",
+      "option.stderr": "ad61709dbae67c091837f5a5378054f65a80683334d24457e846e231f3229a70"
+    },
+    "17.2": {
+      "stdout": "5205bdfa3443df9de6aa52a3ca651b22479ebc7ea13b3efd7d984177cbc8c8dc",
+      "stderr": "04925938798579b6af375ce63aca22f7e8d710a9bae637718d418545bff9649b",
+      "option.stdout": "7e78c9179cb1f96cb4b01549d6657465775dcab7887f2ac54fedd9bddb16bf4c",
+      "option.stderr": "9a961e069669f5beaf1d05c68ec32124a5749fc34bf25f56b27ef56a25b4c307"
+    }
+  }
+}
