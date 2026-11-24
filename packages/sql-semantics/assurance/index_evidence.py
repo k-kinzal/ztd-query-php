@@ -16,6 +16,7 @@ from checked_value_graph import certificate
 from constructor_trace import check_scope, trace
 from evidence_transcript import events as execution_events
 from formal_reindex_evidence import index_lexical_proof
+from formal_sequence_order_evidence import index_sequence_order_proof
 from grammar_scope import inventory as grammar_inventory
 from native_counterexample_reduction import CONTROL_RESULTS as NATIVE_REDUCTION_CONTROLS, DIGEST as NATIVE_REDUCTION_DIGEST
 from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, verify_link as verify_fixture
@@ -541,6 +542,11 @@ def main():
             linked = role_trace["constructors"][role]
             linked.setdefault("lexicalProof", {"receipt": lexical["receipt"], "coveredMethods": []})
             linked["lexicalProof"]["coveredMethods"].append(method)
+    sequence_order = index_sequence_order_proof(evidence, manifest)
+    if sequence_order is not None:
+        prefix = "SqlSemantics\\Platform\\PostgreSql\\Ir\\"
+        for role in ("Expression\\WideIntegerLiteral", "Schema\\Sequence\\SequenceParameters", "Schema\\Sequence\\Alter\\SequenceChanges"):
+            role_trace["constructors"][prefix + role]["signedDecimalOrderProof"] = sequence_order["receipt"]
     require(base.get("activeDeclarations") == role_trace["activeDeclarations"], "bundle-constructor-declaration-receipt")
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)
@@ -558,7 +564,7 @@ def main():
         "sqliteFaultPreflight": preflight[1] if preflight else None,
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
         "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],
-        "postgresReindexLexicalProof": lexical,
+        "postgresReindexLexicalProof": lexical, "postgresSequenceOrderProof": sequence_order,
         "observedBranchRules": rule_link, "requiredBranchStatuses": statuses,
         "missingEvidence": evidence.missing, "humanReview": "pending", "acceptanceProtection": "unverified",
         "requiredScope": base["scope"], "unresolved": base["open"],
@@ -622,6 +628,9 @@ def main():
     if lexical is not None:
         relative = relpath(root / lexical["receipt"]["file"], output)
         lines.append(f"The [PostgreSQL rebuild spelling proof]({relative}) links the three kernel-checked lexical theorems to candidate PHP.")
+    if sequence_order is not None:
+        relative = relpath(root / sequence_order["receipt"]["file"], output)
+        lines.append(f"The [signed decimal order proof]({relative}) checks the canonical numeric comparison used by PostgreSQL sequence bounds.")
     if previous is not None:
         lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")

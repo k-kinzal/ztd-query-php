@@ -87,6 +87,19 @@ The checker validates three exact theorem types and their empty transitive axiom
 
 The theorems cover canonical lexical rendering for complete rebuild values with or without a resolved tablespace under the fixed name interpretation. Consult the native rebuild receipts for observed physical storage changes, transaction outcomes and ordered PostgreSQL reports. Both records remain subject to review and protected acceptance. [Lean proof-validation reference](https://lean-lang.org/doc/reference/latest/ValidatingProofs/)
 
+### Check the PostgreSQL signed decimal order proof
+
+Use the same controller and toolchain for the [frozen sequence order challenge](formal/postgres_sequence_order/contract-v1.json).
+
+```sh
+python3 "$verifier/verify_postgres_sequence_order_proof.py" \
+  --candidate "$candidate" --candidate-sha "$candidate_sha" \
+  --tool-autoload "$tool_autoload" \
+  --lean "$lean_release_directory" --archive "$lean_release_archive" \
+  --out "$evidence/postgres-sequence-order-proof"
+```
+
+The theorem checks that the width and lexicographic ordering used by the PHP comparator agrees with mathematical signed integer ordering under the listed ASCII, canonical digit and sign premises. A second theorem witnesses admissible positive, negative and zero operands. The kernels permit propositional extensionality. The runner checks the exact input constructor and comparison method in the candidate distribution, then applies a reversed sign comparison and verifies that the AST audit rejects it. The independent comparator also rejects a weakened proposition and an unfinished proof. The native sequence receipts cover generator settings, stored values and database effects.
 
 ### Reproduce the SQLite matrix
 
