@@ -1,0 +1,29 @@
+{
+  "revision": "SemanticsIR/mysql-source-free-order-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "server-projection-v1.json",
+    "mysql-create-table-as-v1.json"
+  ],
+  "failure": {
+    "profile": "mysql-5.6.51",
+    "sample": "CREATE TABLE ir_fixture.ir_create_target AS SELECT CAST(17 AS SIGNED) AS value FROM DUAL ORDER BY 1 DESC LIMIT 0",
+    "analyzer": "The production grammar rejects ORDER before publication.",
+    "native": "The pinned server rejects ORDER BY with a source-free or DUAL projection, including with WHERE or parenthesized syntax. It rejects the same DUAL syntax for standalone SELECT.",
+    "rawOptions": {
+      "stdoutSha256": "0df8e5801421f91532d73d418f3e770072072e4490829af498e8362b4162dde2",
+      "stderrSha256": "6419ba863aaa8b780bcd430b70a39c9e43c7aced3cde573b835c072cb3ed080b"
+    },
+    "rawUnitSource": {
+      "stdoutSha256": "e06d1a38b42cbecaf537f331814e750ed67375848aabd48634a6b5a0256c82f9",
+      "stderrSha256": "622284f608d58fbc7c79233d222d35f00d979302596563783922071e10899cec"
+    }
+  },
+  "rules": {
+    "scope": "MySQL 5.6.51, SELECT with no source and at least one checked positional ordering term.",
+    "rendering": "Supply the closed one-row FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single` source in SQL. The projected operands and the checked WHERE, ORDER BY and LIMIT retain their existing structure and order. The source contributes one row and exposes no referenced column. Other releases, external sources and projections without order retain their required rendering rules.",
+    "observations": "Compare the preserved native result table heading, exact inferred types and values, NULL, filter and limit outcome. The SQL must be accepted by the pinned server. The unit source must retain the row for one-row cases and must leave source-free scope unchanged.",
+    "originalTest": "Retain the original SQL as an exact MySQL 5.6.51 grammar refusal. In this profile execute the valid authored DUAL and LIMIT variant independently and retain positive ORDER BY coverage through directly constructed values. Keep the native authored ORDER BY form in every newer pinned profile.",
+    "preservation": "No reduction to the authored positive count, finite grid, seeded budget, required ordering states, comparison observations or registered faults. The 5.6.51 grammar refusal is additional evidence."
+  }
+}
