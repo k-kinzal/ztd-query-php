@@ -15,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema\CreateSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable as ParsedCreateTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\CreateSequence as ParsedCreateSequence;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView as ParsedCreateView;
 
 /**
  * Resolves ordinary table declarations in the namespace being created.
@@ -41,7 +42,7 @@ final class SchemaTableLowering
         $lowering = new CreateTableLowering();
         $scope = new SchemaMemberScope();
         foreach ($schema->elements as $element) {
-            if ($element instanceof ParsedCreateSequence) {
+            if ($element instanceof ParsedCreateSequence || $element instanceof ParsedCreateView) {
                 continue;
             }
             Check::input($element instanceof ParsedCreateTable, 'CREATE SCHEMA elements require a checked namespace composition.');

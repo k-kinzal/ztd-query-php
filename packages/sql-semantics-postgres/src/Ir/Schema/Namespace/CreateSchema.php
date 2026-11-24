@@ -6,7 +6,9 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View\SchemaViewOrder;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\StockRoles;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -40,10 +42,16 @@ final class CreateSchema implements SemanticsIR
     public readonly array $sequences;
 
     /**
+     * @var list<CreateView> Checked views after the sequence and table phases
+     */
+    public readonly array $views;
+
+    /**
      * Fixes the namespace coordinate, owner, and duplicate handling.
      *
      * @param list<CreateTable> $tables
      * @param list<CreateSequence> $sequences
+     * @param list<CreateView> $views
      */
     public function __construct(
         ?Identifier $name,
@@ -52,6 +60,7 @@ final class CreateSchema implements SemanticsIR
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         array $tables = [],
         array $sequences = [],
+        array $views = [],
     ) {
         if ($owner instanceof Identifier) {
             Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');
@@ -61,10 +70,13 @@ final class CreateSchema implements SemanticsIR
         Check::input($name === null || !str_starts_with($name->value, 'pg_'), 'A declared schema name cannot start with pg_.');
         $checkedSequences = Check::listOf($sequences, CreateSequence::class, 'Schema sequences are an ordered list of checked sequence declarations.');
         $checkedTables = Check::listOf($tables, CreateTable::class, 'Schema tables are an ordered list of checked table declarations.');
+        $checkedViews = Check::listOf($views, CreateView::class, 'Schema views are an ordered list of checked view declarations.');
         SchemaRelationOrder::check($name, $ifNotExists, $release, $checkedSequences, $checkedTables);
+        SchemaViewOrder::check($name, $ifNotExists, $release, $checkedSequences, $checkedTables, $checkedViews);
         $this->name = $name;
         $this->sequences = $checkedSequences;
         $this->tables = $checkedTables;
+        $this->views = $checkedViews;
     }
 
     /**
@@ -88,6 +100,9 @@ final class CreateSchema implements SemanticsIR
         }
         foreach ($this->tables as $table) {
             $elements .= ' ' . $table->toString();
+        }
+        foreach ($this->views as $view) {
+            $elements .= ' ' . $view->toString();
         }
 
         return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner . $elements;

@@ -24,7 +24,7 @@ final class CreateViewLowering
      * Publishes the complete view declaration from resolved operations and names.
      * @throws InvalidConstruction When the native view is outside the checked placements
      */
-    public function lower(BoundStatement $operation, ParsedCreateView $statement): CreateView
+    public function lower(BoundStatement $operation, ParsedCreateView $statement, ?Identifier $memberNamespace = null): CreateView
     {
         $context = $operation->context;
         Check::input($context->profile->parameters === ParameterStyle::Native, 'CREATE VIEW requires the native language profile.');
@@ -32,7 +32,7 @@ final class CreateViewLowering
             !$statement->recursive && $statement->persistence === Persistence::Permanent && $statement->name->catalog === null,
             'CREATE VIEW requires a persistent ordinary view in an absolute schema.'
         );
-        $schema = ($statement->name->schema ?? $context->declarationSchema)->value;
+        $schema = $statement->name->schema->value ?? $memberNamespace->value ?? $context->declarationSchema->value;
         $name = new ViewName(new Identifier($schema), new Identifier($statement->name->name->value));
         [$barrier, $invoker, $check] = (new ViewOptionsLowering())->lower($statement);
         [$body, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns);

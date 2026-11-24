@@ -123,6 +123,8 @@ def edge_cases(tag):
 
 def check_value(item, reply):
     same([], reply.get("schemaTables"))
+    same([], reply.get("schemaSequences"))
+    same([], reply.get("schemaViews"))
     same(["constructed", item["release"] + "/utf8/standard-conforming-strings/native", shape(item)],
          [reply.get("status"), reply.get("profile"), reply.get("createSchema")])
 

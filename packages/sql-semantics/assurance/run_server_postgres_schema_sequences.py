@@ -19,8 +19,8 @@ from run_server_postgres_create_schema import specifications as namespace_profil
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-schema-sequences"
-CONTRACT_NAME = "postgres-schema-sequences-v2.json"
-CONTRACT = "178d4cfa5c6ed2021ff3cd0c0f4f17dc6f8f9ed801b4c4444c8d01314ad1c493"
+CONTRACT_NAME = "postgres-schema-sequences-v3.json"
+CONTRACT = "fc5e99d2e791b630c01135ac7c8344a2418df57e9a13a2be37d6f1af276eca5c"
 OBSERVER = "postgres_schema_sequences_observer.py"
 AXES = ("authorization", "writtenOrder", "layouts", "sequenceStorage", "transactional")
 OWNERS = ("effective", "named")
@@ -106,8 +106,8 @@ def refusals(tag):
         ("dynamic-namespace", "CREATE SCHEMA AUTHORIZATION CURRENT_USER CREATE SEQUENCE ticket", None, refusal(DETACHED)),
         ("guarded-parent", "CREATE SCHEMA IF NOT EXISTS ir_ns_sequence_subject CREATE SEQUENCE ticket", None,
          refusal("CREATE SCHEMA IF NOT EXISTS cannot include schema elements", "SemanticException")),
-        ("unregistered-view-member", "CREATE SCHEMA ir_ns_sequence_subject CREATE VIEW feed AS SELECT 1", None,
-         refusal("CREATE SCHEMA elements require a checked namespace composition.")),
+        ("temporary-view-member", "CREATE SCHEMA ir_ns_sequence_subject CREATE TEMP VIEW feed AS SELECT 1", "42P16",
+         refusal("CREATE VIEW requires a persistent ordinary view in an absolute schema.")),
     ]
     for label, command, native, rejected in boundary:
         chosen = {**item, "command": command, "nativeRefusal": native, "negative": label}
@@ -134,6 +134,7 @@ def requests(_, tag, spec):
 
 
 def check_value(item, response):
+    same([], response.get("schemaViews"))
     body = direct(item)["createSchema"]
     header = {key: body[key] for key in ("owner", "ifNotExists")}
     header["name"] = item["namespace"]
@@ -171,7 +172,7 @@ def observe_rejection(_, item, actual, command):
 
 
 def rejected_finite_ids(_, _tag):
-    return {"member-schema", "temporary-member", "unguarded-repeated-sequence", "unguarded-shared-name"}
+    return {"member-schema", "temporary-member", "unguarded-repeated-sequence", "unguarded-shared-name", "temporary-view-member"}
 
 
 def sample_forms(forms, response, _engine, item):

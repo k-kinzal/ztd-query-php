@@ -761,6 +761,17 @@ function constructCreateView(string $platform, array $input): SemanticsIR
     );
 }
 
+function observePostgresCreateView(\SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView $value): array
+{
+    return [
+        'target' => [$value->name->schema->value, $value->name->view->value],
+        'query' => observeSetQuery('SqlSemantics\\Platform\\PostgreSql\\Ir\\', $value->query, 'postgres'),
+        'columns' => array_column($value->columns, 'value'), 'replace' => $value->replace,
+        'securityBarrier' => $value->securityBarrier, 'securityInvoker' => $value->securityInvoker,
+        'checkOption' => $value->checkOption->value,
+    ];
+}
+
 function constructPostgresMaterialization(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -1637,10 +1648,16 @@ function constructPostgresCreateSchema(array $input): \SqlSemantics\Platform\Pos
             'dialect' => 'postgres', 'release' => $sequence['release'], 'createSequence' => $sequence,
         ]);
     }
+    $views = [];
+    foreach ($spec['views'] ?? [] as $view) {
+        $views[] = is_array($view) ? constructCreateView('SqlSemantics\\Platform\\PostgreSql\\', [
+            'dialect' => 'postgres', 'release' => $view['release'], 'createView' => $view,
+        ]) : $view;
+    }
 
     return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
         $name, $owner, $spec['ifNotExists'], \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::from($input['release']),
-        $tables, $sequences,
+        $tables, $sequences, $views,
     );
 }
 
@@ -1669,6 +1686,11 @@ function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema
                 'ifNotExists' => $table->ifNotExists,
             ];
         }, $schema->tables),
+        'schemaViews' => array_map(
+            static fn (\SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView $view): array =>
+                ['release' => $view->query->release->value] + observePostgresCreateView($view),
+            $schema->views,
+        ),
     ];
 }
 
@@ -2120,13 +2142,7 @@ function observeStatement(array $input): array
         if ($dialect === 'postgres') {
             return [
                 'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-                'createView' => [
-                    'target' => [$value->name->schema->value, $value->name->view->value],
-                    'query' => observeSetQuery($namespace, $value->query, $dialect),
-                    'columns' => array_column($value->columns, 'value'), 'replace' => $value->replace,
-                    'securityBarrier' => $value->securityBarrier, 'securityInvoker' => $value->securityInvoker,
-                    'checkOption' => $value->checkOption->value,
-                ],
+                'createView' => observePostgresCreateView($value),
             ];
         }
         return [

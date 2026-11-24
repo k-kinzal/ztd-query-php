@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v140.json"
-CONTRACT = "698cb98fa2d4d446bfe7f9a56df6113e4d6b8ba82164e256224def5dd17829ad"
+CONTRACT_NAME = "release-layout-v141.json"
+CONTRACT = "3e12a6d966ee48757a1e18d0da47788d4e95c981e0ef996103fdaa5e8e56913e"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -411,6 +411,13 @@ def verify_probe(raw, catalog):
                 [["Batch", "child", "n", "INTEGER", False], ["Batch", "child", "wide", "BIGINT", True]],
                 composed, composed, True,
             ], "installed-postgres-schema-tables-mismatch", item)
+            view = ('CREATE SCHEMA "View Batch" AUTHORIZATION CURRENT_USER'
+                    ' CREATE TABLE "View Batch"."child" ("n" INTEGER NULL) USING heap'
+                    ' CREATE VIEW "View Batch"."feed" ("Number") AS'
+                    ' SELECT "__ztd_source"."n" AS "n" FROM "View Batch"."child" AS "__ztd_source"')
+            require(item.get("postgresSchemaViews") == [
+                "View Batch", "feed", "Number", "View Batch", "child", "n", "int4", True, view, view, True, True,
+            ], "installed-postgres-schema-views-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Namespace\\DropSchema"):
             emitted = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE'
             require(item.get("postgresDropSchema") == [

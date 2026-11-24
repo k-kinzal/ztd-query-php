@@ -24,7 +24,15 @@ final class SchemaMemberScope
     public function bind(AnalysisContext $outer, Name $schema, array $provided): AnalysisContext
     {
         $tables = $outer->tables;
+        $created = [];
         foreach ($provided as $table) {
+            $coordinate = $table->name->name->value;
+            if (($table->name->schema->value ?? $schema->value) === $schema->value) {
+                if (isset($created[$coordinate])) {
+                    continue;
+                }
+                $created[$coordinate] = true;
+            }
             if (!in_array($table, $tables, true)) {
                 $tables[] = $table;
             }

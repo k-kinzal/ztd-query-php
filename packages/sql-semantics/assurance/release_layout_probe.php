@@ -1277,6 +1277,37 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                     $table->columns[0]->name->value, $table->columns[0]->storage->value, $table->ifNotExists], $rebuilt->tables),
                 $composite->toString(), $rebuilt->toString(), $refused,
             ];
+            [$namespaceView] = $semantics->analyzeAll(
+                'CREATE SCHEMA "View Batch" CREATE VIEW feed ("Number") AS SELECT n FROM child'
+                . ' CREATE TABLE child (n integer);',
+                $activeContext,
+            );
+            $qualifiedView = $semantics->analyze(
+                'CREATE SCHEMA "View Batch" CREATE VIEW feed ("Number") AS SELECT n FROM "View Batch".child'
+                . ' CREATE TABLE child (n integer)',
+            );
+            $view = $namespaceView->views[0];
+            $member = $view;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $namespaceView->name, $namespaceView->owner, release: $namespaceView->release,
+                tables: $namespaceView->tables, views: [&$member],
+            );
+            $member = null;
+            $unbound = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $namespaceView->name, $namespaceView->owner, release: $namespaceView->release, views: [$view],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $unbound = $error->getMessage() === 'A schema view must resolve its local input to a preceding base table.';
+            }
+            $details['postgresSchemaViews'] = [
+                $view->name->schema->value, $view->name->view->value, $view->columns[0]->value,
+                $view->query->source->schema->value, $view->query->source->table->value,
+                $view->query->source->columns[0]->value, $view->query->source->columnKind(0)->value,
+                $view === $rebuilt->views[0], $namespaceView->toString(), $rebuilt->toString(), $unbound,
+                $qualifiedView == $namespaceView,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
             [$present, $absent] = $result->targets;

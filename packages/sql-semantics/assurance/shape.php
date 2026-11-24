@@ -1069,10 +1069,11 @@ if ($dialect !== 'sqlite') {
         $schemaSession = 'Schema\\Namespace\\SchemaSessionRole';
         $roots[] = $schemaCreation;
         array_push($internal, 'Schema\\Namespace\\CreateSchemaLowering', 'Schema\\Namespace\\SchemaTableLowering',
-            'Schema\\Namespace\\SchemaSequenceLowering', 'Schema\\Namespace\\SchemaRelationOrder');
-        $pureCollaborators[] = 'Schema\\Namespace\\SchemaRelationOrder';
+            'Schema\\Namespace\\SchemaSequenceLowering', 'Schema\\Namespace\\SchemaRelationOrder',
+            'Schema\\Namespace\\View\\SchemaViewLowering', 'Schema\\Namespace\\View\\SchemaViewOrder');
+        array_push($pureCollaborators, 'Schema\\Namespace\\SchemaRelationOrder', 'Schema\\Namespace\\View\\SchemaViewOrder');
         $properties[$schemaCreation] = [
-            'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'],
+            'name' => ['?Identifier'], 'tables' => ['array'], 'sequences' => ['array'], 'views' => ['array'],
             'owner' => ['Identifier', $schemaSession], 'ifNotExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
         ];
@@ -1691,7 +1692,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v18.json', '25eff37e359bd4277052d318ccbdab9f8d7956cbe80fdf5139517ae7fc5a7ed7', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v19.json', 'cd4e995c7c39f5ffe842bb09fe16854cb861e5161ce5209b13e8834a9d3dcf19', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],
@@ -1741,9 +1742,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v67.json';
+    $storagePath = __DIR__ . '/value-storage-v68.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'b815ed1f94c9665f801c70eea8e81bd32337523ab5b8496089407a51e69ebc15',
+        hash_file('sha256', $storagePath) === '44937b6ef57be7cab064f50b2b80e83e98d71cfd48814153388361557a7746ca',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

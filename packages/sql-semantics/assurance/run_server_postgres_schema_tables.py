@@ -18,14 +18,13 @@ from run_server_postgres_create_schema import specifications as namespace_specif
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-schema-tables"
-CONTRACT_NAME = "postgres-schema-tables-v1.json"
-CONTRACT = "a14a08e4b92bf519fd7637bf8b798ca2db8900ff34300e0cff3b553b304fa6d7"
+CONTRACT_NAME = "postgres-schema-tables-v2.json"
+CONTRACT = "daf19b6c0480964d129f12c3677bc1a546ba3da2ecf95f1daab3700cd2df50df"
 OBSERVER = "postgres_schema_tables_observer.py"
 AXES = ("memberShapes", "owner", "qualification", "active")
 NAME = "Schema tables and sequences require an unguarded, statically named namespace."
 CHILD = "A schema table must belong to its namespace and release."
 REPEAT = "A repeated schema table requires its own IF NOT EXISTS guard."
-ROLE = "CREATE SCHEMA elements require a checked namespace composition."
 
 
 def specifications():
@@ -91,7 +90,8 @@ def negatives(tag):
     yield create(["tables", 0, "release"], "pg-17.2" if tag == "pg-16.6" else "pg-16.6"), refusal(CHILD)
     yield create(["tables", -1, "ifNotExists"], False), refusal(REPEAT)
     yield {**analyzed(item), "sql": "CREATE SCHEMA AUTHORIZATION CURRENT_USER CREATE TABLE data (n integer)"}, refusal(NAME)
-    yield {**analyzed(item), "sql": "CREATE SCHEMA making CREATE VIEW feed AS SELECT 1"}, refusal(ROLE)
+    wrong = {**analyzed(item), "sql": "CREATE SCHEMA making CREATE VIEW public.feed AS SELECT 1"}
+    yield wrong, refusal("CREATE specifies a schema (public) different from the one being created (making)", "SemanticException")
 
 
 def requests(_, tag, spec):
@@ -117,6 +117,8 @@ def requests(_, tag, spec):
 
 
 def check_value(item, response):
+    same([], response.get("schemaSequences"))
+    same([], response.get("schemaViews"))
     schema = direct(item)["createSchema"]
     header = {**schema, "name": item["namespace"]}
     del header["tables"]

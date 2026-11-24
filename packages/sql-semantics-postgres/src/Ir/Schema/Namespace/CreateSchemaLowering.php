@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\View\SchemaViewLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -34,8 +35,9 @@ final class CreateSchemaLowering
         $name = $statement->name === null ? null : new Identifier($statement->name->value);
         $resolved = $name ?? ($owner instanceof Identifier ? $owner : null);
         $sequences = (new SchemaSequenceLowering())->lower($context, $statement, $resolved);
+        $views = (new SchemaViewLowering())->lower($operation, $statement, $resolved);
         $tables = (new SchemaTableLowering())->lower($context, $statement, $resolved);
 
-        return new CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables, $sequences);
+        return new CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables, $sequences, $views);
     }
 }
