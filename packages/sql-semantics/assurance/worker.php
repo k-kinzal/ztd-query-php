@@ -158,6 +158,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerPlacement;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerTiming;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerUpdateName;
@@ -946,9 +947,13 @@ function triggerOperand(array $value): TriggerField|IntegerLiteral|TextLiteral|N
 
 function directTriggerInsert(array $input): TriggerInsert
 {
+    $rows = $input['rows'] ?? [$input['fields']];
     return new TriggerInsert(
         new TriggerDestination(source($input['table']), $input['writable']),
-        array_map(static fn (array $field): TriggerInsertField => new TriggerInsertField($field[0], triggerOperand($field[1])), $input['fields']),
+        array_map(static fn (array|string $row): TriggerInsertRow|NullLiteral => is_array($row)
+            ? new TriggerInsertRow(array_map(static fn (array $field): TriggerInsertField => new TriggerInsertField(
+                $field[0], triggerOperand($field[1]),
+            ), $row)) : new NullLiteral(), $rows),
         InsertConflict::from($input['conflict']),
     );
 }
@@ -1006,19 +1011,17 @@ function observeTriggerField(TriggerField $field): array
 
 function observeTriggerInsert(TriggerInsert $value): array
 {
-    $fields = [];
-    foreach ($value->fields as $field) {
-        $operand = $field->value;
-        $fields[] = [$field->column, match (true) {
-            $operand instanceof TriggerField => observeTriggerField($operand),
-            $operand instanceof IntegerLiteral => ['integer', $operand->decimal],
-            $operand instanceof TextLiteral => ['text', $operand->value],
-            $operand instanceof NullLiteral => ['null'],
-        }];
+    $rows = [];
+    foreach ($value->rows as $row) {
+        $fields = [];
+        foreach ($row->fields as $field) {
+            $fields[] = [$field->column, observeTriggerAssignmentOperand($field->value)];
+        }
+        $rows[] = $fields;
     }
 
     return ['table' => observeSource($value->destination->table), 'writable' => $value->destination->writable,
-        'fields' => $fields, 'conflict' => $value->conflict->value];
+        ...(count($rows) === 1 ? ['fields' => $rows[0]] : ['rows' => $rows]), 'conflict' => $value->conflict->value];
 }
 
 function observeTriggerAssignmentOperand(TriggerField|IntegerLiteral|TextLiteral|NullLiteral|TriggerTargetField $operand): array

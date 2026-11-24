@@ -25,7 +25,22 @@ final class TriggerStepLoweringTest extends TestCase
         self::assertInstanceOf(CreateTrigger::class, $result);
         self::assertInstanceOf(TriggerInsert::class, $result->program[0]);
         self::assertSame([0, 2], $result->program[0]->destination->writable);
-        self::assertSame(2, $result->program[0]->fields[0]->column);
+        self::assertSame(2, $result->program[0]->rows[0]->fields[0]->column);
         self::assertSame('generated', $result->program[0]->destination->table->columns[1]->value);
+    }
+
+    public function testLowerKeepsAllTuplesInsideOneInsertionAction(): void
+    {
+        $dialect = new Semantics();
+        $declarations = $dialect->context(['CREATE TABLE t (id)', 'CREATE TABLE audit (source, note)']);
+        $result = $dialect->analyze('CREATE TRIGGER tr INSERT ON t BEGIN INSERT OR FAIL INTO audit(note, source) VALUES (NULL,NEW.id),(NULL,4); END', $declarations);
+
+        self::assertInstanceOf(CreateTrigger::class, $result);
+        self::assertCount(1, $result->program);
+        $statement = $result->program[0];
+        self::assertInstanceOf(TriggerInsert::class, $statement);
+        self::assertCount(2, $statement->rows);
+        self::assertSame([1, 0], $statement->rows[1]->columns());
+        self::assertStringContainsString('INSERT OR FAIL INTO "audit" ("note", "source") VALUES (NULL, NEW."id"), (NULL, 4);', $result->toString());
     }
 }

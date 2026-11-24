@@ -62,15 +62,21 @@ final class TriggerSql
     {
         $target = $step->destination->table;
         $columns = [];
-        $values = [];
-        foreach ($step->fields as $field) {
-            $columns[] = $target->columns[$field->column]->quoted();
-            $values[] = $this->value($field->value, $watched);
+        $rows = [];
+        foreach ($step->rows as $index => $tuple) {
+            $values = [];
+            foreach ($tuple->fields as $field) {
+                if ($index === 0) {
+                    $columns[] = $target->columns[$field->column]->quoted();
+                }
+                $values[] = $this->value($field->value, $watched);
+            }
+            $rows[] = '(' . implode(', ', $values) . ')';
         }
         $policy = $step->conflict === InsertConflict::Inherit ? '' : ' OR ' . strtoupper($step->conflict->value);
 
         return 'INSERT' . $policy . ' INTO ' . $target->table->quoted()
-            . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')';
+            . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $rows);
     }
 
     /**

@@ -549,12 +549,14 @@ if ($dialect === 'sqlite') {
     $properties['Schema\\Trigger\\TriggerCondition'] = ['field' => ['Schema\\Trigger\\TriggerField'], 'isNull' => ['bool']];
     $properties['Schema\\Trigger\\TriggerDestination'] = ['table' => ['TableSource'], 'writable' => ['array']];
     $properties['Schema\\Trigger\\TriggerInsert'] = [
-        'destination' => ['Schema\\Trigger\\TriggerDestination'], 'fields' => ['array'], 'conflict' => ['Mutation\\InsertConflict'],
+        'destination' => ['Schema\\Trigger\\TriggerDestination'], 'rows' => ['array'], 'conflict' => ['Mutation\\InsertConflict'],
     ];
     $properties['Schema\\Trigger\\TriggerInsertField'] = [
         'column' => ['int'], 'value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Schema\\Trigger\\TriggerField'],
     ];
     $properties['Schema\\Trigger\\TriggerUpdateName'] = ['selector' => ['Identifier', 'int']];
+    $properties['Schema\\Trigger\\TriggerInsertRow'] = ['fields' => ['array']];
+    $methods['Schema\\Trigger\\TriggerInsertRow'] = ['__construct', 'columns'];
     $methods['Schema\\Trigger\\CreateTrigger'] = $methods['Select'];
     foreach (['TriggerField', 'TriggerCondition', 'TriggerDestination', 'TriggerInsert', 'TriggerInsertField', 'TriggerUpdateName'] as $role) {
         $methods['Schema\\Trigger\\' . $role] = ['__construct'];
@@ -1392,8 +1394,8 @@ try {
             ['sqlite-flag-pragmas-binding-v4.json', '7947b1414c41c211ca79ae102b8e576afdc7b91effcf5539f6aa7dc18c1ddb61', 'Flag pragma binding'],
             ['sqlite-folded-binding-sources-v11.json', 'c0878a2e8b2d4c0f27659feba880e10cccd398f4d13d2ba4063d630ee495003d', 'Folded binding'],
             ['sqlite-connection-commands-binding-v1.json', '4e048dce7881dd175ff0be0b027010a69e1b8c4d495e09f4d7329bfb7073aed9', 'Connection operand binding'],
-            ['sqlite-audit-triggers-binding-v3.json', '483de39e0271b9ce2f8aa07e337637fb50bf27acfb8b82578ce197bfd912ab37', 'SQLite trigger binding'],
-            ['sqlite-drop-triggers-binding-v2.json', 'b1e6afecd1ce9403f743b8dd2a1b8144dd26cd9938134cfa3af399291c966b23', 'SQLite trigger removal binding'],
+            ['sqlite-audit-triggers-binding-v4.json', 'fc61876080256375f095a8bcd1ca1aa39f0778d2501aa9d81d5d8a3ff6906eff', 'SQLite trigger binding'],
+            ['sqlite-drop-triggers-binding-v3.json', '7dc082cb9ceb3ec053d08609bdad7435705211d37ade3e71b7a78ca0eb29d20d', 'SQLite trigger removal binding'],
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
@@ -1413,6 +1415,7 @@ try {
         ],
     };
     $providedBindings = [];
+    $deferredBindings = [];
     $bindingDependencies = [];
     foreach ($bindings as [$name, $digest, $label]) {
         $bindingRecord = __DIR__ . '/' . $name;
@@ -1423,7 +1426,14 @@ try {
         foreach ($bindingSources as $path => $approved) {
             $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
             $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
-            requireShape(is_file($file) && hash_file('sha256', $file) === $approved['sha256'], "$label source differs in $path");
+            $message = "$label source differs in $path";
+            if (isset($approved['inspectionOrder'])) {
+                requireShape(str_starts_with($path, 'src/Ir/') && $approved['inspectionOrder'] === 'after-method-boundaries',
+                    'Only checked IR sources can defer the byte audit until after the method inspection.');
+                $deferredBindings[] = [$file, $approved['sha256'], $message];
+            } else {
+                requireShape(is_file($file) && hash_file('sha256', $file) === $approved['sha256'], $message);
+            }
             $checkedBindingSources[$path] = $approved;
             $providedBindings[$name][$path] = $approved['sha256'];
         }
@@ -1440,9 +1450,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v55.json';
+    $storagePath = __DIR__ . '/value-storage-v56.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'bfebcd9a1d3bc3e0b1a41bc385880bc78f5b1ce5be71ce65084aea3596b43b27',
+        hash_file('sha256', $storagePath) === 'ded9fb1bdbbc78b747cf991d6cf790afc739c5b87b899e71160ed8664bd53e9c',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1994,6 +2004,9 @@ try {
     $expectedBoundaries = array_keys($boundaries);
     sort($expectedBoundaries);
     requireShape($checkedBoundaries === $expectedBoundaries, 'Native boundary coverage differs');
+    foreach ($deferredBindings as [$file, $expected, $message]) {
+        requireShape(is_file($file) && hash_file('sha256', $file) === $expected, $message);
+    }
     echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields, 'checkedBoundaries' => $checkedBoundaries,
         'checkedBindingSources' => (object) $checkedBindingSources,
         'checkedBindingDependencies' => (object) $checkedBindingDependencies, 'checkedValues' => (object) $checkedValues, 'checkedDispatch' => $checkedDispatch]) . "\n";

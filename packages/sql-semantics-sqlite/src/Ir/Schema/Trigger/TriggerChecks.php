@@ -132,9 +132,11 @@ final class TriggerChecks
      */
     public function insertionImages(TriggerInsert $step, TriggerEvent $event, TableSource $watched): void
     {
-        foreach ($step->fields as $field) {
-            if ($field->value instanceof TriggerField) {
-                $this->field($field->value, $event, $watched);
+        foreach ($step->rows as $tuple) {
+            foreach ($tuple->fields as $field) {
+                if ($field->value instanceof TriggerField) {
+                    $this->field($field->value, $event, $watched);
+                }
             }
         }
     }

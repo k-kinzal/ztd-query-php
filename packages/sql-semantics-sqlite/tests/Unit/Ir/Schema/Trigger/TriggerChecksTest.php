@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerPlacement;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerTiming;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerUpdateName;
@@ -56,12 +57,12 @@ final class TriggerChecksTest extends TestCase
     {
         $table = new TableSource(new Identifier('main'), new Identifier('t'), [new Identifier('id')]);
         $field = new TriggerInsertField(0, new TriggerField(RowImage::New, 0));
-        $step = new TriggerInsert(new TriggerDestination($table, [0]), [$field]);
+        $step = new TriggerInsert(new TriggerDestination($table, [0]), [new TriggerInsertRow([$field])]);
         $sameTable = new TableSource(new Identifier('main'), new Identifier('t'), [new Identifier('id')]);
-        $later = new TriggerInsert(new TriggerDestination($sameTable, [0]), [$field]);
+        $later = new TriggerInsert(new TriggerDestination($sameTable, [0]), [new TriggerInsertRow([$field])]);
         (new TriggerChecks())->program([$step, $later], TriggerPlacement::Stored, $table, TriggerEvent::Insert);
 
-        self::assertSame($field, $step->fields[0]);
+        self::assertSame($field, $step->rows[0]->fields[0]);
     }
 
     public function testLayoutPreservesDistinctMembersThatLookLikeNumbers(): void
@@ -82,10 +83,10 @@ final class TriggerChecksTest extends TestCase
     {
         $table = new TableSource(new Identifier('main'), new Identifier('watched'), [new Identifier('id')]);
         $field = new TriggerInsertField(0, new TriggerField(RowImage::New, 0));
-        $action = new TriggerInsert(new TriggerDestination($table, [0]), [$field]);
+        $action = new TriggerInsert(new TriggerDestination($table, [0]), [new TriggerInsertRow([$field])]);
 
         (new TriggerChecks())->insertionImages($action, TriggerEvent::Insert, $table);
 
-        self::assertSame($field, $action->fields[0]);
+        self::assertSame($field, $action->rows[0]->fields[0]);
     }
 }

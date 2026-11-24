@@ -1437,8 +1437,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger) {
             $step = $result->program[0];
-            $old = $step->fields[0]->value;
-            $new = $step->fields[1]->value;
+            $old = $step->rows[0]->fields[0]->value;
+            $new = $step->rows[0]->fields[1]->value;
             $future = $result->selectors[1]->selector;
             if (!$old instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField
                 || !$new instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField
@@ -1479,6 +1479,26 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mutationTrigger'] = [$update->destination->table->schema->value, $update->conflict->value,
                 $update->where->target->column, $update->where->targetFirst, $delete->where->target->column, $delete->where->targetFirst,
                 $delete->where->image->image->value, $delete->where->image->column, $mutation->toString(), $mutationCopy->toString()];
+            $batch = $semantics->analyze(
+                'CREATE TRIGGER archive.batch_journal AFTER UPDATE ON watched BEGIN INSERT OR FAIL INTO journal(current, prior) VALUES (NEW.payload, OLD.payload), (NULL, OLD.payload); END',
+                $activeContext,
+            );
+            if (!$batch instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger
+                || count($batch->program) !== 1
+                || !$batch->program[0] instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert) {
+                throw new RuntimeException('The installed batch was not published as one insertion.');
+            }
+            $insert = $batch->program[0];
+            $tuples = array_map(
+                static fn ($row) => new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow($row->fields),
+                $insert->rows,
+            );
+            $batchCopy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $batch->schema, $batch->name, $batch->placement, $batch->watched, $batch->timing, $batch->event,
+                [new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert($insert->destination, $tuples, $insert->conflict)],
+            );
+            $details['batchTrigger'] = [$insert->conflict->value, array_map(static fn ($tuple) => $tuple->columns(), $tuples),
+                $batch->toString(), $batchCopy->toString()];
         }
         if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize) {
             $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize($result->schema, $result->amount);

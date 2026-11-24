@@ -184,8 +184,8 @@ def check_faults(args, db, runner=check_render_faults):
                     "foreach (array_reverse($trigger->program) as $step)", update, "meaning-mismatch"),
         RenderFault("erase-the-native-when-test", render, "$when = $condition === null ? ''",
                     "$when = true ? ''", filtered, "meaning-mismatch"),
-        RenderFault("drop-a-checked-destination-field", render, "foreach ($step->fields as $field)",
-                    "foreach (array_slice($step->fields, 0, -1) as $field)", update, "meaning-mismatch"),
+        RenderFault("drop-a-checked-destination-field", render, "foreach ($tuple->fields as $field)",
+                    "foreach (array_slice($tuple->fields, 0, -1) as $field)", update, "meaning-mismatch"),
         RenderFault("erase-the-trigger-existence-guard", render, "($trigger->ifNotExists ? 'IF NOT EXISTS ' : '')",
                     "''", collision, "meaning-mismatch"),
     ], fault_probe)

@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertTargetLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -30,18 +31,22 @@ final class TriggerStepLowering
     public function lower(BoundStatement $operation, TriggerTable $table, TableSource $watched, InsertRows $step): TriggerInsert
     {
         Check::input(
-            $step->upserts === [] && $step->returning === [] && count($step->rows->rows) === 1,
-            'A checked trigger insertion needs one VALUES tuple without RETURNING or UPSERT.'
+            $step->upserts === [] && $step->returning === [],
+            'A checked trigger insertion needs VALUES without RETURNING or UPSERT.'
         );
         $into = $step->into;
         [$binding, $destination] = (new TriggerTargetLowering())->lower($operation, $into->target);
         $selected = (new InsertTargetLowering())->lower($binding, $into, false);
-        $values = $step->rows->rows[0]->values;
-        Check::input(count($selected) === count($values), 'A trigger insertion needs exactly one value for each checked destination slot.');
         $operands = new TriggerOperands();
-        $fields = [];
-        foreach ($selected as $index => $slot) {
-            $fields[] = new TriggerInsertField($slot->slot, $operands->value($operation, $table, $watched, $values[$index]));
+        $rows = [];
+        foreach ($step->rows->rows as $row) {
+            $values = $row->values;
+            Check::input(count($selected) === count($values), 'A trigger insertion needs exactly one value for each checked destination slot.');
+            $fields = [];
+            foreach ($selected as $index => $slot) {
+                $fields[] = new TriggerInsertField($slot->slot, $operands->value($operation, $table, $watched, $values[$index]));
+            }
+            $rows[] = new TriggerInsertRow($fields);
         }
         $policy = $into->replace ? InsertConflict::Replace : match ($into->resolution) {
             null => InsertConflict::Inherit,
@@ -52,6 +57,6 @@ final class TriggerStepLowering
             ConflictResolution::Replace => InsertConflict::Replace,
         };
 
-        return new TriggerInsert($destination, $fields, $policy);
+        return new TriggerInsert($destination, $rows, $policy);
     }
 }

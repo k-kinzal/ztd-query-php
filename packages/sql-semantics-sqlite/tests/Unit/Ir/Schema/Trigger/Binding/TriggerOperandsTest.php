@@ -27,8 +27,8 @@ final class TriggerOperandsTest extends TestCase
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
         self::assertInstanceOf(TriggerInsert::class, $trigger->program[0]);
-        self::assertInstanceOf(IntegerLiteral::class, $trigger->program[0]->fields[0]->value);
-        self::assertSame('-8', $trigger->program[0]->fields[0]->value->decimal);
+        self::assertInstanceOf(IntegerLiteral::class, $trigger->program[0]->rows[0]->fields[0]->value);
+        self::assertSame('-8', $trigger->program[0]->rows[0]->fields[0]->value->decimal);
     }
 
     public function testFieldUsesTheExactRowImageAndResolvedPosition(): void
@@ -39,9 +39,9 @@ final class TriggerOperandsTest extends TestCase
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
         self::assertInstanceOf(TriggerInsert::class, $trigger->program[0]);
-        self::assertInstanceOf(TriggerField::class, $trigger->program[0]->fields[0]->value);
-        self::assertSame(RowImage::Old, $trigger->program[0]->fields[0]->value->image);
-        self::assertSame(1, $trigger->program[0]->fields[0]->value->column);
+        self::assertInstanceOf(TriggerField::class, $trigger->program[0]->rows[0]->fields[0]->value);
+        self::assertSame(RowImage::Old, $trigger->program[0]->rows[0]->fields[0]->value->image);
+        self::assertSame(1, $trigger->program[0]->rows[0]->fields[0]->value->column);
     }
 
     public function testConditionNormalizesSymmetricNullTests(): void
@@ -64,7 +64,7 @@ final class TriggerOperandsTest extends TestCase
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
         self::assertInstanceOf(TriggerInsert::class, $trigger->program[0]);
-        self::assertInstanceOf(TriggerField::class, $trigger->program[0]->fields[0]->value);
-        self::assertSame(0, $trigger->program[0]->fields[0]->value->column);
+        self::assertInstanceOf(TriggerField::class, $trigger->program[0]->rows[0]->fields[0]->value);
+        self::assertSame(0, $trigger->program[0]->rows[0]->fields[0]->value->column);
     }
 }

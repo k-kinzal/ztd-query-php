@@ -1,0 +1,674 @@
+{
+  "revision": "SemanticsIR/sqlite-audit-triggers-boundaries-3",
+  "approval": "pending-human-review",
+  "scope": "Freeze trigger placement, row-image and destination checks, publication and native rendering.",
+  "rules": {
+    "Schema/Trigger/CreateTrigger::__construct": {
+      "common": [
+        "$checks = new TriggerChecks();",
+        "$checks->placement($schema, $name, $placement, $watched, $timing);",
+        "$actions = (new TriggerActions())->copy($program);",
+        "$columns = Check::listOf($selectors, TriggerUpdateName::class, 'A trigger needs an ordered list of UPDATE OF selectors.');",
+        "$checks->selectors($columns, $event, $watched);",
+        "if ($condition !== null) {",
+        "    $checks->field($condition->field, $event, $watched);",
+        "}",
+        "$checks->program($actions, $placement, $watched, $event);",
+        "$this->program = $actions;",
+        "$this->selectors = $columns;"
+      ]
+    },
+    "Schema/Trigger/CreateTrigger::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Trigger/CreateTrigger::toString": {
+      "common": [
+        "return (new TriggerSql())->statement($this);"
+      ]
+    },
+    "Schema/Trigger/TriggerCondition::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Trigger/TriggerDestination::__construct": {
+      "common": [
+        "Check::input($table->kind === ExternalRelationKind::BaseTable && !str_starts_with($table->table->key(), 'sqlite_'), 'A trigger insertion needs an ordinary writable table.');",
+        "Check::input($writable !== [] && array_is_list($writable) && count($writable) <= 2000, 'A trigger destination needs an ordered nonempty list of writable columns.');",
+        "$positions = [];",
+        "$previous = -1;",
+        "foreach ($writable as $column) {",
+        "    Check::input(is_int($column) && $column > $previous && isset($table->columns[$column]), 'Trigger destination positions must be distinct, ordered members of the table.');",
+        "    $positions[] = $column;",
+        "    $previous = $column;",
+        "}",
+        "$this->writable = $positions;"
+      ]
+    },
+    "Schema/Trigger/TriggerField::__construct": {
+      "common": [
+        "Check::input($column >= 0, 'A trigger field needs a nonnegative watched column position.');"
+      ]
+    },
+    "Schema/Trigger/TriggerInsert::__construct": {
+      "common": [
+        "$tuples = Check::listOf($rows, TriggerInsertRow::class, 'A trigger insertion needs a nonempty ordered row list.', 1);",
+        "$heading = $tuples[0]->columns();",
+        "foreach ($heading as $position) {",
+        "    Check::input(in_array($position, $destination->writable, true), 'A trigger insertion must write distinct available slots of its destination.');",
+        "}",
+        "foreach ($tuples as $tuple) {",
+        "    Check::input($tuple->columns() === $heading, 'Every trigger insertion tuple needs the same ordered writable heading.');",
+        "}",
+        "$this->rows = $tuples;"
+      ]
+    },
+    "Schema/Trigger/TriggerInsertField::__construct": {
+      "common": [
+        "Check::input($column >= 0, 'A trigger insertion needs a nonnegative destination position.');"
+      ]
+    },
+    "Schema/Trigger/TriggerUpdateName::__construct": {
+      "common": [
+        "Check::input(is_int($selector) ? $selector >= 0 : !in_array($selector->key(), ['rowid', '_rowid_', 'oid'], true), 'A trigger selector needs a nonnegative column position or a non-rowid absent name.');"
+      ]
+    },
+    "Schema/Trigger/TriggerChecks::placement": {
+      "common": [
+        "$stored = $placement === TriggerPlacement::Stored;",
+        "$owner = $schema->key();",
+        "Check::input($stored === ($owner !== 'temp') && (!$stored || $owner === $watched->schema->key()), 'A stored trigger needs a watched relation in its owning schema and a temporary trigger belongs to temp.');",
+        "Check::input(!str_starts_with($name->key(), 'sqlite_') && !str_starts_with($watched->table->key(), 'sqlite_'), 'A trigger name and watched relation cannot use the reserved SQLite prefix.');",
+        "Check::input(($timing === TriggerTiming::InsteadOf) === ($watched->kind === ExternalRelationKind::View), 'INSTEAD OF watches a view, and BEFORE and AFTER watch a table.');",
+        "Check::input($watched->columns !== [] && count($watched->columns) <= 2000, 'A watched relation needs its complete native column layout.');"
+      ]
+    },
+    "Schema/Trigger/TriggerChecks::field": {
+      "common": [
+        "$available = match ($event) {",
+        "    TriggerEvent::Insert => $field->image === RowImage::New,",
+        "    TriggerEvent::Update => true,",
+        "    TriggerEvent::Delete => $field->image === RowImage::Old,",
+        "};",
+        "Check::input($available && isset($watched->columns[$field->column]), 'A trigger field must belong to an available event image and declared watched position.');"
+      ]
+    },
+    "Schema/Trigger/TriggerChecks::selectors": {
+      "common": [
+        "Check::input($selectors === [] || $event === TriggerEvent::Update, 'Only an UPDATE trigger can carry column selectors.');",
+        "$names = [];",
+        "foreach ($watched->columns as $column) {",
+        "    $names[] = $column->key();",
+        "}",
+        "foreach ($selectors as $item) {",
+        "    $column = $item->selector;",
+        "    Check::input(is_int($column) ? isset($watched->columns[$column]) : !in_array($column->key(), $names, true), 'A trigger selector needs a declared column position or a known absent name.');",
+        "}"
+      ]
+    },
+    "Schema/Trigger/TriggerChecks::program": {
+      "common": [
+        "$watchedIdentity = $this->identity($watched);",
+        "$watchedLayout = $this->layout($watched);",
+        "$stored = $placement === TriggerPlacement::Stored;",
+        "$scopes = [];",
+        "$destinations = [];",
+        "foreach ($program as $step) {",
+        "    $table = $step->destination->table;",
+        "    $identity = $this->identity($table);",
+        "    $scope = $table->schema->key();",
+        "    $layout = $this->layout($table);",
+        "    $name = $table->table->key();",
+        "    Check::input(($stored ? $scope === $watched->schema->key() : true) && ($scopes[$name] ?? $scope) === $scope, 'An unqualified trigger destination needs one consistent native scope.');",
+        "    Check::input($identity !== $watchedIdentity || $layout === $watchedLayout, 'A watched destination must agree with its declaration.');",
+        "    $signature = [$layout, $step->destination->writable];",
+        "    Check::input(($destinations[$identity] ?? $signature) === $signature, 'Repeated references to a trigger destination must agree on its layout.');",
+        "    $scopes[$name] = $scope;",
+        "    $destinations[$identity] = $signature;",
+        "    if ($step instanceof TriggerInsert) {",
+        "        $this->insertionImages($step, $event, $watched);",
+        "    } else {",
+        "        (new TriggerActionFields())->check($step, $event, $watched);",
+        "    }",
+        "}"
+      ]
+    },
+    "Schema/Trigger/TriggerChecks::layout": {
+      "common": [
+        "$names = [];",
+        "foreach ($table->columns as $column) {",
+        "    $names[] = $column->value;",
+        "}",
+        "return $names;"
+      ]
+    },
+    "Schema/Trigger/TriggerChecks::identity": {
+      "common": [
+        "return $table->schema->key() . \"\\x00\" . $table->table->key();"
+      ]
+    },
+    "Schema/Trigger/TriggerSql::statement": {
+      "common": [
+        "$temporary = $trigger->placement === TriggerPlacement::TemporaryKeyword;",
+        "$declaration = ($temporary ? 'CREATE TEMP TRIGGER ' : 'CREATE TRIGGER ') . ($trigger->ifNotExists ? 'IF NOT EXISTS ' : '') . ($temporary ? '' : $trigger->schema->quoted() . '.') . $trigger->name->quoted();",
+        "$watched = $trigger->watched;",
+        "$events = $trigger->timing->value . ' ' . $trigger->event->value;",
+        "$names = [];",
+        "foreach ($trigger->selectors as $member) {",
+        "    $selector = $member->selector;",
+        "    $names[] = (is_int($selector) ? $watched->columns[$selector] : $selector)->quoted();",
+        "}",
+        "if ($names !== []) {",
+        "    $events .= ' OF ' . implode(', ', $names);",
+        "}",
+        "$condition = $trigger->condition;",
+        "$when = $condition === null ? '' : ' WHEN ' . $this->field($condition->field, $watched) . ($condition->isNull ? ' IS NULL' : ' IS NOT NULL');",
+        "$steps = [];",
+        "$mutation = new TriggerMutationSql();",
+        "foreach ($trigger->program as $step) {",
+        "    $steps[] = match (true) {",
+        "        $step instanceof TriggerInsert => $this->insertion($step, $watched),",
+        "        $step instanceof TriggerUpdate, $step instanceof TriggerDelete => $mutation->action($step, $watched),",
+        "    } . ';';",
+        "}",
+        "return $declaration . ' ' . $events . ' ON ' . $watched->schema->quoted() . '.' . $watched->table->quoted() . $when . ' BEGIN ' . implode(' ', $steps) . ' END';"
+      ]
+    },
+    "Schema/Trigger/TriggerSql::insertion": {
+      "common": [
+        "$target = $step->destination->table;",
+        "$columns = [];",
+        "$rows = [];",
+        "foreach ($step->rows as $index => $tuple) {",
+        "    $values = [];",
+        "    foreach ($tuple->fields as $field) {",
+        "        if ($index === 0) {",
+        "            $columns[] = $target->columns[$field->column]->quoted();",
+        "        }",
+        "        $values[] = $this->value($field->value, $watched);",
+        "    }",
+        "    $rows[] = '(' . implode(', ', $values) . ')';",
+        "}",
+        "$policy = $step->conflict === InsertConflict::Inherit ? '' : ' OR ' . strtoupper($step->conflict->value);",
+        "return 'INSERT' . $policy . ' INTO ' . $target->table->quoted() . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $rows);"
+      ]
+    },
+    "Schema/Trigger/TriggerSql::field": {
+      "common": [
+        "return $field->image->value . '.' . $watched->columns[$field->column]->quoted();"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerLowering::lower": {
+      "common": [
+        "$context = $operation->context;",
+        "Check::input($context->relationNames === NameComparison::AsciiInsensitive && $context->columnNames === NameComparison::AsciiInsensitive, 'A complete trigger requires native SQLite identifier comparison.');",
+        "Check::input(!$statement->temporary || $statement->name->schema === null, 'A TEMP keyword trigger cannot have a qualified name.');",
+        "$owner = $this->schema($context, (new TriggerNamespace())->owner($context, $statement->name->schema, $statement->temporary, $statement->table->name));",
+        "Check::input($statement->name->schema !== null || $statement->table->name->schema !== null || $context->complete || $owner->key() === 'temp', 'An unqualified trigger and watched relation need a known temporary namespace.');",
+        "$placement = match (true) {",
+        "    $statement->temporary => TriggerPlacement::TemporaryKeyword,",
+        "    $owner->key() === 'temp' => TriggerPlacement::NamedTemporary,",
+        "    default => TriggerPlacement::Stored,",
+        "};",
+        "$watched = $this->watched($operation, $statement);",
+        "$event = TriggerEvent::from($statement->event->value);",
+        "$timing = $statement->timing === null ? TriggerTiming::Before : TriggerTiming::from($statement->timing->value);",
+        "$test = (new TriggerOperands())->condition($operation, $statement->table, $watched, $statement->when);",
+        "$steps = $this->program($operation, $statement, $watched);",
+        "return new CreateTrigger($owner, new Identifier($statement->name->name->value), $placement, $watched, $timing, $event, $steps, $this->selectors($statement->columns, $watched), $test, $statement->ifNotExists);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerLowering::watched": {
+      "common": [
+        "$resolved = $operation->facts->relation($statement->table)->table;",
+        "Check::input($resolved instanceof DeclaredTable && $resolved->table->complete, 'A trigger needs a resolved complete watched relation.');",
+        "$table = $resolved->table;",
+        "$kind = match ($table->kind) {",
+        "    RelationKind::BaseTable => ExternalRelationKind::BaseTable,",
+        "    RelationKind::View => ExternalRelationKind::View,",
+        "    RelationKind::MaterializedView, RelationKind::ForeignTable, RelationKind::Sequence => throw new InvalidConstruction('A trigger needs an ordinary watched table or view.'),",
+        "};",
+        "$scope = $this->schema($operation->context, $table->name->schema ?? $operation->context->declarationSchema);",
+        "$columns = [];",
+        "foreach ($table->columns as $column) {",
+        "    $columns[] = new Identifier($column->name->value);",
+        "}",
+        "return new TableSource($scope, new Identifier($table->name->name->value), $columns, $kind);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerLowering::selectors": {
+      "common": [
+        "$slots = array_map(static fn(Identifier $column): string => $column->key(), $watched->columns);",
+        "$output = [];",
+        "foreach ($names as $name) {",
+        "    $identifier = new Identifier($name->value);",
+        "    $match = array_search($identifier->key(), $slots, true);",
+        "    $output[] = new TriggerUpdateName($match === false ? $identifier : $match);",
+        "}",
+        "return $output;"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerLowering::schema": {
+      "common": [
+        "foreach ($context->searchPath as $schema) {",
+        "    if (NameComparison::AsciiInsensitive->equal($schema->value, $written->value)) {",
+        "        return new Identifier($schema->value);",
+        "    }",
+        "}",
+        "throw new InvalidConstruction('A checked trigger requires a known schema qualifier.');"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerStepLowering::lower": {
+      "common": [
+        "Check::input($step->upserts === [] && $step->returning === [], 'A checked trigger insertion needs VALUES without RETURNING or UPSERT.');",
+        "$into = $step->into;",
+        "[$binding, $destination] = (new TriggerTargetLowering())->lower($operation, $into->target);",
+        "$selected = (new InsertTargetLowering())->lower($binding, $into, false);",
+        "$operands = new TriggerOperands();",
+        "$rows = [];",
+        "foreach ($step->rows->rows as $row) {",
+        "    $values = $row->values;",
+        "    Check::input(count($selected) === count($values), 'A trigger insertion needs exactly one value for each checked destination slot.');",
+        "    $fields = [];",
+        "    foreach ($selected as $index => $slot) {",
+        "        $fields[] = new TriggerInsertField($slot->slot, $operands->value($operation, $table, $watched, $values[$index]));",
+        "    }",
+        "    $rows[] = new TriggerInsertRow($fields);",
+        "}",
+        "$policy = $into->replace ? InsertConflict::Replace : match ($into->resolution) {",
+        "    null => InsertConflict::Inherit,",
+        "    ConflictResolution::Abort => InsertConflict::Abort,",
+        "    ConflictResolution::Ignore => InsertConflict::Ignore,",
+        "    ConflictResolution::Fail => InsertConflict::Fail,",
+        "    ConflictResolution::Rollback => InsertConflict::Rollback,",
+        "    ConflictResolution::Replace => InsertConflict::Replace,",
+        "};",
+        "return new TriggerInsert($destination, $rows, $policy);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerOperands::value": {
+      "common": [
+        "$leaf = $this->ungroup($operand);",
+        "if ($leaf instanceof ColumnUse) {",
+        "    return $this->field($operation, $table, $watched, $leaf);",
+        "}",
+        "if ($leaf instanceof ParsedText) {",
+        "    return new TextLiteral($leaf->value);",
+        "}",
+        "if ($leaf instanceof ParsedNull) {",
+        "    return new NullLiteral();",
+        "}",
+        "$numeric = new NumericLiteralLowering();",
+        "$number = match (true) {",
+        "    $leaf instanceof ParsedInteger => $numeric->lower($leaf, false),",
+        "    $leaf instanceof Unary => $numeric->signed($leaf),",
+        "    default => null,",
+        "};",
+        "Check::input($number instanceof IntegerLiteral, 'A checked trigger insertion needs a row-image field or a supported literal.');",
+        "return $number;"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerOperands::field": {
+      "common": [
+        "$leaf = $this->ungroup($operand);",
+        "Check::input($leaf instanceof ColumnUse && $leaf->qualifier !== null && $leaf->qualifier->schema === null && $leaf->qualifier->catalog === null, 'A trigger row operand needs an explicit OLD or NEW qualifier.');",
+        "$image = match (NameComparison::AsciiInsensitive->fold($leaf->qualifier->name->value)) {",
+        "    'new' => RowImage::New,",
+        "    'old' => RowImage::Old,",
+        "    default => throw new InvalidConstruction('A trigger row operand needs an explicit OLD or NEW qualifier.'),",
+        "};",
+        "$fact = $operation->facts->scalar($leaf)->resolution;",
+        "Check::input($fact instanceof ResolvedColumn && $fact->relation === $table && $fact->merge === null, 'A trigger operand must resolve to the active watched relation.');",
+        "$key = (new Identifier($leaf->name->value))->key();",
+        "foreach ($watched->columns as $position => $column) {",
+        "    if ($column->key() === $key) {",
+        "        return new TriggerField($image, $position);",
+        "    }",
+        "}",
+        "throw new InvalidConstruction('A trigger operand needs an explicit watched column.');"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerOperands::condition": {
+      "common": [
+        "if ($operand === null) {",
+        "    return null;",
+        "}",
+        "$test = $this->ungroup($operand);",
+        "if ($test instanceof OperatorNullTest) {",
+        "    return new TriggerCondition($this->field($operation, $table, $watched, $test->operand), $test->form === NullTestForm::IsNull);",
+        "}",
+        "Check::input($test instanceof Binary, 'A checked trigger condition needs a NULL test of a watched field.');",
+        "$left = $this->ungroup($test->left);",
+        "$right = $this->ungroup($test->right);",
+        "Check::input($left instanceof ParsedNull || $right instanceof ParsedNull, 'A checked trigger condition needs a NULL test of a watched field.');",
+        "$operator = $test->operator;",
+        "Check::input(in_array($operator, [BinaryOperator::Is, BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom, BinaryOperator::IsNotDistinctFrom], true), 'A checked trigger condition needs a NULL test of a watched field.');",
+        "$isNull = $operator === BinaryOperator::Is || $operator === BinaryOperator::IsNotDistinctFrom;",
+        "return new TriggerCondition($this->field($operation, $table, $watched, $left instanceof ParsedNull ? $right : $left), $isNull);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerOperands::ungroup": {
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "return $operand;"
+      ]
+    },
+    "Schema/DefinitionLowering::lower": {
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedCreateTableAs => (new CreateTableAsLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedCreateIndex => (new CreateIndexLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedCreateView => (new CreateViewLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedTrigger => (new TriggerLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerAssignment::__construct": {
+      "common": [
+        "Check::input($column >= 0, 'A trigger assignment position cannot be negative.');"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerDelete::__construct": {
+      "common": [
+        "(new TriggerMutationScope())->filter($destination, $where);"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerEquality::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerTargetField::__construct": {
+      "common": [
+        "Check::input($column >= 0, 'A local trigger field position cannot be negative.');"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerTargetNullTest::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerUpdate::__construct": {
+      "common": [
+        "$list = Check::listOf($assignments, TriggerAssignment::class, 'A trigger update needs one or more ordered scalar assignments.', 1);",
+        "$scope = new TriggerMutationScope();",
+        "$seen = [];",
+        "foreach ($list as $assignment) {",
+        "    $column = $assignment->column;",
+        "    Check::input(in_array($column, $destination->writable, true) && !isset($seen[$column]), 'A trigger update must write distinct available slots of its destination.');",
+        "    if ($assignment->value instanceof TriggerTargetField) {",
+        "        $scope->localField($destination, $assignment->value);",
+        "    }",
+        "    $seen[$column] = true;",
+        "}",
+        "$scope->filter($destination, $where);",
+        "$this->assignments = $list;"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerActionFields::check": {
+      "common": [
+        "$target = $step->destination->table;",
+        "$filter = $step->where;",
+        "if ($filter instanceof TriggerCondition) {",
+        "    $this->image($filter->field, $event, $watched, $target);",
+        "} elseif ($filter instanceof TriggerEquality) {",
+        "    $this->image($filter->image, $event, $watched, $target);",
+        "}",
+        "if ($step instanceof TriggerUpdate) {",
+        "    foreach ($step->assignments as $assignment) {",
+        "        if ($assignment->value instanceof TriggerField) {",
+        "            $this->image($assignment->value, $event, $watched, $target);",
+        "        }",
+        "    }",
+        "}"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerActionFields::image": {
+      "common": [
+        "(new TriggerChecks())->field($image, $event, $watched);",
+        "$qualifier = $image->image === RowImage::Old ? 'old' : 'new';",
+        "if ($target->table->key() !== $qualifier) {",
+        "    return;",
+        "}",
+        "$name = $watched->columns[$image->column]->key();",
+        "Check::input($name !== 'rowid' && $name !== '_rowid_' && $name !== 'oid', 'A local trigger destination can shadow this row-image rowid alias.');",
+        "foreach ($target->columns as $field) {",
+        "    Check::input($field->key() !== $name, 'A local trigger destination shadows this row-image field.');",
+        "}"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerActions::copy": {
+      "common": [
+        "$actions = [];",
+        "foreach ($program as $step) {",
+        "    Check::input($step instanceof TriggerInsert || $step instanceof TriggerUpdate || $step instanceof TriggerDelete, 'A trigger body contains only resolved ordered mutation actions.');",
+        "    $actions[] = $step;",
+        "}",
+        "Check::input(array_is_list($program) && $actions !== [], 'A trigger needs a nonempty list of ordered actions.');",
+        "return $actions;"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerMutationScope::filter": {
+      "common": [
+        "if ($where instanceof TriggerEquality || $where instanceof TriggerTargetNullTest) {",
+        "    $this->localField($destination, $where->target);",
+        "}"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerMutationScope::localField": {
+      "common": [
+        "Check::input(isset($destination->table->columns[$value->column]), 'A trigger mutation must read a declared position of its destination.');"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerMutationSql::action": {
+      "common": [
+        "$target = $step->destination->table;",
+        "$filter = $this->condition($step->where, $target, $watched);",
+        "if ($step instanceof TriggerDelete) {",
+        "    return 'DELETE FROM ' . $target->table->quoted() . $filter;",
+        "}",
+        "$fields = [];",
+        "$sql = new TriggerSql();",
+        "foreach ($step->assignments as $assignment) {",
+        "    $value = $assignment->value;",
+        "    $rendered = $value instanceof TriggerTargetField ? $this->local($value, $target) : $sql->value($value, $watched);",
+        "    $fields[] = $target->columns[$assignment->column]->quoted() . ' = ' . $rendered;",
+        "}",
+        "$policy = $step->conflict === UpdateConflict::Inherit ? '' : ' OR ' . strtoupper($step->conflict->value);",
+        "return 'UPDATE' . $policy . ' ' . $target->table->quoted() . ' SET ' . implode(', ', $fields) . $filter;"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerMutationSql::condition": {
+      "common": [
+        "$sql = new TriggerSql();",
+        "return match (true) {",
+        "    $filter === null => '',",
+        "    $filter instanceof TriggerTargetNullTest => ' WHERE ' . $this->local($filter->target, $target) . ($filter->isNull ? ' IS NULL' : ' IS NOT NULL'),",
+        "    $filter instanceof TriggerCondition => ' WHERE ' . $sql->field($filter->field, $watched) . ($filter->isNull ? ' IS NULL' : ' IS NOT NULL'),",
+        "    $filter instanceof TriggerEquality => ' WHERE ' . $this->equality($filter, $target, $watched),",
+        "};"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerMutationSql::equality": {
+      "common": [
+        "$local = $this->local($filter->target, $target);",
+        "$image = (new TriggerSql())->field($filter->image, $watched);",
+        "return '(' . ($filter->targetFirst ? $local . ' = ' . $image : $image . ' = ' . $local) . ')';"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerMutationSql::local": {
+      "common": [
+        "return $target->columns[$field->column]->quoted();"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerMutationLowering::lower": {
+      "common": [
+        "Check::input($step->with === null && $step->returning === [], 'A checked trigger mutation needs a local target without WITH or RETURNING.');",
+        "Check::input(!$step instanceof ParsedTriggerUpdate || $step->from === null, 'A checked trigger update needs a local target without FROM.');",
+        "[$binding, $destination] = (new TriggerTargetLowering())->lower($operation, $step->target);",
+        "$operands = new TriggerMutationOperands($operation, $source, $watched, $binding);",
+        "$where = $operands->filter($step->where);",
+        "if ($step instanceof ParsedTriggerDelete) {",
+        "    return new TriggerDelete($destination, $where);",
+        "}",
+        "$assignments = [];",
+        "foreach ($step->assignments as $assignment) {",
+        "    Check::input($assignment instanceof Assignment, 'A checked trigger update requires scalar assignments.');",
+        "    $assignments[] = new TriggerAssignment($binding->write($assignment->column), $operands->value($assignment->value));",
+        "}",
+        "return new TriggerUpdate($destination, $assignments, $where, $this->conflict($step->resolution));"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerMutationLowering::conflict": {
+      "common": [
+        "return match ($resolution) {",
+        "    null => UpdateConflict::Inherit,",
+        "    ConflictResolution::Abort => UpdateConflict::Abort,",
+        "    ConflictResolution::Fail => UpdateConflict::Fail,",
+        "    ConflictResolution::Ignore => UpdateConflict::Ignore,",
+        "    ConflictResolution::Replace => UpdateConflict::Replace,",
+        "    ConflictResolution::Rollback => UpdateConflict::Rollback,",
+        "};"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerMutationOperands::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerMutationOperands::value": {
+      "common": [
+        "$operands = new TriggerOperands();",
+        "$leaf = $operands->ungroup($operand);",
+        "return $leaf instanceof ColumnUse ? $this->field($leaf) : $operands->value($this->operation, $this->source, $this->watched, $leaf);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerMutationOperands::field": {
+      "common": [
+        "$images = new TriggerOperands();",
+        "$leaf = $images->ungroup($operand);",
+        "Check::input($leaf instanceof ColumnUse, 'A trigger mutation filter requires resolved local or row-image fields.');",
+        "$position = $this->operation->facts->scalar($leaf)->resolution;",
+        "Check::input($position instanceof ResolvedColumn && $position->merge === null, 'A trigger mutation field must have one resolved occurrence.');",
+        "if ($position->relation === $this->source) {",
+        "    return $images->field($this->operation, $this->source, $this->watched, $leaf);",
+        "}",
+        "return new TriggerTargetField($this->target->resolved($position)->slot);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerMutationOperands::filter": {
+      "common": [
+        "if ($operand === null) {",
+        "    return null;",
+        "}",
+        "$images = new TriggerOperands();",
+        "$test = $images->ungroup($operand);",
+        "if ($test instanceof OperatorNullTest) {",
+        "    return $this->nullTest($this->field($test->operand), $test->form === NullTestForm::IsNull);",
+        "}",
+        "Check::input($test instanceof Binary, 'A checked trigger mutation filter needs equality or a NULL test.');",
+        "$operator = $test->operator;",
+        "if ($operator === BinaryOperator::Equal || $operator === BinaryOperator::DoubleEqual) {",
+        "    $left = $this->field($test->left);",
+        "    $right = $this->field($test->right);",
+        "    if ($left instanceof TriggerTargetField && $right instanceof TriggerField) {",
+        "        return new TriggerEquality($left, $right, true);",
+        "    }",
+        "    Check::input($right instanceof TriggerTargetField && $left instanceof TriggerField, 'A trigger equality requires one local field and one row-image field.');",
+        "    return new TriggerEquality($right, $left, false);",
+        "}",
+        "Check::input(in_array($operator, [BinaryOperator::Is, BinaryOperator::IsNotDistinctFrom, BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom], true), 'A checked trigger mutation filter needs equality or a NULL test.');",
+        "$isNull = $operator === BinaryOperator::Is || $operator === BinaryOperator::IsNotDistinctFrom;",
+        "$left = $images->ungroup($test->left);",
+        "$right = $images->ungroup($test->right);",
+        "Check::input($left instanceof ParsedNull || $right instanceof ParsedNull, 'A checked trigger mutation filter needs equality or a NULL test.');",
+        "return $this->nullTest($this->field($left instanceof ParsedNull ? $right : $left), $isNull);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerMutationOperands::nullTest": {
+      "common": [
+        "return $field instanceof TriggerField ? new TriggerCondition($field, $isNull) : new TriggerTargetNullTest($field, $isNull);"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerTargetLowering::lower": {
+      "common": [
+        "$resolved = $operation->facts->relation($statement)->table;",
+        "Check::input($resolved instanceof DeclaredTable && $resolved->table->complete, 'A trigger mutation needs a complete destination declaration.');",
+        "$binding = new SourceBinding($operation, $statement);",
+        "foreach ($resolved->table->columns as $column) {",
+        "    $binding->slot(0, $column);",
+        "}",
+        "$target = $binding->source();",
+        "Check::input($target instanceof TableSource, 'A trigger mutation needs a resolved destination.');",
+        "$available = [];",
+        "foreach ($binding->implicitWrites() as $slot) {",
+        "    $available[] = $slot->slot;",
+        "}",
+        "return [$binding, new TriggerDestination($target, $available)];"
+      ]
+    },
+    "Schema/Trigger/TriggerChecks::insertionImages": {
+      "common": [
+        "foreach ($step->rows as $tuple) {",
+        "    foreach ($tuple->fields as $field) {",
+        "        if ($field->value instanceof TriggerField) {",
+        "            $this->field($field->value, $event, $watched);",
+        "        }",
+        "    }",
+        "}"
+      ]
+    },
+    "Schema/Trigger/TriggerSql::value": {
+      "common": [
+        "return match (true) {",
+        "    $value instanceof TriggerField => $this->field($value, $watched),",
+        "    $value instanceof IntegerLiteral => $value->decimal,",
+        "    $value instanceof TextLiteral => $value->toString(),",
+        "    $value instanceof NullLiteral => 'NULL',",
+        "};"
+      ]
+    },
+    "Schema/Trigger/Binding/TriggerLowering::program": {
+      "common": [
+        "$actions = [];",
+        "$insert = new TriggerStepLowering();",
+        "$mutation = new TriggerMutationLowering();",
+        "foreach ($statement->steps as $step) {",
+        "    $actions[] = match (true) {",
+        "        $step instanceof InsertRows => $insert->lower($operation, $statement->table, $watched, $step),",
+        "        $step instanceof ParsedTriggerUpdate, $step instanceof ParsedTriggerDelete => $mutation->lower($operation, $statement->table, $watched, $step),",
+        "        default => throw new InvalidConstruction('A checked trigger body requires INSERT VALUES, UPDATE or DELETE actions.'),",
+        "    };",
+        "}",
+        "return $actions;"
+      ]
+    },
+    "Schema/Trigger/TriggerInsertRow::__construct": {
+      "common": [
+        "$list = Check::listOf($fields, TriggerInsertField::class, 'A trigger insertion tuple needs an ordered nonempty list of supplied fields.', 1);",
+        "$seen = [];",
+        "foreach ($list as $field) {",
+        "    Check::input(!isset($seen[$field->column]), 'A trigger insertion must write distinct available slots of its destination.');",
+        "    $seen[$field->column] = true;",
+        "}",
+        "$this->fields = $list;"
+      ]
+    },
+    "Schema/Trigger/TriggerInsertRow::columns": {
+      "common": [
+        "$positions = [];",
+        "foreach ($this->fields as $field) {",
+        "    $positions[] = $field->column;",
+        "}",
+        "return $positions;"
+      ]
+    }
+  },
+  "extends": "sqlite-audit-triggers-boundaries-v2.json",
+  "change": "Check a rectangular ordered VALUES batch within one native statement. Preserve every existing trigger action, scope and row-image meaning."
+}

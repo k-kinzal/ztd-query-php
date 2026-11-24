@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerDestination;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 #[CoversClass(TriggerInsert::class)]
@@ -24,9 +25,9 @@ final class TriggerInsertTest extends TestCase
         $target = new TriggerDestination($table, [0, 1]);
         $last = new TriggerInsertField(1, new NullLiteral());
         $first = new TriggerInsertField(0, new NullLiteral());
-        $program = new TriggerInsert($target, [$last, $first]);
+        $program = new TriggerInsert($target, [new TriggerInsertRow([$last, $first])]);
 
-        self::assertSame([$last, $first], $program->fields);
+        self::assertSame([$last, $first], $program->rows[0]->fields);
         self::assertSame('inherit', $program->conflict->value);
     }
 }
