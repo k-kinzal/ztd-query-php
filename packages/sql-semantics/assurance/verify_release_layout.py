@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v98.json"
-CONTRACT = "94085df5f03e5a24e08da0ac2e227d7b7728f9b82f1d9a710ba96763b7955614"
+CONTRACT_NAME = "release-layout-v99.json"
+CONTRACT = "7e3a661ce25b2c698f3e52a381bea3c1b66230bc13bc93e8305f64059ec042cd"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,11 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Header\\HeaderPragma"):
+            expect = 'PRAGMA "metadata".user_version(-2147483648)'
+            require(item.get("headerPragma") == [
+                "user_version", "metadata", -2147483648, expect, "data_version", "temp", None, 'PRAGMA "temp".data_version',
+            ] and item["sql"] == expect, "installed-sqlite-header-pragma-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Integrity\\IntegrityAudit"):
             expect = 'PRAGMA quick_check("integrity_child")'
             require(item.get("integrityAudit") == [

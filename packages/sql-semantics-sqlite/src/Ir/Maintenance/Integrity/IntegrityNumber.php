@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity;
 
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Argument\NativePragmaInteger;
+
 /**
  * Interprets the native numeric token of an integrity report budget.
  *
@@ -16,18 +18,11 @@ final class IntegrityNumber
      */
     public function limit(string $token): ?int
     {
-        $hexadecimal = strncasecmp($token, '0x', 2) === 0;
-        $pattern = $hexadecimal ? '/\A0[xX]([0-9a-fA-F]+)/' : '/\A([0-9]+)/';
-        if (preg_match($pattern, $token, $prefix) !== 1) {
+        if (str_starts_with($token, '-') || str_starts_with($token, '+')) {
             return null;
         }
+        $value = (new NativePragmaInteger())->parse($token);
 
-        $digits = strtolower(ltrim($prefix[1], '0'));
-        $maximum = $hexadecimal ? '7fffffff' : (string) IntegrityLimit::MAX_VALUE;
-        if (strlen($digits) > strlen($maximum) || (strlen($digits) === strlen($maximum) && strcmp($digits, $maximum) > 0)) {
-            return null;
-        }
-
-        return $digits === '' ? IntegrityLimit::DEFAULT_VALUE : intval($digits, $hexadecimal ? 16 : 10);
+        return $value === 0 ? IntegrityLimit::DEFAULT_VALUE : $value;
     }
 }

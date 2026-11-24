@@ -467,6 +467,20 @@ if ($dialect === 'sqlite') {
     $roots[] = 'Maintenance\\Integrity\\IntegrityAudit';
     $internal[] = 'Maintenance\\Integrity\\IntegrityAuditLowering';
     $internal[] = 'Maintenance\\Integrity\\IntegrityNumber';
+    $properties['Maintenance\\Header\\HeaderPragma'] = [
+        'field' => ['Maintenance\\Header\\HeaderCookie', 'Maintenance\\Header\\HeaderReadField'],
+        'schema' => ['Identifier'], 'value' => ['?Maintenance\\Header\\HeaderInteger'],
+    ];
+    $properties['Maintenance\\Header\\HeaderInteger'] = ['value' => ['int']];
+    $properties['Maintenance\\Header\\HeaderCookie'] = $methods['Maintenance\\Header\\HeaderCookie'] = [];
+    $properties['Maintenance\\Header\\HeaderReadField'] = $methods['Maintenance\\Header\\HeaderReadField'] = [];
+    $methods['Maintenance\\Header\\HeaderPragma'] = $methods['Select'];
+    $methods['Maintenance\\Header\\HeaderInteger'] = ['__construct'];
+    $enumCases['Maintenance\\Header\\HeaderCookie'] = ['ApplicationId' => 'application_id', 'UserVersion' => 'user_version', 'SchemaVersion' => 'schema_version'];
+    $enumCases['Maintenance\\Header\\HeaderReadField'] = ['FreeListCount' => 'freelist_count', 'DataVersion' => 'data_version'];
+    $roots[] = 'Maintenance\\Header\\HeaderPragma';
+    $internal[] = 'Maintenance\\Header\\HeaderPragmaLowering';
+    $internal[] = 'Maintenance\\Argument\\NativePragmaInteger';
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1438,6 +1452,7 @@ try {
                 'Maintenance\\FlagPragmaLowering' => 'Maintenance\\FlagPragma',
                 'Maintenance\\Metadata\\ForeignKeyAuditLowering' => 'Maintenance\\Metadata\\ForeignKeyAudit',
                 'Maintenance\\Integrity\\IntegrityAuditLowering' => 'Maintenance\\Integrity\\IntegrityAudit',
+                'Maintenance\\Header\\HeaderPragmaLowering' => 'Maintenance\\Header\\HeaderPragma',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
@@ -1447,7 +1462,7 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
+                        'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma',
                         'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
                         'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex',
                     ], 'Unexpected SQLite maintenance publication');
@@ -1458,9 +1473,15 @@ try {
                 $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
                 $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
                 $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
-                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Header\\HeaderPragma', 'Maintenance\\Integrity\\IntegrityAudit', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
+            }
+            if ($short === 'Maintenance\\Argument\\NativePragmaInteger') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'parse' && types($members[0]->returnType, $prefix, $short) === ['?int'],
+                    'Unexpected SQLite native pragma integer conversion route');
             }
             if ($short === 'Maintenance\\Integrity\\IntegrityNumber') {
                 $members = $class->getMethods();

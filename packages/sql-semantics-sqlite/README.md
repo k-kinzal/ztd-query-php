@@ -44,6 +44,8 @@ Connection-flag PRAGMAs such as `foreign_keys`, `query_only`, and `writable_sche
 
 `integrity_check` and `quick_check` return `IntegrityAudit`. An integer argument sets the report limit. A named argument carries a resolved table, view or catalog. An unqualified audit retains SQLite’s access to all attached databases, even when the named target belongs to one database. An explicit database name limits the access to that database.
 
+The database header pragmas `application_id`, `user_version`, `schema_version`, `freelist_count` and `data_version` return `HeaderPragma`. The value records the selected database, the exact field, and the normalized signed operand for a write. A missing database qualifier selects main.
+
 Connection inventory reads return `InventoryPragma` with an `InventoryKind` for databases, collations, compile options, functions, modules or active pragmas. The result reads the current connection registry. An explicit schema qualifier remains part of the operation, including native activation of the temporary database.
 
 A single INNER, CROSS, LEFT, RIGHT, or FULL join between two declared base tables can use USING or NATURAL. The IR resolves the comparison operands in left-to-right order and keeps both inputs addressable by qualified names. An unqualified merged name selects the right slot for RIGHT and the left slot for INNER, CROSS, and LEFT. FULL combines the left and right slots, keeping the first non-NULL value. SQLite also resolves USING and NATURAL in longer INNER, CROSS, and LEFT chains. Each equality refers to its actual earlier input, and each step retains its own right occurrence. The rendered SELECT uses explicit ON and projection clauses.

@@ -40,6 +40,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\EmptyIndexMetadata;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderCookie;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderInteger;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderReadField;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityLimit;
@@ -352,7 +356,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -851,6 +855,27 @@ function observeInventoryPragma(InventoryPragma $value): array
     ];
 }
 
+function directHeaderPragma(array $input): HeaderPragma
+{
+    $field = HeaderCookie::tryFrom($input['field']) ?? HeaderReadField::from($input['field']);
+    $value = $input['value'];
+
+    return new HeaderPragma($field, new Identifier($input['schema']), $value === null ? null : new HeaderInteger($value));
+}
+
+function observeHeaderPragma(HeaderPragma $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'header-pragma',
+        'profile' => $value->profileId(),
+        'field' => $value->field->value,
+        'schema' => $value->schema->value,
+        'value' => $value->value?->value,
+        'sql' => $value->toString(),
+    ];
+}
+
 function directIntegrityAudit(array $input): IntegrityAudit
 {
     $role = $input['target'];
@@ -1121,6 +1146,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
                 InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
             ),
+            ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
             ($input['operation'] ?? null) === 'integrity-audit' => directIntegrityAudit($input),
             ($input['operation'] ?? null) === 'foreign-key-audit' => directForeignKeyAudit($input),
             ($input['operation'] ?? null) === 'index-metadata' => directIndexMetadata($input),
@@ -1150,6 +1176,9 @@ function runCase(array $input): array
     }
     if ($value instanceof InventoryPragma) {
         return observeInventoryPragma($value);
+    }
+    if ($value instanceof HeaderPragma) {
+        return observeHeaderPragma($value);
     }
     if ($value instanceof IntegrityAudit) {
         return observeIntegrityAudit($value);

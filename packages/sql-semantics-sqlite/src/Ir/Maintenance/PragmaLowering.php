@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Maintenance;
 
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderCookie;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragmaLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderReadField;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAuditLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityKind;
@@ -34,7 +38,7 @@ final class PragmaLowering
      * Dispatches a known SQLite operation by its exact native identity.
      * @throws InvalidConstruction When the selected pragma family has no complete representation
      */
-    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing
+    public function lower(BoundStatement $operation, Pragma $statement): FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing
     {
         $name = Comparison::AsciiInsensitive->fold($statement->name->name->value);
         $kind = TableInspectionKind::tryFrom($name);
@@ -46,6 +50,11 @@ final class PragmaLowering
         if ($integrity !== null) {
             return (new IntegrityAuditLowering())->lower($operation, $statement, $integrity);
         }
+        $header = HeaderCookie::tryFrom($name) ?? HeaderReadField::tryFrom($name);
+        if ($header !== null) {
+            return (new HeaderPragmaLowering())->lower($operation, $statement, $header);
+        }
+
         if ($name === 'foreign_key_check') {
             return (new ForeignKeyAuditLowering())->lower($operation, $statement);
         }
