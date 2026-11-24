@@ -1,0 +1,84 @@
+{
+  "revision": "SemanticsIR/sqlite-connection-inventory-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2, stock UTF-8 connection, stock VFS and default builtin introspection modes. Runtime registries and database attachments are the external state.",
+  "scope": "The six native connection inventory pragmas database_list, collation_list, compile_options, function_list, module_list and pragma_list.",
+  "additionalPublicRoots": ["Maintenance/Inventory/InventoryPragma"],
+  "constructors": {
+    "Maintenance/Inventory/InventoryPragma": {
+      "role": "Read the selected SQLite connection inventory with its exact explicit access scope.",
+      "structure": "One InventoryKind with an optional resolved database Identifier.",
+      "conditions": "An explicit schema must identify an existing SQLite database. The inventory remains connection-wide. A decoded argument is ignored by these native handlers in the fixed stock profile.",
+      "meaning": "Return exactly the active native registry identified by the kind, including all rows, typed positions and identities. An explicit temp scope initializes the native temp database even when the result lists another registry.",
+      "externalInterpretation": "Use the same SQLite release, build profile, preexisting temporary and attached databases, and registered collations, modules and functions. A custom VFS or an authorizer that gives significance to ignored arguments requires its own external interpretation.",
+      "sql": "Emit the fixed native pragma name and the optional quoted explicit database. A native ignored argument has no emitted semantic operand.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Inventory/InventoryKind": {
+      "role": "Identify one complete SQLite connection inventory operation.",
+      "structure": "A closed enum with the six native registry names.",
+      "conditions": "Resolve builtin names with SQLite ASCII-insensitive equality. Each case determines its exact native result definition.",
+      "meaning": "Select database locations, collations, compile options, callable definitions, virtual table modules or active pragma names.",
+      "externalInterpretation": "The native operation observes the registry under the same connection and build.",
+      "sql": "Emit the selected builtin operation name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "database_list reports all open database slots in native slot order, with exact stored names and filenames. An uninitialized temp slot is absent. Observe the distinction using sqlite3_db_name and sqlite3_db_filename, independent of the candidate and emitted grammar.",
+    "collation_list reports the connection's available collation name and its native ordinal. Newly registered fixture keys prepend in the bounded scenario. Replacing a collation under an ASCII-equivalent name keeps its existing inventory identity.",
+    "compile_options reports the exact output of sqlite3_compileoption_get. Record actual compiler and compile mode, including conditionally active PRAGMA names rather than choosing them from the candidate.",
+    "function_list reports builtin and connection-registered definitions, including overloads, scalar, aggregate and window roles, encoding, accepted argument count and public flags. Compare full rows and multiplicity. The independent native registry enumerator reads registration data directly from the fixed amalgamation without running PRAGMA SQL.",
+    "module_list reports registered virtual table modules, including lazily registered table-valued introspection modules. pragma_list reports the active compiled names recorded in the independent native declaration inventory.",
+    "None of these stock inventory handlers uses a decoded argument to filter results or mutate a setting. An engine may still open temp before executing an explicitly qualified operation. This effect is preserved by an explicit qualifier. Ignored argument text is recorded as calibration data and may differ between source and output."
+  ],
+  "observations": [
+    "Compare the exact heading, arity, typed values, multiplicity, native semantic ordinal fields, zero parameters, readOnly classification and change count.",
+    "Compare database slot visibility and exact filenames through the native connection API. Compare namespace access and ensure the absence of unexpected writes or additional operations.",
+    "Compare builtin and overridden function rows separately. Use a registered scalar of different arity, flags and identity plus a duplicate builtin name. Include unregistered and lazily registered virtual-table module state.",
+    "Sort only those full typed rows whose order is not fixed by the contract. Preserve database order and each collation ordinal. Check all active pragma names using the independently extracted source inventory."
+  ],
+  "finite": {
+    "operations": ["database_list", "collation_list", "compile_options", "function_list", "module_list", "pragma_list"],
+    "scopes": ["implicit", "main", "temp", "attached"],
+    "registries": ["stock", "extended", "lazy"],
+    "arguments": ["none", "text", "number"],
+    "identity": "All 216 operation/scope/registration/argument coordinates. Infer operation, qualifier and argument form from the original native invocation, and observe registration state independently."
+  },
+  "exploration": {
+    "seeds": [3593, 27847, 49757],
+    "casesPerSeed": 54,
+    "timeoutSeconds": 420,
+    "allowedExclusions": [],
+    "domain": "Vary qualified and unqualified operation names, database coordinates including empty and quote-bearing names, in-memory and file attachments, custom registry values and native ignored arguments. Include an already opened temp database."
+  },
+  "negative": [
+    "A mutable or invented inventory kind",
+    "Unknown explicit database qualifier",
+    "Unknown pragma name",
+    "Invalid numbered grammar token in the argument"
+  ],
+  "faults": [
+    "Replace one inventory operation with another",
+    "Remove the explicit database scope",
+    "Return the same inventory regardless of mode",
+    "Ignore an unknown qualifier and construct an unqualified operation",
+    "Reject otherwise valid present but semantically ignored arguments"
+  ],
+  "open": [
+    "Other SQLite builds, introspection modes, VFS extensions and the registry families not listed here require their own evidence."
+  ],
+  "trust": [
+    "The fixed native SQLite amalgamation and stock native APIs.",
+    "The C registry snapshot evaluator and fixed builtin inventories, with version, source and compiler profiles captured in the evidence.",
+    "The isolated native-result observer and constructor, operation and schema gates."
+  ],
+  "calibration": {
+    "amalgamation": "b947b84b8c45d1513ecf2df8f46bf099d9f6d7a0acac0928061ddbb4ea6fe54b",
+    "registryDriver": "15bc673ad3ca4aadda5d02fa62e1ced612bf2f0a8be15fa2840fa8528b4d3a40",
+    "registryDarwinAndLinux": "7b7d0ac080ff2f1175a7f9bce1fcb8b0325a57340b09c61b72c9e67c566cbe9b",
+    "fixtureDriver": "f95b321f363118c9cf871e4fe3eb7bcf8d7dcb3fd57e106c28bac06492812b23",
+    "fixtureCases": "98644b9321cd4e15d79851bd94f3922ed42b79659f87903d207683f20ef35631"
+  }
+}
