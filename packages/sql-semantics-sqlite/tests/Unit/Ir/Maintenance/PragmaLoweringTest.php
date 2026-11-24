@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
@@ -26,6 +27,7 @@ final class PragmaLoweringTest extends TestCase
         self::assertInstanceOf(FlagPragma::class, $semantics->analyze('PRAGMA automatic_index'));
         self::assertInstanceOf(TableInspection::class, $semantics->analyze('PRAGMA table_info'));
         self::assertInstanceOf(IndexInspection::class, $semantics->analyze('PRAGMA index_info'));
+        self::assertInstanceOf(ForeignKeyAudit::class, $semantics->analyze('PRAGMA foreign_key_check'));
         self::assertInstanceOf(TableListing::class, $semantics->analyze('PRAGMA table_list'));
         self::assertInstanceOf(InventoryPragma::class, $semantics->analyze('PRAGMA pragma_list'));
     }

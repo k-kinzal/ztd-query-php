@@ -40,6 +40,8 @@ Connection-flag PRAGMAs such as `foreign_keys`, `query_only`, and `writable_sche
 
 `index_info` and `index_xinfo` return `IndexInspection`. SQLite searches for a named index before looking for a matching WITHOUT ROWID table. The table-name form and the native automatic index name produce the same absolute index coordinate when they select the same primary storage. An empty selection preserves any explicit database qualifier.
 
+`foreign_key_check` returns `ForeignKeyAudit`. With no argument it checks the selected schema and defaults to main. A named relation is resolved in SQLite's native search order. The database reports violations using the declared foreign-key ordinal and a rowid, or NULL for a WITHOUT ROWID child.
+
 Connection inventory reads return `InventoryPragma` with an `InventoryKind` for databases, collations, compile options, functions, modules or active pragmas. The result reads the current connection registry. An explicit schema qualifier remains part of the operation, including native activation of the temporary database.
 
 A single INNER, CROSS, LEFT, RIGHT, or FULL join between two declared base tables can use USING or NATURAL. The IR resolves the comparison operands in left-to-right order and keeps both inputs addressable by qualified names. An unqualified merged name selects the right slot for RIGHT and the left slot for INNER, CROSS, and LEFT. FULL combines the left and right slots, keeping the first non-NULL value. SQLite also resolves USING and NATURAL in longer INNER, CROSS, and LEFT chains. Each equality refers to its actual earlier input, and each step retains its own right occurrence. The rendered SELECT uses explicit ON and projection clauses.

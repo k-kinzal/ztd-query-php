@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v96.json"
-CONTRACT = "eeeee110ee55c5a344cb55505c0104c6078b9e8fb45a778830df55c8db79213b"
+CONTRACT_NAME = "release-layout-v97.json"
+CONTRACT = "e3fd3b492b03588bfe76c237c4ca954a8a5a33f2fede114188cdcf313eeb1f12"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -611,6 +611,12 @@ def verify_probe(raw, catalog):
                 "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Metadata\\ForeignKeyAudit"):
+            expect = 'PRAGMA "temp".foreign_key_check("audit_child")'
+            require(item.get("foreignKeyAudit") == [
+                "temp", "audit_child", expect, "main", 'PRAGMA "main".foreign_key_check',
+                "temp", None, 'PRAGMA foreign_key_check("sqlite_temp_master")',
+            ] and item["sql"] == expect, "installed-sqlite-foreign-key-audit-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Maintenance\\Metadata\\IndexInspection"):
             expect = 'PRAGMA "main".index_xinfo("sqlite_autoindex_storage_table_2")'
             require(item.get("indexMetadata") == [

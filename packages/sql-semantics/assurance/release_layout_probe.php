@@ -546,6 +546,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Maintenance\\Inventory\\InventoryPragma'] = 'PRAGMA Temp.function_list(+1)';
         $queries['Maintenance\\Metadata\\TableInspection'] = "PRAGMA table_xinfo(accounts)";
         $queries['Maintenance\\Metadata\\IndexInspection'] = 'PRAGMA index_xinfo(storage_table)';
+        $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
         $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
         $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
     } else {
@@ -591,6 +592,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $activeContext = $semantics->context([
                 'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
                 'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\ForeignKeyAudit') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.audit_child(id INT REFERENCES parent(id))',
+                'CREATE TEMP TABLE audit_child(id INT REFERENCES parent(id))',
             ]);
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\IndexInspection') {
@@ -1294,6 +1301,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
                 array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
                 $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\ForeignKeyAudit') {
+            $target = $result->target;
+            $default = $semantics->analyze('PRAGMA foreign_key_check', $activeContext);
+            $catalog = $semantics->analyze('PRAGMA foreign_key_check(sqlite_temp_schema)', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$default->target instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$catalog->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable) {
+                throw new RuntimeException('The installed foreign-key audit lost its selected native scope.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit($target);
+            $details['foreignKeyAudit'] = [$target->schema->value, $target->name->value, $rebuilt->toString(), $default->target->value,
+                $default->toString(), $catalog->target->schema->value, $catalog->catalogAccess?->value, $catalog->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\IndexInspection') {
             $target = $result->target;

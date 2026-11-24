@@ -40,6 +40,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\EmptyIndexMetadata;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspectionKind;
 use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\MissingMetadataTable;
@@ -348,7 +349,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|IndexInspection|TableInspection|TableListing|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|Transaction
 {
     $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
     $semantics = new Semantics(searchPath: $path);
@@ -847,6 +848,36 @@ function observeInventoryPragma(InventoryPragma $value): array
     ];
 }
 
+function directForeignKeyAudit(array $input): ForeignKeyAudit
+{
+    $role = $input['target'];
+    $target = match ($role[0]) {
+        'schema' => new Identifier($role[1]),
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+        'catalog' => new CatalogTable(new Identifier($role[1])),
+    };
+    $access = $role[0] === 'catalog' ? $role[2] : ($input['catalogAccess'] ?? null);
+
+    return new ForeignKeyAudit($target, $access === null ? null : new Identifier($access));
+}
+
+function observeForeignKeyAudit(ForeignKeyAudit $value): array
+{
+    $target = $value->target;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'foreign-key-audit',
+        'profile' => $value->profileId(),
+        'target' => match (true) {
+            $target instanceof Identifier => ['schema', $target->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+            $target instanceof CatalogTable => ['catalog', $target->schema->value, $value->catalogAccess?->value],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
 function directIndexMetadata(array $input): IndexInspection
 {
     $role = $input['target'];
@@ -1055,6 +1086,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
                 InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
             ),
+            ($input['operation'] ?? null) === 'foreign-key-audit' => directForeignKeyAudit($input),
             ($input['operation'] ?? null) === 'index-metadata' => directIndexMetadata($input),
             ($input['operation'] ?? null) === 'table-metadata' => directTableMetadata($input),
             ($input['operation'] ?? null) === 'flag-pragma' => directFlagPragma($input),
@@ -1082,6 +1114,9 @@ function runCase(array $input): array
     }
     if ($value instanceof InventoryPragma) {
         return observeInventoryPragma($value);
+    }
+    if ($value instanceof ForeignKeyAudit) {
+        return observeForeignKeyAudit($value);
     }
     if ($value instanceof IndexInspection) {
         return observeIndexMetadata($value);

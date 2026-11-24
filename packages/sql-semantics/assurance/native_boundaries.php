@@ -29,7 +29,8 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-drop-view-boundaries-v2.json', 'db4c23de7ac34227f73a1d11c8fe75e7f03e21c5f5bdd488035a478698c3c2a6'],
             ['sqlite-reindex-boundaries-v2.json', '3fb402c7fac25484836e5d50c33ea03e7f55cd6f3d5511ffe6327a260177ba80'],
             ['sqlite-analyze-statistics-boundaries-v1.json', '02dbd2404a342c2048199c37f0904e2fa8f0c6e4ca31347549409f8d4b2adb7d'],
-            ['sqlite-flag-pragmas-boundaries-v4.json', '09a5743443fb2309b6f667008238ad7f912c465b48f42c94eb7a543220907d76'],
+            ['sqlite-flag-pragmas-boundaries-v5.json', '76c0dda807d2ce229bcd4e35c0a9e9c9a474c306005675e3f01ceb86f45fa945'],
+            ['sqlite-foreign-key-audit-boundaries-v1.json', '5bb678946a4c64f0af472a44d15418550166719cb920683f240fd3dd9991b085'],
             ['sqlite-index-metadata-boundaries-v1.json', '321a0506e38a0841cdefa822858153626c4c2697a529eb78530719b21d735dec'],
             ['sqlite-table-metadata-boundaries-v2.json', 'fbef9194763edebc3700e0b8e57294b477eb0f6cf1c84ead54022242554bd2e7'],
             ['sqlite-connection-inventory-boundaries-v1.json', 'e5b35533973bfda256d90e2cc80f3bcb90fb8a3ec504bcf516f47c02685c9c48'],
@@ -222,6 +223,7 @@ function checkNativeBoundaries(
             'Ir\\Maintenance\\Metadata\\TableInspectionKind', 'Ir\\Maintenance\\Metadata\\TableInspection', 'Ir\\Maintenance\\Metadata\\TableListing',
             'Ir\\Maintenance\\Metadata\\TableMetadataLowering', 'Model\\Statement\\Identifier\\QualifiedName',
             'Ir\\Maintenance\\Metadata\\IndexInspection', 'Ir\\Maintenance\\Metadata\\IndexInspectionKind',
+            'Ir\\Maintenance\\Metadata\\ForeignKeyAudit', 'Ir\\Maintenance\\Metadata\\ForeignKeyAuditLowering',
             'Ir\\Maintenance\\Metadata\\IndexMetadataLowering', 'Ir\\Maintenance\\Metadata\\EmptyIndexMetadata', 'Ir\\Maintenance\\IndexTarget',
             'Statement\\Maintenance\\Pragma', 'Statement\\Maintenance\\PragmaNumber',
             'Statement\\Maintenance\\Analyze as ParsedAnalyze', 'Statement\\Maintenance\\Reindex as ParsedReindex'] as $name) {

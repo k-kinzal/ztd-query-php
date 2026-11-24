@@ -447,6 +447,13 @@ if ($dialect === 'sqlite') {
     $methods['Maintenance\\Metadata\\EmptyIndexMetadata'] = ['__construct'];
     $enumCases['Maintenance\\Metadata\\IndexInspectionKind'] = ['Basic' => 'index_info', 'Extended' => 'index_xinfo'];
     $roots[] = 'Maintenance\\Metadata\\IndexInspection';
+    $properties['Maintenance\\Metadata\\ForeignKeyAudit'] = [
+        'target' => ['Identifier', 'Maintenance\\Metadata\\CatalogTable', 'Maintenance\\RelationTarget'],
+        'catalogAccess' => ['?Identifier'],
+    ];
+    $methods['Maintenance\\Metadata\\ForeignKeyAudit'] = $methods['Select'];
+    $roots[] = 'Maintenance\\Metadata\\ForeignKeyAudit';
+    $internal[] = 'Maintenance\\Metadata\\ForeignKeyAuditLowering';
     $internal[] = 'Maintenance\\Metadata\\IndexMetadataLowering';
     $internal[] = 'Maintenance\\PragmaScope';
     $properties['Maintenance\\Metadata\\TableInspection'] = ['kind' => ['Maintenance\\Metadata\\TableInspectionKind'],
@@ -1406,6 +1413,7 @@ try {
                 'Maintenance\\ReindexLowering' => 'Maintenance\\Reindex',
                 'Maintenance\\AnalyzeLowering' => 'Maintenance\\Analyze',
                 'Maintenance\\FlagPragmaLowering' => 'Maintenance\\FlagPragma',
+                'Maintenance\\Metadata\\ForeignKeyAuditLowering' => 'Maintenance\\Metadata\\ForeignKeyAudit',
                 'Schema\\View\\DropViewLowering' => 'Schema\\View\\DropView',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
@@ -1416,7 +1424,7 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
                         'Maintenance\\Analyze', 'Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma',
-                        'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
+                        'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', 'Maintenance\\Metadata\\TableInspection',
                         'Maintenance\\Metadata\\TableListing', 'Maintenance\\Reindex',
                     ], 'Unexpected SQLite maintenance publication');
             }
@@ -1426,7 +1434,7 @@ try {
                 $methodNames = array_map(static fn ($method) => $method->name->toString(), $members);
                 $public = array_values(array_filter($members, static fn ($method) => $method->isPublic() && !$method->isStatic()));
                 $metadataRoots = ['Maintenance\\Metadata\\TableInspection', 'Maintenance\\Metadata\\TableListing'];
-                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
+                $return = $short === 'Maintenance\\PragmaLowering' ? ['Maintenance\\FlagPragma', 'Maintenance\\Inventory\\InventoryPragma', 'Maintenance\\Metadata\\ForeignKeyAudit', 'Maintenance\\Metadata\\IndexInspection', ...$metadataRoots] : $metadataRoots;
                 requireShape($methodNames === $expected && count($public) === count($expected)
                     && types($members[0]->returnType, $prefix, $short) === $return, 'Unexpected SQLite pragma publication');
             }
