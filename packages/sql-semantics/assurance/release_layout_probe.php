@@ -915,7 +915,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             try {
                 $semantics->analyze('REINDEX INDEX other.public.saved_key', $constraints);
             } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
-                $badDatabase = str_contains($error->getMessage(), 'requires a local schema and index');
+                $badDatabase = str_contains($error->getMessage(), 'requires the matching current database');
             }
             $details['postgresReindexConstraintIndex'] = [
                 $boundKey->target::class === $key::class,
@@ -936,7 +936,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             try {
                 $semantics->analyze('REINDEX TABLE other.public.orders', $temporary);
             } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
-                $badDatabase = str_contains($error->getMessage(), 'needs a local schema and owner');
+                $badDatabase = str_contains($error->getMessage(), 'requires the matching current database');
             }
             $details['postgresReindexTable'] = [
                 $target->schema->value, $target->name->value, $target->kind->value, $result->mode->value,
@@ -1079,6 +1079,25 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlHaving'] = observeMysqlHaving($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
+            $namedDatabase = new SqlSemantics\Platform\PostgreSql\Semantics(
+                currentDatabase: new SqlSemantics\Platform\PostgreSql\Ir\Identifier('billing'),
+            );
+            $local = $namedDatabase->context(['CREATE TABLE public.ledger (id integer)']);
+            $equivalent = $namedDatabase->analyzeAll(
+                'SELECT id FROM public.ledger; SELECT billing.public.ledger.id FROM billing.public.ledger;',
+                $local,
+            );
+            $unresolvedDatabase = false;
+            try {
+                $namedDatabase->analyze('SELECT other.public.ledger.id FROM public.ledger', $local);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $unresolvedDatabase = str_contains($error->getMessage(), 'requires the matching current database');
+            }
+            $details['postgresLocalCatalog'] = [
+                $equivalent[1]->source->schema->value, $equivalent[1]->source->table->value,
+                $equivalent[1]->columns[0]->expression->slot, $equivalent[0]->toString(), $equivalent[1]->toString(),
+                $unresolvedDatabase,
+            ];
             $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';
             $value = $result->columns[0]->expression;
             if ($value::class !== $castRole || $value->operand::class !== $castRole

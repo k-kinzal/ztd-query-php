@@ -555,6 +555,12 @@ def inventory(root):
                     if alternative in (rebuild - {"reindex_target_relation: INDEX"}) | {"reindex_target_relation: TABLE"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-reindex-table-v2.json")
         if postgres:
+            for rule in ("qualified_name", "columnref", "indirection_el"):
+                for alternative in rules.get(rule, ()):
+                    if alternative in {"qualified_name: ColId indirection", "columnref: ColId indirection",
+                                       "indirection_el: . attr_name", "indirection_el: . *"}:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-local-catalog-binding-v1.json")
+        if postgres:
             values_signatures = {
                 "simple_select: values_clause",
                 "values_clause: VALUES ( expr_list )",

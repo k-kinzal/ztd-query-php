@@ -25,6 +25,8 @@ def library():
         ("PQresultErrorField", c.c_char_p, c.c_void_p, c.c_int),
         ("PQntuples", c.c_int, c.c_void_p),
         ("PQnfields", c.c_int, c.c_void_p),
+        ("PQfname", c.c_char_p, c.c_void_p, c.c_int),
+        ("PQftype", c.c_uint, c.c_void_p, c.c_int),
         ("PQgetisnull", c.c_int, c.c_void_p, c.c_int, c.c_int),
         ("PQgetvalue", c.c_char_p, c.c_void_p, c.c_int, c.c_int),
         ("PQtransactionStatus", c.c_int, c.c_void_p),
@@ -81,7 +83,7 @@ class Session:
     def __exit__(self, *_):
         LIB.PQfinish(self.connection)
 
-    def run(self, sql):
+    def run(self, sql, describe=False):
         self.notices.clear()
         result = LIB.PQexec(self.connection, sql.encode("utf-8"))
         require(bool(result), "postgres-libpq-null-result")
@@ -95,8 +97,12 @@ class Session:
                  for k in range(LIB.PQnfields(result))]
                 for r in range(LIB.PQntuples(result))
             ]
-            return {"sqlState": "00000", "command": ascii_text(LIB.PQcmdStatus(result)),
-                    "notices": list(self.notices), "rows": rows}
+            observed = {"sqlState": "00000", "command": ascii_text(LIB.PQcmdStatus(result)),
+                        "notices": list(self.notices), "rows": rows}
+            if describe:
+                observed["columns"] = [[ascii_text(LIB.PQfname(result, k)), LIB.PQftype(result, k)]
+                                       for k in range(LIB.PQnfields(result))]
+            return observed
         finally:
             LIB.PQclear(result)
 

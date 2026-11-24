@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v118.json"
-CONTRACT = "d7a0ad1371cffaf1ce2727756ad0af293dbde8caa92d547520dfbad924bfeb01"
+CONTRACT_NAME = "release-layout-v119.json"
+CONTRACT = "e82e5987e55eece495c9004650a955da4a5d9bc20c0d7c0f32b2bbc528d185ba"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -390,6 +390,9 @@ def verify_probe(raw, catalog):
                 '"id" = "__ztd_source"."wide" RETURNING "wide" AS "wide"',
             ], "installed-postgres-signed-writes-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
+            local = 'SELECT "__ztd_source"."id" AS "id" FROM "public"."ledger" AS "__ztd_source"'
+            require(item.get("postgresLocalCatalog") == ["public", "ledger", 0, local, local, True],
+                    "installed-postgres-local-catalog-mismatch", item)
             require(item.get("outputOrder") == [
                 [[1, True, False], [2, False, False]], [2, 1],
                 'SELECT "__ztd_source"."lo" AS "id", "__ztd_source"."id" AS "signed" '

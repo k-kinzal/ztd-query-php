@@ -54,6 +54,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
      * @param Comparison $relationNames How relation and schema names are compared
      * @param Comparison $columnNames How column names are compared
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
+     * @param Name|null $currentDatabase The decoded current database when specified
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -64,11 +65,13 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         public readonly Comparison $columnNames = Comparison::Sensitive,
         ?Name $declarationSchema = null,
         public readonly IndexNamespace $indexNamespace = new IndexNamespace(),
+        public readonly ?Name $currentDatabase = null,
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
         foreach (Check::listOf($tables, Table::class, 'Context declarations are tables.') as $table) {
             Check::input($profile->compatibleWith($table->profile), 'A declaration must belong to the language profile of the context.');
+            Check::input($table->name->catalog === null || $table->name->catalog->value === $currentDatabase?->value, 'A declaration must belong to the current database.');
             $unique[spl_object_id($table)] = $table;
         }
         $this->searchPath = $path;

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Model\Facade;
 
 use SqlParser\Lexer\SourceException;
 use SqlParser\Parser\SqlParser;
+use SqlSemantics\Platform\PostgreSql\LocalCatalogBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -49,8 +50,10 @@ final class StatementBinder
         Check::input(count($statements) === 1, 'A complete IR requires exactly one SQL statement.');
         $statement = $statements[0];
         $graph = new ValueGraph(['SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\', $platform->statementNamespace()]);
-        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));
+        $objects = $graph->objects($statement);
+        $dropped = (new LeafEmbedding())->dropped($leaves, $objects);
         Check::invariant($dropped === null, 'The statement lost an operand of the input: ' . ($dropped === null ? '' : $dropped::class));
+        (new LocalCatalogBinding())->check($objects, $context->currentDatabase);
 
         $binding = new BoundStatement($context, $statement);
         $errors = array_values(array_filter(

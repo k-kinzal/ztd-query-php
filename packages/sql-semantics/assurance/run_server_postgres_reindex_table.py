@@ -85,7 +85,7 @@ def negatives(tag):
                    "declarations": ["CREATE TABLE public.y (id integer) PARTITION BY RANGE (id)"],
                    "sql": "REINDEX TABLE public.y"}
     yield {**standard, "sql": 'REINDEX TABLE "fixture"."missing"'}, refusal("missing", "SemanticException")
-    yield {**standard, "sql": 'REINDEX TABLE "other"."fixture"."orders"'}, refusal("needs a local schema and owner")
+    yield {**standard, "sql": 'REINDEX TABLE "other"."fixture"."orders"'}, refusal("requires the matching current database")
     yield view, refusal("materialized view", "SemanticException")
     yield partitioned, refusal("requires a nonpartitioned owner")
     for schema, kind, message in (

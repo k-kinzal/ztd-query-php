@@ -1324,8 +1324,9 @@ try {
         . '$this->profile = $platform->profile($grammarVersion, $mode, $parameters);'
         . '$this->parser = $platform->parser($this->profile);'
         . '$platform->context($this->profile, $searchPath?->schemas, [], false);'
+        . ($dialect === 'postgres' ? '$database = $currentDatabase === null ? null : new \\' . $platform . '\\Model\\Statement\\Identifier\\Name($currentDatabase->value);' : '')
         . '$this->catalog = new \\' . $platform . ($dialect === 'postgres' ? '\\Catalog' : '\\Model\\Facade\\Catalog')
-        . '($this->profile, $searchPath?->schemas, $this->parser);'
+        . '($this->profile, $searchPath?->schemas, $this->parser' . ($dialect === 'postgres' ? ', $database' : '') . ');'
         . '$this->binder = new \\' . $platform . '\\Model\\Facade\\StatementBinder($this->parser);';
     requireShape($printer->prettyPrint($facade->getMethod('__construct')->stmts)
         === $printer->prettyPrint($parser->parse('<?php ' . $constructor)), 'Unexpected façade initialization');
@@ -1476,7 +1477,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v8.json', '967c091c59cc11f3c55325cd38c5c85b37cf9d6e7a5878a4d0641a1925217567', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v9.json', '7db7cf53079be39293b44cd885ba6cfb91f839b82598839f2e21cfa1e94e7bbe', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
         ],

@@ -102,7 +102,7 @@ def negatives(version):
     yield {**request, "sql": 'REINDEX SCHEMA "fixture"'}, refusal("needs a named index")
     yield {**request, "sql": 'REINDEX (TABLESPACE pg_default) INDEX "fixture"."cover"'}, refusal("accepts only concurrency options")
     yield {**request, "sql": """REINDEX (CONCURRENTLY 'yes') INDEX "fixture"."cover\""""}, refusal("concurrently", "SemanticException")
-    yield {**request, "sql": 'REINDEX INDEX "other"."fixture"."cover"'}, refusal("requires a local schema and index")
+    yield {**request, "sql": 'REINDEX INDEX "other"."fixture"."cover"'}, refusal("requires the matching current database")
 
 
 def check_value(item, response):

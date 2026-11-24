@@ -297,6 +297,8 @@ The [PostgreSQL constraint-index rebuild contract](postgres-reindex-constraint-i
 
 The [PostgreSQL owner-wide index rebuild contract](postgres-reindex-table-v2.json) checks the bound table or materialized view and each visible and TOAST index while preserving the heap, its typed rows and decoy catalog. It measures mode-specific notices, temporary physical rebuilding, concurrent transaction refusal, and rollback. Run `run_server_postgres_reindex_table.py` for each pinned release and replay with `combine_server_postgres_reindex_table_evidence.py`.
 
+The [PostgreSQL catalog binding contract](postgres-local-catalog-binding-v1.json) verifies that a decoded current catalog qualifier resolves to the same local coordinate and scalar slot as the schema-qualified spelling. The native observer compares typed result headings, ordered rows, write effects and materialized snapshots. It also executes the original mismatched qualifiers and verifies their SQLSTATE and unchanged local state. Run `run_server_postgres_local_catalog.py` on both pinned releases and replay with `combine_server_postgres_local_catalog_evidence.py`.
+
 
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.

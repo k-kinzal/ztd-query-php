@@ -133,7 +133,7 @@ final class Platform
      * @param list<string>|null $searchPath
      * @param list<Model\Statement\Declaration\Table> $tables
      */
-    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, ?IndexNamespace $indexes = null): AnalysisContext
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, ?IndexNamespace $indexes = null, ?Name $database = null): AnalysisContext
     {
         $schemas = $searchPath ?? ['public'];
         $path = [];
@@ -154,7 +154,7 @@ final class Platform
             }
         }
 
-        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0], $indexes ?? new IndexNamespace());
+        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0], $indexes ?? new IndexNamespace(), $database);
     }
 
     /**

@@ -12,6 +12,7 @@ use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
 use SqlSemantics\Platform\PostgreSql\Ir\Aggregation\GroupedLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Aggregation\GroupedSelect;
+use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Delete;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\DeleteLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert;
@@ -59,6 +60,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Splitter;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete as ParsedDelete;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows as ParsedInsert;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect as ParsedInsertQuery;
@@ -109,16 +111,23 @@ final class Semantics implements Analyzer
      * @param Mode|null $mode The session settings SQL is read under, or null for the defaults of the database
      * @param ParameterStyle $parameters Which parameter markers are read; the named style adds `:name`
      * @param SearchPath|null $searchPath The schemas an unqualified relation name is searched in, or null for the default of the database
+     * @param Identifier|null $currentDatabase The exact decoded database name for checking explicit catalog qualifiers
      *
      * @throws InvalidArgumentException When the release, mode or search path does not belong to the database
      */
-    public function __construct(?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null)
-    {
+    public function __construct(
+        ?string $grammarVersion = null,
+        ?Mode $mode = null,
+        ParameterStyle $parameters = ParameterStyle::Native,
+        ?SearchPath $searchPath = null,
+        ?Identifier $currentDatabase = null,
+    ) {
         $platform = Platform::shared();
         $this->profile = $platform->profile($grammarVersion, $mode, $parameters);
         $this->parser = $platform->parser($this->profile);
         $platform->context($this->profile, $searchPath?->schemas, [], false);
-        $this->catalog = new Catalog($this->profile, $searchPath?->schemas, $this->parser);
+        $database = $currentDatabase === null ? null : new Name($currentDatabase->value);
+        $this->catalog = new Catalog($this->profile, $searchPath?->schemas, $this->parser, $database);
         $this->binder = new StatementBinder($this->parser);
     }
 

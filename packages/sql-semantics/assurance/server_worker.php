@@ -260,11 +260,14 @@ function analyzeStatement(string $platform, array $input): SemanticsIR
 {
     $class = $platform . 'Semantics';
     $searchPath = $platform . 'Model\\Contract\\SearchPath';
-    $semantics = isset($input['schemaPath'])
+    $semantics = isset($input['currentCatalog'])
+        ? new $class($input['release'], searchPath: new $searchPath(...$input['schemaPath']),
+            currentDatabase: new SqlSemantics\Platform\PostgreSql\Ir\Identifier($input['currentCatalog']))
+        : (isset($input['schemaPath'])
         ? new $class($input['release'], searchPath: new $searchPath(...$input['schemaPath']))
         : (isset($input['currentDatabase'])
         ? new $class($input['release'], searchPath: new $searchPath($input['currentDatabase']))
-        : new $class($input['release']));
+        : new $class($input['release'])));
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?? null, $input['complete'] ?? true));
 }
 

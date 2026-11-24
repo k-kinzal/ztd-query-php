@@ -114,6 +114,7 @@ CONTRACTS = {
     "postgres-reindex-index-v1.json": "961195c02b9dd75c7a3f8bc8b5a93d3922b01620ddb23ae0da219ecdc54cf237",
     "postgres-reindex-constraint-index-v1.json": "38b45ec46b0da6a420a1fb61a5ebce316a8fd4313cc14e432e7cc479d16471ae",
     "postgres-reindex-table-v2.json": "b0c19d7d6e033e2e9ee01097c2ad99ef174b159496ceb3a175199a2f093d30ca",
+    "postgres-local-catalog-binding-v1.json": "855a3af17e33095b5a1603198d563d69a9b6ba373b879b716629f9a5b1ffc3ce",
     "postgres-create-btree-v1.json": "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629",
     "postgres-drop-index-v1.json": "d26bab1348dec92d608759e02d68f184ee28461aadbaf015e836f911dced5faa",
     "postgres-drop-view-v1.json": "f38844b5c9ed143cbd9b46e344f721b384c5ce9a969ec85d08e6319e95e8cd4d",
