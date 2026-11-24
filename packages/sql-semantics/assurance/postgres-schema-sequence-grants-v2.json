@@ -1,0 +1,98 @@
+{
+  "revision": "SemanticsIR/postgres-schema-sequence-grants-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "scope": "Close the sequence privilege portion of the CREATE SCHEMA grant phase. Accept named sequence lists and ALL SEQUENCES IN SCHEMA, with exact local and external coordinates, optional grantor and native recipients. Other classes of GRANT and the trigger phase have separate obligations.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-grant.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/schemacmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/schemacmds.c"
+  ],
+  "constructors": {
+    "CreateSchema": {
+      "type": "Schema/Namespace/CreateSchema",
+      "role": "Apply a final ordered list of sequence grants within the namespace owner's native role scope.",
+      "structure": "A detached ordered list of GrantSequenceAccess values follows the checked sequence, table, view and index phases.",
+      "conditions": "A grant requires a statically named unguarded parent and the same release. A named sequence in the local namespace is an actual earlier sequence. Local table, view and index occupants cannot be skipped. If a local schema group is populated, effective grants with options to universal PUBLIC cannot succeed. A different explicit nominal grantor cannot equal a fixed nominal schema owner. External object authorization and dynamic role identities remain native operations.",
+      "meaning": "Native CREATE SCHEMA creates its members and performs each retained GRANT under the selected namespace owner in written grant order. CURRENT_USER selects that owner within the nested command. SESSION_USER selects the authenticated role. The catalog role named PUBLIC remains distinct from the universal grantee. A group considers its native sequence population.",
+      "sql": "Append each structurally checked grant to the same CREATE SCHEMA statement. Emit exact absolute names and retain dynamic role tokens so PostgreSQL applies them under its own namespace owner scope."
+    }
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ],
+  "finite": {
+    "owners": [
+      "effective",
+      "named"
+    ],
+    "targets": [
+      "named-local",
+      "named-mixed",
+      "schema-local",
+      "schema-mixed"
+    ],
+    "options": [
+      false,
+      true
+    ],
+    "transactional": [
+      false,
+      true
+    ],
+    "bound": "32 exact analyzed coordinates and 32 direct coordinates per release. Include both local and same-name external sequence candidates."
+  },
+  "exploration": {
+    "seeds": [
+      17669,
+      42859,
+      72733
+    ],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 220,
+    "allowedExclusions": [],
+    "structure": "Vary ordered grants, unique and repeated target members, order of privileges, PUBLIC and quoted PUBLIC, owner selection, authenticated or local effective grantees, explicit matching grantor, optional grant permission, legacy RULE and native rollback."
+  },
+  "observations": [
+    "Exact sequence and namespace identity, owner, ACL and shared role dependencies, including changes on an explicitly selected external relation and preserved unselected sequences.",
+    "Separate effective and session authorizations, PUBLIC versus a role named PUBLIC, effective READ, WRITE and USAGE for the independently known grantees, and retained grant option.",
+    "Exact transaction state, SQLSTATE, native skipped or accepted grants, and effects observed before and after a rollback.",
+    "A grant to the schema owner with grant option sets the ACL option bit on that owner's explicit entry. Compare it separately from effective authorization."
+  ],
+  "negative": [
+    "An undeclared named local sequence (42P01).",
+    "An earlier table where a sequence is required (42809).",
+    "An earlier index where a sequence is required (42809).",
+    "Universal PUBLIC with option on a known populated local group (0LP01).",
+    "A distinct explicit grantor in a schema with a fixed nominal owner (0A000).",
+    "A direct nested grant from another release.",
+    "A direct nested name without its required earlier local sequence.",
+    "A direct grant collection containing an unchecked element."
+  ],
+  "faults": [
+    "Omit the grant phase.",
+    "Redirect the local named target to the same-name external sequence.",
+    "Resolve a session recipient to the effective schema owner instead.",
+    "Omit a meaningful grant option."
+  ],
+  "trust": [
+    "The observer's protected native service has the declared exact roles, separate effective and session authorization and matching external catalog coordinates.",
+    "The independent ACL model selects granted rights and role identities from typed inputs. It observes the native exploded ACL, sequence identity and privilege states."
+  ],
+  "extends": "postgres-schema-sequence-grants-v1.json",
+  "change": "Retain all existing finite and seeded executions. Add an explicit witness that granting an option to the owner changes its native ACL entry even though the owner already has the authority implicitly.",
+  "requiredSelfOption": "Grant SELECT WITH GRANT OPTION to CURRENT_USER within a schema owned by a named role."
+}
