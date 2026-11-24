@@ -33,6 +33,8 @@ def specifications():
     require(digest(path) == CONTRACT, "postgres-boolean-index-predicate-contract")
     spec = json.loads(path.read_text())
     require(spec["exploration"]["allowedExclusions"] == [], "postgres-boolean-index-predicate-exclusions")
+    # The grouped negative requirements include separate OR-arity and parameter witnesses.
+    spec["additionalPostgreSqlNegatives"] = ["OR without its right child", "Unresolved parameter in a nested branch"]
     return spec, {"postgres": drop_contract()[1]["postgres"]}
 
 
