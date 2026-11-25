@@ -1,0 +1,133 @@
+{
+  "revision": "SemanticsIR/postgres-signed-membership-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "scope": "An ordinary PostgreSQL IN or NOT IN list of pure resolved signed integer leaves, including native int4 and int8 fields and literals and SQL NULL. Each completed term has a typed semantic leaf and no SQL or analysis state.",
+  "constructors": {
+    "Predicate/IntegerMembership": {
+      "role": "Boolean membership with a single subject, an ordered nonempty list of alternatives, and explicit negation.",
+      "structure": "Subject and alternatives have the closed int4/int8 slot, int4/int8 literal, and int4/int8 NULL roles. Store a new readonly list preserving the order and repeats. The comparison operation is the stock signed equality.",
+      "conditions": "Requires one to 8190 alternatives. The enclosing statement owns visible occurrence and column-kind checks, depth and expanded node budgets, and admissible placement. Analyzed unqualified operators require an effective stock-first path. Analysis accepts pure signed operands, grouped equivalents and plain or explicitly typed NULLs. Every atom and direction must be retained.",
+      "meaning": "True when at least one comparison against a non-NULL alternative matches a non-NULL subject. Otherwise UNKNOWN with a NULL subject or a NULL alternative. Otherwise false. Negation preserves UNKNOWN and flips the other two results. A filter admits only true.",
+      "externalInterpretation": "Interpret every occurrence and field in the supplied catalog under the same absolute declaration and the pinned stock comparison and widening functions. Signed widening is exact. Record the local result label and native bool type. A native cast of the NULL placeholder has no evaluation effect.",
+      "sql": "Emit a parenthesized OPERATOR(pg_catalog.=) ANY over the ordered explicitly typed array of alternatives widened to pg_catalog.int8[]. Render NULL as an explicitly cast signed NULL and apply outer NOT for NOT IN. Native signed equality across widths and int4-to-int8 widening preserve exact values. The source profile uses stock complementary inequality for NOT IN.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "finite": {
+    "sources": [
+      "unit",
+      "resolved-table"
+    ],
+    "placements": [
+      "projection",
+      "filter"
+    ],
+    "negated": [
+      false,
+      true
+    ],
+    "lengths": [
+      1,
+      2,
+      3
+    ],
+    "unitOperands": [
+      [
+        "integer",
+        "2"
+      ],
+      [
+        "wide-integer",
+        "2147483648"
+      ],
+      [
+        "null"
+      ]
+    ],
+    "tableExtraOperands": [
+      [
+        "column",
+        0,
+        0
+      ],
+      [
+        "wide-column",
+        1,
+        0
+      ]
+    ],
+    "routes": [
+      "direct",
+      "analyze"
+    ],
+    "coordinatesPerRoute": 3568,
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      17513,
+      35117,
+      57751
+    ],
+    "casesPerSeed": 48,
+    "directCasesPerSeed": 48,
+    "timeoutSecondsPerRelease": 600,
+    "allowedExclusions": [],
+    "structure": "Vary list length, positions, signed width and boundary values, NULL roles and source bindings. Embed memberships in Boolean/NULL/CASE wrappers and verify SELECT and write positions where the host permits a predicate."
+  },
+  "observations": [
+    "Ordered labels and native result types, values and repeated rows, TRUE-only filter admission, and signed column and literal widths.",
+    "Runtime shadow equality and inequality yield different results for the original unqualified spelling. The pure qualified output retains stock behavior.",
+    "Larger lists include the local maximum and retain the final alternative even when many previous elements are equal or null.",
+    "An exact constructor value cannot observe later mutations to caller-owned array references."
+  ],
+  "negative": [
+    "Empty list, associative list, non-integer member, upper length violation, and invisible or wrong-width occurrence at a parent boundary.",
+    "A non-pure or other-family operand, or analysis in a path with a possible earlier operator."
+  ],
+  "faults": [
+    "Remove the local lower bound and accept empty membership",
+    "Replace the final alternative with the previous one",
+    "Turn an unknown result into false",
+    "Emit an unqualified equality that resolves to an earlier operator",
+    "Lose the native direction on negated membership",
+    "Accept a known comparator observation with a dropped duplicate row"
+  ],
+  "open": [
+    "Subquery and row membership, non-pure inputs, parameters, unsigned or non-integral comparisons and non-stock operators.",
+    "Native correspondence for applicable composing roles is scoped to the measured profiles and fixtures."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/functions-comparisons.html",
+    "https://www.postgresql.org/docs/17/functions-comparisons.html",
+    "https://www.postgresql.org/docs/16/typeconv-oper.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/parser/parse_expr.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_expr.c"
+  ],
+  "calibration": {
+    "generate.py": "dafe3232f9207740d0e947e15ed88d400afcd728c06fbf5375fe3345b6cda4cc",
+    "observe.sql": "cec3510cd50deec0896918b32e1d5fda2430d4ae2d1ce2db3914f91ff80f81bd",
+    "expected.jsonl": "27751c13feeef478d3a38b5daa195560d2fdcf4a132c897d6281898bd73e2c10",
+    "16.6.stdout": "8b73b061f1b81a919f7bf490ed6868782a2c2551d0a3b64aab71beaa245bdaf8",
+    "17.2.stdout": "3dc17bd67f7c21284c19dfd0d77f02952fada5a647e22a8794695adcfd27926c"
+  }
+}
