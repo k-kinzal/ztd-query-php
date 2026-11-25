@@ -30,12 +30,8 @@ final class WithSql
             $name = $this->name($position);
             $retain = $aliases->requiresRequested($body);
             if ($retain) {
-                $names = [];
                 $width = $body instanceof WithProjection ? $body->width() : count($body->columns);
-                for ($slot = 0; $slot < $width; ++$slot) {
-                    $names[] = $renderer->localColumn($slot);
-                }
-                $name .= ' (' . implode(', ', $names) . ')';
+                $name .= $renderer->localColumnList($width);
             }
             $definitions[] = $name . ' AS (' . $this->query($body, !$retain) . ')';
         }

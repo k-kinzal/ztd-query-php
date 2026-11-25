@@ -11,7 +11,7 @@ from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main
 from run_server_mysql_signed_membership import refusal
-from run_server_mysql_signed_projection_alias import OBSERVER, check_preparation, observation, observer_request, prepare
+from run_server_mysql_signed_projection_alias import OBSERVER, observation, observer_request
 from run_server_mysql_with_projection import DIAGNOSTICS, core, request, specifications as cte_profile
 from sqlite_domain import RenderFault
 
@@ -32,6 +32,16 @@ def specifications():
             and contract["finite"]["allowedExclusions"] == contract["exploration"]["allowedExclusions"] == [],
             "mysql-with-alias-profile")
     return contract, profiles
+
+
+def prepare(_, db):
+    return db.request({"fixture": True, "derivedMerge": True})
+
+
+def check_preparation(_, environment, result):
+    same(["native-prepared", "text"], environment["protocols"])
+    require(result["status"] == "fixture" and "derived_merge=on" in result["optimizerSwitch"].split(","),
+            "mysql-derived-alias-optimizer-mode", result)
 
 
 def finite_ids(_, contract, _tag):
@@ -130,7 +140,8 @@ def faults(_, tag):
     path = "sql-semantics-mysql/src/Ir/Rows/With/WithSql.php"
     return [
         RenderFault("discard-requested-cte-aliases", path, "$body, !$retain", "$body, true", item, MEANING, law.structure(item)),
-        RenderFault("swap-local-cte-column-list", path, "implode(', ', $names)", "implode(', ', array_reverse($names))",
+        RenderFault("swap-local-cte-column-list", "sql-semantics-mysql/src/Ir/SelectSql.php",
+                    "implode(', ', $names)", "implode(', ', array_reverse($names))",
                     item, MEANING, law.structure(item)),
     ]
 

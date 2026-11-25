@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\From;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
@@ -37,7 +38,11 @@ final class DerivedBinding
         Check::input($query instanceof Select, 'A derived join input requires a SELECT definition.');
         $from = JoinBinding::ungroup($query->from);
         Check::input(!$from instanceof ParsedJoin && !$from instanceof DerivedTable && !$from instanceof TableList, 'A derived join input must be independent of any joined input.');
-        $this->value = new DerivedSource((new SelectLowering())->lower($operation, $query));
+        $definition = (new SelectLowering())->lower($operation, $query);
+        if ($input->columns === []) {
+            (new LocalProjectionAliases())->check($definition);
+        }
+        $this->value = new DerivedSource($definition);
     }
 
     /**

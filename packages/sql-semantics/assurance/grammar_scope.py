@@ -274,6 +274,11 @@ def inventory(root):
                     if alternative in ("table_factor: single_table", "single_table: table_ident opt_use_partition opt_table_alias opt_key_definition",
                                        "table_factor: table_ident opt_use_partition opt_table_alias opt_key_definition"):
                         related[alternative] = (*related.get(alternative, ()), "mysql-external-views-v1.json")
+            for rule in ("derived_table", "opt_derived_column_list"):
+                for alternative in rules.get(rule, ()):
+                    if alternative in {"derived_table: table_subquery opt_table_alias opt_derived_column_list",
+                                       "opt_derived_column_list: ( simple_ident_list )"}:
+                        related[alternative] = (*related.get(alternative, ()), "mysql-derived-projection-alias-v1.json")
             for rule in ("varchar", "simple_ident", "simple_ident_q", "table_wild", "opt_charset_with_opt_binary"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-slots-v2.json")

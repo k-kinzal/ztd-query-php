@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName;
 use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -80,6 +81,19 @@ final class SelectSql
     public function localColumn(int $slot): string
     {
         return '`__ztd_c' . $slot . '`';
+    }
+
+    /**
+     * Writes the separate exported names of a checked local source.
+     */
+    public function localColumnList(int $width): string
+    {
+        $names = [];
+        for ($slot = 0; $slot < $width; ++$slot) {
+            $names[] = $this->localColumn($slot);
+        }
+
+        return ' (' . implode(', ', $names) . ')';
     }
 
     /**
@@ -241,7 +255,10 @@ final class SelectSql
     public function from(TableSource|DerivedSource|Join $source, int $offset = 0): string
     {
         if ($source instanceof DerivedSource) {
-            return '(' . $this->render($source->definition, true) . ') AS ' . $this->alias($offset);
+            $definition = $source->definition;
+            $retain = (new LocalProjectionAliases())->requiresRequested($definition);
+            return '(' . $this->render($definition, !$retain) . ') AS ' . $this->alias($offset)
+                . ($retain ? $this->localColumnList(count($definition->columns)) : '');
         }
         if ($source instanceof TableSource) {
             return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($offset);

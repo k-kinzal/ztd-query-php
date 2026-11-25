@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithSql;
 use SqlSemantics\Platform\MySql\Ir\Select;
@@ -29,12 +30,14 @@ final class LocalProjectionSql
             $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;
         }
         $source = $projection->definition;
+        $retain = (new LocalProjectionAliases())->requiresRequested($source);
         $input = match (true) {
-            $source instanceof Select => $renderer->render($source, true),
-            $source instanceof WithProjection => (new WithSql())->render($source, true),
+            $source instanceof Select => $renderer->render($source, !$retain),
+            $source instanceof WithProjection => (new WithSql())->render($source, !$retain),
             $source instanceof LocalProjection => $this->render($source, true),
         };
+        $names = $retain ? $renderer->localColumnList($source instanceof WithProjection ? $source->width() : count($source->columns)) : '';
 
-        return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias;
+        return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias . $names;
     }
 }

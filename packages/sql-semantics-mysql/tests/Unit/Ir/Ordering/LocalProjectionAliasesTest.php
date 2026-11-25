@@ -32,4 +32,13 @@ final class LocalProjectionAliasesTest extends TestCase
 
         self::assertTrue((new LocalProjectionAliases())->requiresRequested($value));
     }
+
+    public function testCheckDerivedPermitsASeparateModernAliasList(): void
+    {
+        $child = new Select([new ResultColumn(new IntegerLiteral('1'), new RequestedResultAlias(' n'))]);
+        $aliases = new LocalProjectionAliases();
+        $aliases->checkDerived($child);
+
+        self::assertTrue($aliases->requiresRequested($child));
+    }
 }

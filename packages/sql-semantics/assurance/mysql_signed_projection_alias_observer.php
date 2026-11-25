@@ -49,6 +49,11 @@ function observeAliases(PDO $pdo, array $input): array
 {
     if (($input['fixture'] ?? false) === true) {
         $pdo->exec('CREATE TEMPORARY TABLE ir_fixture.sem_ir_alias_warning_reset (n INT)');
+        if (($input['derivedMerge'] ?? false) === true) {
+            $pdo->exec("SET SESSION optimizer_switch = 'derived_merge=on'");
+            $settings = $pdo->query('SELECT @@SESSION.optimizer_switch')->fetchColumn();
+            return ['status' => 'fixture', 'optimizerSwitch' => $settings];
+        }
         return ['status' => 'fixture'];
     }
     if (!str_starts_with($input['sql'], 'SELECT ') && !str_starts_with($input['sql'], 'WITH ')) {

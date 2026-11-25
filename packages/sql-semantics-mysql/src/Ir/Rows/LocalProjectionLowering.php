@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithLowering;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
@@ -39,6 +40,9 @@ final class LocalProjectionLowering
             $definition->from instanceof DerivedTable => $this->lower($operation, $definition, $remaining - 1),
             default => (new SelectLowering())->lower($operation, $definition),
         };
+        if ($statement->from->columns === []) {
+            (new LocalProjectionAliases())->check($source);
+        }
         $width = $source instanceof WithProjection ? $source->width() : count($source->columns);
         Check::input(count($operation->facts->relation($statement->from)->shape->slots) === $width, 'The local definition must resolve all output positions.');
 

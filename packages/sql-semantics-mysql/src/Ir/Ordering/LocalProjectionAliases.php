@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead;
 use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
 /**
@@ -23,6 +24,19 @@ final class LocalProjectionAliases
     public function check(Select|LocalProjection|WithProjection|WithRead $child): void
     {
         Check::input(!$this->requiresRequested($child), 'A locally remapped output cannot discard requested alias diagnostics.');
+    }
+
+    /**
+     * Checks whether a derived table can declare separate positional column names.
+     */
+    public function checkDerived(Select|LocalProjection|WithProjection $child): void
+    {
+        if ($child instanceof Select && $this->requiresRequested($child)) {
+            Check::input(
+                $child->release !== GrammarRelease::MySql5651 && $child->release !== GrammarRelease::MySql5744,
+                'A derived table with requested aliases requires MySQL 8.0 or later.'
+            );
+        }
     }
 
     /**

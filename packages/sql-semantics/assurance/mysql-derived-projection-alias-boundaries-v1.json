@@ -1,0 +1,176 @@
+{
+  "revision": "SemanticsIR/mysql-derived-projection-alias-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-derived-projection-alias-v1.json",
+  "rules": {
+    "Ordering/LocalProjectionAliases::checkDerived": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($child instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select && $this->requiresRequested($child)) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($child->release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $child->release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744, 'A derived table with requested aliases requires MySQL 8.0 or later.');",
+        "}"
+      ]
+    },
+    "From/DerivedSource::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->checkDerived($definition);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$definition->source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join, 'A derived join input must be independent of any joined input.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');",
+        "foreach ($definition->columns as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference, 'A derived join field requires a signed literal or a signed column, or a native VARCHAR column.');",
+        "}"
+      ]
+    },
+    "Rows/LocalProjection::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->checkDerived($definition);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$definition instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || $definition->orderBy === [] && $definition->limit === null, 'The local definition requires an unbounded projection without ordering.');",
+        "$layers = 1;",
+        "for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(++$layers <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "}",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');",
+        "$width = $definition instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $definition->width() : count($definition->columns);",
+        "foreach ($checked as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->slot < $width, 'The local slot must belong to the definition.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "From/DerivedBinding::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$input->lateral, 'A derived join input cannot be lateral.');",
+        "$query = $input->query;",
+        "while ($query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'A derived join input requires a SELECT definition.');",
+        "$from = \\SqlSemantics\\Platform\\MySql\\Ir\\From\\JoinBinding::ungroup($query->from);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JoinedTable && !$from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\DerivedTable && !$from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableList, 'A derived join input must be independent of any joined input.');",
+        "$definition = (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->lower($operation, $query);",
+        "if ($input->columns === []) {",
+        "    (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->check($definition);",
+        "}",
+        "$this->value = new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource($definition);"
+      ]
+    },
+    "Rows/LocalProjectionLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($remaining >= 1 && $remaining <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "$statement = $query ?? $operation->statement;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select && $statement->from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\DerivedTable, 'A local projection requires a query with a local source.');",
+        "$local = new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalDefinition();",
+        "$local->consumer($statement);",
+        "$definition = $local->resolve($statement->from);",
+        "$source = match (true) {",
+        "    $definition instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\QueryExpression => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithLowering())->lower($operation, $definition),",
+        "    $definition->from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\DerivedTable => $this->lower($operation, $definition, $remaining - 1),",
+        "    default => (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->lower($operation, $definition),",
+        "};",
+        "if ($statement->from->columns === []) {",
+        "    (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->check($source);",
+        "}",
+        "$width = $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $source->width() : count($source->columns);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($operation->facts->relation($statement->from)->shape->slots) === $width, 'The local definition must resolve all output positions.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalProjection($source, $local->columns($operation, $statement, $statement->from));"
+      ]
+    },
+    "SelectSql::localColumnList": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = [];",
+        "for ($slot = 0; $slot < $width; ++$slot) {",
+        "    $names[] = $this->localColumn($slot);",
+        "}",
+        "return ' (' . implode(', ', $names) . ')';"
+      ]
+    },
+    "SelectSql::from": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource) {",
+        "    $definition = $source->definition;",
+        "    $retain = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->requiresRequested($definition);",
+        "    return '(' . $this->render($definition, !$retain) . ') AS ' . $this->alias($offset) . ($retain ? $this->localColumnList(count($definition->columns)) : '');",
+        "}",
+        "if ($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource) {",
+        "    return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($offset);",
+        "}",
+        "$rightOffset = $offset + ($source->left instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join ? count($source->left->inputs()) : 1);",
+        "$sql = '(' . $this->from($source->left, $offset) . ' ' . $source->kind->value . ' JOIN ' . $this->from($source->right, $rightOffset);",
+        "if ($source->on !== null) {",
+        "    $sql .= ' ON ' . $this->predicate($source->on, $source, $offset);",
+        "}",
+        "return $sql . ')';"
+      ]
+    },
+    "Rows/With/WithSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definitions = [];",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases();",
+        "$renderer = new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectSql();",
+        "foreach ($query->definitions as $position => $definition) {",
+        "    $body = $definition->body;",
+        "    $name = $this->name($position);",
+        "    $retain = $aliases->requiresRequested($body);",
+        "    if ($retain) {",
+        "        $width = $body instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $body->width() : count($body->columns);",
+        "        $name .= $renderer->localColumnList($width);",
+        "    }",
+        "    $definitions[] = $name . ' AS (' . $this->query($body, !$retain) . ')';",
+        "}",
+        "return 'WITH ' . implode(', ', $definitions) . ' ' . $this->query($query->body, $localNames);"
+      ]
+    },
+    "Rows/LocalProjectionSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$renderer = new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectSql();",
+        "$alias = '`__ztd_local`';",
+        "$columns = [];",
+        "foreach ($projection->columns as $position => $column) {",
+        "    $name = $localNames ? $renderer->localColumn($position) : $column->name->quoted();",
+        "    $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;",
+        "}",
+        "$source = $projection->definition;",
+        "$retain = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->requiresRequested($source);",
+        "$input = match (true) {",
+        "    $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select => $renderer->render($source, !$retain),",
+        "    $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithSql())->render($source, !$retain),",
+        "    $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalProjection => $this->render($source, true),",
+        "};",
+        "$names = $retain ? $renderer->localColumnList($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $source->width() : count($source->columns)) : '';",
+        "return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias . $names;"
+      ]
+    }
+  }
+}

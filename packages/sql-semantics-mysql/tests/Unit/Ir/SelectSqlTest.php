@@ -119,6 +119,10 @@ final class SelectSqlTest extends TestCase
         self::assertSame('`__ztd_c3`', (new SelectSql())->localColumn(3));
     }
 
+    public function testLocalColumnListNamesEachExportedOrdinal(): void
+    {
+        self::assertSame(' (`__ztd_c0`, `__ztd_c1`)', (new SelectSql())->localColumnList(2));
+    }
 
     public function testColumnUsesTheDeclaredVarcharFieldAndOccurrenceAlias(): void
     {

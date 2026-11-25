@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v196.json"
-CONTRACT = "5578a4f15cc37c5a3d7cf4434be936d4d475a2ded56f1c5aa0ded81cbfd6a3e7"
+CONTRACT_NAME = "release-layout-v197.json"
+CONTRACT = "973b8dd1c86b097de0bb6be5a55f7d59c18e2d8d64046b6db6998e5f46634709"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -599,6 +599,15 @@ def verify_probe(raw, catalog):
             require(alias_probe == [True, True, mysql_ir + r"Ordering\RequestedResultAlias", requested,
                                     "漢" * 85, "SELECT 1 AS `" + requested.replace("`", "``") + "`"],
                     "installed-mysql-signed-projection-alias-mismatch", alias_probe)
+            derived_probe = item.get("mysqlDerivedProjectionAlias")
+            require(derived_probe == [
+                True, True, True,
+                'SELECT `__ztd_local`.`__ztd_c1` AS `selected` FROM '
+                '(SELECT 11 AS ` requested`, 22 AS ` requested`) AS `__ztd_local` (`__ztd_c0`, `__ztd_c1`)',
+                'SELECT `__ztd_source_1`.`__ztd_c0` AS `right_value`, `__ztd_source`.`__ztd_c1` AS `left_value` FROM '
+                '((SELECT 11 AS ` requested`, 22 AS ` requested`) AS `__ztd_source` (`__ztd_c0`, `__ztd_c1`) '
+                'CROSS JOIN (SELECT 33 AS ` second`) AS `__ztd_source_1` (`__ztd_c0`))',
+            ], "installed-mysql-derived-projection-alias-mismatch", derived_probe)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

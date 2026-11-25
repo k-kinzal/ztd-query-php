@@ -127,6 +127,38 @@ function observeMysqlWithProjectionAlias(SqlSemantics\Platform\MySql\Semantics $
     return [$analyzed == $batch, $analyzed == $direct, $analyzed->body->columns[0]->slot, $analyzed->toString()];
 }
 
+function observeMysqlDerivedProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $from = '(SELECT 11 AS ` requested`, 22 AS ` requested`) AS d (a, b)';
+    $sql = 'SELECT d.b AS selected FROM ' . $from;
+    $local = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $name = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' requested');
+    $left = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('11'), $name),
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('22'), $name),
+    ], release: $semantics->profile()->grammar);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($left, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('selected')),
+    ]);
+    $right = $semantics->analyze('SELECT 33 AS ` second`');
+    $joined = $semantics->analyze('SELECT e.z AS right_value, d.b AS left_value FROM ' . $from
+        . ' CROSS JOIN (SELECT 33 AS ` second`) AS e (z)');
+    $source = new SqlSemantics\Platform\MySql\Ir\From\Join(
+        SqlSemantics\Platform\MySql\Ir\From\JoinKind::Cross,
+        new SqlSemantics\Platform\MySql\Ir\From\DerivedSource($left),
+        new SqlSemantics\Platform\MySql\Ir\From\DerivedSource($right),
+    );
+    $joinedDirect = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\ColumnReference(0, 1),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('right_value')),
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\ColumnReference(1),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('left_value')),
+    ], $source, $semantics->profile()->grammar);
+
+    return [$local == $batch, $local == $direct, $joined == $joinedDirect, $local->toString(), $joined->toString()];
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -2248,6 +2280,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedComparisonWidths'] = observeMysqlSignedComparisonWidths($semantics);
             $details['mysqlSignedProjection'] = observeMysqlSignedProjection($semantics);
             $details['mysqlSignedProjectionAlias'] = observeMysqlSignedProjectionAlias($semantics);
+            $details['mysqlDerivedProjectionAlias'] = observeMysqlDerivedProjectionAlias($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

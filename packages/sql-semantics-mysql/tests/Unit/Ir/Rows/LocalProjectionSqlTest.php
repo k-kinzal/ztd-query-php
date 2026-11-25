@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjectionSql;
@@ -34,5 +35,16 @@ final class LocalProjectionSqlTest extends TestCase
         self::assertStringContainsString('answer', $sql);
         self::assertStringNotContainsString('first_source', $sql);
         self::assertStringNotContainsString('second_source', $sql);
+    }
+
+    public function testRenderPlacesExportedNamesOutsideTheRequestedAlias(): void
+    {
+        $source = new Select([new ResultColumn(new IntegerLiteral('5'), new RequestedResultAlias(' value'))]);
+        $value = new LocalProjection($source, [new LocalResultColumn(0, new Identifier('result'))]);
+
+        self::assertSame(
+            'SELECT `__ztd_local`.`__ztd_c0` AS `result` FROM (SELECT 5 AS ` value`) AS `__ztd_local` (`__ztd_c0`)',
+            (new LocalProjectionSql())->render($value)
+        );
     }
 }

@@ -29,7 +29,7 @@ final class DerivedSource
      */
     public function __construct(public readonly Select $definition)
     {
-        (new LocalProjectionAliases())->check($definition);
+        (new LocalProjectionAliases())->checkDerived($definition);
         Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');
         Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');
         foreach ($definition->columns as $column) {
