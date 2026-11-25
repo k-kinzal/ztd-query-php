@@ -117,7 +117,7 @@ NATIVE = {
     "mysql_create_table_as_varchar": "mysql-create-table-as-varchar-v1.json",
     "mysql_create_table_as_declarations": "mysql-create-table-as-declarations-v1.json",
     "mysql_create_table_as_width": "mysql-create-table-as-width-evidence-v1.json",
-    "mysql_create_btree_index": "mysql-create-btree-index-evidence-v4.json",
+    "mysql_create_btree_index": "mysql-create-btree-index-evidence-v5.json",
     "mysql_drop_index": "mysql-drop-native-index-evidence-v3.json",
     "mysql_index_policy": "mysql-native-index-policy-evidence-v3.json",
     "mysql_alter_index_removal": "mysql-alter-index-removal-evidence-v1.json",

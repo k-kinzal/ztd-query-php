@@ -16,8 +16,8 @@ from run_server_mysql_create_varchar import DIAGNOSTIC, specifications as native
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-btree-index"
-NAME = "mysql-create-btree-index-evidence-v4.json"
-CONTRACT = "8261b443afbf8b4c779042da2f865832d8ea9b34796ad8f74ce49eeeb4d5bd31"
+NAME = "mysql-create-btree-index-evidence-v5.json"
+CONTRACT = "d5e229e3abee774024da4eb9ef360b673623d70006c731159adae943230026ea"
 BASE = "022cb79259ca6314c358643120765737c90f1baa96d8dc7a926b77e6463df830"
 CASE_CONTRACT = "a1c9a4243a939dc8d13a1971277bc84f5b91e5366ef1c5a96ab41c21eb34a307"
 PREVIOUS = "1ce5c77c55d8a79bebcee8b6a80c20d2b7522822a97d99a6f7bc9cc25811dcf7"
@@ -51,6 +51,7 @@ def specifications():
     profiles = native_profiles()[1]
     same(spec["releases"], profiles["mysql"]["releases"])
     same([], spec["exploration"]["allowedExclusions"])
+    same(["ordinary", "unique", "clustered-unique"], spec["exploration"]["verifiedPhysicalRoles"])
     return spec, profiles
 
 

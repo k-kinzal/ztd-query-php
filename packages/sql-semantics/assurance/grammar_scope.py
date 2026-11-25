@@ -796,7 +796,7 @@ def inventory(root):
                          "ordering_direction", "opt_unique", "visibility", "opt_index_type_clause"):
                 btree_forms.update(rules.get(rule, []))
             for alternative in signatures & btree_forms:
-                related[alternative] = (*related.get(alternative, ()), "mysql-create-btree-index-evidence-v4.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-btree-index-evidence-v5.json")
             index_removal = {
                 "drop: DROP INDEX_SYM ident ON table_ident opt_index_lock_algorithm",
                 "drop_index_stmt: DROP INDEX_SYM ident ON_SYM table_ident opt_index_lock_and_algorithm",

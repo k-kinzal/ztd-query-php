@@ -71,10 +71,15 @@ def coordinates(tag):
 def generated(tag, seed, count):
     rng = Random(seed)
     for index in range(count):
-        slots = rng.sample(range(len(TYPES)), 1 + index if index < 8 else rng.randrange(9, 17))
+        clustered = index % 4 == 1
+        eligible = [position for position, field in enumerate(TYPES) if not clustered or field == "int-not-null"]
+        width = 1 + index if index < 8 else rng.randrange(9, 17)
+        slots = rng.sample(eligible, width)
         directions = [bool(rng.randrange(2)) for _ in slots]
+        identity = ("none" if index % 8 == 1 else "nullable") if clustered else "explicit"
+        visible = clustered or tag in OLD or bool((index // 2) % 2)
         yield definition(tag, LIFETIMES[index % len(LIFETIMES)], slots, directions, bool(index % 2),
-                         tag in OLD or bool((index // 2) % 2), f"ix quoted ` {seed}_{index}")
+                         visible, f"ix quoted ` {seed}_{index}", identity=identity)
 
 
 def native_edges(tag):

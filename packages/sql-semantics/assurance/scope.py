@@ -47,7 +47,7 @@ CONTRACTS = {
     "mysql-create-table-as-varchar-v1.json": "a58750e80af50328a9d7f492a2e96bf9d6b49d722fd6a578026b6d4629d0d46f",
     "mysql-create-table-as-declarations-v1.json": "aaad27fe95a548871d66f8878aea697079d87add3db128aff7e64e7e1add6ebc",
     "mysql-create-table-as-width-evidence-v1.json": "597ce5dfcc3b68fe6558b2a2d2236692c4c29e8f82b867a800bfddf3783c55c7",
-    "mysql-create-btree-index-evidence-v4.json": "8261b443afbf8b4c779042da2f865832d8ea9b34796ad8f74ce49eeeb4d5bd31",
+    "mysql-create-btree-index-evidence-v5.json": "d5e229e3abee774024da4eb9ef360b673623d70006c731159adae943230026ea",
     "mysql-drop-native-index-evidence-v3.json": "78d4213562da75d0be5f161366dd851ff8e542db561d084ad7ceb4cea1ae8fda",
     "mysql-native-index-policy-evidence-v3.json": "52afac02fb82147cb9cd26adb67f0500605c04d8692afdd9407c15f23e066ce3",
     "mysql-alter-index-removal-evidence-v1.json": "a3d9f469bdf68a59640d35e9840c8a41c3c2a841b44e5592db85c4786ed7af3c",
