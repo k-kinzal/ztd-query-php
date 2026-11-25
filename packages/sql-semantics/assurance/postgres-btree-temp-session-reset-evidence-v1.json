@@ -1,0 +1,25 @@
+{
+  "revision": "SemanticsIR/postgres-btree-temp-session-reset-evidence-1",
+  "approval": "pending-human-review",
+  "contract": "e9ec09abc6972e2ec36bdd571e54ce3746b30d9e03b2adb92b63cdd4af4bfd90",
+  "inputs": "f6f073a0fe344614f3912f91473015f7b6a0d529c675c1df0b9f5ab6ea9da047",
+  "inputCount": 325,
+  "observations": {
+    "16.6": {
+      "before.stdout": "2edc160aa4d4424b9350e9bbe212baaa7ef498c039c72ca2139df9f8c960b4c0",
+      "after.stdout": "2edc160aa4d4424b9350e9bbe212baaa7ef498c039c72ca2139df9f8c960b4c0",
+      "controls.json": "8eaa9f587155583867acd483e31def1b6807a7397d4bc92a4e3d3490d64fbe0f"
+    },
+    "17.2": {
+      "before.stdout": "38d12c0bfec178266523839b61db4be56b274869b2bafbe5a1d14b5dd8905a44",
+      "after.stdout": "38d12c0bfec178266523839b61db4be56b274869b2bafbe5a1d14b5dd8905a44",
+      "controls.json": "8eaa9f587155583867acd483e31def1b6807a7397d4bc92a4e3d3490d64fbe0f"
+    }
+  },
+  "observerSources": {
+    "previous": "a8bf9c41ceadff6dbfebf50c39bf277011cc7c7d0acfeaa91bf9bdfd84f63c5b",
+    "revised": "44ac605c061fb9987c9666cb621f74d68314f72b26c6fe664109cc9fa8e6231e",
+    "enrolled": "a94e63833053d7234c6272828dd2cc353e08906d2d43467a68b7fb830c0c0dcc"
+  },
+  "enrollment": "The enrolled observer checks the frozen reset contract before opening either session."
+}

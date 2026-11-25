@@ -8,7 +8,7 @@ import sys
 from postgres_create_btree_cases import declarations, predicate_sql, qualified, quoted
 from postgres_index_inference import EXPRESSIONS
 from postgres_libpq import LIB, Session
-from run import require
+from run import TOOL, digest, require
 
 CATALOG = """SELECT pg_catalog.json_build_array(i.indisunique::text, i.indnullsnotdistinct::text,
        i.indisvalid::text, i.indisready::text, i.indislive::text,
@@ -258,16 +258,35 @@ def observe(db, data):
     return observed
 
 
+def session_settings(db):
+    return [db.execute("SHOW " + name)[0][0] for name in (
+        "server_version_num", "server_encoding", "client_encoding", "standard_conforming_strings", "search_path")]
+
+
+def require_empty_temporary_catalog(db):
+    remaining = db.execute("SELECT c.relname FROM pg_catalog.pg_class c "
+                           "WHERE c.relnamespace=pg_catalog.pg_my_temp_schema() ORDER BY c.relname")
+    require(remaining == [], "postgres-btree-temporary-catalog-occupied", remaining)
+
+
+def reset_temporary_case(db):
+    require(db.transaction() == "idle", "postgres-btree-temporary-session-open")
+    db.execute("SET client_min_messages=warning; DISCARD TEMP")
+    require_empty_temporary_catalog(db)
+
+
 def main():
-    with Session() as regular:
-        settings = [regular.execute("SHOW " + name)[0][0] for name in (
-            "server_version_num", "server_encoding", "client_encoding", "standard_conforming_strings", "search_path")]
+    reset = TOOL / "postgres-btree-temp-session-reset-v1.json"
+    require(digest(reset) == "e9ec09abc6972e2ec36bdd571e54ce3746b30d9e03b2adb92b63cdd4af4bfd90", "postgres-btree-temporary-reset-contract")
+    with Session() as regular, Session() as temporary:
+        settings = session_settings(regular)
+        require(session_settings(temporary) == settings, "postgres-btree-temporary-profile-mismatch")
         print(json.dumps({"database": settings, "python": python_version(), "libpq": LIB.PQlibVersion()}), flush=True)
 
         def run(request):
             if request["trial"]["createBtree"]["table"][0] == "pg_temp":
-                with Session() as db:
-                    return observe(db, request)
+                reset_temporary_case(temporary)
+                return observe(temporary, request)
             return observe(regular, request)
 
         for line in sys.stdin:
