@@ -28,7 +28,7 @@ final class IndexOperandsTest extends TestCase
         $table = new IndexHeading(new IndexTarget(new Identifier('public'), new Identifier('orders')), [new Identifier('id')], [ColumnKind::Int4]);
         $element = new IndexElement(new ColumnKey(new Name('id')), direction: SortDirection::Descending, nulls: NullsOrder::Last);
 
-        self::assertSame(IndexOrder::DescendingNullsLast, (new IndexOperands())->key($table, $element)->order);
+        self::assertSame(IndexOrder::DescendingNullsLast, (new IndexOperands())->key($table, $element, false)->order);
     }
 
     public function testCoveringRetainsThePhysicalColumnSlot(): void
