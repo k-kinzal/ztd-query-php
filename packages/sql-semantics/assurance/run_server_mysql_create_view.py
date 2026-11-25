@@ -368,7 +368,7 @@ def faults(_, tag):
         RenderFault("switch-view-security-mode", path, "$this->security->value", "'DEFINER'", model, "meaning-mismatch"),
         RenderFault("allow-repeated-view-heading-name", path, "!isset($seen[$key]),", "true,",
                     {"boundary": reason}, "mysql-create-view-invalid-published", invalid),
-        RenderFault("erase-requested-view-merge-fallback", path, "$this->algorithm->value", "$this->installedAlgorithm()->value",
+        RenderFault("erase-requested-view-merge-fallback", path, "$this->algorithm->value", "$this->installedAlgorithm->value",
                     fallback, "meaning-mismatch"),
     ]
 

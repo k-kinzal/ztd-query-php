@@ -1524,7 +1524,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 algorithm: SqlSemantics\Platform\MySql\Ir\Schema\View\ViewAlgorithm::Merge
             );
             $details['literalMergeFallback'] = [$merged == $direct, $merged == $batch, $merged->algorithm->value,
-                $merged->installedAlgorithm()->value, $merged->toString()];
+                $merged->installedAlgorithm->value, $merged->toString()];
         }
         if ($platform === 'PostgreSql' && $role === 'Rows\\With\\WithProjection') {
             $table = $semantics->analyze('WITH q AS MATERIALIZED (VALUES (5,TRUE), (NULL,FALSE)) SELECT column2 AS flag,column1 AS id FROM q');

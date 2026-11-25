@@ -56,7 +56,7 @@ final class CreateViewTest extends TestCase
         $view = new CreateView($name, $selection, [new ViewColumn($column)], algorithm: ViewAlgorithm::Merge);
 
         self::assertSame(ViewAlgorithm::Merge, $view->algorithm);
-        self::assertSame(ViewAlgorithm::Undefined, $view->installedAlgorithm());
+        self::assertSame(ViewAlgorithm::Undefined, $view->installedAlgorithm);
         self::assertStringStartsWith('CREATE ALGORITHM=MERGE ', $view->toString());
     }
 }

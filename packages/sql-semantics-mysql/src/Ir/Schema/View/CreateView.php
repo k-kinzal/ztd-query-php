@@ -32,6 +32,11 @@ final class CreateView implements SemanticsIR
     public readonly array $columns;
 
     /**
+     * The algorithm recorded in the catalog when this definition is installed.
+     */
+    public readonly ViewAlgorithm $installedAlgorithm;
+
+    /**
      * Establishes the creation policy and checks the stored heading and complete body.
      * @param list<ViewColumn> $columns Checked names in output order
      * @param ViewAlgorithm $algorithm The requested algorithm, including requests that trigger a server fallback
@@ -61,6 +66,8 @@ final class CreateView implements SemanticsIR
             $seen[$key] = true;
         }
         $this->columns = $heading;
+        $this->installedAlgorithm = $algorithm === ViewAlgorithm::Merge && $query->source === null
+            ? ViewAlgorithm::Undefined : $algorithm;
     }
 
     /**
@@ -69,15 +76,6 @@ final class CreateView implements SemanticsIR
     public function profileId(): string
     {
         return $this->query->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/view-definition';
-    }
-
-    /**
-     * Gives the algorithm recorded in the catalog when this definition is installed.
-     */
-    public function installedAlgorithm(): ViewAlgorithm
-    {
-        return $this->algorithm === ViewAlgorithm::Merge && $this->query->source === null
-            ? ViewAlgorithm::Undefined : $this->algorithm;
     }
 
     /**

@@ -26,7 +26,7 @@ final class CreateViewLoweringTest extends TestCase
         $view = (new CreateViewLowering())->lower($definition->binding(), $definition->statement);
 
         self::assertSame(ViewAlgorithm::Merge, $view->algorithm);
-        self::assertSame(ViewAlgorithm::Merge, $view->installedAlgorithm());
+        self::assertSame(ViewAlgorithm::Merge, $view->installedAlgorithm);
         self::assertSame(ViewSecurity::Invoker, $view->security);
         self::assertSame('event', $view->columns[0]->name->value);
     }
