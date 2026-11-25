@@ -4,6 +4,7 @@ from itertools import product
 from random import Random
 
 from mysql_add_foreign_keys_cases import PROFILE as ADD_PROFILE, key_fact
+from mysql_cascade_model import permits_staged_row
 from mysql_create_btree_index_cases import OLD
 
 SCHEMA = "ir_fixture"
@@ -209,7 +210,8 @@ def after_parent(rows, edges, parent_rows, old, new):
     delete = new is None
     next_rows = [row.copy() for row in rows]
     after = [row.copy() for row in parent_rows if row != old] if delete else [new if row == old else row for row in parent_rows]
-    for _, pairs, effects in sorted(edges):
+    active = [(symbol, pairs) for symbol, pairs, _ in edges]
+    for symbol, pairs, effects in sorted(edges):
         child_coordinates = [HEAD.index(field) for field, _ in pairs]
         parent_coordinates = [("id", "code").index(field) for _, field in pairs]
         previous = [old[slot] for slot in parent_coordinates]
@@ -225,8 +227,14 @@ def after_parent(rows, edges, parent_rows, old, new):
             values = [None] * len(previous) if action == "SET NULL" else replacement
             if values is None:
                 raise ValueError(action)
+            staged = row.copy()
             for slot, value in zip(child_coordinates, values):
-                row[slot] = value
+                staged[slot] = value
+            if not delete and action == "CASCADE" and not permits_staged_row(
+                row, staged, active, symbol, HEAD, ("id", "code"), parent_rows
+            ):
+                return [["db-error", "23000", 1452], rows, parent_rows]
+            row[:] = staged
     return [["executed", 1], next_rows, after]
 
 
