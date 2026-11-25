@@ -16,7 +16,7 @@ from server_delete_cases import literal
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-create-text"
-CONTRACT = "ce5f9834e38a4156fab8dde45dae1f0e2f2edc9f2f581fce03fdff0a3895fbc8"
+CONTRACT = "3ace81b37a0399f31072f1a372e9487c08635f2be7bdf109a74d30d5da609e5c"
 DIAGNOSTIC = "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction"
 STORAGE = "pg_catalog.text"
 TABLE = "public.ir_create_target"
@@ -35,7 +35,7 @@ FORMS = {
 
 
 def specifications():
-    path = TOOL / "postgres-create-text-v1.json"
+    path = TOOL / "postgres-create-text-v2.json"
     require(digest(path) == CONTRACT, "postgres-create-text-contract-mismatch")
     _, profiles = native_specifications()
     return json.loads(path.read_text()), {"postgres": profiles["postgres"]}
@@ -85,8 +85,8 @@ def negatives(tag):
     yield case("postgres", tag, [["c0", "INTEGER", True, ["text", "a value"]]]), "A text default requires native text storage."
     yield analysis(tag, f"CREATE TABLE {TABLE} (c0 text)", ["CREATE TEMPORARY TABLE text (a INTEGER)"]), (
         "The column requires a supported builtin storage kind.")
-    yield analysis(tag, f'CREATE TABLE {TABLE} (c0 pg_catalog.text COLLATE pg_catalog."C")'), (
-        "The column attribute is outside the native declaration domain.")
+    yield analysis(tag, f'CREATE TABLE {TABLE} (c0 pg_catalog.text COLLATE pg_catalog."POSIX")'), (
+        "The column requires a resolved stock PostgreSQL collation.")
     yield analysis(tag, f"CREATE TABLE {TABLE} (c0 pg_catalog.text GENERATED ALWAYS AS ('a') STORED)"), (
         "The column attribute is outside the native declaration domain.")
 

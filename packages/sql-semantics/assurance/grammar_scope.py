@@ -773,7 +773,7 @@ def inventory(root):
                         related[alternative] = (*related[alternative], "postgres-values-compound-v1.json")
         for rule in create:
             for alternative in rules.get(rule, []):
-                related[alternative] = (("server-create-table-v2.json", "postgres-create-text-v1.json",
+                related[alternative] = (("server-create-table-v2.json", "postgres-create-text-v2.json",
                                          "postgres-create-signed-defaults-v1.json", "postgres-create-boolean-v2.json",
                                          "postgres-primary-key-evidence-v1.json", "postgres-table-width-evidence-v1.json")
                                         if postgres else ("server-create-table-v2.json", "mysql-innodb-declaration-width-evidence-v1.json",
