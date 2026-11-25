@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\ImplicitColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexDeclaration;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
@@ -17,6 +18,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIdentityKeys;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIndexDeclarations;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
@@ -161,8 +164,9 @@ final class TableDeclaration
     public function table(CreateTable $definition, ?QueryFact $output, Derivation $derivation): Table
     {
         $comparison = $derivation->context->columnNames;
+        $profile = $derivation->context->profile;
         $primary = $this->primaryColumns($definition);
-        $collation = $this->tableCollation($definition, $derivation->context->profile->grammar);
+        $collation = $this->tableCollation($definition, $profile->grammar);
         $defined = [];
         foreach ($definition->elements as $element) {
             if ($element instanceof ColumnDefinition) {
@@ -195,23 +199,20 @@ final class TableDeclaration
 
         $columns = [...$all, ...$selected];
 
-        return $this->split(
-            $definition->name,
-            $columns,
-            $derivation->context->profile,
-            $complete,
-            $definition->temporary(),
-            (new DeclaredTableStorage())->resolve($definition),
-            (new TableIdentityKeys())->hasIdentity($definition, $columns, $comparison)
-        );
+        $storage = (new DeclaredTableStorage())->resolve($definition);
+        $hasIdentity = (new TableIdentityKeys())->hasIdentity($definition, $columns);
+        $indexes = (new TableIndexDeclarations())->collect($definition, $columns, $profile->grammar);
+
+        return $this->split($definition->name, $columns, $profile, $complete, $definition->temporary(), $storage, $hasIdentity, $indexes);
     }
 
     /**
      * Builds a declaration from columns, keeping INVISIBLE columns as implicit columns.
      *
      * @param list<array{ColumnDefinition|null, Column}> $columns Each column with the definition it comes from, if any
+     * @param list<IndexDeclaration>|null $indexes The settled physical index layout
      */
-    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false, ?string $storageEngine = null, bool $identityKey = false): Table
+    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false, ?string $storageEngine = null, bool $identityKey = false, ?array $indexes = null): Table
     {
         $visible = [];
         $implicit = [];
@@ -224,7 +225,7 @@ final class TableDeclaration
             }
         }
 
-        return new Table($name, $profile, $visible, $implicit, $complete, temporary: $temporary, storageEngine: $storageEngine, hasIdentityKey: $identityKey);
+        return new Table($name, $profile, $visible, $implicit, $complete, temporary: $temporary, storageEngine: $storageEngine, hasIdentityKey: $identityKey, indexes: $indexes);
     }
 
     /**
@@ -275,7 +276,8 @@ final class TableDeclaration
             $source->complete,
             temporary: $temporary,
             storageEngine: $source->storageEngine,
-            hasIdentityKey: $source->hasIdentityKey
+            hasIdentityKey: $source->hasIdentityKey,
+            indexes: $source->indexes
         );
     }
 

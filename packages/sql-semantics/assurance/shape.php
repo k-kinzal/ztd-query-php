@@ -1412,6 +1412,18 @@ if ($dialect !== 'sqlite') {
         $properties[$part] = ['slot' => ['int'], 'descending' => ['bool']];
         $methods[$index] = ['__construct', 'profileId', 'toString'];
         $methods[$part] = ['__construct'];
+        $dropIndex = 'Schema\\Index\\DropIndex';
+        $indexIdentity = 'Schema\\Index\\IndexIdentity';
+        $indexRole = 'Schema\\Index\\IndexRole';
+        $roots[] = $dropIndex;
+        $internal[] = 'Schema\\Index\\DropIndexLowering';
+        $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole]];
+        $properties[$indexRole] = [];
+        $methods[$dropIndex] = ['__construct', 'profileId', 'toString'];
+        $methods[$indexIdentity] = ['__construct'];
+        $methods[$indexRole] = [];
+        $enumCases[$indexRole] = ['Primary' => 'primary', 'Unique' => 'unique', 'Ordinary' => 'ordinary'];
         $identity = 'Schema\\Identity\\TableIdentity';
         $properties[$identity] = ['name' => [$tableName], 'kind' => ['From\\ExternalRelationKind']];
         $methods[$identity] = ['__construct', 'quoted'];
@@ -1584,7 +1596,9 @@ try {
     $recursiveWith = $dialect === 'mysql'
         ? '$statement->with instanceof \\' . $platform . '\\Statement\\Query\\With\\With && $statement->with->recursive'
         : '$statement->with?->recursive === true';
-    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
+    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement;'
+        . ($dialect === 'mysql' ? ' $relationChange = new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering();' : '')
+        . ' return match (true) {'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && ' . $recursiveWith . ' => (new \\'
         . $prefix . 'Rows\\Recursive\\RecursiveSeriesLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null'
@@ -1622,10 +1636,7 @@ try {
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Catalog\\Access\\Privilege\\Revoke'
                 . ', $statement instanceof \\' . $platform . '\\Statement\\Catalog\\Access\\Defaults\\AlterDefaultPrivileges'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
-            : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
-                . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
-                . ', $statement instanceof \\' . $platform . '\\Statement\\Alter\\TruncateTable'
-                . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),')
+            : '$relationChange->applies($statement) => $relationChange->lower($operation, $statement),')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
         . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
         . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lowerQuery($operation, $statement),'
@@ -1736,10 +1747,10 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v6.json', 'd1e5a90ad5187a2685700f486eeb04d130146334db702a918faed7bf77409362', 'MySQL VARCHAR binding'],
-            ['mysql-ordered-table-rename-binding-v5.json', '32a45b7df8471daa07eee24a217fb785d0efac1d84194343a27a0d7563be52c2', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v4.json', '15dc5b5cbd57d4ebdf2fc4a8b0c26e9d57acc4e4d9915b38bf2d6cd40eb6287c', 'MySQL session table binding'],
-            ['mysql-btree-index-binding-v1.json', 'd206ac408565712daad5d45663b3c666b7aa75f0f0bb8bcdd7a86fa773e42989', 'MySQL B-tree index binding'],
+            ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
+            ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
+            ['mysql-session-table-binding-v5.json', '7a1814a0d53a728f4cb57edcda6688a5390763adb35af826625b42f1dc707e24', 'MySQL session table binding'],
+            ['mysql-native-index-binding-v2.json', '7df292a54bb9e9ccf4593c3f7751f7775f7018d70ef5ba83e6248fa4f6a7183c', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -2205,10 +2216,13 @@ try {
             }
             if ($dialect === 'mysql' && $short === 'Schema\\Alter\\RelationChangeLowering') {
                 $members = $class->getMethods();
-                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
-                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
-                    && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                requireShape(count($members) === 2 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'applies' && types($members[0]->returnType, $prefix, $short) === ['bool']
+                    && $members[1]->isPublic() && !$members[1]->isStatic()
+                    && $members[1]->name->toString() === 'lower' && $members[1]->returnType !== null
+                    && types($members[1]->returnType, $prefix, $short) === [
+                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex',
+                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RelationChangeLowering') {
@@ -2286,6 +2300,7 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
+                    'Schema\\Index\\DropIndexLowering' => $dialect === 'mysql' ? ['lower', 'index'] : ['lower'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };
@@ -2314,6 +2329,8 @@ try {
         }
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
+                || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity'], true)
+                    && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',
                     'Schema\\Sequence\\Authorization\\SequencePrincipal'], true)

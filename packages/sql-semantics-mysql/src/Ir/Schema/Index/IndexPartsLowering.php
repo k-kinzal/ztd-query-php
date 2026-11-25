@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
-use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
@@ -28,12 +27,12 @@ final class IndexPartsLowering
      * @param non-empty-list<KeyPart> $parts The written parts
      * @return array{list<Identifier>, list<ColumnKind>, list<IndexColumn>}
      */
-    public function resolve(Table $table, array $parts, Comparison $comparison, bool $legacy): array
+    public function resolve(Table $table, array $parts, bool $legacy): array
     {
         $fields = $directions = [];
         foreach ($parts as $part) {
             Check::input($part instanceof ColumnPart && $part->length === null, 'CREATE INDEX requires whole declared column parts.');
-            $matches = $table->matchingColumns($part->column->value, $comparison);
+            $matches = $table->matchingIndexColumns($part->column->value);
             Check::input(count($matches) === 1, 'Each index field must resolve to one declared column.');
             $field = $matches[0];
             Check::input(

@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -45,8 +46,9 @@ final class CreateIndex implements SemanticsIR
     ) {
         Check::input($target->kind->isTable(), 'CREATE INDEX requires a resolved persistent or temporary InnoDB table.');
         Check::input(count($target->columns) <= 1017, 'An InnoDB index owner can declare at most 1017 fields.');
+        $case = new NativeIdentifierCase();
         Check::input(
-            preg_match('/\A.{1,64}(?<! )\z/us', $name->value) === 1 && $name->key() !== 'primary',
+            preg_match('/\A.{1,64}(?<! )\z/us', $name->value) === 1 && $case->fold($name->value) !== 'primary',
             'CREATE INDEX requires an index name of 1 to 64 characters other than PRIMARY and without a trailing space.'
         );
         $parts = Check::listOf($columns, IndexColumn::class, 'CREATE INDEX needs a nonempty ordered list of index parts.', 1);
@@ -61,9 +63,10 @@ final class CreateIndex implements SemanticsIR
                 $type instanceof ColumnKind,
                 'Each index part must select a declared signed column of its owning table.'
             );
-            Check::input(!isset($seen[$part->slot]), 'CREATE INDEX cannot repeat a key column.');
+            $field = $case->fold($target->columns[$part->slot]->value);
+            Check::input(!isset($seen[$field]), 'CREATE INDEX cannot repeat a key column.');
             Check::input(!$part->descending || !$legacy, 'This MySQL release does not store descending index parts.');
-            $seen[$part->slot] = true;
+            $seen[$field] = true;
             $allowsNull = $allowsNull || $type->nullable();
         }
         Check::input($visible || !$unique || $ownerHasIdentityKey || $allowsNull, 'An implicit primary index must be visible.');

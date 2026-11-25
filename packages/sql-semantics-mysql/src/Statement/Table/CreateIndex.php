@@ -99,7 +99,7 @@ final class CreateIndex implements Statement, Relation
         $scope = $targets->scope($derivation, $this, new QualifiedName($this->table->name), $fact->shape, $declared === null ? [] : $targets->implicit($declared));
         foreach ($this->parts as $part) {
             $part->deriveKeyPart($derivation, $scope);
-            if ($declared !== null && $declared->complete && $part instanceof ColumnPart && $declared->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
+            if ($declared !== null && $declared->complete && $part instanceof ColumnPart && $declared->matchingIndexColumns($part->column->value) === []) {
                 $derivation->report(new UnknownKeyColumn($part->column));
             }
         }

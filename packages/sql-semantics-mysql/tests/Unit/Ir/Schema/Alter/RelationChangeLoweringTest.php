@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
 use SqlSemantics\Platform\MySql\Semantics;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RelationChangeLowering::class)]
 #[Medium]
@@ -27,5 +28,16 @@ final class RelationChangeLoweringTest extends TestCase
         self::assertInstanceOf(DropView::class, $semantics->analyze('DROP VIEW app.report_view', $declarations));
         self::assertInstanceOf(RenameTable::class, $semantics->analyze('RENAME TABLE app.report TO app.archived', $declarations));
         self::assertInstanceOf(TruncateTable::class, $semantics->analyze('TRUNCATE app.report', $declarations));
+    }
+
+    public function testAppliesOnlyToNativeRelationChanges(): void
+    {
+        $inspection = new Inspection();
+        $change = $inspection->inspect('DROP INDEX named ON app.report')->statement;
+        $select = $inspection->inspect('SELECT 1')->statement;
+        $lowering = new RelationChangeLowering();
+
+        self::assertTrue($lowering->applies($change));
+        self::assertFalse($lowering->applies($select));
     }
 }

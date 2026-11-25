@@ -636,6 +636,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
 
     $table = $schema . '.accounts';
     $declarations = ["CREATE TABLE $table (id INTEGER)"];
+    if ($platform === 'MySql') {
+        $declarations[] = 'CREATE TABLE app.index_drop_probe (id INT, KEY ready (id))';
+    }
     if ($platform === 'Sqlite') {
         $declarations[] = "CREATE VIEW main.removable AS SELECT id FROM $table";
     }
@@ -727,6 +730,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Alter\\RenameTable'] = 'RENAME TABLE app.accounts TO app.staged, app.staged TO app.archived';
         $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE app.accounts';
         $queries['Schema\\Index\\CreateIndex'] = 'CREATE INDEX lookup ON app.accounts (id DESC) INVISIBLE';
+        $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX READY ON app.index_drop_probe';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -2265,6 +2269,26 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlBtreeIndex'] = [$indexed->target->kind->value, $indexed->target->columnTypes[0]->value,
                 $indexed->ownerHasIdentityKey, $indexed->columns[0]->descending, $indexed->visible,
                 $indexed->toString(), $direct->toString(), $rejected];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndex') {
+            $catalog = $semantics->context([
+                'CREATE TABLE app.drop_owner (other INT, KEY persistent_only (other))',
+                'CREATE TEMPORARY TABLE app.drop_owner (`Élan` INT NOT NULL, other INT, INDEX `élan`(other), UNIQUE (`Élan`))',
+                'CREATE TABLE app.primary_drop (n INT PRIMARY KEY)',
+            ]);
+            $drop = $semantics->analyze('DROP INDEX `éLAN_2` ON app.drop_owner LOCK DEFAULT', $catalog);
+            $primary = $semantics->analyze('DROP INDEX `PRİMARY` ON app.primary_drop', $catalog);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex($drop->target, $drop->release);
+            $rejected = null;
+            try {
+                $semantics->analyze('DROP INDEX persistent_only ON app.drop_owner', $catalog);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage();
+            }
+            $details['mysqlDropIndex'] = [$drop->target->owner->kind->value, $drop->target->name->value, $drop->target->role->value,
+                $drop->toString(), $direct->toString(), $primary->target->role->value, $primary->toString(), $rejected];
+            $created = $semantics->analyze('CREATE INDEX `Élan_plus` ON app.drop_owner (`éLAN` DESC)', $catalog);
+            $details['mysqlNativeIndexCase'] = [$created->target->columns[0]->value, $created->toString()];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);

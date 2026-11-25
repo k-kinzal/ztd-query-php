@@ -967,6 +967,27 @@ function observeMysqlTableIdentity(object $identity): array
     return [$identity->name->schema->value, $identity->name->table->value, $identity->kind->value];
 }
 
+function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex
+{
+    $spec = $input['mysqlDropIndex'];
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity(
+        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']),
+        new SqlSemantics\Platform\MySql\Ir\Identifier($spec['name']),
+        SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::from($spec['role'])
+    );
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
+        $target, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release'])
+    );
+}
+
+function observeMysqlDropIndex(SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlDropIndex' => ['owner' => observeMysqlTableIdentity($value->target->owner),
+            'name' => $value->target->name->value, 'role' => $value->target->role->value]];
+}
+
 function constructMysqlCreateIndex(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -2127,6 +2148,7 @@ function observeStatement(array $input): array
             isset($input['createLike']) => constructMysqlCreateLike($platform, $input),
             isset($input['mysqlCreateTableAs']) => constructMysqlCreateAs($platform, $input),
             isset($input['mysqlCreateIndex']) => constructMysqlCreateIndex($platform, $input),
+            isset($input['mysqlDropIndex']) => constructMysqlDropIndex($input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -2218,6 +2240,9 @@ function observeStatement(array $input): array
                 'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
             ],
         ];
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex) {
+        return observeMysqlDropIndex($value);
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex) {
         return observeMysqlCreateIndex($namespace, $value);

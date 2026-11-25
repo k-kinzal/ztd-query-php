@@ -101,7 +101,8 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-session-table-sources-boundaries-v1.json', 'f7d52901e9c0e384623182b33b5d21290c977dd83af0ad469b87d058293e8e57'],
             ['mysql-innodb-declaration-width-boundaries-v1.json', 'e7c171a1be33301f6f958c16c03c7cec3dcaf2c5e2255c0037bda886be137894'],
             ['mysql-create-table-as-width-boundaries-v1.json', '12a13739e29e7129ad7e8d4beac9686040cc82b4b4598a7fc7002810ff4d2eb9'],
-            ['mysql-create-btree-index-boundaries-v1.json', '30ee07918c8996f2b7bf374ab40daa1e4c9d05e7e10178552a219a30f21d9f52'],
+            ['mysql-create-btree-index-boundaries-v2.json', 'ac3328ace8f3e7c54033c8cb9b100bb19a8240f7f378295a54d15006329d6c04'],
+            ['mysql-drop-native-index-boundaries-v1.json', 'ec76acd0a7028fdd88818dde46cbb669478f5db37a55fc5a788915f062c7a318'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],

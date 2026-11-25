@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexPartsLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
-use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
@@ -27,7 +26,6 @@ final class IndexPartsLoweringTest extends TestCase
         [$heading, $types, $parts] = (new IndexPartsLowering())->resolve(
             $context->tables[0],
             [new ColumnPart(new Name('B'), direction: Direction::Descending), new ColumnPart(new Name('a'))],
-            Comparison::AsciiInsensitive,
             false
         );
 

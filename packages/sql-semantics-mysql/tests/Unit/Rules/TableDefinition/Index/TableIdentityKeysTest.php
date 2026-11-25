@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rules\TableDefinition;
+namespace Tests\Unit\Rules\TableDefinition\Index;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex;
-use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableIdentityKeys;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIdentityKeys;
 use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(TableIdentityKeys::class)]

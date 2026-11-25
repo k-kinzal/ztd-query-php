@@ -44,7 +44,7 @@ final class IndexTableLowering
         $kind = $table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;
         $legacy = $profile->grammar === GrammarRelease::MySql5651 || $profile->grammar === GrammarRelease::MySql5744;
 
-        [$names, $types, $parts] = (new IndexPartsLowering())->resolve($table, $statement->parts, $context->columnNames, $legacy);
+        [$names, $types, $parts] = (new IndexPartsLowering())->resolve($table, $statement->parts, $legacy);
         $target = new TableSource(new Identifier($schema), new Identifier($table->name->name->value), $names, $types, $kind);
 
         return [$target, $parts, $table->hasIdentityKey];

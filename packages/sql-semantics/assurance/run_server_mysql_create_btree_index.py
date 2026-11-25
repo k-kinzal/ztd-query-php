@@ -16,9 +16,11 @@ from run_server_mysql_create_varchar import DIAGNOSTIC, specifications as native
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-btree-index"
-NAME = "mysql-create-btree-index-evidence-v1.json"
-CONTRACT = "1ce5c77c55d8a79bebcee8b6a80c20d2b7522822a97d99a6f7bc9cc25811dcf7"
+NAME = "mysql-create-btree-index-evidence-v2.json"
+CONTRACT = "4e6842a285234994c94dbe7f06b380ed52d00ef157003cd64bc55c60eaf343b3"
 BASE = "022cb79259ca6314c358643120765737c90f1baa96d8dc7a926b77e6463df830"
+CASE_CONTRACT = "a1c9a4243a939dc8d13a1971277bc84f5b91e5366ef1c5a96ab41c21eb34a307"
+PREVIOUS = "1ce5c77c55d8a79bebcee8b6a80c20d2b7522822a97d99a6f7bc9cc25811dcf7"
 IDENTITY_CONTRACT = "2d274610477ef7ac302bd4006949f4f9df2d4259379740a29f0e5c215fa325c0"
 OBSERVER = "mysql_btree_index_observer.php"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/btree-index"
@@ -29,7 +31,9 @@ COMPARATOR_FAULTS = {"Ignore a table of contents with a wrong ordered part.": "w
 def specifications():
     path = TOOL / NAME
     require(digest(path) == CONTRACT and digest(TOOL / "mysql-create-btree-index-v1.json") == BASE
-            and digest(TOOL / "mysql-btree-identity-visibility-v1.json") == IDENTITY_CONTRACT,
+            and digest(TOOL / "mysql-btree-identity-visibility-v1.json") == IDENTITY_CONTRACT
+            and digest(TOOL / "mysql-native-index-case-v1.json") == CASE_CONTRACT
+            and digest(TOOL / "mysql-create-btree-index-evidence-v1.json") == PREVIOUS,
             "mysql-create-btree-index-contract")
     spec = json.loads(path.read_text())
     profiles = native_profiles()[1]
@@ -91,6 +95,11 @@ def negative_cases(tag):
         item = deepcopy(base)
         item["mysqlCreateIndex"]["columns"] = parts
         yield label, item, None, DIAGNOSTIC, "nonempty ordered list of index parts"
+    case_columns = deepcopy(base)
+    case_columns["mysqlCreateIndex"]["target"]["columns"] = ["Élan", "élan"]
+    case_columns["mysqlCreateIndex"]["target"]["columnTypes"] = ["int", "int"]
+    case_columns["mysqlCreateIndex"]["columns"] = [[0, False], [1, False]]
+    yield "same-native-column", case_columns, None, DIAGNOSTIC, "cannot repeat a key column"
     not_innodb = analyze(base)
     not_innodb["declarations"] = [s.replace("ENGINE=InnoDB", "ENGINE=MyISAM") for s in not_innodb["declarations"]]
     yield "non-innodb", not_innodb, None, DIAGNOSTIC, "resolved ordinary InnoDB declaration"
@@ -105,11 +114,13 @@ def negative_cases(tag):
     repeated["mysqlCreateIndex"]["columns"] = [[0, False], [0, False]]
     excess = definition(tag, "persistent", list(range(17)), [False] * 17, False, True, "large_ix")
     reserved = definition(tag, "persistent", [0], [False], False, True, "pRiMaRy")
+    dotted = definition(tag, "persistent", [0], [False], False, True, "PRİMARY")
     large_name = definition(tag, "persistent", [0], [False], False, True, "界" * 65)
     both = [
         ("repeat", repeated, ["db-error", "42S21", 1060], "cannot repeat a key column"),
         ("arity", excess, ["db-error", "42000", 1070], "at most 16 key parts"),
         ("primary", reserved, ["db-error", "42000", 1280], "other than PRIMARY"),
+        ("dotted-primary", dotted, ["db-error", "42000", 1280], "other than PRIMARY"),
         ("long-name", large_name, ["db-error", "42000", 1059], "1 to 64 characters"),
     ]
     if tag in OLD:
@@ -150,7 +161,7 @@ def requests(engine, tag, spec):
 
 
 def rejected_finite_ids(_, tag):
-    base = {"unknown-field", "repeat/analysis", "arity/analysis", "primary/analysis", "long-name/analysis"}
+    base = {"unknown-field", "repeat/analysis", "arity/analysis", "primary/analysis", "dotted-primary/analysis", "long-name/analysis"}
     return base if tag in OLD else base | {"implicit-none/analysis", "implicit-nullable/analysis"}
 
 

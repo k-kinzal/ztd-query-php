@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v151.json"
-CONTRACT = "d642a9dc7e9142de6d3701d07ff66784a9f543a6cd1e6e562429cab594071d26"
+CONTRACT_NAME = "release-layout-v152.json"
+CONTRACT = "c1276c92ba52ef412b0c0b3707b6295c68f584b6a3c1bcefb5ca3a969c111735"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -709,6 +709,13 @@ def verify_probe(raw, catalog):
             index_sql = "CREATE UNIQUE INDEX `test_ix` ON `app`.`session_index` (`a` DESC) INVISIBLE"
             require(item.get("mysqlBtreeIndex") == ["temporary-table", "int-not-null", True, True, False,
                     index_sql, index_sql, "An implicit primary index must be visible."], "installed-mysql-btree-index-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\DropIndex"):
+            drop = "DROP INDEX `Élan_2` ON `app`.`drop_owner`"
+            require(item.get("mysqlDropIndex") == ["temporary-table", "Élan_2", "unique", drop, drop, "primary",
+                    "DROP INDEX `PRIMARY` ON `app`.`primary_drop`",
+                    "DROP INDEX requires one resolved ordinary index on its owning table."], "installed-mysql-drop-index-mismatch", item)
+            require(item.get("mysqlNativeIndexCase") == ["Élan", "CREATE INDEX `Élan_plus` ON `app`.`drop_owner` (`Élan` DESC)"],
+                    "installed-mysql-native-index-case-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
             require(item.get("mysqlQueryBackedInnoDbWidth") == [
                 203, False, False, 1, "tail_5", "The projected clustered InnoDB record must fit the native 8126-byte boundary.",

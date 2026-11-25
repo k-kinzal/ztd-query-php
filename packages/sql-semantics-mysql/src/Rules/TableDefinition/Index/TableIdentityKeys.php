@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
+namespace SqlSemantics\Platform\MySql\Rules\TableDefinition\Index;
 
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
-use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
@@ -25,14 +25,15 @@ final class TableIdentityKeys
      * Answers whether a primary or eligible visible unique declaration already supplies identity.
      * @param list<array{ColumnDefinition|null, Column}> $columns The settled declarations
      */
-    public function hasIdentity(CreateTable $definition, array $columns, Comparison $comparison): bool
+    public function hasIdentity(CreateTable $definition, array $columns): bool
     {
+        $case = new NativeIdentifierCase();
         $required = [];
         foreach ($columns as [$origin, $column]) {
             if ($column->nullability !== Nullability::NotNull || $column->generated) {
                 continue;
             }
-            $required[$comparison->fold($column->name->value)] = true;
+            $required[$case->fold($column->name->value)] = true;
             if ($origin !== null && (new InlineIdentityKey())->qualifies($origin)) {
                 return true;
             }
@@ -58,7 +59,7 @@ final class TableIdentityKeys
             }
             foreach ($element->parts as $part) {
                 if (!$part instanceof ColumnPart || $part->length !== null
-                    || !isset($required[$comparison->fold($part->column->value)])) {
+                    || !isset($required[$case->fold($part->column->value)])) {
                     continue 2;
                 }
             }

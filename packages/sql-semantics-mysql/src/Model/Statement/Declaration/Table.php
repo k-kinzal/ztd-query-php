@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement\Declaration;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
@@ -33,6 +34,11 @@ final class Table
     public readonly array $implicit;
 
     /**
+     * @var list<IndexDeclaration>|null Physical index definitions when the names are settled
+     */
+    public readonly ?array $indexes;
+
+    /**
      * @param QualifiedName $name The declared name
      * @param LanguageProfile $profile The language profile the declaration was read under
      * @param list<Column> $columns The declared columns in declaration order
@@ -42,6 +48,7 @@ final class Table
      * @param bool $temporary Whether this declaration creates a session-temporary table
      * @param string|null $storageEngine The decoded engine of a known table declaration
      * @param bool $hasIdentityKey A prior declared primary or eligible visible unique key
+     * @param list<IndexDeclaration>|null $indexes The resolved declared indexes, or an open index namespace
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -53,9 +60,11 @@ final class Table
         public readonly bool $temporary = false,
         public readonly ?string $storageEngine = null,
         public readonly bool $hasIdentityKey = false,
+        ?array $indexes = null,
     ) {
         Check::input(!$temporary || $kind === RelationKind::BaseTable, 'Only a base table can be a temporary declaration.');
         $this->columns = Check::listOf($columns, Column::class, 'Table columns are an ordered list of column declarations.');
+        $this->indexes = $indexes === null ? null : Check::listOf($indexes, IndexDeclaration::class, 'Native indexes are an ordered list of physical declarations.');
         $this->implicit = Check::listOf($implicit, ImplicitColumn::class, 'Implicit table columns are a list of implicit column declarations.');
     }
 
@@ -86,5 +95,18 @@ final class Table
         }
 
         return [];
+    }
+
+    /**
+     * Finds physically named index fields using the native system case table.
+     * @return list<Column>
+     */
+    public function matchingIndexColumns(string $name): array
+    {
+        $case = new NativeIdentifierCase();
+        $key = $case->fold($name);
+        $columns = [...$this->columns, ...array_map(static fn (ImplicitColumn $slot): Column => $slot->column, $this->implicit)];
+
+        return array_values(array_filter($columns, static fn (Column $column): bool => $case->fold($column->name->value) === $key));
     }
 }
