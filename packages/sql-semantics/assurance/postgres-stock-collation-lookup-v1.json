@@ -1,0 +1,77 @@
+{
+  "revision": "SemanticsIR/postgres-stock-collation-lookup-1",
+  "approval": "pending-human-review",
+  "profiles": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "sources": [
+    "https://github.com/postgres/postgres/blob/REL_16_6/src/backend/catalog/namespace.c",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/catalog/namespace.c",
+    "https://www.postgresql.org/docs/17/runtime-config-client.html#GUC-SEARCH-PATH"
+  ],
+  "scope": "Resolve the stock C collation and the B-tree text_ops class from absolute selectors or an established unqualified lookup path in ordinary table and index declarations.",
+  "rules": [
+    "A two-part pg_catalog selector targets the stock catalog exactly, regardless of other namespaces in the effective path.",
+    "A one-part decoded stock name resolves when pg_catalog is the first effective namespace searched for the relevant object kind. Both collation and operator-class lookup skip the current temporary namespace.",
+    "Application and explicitly numbered temporary namespaces earlier on the path cannot be dismissed without evidence. An unqualified request in that case is rejected before publication.",
+    "The compiled column, key, and emitted SQL carry the same absolute identity for admitted unqualified and qualified spellings. A fresh schema member uses the exact local table role and retains the selected stock identities."
+  ],
+  "finite": {
+    "path": [
+      "implicit-stock-first",
+      "explicit-stock-first",
+      "temporary-namesake",
+      "earlier-application"
+    ],
+    "selector": [
+      "column-collation",
+      "index-collation",
+      "text-operator-class"
+    ],
+    "composition": [
+      "standalone",
+      "schema-member"
+    ],
+    "spelling": [
+      "unqualified",
+      "stock-qualified"
+    ],
+    "coordinates": 48,
+    "admitted": 42,
+    "shadowedUnqualified": 6,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Read the physical namespace and identity of the column and index collations and text operator class from the pinned native catalogs.",
+    "Preserve table and index coordinates, byte-ordered text rows and the exact stock identities in the constructed graph and emitted SQL.",
+    "Supply differently named catalog identities in the current temporary namespace and a real earlier application namespace. Verify their existence and measure selection."
+  ],
+  "negative": [
+    "An unqualified collation or class may resolve to an earlier application namespace",
+    "A differently spelled or differently qualified selector is outside the stock domain"
+  ],
+  "faults": [
+    "Ignore an earlier application namespace",
+    "Treat the current temporary namespace as a collation or operator-class blocker",
+    "Resolve the whole declaration from a later rather than original search path"
+  ],
+  "calibration": {
+    "calibrate-setup.sql": "d6c6dc5a80e7c048e104a4a99405723ae8a3e2af11f0ff6f2d7e1c9ff82793bb",
+    "16.6-setup.stdout": "0ee991fc73d1197c27b2753f432335b2f8ec987967cfd97bb8304d0d15c8970e",
+    "17.2-setup.stdout": "3ec48738172820bdbac5ef8aa07a464bf8b35abf404b6a8a0959639c3b25d01b"
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ]
+}
