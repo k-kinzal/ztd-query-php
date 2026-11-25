@@ -34,6 +34,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndexLowering;
@@ -156,7 +157,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): AddForeignKeys|Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropForeignKeys|DropIndex|DropIndexes|DropTable|AlterIndexes|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|SetIndexVisibility|Transaction|TruncateTable|Update|WithProjection
+    public function analyze(string $sql, ?Context $context = null): AddForeignKeys|AlterForeignKeys|Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropForeignKeys|DropIndex|DropIndexes|DropTable|AlterIndexes|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|SetIndexVisibility|Transaction|TruncateTable|Update|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -186,7 +187,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<AddForeignKeys|Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropForeignKeys|DropIndex|DropIndexes|DropTable|AlterIndexes|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|SetIndexVisibility|Transaction|TruncateTable|Update|WithProjection>
+     * @return list<AddForeignKeys|AlterForeignKeys|Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropForeignKeys|DropIndex|DropIndexes|DropTable|AlterIndexes|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|SetIndexVisibility|Transaction|TruncateTable|Update|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

@@ -1,0 +1,80 @@
+{
+  "revision": "SemanticsIR/mysql-native-foreign-key-index-replacement-2",
+  "approval": "pending-human-review",
+  "scope": "Native InnoDB child supporting-index replacement during pure addition or atomic foreign-key exchange.",
+  "profile": "Native release, utf8mb4, exact absolute table names, empty sql_mode and referential checks enabled.",
+  "rules": [
+    "A native ordinary full child index created for a foreign-key constraint has a generated-origin role. CREATE TABLE LIKE carries that role to the copied physical key.",
+    "Find which proposed native directional fields require an index after considering the original supported prefixes and the selected proposed prefixes.",
+    "For each new index, replace any full earlier implicit child index when its complete ordered directional fields form a prefix of the new physical key. An explicit prior physical key remains present.",
+    "Remove superseded keys from the prior name space before allocating the successor names. Reuse of the physical name is possible. Previous foreign constraint labels remain independently occupied.",
+    "Enforce the native 64-key bound on the final native key set, including an explicit primary key. Statically invalid original catalogs are rejected where declarations are constructed.",
+    "The completed value carries the resolved physical names that disappear and the exact created key references. The constructor uses native index-origin facts and unaffected keys as transient inputs."
+  ],
+  "observations": [
+    "Distinguish the same name with different physical column width. Record before and after full ordered directions, origin fixture and the name of each replacement.",
+    "Compare implicit originals, explicit controls, copied implicit origin, named and automatic successors, name reuse and the final physical budget with one through 64 existing keys.",
+    "Verify persistent rows, constraint matches, unaffected values and both native execution routes under the same exact reference and type meanings."
+  ],
+  "trust": [
+    "Native table DDL declarations and copied physical metadata",
+    "Fixed syntax and engine modes",
+    "The independent native observers and actual shape checks"
+  ],
+  "calibration": {
+    "beforeAfter": {
+      "query": "06e53bd1fb857d4be5ea0af0b54782eb73831bb0fb6042d176d19d13d2b09fb1",
+      "cases": 12,
+      "receipts": {
+        "5.6.51.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "5.6.51.stderr": "db479cfbd9e0cc07d27cd310d7a951b4a62a0022cbc94f164ef0efc5455c97be",
+        "5.6.51.stdout": "4340805b3c00d2180c6de655170f4ae3ae17efb06e416cc5ef9d1530528cd0b2",
+        "8.0.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "8.0.44.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "8.0.44.stdout": "1b46616bbdc556eff21e04df857400a38511c4f843c089c3908a50689ba4d8c3",
+        "9.1.0.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "9.1.0.stderr": "db479cfbd9e0cc07d27cd310d7a951b4a62a0022cbc94f164ef0efc5455c97be",
+        "9.1.0.stdout": "8da3b0b88d01f5b58e635d9a23c3357245561220a5d92fc4c5ea145be10b2629"
+      }
+    },
+    "capacity": {
+      "query": "9dcb480db0fdc4ac3db7ddbd412ce014a5db5be25940af1530151693026a43c2",
+      "cases": 32,
+      "receipts": {
+        "5.6.51.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "5.6.51.stderr": "f0398886240ac9aaba48e953df376578b8ed4b59fa3ae018aee4c3dc692b9ca1",
+        "5.6.51.stdout": "c937474aa7f323d622c8854121f6dd8068a0095c5a71d0c0df73e245ae6713f4",
+        "8.0.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "8.0.44.stderr": "4a47afb20c35951347120d47b482a4e917f041d269e2d87e66e374a9002204fe",
+        "8.0.44.stdout": "eff730144b2fc39682d79bd16d4252c365238fbddc19423e13e0786bc9b2be5f",
+        "9.1.0.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "9.1.0.stderr": "f0398886240ac9aaba48e953df376578b8ed4b59fa3ae018aee4c3dc692b9ca1",
+        "9.1.0.stdout": "400c7ea69559896ae496a10edc9ef5e8ffb32483d147dd352f1de92cb2b344d4"
+      }
+    },
+    "sameName": {
+      "query": "1ef6157dc0175d64386824534a7b97d79f8f1bf4f35eeca9ac38eb187087c44b",
+      "cases": 12,
+      "receipts": {
+        "5.6.51.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "5.6.51.stderr": "ead502a9fdea5530a338ab8796215c8cb84627717a7e3e782569819eb911287a",
+        "5.6.51.stdout": "85a9edcb2f80dcfbeae9d4d99646015f9099a65a3a595c081a057ceac5e9ae95",
+        "8.0.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "8.0.44.stderr": "26b8a4958c0fa27a819ba7dcd200befc7408457face4392bb85df9bbe271eacf",
+        "8.0.44.stdout": "0477c9128ac604445ac11e626c4d389fe16e096d3192a3e2732c26104620eee4",
+        "9.1.0.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "9.1.0.stderr": "ead502a9fdea5530a338ab8796215c8cb84627717a7e3e782569819eb911287a",
+        "9.1.0.stdout": "d6e62582afb40f13536e83cf76bd96e99813fcfdd4e24569058c7a9aa11f3dc1"
+      }
+    }
+  },
+  "faults": [
+    "Forget origin or protect an implicit old key from replacement",
+    "Treat an explicit key as replaceable",
+    "Count replaced names toward the final physical limit",
+    "Ignore the operand width of a same-named replacement"
+  ],
+  "extends": {
+    "mysql-native-foreign-key-index-replacement-v1.json": "ddc4c85156b7b9f1cbf9bd4023755ccfefce565e73cfb10e099677be1f3a2ab6"
+  }
+}

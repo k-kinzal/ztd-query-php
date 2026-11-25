@@ -203,6 +203,27 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'native-fk-add-replaced-copy' || $rule === 'native-fk-exchange-replaced-copy') {
+            $role = str_replace('\\', '/', $short);
+            $expected = $rule === 'native-fk-add-replaced-copy' ? 'Schema/ForeignKey/Add/AddForeignKeys' : 'Schema/ForeignKey/Exchange/AlterForeignKeys';
+            requireShape($role === $expected && $property === 'removedIndexes'
+                && in_array($role . '::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\MethodCall && $write->expr->name instanceof Identifier
+                && $write->expr->name->toString() === 'check',
+                'Replaced native keys must come from the verified physical allocation.');
+
+            continue;
+        }
+
+        if ($rule === 'native-fk-exchange-actions-copy') {
+            requireShape($short === 'Schema\\ForeignKey\\Exchange\\AlterForeignKeys' && $property === 'actions'
+                && in_array('Schema/ForeignKey/Exchange/AlterForeignKeys::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'checked',
+                'Native foreign-key exchange actions must come from the verified detached copy.');
+
+            continue;
+        }
+
         if ($rule === 'native-foreign-key-removal-copy') {
             requireShape($short === 'Schema\\ForeignKey\\DropForeignKeys' && $property === 'actions'
                 && in_array('Schema/ForeignKey/DropForeignKeys::__construct', $checkedBoundaries, true)

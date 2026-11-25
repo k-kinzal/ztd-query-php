@@ -35,6 +35,7 @@ final class IndexCandidate
         public readonly bool $clusterCandidate,
         public readonly ?Name $autoIncrementField,
         array $prefix,
+        public readonly bool $implicitForeignKey = false,
     ) {
         $checked = [];
         foreach ($prefix as [$field, $descending]) {
@@ -57,6 +58,7 @@ final class IndexCandidate
             array_column($this->prefix, 0),
             $this->clusterCandidate,
             array_column($this->prefix, 1),
+            $this->implicitForeignKey,
         );
     }
 }

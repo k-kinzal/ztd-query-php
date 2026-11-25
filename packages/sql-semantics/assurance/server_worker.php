@@ -1220,57 +1220,109 @@ function observeMysqlForeignKeySide(
     };
 }
 
-function constructMysqlAddForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys
+function constructMysqlForeignKeyAddition(array $given, string $namespace): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition
 {
-    $namespace = 'SqlSemantics\\Platform\\MySql\\Ir\\';
-    $additionNamespace = $namespace . 'Schema\\ForeignKey\\Add\\';
-    $root = $additionNamespace . 'AddForeignKeys';
-    $change = $additionNamespace . 'ForeignKeyAddition';
-    $effects = $additionNamespace . 'ForeignKeyEffects';
-    $action = $additionNamespace . 'ForeignKeyAction';
-    $match = $additionNamespace . 'ForeignKeyMatch';
-    $index = $additionNamespace . 'Catalog\\ForeignKeyNativeKey';
-    $column = $additionNamespace . 'Catalog\\ForeignKeyKeyColumn';
-    $constraint = $additionNamespace . 'Catalog\\ForeignKeyConstraintIdentity';
-    $limit = SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit::class;
+    $addition = $namespace . 'Schema\\ForeignKey\\Add\\';
+    $change = $addition . 'ForeignKeyAddition';
+    $effects = $addition . 'ForeignKeyEffects';
+    $action = $addition . 'ForeignKeyAction';
+    $match = $addition . 'ForeignKeyMatch';
     $name = $namespace . 'Identifier';
-    $spec = $input['mysqlAddForeignKeys'];
-    $facts = $input['mysqlForeignKeyCatalog'];
-    $additions = [];
-    foreach ($spec['additions'] as $position => $given) {
-        $fields = array_map(static fn (array $field): object => constructMysqlForeignKeyPair($field, $namespace), $given['pairs']);
-        [$update, $delete, $mode] = $given['effects'];
-        $additions[$position] = new $change(
-            mysqlTableIdentity($namespace, $given['parent']), new $name($given['symbol']), $fields,
-            new $effects($action::from($update), $action::from($delete), $match::from($mode)), $given['generated'],
-            $given['indexName'] === null ? null : new $name($given['indexName']),
-            $given['created'] === null ? null : new $name($given['created'])
-        );
-    }
+    $fields = array_map(static fn (array $field): object => constructMysqlForeignKeyPair($field, $namespace), $given['pairs']);
+    [$update, $delete, $mode] = $given['effects'];
+    return new $change(
+        mysqlTableIdentity($namespace, $given['parent']), new $name($given['symbol']), $fields,
+        new $effects($action::from($update), $action::from($delete), $match::from($mode)), $given['generated'],
+        $given['indexName'] === null ? null : new $name($given['indexName']),
+        $given['created'] === null ? null : new $name($given['created'])
+    );
+}
+
+function constructMysqlForeignKeyCatalog(array $facts, string $namespace): array
+{
+    $catalog = $namespace . 'Schema\\ForeignKey\\Add\\Catalog\\';
+    $index = $catalog . 'ForeignKeyNativeKey';
+    $column = $catalog . 'ForeignKeyKeyColumn';
+    $constraint = $catalog . 'ForeignKeyConstraintIdentity';
+    $name = $namespace . 'Identifier';
+    $limit = SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit::class;
     $keys = array_map(static fn (array $key): object => new $index(constructMysqlIndexIdentity($key),
         array_map(static fn (array $field): object => new $column(new $name($field[0]), $field[1]), $key['fields']), $key['full'],
-        $key['referenceKey'] ?? true), $facts['keys']);
+        $key['referenceKey'] ?? true, $key['implicitForeignKey'] ?? false), $facts['keys']);
     $constraints = array_map(static fn (array $stored): object =>
         new $constraint(mysqlTableIdentity($namespace, $stored[0]), new $name($stored[1])), $facts['constraints']);
 
+    return [$keys, $constraints, isset($facts['keyLimit']) ? $limit::from($facts['keyLimit']) : null];
+}
+
+function constructMysqlAddForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys
+{
+    $namespace = 'SqlSemantics\\Platform\\MySql\\Ir\\';
+    $root = $namespace . 'Schema\\ForeignKey\\Add\\AddForeignKeys';
+    $spec = $input['mysqlAddForeignKeys'];
+    $additions = [];
+    foreach ($spec['additions'] as $position => $given) {
+        $additions[$position] = constructMysqlForeignKeyAddition($given, $namespace);
+    }
+    [$keys, $constraints, $limit] = constructMysqlForeignKeyCatalog($input['mysqlForeignKeyCatalog'], $namespace);
+
     return new $root(mysqlTableIdentity($namespace, $spec['owner']), $additions, $keys, $constraints,
         SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
-        constructMysqlIndexPolicy($spec['policy']), $spec['ignore'], isset($facts['keyLimit']) ? $limit::from($facts['keyLimit']) : null);
+        constructMysqlIndexPolicy($spec['policy']), $spec['ignore'], $limit);
+}
+
+function observeMysqlForeignKeyAddition(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition $addition): array
+{
+    return ['parent' => observeMysqlTableIdentity($addition->parent),
+        'symbol' => $addition->symbol->value, 'generated' => $addition->generated,
+        'pairs' => array_map(observeMysqlForeignKeyPair(...), $addition->pairs),
+        'effects' => [$addition->effects->update->value, $addition->effects->delete->value, $addition->effects->match->value],
+        'created' => $addition->createdIndex?->value, 'indexName' => $addition->indexName?->value];
 }
 
 function observeMysqlAddForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys $value): array
 {
-    $additions = [];
-    foreach ($value->additions as $addition) {
-        $additions[] = ['parent' => observeMysqlTableIdentity($addition->parent),
-            'symbol' => $addition->symbol->value, 'generated' => $addition->generated,
-            'pairs' => array_map(observeMysqlForeignKeyPair(...), $addition->pairs),
-            'effects' => [$addition->effects->update->value, $addition->effects->delete->value, $addition->effects->match->value],
-            'created' => $addition->createdIndex?->value, 'indexName' => $addition->indexName?->value];
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlAddForeignKeys' => ['owner' => observeMysqlTableIdentity($value->owner),
+            'additions' => array_map(observeMysqlForeignKeyAddition(...), $value->additions),
+            'removedIndexes' => array_map(static fn ($name): string => $name->value, $value->removedIndexes),
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
+}
+
+function constructMysqlAlterForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys
+{
+    $namespace = 'SqlSemantics\\Platform\\MySql\\Ir\\';
+    $spec = $input['mysqlAlterForeignKeys'];
+    $edits = [];
+    foreach ($spec['actions'] as $position => $edit) {
+        $edits[$position] = match (true) {
+            isset($edit['add']) => constructMysqlForeignKeyAddition($edit['add'], $namespace),
+            isset($edit['drop']) => new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval(
+                $edit['drop'][0] === null ? null : new SqlSemantics\Platform\MySql\Ir\Identifier($edit['drop'][0]),
+                SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalKind::from($edit['drop'][1]),
+            ),
+            default => $edit,
+        };
+    }
+    [$keys, $constraints, $limit] = constructMysqlForeignKeyCatalog($input['mysqlForeignKeyCatalog'], $namespace);
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
+        mysqlTableIdentity($namespace, $spec['owner']), $edits, $keys, $constraints,
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexPolicy($spec['policy']), $spec['ignore'], $limit);
+}
+
+function observeMysqlAlterForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys $value): array
+{
+    $actions = [];
+    foreach ($value->actions as $edit) {
+        $actions[] = $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval
+            ? ['drop' => [$edit->name?->value, $edit->kind->value]] : ['add' => observeMysqlForeignKeyAddition($edit)];
     }
 
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-        'mysqlAddForeignKeys' => ['owner' => observeMysqlTableIdentity($value->owner), 'additions' => $additions,
+        'mysqlAlterForeignKeys' => ['owner' => observeMysqlTableIdentity($value->owner), 'actions' => $actions,
+            'removedIndexes' => array_map(static fn ($name): string => $name->value, $value->removedIndexes),
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
 }
 
@@ -2500,6 +2552,7 @@ function observeStatement(array $input): array
             isset($input['mysqlDropIndexes']) => constructMysqlDropIndexes($input),
             isset($input['mysqlDropForeignKeys']) => constructMysqlDropForeignKeys($input),
             isset($input['mysqlAddForeignKeys']) => constructMysqlAddForeignKeys($input),
+            isset($input['mysqlAlterForeignKeys']) => constructMysqlAlterForeignKeys($input),
             isset($input['mysqlIndexRenames']) => constructMysqlIndexRenames($input),
             isset($input['mysqlMixedIndexes']) => constructMysqlMixedIndexes($input),
             isset($input['mysqlIndexVisibility']) => constructMysqlIndexVisibility($input),
@@ -2604,6 +2657,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex) {
         return observeMysqlDropIndex($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys) {
+        return observeMysqlAlterForeignKeys($value);
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys) {
         return observeMysqlAddForeignKeys($value);

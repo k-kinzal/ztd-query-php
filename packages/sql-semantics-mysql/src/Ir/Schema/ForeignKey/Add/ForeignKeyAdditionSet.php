@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
+use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyKeyCapacity;
@@ -29,6 +30,7 @@ final class ForeignKeyAdditionSet
      * @param non-empty-list<ForeignKeyAddition> $additions Ordered checked native additions
      * @param list<ForeignKeyNativeKey> $keys Complete prior physical keys
      * @param list<ForeignKeyConstraintIdentity> $constraints Complete prior native symbols
+     * @return list<Identifier> The names of the replaced implicit child indexes
      */
     public function check(
         TableIdentity $owner,
@@ -39,7 +41,7 @@ final class ForeignKeyAdditionSet
         IndexChangePolicy $policy,
         bool $ignore,
         ?InnoDbKeyLimit $limit = null,
-    ): void {
+    ): array {
         Check::input($owner->kind === ExternalRelationKind::BaseTable, 'A native foreign-key addition requires a persistent owning table.');
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
         Check::input(
@@ -54,7 +56,7 @@ final class ForeignKeyAdditionSet
             $labels[] = $addition->generated ? $addition->indexName : $addition->symbol;
         }
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $selected);
-        $created = (new ForeignKeyChildIndexes())->allocate($owner, $keys, $fields, $labels, $release);
+        [$created, $replaced] = (new ForeignKeyChildIndexes())->allocate($owner, $keys, $fields, $labels, $release);
         $layout = new ForeignKeyIndexPrefix();
         $capacity = new ForeignKeyKeyCapacity();
         $nativeLimit = $capacity->effective($release, $limit);
@@ -65,6 +67,8 @@ final class ForeignKeyAdditionSet
             Check::input($created[$position]?->value === $addition->createdIndex?->value, 'The declared foreign-key index effect differs from native allocation.');
             $layout->requireParent($addition->parent, $addition->pairs, $keys, $release);
         }
+
+        return $replaced;
     }
 
     /**

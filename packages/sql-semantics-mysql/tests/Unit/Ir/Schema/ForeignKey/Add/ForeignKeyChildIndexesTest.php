@@ -8,7 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyChildIndexes;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyIndexPrefix;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Testing\MySql\NativeAdditionFixture;
 
@@ -20,7 +23,7 @@ final class ForeignKeyChildIndexesTest extends TestCase
     {
         $owner = NativeAdditionFixture::owner('child');
         $pairs = [NativeAdditionFixture::pair('owner_id', 'id')];
-        $keys = (new ForeignKeyChildIndexes())->allocate(
+        [$keys] = (new ForeignKeyChildIndexes())->allocate(
             $owner,
             [],
             [$pairs, $pairs],
@@ -30,6 +33,21 @@ final class ForeignKeyChildIndexesTest extends TestCase
 
         self::assertNull($keys[0]);
         self::assertSame('Later', $keys[1]?->value);
+    }
+
+    public function testReplacedRequiresImplicitOriginAndTheCompleteDirectionalPrefix(): void
+    {
+        $owner = NativeAdditionFixture::owner('child');
+        $explicit = NativeAdditionFixture::key($owner, 'Explicit', IndexRole::Ordinary, 'owner_id');
+        $initial = NativeAdditionFixture::key($owner, 'Implicit', IndexRole::Ordinary, 'owner_id');
+        $implicit = new ForeignKeyNativeKey($initial->identity, $initial->fields, true, implicitForeignKey: true);
+        $replaced = (new ForeignKeyChildIndexes())->replaced(
+            ['explicit' => $explicit, 'implicit' => $implicit],
+            [[['owner_id', false], ['other', false]]],
+            new ForeignKeyIndexPrefix(),
+        );
+
+        self::assertSame(['implicit' => $initial->identity->name], $replaced);
     }
 
     public function testCoveredUsesExactNativeDirection(): void

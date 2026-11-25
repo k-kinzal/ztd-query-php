@@ -127,7 +127,7 @@ def check_value(item, actual):
     model = item["model"]
     require(actual.get("status") == "constructed", "mysql-foreign-key-scalar-not-constructed", actual)
     same(model["release"] + cases.PROFILE, actual["profile"])
-    same(cases.direct(model)["mysqlAddForeignKeys"], actual["mysqlAddForeignKeys"])
+    same({**cases.direct(model)["mysqlAddForeignKeys"], "removedIndexes": []}, actual["mysqlAddForeignKeys"])
 
 
 def coordinate_seen(actual, item):

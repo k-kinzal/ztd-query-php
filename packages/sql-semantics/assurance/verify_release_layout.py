@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v172.json"
-CONTRACT = "7bccc4a6734a7b3064ee11c7a39d4f8ecedc1601fc8a606277cd07f3f665cf33"
+CONTRACT_NAME = "release-layout-v173.json"
+CONTRACT = "47da62cbeb5884868f72caa8f7c74efbdf8089f3c70a89f9112aa6099d95469e"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -920,6 +920,13 @@ def verify_probe(raw, catalog):
                 [["ENUM", ["green", " red", ""], "utf8mb4_bin", "TINYINT", 1],
                  ["SET", list("abcdefghi"), "utf8mb4_bin", "SMALLINT", 2]], enumeration_sql,
             ], "installed-mysql-foreign-key-enumeration-domain-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\Exchange\\AlterForeignKeys"):
+            exchange = ("ALTER TABLE `app`.`exchange_child` DROP FOREIGN KEY `exchange_child_ibfk_1`, "
+                        "ADD CONSTRAINT `Wider_Link` FOREIGN KEY (`pid`, `other_id`) REFERENCES `app`.`exchange_parent` "
+                        "(`a`, `b`) ON UPDATE CASCADE ON DELETE SET NULL, ALGORITHM=COPY")
+            require(item.get("mysqlForeignKeyExchange") == [
+                "exchange_child_ibfk_1", "Wider_Link", "Wider_Link", ["pid"], ["pid"], exchange, exchange,
+            ] and item["sql"] == exchange, "installed-mysql-foreign-key-exchange-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"

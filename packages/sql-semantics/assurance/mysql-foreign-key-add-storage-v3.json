@@ -1,0 +1,36 @@
+{
+  "revision": "SemanticsIR/mysql-foreign-key-add-storage-3",
+  "approval": "pending-human-review",
+  "records": {
+    "Schema/ForeignKey/Add/AddForeignKeys": {
+      "additions": [
+        "Schema/ForeignKey/Add/ForeignKeyAddition",
+        1
+      ],
+      "removedIndexes": "native-fk-add-replaced-copy"
+    },
+    "Schema/ForeignKey/Add/ForeignKeyAddition": {
+      "pairs": [
+        "Schema/ForeignKey/Add/ForeignKeyPair",
+        1
+      ]
+    },
+    "Schema/ForeignKey/Add/Catalog/ForeignKeyNativeKey": {
+      "fields": [
+        "Schema/ForeignKey/Add/Catalog/ForeignKeyKeyColumn",
+        0
+      ]
+    },
+    "Schema/ForeignKey/Add/Enumeration/ForeignKeyEnumerationStorage": {
+      "members": [
+        "Schema/ForeignKey/Add/Enumeration/ForeignKeyEnumerationMember",
+        1
+      ]
+    },
+    "Schema/ForeignKey/Exchange/AlterForeignKeys": {
+      "actions": "native-fk-exchange-actions-copy",
+      "removedIndexes": "native-fk-exchange-replaced-copy"
+    }
+  },
+  "revises": "mysql-foreign-key-add-storage-v1.json"
+}

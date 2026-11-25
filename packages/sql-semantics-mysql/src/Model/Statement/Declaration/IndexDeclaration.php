@@ -41,6 +41,7 @@ final class IndexDeclaration
         array $leadingFields = [],
         public readonly bool $clusterCandidate = false,
         ?array $leadingDescending = null,
+        public readonly bool $implicitForeignKey = false,
     ) {
         $this->leadingFields = Check::listOf($leadingFields, Name::class, 'An index has ordered leading full fields.');
         $ordered = $leadingDescending ?? array_fill(0, count($this->leadingFields), false);

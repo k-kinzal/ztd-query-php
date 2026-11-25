@@ -9,6 +9,8 @@ use SqlSemantics\Platform\MySql\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAdditionLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\ForeignKeyExchangeLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
@@ -51,15 +53,18 @@ final class RelationChangeLowering
                 || (new IndexVisibilityLowering())->edits($statement) !== null
                 || (new ForeignKeyRemovalLowering())->changes($statement) !== null
                 || (new ForeignKeyAdditionLowering())->additions($statement) !== null
+                || (new ForeignKeyExchangeLowering())->actions($statement) !== null
             ));
     }
 
     /**
      * Publishes the specific operation after its relation has been bound.
      */
-    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): AddForeignKeys|AlterIndexes|DropForeignKeys|DropIndex|DropIndexes|DropTable|DropView|RenameIndexes|RenameTable|SetIndexVisibility|TruncateTable
+    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): AddForeignKeys|AlterForeignKeys|AlterIndexes|DropForeignKeys|DropIndex|DropIndexes|DropTable|DropView|RenameIndexes|RenameTable|SetIndexVisibility|TruncateTable
     {
         return match (true) {
+            $statement instanceof ParsedAlterTable && (new ForeignKeyExchangeLowering())->actions($statement) !== null
+                => (new ForeignKeyExchangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable && (new ForeignKeyAdditionLowering())->additions($statement) !== null
                 => (new ForeignKeyAdditionLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable && (new ForeignKeyRemovalLowering())->changes($statement) !== null

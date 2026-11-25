@@ -14,30 +14,43 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\IndexNameAllocation;
 
 /**
- * Settles the physical keys created by a native foreign-key addition group.
+ * Settles the physical keys created or replaced by a native foreign-key addition group.
  * @visibility SqlSemantics
  */
 final class ForeignKeyChildIndexes
 {
     /**
-     * Returns the created key of each addition, or null when a physical prefix already covers it.
+     * Returns the introduced key per addition and the replaced names in original catalog order.
      * @param list<ForeignKeyNativeKey> $catalog Original native keys with their full prefix
      * @param non-empty-list<non-empty-list<ForeignKeyPair>> $fields Resolved fields by action
      * @param non-empty-list<Identifier|null> $labels Effective explicit key-name requests by action
-     * @return non-empty-list<Identifier|null>
+     * @return array{non-empty-list<Identifier|null>, list<Identifier>}
      */
     public function allocate(TableIdentity $owner, array $catalog, array $fields, array $labels, GrammarRelease $release): array
     {
         $layout = new ForeignKeyIndexPrefix();
         $occupied = $layout->keys($owner, $catalog);
-        $used = $prefixes = $existing = [];
+        Check::input(count($occupied) <= 64, 'The original child catalog exceeds the native index limit.');
+        $prefixes = $existing = [];
         foreach ($fields as $source) {
             $prefixes[] = $layout->child($source);
         }
-        foreach ($occupied as $name => $key) {
-            $used[$name] = true;
+        foreach ($occupied as $key) {
             if ($key->referenceKey) {
                 $existing[] = $layout->physical($key);
+            }
+        }
+        $introduced = [];
+        foreach ($prefixes as $position => $prefix) {
+            if (!$this->covered($position, $prefixes, $existing)) {
+                $introduced[$position] = $prefix;
+            }
+        }
+        $replaced = $this->replaced($occupied, $introduced, $layout);
+        $used = [];
+        foreach (array_keys($occupied) as $name) {
+            if (!isset($replaced[$name])) {
+                $used[$name] = true;
             }
         }
         $legacy = (new ForeignKeyRemovalSet())->legacy($release);
@@ -47,7 +60,7 @@ final class ForeignKeyChildIndexes
         foreach ($fields as $position => $pairs) {
             $label = $labels[$position];
             Check::input(!$legacy || $label === null || $case->fold($label->value) !== 'primary', 'The legacy foreign-key index label cannot be PRIMARY.');
-            if ($this->covered($position, $prefixes, $existing)) {
+            if (!isset($introduced[$position])) {
                 $result[] = null;
 
                 continue;
@@ -61,7 +74,34 @@ final class ForeignKeyChildIndexes
         }
         Check::input(count($used) <= 64, 'Native foreign-key additions must fit the physical index limit.');
 
-        return $result;
+        return [$result, array_values($replaced)];
+    }
+
+    /**
+     * Finds generated child indexes covered by a newly introduced physical key.
+     *
+     * @param array<array-key, ForeignKeyNativeKey> $original Original keys of this child
+     * @param array<int, non-empty-list<array{string, bool}>> $introduced Effective new directional prefixes
+     * @return array<array-key, Identifier>
+     */
+    public function replaced(array $original, array $introduced, ForeignKeyIndexPrefix $layout): array
+    {
+        $replacements = [];
+        foreach ($original as $name => $key) {
+            if (!$key->implicitForeignKey) {
+                continue;
+            }
+            $prefix = $layout->physical($key);
+            foreach ($introduced as $candidate) {
+                if (array_slice($candidate, 0, count($prefix)) === $prefix) {
+                    $replacements[$name] = $key->identity->name;
+
+                    break;
+                }
+            }
+        }
+
+        return $replacements;
     }
 
     /**

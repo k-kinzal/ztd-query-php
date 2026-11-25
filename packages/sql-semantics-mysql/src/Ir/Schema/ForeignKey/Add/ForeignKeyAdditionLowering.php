@@ -6,10 +6,14 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyCatalogLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
+use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint;
@@ -50,8 +54,30 @@ final class ForeignKeyAdditionLowering
     {
         $definitions = $this->additions($statement);
         Check::input($definitions !== null, 'ALTER TABLE requires a group of native foreign-key additions.');
+        [$child, $owner] = (new ForeignKeyTables())->child($operation, $statement);
+        [$additions, $original, $constraints, $limit] = $this->resolve($operation, $child, $owner, $definitions);
+
+        return new AddForeignKeys(
+            $owner,
+            $additions,
+            $original,
+            $constraints,
+            $operation->context->profile->grammar,
+            (new IndexPolicyLowering())->alteration($statement),
+            $statement->ignore,
+            $limit,
+        );
+    }
+
+    /**
+     * Binds added edges and returns the original facts needed by the enclosing operation.
+     *
+     * @param non-empty-list<ForeignKey> $definitions Parsed addition clauses in relative order
+     * @return array{non-empty-list<ForeignKeyAddition>, list<ForeignKeyNativeKey>, list<ForeignKeyConstraintIdentity>, InnoDbKeyLimit}
+     */
+    public function resolve(BoundStatement $operation, Table $child, TableIdentity $owner, array $definitions): array
+    {
         $tables = new ForeignKeyTables();
-        [$child, $owner] = $tables->child($operation, $statement);
         Check::input($child->keyLimit !== null, 'The native foreign-key profile requires a supported InnoDB row format.');
         $release = $operation->context->profile->grammar;
         $native = new ForeignKeyCatalogLowering();
@@ -72,17 +98,13 @@ final class ForeignKeyAdditionLowering
         }
         $original = array_merge(...array_values($keys));
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $requested);
-        $created = (new ForeignKeyChildIndexes())->allocate($owner, $original, $pairs, $labels, $release);
-        return new AddForeignKeys(
-            $owner,
+        [$created] = (new ForeignKeyChildIndexes())->allocate($owner, $original, $pairs, $labels, $release);
+        return [
             $this->materialize($frames, $requested, $symbols, $pairs, $created),
             $original,
             $constraints,
-            $release,
-            (new IndexPolicyLowering())->alteration($statement),
-            $statement->ignore,
-            $child->keyLimit
-        );
+            $child->keyLimit,
+        ];
     }
 
     /**

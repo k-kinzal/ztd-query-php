@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog;
 
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -39,11 +40,16 @@ final class ForeignKeyNativeKey
         array $fields,
         public readonly bool $full,
         public readonly bool $referenceKey = true,
+        public readonly bool $implicitForeignKey = false,
     ) {
         Check::input($identity->owner->kind === ExternalRelationKind::BaseTable, 'A native foreign-key key fact must belong to a persistent table.');
         $checked = Check::listOf($fields, ForeignKeyKeyColumn::class, 'A native key fact requires checked prefix fields.');
         Check::input(count($checked) <= 16 && (!$full || $checked !== []), 'A native key fact requires a valid full-field prefix.');
         Check::input($referenceKey || (!$full && $fields === []), 'A non-B-tree key supplies no native reference prefix.');
+        Check::input(
+            !$implicitForeignKey || ($referenceKey && $full && $identity->role === IndexRole::Ordinary),
+            'An implicit foreign-key index requires a full ordinary native key.',
+        );
         $case = new NativeIdentifierCase();
         $seen = [];
         foreach ($checked as $field) {

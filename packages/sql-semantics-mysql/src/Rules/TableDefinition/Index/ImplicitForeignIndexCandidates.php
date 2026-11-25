@@ -74,7 +74,7 @@ final class ImplicitForeignIndexCandidates
         $first = $prefix[0][0];
         $increment = $columns[$case->fold($first->value)][2] ?? false;
 
-        return new IndexCandidate(IndexKind::Index, $symbol, $first, true, false, $increment ? $first : null, $prefix);
+        return new IndexCandidate(IndexKind::Index, $symbol, $first, true, false, $increment ? $first : null, $prefix, implicitForeignKey: true);
     }
 
     /**

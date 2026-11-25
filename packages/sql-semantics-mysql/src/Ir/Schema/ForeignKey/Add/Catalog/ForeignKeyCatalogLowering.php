@@ -70,6 +70,6 @@ final class ForeignKeyCatalogLowering
             }
         }
 
-        return new ForeignKeyNativeKey($identity, $fields, $eligible && $index->wholeFields, $eligible);
+        return new ForeignKeyNativeKey($identity, $fields, $eligible && $index->wholeFields, $eligible, $index->implicitForeignKey);
     }
 }

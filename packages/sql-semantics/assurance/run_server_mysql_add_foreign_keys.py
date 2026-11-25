@@ -13,9 +13,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-add-foreign-keys"
 OBSERVER = "mysql_add_foreign_keys_observer.php"
-NAME = "mysql-add-foreign-keys-evidence-v1.json"
+NAME = "mysql-add-foreign-keys-evidence-v2.json"
 BASE = "214b04864ac045b8ee9b10e5291a5d59c5f34d893df871dd3de791d7ed6bb09a"
-CONTRACT = "659cd9ce9f952ed3441f741523524502145168af7d0edb5ecb1a1cb585d8a308"
+CONTRACT = "3d92083cb67c04cfa7afec67376108c90c973c2c9f087494697c91a29b4b9999"
 COMPARATOR_FAULTS = {
     "Erase native MATCH metadata with unchanged rows.": "erase-match-metadata",
     "Erase an observed partial-NULL insertion outcome.": "erase-partial-null-effects",
@@ -28,6 +28,8 @@ def specifications():
     base, exact = TOOL / "mysql-add-foreign-key-groups-v1.json", TOOL / NAME
     require(digest(base) == BASE and digest(exact) == CONTRACT, "mysql-add-foreign-key-contract")
     law, spec = json.loads(base.read_text()), json.loads(exact.read_text())
+    for name, expected in spec["publicationContracts"].items():
+        require(digest(TOOL / name) == expected, "mysql-add-foreign-key-publication-contract", name)
     _, profiles = native_profiles()
     same(law["language"]["releases"], spec["releases"])
     same(profiles["mysql"]["releases"], spec["releases"])
@@ -154,7 +156,7 @@ def check_value(item, actual):
     model = item["model"]
     require(actual.get("status") == "constructed", "mysql-add-foreign-key-not-constructed", actual)
     same(model["release"] + laws.PROFILE, actual["profile"])
-    same(laws.direct(model)["mysqlAddForeignKeys"], actual["mysqlAddForeignKeys"])
+    same({**laws.direct(model)["mysqlAddForeignKeys"], "removedIndexes": []}, actual["mysqlAddForeignKeys"])
 
 
 def coordinate_seen(item, actual):

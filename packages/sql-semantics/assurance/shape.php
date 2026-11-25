@@ -1480,8 +1480,15 @@ if ($dialect !== 'sqlite') {
             $foreignAddBase . 'ForeignKeyPairLowering', $foreignAddBase . 'ForeignKeyTables', $foreignAddBase . 'Catalog\\ForeignKeyCatalogLowering');
         array_push($internal, ...$foreignBoundary);
         array_push($pureCollaborators, ...$foreignBoundary);
-        $roots[] = $foreignAdd;
-        $properties[$foreignAdd] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'additions' => ['array'],
+        $exchangeBase = 'Schema\\ForeignKey\\Exchange\\';
+        $foreignExchange = $exchangeBase . 'AlterForeignKeys';
+        $exchangeRemovals = $exchangeBase . 'ForeignKeyExchangeRemovals';
+        array_push($internal, $exchangeBase . 'ForeignKeyExchangeLowering', $exchangeRemovals);
+        $pureCollaborators[] = $exchangeRemovals;
+        array_push($roots, $foreignAdd, $foreignExchange);
+        $properties[$foreignAdd] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'additions' => ['array'], 'removedIndexes' => ['array'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
+        $properties[$foreignExchange] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'actions' => ['array'], 'removedIndexes' => ['array'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
         $properties[$foreignDefinition] = ['parent' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier'], 'pairs' => ['array'],
             'effects' => [$foreignEffects], 'generated' => ['bool'], 'indexName' => ['?Identifier'], 'createdIndex' => ['?Identifier']];
@@ -1533,14 +1540,14 @@ if ($dialect !== 'sqlite') {
         $enumCases[$foreignCollation] = ['Binary' => 'utf8mb4_bin', 'General' => 'utf8mb4_general_ci', 'Unicode' => 'utf8mb4_unicode_ci'];
         $enumCases[$foreignScalarKind] = ['Decimal' => 'DECIMAL', 'Bit' => 'BIT', 'Single' => 'FLOAT', 'Double' => 'DOUBLE',
             'Date' => 'DATE', 'Year' => 'YEAR', 'Time' => 'TIME', 'DateTime' => 'DATETIME', 'Timestamp' => 'TIMESTAMP'];
-        $properties[$foreignKeyFact] = ['identity' => [$indexIdentity], 'fields' => ['array'], 'full' => ['bool'], 'referenceKey' => ['bool']];
+        $properties[$foreignKeyFact] = ['identity' => [$indexIdentity], 'fields' => ['array'], 'full' => ['bool'], 'referenceKey' => ['bool'], 'implicitForeignKey' => ['bool']];
         $properties[$foreignFieldFact] = ['field' => ['Identifier'], 'descending' => ['bool']];
         $properties[$foreignSymbolFact] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier']];
         $properties[$foreignEvent] = $properties[$foreignMatch] = $methods[$foreignEvent] = $methods[$foreignMatch] = [];
         $enumCases[$foreignEvent] = ['Restrict' => 'RESTRICT', 'NoAction' => 'NO ACTION', 'Cascade' => 'CASCADE',
             'SetNull' => 'SET NULL', 'SetDefault' => 'SET DEFAULT'];
         $enumCases[$foreignMatch] = ['None' => 'NONE', 'Full' => 'FULL', 'Partial' => 'PARTIAL'];
-        $methods[$foreignAdd] = ['__construct', 'profileId', 'toString'];
+        $methods[$foreignAdd] = $methods[$foreignExchange] = ['__construct', 'profileId', 'toString'];
         $methods[$foreignDefinition] = ['__construct', 'toString'];
         $methods[$foreignEffects] = ['__construct', 'sql'];
         $methods[$foreignPair] = $methods[$foreignKeyFact] = $methods[$foreignFieldFact] = $methods[$foreignSymbolFact] = ['__construct'];
@@ -1916,10 +1923,10 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v9.json', '4f223c9722dae50667ffeea8d9ddb6b7e279ba61891569ae1ee51ef01ae08007', 'MySQL VARCHAR binding'],
+            ['mysql-varchar-binding-v10.json', '4f223c9722dae50667ffeea8d9ddb6b7e279ba61891569ae1ee51ef01ae08007', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v7.json', '99c1136783f445921aab242f7d33d415c4f4352756d4c2eb1f4a83a7a5cbf05a', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v9.json', '6f50b02a129f3dbc38b518180c2c18c7dc7e6f1571aa9b252afefad25cce27ff', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v10.json', 'dca89baa33c3e0d7af7d6a2e8333259df624ed04d3d675e1b38f93ac838cdd01', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v11.json', 'd8b19dde056bcf57f4aa2a9270c9a0a2f28fd90d3294faef68708114ed331d60', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1984,8 +1991,8 @@ try {
             requireShape(array_intersect_key($current, $indexRecord['storage']) === [], 'Duplicate MySQL native index list storage rule');
             $storage[$indexRecord['owner']] = $current + $indexRecord['storage'];
         }
-        $foreignStorage = __DIR__ . '/mysql-foreign-key-add-storage-v2.json';
-        requireShape(hash_file('sha256', $foreignStorage) === 'b72134447d55a5f70638d127ea59d0c12c54e0733094ef9b026f389548b622d6', 'Native foreign-key addition list storage differs.');
+        $foreignStorage = __DIR__ . '/mysql-foreign-key-add-storage-v3.json';
+        requireShape(hash_file('sha256', $foreignStorage) === 'cfb61b5b8fa831fabcd07cd672e7262e647730b1ea81f318fbcc886e49eb2393', 'Native foreign-key addition list storage differs.');
         $additionalStorage = json_decode(file_get_contents($foreignStorage), true, 512, JSON_THROW_ON_ERROR)['records'];
         requireShape(array_intersect_key($storage, $additionalStorage) === [], 'Duplicate native foreign-key addition storage rule.');
         $storage += $additionalStorage;
@@ -2449,7 +2456,7 @@ try {
                     && $members[1]->name->toString() === 'lower' && $members[1]->returnType !== null
                     && types($members[1]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\ForeignKey\\Add\\AddForeignKeys',
-                        'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\Index\\Change\\AlterIndexes',
+                        'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\ForeignKey\\Exchange\\AlterForeignKeys', 'Schema\\Index\\Change\\AlterIndexes',
                         'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes', 'Schema\\Index\\Rename\\RenameIndexes',
                         'Schema\\Index\\Visibility\\SetIndexVisibility', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
@@ -2571,7 +2578,8 @@ try {
                     'Schema\\Index\\Change\\MixedIndexNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\ForeignKey\\Add\\AddForeignKeys',
-                    'Schema\\ForeignKey\\Add\\ForeignKeyAdditionSet', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyKeyCapacity'], true)
+                    'Schema\\ForeignKey\\Add\\ForeignKeyAdditionSet', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyKeyCapacity',
+                    'Schema\\ForeignKey\\Exchange\\AlterForeignKeys'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\InnoDbKeyLimit')
                 || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes'
                     && $name->toString() === $platform . '\\Rules\\TableDefinition\\Index\\IndexNameAllocation')
@@ -2605,6 +2613,8 @@ try {
                     || ($dialect === 'mysql' && in_array($short, ['Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes',
                         'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'], true)
                         && in_array($call->name->toString(), ['array_slice', 'in_array'], true))
+                    || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes'
+                        && in_array($call->name->toString(), ['array_keys', 'array_values'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\AppendColumnBounds' && $call->name->toString() === 'ksort')
                     || ($dialect === 'sqlite' && $short === 'Schema\\Predicate\\DefinitionSource' && $call->name->toString() === 'is_int')

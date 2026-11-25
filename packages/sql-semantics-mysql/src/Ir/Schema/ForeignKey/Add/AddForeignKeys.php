@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 
+use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
@@ -32,6 +33,11 @@ final class AddForeignKeys implements SemanticsIR
     public readonly array $additions;
 
     /**
+     * @var list<Identifier> Prior implicit indexes replaced by the added physical keys
+     */
+    public readonly array $removedIndexes;
+
+    /**
      * Validates every native addition relative to the original complete physical facts.
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $additions Checked candidate definitions
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $keys Original physical keys on the affected child and parents
@@ -50,7 +56,7 @@ final class AddForeignKeys implements SemanticsIR
         $checked = Check::listOf($additions, ForeignKeyAddition::class, 'At least one checked native foreign-key addition is required.', 1);
         $originalKeys = Check::listOf($keys, ForeignKeyNativeKey::class, 'Foreign-key addition requires checked original physical keys.');
         $originalConstraints = Check::listOf($constraints, ForeignKeyConstraintIdentity::class, 'Foreign-key addition requires checked original symbols.');
-        (new ForeignKeyAdditionSet())->check($owner, $checked, $originalKeys, $originalConstraints, $release, $policy, $ignore, $keyLimit);
+        $this->removedIndexes = (new ForeignKeyAdditionSet())->check($owner, $checked, $originalKeys, $originalConstraints, $release, $policy, $ignore, $keyLimit);
         $this->additions = $checked;
     }
 

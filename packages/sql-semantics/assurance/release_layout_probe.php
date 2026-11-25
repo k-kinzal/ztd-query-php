@@ -653,6 +653,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $declarations[] = 'CREATE TABLE app.visibility_probe (a INT, b INT, KEY no_shadow (a))';
         $declarations[] = 'CREATE TEMPORARY TABLE app.visibility_probe (a INT, b INT, KEY first_key (a), UNIQUE KEY second_key (b))';
         $declarations[] = 'CREATE TABLE app.fk_drop_parent (a INT PRIMARY KEY)';
+        $declarations[] = 'CREATE TABLE app.exchange_parent (a INT NOT NULL PRIMARY KEY, b INT NOT NULL, UNIQUE KEY both_fields (a,b))';
+        $declarations[] = 'CREATE TABLE app.exchange_child (pid INT, other_id INT, FOREIGN KEY (pid) REFERENCES exchange_parent(a))';
         $declarations[] = 'CREATE TABLE app.fk_add_parent (a BIGINT PRIMARY KEY, b BIGINT NOT NULL UNIQUE)';
         $declarations[] = 'CREATE TABLE app.fk_add_child (x BIGINT, y BIGINT, z INT PRIMARY KEY, KEY Earlier (y DESC))';
         $declarations[] = 'CREATE TEMPORARY TABLE app.fk_add_parent (bad_shape VARCHAR(3))';
@@ -756,6 +758,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\Change\\AlterIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, RENAME INDEX by_a TO new_a';
         $queries['Schema\\Index\\Visibility\\SetIndexVisibility'] = 'ALTER TABLE app.visibility_probe ALTER INDEX FIRST_KEY INVISIBLE, ALTER INDEX first_key VISIBLE, ALTER INDEX SECOND_KEY INVISIBLE, ALGORITHM=COPY, LOCK=NONE';
         $queries['Schema\\ForeignKey\\DropForeignKeys'] = 'ALTER TABLE app.fk_drop_child DROP INDEX owner_link, DROP FOREIGN KEY OWNER_LINK';
+        $queries['Schema\\ForeignKey\\Exchange\\AlterForeignKeys'] = 'ALTER TABLE app.exchange_child '
+            . 'DROP FOREIGN KEY EXCHANGE_CHILD_IBFK_1, ADD CONSTRAINT Wider_Link FOREIGN KEY (pid, other_id) '
+            . 'REFERENCES exchange_parent(a, b) ON UPDATE CASCADE ON DELETE SET NULL, ALGORITHM=COPY';
         $queries['Schema\\ForeignKey\\Add\\AddForeignKeys'] = 'ALTER TABLE app.fk_add_child '
             . 'ADD CONSTRAINT Live_Link FOREIGN KEY (x) REFERENCES fk_add_parent(a) MATCH FULL ON DELETE CASCADE, '
             . 'ADD FOREIGN KEY unused_proposal (y DESC) REFERENCES fk_add_parent(b) MATCH PARTIAL ON UPDATE SET NULL';
@@ -2544,6 +2549,35 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_map(static fn ($index): string => $index->value, $removed->autoIncrement->alternates),
                 [$renamed->source->value, $renamed->destination->value],
                 $rebuilt->toString(), $overlap, $legacy,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Exchange\\AlterForeignKeys') {
+            [$drop, $add] = $result->actions;
+            $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $native = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey::class;
+            $term = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyKeyColumn::class;
+            $key = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity::class;
+            $roleType = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::class;
+            $facts = [
+                new $native(new $key($add->parent, new $identifier('PRIMARY'), $roleType::Primary),
+                    [new $term(new $identifier('a'))], true),
+                new $native(new $key($add->parent, new $identifier('both_fields'), $roleType::Unique),
+                    [new $term(new $identifier('a')), new $term(new $identifier('b'))], true),
+                new $native(new $key($result->owner, new $identifier('pid'), $roleType::Ordinary),
+                    [new $term(new $identifier('pid'))], true, implicitForeignKey: true),
+            ];
+            $identity = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity::class;
+            $symbols = [new $identity($result->owner, new $identifier('exchange_child_ibfk_1'))];
+            $detachedAction = $drop;
+            $actions = [&$detachedAction, $add];
+            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
+                $result->owner, $actions, $facts, $symbols, $result->release, $result->policy,
+            );
+            $detachedAction = $add;
+            $details['mysqlForeignKeyExchange'] = [
+                $drop->name->value, $add->symbol->value, $add->createdIndex->value,
+                array_column($result->removedIndexes, 'value'), array_column($rebuilt->removedIndexes, 'value'),
+                $result->toString(), $rebuilt->toString(),
             ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {

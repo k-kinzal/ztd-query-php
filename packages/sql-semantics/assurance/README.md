@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v92.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v93.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -468,7 +468,9 @@ The [MySQL implicit foreign-key index contract](mysql-implicit-foreign-index-evi
 
 The [MySQL foreign-key removal contract](mysql-drop-foreign-keys-evidence-v1.json) covers ordered removals, native symbol boundaries, dependent indexes and original constraints. Execute `run_server_mysql_drop_foreign_keys.py` and independently replay the ledgers with `combine_server_mysql_drop_foreign_keys_evidence.py`. The observer checks indexes, qualified foreign edges, distinguishable writes, warnings and the partial native effect of selected failed legacy COPY requests.
 
-The [MySQL foreign-key addition contract](mysql-add-foreign-keys-evidence-v1.json) checks persistent reference scope, exact key allocation, referential runtime effects, and the declared MATCH and action metadata. Execute `run_server_mysql_add_foreign_keys.py` and independently replay the ledgers with `combine_server_mysql_add_foreign_keys_evidence.py`.
+The [MySQL foreign-key exchange contract](mysql-foreign-key-exchange-evidence-v1.json) checks atomic replacement of named constraints. The [supporting-index replacement contract](mysql-native-foreign-key-index-replacement-v2.json) covers the removal of earlier generated keys, physical name reuse, copied origins and capacity. Run `run_server_mysql_foreign_key_exchange.py` and replay the ledgers with `combine_server_mysql_foreign_key_exchange_evidence.py`.
+
+The [MySQL foreign-key addition contract](mysql-add-foreign-keys-evidence-v2.json) checks persistent reference scope, exact key allocation, referential runtime effects, and the declared MATCH and action metadata. Execute `run_server_mysql_add_foreign_keys.py` and independently replay the ledgers with `combine_server_mysql_add_foreign_keys_evidence.py`.
 
 The [MySQL string foreign-key contract](mysql-foreign-key-string-evidence-v1.json) checks full native character and byte fields with explicit collation, exact stored byte values, and the separate term and combined key capacities. Execute `run_server_mysql_foreign_key_strings.py` and replay with `combine_server_mysql_foreign_key_strings_evidence.py`.
 
