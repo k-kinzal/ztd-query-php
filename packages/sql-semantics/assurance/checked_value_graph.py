@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v9.json"
-CONTRACT_DIGEST = "0ee47714975eeaae236c736fa5e7f4f2e7e37f5f98fa41bb3d8881a781078563"
+CONTRACT = "closed-value-graph-v10.json"
+CONTRACT_DIGEST = "fcbf651f962e9e6bbaeef2462c117dbe7d84c3822c80562d31f5004c4bbe69bf"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -30,7 +30,8 @@ def field_types(owner, field, declared, rules, verified_methods, specification):
         return [element], "checked-list-copy"
     special = specification["specialLists"].get(rule)
     require(special is not None and (owner, field) == (special["owner"], special["field"])
-            and special["template"] in verified_methods, "value-closure-unverified-list", [owner, field])
+            and special["templates"] and set(special["templates"]) <= set(verified_methods),
+            "value-closure-unverified-list", [owner, field])
     return special["elements"], rule
 
 
@@ -79,6 +80,8 @@ def controls(manifest, constructors, outcomes, specification):
         ("erase-native-assignment-boundary", "value-closure-unverified-list"),
         ("erase-mysql-drop-target-boundary", "value-closure-unverified-list"),
         ("erase-postgres-index-target-boundary", "value-closure-unverified-list"),
+        ("erase-postgres-table-column-normalization", "value-closure-unverified-list"),
+        ("erase-postgres-unique-key-normalization", "value-closure-unverified-list"),
         ("erase-writable-trigger-boundary", "value-closure-unverified-list"),
         ("erase-ordered-trigger-action-boundary", "value-closure-unverified-list"),
         ("change-external-definition", "value-closure-external-definition"),
@@ -107,6 +110,14 @@ def controls(manifest, constructors, outcomes, specification):
             after = None
         elif name == "erase-postgres-index-target-boundary":
             before = "Schema/Index/DropIndex::__construct"
+            mutated["postgres"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-postgres-table-column-normalization":
+            before = "Schema/CreateTable::__construct"
+            mutated["postgres"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-postgres-unique-key-normalization":
+            before = "Schema/Key/TableKeySet::close"
             mutated["postgres"]["checkedBoundaries"].remove(before)
             after = None
         elif name == "erase-writable-trigger-boundary":
