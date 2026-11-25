@@ -1,0 +1,125 @@
+{
+  "revision": "SemanticsIR/mysql-index-renames-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-native-index-policy-evidence-v2.json",
+    "mysql-alter-index-removal-evidence-v1.json"
+  ],
+  "requiredGrammar": [
+    "ALTER TABLE with a list containing one or more RENAME INDEX or RENAME KEY actions, optionally with algorithm and lock commands.",
+    "The initial complete B-tree index namespace is resolved on one absolute ordinary stock InnoDB table. Include persistent, temporary and temporary-shadow namespaces.",
+    "Native table-qualified index names follow the 5.7 grammar and must resolve to the selected owner. Later pinned grammars accept bare names."
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "runtimeProfile": "Native parameters, SQL mode empty, lower_case_table_names=0, utf8mb4, stock InnoDB with 16 KiB pages.",
+  "construction": {
+    "operands": "The resolved ordered source keys, requested exact destination identifiers, unmoved physical names, checked release and effective native policy.",
+    "owner": "All moves must share one resolved absolute owner and table lifetime. Direct and analyzed construction are checked before publication.",
+    "namespace": "Every source in the original physical index namespace is consumed at most once. Unmoved keys occupy their original names. Check native-folded uniqueness both before and after renaming. The final namespace may contain a name held by another moved source in the initial state.",
+    "capacity": "Require at least one move and at most 64 physical names in the original and resulting namespaces. Allow exact no-op and case-only moves.",
+    "names": "Names consist of 1 to 64 BMP characters with no trailing space or NUL. The primary key cannot be renamed, and no move can select a destination with the reserved native-folded PRIMARY name.",
+    "role": "Permit a named ordinary, unique or implicitly clustered unique B-tree source. Its prior field roles, direction, visibility and generating support persist.",
+    "policy": "Use the last algorithm and lock. A persistent rename can be in place, including rename of an implicit clustered unique key. COPY with NONE requires a temporary table. A temporary table refuses INPLACE. A rename of an index has no native INSTANT implementation.",
+    "release": "5.6 refuses the grammar and direct construction. 5.7 and later use the same typed operation for RENAME INDEX or RENAME KEY."
+  },
+  "observations": [
+    "Observe ordered parts, exact physical names, key type, uniqueness, visibility, table field metadata, rows, next generated value and the unaffected physical sibling where present.",
+    "Canonical SQL performs all moves in one ALTER TABLE. Compare both the original accepted SQL and the emitted SQL with the independent final namespace and data rule.",
+    "Detect swapped source identity through distinct ordered key parts. Observe a successful cycle, positive fresh and case-only renames, an absent or reused original source and an occupied final destination.",
+    "Observe native rejection class and whether the pre-statement transaction marker was committed."
+  ],
+  "finite": {
+    "lifetimes": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "widths": [
+      1,
+      2,
+      3,
+      8,
+      63,
+      64
+    ],
+    "topologies": [
+      "fresh",
+      "closed-cycle",
+      "open-chain"
+    ],
+    "orders": [
+      "forward",
+      "reverse"
+    ],
+    "nameBoundaries": [
+      0,
+      1,
+      64,
+      65
+    ],
+    "legacyAvailability": "Run registered 5.6 rejection controls for analysis and direct construction.",
+    "finiteOrder": "Cross life, width, topology and written order for each admitted release. A cycle at width one retains its source name. Widths below 64 retain an unrelated physical name.",
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      1891,
+      4057,
+      16273
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "assurance": {
+    "P01": "Check source identity on the original namespace and preserve exact, checked destination names.",
+    "P02": "Reject repeated or absent sources, result name conflicts, owner incoherence, reserved names, invalid capacities and unsupported release or policy.",
+    "P03": "Use closed immutable value roles and native identifiers.",
+    "P04": "Compose a single final namespace from initially resolved source moves and stable occupied keys.",
+    "P05": "Require detached lists, final value children and audited construction.",
+    "P06": "Emit one ALTER operation and compare measured metadata, transaction and data effects.",
+    "Q01": "Check all owning and local rules in restricted source shape and with independent typed negatives.",
+    "Q02": "Measure all fixed direct and analyzed finite identities and exact releases; include cycles, permitted qualifiers and policy.",
+    "Q03": "The initial namespace has distinct owners and keys; the resulting namespace is injective under native comparison.",
+    "Q04": "Observe native effects with source-sensitive catalog data and an applied mutation that changes the identity of a moved key.",
+    "Q05": "Audit exact distribution, fixed generated evidence, direct and analyzed installed layout and replay."
+  },
+  "initialFaults": [
+    "Resolve a later source against the result of earlier moves.",
+    "Disallow the occupied destination of an original source that moves in the same operation.",
+    "Allow a destination that collides with an unmoved key.",
+    "Discard a move from canonical SQL or swap two destinations and detect the changed catalog.",
+    "Alias a mutable slot in the stored move or unmoved list."
+  ],
+  "calibration": {
+    "profileScriptSha256": "d0b98c349c78002f025a315fcb3fb28dbfd2db93eb53c231b6b8e4120d78f044",
+    "nativeRows": {
+      "5.6.51": "a647ada6fcee50de86bd7806873da27f70a2294c95bbeb37147b3cd268d9ea7f",
+      "5.7.44": "e709f6bdaaa4fee39763222c6c4114ef31c6af89b78830371de151c0cc3ae421",
+      "8.0.44": "18a7456a7ed9d631a907b800c13ea9125957547ef1ac2518a4eec463bb710855",
+      "9.1.0": "c2529460cf4594cde38b51debee14e2f144abd7bfa78677286d3854d3fe2b3ca"
+    }
+  },
+  "trackedBeyondThisSlice": [
+    "Mixed rename, removal, visibility and addition change the final namespace together and remain separate required domains.",
+    "Foreign-key-backed owners, partitioned declarations, prefix and functional indexes, and FULLTEXT and SPATIAL indexes remain separate required domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/relnotes/mysql/5.7/en/news-5-7-1.html",
+    "https://dev.mysql.com/worklog/task/?id=6555",
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html"
+  ]
+}
