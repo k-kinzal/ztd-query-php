@@ -63,7 +63,7 @@ final class Select implements SemanticsIR
         public readonly ?Limit $limit = null,
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
-        (new SelectBounds())->check($results, $source, $where);
+        (new SelectBounds())->check($results, $source, $where, !$distinct && $orderBy === [] && $limit === null);
         if ($source instanceof Join) {
             foreach ($source->inputs() as $input) {
                 Check::input(!$input instanceof DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');

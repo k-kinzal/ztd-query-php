@@ -1,0 +1,265 @@
+{
+  "revision": "SemanticsIR/mysql-generated-view-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-generated-view-headings-v2.json",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910, 'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewQueryBounds())->check($query, $name, $algorithm);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($columns) <= 4096, 'A MySQL view permits at most 4096 result columns.');",
+        "$heading = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading())->check($heading, $query);",
+        "$seen = [];",
+        "$names = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "foreach ($heading as $column) {",
+        "    $key = $names->key($column->name->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'The view heading cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $heading;"
+      ]
+    },
+    "Schema/View/CreateView::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$start = $this->policy === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Replace ? 'CREATE OR REPLACE' : 'CREATE';",
+        "$preserve = $this->policy === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve ? 'IF NOT EXISTS ' : '';",
+        "$target = $start . ' ALGORITHM=' . $this->algorithm->value . ' SQL SECURITY ' . $this->security->value . ' VIEW ' . $preserve . $this->name->quoted();",
+        "$renderer = new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectSql();",
+        "if ((new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading())->usesImplicit($this->columns, $this->query->release)) {",
+        "    $names = [];",
+        "    foreach ($this->columns as $position => $column) {",
+        "        $name = $this->query->columns[$position]->name;",
+        "        $names[] = $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias ? $name : $column->name;",
+        "    }",
+        "    return $target . ' AS ' . $renderer->render($this->query, viewNames: $names);",
+        "}",
+        "$names = [];",
+        "foreach ($this->columns as $column) {",
+        "    $name = $column->name;",
+        "    $names[] = $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias ? $name->aliasSql() : $name->quoted();",
+        "}",
+        "return $target . ' (' . implode(', ', $names) . ') AS ' . $renderer->render($this->query, true, true);"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definition = $statement->definition;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->definer === null && $definition->check === null && !($statement->orReplace && $definition->ifNotExists), 'CREATE VIEW needs an implicit definer and one admitted creation policy without a check option.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'A checked view requires one ordinary SELECT block.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($operation->context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE VIEW requires the native case-sensitive relation profile.');",
+        "$schema = ($definition->name->schema ?? $operation->context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED && $definition->name->catalog === null, 'CREATE VIEW requires an absolute view identity.');",
+        "$name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($definition->name->name->value));",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewProjectionAliases();",
+        "foreach ($definition->query->items as $item) {",
+        "    if ($item instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression && $item->alias !== null) {",
+        "        $aliases->check($item->alias->value);",
+        "    }",
+        "}",
+        "$query = (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->lower($operation, $definition->query);",
+        "$columns = [];",
+        "if ($definition->columns === null) {",
+        "    $fact = $operation->facts->query($definition->query);",
+        "    $fields = (new \\SqlSemantics\\Platform\\MySql\\Rules\\TableDefinition\\TableDeclaration())->settled($fact);",
+        "    $assign = new \\SqlSemantics\\Platform\\MySql\\Rules\\TableDefinition\\ViewColumns($operation->context->profile);",
+        "    $generated = $assign->generated($definition->query, $fields);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($generated) === count($query->columns), 'A view heading must resolve every result position.');",
+        "    $labels = array_map(static fn(\\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn $column): string => $column->name->value, $query->columns);",
+        "    foreach ($assign->allocate($labels, $generated) as $label) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($label !== null, 'A view heading must resolve every result name.');",
+        "        $columns[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($label));",
+        "    }",
+        "} else {",
+        "    $names = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading();",
+        "    foreach ($definition->columns as $column) {",
+        "        $columns[] = $names->explicit($column->value, $query->release);",
+        "    }",
+        "}",
+        "$policy = match (true) {",
+        "    $statement->orReplace => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Replace,",
+        "    $definition->ifNotExists => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve,",
+        "    default => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::RequireNew,",
+        "};",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\CreateView($name, $query, $columns, $policy, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::from($definition->algorithm->value ?? 'UNDEFINED'), \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewSecurity::from($definition->security->value ?? 'DEFINER'));"
+      ]
+    },
+    "Schema/View/ViewCatalogHeading::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$legacy = $this->legacy($query->release);",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewProjectionAliases();",
+        "$native = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "$implicit = $this->usesImplicit($columns, $query->release);",
+        "foreach ($columns as $position => $column) {",
+        "    $name = $column->name;",
+        "    if ($legacy) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias || $native->prefix($name->value) === $name->value, 'A legacy view heading needs a native effective name or its requested alias.');",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier, 'A modern view heading uses an exact column name.');",
+        "    if (!$implicit) {",
+        "        $aliases->check($name->value);",
+        "        continue;",
+        "    }",
+        "    $body = $query->columns[$position]->name;",
+        "    if ($body instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($body->value === $name->value, 'An empty modern view heading must preserve each requested body name.');",
+        "        continue;",
+        "    }",
+        "    $aliases->check($name->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($native->prefix($name->value) === $name->value, 'An inherited view heading needs an effective body name.');",
+        "}"
+      ]
+    },
+    "SelectSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $name = $viewNames[$slot] ?? $column->name;",
+        "    $label = $name->value;",
+        "    $retain = $retainRequested && $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias;",
+        "    if ($localNames && !$retain) {",
+        "        $alias = ' AS ' . $this->localColumn($slot);",
+        "    } elseif ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || $label !== ltrim($label, \"\\x00.. \")) {",
+        "        $alias = '';",
+        "    } elseif ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        $alias = ' AS ' . $name->aliasSql();",
+        "    } else {",
+        "        $alias = ' AS ' . $name->quoted();",
+        "    }",
+        "    $items[] = $this->expression($column->expression, $source) . $alias;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "} elseif ($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $select->orderBy !== []) {",
+        "    $sql .= ' FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single`';",
+        "} elseif (($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744) && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {",
+        "    $sql .= ' FROM DUAL';",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "return $sql . (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultSql())->render($select);"
+      ]
+    },
+    "Select::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$results = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectBounds())->check($results, $source, $where, !$distinct && $orderBy === [] && $limit === null);",
+        "if ($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join) {",
+        "    foreach ($source->inputs() as $input) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$input instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');",
+        "    }",
+        "}",
+        "$this->columns = $results;",
+        "$this->orderBy = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($orderBy, \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\Order::class, 'ORDER BY needs an owned list of output keys.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($this->orderBy) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');",
+        "foreach ($this->orderBy as $key) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($key->position <= count($results), 'An output order position must belong to the projection.');",
+        "}"
+      ]
+    },
+    "SelectBounds::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$wide = count($results) > 1024;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$wide || $ordinaryProjection && $source === null && $where === null && count($results) <= 4097, 'A SELECT with more than 1024 results must be an independent projection of at most 4097 signed literals.');",
+        "$inputs = $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$position = 0;",
+        "foreach ($results as $result) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$wide || $result->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $result->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral, 'A SELECT with more than 1024 results must be an independent projection of at most 4097 signed literals.');",
+        "    [$nodes, $position] = $this->checkResult($result, $inputs, $scope, $nodes, $position);",
+        "}"
+      ]
+    },
+    "Ordering/LocalProjectionAliases::checkDerived": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$needsInherited = $this->needsInherited($child);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$child instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || count($child->columns) <= 1024, 'A local definition can have at most 1024 result columns.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$needsInherited || $inherited, 'A derived table with requested aliases requires MySQL 8.0 or later.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$inherited || $needsInherited, 'Retaining inherited derived aliases requires a legacy SELECT with requested aliases.');",
+        "if ($inherited) {",
+        "    $this->check($child);",
+        "}"
+      ]
+    },
+    "Rows/Compound::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($left->profileId() === $right->profileId(), 'Compound operands must have the same language profile.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundShape::width($left) <= 1024, 'A compound can have at most 1024 result columns.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundShape::width($left) === \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundShape::width($right), 'Compound operands must have the same width.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundShape::arms($left) + \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundShape::arms($right) <= 64, 'A compound can expand to at most 64 query arms.');",
+        "foreach ([$left, $right] as $operand) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || $operand->orderBy === [] && $operand->limit === null, 'A compound arm requires an unbounded projection without ordering.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundShape::depth($operand) < 16, 'A compound has at most 16 nested operations.');",
+        "}",
+        "if (\\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundShape::legacy($left)) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($operator === \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\CompoundOperator::Union && $right instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select, 'MySQL 5.x compounds require a left-associated UNION.');",
+        "}"
+      ]
+    },
+    "Rows/With/WithDefinition::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$body instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || count($body->columns) <= 1024, 'A WITH definition can have at most 1024 result columns.');"
+      ]
+    },
+    "Rows/With/WithScope::width": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($query instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithRead) {",
+        "    $width = $headings[$query->definition] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($width !== null, 'A local read must select a visible WITH definition.');",
+        "    foreach ($query->columns as $column) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->slot < $width, 'A local read must select an existing WITH output slot.');",
+        "    }",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query->profileId() === $profile, 'Each WITH query must use its owning language profile.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$query instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || count($query->columns) <= 1024, 'A WITH query can have at most 1024 result columns.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$query instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || $query->orderBy === [] && $query->limit === null, 'An ordinary WITH projection needs unbounded unordered SELECT members.');",
+        "}",
+        "return $query instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $query->width() : count($query->columns);"
+      ]
+    }
+  }
+}

@@ -58,14 +58,12 @@ final class ViewCatalogHeading
                 continue;
             }
             $body = $query->columns[$position]->name;
-            Check::input(
-                ($body instanceof Identifier || $body instanceof RequestedResultAlias) && $body->value === $name->value,
-                'An empty modern view heading must inherit each published body name.'
-            );
-            if ($body instanceof Identifier) {
-                $aliases->check($body->value);
-                Check::input($native->prefix($body->value) === $body->value, 'An inherited view heading needs an effective body name.');
+            if ($body instanceof RequestedResultAlias) {
+                Check::input($body->value === $name->value, 'An empty modern view heading must preserve each requested body name.');
+                continue;
             }
+            $aliases->check($name->value);
+            Check::input($native->prefix($name->value) === $name->value, 'An inherited view heading needs an effective body name.');
         }
     }
 

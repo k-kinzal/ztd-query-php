@@ -20,6 +20,34 @@ function viewAliasWarnings(PDO $pdo): array
     }
 }
 
+function observeAliasRows(PDOStatement $data): array
+{
+    $fields = [];
+    for ($index = 0; $index < $data->columnCount(); ++$index) {
+        $metadata = $data->getColumnMeta($index);
+        $fields[] = [bin2hex($metadata['name']), $metadata['native_type'], $metadata['len'], $metadata['flags']];
+    }
+    $rows = $data->fetchAll(PDO::FETCH_NUM);
+    $data->closeCursor();
+
+    return [$fields, $rows];
+}
+
+function observeStandaloneProjection(PDO $pdo, string $sql, bool $text): array
+{
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+    $pdo->query('SELECT value FROM ir_fixture.sem_ir_view_alias_reset LIMIT 1')->closeCursor();
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $text);
+    $statement = $pdo->prepare($sql);
+    $prepare = viewAliasWarnings($pdo);
+    $statement->execute();
+    [$fields, $rows] = observeAliasRows($statement);
+    $execute = viewAliasWarnings($pdo);
+
+    return ['status' => 'rows', 'fields' => $fields, 'rows' => $rows,
+        'prepareWarnings' => $prepare, 'executeWarnings' => $execute];
+}
+
 function readAliasView(PDO $pdo, bool $observeColumns): array
 {
     $catalog = $pdo->query(
@@ -31,13 +59,7 @@ function readAliasView(PDO $pdo, bool $observeColumns): array
         throw new RuntimeException('The native view definition did not identify its algorithm.');
     }
     $data = $pdo->query('SELECT * FROM ir_fixture.ir_cv_main');
-    $fields = [];
-    for ($index = 0; $index < $data->columnCount(); ++$index) {
-        $metadata = $data->getColumnMeta($index);
-        $fields[] = [bin2hex($metadata['name']), $metadata['native_type'], $metadata['len'], $metadata['flags']];
-    }
-    $rows = $data->fetchAll(PDO::FETCH_NUM);
-    $data->closeCursor();
+    [$fields, $rows] = observeAliasRows($data);
 
     $readWarnings = viewAliasWarnings($pdo);
     $result = ['catalog' => $catalog, 'algorithm' => $algorithm[1], 'definitionSql' => $definition[1],
@@ -87,6 +109,10 @@ function observeViewAliases(PDO $pdo, array $input): array
         return ['status' => 'fixture'];
     }
     $sql = $input['sql'];
+    if (($input['standaloneProjection'] ?? false) === true && str_starts_with($sql, 'SELECT ')) {
+        return ['native-prepared' => observeStandaloneProjection($pdo, $sql, false),
+            'text' => observeStandaloneProjection($pdo, $sql, true)];
+    }
     if (!str_starts_with($sql, 'CREATE ') || !preg_match('/ VIEW (?:ir_fixture\.ir_cv_main|`ir_fixture`\.`ir_cv_main`) /', $sql)) {
         return ['status' => 'outside-view-alias-observer-scope'];
     }

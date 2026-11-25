@@ -42,14 +42,23 @@ final class SelectBounds
         array $results,
         TableSource|Join|null $source,
         BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|TruthTest|null $where = null,
+        bool $ordinaryProjection = false,
     ): void {
-        Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
+        $wide = count($results) > 1024;
+        Check::input(
+            !$wide || ($ordinaryProjection && $source === null && $where === null && count($results) <= 4097),
+            'A SELECT with more than 1024 results must be an independent projection of at most 4097 signed literals.'
+        );
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
         $scope = new OccurrenceScope();
         $scope->predicate($where, $inputs);
         $nodes = 0;
         $position = 0;
         foreach ($results as $result) {
+            Check::input(
+                !$wide || $result->expression instanceof IntegerLiteral || $result->expression instanceof ProjectedIntegerLiteral,
+                'A SELECT with more than 1024 results must be an independent projection of at most 4097 signed literals.'
+            );
             [$nodes, $position] = $this->checkResult($result, $inputs, $scope, $nodes, $position);
         }
     }

@@ -41,14 +41,14 @@ final class ViewColumnsTest extends TestCase
         $select = $operation->statement;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertSame([false, false, true], (new ViewColumns($operation->context->profile, $operation->context->columnNames))->generated($select, $operation->fields()->items ?? []));
+        self::assertSame([false, false, true], (new ViewColumns($operation->context->profile))->generated($select, $operation->fields()->items ?? []));
     }
 
     public function testBlockAnswersTheFirstQueryBlock(): void
     {
         $operation = (new Inspection())->inspect('(SELECT 1 AS a) UNION SELECT 2');
         $values = (new Inspection())->inspect('VALUES ROW(1)')->statement;
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns($operation->context->profile);
 
         self::assertInstanceOf(Query::class, $operation->statement);
         self::assertInstanceOf(Query::class, $values);
@@ -59,7 +59,7 @@ final class ViewColumnsTest extends TestCase
     public function testUniqueAddsTheCounterWhenTheNameIsTaken(): void
     {
         $operation = (new Inspection())->inspect('SELECT 1');
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns($operation->context->profile);
 
         self::assertSame('Name_exp_1_a', $columns->unique(['Name_exp_a', 'a', 'a'], 2, 2, 'a'));
     }
@@ -67,10 +67,17 @@ final class ViewColumnsTest extends TestCase
     public function testCutKeepsSixtyFourCharactersOrTheLegacyBytes(): void
     {
         $operation = (new Inspection())->inspect('SELECT 1');
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns($operation->context->profile);
 
         self::assertSame(str_repeat('a', 64), $columns->cut(str_repeat('a', 70), false));
         self::assertSame(str_repeat('a', 191), $columns->cut(str_repeat('a', 200), true));
         self::assertEquals(new Name('x'), new Name($columns->cut('x', false)));
+    }
+    public function testAllocateMovesTheEarlierGeneratedNameWhenTheOtherNameIsFixed(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1');
+        $assign = new ViewColumns($operation->context->profile);
+
+        self::assertSame(['Name_exp_K', 'k'], $assign->allocate(['K', 'k'], [true, false]));
     }
 }

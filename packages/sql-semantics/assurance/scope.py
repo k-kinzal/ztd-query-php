@@ -44,6 +44,8 @@ CONTRACTS = {
     "mysql-native-local-column-names-v1.json": "079088225b5a90cf54915864f4381557629eb83160e3e469b69590106c630b36",
     "mysql-create-view-output-names-v1.json": "6aa906b27141bcc0cd2443fe78a3aa5f13fd64b414e6884840bc6b497f3b3e17",
     "mysql-create-view-output-names-v2.json": "b46218c187468ced7737f36cf10240e2d9dbb0e5629400eb5c1458e09198830e",
+    "mysql-generated-view-headings-v1.json": "f83e4818dcc190c71cdf3f9775bf2d67628368b33a07f45112174fdab5ad7b0d",
+    "mysql-generated-view-headings-v2.json": "e1f34fa97cc20a3557b20e1747af99ebef0c4e80ae42129e3ddbcd27e9e98511",
     "mysql-create-view-projection-alias-v1.json": "fbb47880cde2e45f72899d6bf18abc720c75fdf9fc2587bd7f02bc447486eecf",
     "mysql-signed-casts-v2.json": "b6a092682ba55ea4ca044c0131d35612de5cb42a8d85130e2834bb8ea395c069",
     "mysql-unsigned-casts-v3.json": "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b",

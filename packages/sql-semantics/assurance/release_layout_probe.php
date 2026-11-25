@@ -282,6 +282,81 @@ function observeMysqlPersistentOutputNames(SqlSemantics\Platform\MySql\Semantics
     return $result;
 }
 
+function observeMysqlGeneratedViewHeadings(SqlSemantics\Platform\MySql\Semantics $modern): array
+{
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('numbered')
+    );
+    $result = [];
+    foreach ([[$modern, 'Name_exp_'], [new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'), 'My_exp_']] as [$semantics, $prefix]) {
+        $reserved = strtolower($prefix) . '1';
+        $sql = 'CREATE VIEW app.numbered AS SELECT 1, 1, 7 AS `' . $reserved . '`, 1';
+        $analyzed = $semantics->analyze($sql);
+        [$batch] = $semantics->analyzeAll($sql);
+        $number = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+            new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('1'), new SqlSemantics\Platform\MySql\Ir\Identifier('1')
+        );
+        $fixed = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+            new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('7'), new SqlSemantics\Platform\MySql\Ir\Identifier($reserved)
+        );
+        $query = new SqlSemantics\Platform\MySql\Ir\Select([$number, $number, $fixed, $number], release: $semantics->profile()->grammar);
+        $fields = ['1', $prefix . '1_1', $reserved, $prefix . '2_1'];
+        $columns = array_map(static fn (string $name): SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn =>
+            new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn(new SqlSemantics\Platform\MySql\Ir\Identifier($name)), $fields);
+        $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView($target, $query, $columns);
+        $result[] = [$analyzed == $direct, $analyzed == $batch,
+            array_map(static fn ($column): string => $column->name->value, $analyzed->columns), $analyzed->toString()];
+    }
+
+    return $result;
+}
+
+function observeMysqlWideProjectionConsumers(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $integer = new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('7');
+    $targetName = new SqlSemantics\Platform\MySql\Ir\Identifier('destination');
+    $schema = new SqlSemantics\Platform\MySql\Ir\Identifier('app');
+    $names = [];
+    $results = [];
+    for ($position = 0; $position < 1025; ++$position) {
+        $name = new SqlSemantics\Platform\MySql\Ir\Identifier('field_' . $position);
+        $names[] = $name;
+        $results[] = new SqlSemantics\Platform\MySql\Ir\ResultColumn($integer, $name);
+    }
+    $release = $semantics->profile()->grammar;
+    $wide = new SqlSemantics\Platform\MySql\Ir\Select($results, release: $release);
+    $small = new SqlSemantics\Platform\MySql\Ir\Select([$results[0]], release: $release);
+    $smallDefinition = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($small);
+    $reference = new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, $names[0]);
+    $target = new SqlSemantics\Platform\MySql\Ir\TableSource($schema, $targetName, $names);
+    $table = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+        new SqlSemantics\Platform\MySql\Ir\Schema\TableName($schema, $targetName),
+        SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable
+    );
+    $operators = [
+        'derived' => static fn () => new SqlSemantics\Platform\MySql\Ir\From\DerivedSource($wide),
+        'local' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($wide, [$reference]),
+        'with-definition' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($wide),
+        'with-body' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$smallDefinition], $wide, $release),
+        'compound' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\Compound(
+            $wide, SqlSemantics\Platform\MySql\Ir\Rows\CompoundOperator::Union, true, $wide
+        ),
+        'insert-destination' => static fn () => new SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery($target, $wide),
+        'innodb-record' => static fn () => new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($table, $wide),
+    ];
+    $observed = [];
+    foreach ($operators as $role => $construct) {
+        try {
+            $construct();
+            throw new RuntimeException('A wide literal projection reached an unverified placement.');
+        } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+            $observed[$role] = $error->getMessage();
+        }
+    }
+
+    return $observed;
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -1364,6 +1439,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'MySql' && $role === 'Schema\\View\\CreateView') {
             $details['createViewAlias'] = observeMysqlCreateViewProjectionAlias($semantics);
             $details['persistentOutputNames'] = observeMysqlPersistentOutputNames($semantics);
+            $details['generatedViewHeadings'] = observeMysqlGeneratedViewHeadings($semantics);
+            $details['wideProjectionConsumers'] = observeMysqlWideProjectionConsumers($semantics);
             $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
             $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
             $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,

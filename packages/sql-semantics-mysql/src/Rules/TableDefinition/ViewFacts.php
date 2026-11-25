@@ -37,11 +37,15 @@ final class ViewFacts
             $derivation->report(new ViewColumnCount(count($definition->columns), count($output->projection)));
         }
         $declaration = new TableDeclaration();
-        $names = $definition->columns ?? (new ViewColumns($derivation->context->profile, $derivation->context->columnNames))->names($definition->query, $declaration->settled($output));
+        $fields = $declaration->settled($output);
+        $heading = new ViewColumns($derivation->context->profile);
+        $names = $definition->columns ?? $heading->names($definition->query, $fields);
         $table = $declaration->view($definition->name, $output, $names, $definition->columns !== null, $derivation->context->profile);
         if ($definition->columns === null) {
-            foreach ($names as $name) {
-                if ($name !== null && !(new ColumnNameRule())->valid($name->value)) {
+            $generated = $heading->generated($definition->query, $fields);
+            foreach ($fields as $position => $field) {
+                $name = $field->name;
+                if (!$generated[$position] && $name !== null && !(new ColumnNameRule())->valid($name->value)) {
                     $derivation->report(new IncorrectColumnName($name));
                 }
             }

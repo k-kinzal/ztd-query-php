@@ -32,6 +32,7 @@ final class Compound implements SemanticsIR
         public readonly Select|self $right,
     ) {
         Check::input($left->profileId() === $right->profileId(), 'Compound operands must have the same language profile.');
+        Check::input(CompoundShape::width($left) <= 1024, 'A compound can have at most 1024 result columns.');
         Check::input(CompoundShape::width($left) === CompoundShape::width($right), 'Compound operands must have the same width.');
         Check::input(CompoundShape::arms($left) + CompoundShape::arms($right) <= 64, 'A compound can expand to at most 64 query arms.');
         foreach ([$left, $right] as $operand) {

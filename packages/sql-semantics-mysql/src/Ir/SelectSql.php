@@ -41,22 +41,24 @@ final class SelectSql
 
     /**
      * Renders the result columns in order, then the optional source and filter.
+     * @param list<Identifier|RequestedResultAlias> $viewNames Names checked by a persistent view with an inferred heading
      */
-    public function render(Select $select, bool $localNames = false, bool $retainRequested = false): string
+    public function render(Select $select, bool $localNames = false, bool $retainRequested = false, array $viewNames = []): string
     {
         $source = $select->source;
         $items = [];
         foreach ($select->columns as $slot => $column) {
-            $label = $column->name->value;
-            $retain = $retainRequested && $column->name instanceof RequestedResultAlias;
+            $name = $viewNames[$slot] ?? $column->name;
+            $label = $name->value;
+            $retain = $retainRequested && $name instanceof RequestedResultAlias;
             if ($localNames && !$retain) {
                 $alias = ' AS ' . $this->localColumn($slot);
-            } elseif ($column->name instanceof IntrinsicIntegerName || $label !== ltrim($label, "\x00..\x20\x7f")) {
+            } elseif ($name instanceof IntrinsicIntegerName || $label !== ltrim($label, "\x00..\x20\x7f")) {
                 $alias = '';
-            } elseif ($column->name instanceof RequestedResultAlias) {
-                $alias = ' AS ' . $column->name->aliasSql();
+            } elseif ($name instanceof RequestedResultAlias) {
+                $alias = ' AS ' . $name->aliasSql();
             } else {
-                $alias = ' AS ' . $column->name->quoted();
+                $alias = ' AS ' . $name->quoted();
             }
             $items[] = $this->expression($column->expression, $source) . $alias;
         }

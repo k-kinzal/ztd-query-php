@@ -183,7 +183,7 @@ def controls():
 def faults(_, tag):
     item = warnings_example(tag)
     return [RenderFault("drop-native-alias-diagnostics", "sql-semantics-mysql/src/Ir/SelectSql.php",
-                        "$column->name->aliasSql()", "'`' . str_replace('`', '``', $label) . '`'",
+                        "$name->aliasSql()", "'`' . str_replace('`', '``', $label) . '`'",
                         item, MEANING, law.direct(item))]
 
 

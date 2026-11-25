@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v202.json"
-CONTRACT = "e41ca459901355da9a4940b48b1333e925d42a7c0ef768454e26987db035f1d8"
+CONTRACT_NAME = "release-layout-v203.json"
+CONTRACT = "08bda540b5bcd7e1c3cbbb0ceb59c255fd0d7786d343e06615ec9dba6da88920"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -565,6 +565,25 @@ def verify_probe(raw, catalog):
                 [True, True, " K", None, explicit],
                 [True, True, "", None, header + " AS SELECT 17 AS ` \x7f`"],
             ], "installed-mysql-persistent-output-names-mismatch", supplied)
+            generated = item.get("generatedViewHeadings")
+            want = []
+            for prefix in ("Name_exp_", "My_exp_"):
+                fields = ["1", prefix + "1_1", prefix.lower() + "1", prefix + "2_1"]
+                heading = ", ".join(f"`{name}`" for name in fields)
+                sql = (f"CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `app`.`numbered` ({heading}) "
+                       "AS SELECT 1 AS `__ztd_c0`, 1 AS `__ztd_c1`, 7 AS `__ztd_c2`, 1 AS `__ztd_c3`")
+                want.append([True, True, fields, sql])
+            require(generated == want, "installed-mysql-generated-view-headings-mismatch", generated)
+            consumers = item.get("wideProjectionConsumers")
+            require(consumers == {
+                "derived": "A local definition can have at most 1024 result columns.",
+                "local": "A local definition can have at most 1024 result columns.",
+                "with-definition": "A WITH definition can have at most 1024 result columns.",
+                "with-body": "A WITH query can have at most 1024 result columns.",
+                "compound": "A compound can have at most 1024 result columns.",
+                "insert-destination": "A query INSERT needs between one and 1024 target columns.",
+                "innodb-record": "The effective InnoDB table heading can have at most 1017 columns.",
+            }, "installed-mysql-wide-projection-consumers-mismatch", consumers)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("mysqlSignedComparisonWidths") == [True, True, True, ["val", "lo", "hi"],
                 [["BIGINT", True], ["SMALLINT", False], ["MEDIUMINT", True]],

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Rows\With;
 
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -26,5 +27,6 @@ final class WithDefinition
      */
     public function __construct(public readonly Select|LocalProjection|WithProjection|WithRead $body)
     {
+        Check::input(!$body instanceof Select || count($body->columns) <= 1024, 'A WITH definition can have at most 1024 result columns.');
     }
 }

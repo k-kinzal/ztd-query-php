@@ -54,6 +54,7 @@ final class LocalProjectionAliases
     public function checkDerived(Select|LocalProjection|WithProjection $child, bool $inherited = false): void
     {
         $needsInherited = $this->needsInherited($child);
+        Check::input(!$child instanceof Select || count($child->columns) <= 1024, 'A local definition can have at most 1024 result columns.');
         Check::input(!$needsInherited || $inherited, 'A derived table with requested aliases requires MySQL 8.0 or later.');
         Check::input(!$inherited || $needsInherited, 'Retaining inherited derived aliases requires a legacy SELECT with requested aliases.');
         if ($inherited) {

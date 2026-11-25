@@ -2030,6 +2030,7 @@ try {
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
             ['mysql-inherited-local-alias-binding-v2.json', '461369c922f4d7948d0e75c32497fb97203df5e61d27c46cf0c02af891692919', 'MySQL inherited alias binding'],
+            ['mysql-generated-view-binding-v1.json', '35d4c74d690a17924ca138e56ba9a67b286063195cb0e80294b0b51ac2693d7e', 'MySQL generated view binding'],
         ],
     };
     $providedBindings = [];

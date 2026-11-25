@@ -29,6 +29,7 @@ final class WithScope
             }
         } else {
             Check::input($query->profileId() === $profile, 'Each WITH query must use its owning language profile.');
+            Check::input(!$query instanceof Select || count($query->columns) <= 1024, 'A WITH query can have at most 1024 result columns.');
             Check::input(!$query instanceof Select || ($query->orderBy === [] && $query->limit === null), 'An ordinary WITH projection needs unbounded unordered SELECT members.');
         }
 

@@ -48,6 +48,7 @@ final class CreateView implements SemanticsIR
             'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.'
         );
         (new ViewQueryBounds())->check($query, $name, $algorithm);
+        Check::input(count($columns) <= 4096, 'A MySQL view permits at most 4096 result columns.');
         $heading = Check::listOf($columns, ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);
         Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');
         (new ViewCatalogHeading())->check($heading, $query);
@@ -80,7 +81,13 @@ final class CreateView implements SemanticsIR
             . $preserve . $this->name->quoted();
         $renderer = new SelectSql();
         if ((new ViewCatalogHeading())->usesImplicit($this->columns, $this->query->release)) {
-            return $target . ' AS ' . $renderer->render($this->query);
+            $names = [];
+            foreach ($this->columns as $position => $column) {
+                $name = $this->query->columns[$position]->name;
+                $names[] = $name instanceof RequestedResultAlias ? $name : $column->name;
+            }
+
+            return $target . ' AS ' . $renderer->render($this->query, viewNames: $names);
         }
         $names = [];
         foreach ($this->columns as $column) {
