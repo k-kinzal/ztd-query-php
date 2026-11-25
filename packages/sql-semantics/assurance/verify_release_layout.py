@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v162.json"
-CONTRACT = "e08ba0a15132f872f6fca73fec67df2a142cae6a92c3ae12f9237dab7363a9f5"
+CONTRACT_NAME = "release-layout-v163.json"
+CONTRACT = "4fe35d7cec31274f710902c7cec210e1f42c6299fb19b74625cec818c0c24451"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -734,6 +734,11 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlIndexForeignRequirements") == [
                 dropping_fk, dropping_fk, "loose_support", preserves_fk, [blocked_fk] * 3,
             ], "installed-mysql-index-foreign-key-support-mismatch", item)
+            copied_fk = "DROP INDEX `Actual_Fk` ON `app`.`generated_copy`"
+            require(item.get("mysqlImplicitForeignIndexes") == [
+                "Actual_Fk", copied_fk, copied_fk, "ALTER TABLE `app`.`generated_child` ALTER INDEX `Actual_Fk` INVISIBLE",
+                [blocked_fk, "CREATE INDEX requires an unoccupied native index name."],
+            ], "installed-mysql-implicit-foreign-key-index-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\DropIndexes"):
             drop_set = "ALTER TABLE `app`.`batch_index` DROP INDEX `PRIMARY`, DROP INDEX `by_a`"
             require(item.get("mysqlAtomicIndexRemoval") == [

@@ -804,6 +804,10 @@ def inventory(root):
             for alternative in signatures & index_removal:
                 related[alternative] = (*related.get(alternative, ()), "mysql-drop-native-index-evidence-v3.json")
                 related[alternative] = (*related.get(alternative, ()), "mysql-index-foreign-keys-evidence-v1.json")
+            implicit = {entry for entry in rules.get("table_constraint_def", ()) if "FOREIGN" in entry}
+            implicit |= {entry for entry in rules.get("opt_references", ()) if entry.endswith(": references")}
+            for alternative in signatures & (implicit | index_removal):
+                related[alternative] = (*related.get(alternative, ()), "mysql-implicit-foreign-index-evidence-v1.json")
             for alternative in signatures & (btree_forms | index_removal):
                 related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v2.json")
             for rule in ("alter_algorithm_option", "alter_lock_option", "opt_index_lock_and_algorithm", "opt_index_lock_algorithm"):

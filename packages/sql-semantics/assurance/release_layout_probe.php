@@ -2416,6 +2416,28 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlIndexForeignRequirements'] = [
                 $kept->toString(), $rebuilt->toString(), $requirement->keys[1]->value, $changed->toString(), $failures,
             ];
+            $declared = $semantics->context([
+                'CREATE TABLE app.generated_parent (a INT PRIMARY KEY)',
+                'CREATE TABLE app.generated_child (A INT, b INT, z INT PRIMARY KEY, KEY decoy (b), CONSTRAINT Actual_Fk FOREIGN KEY written_key (a) REFERENCES generated_parent(a))',
+                'CREATE TABLE app.generated_copy LIKE app.generated_child',
+            ]);
+            $copy = $semantics->analyze('DROP INDEX actual_fk ON app.generated_copy', $declared);
+            $copyDirect = new $dropType($copy->target, [], $copy->release);
+            $hide = $semantics->analyze('ALTER TABLE app.generated_child ALTER INDEX actual_fk INVISIBLE', $declared);
+            $unavailable = [];
+            foreach ([
+                'DROP INDEX actual_fk ON app.generated_child',
+                'CREATE INDEX actual_fk ON app.generated_child (b)',
+            ] as $query) {
+                try {
+                    $semantics->analyze($query, $declared);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $unavailable[] = $error->getMessage();
+                }
+            }
+            $details['mysqlImplicitForeignIndexes'] = [
+                $copy->target->name->value, $copy->toString(), $copyDirect->toString(), $hide->toString(), $unavailable,
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndexes') {
             $keys = $result->targets;

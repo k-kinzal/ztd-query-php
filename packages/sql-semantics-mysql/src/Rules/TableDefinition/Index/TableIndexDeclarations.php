@@ -9,15 +9,12 @@ use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexDeclaration;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\PhysicalIndexKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
-use SqlSemantics\Platform\MySql\Rules\TableDefinition\ForeignKeyDeclarations;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 
 /**
  * Resolves physical index names from the ordered declaration of an ordinary table.
- *
  * @visibility SqlSemantics
  */
 final class TableIndexDeclarations
@@ -32,39 +29,59 @@ final class TableIndexDeclarations
         if ($definition->partitioning !== null) {
             return null;
         }
-        $case = new NativeIdentifierCase();
         $candidates = new TableIndexCandidates();
         $columnNames = $candidates->fields($columns);
         if ($columnNames === null) {
             return null;
         }
-        $used = [];
-        $firstCandidate = null;
+        $explicit = [];
         foreach ($definition->elements as $element) {
-            $items = $candidates->keys($element, $columnNames);
+            $items = $candidates->keys($element, $columnNames, $release);
             if ($items === null) {
                 return null;
             }
-            foreach ($items as [$kind, $name, $first, $ordinary, $clusterCandidate, $support, $leadingFields]) {
-                $resolved = $name ?? ($first === null ? null : (new IndexNameAllocation())->generated($first, $used, $release));
-                if ($resolved === null || preg_match('/\A[^\x00\x{10000}-\x{10FFFF}]{1,64}(?<! )\z/u', $resolved->value) !== 1) {
-                    return null;
-                }
-                $key = $case->fold($resolved->value);
-                if (isset($used[$key]) || ($key === 'primary') !== ($kind === IndexKind::Primary)) {
-                    return null;
-                }
-                $backing = in_array($kind, [IndexKind::Primary, IndexKind::Unique, IndexKind::Index], true) ? $support : null;
-                $used[$key] = new IndexDeclaration($resolved, PhysicalIndexKind::from($kind->value), $ordinary, false, $backing, $leadingFields, $clusterCandidate);
-                if ($clusterCandidate) {
-                    $firstCandidate ??= $key;
-                }
+            $explicit[] = $items;
+        }
+        $implicit = (new ImplicitForeignIndexCandidates())->collect($definition, $columnNames, $explicit, $release);
+        if ($implicit === null) {
+            return null;
+        }
+        foreach ($implicit as $position => $candidate) {
+            $explicit[$position][] = $candidate;
+        }
+
+        return $this->allocate(array_merge(...$explicit), count(array_filter(array_column($columnNames, 2))), $release);
+    }
+
+    /**
+     * Assigns each retained physical name in the declared order and marks the clustered key.
+     * @param list<IndexCandidate> $candidates The complete ordered physical keys
+     * @return list<IndexDeclaration>|null
+     */
+    public function allocate(array $candidates, int $generatingFields, GrammarRelease $release): ?array
+    {
+        $case = new NativeIdentifierCase();
+        $allocate = new IndexNameAllocation();
+        $used = [];
+        $firstCandidate = null;
+        foreach ($candidates as $candidate) {
+            $first = $candidate->firstField;
+            $name = $candidate->writtenName ?? ($first === null ? null : $allocate->generated($first, $used, $release));
+            if ($name === null || preg_match('/\A[^\x00\x{10000}-\x{10FFFF}]{1,64}(?<! )\z/u', $name->value) !== 1) {
+                return null;
+            }
+            $key = $case->fold($name->value);
+            if (isset($used[$key]) || ($key === 'primary') !== ($candidate->kind === IndexKind::Primary)) {
+                return null;
+            }
+            $used[$key] = $candidate->declaration($name);
+            if ($candidate->clusterCandidate) {
+                $firstCandidate ??= $key;
             }
         }
-        $generated = count(array_filter(array_column($columnNames, 2)));
         $backing = array_filter($used, static fn (IndexDeclaration $index): bool => $index->autoIncrementField !== null);
         $maximumGeneratingFields = min(1, count($backing));
-        if (count($used) > 64 || $generated > $maximumGeneratingFields) {
+        if (count($used) > 64 || $generatingFields > $maximumGeneratingFields) {
             return null;
         }
         if ($firstCandidate !== null && !isset($used['primary'])) {
@@ -72,34 +89,6 @@ final class TableIndexDeclarations
             $used[$firstCandidate] = new IndexDeclaration($unique->name, PhysicalIndexKind::Unique, true, true, $unique->autoIncrementField, $unique->leadingFields, true);
         }
 
-        $indexes = array_values($used);
-
-        return $this->explicitSupport($definition, $indexes, $release) ? $indexes : null;
-    }
-
-    /**
-     * Confirms that each native child key can be supplied by explicit leading fields.
-     * @param list<IndexDeclaration> $indexes Declared physical indexes
-     */
-    public function explicitSupport(CreateTable $definition, array $indexes, GrammarRelease $release): bool
-    {
-        $rules = new ForeignKeyDeclarations();
-        $inline = $rules->inline($release);
-        $coverage = new IndexKeyCoverage();
-        foreach ($definition->elements as $element) {
-            if ((!$element instanceof ForeignKey && !$element instanceof ColumnDefinition) || $rules->reference($element, $inline) === null) {
-                continue;
-            }
-            $fields = $rules->childFields($element);
-            $backing = array_filter(
-                $indexes,
-                static fn (IndexDeclaration $key): bool => $coverage->covers($fields, $key, null, false),
-            );
-            if ($backing === []) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_values($used);
     }
 }
