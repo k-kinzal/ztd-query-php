@@ -126,7 +126,7 @@ NATIVE = {
     "mysql_index_rename": "mysql-index-renames-evidence-v1.json",
     "mysql_mixed_index_alteration": "mysql-mixed-index-alteration-evidence-v2.json",
     "mysql_index_foreign_keys": "mysql-index-foreign-keys-evidence-v1.json",
-    "mysql_index_visibility": "mysql-index-visibility-evidence-v1.json",
+    "mysql_index_visibility": "mysql-index-visibility-evidence-v2.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
     "mysql_grouped_having": "mysql-grouped-having-v2.json",

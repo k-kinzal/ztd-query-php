@@ -13,9 +13,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-index-visibility"
 OBSERVER = "mysql_index_visibility_observer.php"
-NAME = "mysql-index-visibility-evidence-v1.json"
-BASE = "f74710fe143d9ee77f60c211b0ff84331186b29a73263fc8e9c8bf34450cc090"
-CONTRACT = "3dbff06f6c17906afef227f24115c70ff9549edfc7b4f1eeedf15ba0f78c837d"
+NAME = "mysql-index-visibility-evidence-v2.json"
+BASE = "692fe49f4c6cc21944634bea48d54092ea3f72b8055de35a7d20313fc3e1480b"
+CONTRACT = "3df7302bfb4250558f066791f67b25f47196896ccd7c362b53feb8c08b1d28d7"
 PRIMARY = "Native index visibility requires a secondary key."
 POLICY = "The algorithm and lock cannot change native index visibility on this table."
 ALGORITHM = "Ordinary InnoDB index changes accept DEFAULT, INPLACE or COPY algorithms."
@@ -27,13 +27,15 @@ COMPARATOR_FAULTS = {
 
 
 def specifications():
-    frozen, current = TOOL / "mysql-index-visibility-v1.json", TOOL / NAME
+    frozen, current = TOOL / "mysql-index-visibility-v2.json", TOOL / NAME
     require(digest(frozen) == BASE and digest(current) == CONTRACT, "mysql-index-visibility-contract")
     spec, base = json.loads(current.read_text()), json.loads(frozen.read_text())
     _, profiles = native_profiles()
     same(base["finite"], spec["finite"])
     same(base["exploration"], spec["exploration"])
     same(base["releases"], spec["releases"])
+    same(laws.FUNCTIONAL_COLUMN_NAME, spec["functionalColumnName"])
+    same(laws.FUNCTIONAL_COLUMN_NAME, base["functionalColumnName"]["perRelease"])
     return spec, profiles
 
 

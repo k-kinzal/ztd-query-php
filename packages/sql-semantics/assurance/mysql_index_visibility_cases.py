@@ -6,6 +6,15 @@ from random import Random
 SCHEMA = "ir_fixture"
 TABLE = "ir_visibility"
 LIFETIMES = ("persistent", "temporary")
+FUNCTIONAL_COLUMN_NAME = {
+    "mysql-8.0.44": {'persistent': None, 'temporary': None},
+    "mysql-8.1.0": {'persistent': None, 'temporary': ''},
+    "mysql-8.2.0": {'persistent': None, 'temporary': ''},
+    "mysql-8.3.0": {'persistent': None, 'temporary': ''},
+    "mysql-8.4.7": {'persistent': None, 'temporary': None},
+    "mysql-9.0.1": {'persistent': None, 'temporary': ''},
+    "mysql-9.1.0": {'persistent': None, 'temporary': None},
+}
 KEY_KINDS = {"none": "ordinary", "prefix": "ordinary", "functional": "ordinary", "fulltext": "fulltext", "spatial": "spatial"}
 POLICIES = {
     "persistent": {"default": ("default", "none", "shared", "exclusive"),
@@ -82,12 +91,13 @@ def selected_name(item, position):
 def term_specs(item, temporary):
     first, second, third = names(item["variant"])
     a, b = ("b", "a") if temporary else ("a", "b")
+    functional_label = FUNCTIONAL_COLUMN_NAME[item["release"]]["temporary" if temporary else "persistent"]
     return {
         "PRIMARY": ("BTREE", 0, "z", "A", None, None),
         first: ("BTREE", 1, a, "A", None, None),
         second: ("BTREE", 0, b, "A", None, None),
         "prefix": ("BTREE", 1, "payload", "A", 2, None),
-        "functional": ("BTREE", 1, None, "A", None, "(`a` + 10)"),
+        "functional": ("BTREE", 1, functional_label, "A", None, "(`a` + 10)"),
         "fulltext": ("FULLTEXT", 1, "payload", None, None, None),
         "spatial": ("SPATIAL", 1, "geom", "A", 32, None),
     }, third
