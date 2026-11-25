@@ -39,11 +39,11 @@ def model(tag, original="explicit", requested="allocated", order="drop-before-ad
     prior_ordinal = {"explicit": 0, "ordinal-one": 1, "ordinal-nine": 9}[original]
     retained_symbol = TABLE + "_ibfk_4" if retained else None
     parent = [ALTERNATE if cross else SCHEMA, PARENT, "table"]
-    cols = [("code_id", "code"), ("peer_id", "id")] if composite else [("code_id", "code")]
+    cols = [["code_id", "code"], ["peer_id", "id"]] if composite else [["code_id", "code"]]
     origin_field, origin_target = ("code_id", "code") if origin != "explicit" else ("pid", "id")
-    old_pairs = [(origin_field, origin_target)]
+    old_pairs = [[origin_field, origin_target]]
     if prior_composite:
-        old_pairs.append(("peer_id", "id"))
+        old_pairs.append(["peer_id", "id"])
     old_key = "prior_pid" if origin == "explicit" else "code_id"
     prior_symbol = TABLE + "_ibfk_1" if origin != "explicit" else prior_symbol
     prior_ordinal = 1 if origin != "explicit" else prior_ordinal
@@ -54,7 +54,7 @@ def model(tag, original="explicit", requested="allocated", order="drop-before-ad
         "requested": requested, "pairs": cols, "effects": [UPDATE, DELETE],
     }]
     if extra is not None:
-        additions.append({"symbol": extra, "requested": "distinct-explicit", "pairs": [("tag_id", "id")],
+        additions.append({"symbol": extra, "requested": "distinct-explicit", "pairs": [["tag_id", "id"]],
                           "effects": [UPDATE, DELETE]})
     replacement = origin != "explicit" and (composite or not prior_composite)
     created = [addition["pairs"][0][0] if addition["requested"] == "allocated" else addition["symbol"] for addition in additions]
