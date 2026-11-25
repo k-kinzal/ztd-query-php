@@ -1,0 +1,109 @@
+{
+  "revision": "SemanticsIR/mysql-drop-table-foreign-dependencies-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-session-drop-table-v1.json",
+    "mysql-truncate-foreign-dependencies-v2.json",
+    "server-drop-table-v2.json"
+  ],
+  "scope": "Native stock MySQL DROP TABLE with a complete persistent InnoDB foreign-key catalog, exact qualified table identities, and the existing guarded absence or session-local table roles.",
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "language": "Native parameters, SQL mode empty, lower_case_table_names=0, utf8mb4, ordinary InnoDB and foreign_key_checks=1.",
+  "rules": {
+    "knownTargets": "Analyzed persistent targets require a complete catalog of incoming references. The value stores the checked target list, release and statement flags. Analyzed temporary and absent targets retain their own fixed namespace rules.",
+    "dependencies": "Every known foreign-key edge to a selected persistent parent must have a resolved absolute persistent child. A self-reference permits the parent to be dropped. A temporary shadow of the child cannot remove the underlying foreign-key edge.",
+    "legacyOrder": "For 5.6.51 and 5.7.44, an external child must be selected as a persistent removal earlier than its parent. The native operation processes effects in table order and cannot satisfy a persistent dependency cycle.",
+    "modernGroup": "For native 8.0.44 and later InnoDB profiles, the external child must be included among the resolved persistent targets. Order and cycles within the chosen group are valid.",
+    "emptyChild": "An empty or ON DELETE CASCADE child retains its native DDL restriction. IF EXISTS guards proven absence only.",
+    "partialNativeFailure": "When the legacy server refuses a parent drop it may have applied other original table removals, including a later child or a temporary target. The complete IR constructor refuses these statically blocked statements and native evidence records their actual partial effects. In the measured modern pure InnoDB fixture the whole blocked statement leaves persistent and temporary targets intact.",
+    "rendering": "Use the exact ordered schema-qualified value roles, keeping DROP TEMPORARY TABLE and IF EXISTS. Native accepted spelling and behavior of RESTRICT and CASCADE retain their fixed semantic equivalence.",
+    "externalInterpretation": "The persistent incoming references supplied to the public constructor are the complete initial native facts for those targets. Catalog resolution gathers the same facts before constructing the value. Neither that catalog nor unchecked statements are stored."
+  },
+  "observations": [
+    "Measure the resolved ordered persistent and temporary targets, stable decoys, exact before and after native catalogs, owned data and transaction boundary.",
+    "Keep native blocked evidence with actual legacy 1217 versus modern 3730 and observe both partial effects and untouched targets.",
+    "Measure both target orders, an all-selected dependency cycle, a multilevel chain, cross-database and self references, empty child and shadowed child and parent.",
+    "Compare emitted and independently specified source SQL at direct and analyzed construction under the same complete initial graph."
+  ],
+  "finite": {
+    "graph": [
+      "single-edge",
+      "self-edge",
+      "chain",
+      "cycle",
+      "cross-database"
+    ],
+    "scope": [
+      "persistent",
+      "child-shadow",
+      "parent-shadow"
+    ],
+    "ordering": [
+      "child-first",
+      "parent-first",
+      "parent-only",
+      "child-only"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      337,
+      5737,
+      15569
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "assurance": {
+    "P01": "Hold selected target identities and their absolute session scope, checked operation, flags and release.",
+    "P02": "Enforce initial edge ownership, release-specific dependency placement, and complete catalog analysis.",
+    "P03": "Use resolved immutable target roles. Retain no lookup graph or behavioral SQL snippets after construction.",
+    "P04": "Close the full persistent group from the native reference graph and release order.",
+    "P05": "Keep detached target list and closed immutable child values across every public route.",
+    "P06": "Emit the full ordered checked native DROP operation, preserving explicitly temporary and guarded behaviors.",
+    "Q01": "Audit the actual root constructor and transient binding together, including wrong-role and partial graph mutants.",
+    "Q02": "Keep all valid known catalog cases and exact typed and witnessed refusals.",
+    "Q03": "Validate group membership and required predecessor relation without executing or reparsing SQL.",
+    "Q04": "Compare the native operations and intentional mismatch probes with strong visible distinguishers.",
+    "Q05": "Connect exact runtime and staged offline Composer installs to independent native replay."
+  },
+  "faults": [
+    "Publish a persistent parent whose distinct child is still present.",
+    "Treat the temporary copy of a referencing child as removal of the persistent edge.",
+    "Check only membership in a legacy target list and discard the source order.",
+    "Require a legacy-only order in an admissible modern cycle.",
+    "Drop a second resolved table from emitted SQL while keeping the successful group shape."
+  ],
+  "calibration": {
+    "script": "b57bc95f1dcac2e3253a001a123fe1b9ee9169e13f92ff5341dacb6f985adcb5",
+    "transcripts": {
+      "5.6.51": "61d43bd02cc6be0463021410fcc5639ed8b2b262ec615d1ae497d3c82f2fdbca",
+      "5.7.44": "03fab26288fcbe93238b29b46ffaab313dd7400b843525efd3cd6feadfd579c6",
+      "8.0.44": "850d510bdf75761cf6bb4df7cc8eb3ec59455659977b0e7a151611439806d0e5",
+      "9.1.0": "37309a06ba8a4f7e8cb50d81bf37b6f595755f1e8f994608145567e406a1f0b0"
+    }
+  },
+  "remainingDomains": [
+    "Other storage engines and explicit foreign_key_checks changes remain separately required native domains.",
+    "Native missing, duplicated and invalid target behaviors retain their existing constructor obligations and separately tracked grammar cases."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/drop-table.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/atomic-ddl.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html"
+  ]
+}
