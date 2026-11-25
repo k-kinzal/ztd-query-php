@@ -19,7 +19,7 @@ LABEL = "mysql-alter-index-removal"
 OBSERVER = "mysql_alter_index_observer.php"
 NAME = "mysql-alter-index-removal-evidence-v1.json"
 BASE = "b0c41129a37d7d30becf318f31ea5f82f016be99a9664543195689d11311c401"
-CONTRACT = "3d307af06a3b7e3376bca6c12820d8485b8cf4e67a85ee16b784df441354b6ad"
+CONTRACT = "a3d9f469bdf68a59640d35e9840c8a41c3c2a841b44e5592db85c4786ed7af3c"
 COMPARATOR_FAULTS = {"Ignore absence of the legacy deprecation warning.": "lost-native-legacy-warning"}
 
 
@@ -224,11 +224,13 @@ def check_fault_witness(item, receipt):
 
 
 def faults(_, tag):
-    if tag != LEGACY_IGNORE:
-        return []
     item = witness(tag)
     path = "sql-semantics-mysql/src/Ir/Schema/Index/DropIndex.php"
-    return [RenderFault("erase-mysql-alter-ignore", path, "'ALTER IGNORE TABLE '", "'ALTER TABLE '",
+    if tag == LEGACY_IGNORE:
+        return [RenderFault("erase-mysql-alter-ignore", path, "'ALTER IGNORE TABLE '", "'ALTER TABLE '",
+                            item, "meaning-mismatch", item["model"])]
+    unrelated = "'" + chr(96) + "retained_c" + chr(96) + "'"
+    return [RenderFault("remove-unrelated-mysql-alter-index", path, "$this->target->name->quoted()", unrelated,
                         item, "meaning-mismatch", item["model"])]
 
 

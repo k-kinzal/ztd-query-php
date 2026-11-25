@@ -106,11 +106,22 @@
     "Keep the accepted ALGORITHM and LOCK cases when modifiers change positions. Observe legacy unknown INSTANT, modern recognized INSTANT overridden by a supported final choice, and an unknown spelling in a position that a later choice would otherwise override."
   ],
   "faults": [
-    "Ignore absence of the legacy deprecation warning."
+    "Ignore absence of the legacy deprecation warning.",
+    "Change the observable native effect of the release-specific index removal witness."
   ],
   "renderFaultAvailability": {
     "erase-mysql-alter-ignore": [
       "5.6.51"
+    ],
+    "remove-unrelated-mysql-alter-index": [
+      "5.7.44",
+      "8.0.44",
+      "8.1.0",
+      "8.2.0",
+      "8.3.0",
+      "8.4.7",
+      "9.0.1",
+      "9.1.0"
     ]
   },
   "evidence": {
