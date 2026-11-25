@@ -845,7 +845,7 @@ def inventory(root):
             for alternative in signatures & mixed_support:
                 related[alternative] = (*related.get(alternative, ()), "mysql-mixed-support-evidence-v2.json")
             for alternative in signatures & (mixed_support | alter_index | index_removal):
-                related[alternative] = (*related.get(alternative, ()), "mysql-physical-exchange-evidence-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-physical-exchange-evidence-v2.json")
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v2.json")
             generated_keys = {

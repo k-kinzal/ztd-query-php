@@ -14,14 +14,15 @@ from run_server_mysql_drop_index import DIAGNOSTIC, specifications as native_pro
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-physical-exchange"
-NAME = "mysql-physical-exchange-evidence-v1.json"
-CONTRACT = "34b9b120623d32f1f792686b357659dd931663daa825e948d4eb40e5911281fc"
+NAME = "mysql-physical-exchange-evidence-v2.json"
+CONTRACT = "8fba2f47b7abb5e22c5765acd4126a20b75c5d1d62c1c6efcb127b8159c8aae3"
 OBSERVER = "mysql_physical_exchange_observer.php"
 FINITE = "mysql-physical-exchange-finite-v1.json"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/alter-foreign-keys"
 COMPARATOR_FAULTS = {
     "Ignore the identity of a retained native constraint.": "change-retained-constraint",
     "Ignore the newly generated native value.": "change-generated-value",
+    "Ignore the live next allocation counter.": "change-next-allocation",
 }
 
 
@@ -204,10 +205,16 @@ def compare(observed, reference, sql):
 
 def check_observation(value, actual, sql):
     require(actual.get("status") == LABEL, "physical-exchange-outside-observer", actual)
+    expiry = None if value["tag"] in ("mysql-5.6.51", "mysql-5.7.44") else 0
+    require("statisticsExpiry" in actual and actual["statisticsExpiry"] == expiry,
+            "physical-exchange-statistics-freshness", actual.get("statisticsExpiry"))
     expected = value["case"]["outcomes"][release_for_expected(value["tag"])]
     reference = actual["reference"]
     same(expected["alter"], result_status(reference["effect"]))
     same(expected["probe"], result_status(reference["probe"]))
+    if value["case"]["id"].startswith("generating/"):
+        counters = [reference[stage]["tables"]["affected"]["next"] for stage in ("before", "after", "result")]
+        same([3, 3, 4], counters)
     compare(actual["observed"], reference, sql)
 
 
@@ -239,14 +246,17 @@ def check_preparation(_, _environment, observed):
 
 def controls():
     data = {"diagnostics": [], "after": {"constraints": [["fk_test_child", "anchor"]]},
-            "result": {"tables": {"affected": {"rows": [[33, 3, 3]]}}}}
+            "result": {"tables": {"affected": {"rows": [[33, 3, 3]], "next": 4}}}}
     compare(data, deepcopy(data), "control")
     changed = {}
     constraint = deepcopy(data)
     constraint["after"]["constraints"][0][1] = "different"
     generated = deepcopy(data)
     generated["result"]["tables"]["affected"]["rows"][0][1] = 4
-    for name, witness in (("change-retained-constraint", constraint), ("change-generated-value", generated)):
+    cached = deepcopy(data)
+    cached["result"]["tables"]["affected"]["next"] = 3
+    for name, witness in (("change-retained-constraint", constraint), ("change-generated-value", generated),
+                          ("change-next-allocation", cached)):
         try:
             compare(witness, data, "control")
         except Failure as problem:

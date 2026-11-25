@@ -1,0 +1,145 @@
+{
+  "revision": "SemanticsIR/mysql-physical-exchange-evidence-2",
+  "approval": "pending-human-review",
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "profile": "Native InnoDB with the registered signed field definitions, default physical options and all exact DB settings inherited from the MySQL profile.",
+  "references": {
+    "mysql-native-mixed-physical-key-removals-v2.json": "2762fa33b076f6c222d489f794ece89e80bd5e4e6b41387f227c5a554e91a678",
+    "mysql-physical-exchange-finite-v1.json": "7075018eeefd3330a61205fc746e987c87bd40f4d8a4aaa720fb221567d23bfe",
+    "mysql-drop-native-index-evidence-v4.json": "3d97452ae70caf96c47f57111ed99507304460f3260eb1a794665bc247219389",
+    "mysql-mixed-support-evidence-v2.json": "071dac466128b4396c2d3decf7a08bec47b7ffe3cacaf3839d7739e27917ceca",
+    "mysql-physical-exchange-evidence-v1.json": "34b9b120623d32f1f792686b357659dd931663daa825e948d4eb40e5911281fc"
+  },
+  "finite": {
+    "coordinates": 220,
+    "families": {
+      "outgoing": 80,
+      "incoming": 24,
+      "generating": 80,
+      "self-parent": 36
+    },
+    "routes": [
+      "analysis",
+      "direct"
+    ],
+    "admission": "Typed native calibrations on five releases. The declared intermediate-profile mapping is checked against the actual engine during every run.",
+    "additionalNegatives": [
+      "wrong original owner",
+      "wrong original role",
+      "wrong original name",
+      "missing retained layout",
+      "missing known retained child side",
+      "wrong generating field"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      7229,
+      16057,
+      77029
+    ],
+    "casesPerSeed": 24,
+    "directCasesPerSeed": 24,
+    "timeoutSecondsPerRelease": 900,
+    "allowedExclusions": []
+  },
+  "admitted": {
+    "mysql-5.6.51": 186,
+    "mysql-5.7.44": 186,
+    "mysql-8.0.44": 186,
+    "mysql-8.1.0": 186,
+    "mysql-8.2.0": 186,
+    "mysql-8.3.0": 186,
+    "mysql-8.4.7": 168,
+    "mysql-9.0.1": 168,
+    "mysql-9.1.0": 168
+  },
+  "negativeCount": {
+    "mysql-5.6.51": 74,
+    "mysql-5.7.44": 74,
+    "mysql-8.0.44": 74,
+    "mysql-8.1.0": 74,
+    "mysql-8.2.0": 74,
+    "mysql-8.3.0": 74,
+    "mysql-8.4.7": 110,
+    "mysql-9.0.1": 110,
+    "mysql-9.1.0": 110
+  },
+  "oracle": {
+    "structural": "Build the expected exact action values from independent case coordinates, explicit key roles and ordered native allocation rules.",
+    "native": "Run the separately specified original SQL and each rendered SQL on independently rebuilt identical native data. Compare fully typed initial and final metadata, rows, ordered runtime diagnostics, setup and follow-up mutation effects.",
+    "normalization": "Only the temporary COPY object name in exact legacy error 1025 is a local server-assigned coordinate. Record and compare all other diagnostic fields, including order and target owner. Keep original raw observer payloads.",
+    "metadataFreshness": "The observer reads live InnoDB metadata with information_schema_stats_expiry=0 on releases which cache TABLES.AUTO_INCREMENT. It records the checked session setting. The follow-up insert and allocation counter are both still required.",
+    "reference": "https://dev.mysql.com/doc/refman/8.0/en/information-schema-tables-table.html",
+    "allocationCounter": [
+      3,
+      3,
+      4
+    ],
+    "cachedMetadataCounterexample": {
+      "case": "seed/16057/2",
+      "release": "mysql-8.0.44",
+      "originalWitnessSha256": "f8091bc43a693a6045f7ea0f6bac94b06aa29417c9d7188b845a6593beff394d",
+      "reportedNext": [
+        3,
+        4
+      ],
+      "generatedRow": [
+        33,
+        3,
+        3
+      ]
+    }
+  },
+  "constructors": {
+    "Schema/ForeignKey/Exchange/AlterForeignKeys": {
+      "role": "An atomic ordered change including distinct original physical index drops and new foreign constraints.",
+      "structure": "Exact absolute owner, ordered native actions, automatically superseded indexes, release and physical options.",
+      "meaning": "Publish effective explicit and implicit key changes while keeping every retained index requirement and new original/final foreign-key stage.",
+      "conditions": "Both public routes check the original target and complete retained reference layout before producing the ordered index identity projection. Each supplied retained side must identify its checked original constraint; every known outgoing retained symbol needs its child side.",
+      "sql": "Render each action in original order, including the exact resolved physical drop. Use the checked absolute owner and original requested options."
+    },
+    "Schema/Index/IndexIdentity": {
+      "role": "The exact physical key explicitly removed.",
+      "structure": "Resolved owner, native physical key name and original effective role.",
+      "meaning": "Remove the selected physical key, allowing explicit reuse of its native name by a new physical key.",
+      "conditions": "The key must belong to the exact unchanged initial layout at the atomic removal boundary.",
+      "sql": "Use the exact physical name in the DROP INDEX position."
+    }
+  },
+  "faults": [
+    "Omit the resolved physical removal.",
+    "Render an index on the wrong self-referenced parent column.",
+    "Ignore the identity of a retained native constraint.",
+    "Ignore the newly generated native value.",
+    "Ignore the live next allocation counter."
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "mode": "Native InnoDB with the registered signed field definitions, default physical options and all exact DB settings inherited from the MySQL profile.",
+  "extends": "mysql-physical-exchange-evidence-v1.json"
+}

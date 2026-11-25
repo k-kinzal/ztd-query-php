@@ -9,9 +9,20 @@ const PHYSICAL_EXCHANGE_MARKER = 'ir_fixture.ir_exchange_marker';
 
 function initializePhysicalExchange(PDO $catalog): void
 {
+    if (physicalExchangeStatsExpiry($catalog) !== null) {
+        $catalog->exec('SET SESSION information_schema_stats_expiry=0');
+    }
     $catalog->exec('DROP TABLE IF EXISTS ' . PHYSICAL_EXCHANGE_MARKER);
     $catalog->exec('CREATE TABLE ' . PHYSICAL_EXCHANGE_MARKER . ' (n INT NOT NULL) ENGINE=InnoDB');
     $catalog->exec('INSERT INTO ' . PHYSICAL_EXCHANGE_MARKER . ' VALUES (0)');
+}
+
+/** Reads the metadata freshness setting before capturing the live allocation counter. */
+function physicalExchangeStatsExpiry(PDO $catalog): ?int
+{
+    $setting = $catalog->query("SHOW VARIABLES WHERE Variable_name='information_schema_stats_expiry'")->fetch(PDO::FETCH_NUM);
+
+    return $setting === false ? null : (int) $setting[1];
 }
 
 /** Admits the fixture field and key clauses emitted by the fixed case catalog. */
@@ -119,7 +130,8 @@ function observePhysicalExchange(PDO $catalog, PDO $owner, array $request): arra
     $observed = physicalExchangeStatement($catalog, $owner, $request, $sql);
     $reference = $sql === $referenceSql ? $observed : physicalExchangeStatement($catalog, $owner, $request, $referenceSql);
 
-    return ['status' => 'mysql-physical-exchange', 'observed' => $observed, 'reference' => $reference];
+    return ['status' => 'mysql-physical-exchange', 'statisticsExpiry' => physicalExchangeStatsExpiry($catalog),
+        'observed' => $observed, 'reference' => $reference];
 }
 
 runMysqlIndexObserver($argv, initializePhysicalExchange(...), observePhysicalExchange(...));
