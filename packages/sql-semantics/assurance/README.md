@@ -71,6 +71,18 @@ It also emits `constructors.json` with each audited type, source digest, constru
 
 The [folded SQLite binding record](sqlite-folded-binding-sources-v4.json) ties the empty-membership checks to the exact transient syntax sources. The graph audit follows all syntax edges. The binding walk omits only the operand edge identified by the SQLite wiring for an empty IN list. Two source mutations exercise the full audit and the edge classifier independently.
 
+### Replay SQLite domains across recorded attempts
+
+Use the archived verifier for the original launch. Supply the original evidence directory first, followed by each retry directory in execution order. All attempts must identify the same distribution, SQLite binary and fixed verifier tools. The replay links the preserved launch reports, failures and selected domain transcripts. Its result is provisional evidence for the registered SQLite domains.
+
+```sh
+python3 "$verifier/reconcile_sqlite_attempts.py" --candidate "$candidate_sha" \
+  --candidate-root "$candidate" --sqlite-library "$sqlite_library" \
+  --attempt "$original" --attempt "$retry" --out "$evidence/sqlite-reconciled"
+```
+
+For an incomplete original launch and a retry that fills its missing domains, run `check_sqlite_reconciliation.py` with the same candidate and library, plus `--original`, `--retry` and a fresh `--out` directory. It checks the healthy selected scope and rejects changed library bytes, a missing execution, incomplete domain coverage, a changed selected receipt, a missing original launch and an unresolved semantic failure. Recorded launcher or AST startup timeouts can be retried under the [fixed reconciliation contract](sqlite-launch-reconciliation-v2.json).
+
 ### Check the PostgreSQL rebuild spelling proof
 
 Use a Linux ARM64 controller with Bubblewrap and the official Lean 4.36.0 release archive named in the [frozen lexical challenge](formal/postgres_reindex/contract-v7.json). Unpack the release outside the candidate, and keep the verified archive for the toolchain check. Use a separate trusted verifier checkout and its PHP parser autoload file.
