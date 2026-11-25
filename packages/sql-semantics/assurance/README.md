@@ -470,6 +470,8 @@ The [MySQL foreign-key removal contract](mysql-drop-foreign-keys-evidence-v1.jso
 
 The [MySQL foreign-key exchange contract](mysql-foreign-key-exchange-evidence-v2.json) checks atomic replacement of named constraints. The [supporting-index replacement contract](mysql-native-foreign-key-index-replacement-v3.json) covers the removal of earlier generated keys, physical name reuse, copied origins and capacity. Run `run_server_mysql_foreign_key_exchange.py` and replay the ledgers with `combine_server_mysql_foreign_key_exchange_evidence.py`.
 
+The [MySQL mixed supporting-key contract](mysql-mixed-support-evidence-v1.json) checks the physical name namespace shared by explicit secondary keys and implicit foreign-key indexes. The native observer compares ordered terms, replaced old implicit keys, referential actions, unique writes, schema isolation and warnings. Run `run_server_mysql_mixed_support.py` on the fixed matrix and replay with `combine_server_mysql_mixed_support_evidence.py`.
+
 The [MySQL foreign-key addition contract](mysql-add-foreign-keys-evidence-v3.json) checks persistent reference scope, exact key allocation, referential runtime effects, and the declared MATCH and action metadata. Execute `run_server_mysql_add_foreign_keys.py` and independently replay the ledgers with `combine_server_mysql_add_foreign_keys_evidence.py`.
 
 The [MySQL string foreign-key contract](mysql-foreign-key-string-evidence-v1.json) checks full native character and byte fields with explicit collation, exact stored byte values, and the separate term and combined key capacities. Execute `run_server_mysql_foreign_key_strings.py` and replay with `combine_server_mysql_foreign_key_strings_evidence.py`.

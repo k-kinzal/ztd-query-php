@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyTables;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\ForeignKeyExchangeLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval;
@@ -31,6 +32,24 @@ final class ForeignKeyExchangeLoweringTest extends TestCase
         self::assertCount(2, $actions);
         self::assertInstanceOf(ForeignKey::class, $actions[0]);
         self::assertInstanceOf(DropElement::class, $actions[1]);
+    }
+
+    public function testBindPreservesThePositionOfADeclaredIndexAndAForeignKey(): void
+    {
+        $operation = NativeAdditionFixture::operation('ALTER TABLE app.child ADD KEY by_owner (x), ADD FOREIGN KEY(x) REFERENCES parent(a)');
+        $statement = $operation->statement;
+        self::assertInstanceOf(AlterTable::class, $statement);
+        $lowering = new ForeignKeyExchangeLowering();
+        $actions = $lowering->actions($statement);
+        self::assertNotNull($actions);
+        [$child, $owner] = (new ForeignKeyTables())->child($operation, $statement);
+        [$additions, $positions, $removals, $indexes] = $lowering->bind($operation, $child, $owner, $actions, false);
+
+        self::assertCount(1, $additions);
+        self::assertSame([1], $positions);
+        self::assertSame([], $removals);
+        self::assertSame('by_owner', $indexes[0][0]?->value);
+        self::assertSame('x', $indexes[0][1][0]->field->value);
     }
 
     public function testLowerRetainsTheOriginalNativeOrdinalWhenItsEdgeIsRemoved(): void

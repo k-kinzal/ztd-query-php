@@ -1484,7 +1484,13 @@ if ($dialect !== 'sqlite') {
         $foreignExchange = $exchangeBase . 'AlterForeignKeys';
         $exchangeRemovals = $exchangeBase . 'ForeignKeyExchangeRemovals';
         array_push($internal, $exchangeBase . 'ForeignKeyExchangeLowering', $exchangeRemovals);
-        $pureCollaborators[] = $exchangeRemovals;
+        $mixedIndex = $exchangeBase . 'IndexAddition';
+        $checks = $exchangeBase . 'ExplicitKeyChecks';
+        $names = $exchangeBase . 'PhysicalKeyNames';
+        array_push($internal, $checks, $names, $exchangeBase . 'IndexAdditionLowering');
+        array_push($pureCollaborators, $exchangeRemovals, $checks, $names);
+        $properties[$mixedIndex] = ['key' => [$foreignKeyFact], 'automatic' => ['bool']];
+        $methods[$mixedIndex] = ['__construct', 'toString'];
         array_push($roots, $foreignAdd, $foreignExchange);
         $properties[$foreignAdd] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'additions' => ['array'], 'removedIndexes' => ['array'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
@@ -2575,13 +2581,13 @@ try {
                     'Schema\\ForeignKey\\Add\\Catalog\\ForeignKeyNativeKey',
                     'Schema\\Index\\Visibility\\IndexVisibilityEdit',
                     'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
-                    'Schema\\Index\\Change\\MixedIndexNamespace'], true)
+                    'Schema\\Index\\Change\\MixedIndexNamespace', 'Schema\\ForeignKey\\Exchange\\PhysicalKeyNames'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\ForeignKey\\Add\\AddForeignKeys',
                     'Schema\\ForeignKey\\Add\\ForeignKeyAdditionSet', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyKeyCapacity',
                     'Schema\\ForeignKey\\Exchange\\AlterForeignKeys'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\InnoDbKeyLimit')
-                || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes'
+                || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Exchange\\PhysicalKeyNames'
                     && $name->toString() === $platform . '\\Rules\\TableDefinition\\Index\\IndexNameAllocation')
                 || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'
                     && in_array($name->toString(), [$prefix . 'Schema\\Index\\Dependency\\IndexDependencyKeys',
@@ -2614,7 +2620,9 @@ try {
                         'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'], true)
                         && in_array($call->name->toString(), ['array_slice', 'in_array'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes'
-                        && in_array($call->name->toString(), ['array_keys', 'array_values'], true))
+                        && in_array($call->name->toString(), ['array_keys', 'array_values', 'array_intersect_key'], true))
+                    || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Exchange\\PhysicalKeyNames'
+                        && in_array($call->name->toString(), ['array_keys', 'ksort'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\AppendColumnBounds' && $call->name->toString() === 'ksort')
                     || ($dialect === 'sqlite' && $short === 'Schema\\Index\\CreateIndex' && $call->name->toString() === 'ksort')

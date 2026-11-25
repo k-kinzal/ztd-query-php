@@ -10,6 +10,8 @@ use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConst
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyKeyCapacity;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Enumeration\ForeignKeyEnumerationDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\ExplicitKeyChecks;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexAlgorithm;
@@ -30,6 +32,8 @@ final class ForeignKeyAdditionSet
      * @param non-empty-list<ForeignKeyAddition> $additions Ordered checked native additions
      * @param list<ForeignKeyNativeKey> $keys Complete prior physical keys
      * @param list<ForeignKeyConstraintIdentity> $constraints Complete prior native symbols
+     * @param array<int, IndexAddition> $indexes Explicit additions by action position
+     * @param list<int> $foreignSlots Written positions of the added foreign constraints
      * @return list<Identifier> The names of the replaced implicit child indexes
      */
     public function check(
@@ -41,6 +45,8 @@ final class ForeignKeyAdditionSet
         IndexChangePolicy $policy,
         bool $ignore,
         ?InnoDbKeyLimit $limit = null,
+        array $indexes = [],
+        array $foreignSlots = [],
     ): array {
         Check::input($owner->kind === ExternalRelationKind::BaseTable, 'A native foreign-key addition requires a persistent owning table.');
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
@@ -56,7 +62,14 @@ final class ForeignKeyAdditionSet
             $labels[] = $addition->generated ? $addition->indexName : $addition->symbol;
         }
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $selected);
-        [$created, $replaced] = (new ForeignKeyChildIndexes())->allocate($owner, $keys, $fields, $labels, $release);
+        $explicit = (new ExplicitKeyChecks())->requests($owner, $keys, $indexes, $legacy);
+        [$created, $replaced, $newNames] = (new ForeignKeyChildIndexes())->allocate($owner, $keys, $fields, $labels, $release, $explicit, $foreignSlots);
+        foreach ($indexes as $position => $index) {
+            Check::input(
+                $newNames[$position]->value === $index->key->identity->name->value,
+                'The declared secondary index name differs from native allocation.'
+            );
+        }
         $layout = new ForeignKeyIndexPrefix();
         $capacity = new ForeignKeyKeyCapacity();
         $nativeLimit = $capacity->effective($release, $limit);

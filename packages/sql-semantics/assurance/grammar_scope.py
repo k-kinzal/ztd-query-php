@@ -837,6 +837,13 @@ def inventory(root):
                 related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-enumeration-evidence-v2.json")
             for alternative in signatures & (foreign_addition | foreign_removal | alter_index):
                 related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-exchange-evidence-v2.json")
+            mixed_support = foreign_addition | foreign_removal | {
+                entry for rule in ("table_constraint_def", "alter_list", "alter_list_item_list")
+                for entry in rules.get(rule, ())
+                if rule != "table_constraint_def" or "key_or_index" in entry or "UNIQUE" in entry
+            }
+            for alternative in signatures & mixed_support:
+                related[alternative] = (*related.get(alternative, ()), "mysql-mixed-support-evidence-v1.json")
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
             generated_keys = {

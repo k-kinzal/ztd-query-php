@@ -7,6 +7,8 @@ namespace Tests\Unit\Ir\Schema\ForeignKey\Add;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyKeyColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyIndexPrefix;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -39,6 +41,13 @@ final class ForeignKeyIndexPrefixTest extends TestCase
         $key = NativeAdditionFixture::key($owner, 'Native', IndexRole::Ordinary, 'Id', true);
 
         self::assertSame([['id', true]], (new ForeignKeyIndexPrefix())->physical($key));
+    }
+
+    public function testColumnsPreservesTheOrderedDirectionalPrefix(): void
+    {
+        $parts = [new ForeignKeyKeyColumn(new Identifier('Y'), true), new ForeignKeyKeyColumn(new Identifier('X'))];
+
+        self::assertSame([['y', true], ['x', false]], (new ForeignKeyIndexPrefix())->columns($parts));
     }
 
     public function testRequireParentAcceptsAnOriginalUniqueKey(): void

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * One native ALTER TABLE that removes and introduces resolved foreign keys.
+ * One native ALTER TABLE that adds resolved foreign keys alongside other key edits.
  * @visibility public
  * @example Replacing a foreign constraint with another name
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
@@ -32,7 +32,7 @@ final class AlterForeignKeys implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<ForeignKeyAddition|ForeignKeyRemoval> Checked clauses in their native order
+     * @var non-empty-list<ForeignKeyAddition|ForeignKeyRemoval|IndexAddition> Checked clauses in their native order
      */
     public readonly array $actions;
 
@@ -42,9 +42,9 @@ final class AlterForeignKeys implements SemanticsIR
     public readonly array $removedIndexes;
 
     /**
-     * Checks both edit kinds against the starting schema before publishing the atomic operation.
+     * Checks all ordered edit roles against the starting schema before publishing the atomic operation.
      *
-     * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $actions The ordered foreign-key edits
+     * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $actions The ordered native key edits
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $keys The original physical key catalog
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $constraints The original constraint catalog
      */
@@ -59,22 +59,41 @@ final class AlterForeignKeys implements SemanticsIR
         ?InnoDbKeyLimit $keyLimit = null,
     ) {
         Check::input(array_is_list($actions) && $actions !== [], 'A foreign-key exchange needs a nonempty ordered action list.');
-        $checked = $additions = $removals = [];
-        foreach ($actions as $action) {
-            Check::input($action instanceof ForeignKeyAddition || $action instanceof ForeignKeyRemoval, 'A foreign-key exchange requires checked addition and removal roles.');
+        $checked = $additions = $removals = $indexes = $foreignSlots = [];
+        foreach ($actions as $position => $action) {
+            Check::input(
+                $action instanceof ForeignKeyAddition || $action instanceof ForeignKeyRemoval || $action instanceof IndexAddition,
+                'A mixed key alteration requires checked foreign-key additions, removals or secondary keys.'
+            );
             $checked[] = $action;
             if ($action instanceof ForeignKeyAddition) {
+                $foreignSlots[] = $position;
                 $additions[] = $action;
-            } else {
+            } elseif ($action instanceof ForeignKeyRemoval) {
                 $removals[] = $action;
+            } else {
+                $indexes[$position] = $action;
             }
         }
-        Check::input($additions !== [] && $removals !== [], 'A foreign-key exchange requires both additions and removals.');
+        Check::input($additions !== [] && ($removals !== [] || $indexes !== []), 'A mixed key alteration requires foreign-key additions and a distinct key edit.');
         $originalKeys = Check::listOf($keys, ForeignKeyNativeKey::class, 'Foreign-key exchange requires checked original physical keys.');
         $originalConstraints = Check::listOf($constraints, ForeignKeyConstraintIdentity::class, 'Foreign-key exchange requires checked original symbols.');
-        (new ForeignKeyRemovalSet())->check($owner, $removals, [], $release, $policy);
-        (new ForeignKeyExchangeRemovals())->check($owner, $removals, $originalConstraints);
-        $this->removedIndexes = (new ForeignKeyAdditionSet())->check($owner, $additions, $originalKeys, $originalConstraints, $release, $policy, $ignore, $keyLimit);
+        if ($removals !== []) {
+            (new ForeignKeyRemovalSet())->check($owner, $removals, [], $release, $policy);
+            (new ForeignKeyExchangeRemovals())->check($owner, $removals, $originalConstraints);
+        }
+        $this->removedIndexes = (new ForeignKeyAdditionSet())->check(
+            $owner,
+            $additions,
+            $originalKeys,
+            $originalConstraints,
+            $release,
+            $policy,
+            $ignore,
+            $keyLimit,
+            $indexes,
+            $foreignSlots
+        );
         $this->actions = $checked;
     }
 

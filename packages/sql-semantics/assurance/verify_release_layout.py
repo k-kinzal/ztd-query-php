@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v175.json"
-CONTRACT = "612dac0d3171f98070cbe61e90d08aa4a4b1f2bfa1637e88972677990e058f42"
+CONTRACT_NAME = "release-layout-v176.json"
+CONTRACT = "3ae6140e72755c48e008d3d025df2e6e84fada51c33722dac6f79299d1648ceb"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -927,6 +927,12 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlForeignKeyExchange") == [
                 "exchange_child_ibfk_1", "Wider_Link", "Wider_Link", ["pid"], ["pid"], exchange, exchange,
             ] and item["sql"] == exchange, "installed-mysql-foreign-key-exchange-mismatch", item)
+            supporting = ("ALTER TABLE `app`.`indexed_exchange` ADD INDEX `pid` (`spare`), "
+                          "ADD FOREIGN KEY (`pid`) REFERENCES `app`.`exchange_parent` (`a`) "
+                          "ON UPDATE NO ACTION ON DELETE NO ACTION")
+            require(item.get("mysqlMixedSupportingKeys") == [
+                "pid", "ordinary", False, ["spare"], "indexed_exchange_ibfk_1", "pid_2", supporting, supporting,
+            ], "installed-mysql-mixed-supporting-key-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"

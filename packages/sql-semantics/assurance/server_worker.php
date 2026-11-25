@@ -1289,6 +1289,31 @@ function observeMysqlAddForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\Foreig
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
 }
 
+function constructMysqlMixedIndexAddition(array $item, string $namespace): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition
+{
+    $name = $namespace . 'Identifier';
+    $source = $namespace . 'TableSource';
+    $kind = $namespace . 'From\\ExternalRelationKind';
+    $column = $namespace . 'From\\ColumnKind';
+    $ordered = $item['heading'] ?? array_map(static fn (array $field): array => [$field[0], 'int'], $item['fields']);
+    $owner = $item['headingOwner'] ?? $item['owner'];
+    [$keys] = constructMysqlForeignKeyCatalog(['keys' => [$item + ['full' => true, 'autoIncrement' => null]], 'constraints' => []], $namespace);
+    $heading = new $source(new $name($owner[0]), new $name($owner[1]),
+        array_map(static fn (array $field): object => new $name($field[0]), $ordered),
+        array_map(static fn (array $field): object => $column::from($field[1]), $ordered), $kind::from($owner[2]));
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition($keys[0], $heading, $item['automatic']);
+}
+
+function observeMysqlMixedIndexAddition(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition $value): array
+{
+    $identity = $value->key->identity;
+
+    return ['owner' => observeMysqlTableIdentity($identity->owner), 'name' => $identity->name->value,
+        'role' => $identity->role->value, 'automatic' => $value->automatic,
+        'fields' => array_map(static fn ($field): array => [$field->field->value, $field->descending], $value->key->fields)];
+}
+
 function constructMysqlAlterForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys
 {
     $namespace = 'SqlSemantics\\Platform\\MySql\\Ir\\';
@@ -1297,6 +1322,7 @@ function constructMysqlAlterForeignKeys(array $input): SqlSemantics\Platform\MyS
     foreach ($spec['actions'] as $position => $edit) {
         $edits[$position] = match (true) {
             isset($edit['add']) => constructMysqlForeignKeyAddition($edit['add'], $namespace),
+            isset($edit['index']) => constructMysqlMixedIndexAddition($edit['index'], $namespace),
             isset($edit['drop']) => new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval(
                 $edit['drop'][0] === null ? null : new SqlSemantics\Platform\MySql\Ir\Identifier($edit['drop'][0]),
                 SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalKind::from($edit['drop'][1]),
@@ -1316,8 +1342,14 @@ function observeMysqlAlterForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\Fore
 {
     $actions = [];
     foreach ($value->actions as $edit) {
-        $actions[] = $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval
-            ? ['drop' => [$edit->name?->value, $edit->kind->value]] : ['add' => observeMysqlForeignKeyAddition($edit)];
+        $actions[] = match (true) {
+            $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval =>
+                ['drop' => [$edit->name?->value, $edit->kind->value]],
+            $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition =>
+                ['index' => observeMysqlMixedIndexAddition($edit)],
+            $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition =>
+                ['add' => observeMysqlForeignKeyAddition($edit)],
+        };
     }
 
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),

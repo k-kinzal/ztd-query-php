@@ -59,6 +59,7 @@ CONTRACTS = {
     "mysql-implicit-foreign-index-evidence-v1.json": "2415d321aff6b3f886eb46ad353b5b80923e470c0d0784d2decd59817a341b84",
     "mysql-drop-foreign-keys-evidence-v1.json": "85c7a4092c281ed0920a9b69a84c8f4c647758e4d1266142002e1f2ed7f08c39",
     "mysql-foreign-key-exchange-evidence-v2.json": "92d71447548f0191a3f0b92edbe2e737a47f8cdf36175138b6cb7230130a63aa",
+    "mysql-mixed-support-evidence-v1.json": "4b91ef2f0a0031d39bc17ec0ff826ace4f93c978172151195bc9b9abced51646",
     "mysql-add-foreign-keys-evidence-v3.json": "ada4f2890c01347741ae019ba709c825d20e84d0b645ca3ec165c20a8bc5f81c",
     "mysql-foreign-key-string-evidence-v1.json": "2b34e40c25a85120c62955a0fdeeb15b772bdb46c502609470ff5bc287391159",
     "mysql-foreign-key-scalar-evidence-v2.json": "14e178cbf69702558ccd1ab6753daae67c91f177d543f84f9be8d923ae104c6a",

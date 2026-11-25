@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyKeyColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyChildIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyIndexPrefix;
@@ -57,6 +58,23 @@ final class ForeignKeyChildIndexesTest extends TestCase
 
         self::assertFalse($keys->covered(0, $proposed, [[[['owner_id', false]], true]]));
         self::assertTrue($keys->covered(0, $proposed, [[[['owner_id', false], ['code', true]], true]]));
+    }
+
+    public function testRequestsCarriesNativeNamesAtTheOriginalClausePositions(): void
+    {
+        $pair = NativeAdditionFixture::pair('owner_id', 'id');
+        $key = new ForeignKeyKeyColumn(new Identifier('code'));
+        $explicit = new Identifier('named');
+        $requests = (new ForeignKeyChildIndexes())->requests(
+            [[$pair]],
+            [null],
+            [[['owner_id', false]]],
+            [4 => [$explicit, [$key]]],
+            [2],
+            GrammarRelease::MySql910
+        );
+
+        self::assertSame([4 => [$key->field, $explicit], 2 => [$pair->child, null]], $requests);
     }
 
     public function testCoveredUsesExactNativeDirection(): void

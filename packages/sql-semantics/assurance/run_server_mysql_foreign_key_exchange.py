@@ -98,7 +98,7 @@ def invalid(tag):
         ("unresolved-spelling", {"drop": [previous.upper(), "constraint"]}, REMOVAL),
         ("ignored-removal", {"drop": [None, "ignored-on-temporary"]},
          "The foreign-key action does not belong to this native table lifetime."),
-        ("wrong-kind", 19, "A foreign-key exchange requires checked addition and removal roles."),
+        ("wrong-kind", 19, "A mixed key alteration requires checked foreign-key additions, removals or secondary keys."),
     ):
         changed = deepcopy(base)
         changed[path]["actions"][0] = action
@@ -106,7 +106,7 @@ def invalid(tag):
     for index, label in enumerate(("only-drop", "only-add")):
         changed = deepcopy(base)
         changed[path]["actions"] = [base[path]["actions"][index]]
-        yield label, changed, "A foreign-key exchange requires both additions and removals."
+        yield label, changed, "A mixed key alteration requires foreign-key additions and a distinct key edit."
     changed = deepcopy(base)
     changed[path]["actions"] = {"3": base[path]["actions"][0], "4": base[path]["actions"][1]}
     yield "sparse-clauses", changed, "A foreign-key exchange needs a nonempty ordered action list."

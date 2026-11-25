@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyKeyColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyKeys;
@@ -64,10 +65,20 @@ final class ForeignKeyIndexPrefix
      */
     public function physical(ForeignKeyNativeKey $key): array
     {
+        return $this->columns($key->fields);
+    }
+
+    /**
+     * Projects the exact native directional prefix of whole fields.
+     * @param list<ForeignKeyKeyColumn> $columns The ordered physical fields
+     * @return list<array{string, bool}>
+     */
+    public function columns(array $columns): array
+    {
         $case = new NativeIdentifierCase();
 
         $fields = [];
-        foreach ($key->fields as $term) {
+        foreach ($columns as $term) {
             $fields[] = [$case->fold($term->field->value), $term->descending];
         }
 

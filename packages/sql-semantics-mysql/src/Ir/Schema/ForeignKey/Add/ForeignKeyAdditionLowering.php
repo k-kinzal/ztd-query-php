@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 /**
  * Publishes table-level native foreign-key additions with both endpoints resolved.
  * @visibility SqlSemantics
+ * @phpstan-import-type ExplicitIndexRequest from ForeignKeyChildIndexes
  */
 final class ForeignKeyAdditionLowering
 {
@@ -73,10 +74,18 @@ final class ForeignKeyAdditionLowering
      * Binds added edges and returns the original facts needed by the enclosing operation.
      *
      * @param non-empty-list<ForeignKey> $definitions Parsed addition clauses in relative order
-     * @return array{non-empty-list<ForeignKeyAddition>, list<ForeignKeyNativeKey>, list<ForeignKeyConstraintIdentity>, InnoDbKeyLimit}
+     * @param array<int, ExplicitIndexRequest> $indexes Requested secondary index fields and names by action slot
+     * @param list<int> $positions Written positions of the added foreign constraints
+     * @return array{non-empty-list<ForeignKeyAddition>, list<ForeignKeyNativeKey>, list<ForeignKeyConstraintIdentity>, InnoDbKeyLimit, array<int, Identifier>}
      */
-    public function resolve(BoundStatement $operation, Table $child, TableIdentity $owner, array $definitions): array
-    {
+    public function resolve(
+        BoundStatement $operation,
+        Table $child,
+        TableIdentity $owner,
+        array $definitions,
+        array $indexes = [],
+        array $positions = [],
+    ): array {
         $tables = new ForeignKeyTables();
         Check::input($child->keyLimit !== null, 'The native foreign-key profile requires a supported InnoDB row format.');
         $release = $operation->context->profile->grammar;
@@ -98,12 +107,13 @@ final class ForeignKeyAdditionLowering
         }
         $original = array_merge(...array_values($keys));
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $requested);
-        [$created] = (new ForeignKeyChildIndexes())->allocate($owner, $original, $pairs, $labels, $release);
+        [$created, , $names] = (new ForeignKeyChildIndexes())->allocate($owner, $original, $pairs, $labels, $release, $indexes, $positions);
         return [
             $this->materialize($frames, $requested, $symbols, $pairs, $created),
             $original,
             $constraints,
             $child->keyLimit,
+            $names,
         ];
     }
 

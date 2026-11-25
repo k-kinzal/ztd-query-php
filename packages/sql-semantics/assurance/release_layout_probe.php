@@ -655,6 +655,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $declarations[] = 'CREATE TABLE app.fk_drop_parent (a INT PRIMARY KEY)';
         $declarations[] = 'CREATE TABLE app.exchange_parent (a INT NOT NULL PRIMARY KEY, b INT NOT NULL, UNIQUE KEY both_fields (a,b))';
         $declarations[] = 'CREATE TABLE app.exchange_child (pid INT, other_id INT, FOREIGN KEY (pid) REFERENCES exchange_parent(a))';
+        $declarations[] = 'CREATE TABLE app.indexed_exchange (rid INT PRIMARY KEY, pid INT, spare INT)';
         $declarations[] = 'CREATE TABLE app.fk_add_parent (a BIGINT PRIMARY KEY, b BIGINT NOT NULL UNIQUE)';
         $declarations[] = 'CREATE TABLE app.fk_add_child (x BIGINT, y BIGINT, z INT PRIMARY KEY, KEY Earlier (y DESC))';
         $declarations[] = 'CREATE TEMPORARY TABLE app.fk_add_parent (bad_shape VARCHAR(3))';
@@ -2579,6 +2580,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_column($result->removedIndexes, 'value'), array_column($rebuilt->removedIndexes, 'value'),
                 $result->toString(), $rebuilt->toString(),
             ];
+            $mixed = $semantics->analyze('ALTER TABLE app.indexed_exchange ADD KEY pid(spare), '
+                . 'ADD FOREIGN KEY(pid) REFERENCES exchange_parent(a)', $activeContext);
+            [$addedKey, $addedEdge] = $mixed->actions;
+            $mixedRole = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition::class;
+            $heading = new SqlSemantics\Platform\MySql\Ir\TableSource(
+                new $identifier('app'), new $identifier('indexed_exchange'), [new $identifier('spare'), new $identifier('pid')],
+            );
+            $startingKeys = [$facts[0], new $native(new $key($mixed->owner, new $identifier('PRIMARY'), $roleType::Primary),
+                [new $term(new $identifier('rid'))], true)];
+            $directMixed = new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
+                $mixed->owner, [new $mixedRole($addedKey->key, $heading), $addedEdge], $startingKeys, [], $mixed->release,
+            );
+            $details['mysqlMixedSupportingKeys'] = [$addedKey->key->identity->name->value, $addedKey->key->identity->role->value,
+                $addedKey->automatic, array_map(static fn ($field): string => $field->field->value, $addedKey->key->fields),
+                $addedEdge->symbol->value, $addedEdge->createdIndex->value,
+                $mixed->toString(), $directMixed->toString()];
         }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
             $one = $result->additions[0];
