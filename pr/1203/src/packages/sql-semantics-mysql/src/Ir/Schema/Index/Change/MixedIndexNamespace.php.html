@@ -45,10 +45,10 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Schema\Index\Change</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Identifier</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRenameNamespace</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRenameNamespace</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
@@ -59,7 +59,7 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>{</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     * Closes all original names and the referenced generating support.</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @param non-empty-list&lt;IndexIdentity&gt; $drops Checked removals</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @param non-empty-list&lt;IndexRemovalTarget&gt; $drops Checked removals</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * @param non-empty-list&lt;IndexRename&gt; $moves Checked renames</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param list&lt;Identifier&gt; $unmoved Physical names preserved without a change</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
@@ -76,7 +76,7 @@
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-var">$original</span>[<span class="tok-var">$case</span>-&gt;<span class="tok-id">fold</span>(<span class="tok-var">$prior</span>-&gt;<span class="tok-id">value</span>)] = <span class="tok-id">true</span>;</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        }</span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$drops</span> <span class="tok-kw">as</span> <span class="tok-var">$drop</span>) {</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            <span class="tok-var">$name</span> = <span class="tok-var">$case</span>-&gt;<span class="tok-id">fold</span>(<span class="tok-var">$drop</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            <span class="tok-var">$name</span> = <span class="tok-var">$case</span>-&gt;<span class="tok-id">fold</span>(<span class="tok-var">$drop</span>-&gt;<span class="tok-id">index</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>);</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-id">Check</span>::<span class="tok-id">input</span>(!<span class="tok-kw">isset</span>(<span class="tok-var">$original</span>[<span class="tok-var">$name</span>]), <span class="tok-str">&#039;A removed index cannot also be renamed or unmoved.&#039;</span>);</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>            <span class="tok-var">$original</span>[<span class="tok-var">$name</span>] = <span class="tok-id">true</span>;</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        }</span>
