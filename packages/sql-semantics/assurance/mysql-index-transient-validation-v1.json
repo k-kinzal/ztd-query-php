@@ -1,0 +1,69 @@
+{
+  "revision": "SemanticsIR/mysql-index-transient-validation-1",
+  "approval": "pending-human-review",
+  "workOrder": "P01, P02, P03, P04, P05, P06, Q01, Q02, Q03, Q04 and Q05",
+  "extends": {
+    "mysql-native-index-policy-evidence-v2.json": "1186f86f785635f4708135df8bbb83486c41b2cda22e05d856558f2936740a37",
+    "mysql-index-renames-evidence-v1.json": "a0447f8248759f8627ee3cf4bba74c0396678d9de97e5f471554e6a652eb0074",
+    "mysql-mixed-index-alteration-evidence-v2.json": "cf8dab798394497cf06f819a0d1f363cc4bf85dd9766e3a67945bc49f9421904"
+  },
+  "sources": {
+    "creation": "https://dev.mysql.com/doc/refman/8.0/en/create-index.html",
+    "storage": "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+  },
+  "profiles": "Stock native InnoDB versions fixed by the extended domain contracts, with empty sql_mode and exact external table definitions.",
+  "rules": {
+    "creation": [
+      "Check prior key names, count, namespace and existence of a physical identity key using transient constructor inputs.",
+      "Keep the resolved owner and ordered operands, native index name, visibility, policy, release and effective physical secondary ordinary, secondary unique or clustered unique role.",
+      "A unique key on a table without an existing suitable identity becomes clustered when every checked key field is nonnullable. This is the only created clustered role. The observed default, COPY and INPLACE variants select the same role.",
+      "From MySQL 8.0, the same visibility rule excludes an invisible clustered unique creation. Existing primary or clustered unique identity leaves a new unique key secondary. The prior identifier list and identity-key input are absent from the value."
+    ],
+    "rename": [
+      "Check the complete native collision, cardinality and policy premises from ordered moves and independently provided unaffected names.",
+      "Keep only the owner, checked moves, policy and release. Unaffected names remain native observations in the independent fixture."
+    ],
+    "mixed": [
+      "Check the complete final native namespace and remaining eligible support using original unaffected key and dependency facts before publication.",
+      "Keep the owner, ordered removal and rename actions, release and policy. Continue to compare the unaffected key names, physical properties and foreign-key survival in the observer."
+    ],
+    "acceptance": "Retain all original finite coordinate sets, supported modes, seeds, mandatory observed native effects, budgets and intended typed rejections. The structural response projects the effective action roles. Original proof premises stay available from the fixed requests and live fixture. Compare original and emitted SQL under the same prior catalog."
+  },
+  "calibration": {
+    "recipeSha256": "93cfbcafa73eca94f3d2f8aff77fb7f225f3e9cdc61d652e83ecac52472f30cc",
+    "casesPerRelease": 60,
+    "observedNativeTypeValues": {
+      "ordinary": 0,
+      "secondaryUnique": 2,
+      "clusteredUnique": 3
+    },
+    "releaseReceipts": {
+      "5.6.51": {
+        "stdout": "6d5cedbe0f3a14304f3336ce9bffa88f54259bed1c3474023e88a0cdedaddf48",
+        "stderr": "0a3b6b825883637648b2e3e7aef6792a8581eb0d85247faf7622af74100e9d81"
+      },
+      "5.7.44": {
+        "stdout": "3f293066384f78585d1aaaddb249f15ff9b06a0896102e85edc790a0f085a5ff",
+        "stderr": "0a3b6b825883637648b2e3e7aef6792a8581eb0d85247faf7622af74100e9d81"
+      },
+      "8.0.44": {
+        "stdout": "42f6f470d132ddb4297914c9aea03667a1de854f9f0ade5273b51a378aa8bfe9",
+        "stderr": "cb9219b74a90555d224f783c12a233fd5e7399f643b4b8cd728e4015eaddaff1"
+      },
+      "8.4.7": {
+        "stdout": "89ce1f4e177a47b30e0f947d337ef813935ba07be08eae1a2633903ee42fd760",
+        "stderr": "cb9219b74a90555d224f783c12a233fd5e7399f643b4b8cd728e4015eaddaff1"
+      },
+      "9.1.0": {
+        "stdout": "0af7d529cf38acd41e27aa708add1a98954b47d58577615f2c21d93a700c1d62",
+        "stderr": "afe62a774c382803d1ba19394c4bd73037c3d6be97aab525e44f4a864a8bf1aa"
+      }
+    }
+  },
+  "expectedChecks": [
+    "Reject retained validation-only fields, missing namespace checks and a changed clustered selection rule.",
+    "Verify exact active role, visibility and SQL under both normal construction routes.",
+    "Keep direct malformed-namespace and known-blocking engine cases, whole finite domains and deployed build evidence."
+  ],
+  "remaining": "Other promoted catalog-only fields across dialects, full grammar domains and protected human-reviewed acceptance are tracked separately."
+}
