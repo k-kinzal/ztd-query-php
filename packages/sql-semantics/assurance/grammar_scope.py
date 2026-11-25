@@ -831,6 +831,8 @@ def inventory(root):
             }
             for alternative in signatures & native_index_rename:
                 related[alternative] = (*related.get(alternative, ()), "mysql-index-renames-evidence-v1.json")
+            for alternative in signatures & (batch_index | native_index_rename):
+                related[alternative] = (*related.get(alternative, ()), "mysql-mixed-index-alteration-evidence-v1.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):
                 for alternative in rules.get(rule, []):
                     if rule != "rename" or "table_to_table_list" in alternative:

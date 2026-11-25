@@ -1450,6 +1450,18 @@ if ($dialect !== 'sqlite') {
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
         $methods[$indexRename] = ['__construct', 'toString'];
         $methods[$renameIndexes] = ['__construct', 'profileId', 'toString'];
+        $mixedAlter = 'Schema\\Index\\Change\\AlterIndexes';
+        $indexAlteration = 'Schema\\Index\\Change\\IndexAlteration';
+        $mixedChanges = 'Schema\\Index\\Change\\MixedIndexChanges';
+        $mixedNamespace = 'Schema\\Index\\Change\\MixedIndexNamespace';
+        $roots[] = $mixedAlter;
+        array_push($internal, 'Schema\\Alter\\AlterMixedIndexesLowering', $mixedChanges, $mixedNamespace);
+        array_push($pureCollaborators, $mixedChanges, $mixedNamespace);
+        $properties[$indexAlteration] = ['operation' => [$indexIdentity, $indexRename]];
+        $properties[$mixedAlter] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'actions' => ['array'], 'unmoved' => ['array'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
+        $methods[$indexAlteration] = ['__construct', 'toString'];
+        $methods[$mixedAlter] = ['__construct', 'profileId', 'toString'];
         $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
         $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole],
             'autoIncrement' => ['?' . $indexAutoIncrement]];
@@ -1837,6 +1849,7 @@ try {
             ['mysql-index-auto-increment-storage-v1.json', '6b6a146f979bb53a4dce55a241f642a75e4fdb61d541c7ba254ae158aa3344c7'],
             ['mysql-index-removal-set-storage-v1.json', 'ed343981fe207cd80b7d6628cdd6685787c39f241bfc5bc27cee629e80e243a1'],
             ['mysql-index-rename-storage-v1.json', 'ffc8cd41e898f15ecae3343c9dfdcfbe1a72678249e21fb2edbe8d02c1d73831'],
+            ['mysql-mixed-index-storage-v1.json', '281216083a6a07e02dc27a5730a9b347b9f512f77e4507b1037a39557a28490f'],
         ] as [$catalogue, $digest]) {
             $indexStorage = __DIR__ . '/' . $catalogue;
             requireShape(hash_file('sha256', $indexStorage) === $digest, 'MySQL native index list storage differs from its recorded revision');
@@ -2264,6 +2277,13 @@ try {
                     ],
                     'Unexpected PostgreSQL rename publication');
             }
+            if ($dialect === 'mysql' && $short === 'Schema\\Alter\\AlterMixedIndexesLowering') {
+                $members = $class->getMethods();
+                requireShape(array_map(static fn ($method) => $method->name->toString(), $members) === ['changes', 'lower', 'unmoved']
+                    && $members[1]->isPublic() && !$members[1]->isStatic() && $members[1]->returnType !== null
+                    && types($members[1]->returnType, $prefix, $short) === ['Schema\\Index\\Change\\AlterIndexes'],
+                    'Unexpected MySQL mixed index publication');
+            }
             if ($dialect === 'mysql' && $short === 'Schema\\Alter\\AlterIndexRenameLowering') {
                 $members = $class->getMethods();
                 requireShape(array_map(static fn ($method) => $method->name->toString(), $members) === [
@@ -2290,8 +2310,9 @@ try {
                     && $members[1]->isPublic() && !$members[1]->isStatic()
                     && $members[1]->name->toString() === 'lower' && $members[1]->returnType !== null
                     && types($members[1]->returnType, $prefix, $short) === [
-                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes',
-                        'Schema\\Index\\Rename\\RenameIndexes', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\Change\\AlterIndexes',
+                        'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes', 'Schema\\Index\\Rename\\RenameIndexes',
+                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RelationChangeLowering') {
@@ -2400,7 +2421,8 @@ try {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace', 'Schema\\Index\\IndexAutoIncrement',
                     'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
-                    'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace'], true)
+                    'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
+                    'Schema\\Index\\Change\\MixedIndexNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',

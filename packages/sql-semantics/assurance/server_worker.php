@@ -1035,6 +1035,42 @@ function observeMysqlIndexRenames(SqlSemantics\Platform\MySql\Ir\Schema\Index\Re
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
 }
 
+function constructMysqlMixedIndexes(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes
+{
+    $spec = $input['mysqlMixedIndexes'];
+    $name = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+    $actions = [];
+    foreach ($spec['actions'] as $action) {
+        $operation = isset($action['drop']) ? constructMysqlIndexIdentity($action['drop'])
+            : new SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename(
+                new $name($action['rename'][0]), new $name($action['rename'][1])
+            );
+        $actions[] = new SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\IndexAlteration($operation);
+    }
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes(
+        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']), $actions,
+        array_map(static fn (string $unmoved): SqlSemantics\Platform\MySql\Ir\Identifier => new $name($unmoved), $spec['unmoved']),
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexPolicy($spec['policy'])
+    );
+}
+
+function observeMysqlMixedIndexes(SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes $value): array
+{
+    $actions = [];
+    foreach ($value->actions as $action) {
+        $change = $action->operation;
+        $actions[] = $change instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity
+            ? ['drop' => observeMysqlIndexIdentity($change)] : ['rename' => [$change->source->value, $change->destination->value]];
+    }
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlMixedIndexes' => ['owner' => observeMysqlTableIdentity($value->owner), 'actions' => $actions,
+            'unmoved' => array_map(static fn (object $key): string => $key->value, $value->unmoved),
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
+}
+
 function observeMysqlIndexIdentity(SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity $target): array
 {
     $increment = $target->autoIncrement;
@@ -2225,6 +2261,7 @@ function observeStatement(array $input): array
             isset($input['mysqlDropIndex']) => constructMysqlDropIndex($input),
             isset($input['mysqlDropIndexes']) => constructMysqlDropIndexes($input),
             isset($input['mysqlIndexRenames']) => constructMysqlIndexRenames($input),
+            isset($input['mysqlMixedIndexes']) => constructMysqlMixedIndexes($input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -2329,6 +2366,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes) {
         return observeMysqlDropIndexes($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes) {
+        return observeMysqlMixedIndexes($value);
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes) {
         return observeMysqlIndexRenames($value);

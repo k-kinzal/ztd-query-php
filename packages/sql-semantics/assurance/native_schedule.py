@@ -122,6 +122,7 @@ NATIVE = {
     "mysql_index_auto_increment": "mysql-index-auto-increment-evidence-v1.json",
     "mysql_drop_indexes": "mysql-multiple-index-removal-evidence-v1.json",
     "mysql_index_rename": "mysql-index-renames-evidence-v1.json",
+    "mysql_mixed_index_alteration": "mysql-mixed-index-alteration-evidence-v1.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
     "mysql_grouped_having": "mysql-grouped-having-v2.json",
@@ -285,6 +286,7 @@ SINGLE_ENGINE = {
     "mysql_index_auto_increment": "mysql",
     "mysql_drop_indexes": "mysql",
     "mysql_index_rename": "mysql",
+    "mysql_mixed_index_alteration": "mysql",
     "mysql_session_table_sources": "mysql",
     "mysql_create_view": "mysql",
     "mysql_grouped_having": "mysql",
@@ -313,7 +315,11 @@ SINGLE_ENGINE = {
 
 @lru_cache(maxsize=None)
 def release_subset(domain):
-    field = {"mysql_with_projection": "profiles", "mysql_index_rename": "releases"}.get(domain)
+    field = {
+        "mysql_with_projection": "profiles",
+        "mysql_index_rename": "releases",
+        "mysql_mixed_index_alteration": "releases",
+    }.get(domain)
     if field is None:
         return None
     path = NATIVE[domain]

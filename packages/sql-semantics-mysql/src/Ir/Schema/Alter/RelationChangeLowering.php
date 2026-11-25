@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Alter;
 
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTableLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
@@ -40,15 +41,18 @@ final class RelationChangeLowering
             || $statement instanceof ParsedRenameTable || $statement instanceof ParsedTruncateTable
             || ($statement instanceof ParsedAlterTable && (
                 (new AlterIndexRemovalLowering())->removals($statement) !== null || (new AlterIndexRenameLowering())->moves($statement) !== null
+                || (new AlterMixedIndexesLowering())->changes($statement) !== null
             ));
     }
 
     /**
      * Publishes the specific operation after its relation has been bound.
      */
-    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): DropIndex|DropIndexes|DropTable|DropView|RenameIndexes|RenameTable|TruncateTable
+    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): AlterIndexes|DropIndex|DropIndexes|DropTable|DropView|RenameIndexes|RenameTable|TruncateTable
     {
         return match (true) {
+            $statement instanceof ParsedAlterTable && (new AlterMixedIndexesLowering())->changes($statement) !== null
+                => (new AlterMixedIndexesLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable && (new AlterIndexRenameLowering())->moves($statement) !== null
                 => (new AlterIndexRenameLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable => (new AlterIndexRemovalLowering())->lower($operation, $statement),

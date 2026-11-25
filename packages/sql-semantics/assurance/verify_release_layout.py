@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v157.json"
-CONTRACT = "51820852dc399cf8332546ceea667ae41ebdab2d36756b4bd8d0335d8995b24c"
+CONTRACT_NAME = "release-layout-v158.json"
+CONTRACT = "cd4ccce9116abf641d046dafc038a0635ef49dc8f1866954f2c70a9abce6e9eb"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -742,6 +742,13 @@ def verify_probe(raw, catalog):
                 "The resulting native index names must be distinct.",
                 "Native index renaming requires MySQL 5.7 or later.", True,
             ] and item["sql"] == rename, "installed-mysql-index-rename-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\Change\\AlterIndexes"):
+            mixed = "ALTER TABLE `app`.`batch_index` DROP INDEX `PRIMARY`, RENAME INDEX `by_a` TO `new_a`"
+            require(item.get("mysqlMixedIndexAlteration") == [
+                "PRIMARY", ["by_a", "keeps_a"], ["by_a", "new_a"], ["keeps_a"], mixed,
+                "A removed index cannot also be renamed or unmoved.",
+                "Mixed native index removal and renaming requires MySQL 5.7 or later.",
+            ] and item["sql"] == mixed, "installed-mysql-mixed-index-alteration-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
             require(item.get("mysqlQueryBackedInnoDbWidth") == [
                 203, False, False, 1, "tail_5", "The projected clustered InnoDB record must fit the native 8126-byte boundary.",

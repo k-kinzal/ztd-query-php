@@ -735,6 +735,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX READY ON app.index_drop_probe';
         $queries['Schema\\Index\\DropIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, DROP KEY by_a';
         $queries['Schema\\Index\\Rename\\RenameIndexes'] = 'ALTER TABLE app.index_rename_probe RENAME KEY by_a TO by_b, RENAME INDEX by_b TO by_a';
+        $queries['Schema\\Index\\Change\\AlterIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, RENAME INDEX by_a TO new_a';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -2398,6 +2399,34 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_map(static fn ($move): array => [$move->source->value, $move->destination->value], $rebuilt->moves),
                 array_map(static fn ($name): string => $name->value, $rebuilt->unmoved),
                 $rebuilt->toString(), $occupied, $legacyDirect, $legacyAnalysis,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\Change\\AlterIndexes') {
+            $inputs = $result->actions;
+            $first = $inputs[0];
+            $inputs[0] = &$first;
+            $class = SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes::class;
+            $rebuilt = new $class($result->owner, $inputs, $result->unmoved, $result->release, $result->policy);
+            $first = $inputs[1];
+            $removed = $rebuilt->actions[0]->operation;
+            $renamed = $rebuilt->actions[1]->operation;
+            $overlap = $legacy = null;
+            try {
+                $semantics->analyze('ALTER TABLE app.batch_index DROP INDEX by_a, RENAME INDEX by_a TO alias_name', $activeContext);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $overlap = $error->getMessage();
+            }
+            try {
+                new $class($result->owner, $result->actions, $result->unmoved, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $legacy = $error->getMessage();
+            }
+            $details['mysqlMixedIndexAlteration'] = [
+                $removed->name->value,
+                array_map(static fn ($index): string => $index->value, $removed->autoIncrement->alternates),
+                [$renamed->source->value, $renamed->destination->value],
+                array_map(static fn ($name): string => $name->value, $rebuilt->unmoved),
+                $rebuilt->toString(), $overlap, $legacy,
             ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
