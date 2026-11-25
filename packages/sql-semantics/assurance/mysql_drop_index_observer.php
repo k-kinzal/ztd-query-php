@@ -36,7 +36,7 @@ function admitIndexFixture(string $sql): bool
 
     return strlen($sql) <= 1400 && preg_match('/\ACREATE (?:TEMPORARY )?TABLE `ir_fixture`.`ir_index_removal` \('
         . $name . ' INT NOT NULL(?: PRIMARY KEY| UNIQUE)?, `b` INT NULL, `c` INT NOT NULL'
-        . '(?:, ' . $constraint . '){2,4}\) ENGINE=InnoDB\z/Du', $sql) === 1;
+        . '(?:, ' . $constraint . '){2,5}\) ENGINE=InnoDB\z/Du', $sql) === 1;
 }
 
 function dropIndexQuote(string $name): string
