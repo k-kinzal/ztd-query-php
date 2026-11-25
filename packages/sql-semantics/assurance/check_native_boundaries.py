@@ -16,8 +16,8 @@ from run import TOOL, Failure, candidate_distribution, digest, require, shape, v
 
 
 ENGINES = ("mysql", "postgres", "sqlite")
-FAULT_REPLAY_NAME = "native-boundary-fault-replay-v2.json"
-FAULT_REPLAY = "ff6f0bb0bd9fc0bdadec03a780003f87bec97515f76a2ad908772877a96f8bd1"
+FAULT_REPLAY_NAME = "native-boundary-fault-replay-v3.json"
+FAULT_REPLAY = "c7526689a3aacd5aac08124eee7abf992ce83df45406527b1016cabf4794d587"
 
 
 def native_boundary_procedures(tools):
@@ -1409,7 +1409,11 @@ def expected_rejection(engine, fault):
 
 
 def mechanism(fault):
-    return "full-binding-source-audit" if fault.artifact else "registered-method-template"
+    if fault.artifact:
+        return "full-binding-source-audit"
+    if fault.message is not None:
+        return "full-specialized-shape-audit"
+    return "registered-method-template"
 
 
 def method_target(args, engine, fault, source):
@@ -1488,7 +1492,7 @@ def check_fault(args, engine, fault, distribution):
                                 f"a/{relative}", f"b/{relative}")
     (overlay / "injected.diff").write_text("".join(diff))
 
-    if fault.artifact:
+    if mechanism(fault) != "registered-method-template":
         observed = checked_rejection(lambda: shape(args, overlay, engine), engine, fault)
     else:
         observed = checked_rejection(lambda: method_target(args, engine, fault, altered), engine, fault)
@@ -1528,7 +1532,7 @@ def main():
         require({fault.role for fault in cases if not fault.artifact} <= set(healthy["checkedBoundaries"])
                 and {fault.artifact for fault in cases if fault.artifact} <= healthy["checkedBindingSources"].keys(),
                 "native-boundary-audit-incomplete", engine)
-        first = next(fault for fault in cases if not fault.artifact)
+        first = next(fault for fault in cases if mechanism(fault) == "registered-method-template")
         records = []
         control = None
         for fault in cases:
