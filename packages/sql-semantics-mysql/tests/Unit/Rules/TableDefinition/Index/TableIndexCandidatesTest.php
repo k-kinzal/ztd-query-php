@@ -7,6 +7,7 @@ namespace Tests\Unit\Rules\TableDefinition\Index;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIndexCandidates;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
@@ -22,9 +23,20 @@ final class TableIndexCandidatesTest extends TestCase
         $result = (new Inspection())->inspect('CREATE TABLE app.t (a INT, CONSTRAINT label UNIQUE INDEX exact_name (a))');
         self::assertInstanceOf(CreateTable::class, $result->statement);
 
-        $keys = (new TableIndexCandidates())->keys($result->statement->elements[1], ['a' => new Name('a')]);
+        $keys = (new TableIndexCandidates())->keys($result->statement->elements[1], ['a' => [new Name('a'), false]]);
         self::assertNotNull($keys);
         self::assertSame(IndexKind::Unique, $keys[0][0]);
         self::assertSame('exact_name', $keys[0][1]?->value);
+    }
+    public function testFieldsKeepsNamesAndRejectsNativeCaseDuplicates(): void
+    {
+        $candidates = new TableIndexCandidates();
+        $result = (new \SqlSemantics\Platform\MySql\Semantics())->context(['CREATE TABLE app.t (n INT NOT NULL, m INT NULL)']);
+        self::assertInstanceOf(AnalysisContext::class, $result);
+        [$required, $nullable] = $result->tables[0]->columns;
+
+        $fields = $candidates->fields([[null, $required], [null, $nullable]]);
+        self::assertSame(['n' => [$required->name, true], 'm' => [$nullable->name, false]], $fields);
+        self::assertNull($candidates->fields([[null, $required], [null, $required]]));
     }
 }

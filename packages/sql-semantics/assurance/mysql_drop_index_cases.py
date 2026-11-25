@@ -33,7 +33,7 @@ def coordinates():
             for kind, origins in KINDS.items() for origin in origins}
 
 
-def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=0, option="", suffix=2):
+def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=0, option="", suffix=2, nullable=False, anchor=None):
     life, kind, origin, spelling, qualifier = point
     occupied = None
     if kind == "primary":
@@ -48,10 +48,11 @@ def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=
         name = field
     written = name if spelling == "declared" else name.swapcase()
     fields = [field, "c"] if origin != "inline" and composite else [field]
+    role = "clustered-unique" if kind == "unique" and not nullable and anchor not in ("primary", "prior") else kind
     target = [SCHEMA, TABLE, "table" if life == "persistent" else "temporary-table"]
-    return {"dialect": "mysql", "release": tag, "mysqlDropIndex": {"owner": target, "role": kind, "name": name},
+    return {"dialect": "mysql", "release": tag, "mysqlDropIndex": {"owner": target, "role": role, "name": name, "policy": ["DEFAULT", "DEFAULT"]},
             "point": list(point), "written": written, "fields": fields, "field": field, "label": label,
-            "offset": offset, "option": option, "occupied": occupied}
+            "offset": offset, "option": option, "occupied": occupied, "nullable": nullable, "anchor": anchor}
 
 
 def cases(tag, seed, count):
@@ -74,6 +75,9 @@ def keys(item, sibling=False):
         keep.append([item["field"], "ordinary", ["b"]])
         if item["occupied"] is not None:
             keep.append([item["occupied"], "ordinary", ["b"]])
+    if not sibling and item["anchor"] is not None:
+        keep.append(["PRIMARY" if item["anchor"] == "primary" else "required_c",
+                     "primary" if item["anchor"] == "primary" else "unique", ["c"]])
     if sibling:
         return [*keep, ["persistent_only", "ordinary", [item["field"]]]]
     return [*keep, [name, kind, item["fields"]]]
@@ -85,12 +89,15 @@ def table_definition(item, temporary, sibling=False):
     first = quote(field) + " INT NOT NULL"
     if not sibling and origin == "inline":
         first += " PRIMARY KEY" if kind == "primary" else " UNIQUE"
-    columns = [first, "`b` INT NULL", "`c` INT NOT NULL",
+    c = "`c` INT NULL" if item["nullable"] and not sibling else "`c` INT NOT NULL"
+    columns = [first, "`b` INT NULL", c,
                "UNIQUE INDEX `retained_b` (`b`)", "INDEX `retained_c` (`c`, `b`)"]
     if origin == "automatic-suffixed":
         columns.append("INDEX " + quote(field) + " (`b`)")
         if item["occupied"] is not None:
             columns.append("INDEX " + quote(item["occupied"]) + " (`b`)")
+    if not sibling and item["anchor"] == "prior":
+        columns.append("UNIQUE INDEX `required_c` (`c`)")
     if sibling:
         columns.append("INDEX `persistent_only` (" + quote(field) + ")")
     elif origin != "inline":
@@ -100,6 +107,8 @@ def table_definition(item, temporary, sibling=False):
         elif origin == "explicit":
             starter += " " + quote(label)
         columns.append(starter + " (" + ", ".join(map(quote, item["fields"])) + ")")
+    if not sibling and item["anchor"] in ("primary", "later"):
+        columns.append(("PRIMARY KEY" if item["anchor"] == "primary" else "UNIQUE INDEX `required_c`") + " (`c`)")
     return f"CREATE {'TEMPORARY ' if temporary else ''}TABLE {quote(SCHEMA)}.{quote(TABLE)} ({', '.join(columns)}) ENGINE=InnoDB"
 
 
@@ -132,17 +141,22 @@ def field_rows(item, temporary):
 
 
 def metadata(item, retained, temporary, sibling=False, rows=None):
+    nullable = {"b", "c"} if item["nullable"] and not sibling else {"b"}
     index_values = []
     for name, kind, fields in keys(item, sibling):
         if retained and not sibling and name == item["mysqlDropIndex"]["name"]:
             continue
-        index_values += [[name, int(kind == "ordinary"), i, field, "A", field == "b", "BTREE", True, None]
+        index_values += [[name, int(kind == "ordinary"), i, field, "A", field in nullable, "BTREE", True, None]
                          for i, field in enumerate(fields, 1)]
     native_type = "int(11)" if item["release"] in OLD else "int"
     extra = "NULL" if temporary and item["release"] not in OLD else ""
-    columns = [[name, native_type, optional, None, extra, None] for name, optional in ((item["field"], False), ("b", True), ("c", False))]
+    columns = [[name, native_type, optional, None, extra, None] for name, optional in ((item["field"], False), ("b", True), ("c", "c" in nullable))]
     return {"rows": field_rows(item, temporary) if rows is None else sorted(rows, key=lambda r: (r[0], -1 if r[1] is None else r[1])),
             "columns": columns, "indexes": sorted(index_values, key=lambda part: (part[0], part[2]))}
+
+
+def probe_last(item):
+    return 97 if item["anchor"] is not None else field_rows(item, item["point"][0] != "persistent")[0][2]
 
 
 def prediction(item, runtime_error=None):
@@ -150,7 +164,7 @@ def prediction(item, runtime_error=None):
     temporary = life != "persistent"
     before = metadata(item, False, temporary)
     if runtime_error is None:
-        rows = [*before["rows"], [before["rows"][0][0], 63, before["rows"][0][2]]]
+        rows = [*before["rows"], [before["rows"][0][0], 63, probe_last(item)]]
         after = metadata(item, True, temporary, rows=rows)
     else:
         after = before

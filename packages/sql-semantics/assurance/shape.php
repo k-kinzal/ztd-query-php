@@ -1403,12 +1403,23 @@ if ($dialect !== 'sqlite') {
         $internal[] = 'Schema\\Truncate\\TruncateLowering';
         $index = 'Schema\\Index\\CreateIndex';
         $part = 'Schema\\Index\\IndexColumn';
+        $policy = 'Schema\\Index\\Policy\\IndexChangePolicy';
+        $algorithm = 'Schema\\Index\\Policy\\IndexAlgorithm';
+        $lock = 'Schema\\Index\\Policy\\IndexLock';
+        $properties[$policy] = ['algorithm' => [$algorithm], 'lock' => [$lock]];
+        $properties[$algorithm] = $properties[$lock] = [];
+        $methods[$policy] = ['__construct', 'supports', 'sql'];
+        $methods[$algorithm] = $methods[$lock] = [];
+        $enumCases[$algorithm] = ['Default' => 'DEFAULT', 'InPlace' => 'INPLACE', 'Copy' => 'COPY'];
+        $enumCases[$lock] = ['Default' => 'DEFAULT', 'None' => 'NONE', 'Shared' => 'SHARED', 'Exclusive' => 'EXCLUSIVE'];
+        array_push($internal, 'Schema\\Index\\IndexNamespace', 'Schema\\Index\\Policy\\IndexPolicyLowering');
+        $pureCollaborators[] = 'Schema\\Index\\IndexNamespace';
         $roots[] = $index;
         array_push($internal, 'Schema\\Index\\CreateIndexLowering', 'Schema\\Index\\IndexOptionsLowering',
             'Schema\\Index\\IndexTableLowering', 'Schema\\Index\\IndexPartsLowering');
         $properties[$index] = ['target' => ['TableSource'], 'name' => ['Identifier'], 'columns' => ['array'],
             'unique' => ['bool'], 'visible' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
-            'ownerHasIdentityKey' => ['bool']];
+            'ownerHasIdentityKey' => ['bool'], 'priorKeys' => ['array'], 'policy' => [$policy]];
         $properties[$part] = ['slot' => ['int'], 'descending' => ['bool']];
         $methods[$index] = ['__construct', 'profileId', 'toString'];
         $methods[$part] = ['__construct'];
@@ -1417,13 +1428,13 @@ if ($dialect !== 'sqlite') {
         $indexRole = 'Schema\\Index\\IndexRole';
         $roots[] = $dropIndex;
         $internal[] = 'Schema\\Index\\DropIndexLowering';
-        $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
         $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole]];
         $properties[$indexRole] = [];
         $methods[$dropIndex] = ['__construct', 'profileId', 'toString'];
         $methods[$indexIdentity] = ['__construct'];
-        $methods[$indexRole] = [];
-        $enumCases[$indexRole] = ['Primary' => 'primary', 'Unique' => 'unique', 'Ordinary' => 'ordinary'];
+        $methods[$indexRole] = ['clustered'];
+        $enumCases[$indexRole] = ['Primary' => 'primary', 'ClusteredUnique' => 'clustered-unique', 'Unique' => 'unique', 'Ordinary' => 'ordinary'];
         $identity = 'Schema\\Identity\\TableIdentity';
         $properties[$identity] = ['name' => [$tableName], 'kind' => ['From\\ExternalRelationKind']];
         $methods[$identity] = ['__construct', 'quoted'];
@@ -1750,7 +1761,7 @@ try {
             ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v5.json', '7a1814a0d53a728f4cb57edcda6688a5390763adb35af826625b42f1dc707e24', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v3.json', '2e88b842eb8627ad997d2b481ee423a15ee54cabed6bdfd3e3ec20c195f533f9', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v4.json', '72af04c3dbcbf4208f7de344aa503556e00b2d2f43575d4513f437db09e1c627', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1797,6 +1808,13 @@ try {
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
+    if ($dialect === 'mysql') {
+        $indexStorage = __DIR__ . '/mysql-index-namespace-storage-v1.json';
+        requireShape(hash_file('sha256', $indexStorage) === '90a0725227d5c8931a4b9cb2ea92567cb4a93798161a81590874659da33c412d',
+            'MySQL native index list storage differs from its recorded revision');
+        $indexRecord = json_decode(file_get_contents($indexStorage), true, 512, JSON_THROW_ON_ERROR);
+        $storage[$indexRecord['owner']] += $indexRecord['storage'];
+    }
     $listFields = [];
     $checkedValues = [];
     $checkedDispatch = [];
@@ -2329,7 +2347,7 @@ try {
         }
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
-                || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity'], true)
+                || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',
@@ -2431,7 +2449,7 @@ try {
             $operators = [];
             foreach ($class->stmts as $case) {
                 if ($case instanceof Stmt\ClassMethod && (
-                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'From\\ExternalRelationKind', 'From\\ColumnKind'], true))
+                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'Schema\\Index\\IndexRole', 'From\\ExternalRelationKind', 'From\\ColumnKind'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Sequence\\SequencePersistence')
                 )) {
                     continue;

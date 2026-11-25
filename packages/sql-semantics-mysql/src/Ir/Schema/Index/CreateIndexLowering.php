@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -33,7 +34,7 @@ final class CreateIndexLowering
             'CREATE INDEX requires the default native profile.'
         );
         $visible = (new IndexOptionsLowering())->visible($statement);
-        [$target, $parts, $hasIdentity] = (new IndexTableLowering())->resolve($operation, $statement);
+        [$target, $parts, $hasIdentity, $priorKeys] = (new IndexTableLowering())->resolve($operation, $statement);
 
         return new CreateIndex(
             $target,
@@ -42,7 +43,9 @@ final class CreateIndexLowering
             $statement->kind === IndexKind::Unique,
             $visible,
             $profile->grammar,
-            $hasIdentity
+            $hasIdentity,
+            $priorKeys,
+            (new IndexPolicyLowering())->lower($statement->alterOptions)
         );
     }
 }

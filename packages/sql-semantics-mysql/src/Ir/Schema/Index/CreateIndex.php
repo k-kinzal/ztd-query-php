@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -31,9 +32,15 @@ final class CreateIndex implements SemanticsIR
     public readonly array $columns;
 
     /**
+     * @var list<Identifier> The occupied physical names in the resolved owner namespace
+     */
+    public readonly array $priorKeys;
+
+    /**
      * Closes the native index definition against its resolved table.
      *
      * @param list<IndexColumn> $columns The ordered index parts
+     * @param list<Identifier> $priorKeys The names of every prior declared key in the owner
      */
     public function __construct(
         public readonly TableSource $target,
@@ -43,14 +50,23 @@ final class CreateIndex implements SemanticsIR
         public readonly bool $visible = true,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly bool $ownerHasIdentityKey = false,
+        array $priorKeys = [],
+        public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
     ) {
         Check::input($target->kind->isTable(), 'CREATE INDEX requires a resolved persistent or temporary InnoDB table.');
+        Check::input($policy->supports($target->kind), 'The algorithm and lock cannot create this native InnoDB index.');
         Check::input(count($target->columns) <= 1017, 'An InnoDB index owner can declare at most 1017 fields.');
         $case = new NativeIdentifierCase();
         Check::input(
             preg_match('/\A.{1,64}(?<! )\z/us', $name->value) === 1 && $case->fold($name->value) !== 'primary',
             'CREATE INDEX requires an index name of 1 to 64 characters other than PRIMARY and without a trailing space.'
         );
+        $this->priorKeys = Check::listOf(
+            $priorKeys,
+            Identifier::class,
+            'A native index namespace contains an ordered list of physical names.'
+        );
+        (new IndexNamespace())->check($name, $this->priorKeys, $ownerHasIdentityKey);
         $parts = Check::listOf($columns, IndexColumn::class, 'CREATE INDEX needs a nonempty ordered list of index parts.', 1);
         Check::input(count($parts) <= 16, 'An InnoDB secondary index can have at most 16 key parts.');
         $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
@@ -93,6 +109,6 @@ final class CreateIndex implements SemanticsIR
 
         return 'CREATE ' . ($this->unique ? 'UNIQUE ' : '') . 'INDEX ' . $this->name->quoted()
             . ' ON ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted()
-            . ' (' . implode(', ', $parts) . ')' . ($this->visible ? '' : ' INVISIBLE');
+            . ' (' . implode(', ', $parts) . ')' . ($this->visible ? '' : ' INVISIBLE') . $this->policy->sql();
     }
 }

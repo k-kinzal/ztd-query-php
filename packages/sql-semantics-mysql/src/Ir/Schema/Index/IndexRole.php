@@ -14,6 +14,18 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 enum IndexRole: string
 {
     case Primary = 'primary';
+    case ClusteredUnique = 'clustered-unique';
     case Unique = 'unique';
     case Ordinary = 'ordinary';
+
+    /**
+     * Answers whether removal changes the owning InnoDB table's clustered identity.
+     */
+    public function clustered(): bool
+    {
+        return match ($this) {
+            self::Primary, self::ClusteredUnique => true,
+            self::Unique, self::Ordinary => false,
+        };
+    }
 }

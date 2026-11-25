@@ -1,0 +1,142 @@
+{
+  "revision": "SemanticsIR/mysql-native-index-policy-evidence-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-native-index-policy-v1.json",
+    "mysql-native-index-policy-v2.json",
+    "mysql-create-btree-index-evidence-v3.json",
+    "mysql-drop-native-index-evidence-v3.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Stock ordinary InnoDB, native parameter and lexical profile, utf8mb4, empty sql_mode, default mandatory-primary-key setting.",
+  "scope": "Native ALGORITHM and LOCK clauses of standalone ordinary CREATE INDEX, CREATE UNIQUE INDEX and resolved DROP INDEX. Include persistent, session-temporary and session-shadow ownership, ordinary and unique secondary removals, and an explicit physical PRIMARY removal. Leave dependent keys, non-InnoDB storage, generated keys and ALTER TABLE action lists tracked separately. Includes an implicitly clustered unique role, a competing required unique key and explicit PRIMARY precedence.",
+  "constructors": {
+    "IndexChangePolicy": {
+      "type": "Schema/Index/Policy/IndexChangePolicy",
+      "role": "The checked DDL algorithm and requested lock level of an ordinary index operation.",
+      "structure": "Native Algorithm and Lock enum values, closed as compatible at the owning CreateIndex or DropIndex boundary.",
+      "conditions": "Temporary table changes and standalone physical PRIMARY removal cannot use INPLACE. On a persistent table, COPY and PRIMARY removal require a lock level other than NONE. A temporary table can accept COPY with NONE. No ordinary index creation or removal accepts INSTANT in this declared domain.",
+      "meaning": "Carry the requested native physical implementation and allowed concurrency; omitted and explicit DEFAULT have the same effective request. Native realization depends on ownership mode, other transactions and the matching external table.",
+      "sql": "Emit only the native nondefault immutable algorithm and lock tokens, each once. Render the same effective request in either written option order."
+    },
+    "IndexAlgorithm": {
+      "type": "Schema/Index/Policy/IndexAlgorithm",
+      "role": "The requested native index DDL algorithm.",
+      "structure": "Default, in-place and copy are distinct finite roles.",
+      "conditions": "Instant is unavailable in this ordinary InnoDB domain.",
+      "meaning": "Select a supported native execution algorithm under the owning table and operation constraints.",
+      "sql": "Emit INPLACE or COPY only when explicitly effective."
+    },
+    "IndexLock": {
+      "type": "Schema/Index/Policy/IndexLock",
+      "role": "The requested native index concurrency level.",
+      "structure": "Default, none, shared and exclusive are distinct finite roles.",
+      "conditions": "The owner and selected algorithm determine which requests are compatible.",
+      "meaning": "Preserve the native concurrency request, including explicit NONE.",
+      "sql": "Emit NONE, SHARED or EXCLUSIVE when the request is not DEFAULT."
+    }
+  },
+  "boundaries": {
+    "persistentSecondary": "DEFAULT and INPLACE admit every lock setting. COPY admits DEFAULT, SHARED and EXCLUSIVE.",
+    "persistentPrimaryRemoval": "Explicit PRIMARY and implicitly clustered unique removal accept DEFAULT or COPY with DEFAULT, SHARED or EXCLUSIVE.",
+    "temporary": "DEFAULT and COPY admit all lock settings. INPLACE fails.",
+    "instant": "Reject before completing an index value. Legacy servers report an unknown algorithm, and modern servers reject unsupported INSTANT or INSTANT with a nondefault lock. Record the actual native diagnostic per point.",
+    "keys": "InnoDB accepts at most 64 declared keys on a table in this profile, counting an explicit PRIMARY among the 64. An internal hidden row identifier is not a declared key. Creation is valid from 63 already-declared indexes and requires a known spare position; a source with 64 cannot accept another. Source key count is an externally interpreted property of the owning declaration."
+  },
+  "finite": {
+    "algorithms": [
+      "DEFAULT",
+      "INPLACE",
+      "COPY",
+      "INSTANT"
+    ],
+    "locks": [
+      "DEFAULT",
+      "NONE",
+      "SHARED",
+      "EXCLUSIVE"
+    ],
+    "owners": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "operationRoles": [
+      "create-ordinary",
+      "create-unique",
+      "drop-ordinary",
+      "drop-unique",
+      "drop-primary",
+      "drop-clustered-unique"
+    ],
+    "orders": [
+      "algorithm-first",
+      "lock-first"
+    ],
+    "priorKeyCounts": [
+      0,
+      62,
+      63,
+      64,
+      65
+    ],
+    "explicitPrimaryOwner": [
+      false,
+      true
+    ],
+    "order": "Enumerate the policy pair independently of admissible constructor values. Require matched native admission on every release, either the exact typed refusal or the corresponding successful construction, plus all fixed ordinary key-count boundaries."
+  },
+  "exploration": {
+    "seeds": [
+      2013,
+      6631,
+      14083
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Before and after catalog, typed rows, exact target, lifetime and retained keys, including uniqueness and the transaction marker.",
+    "The written request's precise effective algorithm and lock in analyzed results, direct results and rendered SQL. A default, explicit NONE and SHARED are distinct except for the stock physical result on temporary tables.",
+    "Compare typed native refusal for every disallowed option pair without weakening the output or allowed input and admission domains. Record the measured affected rows and diagnostic categories."
+  ],
+  "faults": [
+    "Drop the emitted algorithm.",
+    "Drop the emitted explicit NONE lock.",
+    "Ignore changes in retained physical keys."
+  ],
+  "trust": "Native engine choice and lock behavior for the same emitted constraints, the declared owner key catalog, exact closed construction methods and externally controlled native and distribution evidence.",
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-index.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/drop-index.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-limits.html"
+  ],
+  "orderCoordinates": 576,
+  "directCoordinates": 288,
+  "analysisAdmitted": 309,
+  "directAdmitted": 157,
+  "negative": [
+    "Disallowed policy with exact typed native observation for each written order.",
+    "Invalid direct enum, incompatible direct policy or known key capacity.",
+    "Implicitly clustered unique role cannot be removed with persistent INPLACE or LOCK NONE."
+  ],
+  "nativeReference": "Checked against generated effects, calibrated vendor diagnostics and both native option orders.",
+  "capacityDomain": "Counts denote total physical keys. Test the impossible zero-count primary only at direct construction. An uncreatable owner with 65 declared keys is measured at table declaration rather than pretending it exists.",
+  "negativeCount": 419
+}

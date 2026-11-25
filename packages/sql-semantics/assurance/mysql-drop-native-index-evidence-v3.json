@@ -1,0 +1,182 @@
+{
+  "revision": "SemanticsIR/mysql-drop-native-index-evidence-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Native MySQL parameter and lexical profile, utf8mb4 connection, empty SQL mode, exact database and table name comparison, stock ordinary InnoDB with no mandatory primary key. Supply the same session catalog at execution.",
+  "scope": "Standalone DROP INDEX on a single resolved ordinary InnoDB table with default algorithm and lock, including an explicitly declared physical primary key, an ordinary secondary index and a unique secondary index. The namespace includes persistent tables and a session-temporary table shadowing a persistent one. Explicit and generated physical names are resolved. Other storage engines, table alteration action lists, nondefault physical policy, advanced indexes and dependency effects remain separately tracked requirements.",
+  "constructors": {
+    "DropIndex": {
+      "type": "Schema/Index/DropIndex",
+      "role": "Remove one resolved physical index from its known owning table in the selected native namespace.",
+      "structure": "A detached IndexIdentity and immutable grammar release.",
+      "conditions": "Analysis must resolve one ordinary InnoDB owner and exactly one index on it. A same-named permanent table cannot satisfy a reference to a missing index on the visible temporary table. An explicit primary key has the physical name PRIMARY. Implicit clustered identity from a required unique index keeps the unique index's own physical name.",
+      "meaning": "Remove the identified B-tree index and stop enforcing its primary or unique key policy. Preserve the owner, retained columns, unaffected indexes, and stored rows. MySQL's implicit commit applies to both persistent and temporary index removals. Actual dependent constraints, runtime session configuration and physical catalog changes can affect execution.",
+      "sql": "Emit DROP INDEX with the canonical quoted physical name and the absolute quoted owning table. Quoting PRIMARY is mandatory. SQL uses the same connection for a temporary binding."
+    },
+    "IndexIdentity": {
+      "type": "Schema/Index/IndexIdentity",
+      "role": "A resolved external index coordinate and physical policy.",
+      "structure": "A resolved TableIdentity, the native index identifier and the effective IndexRole.",
+      "conditions": "The identifier has 1 to 64 BMP characters and no trailing space. PRIMARY is reserved for an explicit physical primary role. The declared secondary index name cannot occupy that identity. Direct construction supplies the verified external identity and role under the same state interpretation as a TableIdentity.",
+      "meaning": "The physical index belonging to the fully qualified table in the selected lifetime and owner connection.",
+      "sql": "Quote the physical name without changing the bytes of the declared identifier."
+    },
+    "IndexRole": {
+      "type": "Schema/Index/IndexRole",
+      "role": "The ordinary physical key policy affected by removal.",
+      "structure": "Explicit primary, implicitly clustered unique, secondary unique, and ordinary.",
+      "conditions": "Match the resolved physical name and the role of the declared key in the owning table.",
+      "meaning": "Distinguish the source of primary or unique enforcement from a secondary index with no uniqueness policy. A qualifying clustered unique key keeps its own name and has the clustered-key alteration boundary.",
+      "sql": "The native removal identifies the policy by its resolved physical name."
+    }
+  },
+  "nameResolution": {
+    "comparison": "The native system identifier comparison lowercases each valid BMP scalar under the pinned MySQL utf8 general case table. It does not apply accent-insensitive data equality or current connection collation. Compare every nonzero nonsurrogate BMP value and require the observed mapping for every pinned release, with native DDL witnesses that distinguish accented and case-paired keys.",
+    "order": "Allocate table index names in written element order, including inline unique and primary definitions at their column position. Ignore the label of an explicit PRIMARY KEY. Prefer an explicit secondary index name over a CONSTRAINT symbol. An unnamed ordinary or unique secondary index uses the declared first column name.",
+    "collision": "Use the exact bytesByRelease mapping and complete-identifier boundary in mysql-native-index-generated-name-v2.json. Preserve the allocation order, reserved spelling, first free suffix and copied LIKE names."
+  },
+  "obligations": {
+    "Q01": "Check the complete public target roles and analysis-time resolution. Test malformed names, primary and secondary mismatch, foreign classes, unresolved indexes, table views, invalid profiles and absent indexes on a session shadow.",
+    "Q02": "Require each fixed finite construction and compare direct and analyzed output. Check a declared unique index with an implicit clustered identity and a quoted explicit PRIMARY with mixed-case source spelling.",
+    "Q03": "Close ownership and target kind before publication. Scan every used role, require one immutable target and reject missing publication routes or omitted cases.",
+    "Q04": "Compare independent expected catalog, field and row effects against emitted SQL on each stock release, including a post-removal duplicate-value probe for primary and unique keys and a transaction marker.",
+    "Q05": "Bind package digests, the constructor, native name comparison mapping, emitted SQL and indexed evidence to the staged installed layouts. Replay separately and detect changes to the candidate after evidence generation."
+  },
+  "finite": {
+    "lifetimes": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "targetKinds": [
+      "primary",
+      "unique",
+      "ordinary"
+    ],
+    "sourceSpellings": [
+      "declared",
+      "permitted-case-variant"
+    ],
+    "qualifiers": [
+      "explicit",
+      "current-database"
+    ],
+    "nameOrigins": {
+      "primary": [
+        "inline",
+        "table"
+      ],
+      "unique": [
+        "explicit",
+        "constraint",
+        "inline",
+        "automatic-in-order",
+        "automatic-suffixed"
+      ],
+      "ordinary": [
+        "explicit",
+        "automatic-in-order",
+        "automatic-suffixed"
+      ]
+    },
+    "order": "Lexicographic product of lifetime, target policy, applicable name origin, spelling and qualification. Evaluate direct and analyzed routes for every coordinate.",
+    "identities": 120,
+    "edges": [
+      "Native legacy and modern ASCII and complete utf8mb4 byte prefix bounds",
+      "Dotted I exact reserved identity",
+      "Native Greek case comparison",
+      "First free suffix when the release-specific _2 identity is occupied",
+      "A unique index with a nullable part retains the secondary role"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      2347,
+      6421,
+      16229
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 320,
+    "allowedExclusions": [],
+    "structure": "Vary index kinds, explicit and generated names with case, literals in fixture rows, compatible table lifetime, shorter and longer shared prefixes, other index identities, and first key fields of actual catalog definitions."
+  },
+  "observations": [
+    "Observe both the owning and independent persistent catalog connections. Compare exact table and selected physical index identity, ordered positions within unaffected keys, names, native nullability, uniqueness and visibility.",
+    "Retain exact rows, NULLs, duplicates and native field types. Probe the subsequent enforcement of the specific removed key and of at least one retained key.",
+    "Observe commit of a transaction marker and whether the originating connection remains in a transaction.",
+    "Distinguish absence in a declared catalog, exact typed SQL rejection of a missing key in runtime state, and disallowed dependency states. Rejected IR never enters the ordinary emitted output path.",
+    "Observe explicit primary and implicitly clustered unique independently, with the complete declared key role available in the semantic value."
+  ],
+  "faults": [
+    "Remove the unrelated retained index",
+    "Ignore changed retained uniqueness.",
+    "Ignore changed column metadata."
+  ],
+  "trust": "The small identifier comparison and naming rules, validated owning context entries, stock pinned server profiles, immutable graph and source/linkage checks, and protected runner and comparator selected independently of the candidate.",
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/drop-index.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/strings/ctype-utf8.cc"
+  ],
+  "extends": [
+    "mysql-drop-native-index-v1.json",
+    "mysql-native-index-case-v1.json",
+    "mysql-drop-index-native-metadata-v1.json",
+    "mysql-drop-native-index-evidence-v1.json",
+    "mysql-native-index-generated-name-v2.json",
+    "mysql-drop-native-index-evidence-v2.json",
+    "mysql-native-index-policy-v2.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Index/DropIndex"
+  ],
+  "negative": [
+    "Secondary role cannot be PRIMARY by native case comparison",
+    "Primary role requires physical PRIMARY name",
+    "Trailing space",
+    "More than 64 BMP characters",
+    "Supplementary character",
+    "View owner",
+    "Absent native owner member",
+    "Implicit promotion names the actual unique key rather than PRIMARY",
+    "Persistent name alone cannot satisfy temporary shadow",
+    "Another storage engine",
+    "Conflicting physical names",
+    "A name formed from the other byte prefix cannot reference the declared generated index"
+  ],
+  "sourceFaults": [
+    "Resolve PRIMARY to a native unique secondary identity.",
+    "Resolve absence on a session shadow using its persistent sibling.",
+    "Skip suffix allocation or use the wrong release's prefix when resolving an automatically named index.",
+    "Drop an unrelated known retained index instead of the chosen index.",
+    "Ignore a changed key enforcement, retained key order, column definition or transaction outcome.",
+    "Drop a finite coordinate, an index policy, a source mutation or a post-verification distribution mismatch."
+  ],
+  "evidence": {
+    "P01": "Compare the resolved absolute owner and physical index name and policy in both publication paths.",
+    "P02": "Check independent accepted coordinate sets and typed construction and binding refusals.",
+    "P03": "Close the immutable physical index coordinate over value types free of parser declarations.",
+    "P04": "Inspect the target policy, owner identity and native name allocation before publication.",
+    "P05": "Check transitive readonly closure and construction and restoration paths.",
+    "P06": "Compare exact native index effects, typed column metadata, row values, constraint enforcement and commit."
+  },
+  "nativeColumnMetadata": "Exact names, native signed type label, nullability, default, Extra and collation. Apply the native persistent and temporary presentation table to before and after metadata."
+}

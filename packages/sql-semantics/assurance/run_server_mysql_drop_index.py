@@ -7,7 +7,7 @@ import sys
 
 from mysql_drop_index_cases import (
     ABSENT, KINDS, LIFETIMES, QUALIFIERS, SPELLINGS, STATUS, SUFFIX_BYTES, analyze, cases, command,
-    coordinates, declarations, definition, field_rows, prediction,
+    coordinates, declarations, definition, field_rows, prediction, probe_last,
 )
 from run import Failure, TOOL, digest, require
 from run_server import same
@@ -17,8 +17,8 @@ from sqlite_domain import RenderFault
 
 
 LABEL = "mysql-drop-index"
-NAME = "mysql-drop-native-index-evidence-v2.json"
-CONTRACT = "687ecd388a40b985a8075fd4954b1a85d5e32024adff1808d2e65a011baf6c5c"
+NAME = "mysql-drop-native-index-evidence-v3.json"
+CONTRACT = "78d4213562da75d0be5f161366dd851ff8e542db561d084ad7ceb4cea1ae8fda"
 SUFFIX_CONTRACT = "cba633bc81924ce3a8e7eee3507b0af23294bce1dbb634c894b3f2d05e8e9902"
 BASE = "b913362b3246efb53355e3bbe9128134f7bb9d80b408d18c616f70579a73b309"
 CASE_CONTRACT = "a1c9a4243a939dc8d13a1971277bc84f5b91e5366ef1c5a96ab41c21eb34a307"
@@ -67,7 +67,8 @@ def observed_point(response, item):
     lifetime, _, origin, spelling, qualification = model["point"]
     same("table" if lifetime == "persistent" else "temporary-table", observer["owner"][2])
     same(model["mysqlDropIndex"]["name"], observer["name"])
-    return lifetime, observer["role"], origin, spelling, qualification
+    role = "unique" if observer["role"] == "clustered-unique" else observer["role"]
+    return lifetime, role, origin, spelling, qualification
 
 
 def analysis_finite_id(_, response, item, sql):
@@ -141,6 +142,9 @@ def requests(engine, tag, spec):
     greek = definition(tag, ("temporary", "ordinary", "explicit", "permitted-case-variant", "explicit"), label="Άλφα")
     yield from case_pair("edge", "native-greek-case", greek)
 
+    unique = ("persistent", "unique", "explicit", "declared", "explicit")
+    yield from case_pair("edge", "unique-remains-secondary-if-nullable", definition(tag, unique, nullable=True))
+
     negatives = list(negative_cases(tag))
     same(negative_count(spec, engine, tag), len(negatives))
     for name, request, item, reason in negatives:
@@ -161,7 +165,7 @@ def check_value(item, response):
 def observer_request(item, sql):
     model = item.get("model", item)
     return {"sql": sql, "field": model["field"], "lifetime": model["point"][0], "declarations": declarations(model),
-            "rows": {"temporary": field_rows(model, True), "persistent": field_rows(model, False)}, "probe": not item.get("nativeError")}
+            "rows": {"temporary": field_rows(model, True), "persistent": field_rows(model, False)}, "probe": not item.get("nativeError"), "probeLast": probe_last(model)}
 
 
 def observation(raw):
@@ -195,7 +199,7 @@ def sample_forms(forms, response, _, item):
 
 
 def required_forms(_, _tag):
-    return {*(f"scope/{life}" for life in LIFETIMES), *(f"policy/{role}" for role in KINDS),
+    return {*(f"scope/{life}" for life in LIFETIMES), *(f"policy/{role}" for role in KINDS), "policy/clustered-unique",
             *(f"origin/{origin}" for roles in KINDS.values() for origin in roles), "parts/1", "parts/2"}
 
 

@@ -17,9 +17,13 @@ final class IndexDeclaration
     use Snapshot;
 
     /**
-     * Stores the native name, kind and whether all parts are ordinary full fields.
+     * Stores the native name, ordinary-part status and implicit clustered role.
      */
-    public function __construct(public readonly Name $name, public readonly PhysicalIndexKind $kind, public readonly bool $wholeFields)
-    {
+    public function __construct(
+        public readonly Name $name,
+        public readonly PhysicalIndexKind $kind,
+        public readonly bool $wholeFields,
+        public readonly bool $clusteredUnique = false,
+    ) {
     }
 }

@@ -2254,14 +2254,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE TABLE app.session_index (permanent_field INT NOT NULL)',
                 'CREATE TEMPORARY TABLE app.session_index (a INT NOT NULL, b INT NOT NULL, UNIQUE INDEX prior_identity (b)) ENGINE=InnoDB',
             ]);
-            $indexed = $semantics->analyze('CREATE UNIQUE INDEX test_ix ON app.session_index (a DESC) INVISIBLE', $indexContext);
+            $indexed = $semantics->analyze('CREATE UNIQUE INDEX test_ix ON app.session_index (a DESC) INVISIBLE LOCK=NONE ALGORITHM=COPY', $indexContext);
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
-                $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, true,
+                $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, true, $indexed->priorKeys, $indexed->policy,
             );
             $rejected = null;
             try {
                 new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
-                    $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, false,
+                    $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, false, $indexed->priorKeys, $indexed->policy,
                 );
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $rejected = $error->getMessage();
@@ -2269,6 +2269,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlBtreeIndex'] = [$indexed->target->kind->value, $indexed->target->columnTypes[0]->value,
                 $indexed->ownerHasIdentityKey, $indexed->columns[0]->descending, $indexed->visible,
                 $indexed->toString(), $direct->toString(), $rejected];
+            $occupied = null;
+            try {
+                $semantics->analyze('CREATE INDEX PRIOR_IDENTITY ON app.session_index (a)', $indexContext);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $occupied = $error->getMessage();
+            }
+            $details['mysqlIndexNamespace'] = [
+                array_map(static fn ($name): string => $name->value, $indexed->priorKeys),
+                $indexed->policy->algorithm->value, $indexed->policy->lock->value, $occupied,
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndex') {
             $catalog = $semantics->context([
@@ -2276,9 +2286,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE TEMPORARY TABLE app.drop_owner (`Élan` INT NOT NULL, other INT, INDEX `élan`(other), UNIQUE (`Élan`))',
                 'CREATE TABLE app.primary_drop (n INT PRIMARY KEY)',
             ]);
-            $drop = $semantics->analyze('DROP INDEX `éLAN_2` ON app.drop_owner LOCK DEFAULT', $catalog);
+            $drop = $semantics->analyze('DROP INDEX `éLAN_2` ON app.drop_owner LOCK=NONE ALGORITHM=COPY', $catalog);
             $primary = $semantics->analyze('DROP INDEX `PRİMARY` ON app.primary_drop', $catalog);
-            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex($drop->target, $drop->release);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex($drop->target, $drop->release, $drop->policy);
             $rejected = null;
             try {
                 $semantics->analyze('DROP INDEX persistent_only ON app.drop_owner', $catalog);
@@ -2289,6 +2299,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $drop->toString(), $direct->toString(), $primary->target->role->value, $primary->toString(), $rejected];
             $created = $semantics->analyze('CREATE INDEX `Élan_plus` ON app.drop_owner (`éLAN` DESC)', $catalog);
             $details['mysqlNativeIndexCase'] = [$created->target->columns[0]->value, $created->toString()];
+            $unsupported = null;
+            try {
+                $semantics->analyze('DROP INDEX ' . chr(96) . 'PRIMARY' . chr(96) . ' ON app.primary_drop ALGORITHM=INPLACE', $catalog);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $unsupported = $error->getMessage();
+            }
+            $details['mysqlIndexRemovalPolicy'] = [$drop->policy->algorithm->value, $drop->policy->lock->value, $unsupported];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);

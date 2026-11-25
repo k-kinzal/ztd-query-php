@@ -31,7 +31,7 @@ final class DropIndexLoweringTest extends TestCase
 
         self::assertInstanceOf(DropIndex::class, $drop);
         self::assertSame(ExternalRelationKind::TemporaryTable, $drop->target->owner->kind);
-        self::assertSame(IndexRole::Unique, $drop->target->role);
+        self::assertSame(IndexRole::ClusteredUnique, $drop->target->role);
         self::assertSame('DROP INDEX `ÉLAN` ON `app`.`events`', $drop->toString());
     }
 
@@ -43,5 +43,24 @@ final class DropIndexLoweringTest extends TestCase
         $index = (new DropIndexLowering())->index($context->tables[0], new Name('N'));
         self::assertSame('n', $index->name->value);
         self::assertSame(PhysicalIndexKind::Unique, $index->kind);
+        self::assertTrue($index->clusteredUnique);
+    }
+
+    public function testLowerDistinguishesTwoRequiredUniqueKeysAndAnExplicitPrimary(): void
+    {
+        $semantics = new Semantics();
+        $keys = 'n INT NOT NULL, m INT NOT NULL, UNIQUE first_key (n), UNIQUE later_key (m)';
+        $context = $semantics->context(["CREATE TABLE app.events ($keys)"]);
+        $first = $semantics->analyze('DROP INDEX first_key ON app.events', $context);
+        $later = $semantics->analyze('DROP INDEX later_key ON app.events ALGORITHM=INPLACE LOCK=NONE', $context);
+        self::assertInstanceOf(DropIndex::class, $first);
+        self::assertInstanceOf(DropIndex::class, $later);
+        self::assertSame(IndexRole::ClusteredUnique, $first->target->role);
+        self::assertSame(IndexRole::Unique, $later->target->role);
+
+        $context = $semantics->context(["CREATE TABLE app.events ($keys, PRIMARY KEY (m))"]);
+        $first = $semantics->analyze('DROP INDEX first_key ON app.events ALGORITHM=INPLACE LOCK=NONE', $context);
+        self::assertInstanceOf(DropIndex::class, $first);
+        self::assertSame(IndexRole::Unique, $first->target->role);
     }
 }

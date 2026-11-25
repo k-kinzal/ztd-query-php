@@ -16,8 +16,8 @@ from run_server_mysql_create_varchar import DIAGNOSTIC, specifications as native
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-btree-index"
-NAME = "mysql-create-btree-index-evidence-v2.json"
-CONTRACT = "4e6842a285234994c94dbe7f06b380ed52d00ef157003cd64bc55c60eaf343b3"
+NAME = "mysql-create-btree-index-evidence-v3.json"
+CONTRACT = "f52e95fb78702ed2f66c761db4990fd7feb9f59d21fc299c7a10a1e0b7df0d05"
 BASE = "022cb79259ca6314c358643120765737c90f1baa96d8dc7a926b77e6463df830"
 CASE_CONTRACT = "a1c9a4243a939dc8d13a1971277bc84f5b91e5366ef1c5a96ab41c21eb34a307"
 PREVIOUS = "1ce5c77c55d8a79bebcee8b6a80c20d2b7522822a97d99a6f7bc9cc25811dcf7"
@@ -123,6 +123,8 @@ def negative_cases(tag):
         ("dotted-primary", dotted, ["db-error", "42000", 1280], "other than PRIMARY"),
         ("long-name", large_name, ["db-error", "42000", 1059], "1 to 64 characters"),
     ]
+    occupied = definition(tag, "persistent", [0], [False], False, True, "Occupied_IX", data="known-occupied")
+    both.append(("occupied-native-name", occupied, ["db-error", "42000", 1061], "unoccupied native index name"))
     if tag in OLD:
         invisible = definition(tag, "persistent", [0], [False], False, False, "old_hidden")
         yield "legacy-invisible", invisible, None, DIAGNOSTIC, "no invisible index role"
@@ -161,7 +163,7 @@ def requests(engine, tag, spec):
 
 
 def rejected_finite_ids(_, tag):
-    base = {"unknown-field", "repeat/analysis", "arity/analysis", "primary/analysis", "dotted-primary/analysis", "long-name/analysis"}
+    base = {"unknown-field", "repeat/analysis", "arity/analysis", "primary/analysis", "dotted-primary/analysis", "long-name/analysis", "occupied-native-name/analysis"}
     return base if tag in OLD else base | {"implicit-none/analysis", "implicit-nullable/analysis"}
 
 
@@ -174,7 +176,8 @@ def check_value(item, response):
 
 def observer_request(item, sql):
     shape = item.get("model", item)
-    return {"sql": sql, "lifetime": shape["lifetime"], "identity": shape["identity"], "data": shape["data"],
+    data = "occupied" if shape["data"] in ("known-occupied", "accent-distinct") else shape["data"]
+    return {"sql": sql, "lifetime": shape["lifetime"], "identity": shape["identity"], "data": data,
             "probe": not item.get("nativeError")}
 
 

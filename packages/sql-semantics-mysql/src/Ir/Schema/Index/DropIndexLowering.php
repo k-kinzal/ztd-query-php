@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
@@ -22,8 +23,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex as ParsedDropIndex;
-use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption;
-use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 
 /**
  * Resolves the physical index within the table already selected by native table lookup.
@@ -33,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 final class DropIndexLowering
 {
     /**
-     * Publishes only a resolved ordinary key under the default native removal policy.
+     * Publishes a resolved ordinary key with a checked native removal policy.
      */
     public function lower(BoundStatement $operation, ParsedDropIndex $statement): DropIndex
     {
@@ -44,14 +43,6 @@ final class DropIndexLowering
                 && $context->relationNames === Comparison::Sensitive,
             'DROP INDEX requires the default native profile.'
         );
-        foreach ($statement->options as $option) {
-            $default = match (true) {
-                $option instanceof AlgorithmOption => strcasecmp($option->algorithm->value ?? 'default', 'default') === 0,
-                $option instanceof LockOption => strcasecmp($option->lock->value ?? 'default', 'default') === 0,
-                default => false,
-            };
-            Check::input($default, 'DROP INDEX requires the default algorithm and lock.');
-        }
         $resolution = $operation->facts->relation($statement)->table;
         Check::input(
             $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable
@@ -67,13 +58,17 @@ final class DropIndexLowering
         $owner = new TableIdentity($name, $table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable);
         $role = match ($index->kind) {
             PhysicalIndexKind::Primary => IndexRole::Primary,
-            PhysicalIndexKind::Unique => IndexRole::Unique,
+            PhysicalIndexKind::Unique => $index->clusteredUnique ? IndexRole::ClusteredUnique : IndexRole::Unique,
             PhysicalIndexKind::Index => IndexRole::Ordinary,
             PhysicalIndexKind::FullText, PhysicalIndexKind::Spatial => null,
         };
         Check::input($role !== null, 'DROP INDEX requires a primary or ordinary B-tree index.');
 
-        return new DropIndex(new IndexIdentity($owner, new Identifier($index->name->value), $role), $profile->grammar);
+        return new DropIndex(
+            new IndexIdentity($owner, new Identifier($index->name->value), $role),
+            $profile->grammar,
+            (new IndexPolicyLowering())->lower($statement->options)
+        );
     }
 
     /**

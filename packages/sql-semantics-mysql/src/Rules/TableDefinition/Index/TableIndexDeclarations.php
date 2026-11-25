@@ -32,24 +32,22 @@ final class TableIndexDeclarations
             return null;
         }
         $case = new NativeIdentifierCase();
-        $columnNames = [];
-        foreach ($columns as [,$column]) {
-            $key = $case->fold($column->name->value);
-            if (isset($columnNames[$key])) {
-                return null;
-            }
-            $columnNames[$key] = $column->name;
+        $candidates = new TableIndexCandidates();
+        $columnNames = $candidates->fields($columns);
+        if ($columnNames === null) {
+            return null;
         }
         $used = [];
+        $firstCandidate = null;
         foreach ($definition->elements as $element) {
             if ($element instanceof ForeignKey) {
                 return null;
             }
-            $items = (new TableIndexCandidates())->keys($element, $columnNames);
+            $items = $candidates->keys($element, $columnNames);
             if ($items === null) {
                 return null;
             }
-            foreach ($items as [$kind, $name, $first, $ordinary]) {
+            foreach ($items as [$kind, $name, $first, $ordinary, $clusterCandidate]) {
                 $resolved = $name ?? ($first === null ? null : (new IndexNameAllocation())->generated($first, $used, $release));
                 if ($resolved === null || preg_match('/\A[^\x00\x{10000}-\x{10FFFF}]{1,64}(?<! )\z/u', $resolved->value) !== 1) {
                     return null;
@@ -59,7 +57,17 @@ final class TableIndexDeclarations
                     return null;
                 }
                 $used[$key] = new IndexDeclaration($resolved, PhysicalIndexKind::from($kind->value), $ordinary);
+                if ($clusterCandidate) {
+                    $firstCandidate ??= $key;
+                }
             }
+        }
+        if (count($used) > 64) {
+            return null;
+        }
+        if ($firstCandidate !== null && !isset($used['primary'])) {
+            $unique = $used[$firstCandidate];
+            $used[$firstCandidate] = new IndexDeclaration($unique->name, PhysicalIndexKind::Unique, true, true);
         }
 
         return array_values($used);

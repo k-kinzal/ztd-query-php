@@ -795,13 +795,18 @@ def inventory(root):
                          "ordering_direction", "opt_unique", "visibility", "opt_index_type_clause"):
                 btree_forms.update(rules.get(rule, []))
             for alternative in signatures & btree_forms:
-                related[alternative] = (*related.get(alternative, ()), "mysql-create-btree-index-evidence-v2.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-btree-index-evidence-v3.json")
             index_removal = {
                 "drop: DROP INDEX_SYM ident ON table_ident opt_index_lock_algorithm",
                 "drop_index_stmt: DROP INDEX_SYM ident ON_SYM table_ident opt_index_lock_and_algorithm",
             }
             for alternative in signatures & index_removal:
-                related[alternative] = (*related.get(alternative, ()), "mysql-drop-native-index-evidence-v2.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-drop-native-index-evidence-v3.json")
+            for alternative in signatures & (btree_forms | index_removal):
+                related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v2.json")
+            for rule in ("alter_algorithm_option", "alter_lock_option", "opt_index_lock_and_algorithm", "opt_index_lock_algorithm"):
+                for alternative in rules.get(rule, []):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v2.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):
                 for alternative in rules.get(rule, []):
                     if rule != "rename" or "table_to_table_list" in alternative:

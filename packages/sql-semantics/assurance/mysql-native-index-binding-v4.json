@@ -1,0 +1,75 @@
+{
+  "revision": "SemanticsIR/mysql-native-index-binding-4",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "5ffd53c23af59a3180d61e1250f0b0b5dabb835d33967b0c84db7c584254cfd4",
+      "role": "Carries known table engine, namespace and the prior eligible identity."
+    },
+    "src/Rules/TableDefinition/TableDeclaration.php": {
+      "sha256": "3ec301030a108c2aaf62bf50d9b14dd10c927cfe89bd8bb6833a87f5bab3ca5f",
+      "role": "Derives the native engine and identity from the originating checked table declaration."
+    },
+    "src/Rules/TableDefinition/Index/TableIdentityKeys.php": {
+      "sha256": "83253fac0bad55a5c0e16787bb09dad10b79ca240087a950315244be883bb87e",
+      "role": "Recognizes explicit primary identity and the earlier eligible visible unique roles."
+    },
+    "src/Rules/TableDefinition/ColumnFlags.php": {
+      "sha256": "23f959097c0ebb86fe49bf1e496b874e7995f4c026d49a11011ad560c7580fe0",
+      "role": "Resolves the effective declared nullability and inline primary field markers."
+    },
+    "src/Statement/Table/CreateIndex.php": {
+      "sha256": "f94f413e2769ca670170a9850a54b4f203ec7c22f6ce2857dfd5748e7bca2b20",
+      "role": "Binds the indexed relation and complete visible column facts before lowering."
+    },
+    "src/Rules/TableDefinition/Index/InlineIdentityKey.php": {
+      "role": "Recognize inline required identities before building a completed native index.",
+      "sha256": "87f7cfd5775cc43f9fb6c0f7ef81b9a1152c657715f4c1066da6e7f23c008acf"
+    },
+    "src/Rules/TableDefinition/DeclaredTableStorage.php": {
+      "role": "Resolve the declared engine and the fixed default.",
+      "sha256": "fc8e78652b57ff919efb40a8f7901cfdd4036200401a41105ed2be88bd38233b"
+    },
+    "src/Model/Statement/Declaration/IndexDeclaration.php": {
+      "role": "The exact native physical name, key policy and part class in the analysis context. Carries the settled implicit clustered role.",
+      "sha256": "a61d4f1e0853f9efcd42cba18ba0080e5b7ae33cbb7568f6fbecbb1c2c7ee882"
+    },
+    "src/Model/Statement/Identifier/NativeIdentifierCase.php": {
+      "role": "Compose the pinned native BMP lowercase map without dynamic input or locale.",
+      "sha256": "5a9b345e21ba318be9ce1b73c6e2f5cc8e132b297ab02c459905149193a266e1"
+    },
+    "src/Model/Statement/Identifier/CaseTable/LatinGreekCase.php": {
+      "role": "Fixed native scalar results below U+0400.",
+      "sha256": "96d7530b7dadf0c24658edc16565c7f71d2b5d9518aa4537d1845ecce86736c4"
+    },
+    "src/Model/Statement/Identifier/CaseTable/CyrillicArmenianCase.php": {
+      "role": "Fixed native scalar results at U+0400 through U+0FFF.",
+      "sha256": "6aaeeefec9e23061bb351eed0f081f2cc6a3eade6657cdca859c8fa462c6f0ed"
+    },
+    "src/Model/Statement/Identifier/CaseTable/ExtendedBmpCase.php": {
+      "role": "Fixed native scalar results from U+1000.",
+      "sha256": "f85700248adaea6f357e4fa57f49c7bed0c93870fc1db1141d96134c328bb3e3"
+    },
+    "src/Rules/TableDefinition/Index/IndexNameAllocation.php": {
+      "role": "Allocate the first free ordered numeric suffix with the release-specific native byte limit.",
+      "sha256": "666ca8e07c7757d7df8d60382a69c454607d48e9f34cb4eb5698b8e7e5c19fb9"
+    },
+    "src/Rules/TableDefinition/Index/TableIndexCandidates.php": {
+      "role": "Read only definitions of physical indexes from ordered table elements with known key field roles. Distinguishes full required nonvirtual fields.",
+      "sha256": "1c9a43a899e588766f70e6f9dcc3b8d87898615426e3e49fc75108fff8ccc24a"
+    },
+    "src/Rules/TableDefinition/Index/TableIndexDeclarations.php": {
+      "role": "Resolve, check and collect each declared physical index in native element order. Selects the first eligible unique key unless a physical primary exists and enforces the native declaration capacity.",
+      "sha256": "e6521fc157b16847add373d0e00f002e1a488c7bd58ab998dc77b15cfee956a3"
+    },
+    "src/Statement/Alter/DropIndex.php": {
+      "role": "Derive the selected native table fact and the syntax-checked alteration policies.",
+      "sha256": "b15d7c76af69eb2ffd0287df573204688bf84edc626a65af8b35aed98f6d6066"
+    },
+    "src/Model/Statement/Declaration/PhysicalIndexKind.php": {
+      "role": "Closed catalog roles detached from parser statement types.",
+      "sha256": "0d7466d1056b07180e2c8e1428a277e64225c1626f4e93aabac36b5f20149fef"
+    }
+  },
+  "revises": "mysql-native-index-binding-v3.json"
+}

@@ -29,9 +29,14 @@ def definition(tag, lifetime, fields, descends, unique, visible, name, identity=
               "columnTypes": [TYPES[field] for field in heading]}
     if lifetime != "persistent":
         target["relationKind"] = "temporary-table"
+    prior = {"explicit": ["PRIMARY"], "required": ["prior_identity"],
+             "nullable": ["prior_nullable"], "none": []}[identity]
+    if data in ("known-occupied", "accent-distinct"):
+        prior.append("occupied_ix")
     return {"dialect": "mysql", "release": tag, "identity": identity, "data": data, "lifetime": lifetime,
             "mysqlCreateIndex": {"target": target, "name": name, "unique": unique, "visible": visible,
                 "ownerHasIdentityKey": identity in {"explicit", "required"},
+                "priorKeyCount": len(prior), "priorKeys": prior, "policy": ["DEFAULT", "DEFAULT"],
                 "columns": [[heading.index(field), written and tag not in OLD] for field, written in zip(fields, descends)]},
             "writtenDirections": list(descends)}
 
@@ -62,6 +67,7 @@ def generated(tag, seed, count):
 def native_edges(tag):
     yield "unicode-max", definition(tag, "persistent", [0], [False], False, True, "界" * 64)
     yield "collision-existing-name", definition(tag, "persistent", [0], [False], False, True, "occupied_ix", data="occupied")
+    yield "accent-distinct-name", definition(tag, "persistent", [0], [False], False, True, "occupiÉd_ix", data="accent-distinct")
     yield "duplicate-populated-rows", definition(tag, "persistent", [0], [False], True, True, "duplicate_ix", data="duplicate")
     yield "temporary-qualified", definition(tag, "temporary-shadow", [17, 2], [True, False], True, True, "shadow_ix")
     if tag not in OLD:
@@ -89,8 +95,8 @@ def create_table(lifetime, identity, occupied=False):
 def declarations(item):
     lifetime, identity = item["lifetime"], item["identity"]
     if lifetime == "persistent":
-        return [create_table(False, identity, item["data"] == "occupied")]
-    owner = [create_table(True, identity, item["data"] == "occupied")]
+        return [create_table(False, identity, item["data"] in ("known-occupied", "accent-distinct"))]
+    owner = [create_table(True, identity, item["data"] in ("known-occupied", "accent-distinct"))]
     return [create_table(False, "explicit"), *owner] if lifetime == "temporary-shadow" else owner
 
 
@@ -145,7 +151,7 @@ def table_state(temporary, item, after=False, runtime_error=None, rows=None):
         meta += key_rows("prior_identity", [("f17", False)], True, True)
     elif identity == "nullable":
         meta += key_rows("prior_nullable", [("f3", False)], True, True)
-    if item["data"] == "occupied":
+    if item["data"] in ("occupied", "known-occupied", "accent-distinct"):
         meta += key_rows("occupied_ix", [("f17", False)], False, True)
     if after and runtime_error is None:
         index = item["mysqlCreateIndex"]

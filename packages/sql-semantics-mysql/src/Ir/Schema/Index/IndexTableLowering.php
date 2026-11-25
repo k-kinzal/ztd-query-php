@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexDeclaration;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
@@ -23,8 +24,8 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex as ParsedCreateIndex
 final class IndexTableLowering
 {
     /**
-     * Returns the detached table, ordered owned references and prior identity.
-     * @return array{TableSource, list<IndexColumn>, bool}
+     * Returns the detached table, ordered owned references and prior namespace.
+     * @return array{TableSource, list<IndexColumn>, bool, list<Identifier>}
      */
     public function resolve(BoundStatement $operation, ParsedCreateIndex $statement): array
     {
@@ -38,6 +39,7 @@ final class IndexTableLowering
             'CREATE INDEX requires a resolved ordinary InnoDB declaration.'
         );
         $table = $resolution->table;
+        Check::input($table->indexes !== null, 'CREATE INDEX requires a settled native key count.');
         Check::input(count($table->columns) <= 1017, 'An InnoDB index owner can declare at most 1017 fields.');
         $schema = ($table->name->schema ?? $context->declarationSchema)->value;
         Check::input($schema !== SessionDatabase::UNNAMED, 'CREATE INDEX requires an absolute owning table.');
@@ -47,6 +49,8 @@ final class IndexTableLowering
         [$names, $types, $parts] = (new IndexPartsLowering())->resolve($table, $statement->parts, $legacy);
         $target = new TableSource(new Identifier($schema), new Identifier($table->name->name->value), $names, $types, $kind);
 
-        return [$target, $parts, $table->hasIdentityKey];
+        $prior = array_map(static fn (IndexDeclaration $index): Identifier => new Identifier($index->name->value), $table->indexes);
+
+        return [$target, $parts, $table->hasIdentityKey, $prior];
     }
 }

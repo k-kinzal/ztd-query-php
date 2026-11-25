@@ -28,8 +28,8 @@ final class IndexOptionsLowering
             'CREATE INDEX requires an ordinary or unique native B-tree role.'
         );
         Check::input(
-            ($statement->algorithm === null || $statement->algorithm === IndexAlgorithm::Btree) && $statement->alterOptions === [],
-            'CREATE INDEX requires the ordinary native B-tree storage and alteration policy.'
+            $statement->algorithm === null || $statement->algorithm === IndexAlgorithm::Btree,
+            'CREATE INDEX requires the ordinary native B-tree storage.'
         );
         $visible = true;
         foreach ($statement->options as $option) {

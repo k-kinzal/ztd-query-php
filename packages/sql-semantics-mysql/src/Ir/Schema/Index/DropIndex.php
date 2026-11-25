@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -27,7 +29,12 @@ final class DropIndex implements SemanticsIR
     public function __construct(
         public readonly IndexIdentity $target,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
+        public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
     ) {
+        Check::input(
+            $policy->supports($target->owner->kind, $target->role->clustered()),
+            'The algorithm and lock cannot remove this native InnoDB index.'
+        );
     }
 
     /**
@@ -43,6 +50,6 @@ final class DropIndex implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'DROP INDEX ' . $this->target->name->quoted() . ' ON ' . $this->target->owner->quoted();
+        return 'DROP INDEX ' . $this->target->name->quoted() . ' ON ' . $this->target->owner->quoted() . $this->policy->sql();
     }
 }

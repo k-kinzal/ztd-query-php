@@ -967,6 +967,14 @@ function observeMysqlTableIdentity(object $identity): array
     return [$identity->name->schema->value, $identity->name->table->value, $identity->kind->value];
 }
 
+function constructMysqlIndexPolicy(array $options): SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy
+{
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy(
+        SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexAlgorithm::from($options[0]),
+        SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexLock::from($options[1])
+    );
+}
+
 function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex
 {
     $spec = $input['mysqlDropIndex'];
@@ -977,7 +985,8 @@ function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\S
     );
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
-        $target, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release'])
+        $target, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexPolicy($spec['policy'])
     );
 }
 
@@ -985,7 +994,8 @@ function observeMysqlDropIndex(SqlSemantics\Platform\MySql\Ir\Schema\Index\DropI
 {
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlDropIndex' => ['owner' => observeMysqlTableIdentity($value->target->owner),
-            'name' => $value->target->name->value, 'role' => $value->target->role->value]];
+            'name' => $value->target->name->value, 'role' => $value->target->role->value,
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
 }
 
 function constructMysqlCreateIndex(string $platform, array $input): SemanticsIR
@@ -1003,7 +1013,9 @@ function constructMysqlCreateIndex(string $platform, array $input): SemanticsIR
     }
 
     return new $index($target, new $name($definition['name']), $parts, $definition['unique'], $definition['visible'],
-        $release::from($input['release']), $definition['ownerHasIdentityKey']);
+        $release::from($input['release']), $definition['ownerHasIdentityKey'],
+        array_map(static fn (string $key): object => new $name($key), $definition['priorKeys']),
+        constructMysqlIndexPolicy($definition['policy']));
 }
 
 function observeMysqlCreateIndex(string $namespace, SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex $value): array
@@ -1018,7 +1030,9 @@ function observeMysqlCreateIndex(string $namespace, SqlSemantics\Platform\MySql\
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlCreateIndex' => [
             'target' => $target, 'name' => $value->name->value, 'unique' => $value->unique, 'visible' => $value->visible,
-            'ownerHasIdentityKey' => $value->ownerHasIdentityKey,
+            'ownerHasIdentityKey' => $value->ownerHasIdentityKey, 'priorKeyCount' => count($value->priorKeys),
+            'priorKeys' => array_map(static fn (object $name): string => $name->value, $value->priorKeys),
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value],
             'columns' => array_map(static fn ($column): array => [$column->slot, $column->descending], $value->columns),
         ],
     ];
@@ -2187,6 +2201,13 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    } catch (ValueError $error) {
+        $frame = $error->getTrace()[0] ?? [];
+        if (($frame['class'] ?? null) === SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexAlgorithm::class
+            && ($frame['function'] ?? null) === 'from') {
+            return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+        }
+        throw $error;
     } catch (TypeError $error) {
         $frame = $error->getTrace()[0] ?? [];
         $predicate = $input['createBtree']['predicate'] ?? null;
