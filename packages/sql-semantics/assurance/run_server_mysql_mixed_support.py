@@ -12,13 +12,14 @@ from run_server_mysql_drop_index import DIAGNOSTIC, specifications as profiles
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-mixed-support"
-NAME = "mysql-mixed-support-evidence-v1.json"
-CONTRACT = "4b91ef2f0a0031d39bc17ec0ff826ace4f93c978172151195bc9b9abced51646"
+NAME = "mysql-mixed-support-evidence-v2.json"
+CONTRACT = "071dac466128b4396c2d3decf7a08bec47b7ffe3cacaf3839d7739e27917ceca"
 OBSERVER = "mysql_mixed_support_observer.php"
 NAME_COLLISION = "An introduced foreign-key index needs an available physical name."
 COMPARATOR_FAULTS = {
     "Ignore the direction of the ordered supporting columns.": "ignore-support-direction",
     "Ignore the exact allocated physical name.": "ignore-physical-name",
+    "Discard the duplicate-definition notice preceding a physical name conflict.": "discard-native-preceding-notice",
 }
 
 
@@ -176,19 +177,19 @@ def observation(payload):
 
 def diagnostics(value, outcome):
     collision = outcome["collision"]
-    if collision is not None:
-        return [["Error", 1061, f"Duplicate key name '{collision}'"]]
-    if value["tag"] == "mysql-5.6.51":
-        return []
+    severity = "Note" if value["tag"] == "mysql-5.6.51" else "Warning"
     namespace = [(role, fields) for name, role, fields, implicit in value["originals"]
                  if not implicit and name not in outcome["removed"]]
     warnings = []
-    for current in outcome["applied"]:
+    for position, current in enumerate(outcome["applied"]):
+        if position == outcome["collisionAt"]:
+            warnings.append(["Error", 1061, f"Duplicate key name '{collision}'"])
+            break
         if current is None or current[3]:
             continue
         name, kind, fields, _ = current
         if (kind, fields) in namespace:
-            warnings.append(["Warning", 1831, f"Duplicate index '{name}' defined on the table '{'.'.join(laws.OWNER[:2])}'. "
+            warnings.append([severity, 1831, f"Duplicate index '{name}' defined on the table '{'.'.join(laws.OWNER[:2])}'. "
                              "This is deprecated and will be disallowed in a future release."])
         namespace.append((kind, fields))
     return warnings
@@ -245,6 +246,20 @@ def controls():
             changed[role] = error.detail
         else:
             raise Failure("mysql-mixed-support-ignores-fault", role)
+    collision = control_input("mysql-5.6.51", ("explicit", "second-explicit", "generated", "key-first"))
+    model, result = collision["model"], collision["result"]
+    command = laws.statement(model)
+    observed = {**laws.prediction(model, result), "diagnostics": diagnostics(model, result)}
+    require(len(observed["diagnostics"]) == 2, "mysql-mixed-support-colliding-control-diagnostics")
+    check_observation(collision, observed, command)
+    omitted = {**observed, "diagnostics": observed["diagnostics"][1:]}
+    try:
+        check_observation(collision, omitted, command)
+    except Failure as error:
+        same("meaning-mismatch", error.signal)
+        changed["discard-native-preceding-notice"] = error.detail
+    else:
+        raise Failure("mysql-mixed-support-ignores-fault", "discard-native-preceding-notice")
     return changed
 
 

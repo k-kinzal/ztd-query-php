@@ -108,9 +108,9 @@ def key_result(value):
                if implicit and any(leading(terms, prefix) for terms in additions)]
     original_names = {name.lower() for name, _, _, _ in originals if name not in removed}
     applied = []
-    collision = None
+    collision = collision_at = None
     current = iter(selected)
-    for role, effect in plan:
+    for position, (role, effect) in enumerate(plan):
         if role == "drop" or (role == "foreign" and cover):
             applied.append(None)
             continue
@@ -120,9 +120,10 @@ def key_result(value):
             name = effect["label"]
             if collision is None:
                 collision = name
+                collision_at = position
         original_names.add(name.lower())
         applied.append([name, effect.get("role", "ordinary"), terms, role == "foreign"])
-    return {"applied": applied, "removed": removed, "collision": collision}
+    return {"applied": applied, "removed": removed, "collision": collision, "collisionAt": collision_at}
 
 
 def key_clause(label, role, fields):

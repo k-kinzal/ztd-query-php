@@ -843,7 +843,7 @@ def inventory(root):
                 if rule != "table_constraint_def" or "key_or_index" in entry or "UNIQUE" in entry
             }
             for alternative in signatures & mixed_support:
-                related[alternative] = (*related.get(alternative, ()), "mysql-mixed-support-evidence-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-mixed-support-evidence-v2.json")
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
             generated_keys = {
