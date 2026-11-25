@@ -2723,7 +2723,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\DropForeignKeys') {
             $runtimeType = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys::class;
-            $first = $result->actions[0];
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $first = new $binding($result->actions[0], null);
             $choices = $result->actions;
             $choices[0] = &$first;
             $rebuilt = new $runtimeType($result->owner, $choices, [], $result->release, $result->policy);
