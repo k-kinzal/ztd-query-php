@@ -98,6 +98,8 @@ Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain tex
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.
 
+`Ir\Predicate\IntegerMembership` represents signed integer `IN` and `NOT IN` with one subject and 1 to 8190 ordered alternatives. The leaves can be signed literals, NULL or resolved fields with TINYINT, SMALLINT, MEDIUMINT, INT or BIGINT storage. The owning source retains each consumed field's storage width and NULL policy. Projections return MySQL's native `1`, `0` or NULL. Filters, join conditions and write predicates select a row only when the test is true. The emitted SQL keeps duplicates, literal format and occurrence bindings. Supply an explicit projection alias.
+
 On MySQL 8.0 and later an ordinary `WITH` retains the ordered definition bodies and the resolved relation and field positions in each local projection. Independent nested definitions keep their own scope. Native markers in projected signed casts follow the definition order and then the result query.
 
 `RENAME TABLE` publishes `Ir\Schema\Alter\RenameTable` with the move list in native execution order. Every move records its current name, destination and original table identity. A swap through an intermediate name retains the same origin when that name becomes the next source. Supply the declarations and a named current database for unqualified operands. The checked operation covers persistent base tables.

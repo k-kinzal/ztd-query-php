@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Ordering\Order;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
@@ -30,6 +31,13 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 #[Small]
 final class SelectSqlTest extends TestCase
 {
+    public function testIntegerMembershipEmitsTheExactSignedAlternativeList(): void
+    {
+        $test = new IntegerMembership(new RangeIntegerLiteral('2147483648'), [new NullLiteral(), new RangeIntegerLiteral('2', 2)], true);
+
+        self::assertSame('(2147483648 NOT IN (NULL, 002))', (new SelectSql())->integerMembership($test, null, 0, true));
+    }
+
     public function testIntegerRangeEmitsTheSignedOrderedPredicate(): void
     {
         $range = new IntegerRange(new RangeIntegerLiteral('2'), new RangeIntegerLiteral('3'), new NullLiteral(), true);

@@ -224,6 +224,8 @@ def inventory(root):
             )})
             related.update({alternative: ("mysql-signed-range-v3.json",) for alternative in rules["predicate"]
                             if " BETWEEN_SYM " in alternative})
+            related.update({alternative: ("mysql-signed-membership-v2.json",) for alternative in rules["predicate"]
+                            if alternative.endswith((" IN_SYM ( expr )", " IN_SYM ( expr , expr_list )"))})
             for rule in ("create_view", "view_tail", "view_query_block", "view_algorithm", "view_suid"):
                 for alternative in rules.get(rule, ()):
                     if alternative != rule + ":":

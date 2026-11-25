@@ -169,7 +169,15 @@ if ($dialect === 'mysql') {
     $properties[$rangeLiteral] = $properties['IntegerLiteral'];
     $methods[$range] = ['__construct'];
     $methods[$rangeLiteral] = ['__construct', 'toString'];
-    $properties['ResultColumn']['expression'][] = $range;
+    $membership = 'Predicate\\IntegerMembership';
+    $integralReference = 'From\\IntegralColumnReference';
+    $integralType = 'From\\IntegralSlot';
+    $properties[$integralReference] = ['slot' => ['int'], 'occurrence' => ['int']];
+    $properties[$integralType] = ['storage' => ['Schema\\IntegerStorage'], 'nullable' => ['bool']];
+    $properties[$membership] = ['subject' => [...$rangeLeaves, $integralReference], 'alternatives' => ['array'], 'negated' => ['bool']];
+    sort($properties[$membership]['subject']);
+    $methods[$integralReference] = $methods[$integralType] = $methods[$membership] = ['__construct'];
+    array_push($properties['ResultColumn']['expression'], $range, $membership);
     sort($properties['ResultColumn']['expression']);
 }
 $selectBounds = $dialect === 'sqlite' ? 'From\\SelectBounds' : 'SelectBounds';
@@ -186,7 +194,7 @@ if ($dialect === 'postgres') {
     $internal[] = 'Predicate\\TruthTestLowering';
 }
 if ($dialect === 'mysql') {
-    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'From\\VarcharLowering', 'Predicate\\Text\\TextComparisonLowering', 'Expression\\CollatedTextLowering');
+    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'Predicate\\Membership\\IntegerMembershipLowering', 'From\\VarcharLowering', 'Predicate\\Text\\TextComparisonLowering', 'Expression\\CollatedTextLowering');
 }
 $pureCollaborators = [$selectBounds, 'SelectSql'];
 if ($dialect === 'postgres') {
@@ -806,7 +814,7 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         array_push($truthValues, 'From\\BooleanColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
-        $truthValues[] = 'Predicate\\Text\\TextComparison';
+        array_push($truthValues, 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison');
     }
     sort($truthValues);
     if ($dialect === 'postgres') {
@@ -894,7 +902,7 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         array_push($properties['Predicate\\NullTest']['operand'], 'From\\BooleanColumnReference', 'From\\WideIntegerColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
-        $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\Text\\TextComparison';
+        array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison');
     }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];
@@ -2002,6 +2010,7 @@ try {
             ['mysql-index-rename-storage-v2.json', '5f5a89195ed0333e80c8536781bf64ef28e4c7a362dbca38efc6186173cc4ae3'],
             ['mysql-mixed-index-storage-v2.json', '1cf5804f5b41033e809de4ec592ea89334b69bc2dc3a1c80db0c4c8ba50c59cb'],
             ['mysql-foreign-key-drop-storage-v1.json', 'c75c4457de69363e2d1cb77c933d45dad428b9ab423b0bc2f9c48118c3587c69'],
+            ['mysql-signed-membership-storage-v1.json', 'b921dc06175b3c42d6b95feef9e2df8b8ab36e074e94c18d5d4dbb8661545099'],
         ] as [$catalogue, $digest]) {
             $indexStorage = __DIR__ . '/' . $catalogue;
             requireShape(hash_file('sha256', $indexStorage) === $digest, 'MySQL native index list storage differs from its recorded revision');

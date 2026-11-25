@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Ir\Mutation\TextUpdateAssignment;
 use SqlSemantics\Platform\MySql\Ir\Mutation\UpdateAssignment;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
@@ -33,7 +34,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs
      */
     public function predicate(
-        BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $condition,
+        BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $condition,
         array $inputs,
         string $invalidSlot = 'A predicate slot must belong to a visible input occurrence.',
     ): void {
@@ -48,7 +49,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanLiteral|CollatedText|ColumnReference|IntegerComparison|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral|TextColumnReference|TextLiteral $operand,
+        BooleanLiteral|CollatedText|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral|IntegralColumnReference|TextColumnReference|TextLiteral $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
@@ -58,16 +59,24 @@ final class OccurrenceScope
         if ($operand instanceof ColumnReference) {
             Check::input($this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot), $invalidSlot);
         }
+        if ($operand instanceof IntegralColumnReference) {
+            $input = $inputs[$operand->occurrence] ?? null;
+            Check::input(
+                $input instanceof TableSource && ($input->columnTypes[$operand->slot] ?? null) instanceof IntegralSlot,
+                $invalidSlot,
+            );
+        }
         if ($operand instanceof TextColumnReference) {
             $this->textColumn($operand, $inputs);
         }
         $children = match (true) {
             $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],
             $operand instanceof IntegerComparison, $operand instanceof TextComparison => [$operand->left, $operand->right],
+            $operand instanceof IntegerMembership => [$operand->subject, ...$operand->alternatives],
             $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
             $operand instanceof NullTest => [$operand->operand],
             $operand instanceof CollatedText => [$operand->operand],
-            $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof RangeIntegerLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral => [],
+            $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegralColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof RangeIntegerLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral => [],
         };
         foreach ($children as $child) {
             $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);

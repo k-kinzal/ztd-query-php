@@ -10,11 +10,19 @@ deptrac:
     - name: DatabaseModel
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Platform\\MySql\\Model\\.*'
+          value: '^SqlSemantics\\Platform\\MySql\\Model\\(?!Statement\\Declaration\\(?:ForeignKeyIndexSide|IndexRemovalTarget)$).*'
+    - name: IndexConstructionInputs
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\(?:ForeignKeyIndexSide|IndexRemovalTarget)$'
+    - name: IrIndexCoordinates
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\MySql\\Ir\\(?:Identifier|From\\ExternalRelationKind|Schema\\(?:TableName|Identity\\TableIdentity|Index\\(?:IndexIdentity|IndexRole|IndexAutoIncrement)|ForeignKey\\Add\\Catalog\\ForeignKeyConstraintIdentity))$'
     - name: Ir
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Platform\\MySql\\Ir\\.*'
+          value: '^SqlSemantics\\Platform\\MySql\\Ir\\(?!(?:Identifier|From\\ExternalRelationKind|Schema\\(?:TableName|Identity\\TableIdentity|Index\\(?:IndexIdentity|IndexRole|IndexAutoIncrement)|ForeignKey\\Add\\Catalog\\ForeignKeyConstraintIdentity))$).*'
     - name: Parser
       collectors:
         - type: classLike
@@ -38,9 +46,11 @@ deptrac:
   ruleset:
     Core: []
     DatabaseModel: [Core, Parser, Wiring]
-    Ir: [Core, DatabaseModel, Model, Rules, Wiring]
+    IndexConstructionInputs: [DatabaseModel, IrIndexCoordinates]
+    IrIndexCoordinates: [DatabaseModel]
+    Ir: [Core, DatabaseModel, IndexConstructionInputs, IrIndexCoordinates, Model, Rules, Wiring]
     Parser: []
     Model: [Core, DatabaseModel, Rules]
     Rules: [Core, DatabaseModel, Model, Parser]
     PlatformLowering: [Core, DatabaseModel, Model, Rules, Parser]
-    Wiring: [Core, DatabaseModel, Model, Rules, PlatformLowering, Parser, Ir]
+    Wiring: [Core, DatabaseModel, IrIndexCoordinates, Model, Rules, PlatformLowering, Parser, Ir]

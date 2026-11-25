@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedBinding;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
@@ -165,5 +166,23 @@ final class JoinBindingTest extends TestCase
 
         self::assertInstanceOf(TextColumnReference::class, $field);
         self::assertSame(1, $field->occurrence);
+    }
+
+    public function testMembershipReferenceRetainsTheExactJoinOccurrence(): void
+    {
+        $inspection = new Inspection();
+        $declaration = $inspection->inspect('CREATE TABLE ir_fixture.t (n BIGINT)');
+        $operation = $inspection->inspect('SELECT right_table.n FROM ir_fixture.t left_table CROSS JOIN ir_fixture.t right_table', [$declaration]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $projection = $statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $projection);
+        $binding = JoinBinding::bind($operation->binding(), $statement->from);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $field = $binding->membershipReference($projection->expression);
+        self::assertInstanceOf(IntegralColumnReference::class, $field);
+        self::assertSame(1, $field->occurrence);
+        self::assertSame(0, $field->slot);
     }
 }

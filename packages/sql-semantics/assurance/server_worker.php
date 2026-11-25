@@ -40,6 +40,7 @@ function constructOperand(string $namespace, array $data): object
         'text-slot' => 'From\\TextColumnReference',
         'bool-slot' => 'From\\BooleanColumnReference',
         'wide-slot' => 'From\\WideIntegerColumnReference',
+        'integral-slot' => 'From\\IntegralColumnReference',
         'operation' => 'Arithmetic',
         'comparison' => 'Predicate\\IntegerComparison',
         'int4-case' => 'Expression\\IntegerCase',
@@ -74,7 +75,7 @@ function constructOperand(string $namespace, array $data): object
         ),
         'boolean' => new $type($data[1]),
         'parameter' => isset($data[2]) ? new $type($data[1], $castTarget::from($data[2])) : new $type($data[1]),
-        'slot', 'text-slot', 'bool-slot', 'wide-slot' => new $type($data[1], $data[2] ?? 0),
+        'slot', 'text-slot', 'bool-slot', 'wide-slot', 'integral-slot' => new $type($data[1], $data[2] ?? 0),
         'null', 'wide-null' => new $type(),
         'operation' => new $type(
             $operator::from($data[1]),
@@ -145,6 +146,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'From\\TextColumnReference' => ['text-slot', $value->slot, $value->occurrence],
         $namespace . 'From\\BooleanColumnReference' => ['bool-slot', $value->slot, $value->occurrence],
         $namespace . 'From\\WideIntegerColumnReference' => ['wide-slot', $value->slot, $value->occurrence],
+        $namespace . 'From\\IntegralColumnReference' => ['integral-slot', $value->slot, $value->occurrence],
         $namespace . 'Predicate\\IntegerComparison' => observePredicate($namespace, $value),
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
@@ -211,6 +213,12 @@ function constructMySqlColumnType(array|string $input): object
 {
     if (is_string($input)) {
         return SqlSemantics\Platform\MySql\Ir\From\ColumnKind::from($input);
+    }
+    if ($input[0] === 'signed-integral') {
+        return new SqlSemantics\Platform\MySql\Ir\From\IntegralSlot(
+            SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::from($input[1]),
+            $input[2],
+        );
     }
     if ($input[0] !== 'varchar') {
         throw new RuntimeException('Unknown MySQL column type role.');
@@ -279,13 +287,13 @@ function analyzeStatement(string $platform, array $input): SemanticsIR
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?? null, $input['complete'] ?? true));
 }
 
-function observeSource(object $source, string $dialect, string $namespace): array
+function observeSource(object $source, string $dialect, string $namespace, bool $exactIntegral = false): array
 {
     if ($source::class === $namespace . 'From\\Join') {
         return [
             'kind' => $source->kind->value,
-            'left' => observeSource($source->left, $dialect, $namespace),
-            'right' => observeSource($source->right, $dialect, $namespace),
+            'left' => observeSource($source->left, $dialect, $namespace, $exactIntegral),
+            'right' => observeSource($source->right, $dialect, $namespace, $exactIntegral),
             'on' => observePredicate($namespace, $source->on),
         ];
     }
@@ -313,9 +321,13 @@ function observeSource(object $source, string $dialect, string $namespace): arra
         }
     } else {
         $types = array_map(
-            static fn ($type): array|string => $type instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar
-                ? ['varchar', $type->length, $type->collation->value, ...($type->nullable ? [] : [false])]
-                : 'int',
+            static fn ($type): array|string => match ($type::class) {
+                SqlSemantics\Platform\MySql\Ir\From\Varchar::class =>
+                    ['varchar', $type->length, $type->collation->value, ...($type->nullable ? [] : [false])],
+                SqlSemantics\Platform\MySql\Ir\From\IntegralSlot::class =>
+                    ['signed-integral', $type->storage->value, $type->nullable],
+                SqlSemantics\Platform\MySql\Ir\From\ColumnKind::class => $exactIntegral ? $type->value : 'int',
+            },
             $source->columnTypes,
         );
         if ($types !== array_fill(0, count($columns['columns']), 'int')) {
@@ -459,7 +471,7 @@ function mysqlSetKinds(SqlSemantics\Platform\MySql\Ir\Rows\Compound $value): arr
     return $kinds;
 }
 
-function observeSetQuery(string $namespace, object $value, string $dialect): array
+function observeSetQuery(string $namespace, object $value, string $dialect, bool $exactIntegral = false): array
 {
     if ($value::class === $namespace . 'Rows\\Values\\ValuesQuery') {
         return postgresValuesGraph($namespace, $value);
@@ -495,7 +507,7 @@ function observeSetQuery(string $namespace, object $value, string $dialect): arr
     $source = $value->source;
     return [
         'columns' => array_map(static fn ($column): array => [observeOperand($namespace, $column->expression), $column->name->value], $value->columns),
-        'source' => $source === null ? null : observeSource($source, $dialect, $namespace),
+        'source' => $source === null ? null : observeSource($source, $dialect, $namespace, $exactIntegral),
         'where' => observePredicate($namespace, $value->where),
         'distinct' => $value->distinct,
         'orderBy' => array_map(static function ($key) use ($dialect, $namespace): array {
@@ -2424,7 +2436,7 @@ function constructUpdate(string $platform, array $input): SemanticsIR
     );
 }
 
-function observeUpdate(string $namespace, object $value, string $dialect): array
+function observeUpdate(string $namespace, object $value, string $dialect, bool $exactIntegral = false): array
 {
     $sets = [];
     foreach ($value->assignments as $assignment) {
@@ -2432,7 +2444,7 @@ function observeUpdate(string $namespace, object $value, string $dialect): array
     }
 
     return [
-        'status' => 'constructed', 'profile' => $value->profileId(), 'target' => observeSource($value->target, $dialect, $namespace),
+        'status' => 'constructed', 'profile' => $value->profileId(), 'target' => observeSource($value->target, $dialect, $namespace, $exactIntegral),
         'assignments' => $sets, 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
         ...($dialect === 'postgres' ? ['returning' => observeReturnedColumns($namespace, $value->returning)] : []),
     ];
@@ -2595,11 +2607,11 @@ function observePredicate(string $namespace, ?object $condition): ?array
     };
 }
 
-function observeDelete(string $namespace, object $value, string $dialect): array
+function observeDelete(string $namespace, object $value, string $dialect, bool $exactIntegral = false): array
 {
     return [
         'status' => 'constructed', 'profile' => $value->profileId(),
-        'target' => observeSource($value->target, $dialect, $namespace), 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
+        'target' => observeSource($value->target, $dialect, $namespace, $exactIntegral), 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
         ...($dialect === 'postgres' ? ['returning' => observeReturnedColumns($namespace, $value->returning)] : []),
     ];
 }
@@ -2900,7 +2912,7 @@ function observeStatement(array $input): array
         ];
     }
     if ($value::class === $namespace . 'Mutation\\Update') {
-        return observeUpdate($namespace, $value, $input['dialect']);
+        return observeUpdate($namespace, $value, $input['dialect'], ($input['observeExactIntegralSlots'] ?? false) === true);
     }
     if ($value::class === $namespace . 'Mutation\\InsertQuery') {
         return observeInsertQuery($namespace, $value, $input['dialect']);
@@ -2909,12 +2921,12 @@ function observeStatement(array $input): array
         return observeInsert($namespace, $value, $input['dialect']);
     }
     if ($value::class === $namespace . 'Mutation\\Delete') {
-        return observeDelete($namespace, $value, $input['dialect']);
+        return observeDelete($namespace, $value, $input['dialect'], ($input['observeExactIntegralSlots'] ?? false) === true);
     }
     return [
         'status' => 'constructed',
         'profile' => $value->profileId(),
-        ...observeSetQuery($namespace, $value, $input['dialect']),
+        ...observeSetQuery($namespace, $value, $input['dialect'], ($input['observeExactIntegralSlots'] ?? false) === true),
         ...($value instanceof SqlSemantics\Platform\MySql\Ir\Rows\Compound ? ['resultKinds' => mysqlSetKinds($value)] : []),
         'sql' => $value->toString(),
     ];

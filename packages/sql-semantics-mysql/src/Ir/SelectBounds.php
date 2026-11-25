@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
@@ -37,7 +38,7 @@ final class SelectBounds
     public function check(
         array $results,
         TableSource|Join|null $source,
-        BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
     ): void {
         Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
@@ -50,7 +51,7 @@ final class SelectBounds
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
-                if ($expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TextComparison) {
+                if ($expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TextComparison) {
                     $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
                         : 'A predicate slot must belong to the SELECT source.';
                     $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);

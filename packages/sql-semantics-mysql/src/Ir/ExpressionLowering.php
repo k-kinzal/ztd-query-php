@@ -6,8 +6,10 @@ namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Literal\IntegerTokenLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRangeLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Membership\IntegerMembershipLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
@@ -15,6 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic as ParsedArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between as ParsedRange;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList as ParsedMembership;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral as ParsedBoolean;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral as ParsedNull;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -30,10 +33,10 @@ final class ExpressionLowering
      * Converts a resolved operand, refusing expressions outside the projection contract.
      *
      * @param bool $wide Whether the enclosing conversion admits native 64-bit literals
-     * @return ($wide is true ? Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|RangeIntegerLiteral : Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral)
+     * @return ($wide is true ? Arithmetic|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|RangeIntegerLiteral : Arithmetic|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral)
      * @throws InvalidConstruction When the operand has no representation in this domain
      */
-    public function lower(Scalar $expression, SourceBinding|JoinBinding $binding, bool $wide = false): Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|RangeIntegerLiteral
+    public function lower(Scalar $expression, SourceBinding|JoinBinding $binding, bool $wide = false): Arithmetic|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|RangeIntegerLiteral
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -55,6 +58,7 @@ final class ExpressionLowering
         }
 
         return match (true) {
+            $expression instanceof ParsedMembership => (new IntegerMembershipLowering())->lower($expression, $binding),
             $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding),
             $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),
             $expression instanceof ParsedNull => new NullLiteral(),

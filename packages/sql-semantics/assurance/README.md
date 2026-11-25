@@ -185,6 +185,8 @@ python3 "$verifier/verify_postgres_signed_membership_proof.py" \
 
 Run `run_server_postgres_signed_membership.py` and `combine_server_postgres_signed_membership_evidence.py` for the native comparison and replay.
 
+The [MySQL signed membership contract](mysql-signed-membership-v2.json) covers all five signed physical widths, signed 64-bit literal tokens and NULL. The [native schedule](mysql-signed-membership-evidence-v1.json) checks the ordered finite coordinates through direct construction and analysis. It compares native field metadata, names, NULL, row multisets, ordered results and the entire affected relation after a write and after rollback. Run `run_server_mysql_signed_membership.py` for each of the nine pinned MySQL releases, then replay the complete ledger with `combine_server_mysql_signed_membership_evidence.py`.
+
 ## Establish independent acceptance
 
 The proposed [manual evidence workflow](../../../.github/workflows/semantics-ir-assurance.yml) selects its checker from the workflow revision on `main` and reads an explicit candidate SHA. Keep it outside the candidate's pull-request checks and review the workflow, its action pins, locked dependencies, engine build, oracle, mutation fixtures and contract before using the evidence for acceptance. Require repository-owner control of changes to this workflow and its inputs, and an independently maintained decision keyed to the tested candidate SHA. Verify that the decision rejects missing or stale evidence. No repository-level control has been installed or verified in this change.

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v187.json"
-CONTRACT = "33ddd3b4c2298929358ee1bbb76f3b93b6b97fc4d2453549673d5c92d3320a91"
+CONTRACT_NAME = "release-layout-v188.json"
+CONTRACT = "530419e94c9afa2ee66d69e3e3076f121f00224f9e3203468cf31dc2903cdbb2"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -547,6 +547,12 @@ def verify_probe(raw, catalog):
                     and item["sql"] == 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `app`.`answer` (`value`) AS SELECT 42 AS `__ztd_c0`',
                     "installed-mysql-create-view-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
+            require(item.get("mysqlSignedMembership") == [True, True, ["a", "b", "c", "d", "e"],
+                [["TINYINT", True], ["SMALLINT", False], ["MEDIUMINT", True], "int-not-null", ["BIGINT", True]],
+                [1, 2, 3, 4, None, "2147483648", "2147483648"], True,
+                "SELECT (`__ztd_source`.`a` NOT IN (`__ztd_source`.`b`, `__ztd_source`.`c`, `__ztd_source`.`d`, "
+                "`__ztd_source`.`e`, NULL, 2147483648, 2147483648)) AS `selected` FROM `app`.`membership_release` AS `__ztd_source`"],
+                "installed-mysql-signed-membership-mismatch", item)
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
             require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",
                                                      "utf8mb4_general_ci", "utf8mb4_0900_ai_ci"],

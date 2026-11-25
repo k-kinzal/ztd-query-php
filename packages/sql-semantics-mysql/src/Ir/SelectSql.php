@@ -9,11 +9,13 @@ use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
@@ -71,13 +73,14 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',
             $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',
+            $expression instanceof IntegerMembership => $this->integerMembership($expression, $source, $offset, $qualify),
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
             $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),
             $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),
@@ -104,7 +107,7 @@ final class SelectSql
     /**
      * Emits the exact field name and its owning physical or derived occurrence.
      */
-    public function column(ColumnReference|TextColumnReference $expression, TableSource|Join|null $source, int $offset, bool $qualify): string
+    public function column(ColumnReference|IntegralColumnReference|TextColumnReference $expression, TableSource|Join|null $source, int $offset, bool $qualify): string
     {
         $inputs = $source instanceof Join ? $source->inputs() : [$source];
         $input = $inputs[$expression->occurrence] ?? null;
@@ -132,11 +135,29 @@ final class SelectSql
     }
 
     /**
-     * Renders a range atom in its signed or referenced role.
+     * Emits native IN with its complete signed operand list in order.
      */
-    public function rangeOperand(ColumnReference|RangeIntegerLiteral|NullLiteral $operand, TableSource|Join|null $source, int $offset, bool $qualify): string
+    public function integerMembership(IntegerMembership $test, TableSource|Join|null $source, int $offset, bool $qualify): string
     {
-        return $operand instanceof RangeIntegerLiteral ? $operand->toString() : $this->expression($operand, $source, $offset, $qualify);
+        $subject = $this->rangeOperand($test->subject, $source, $offset, $qualify);
+        $alternatives = [];
+        foreach ($test->alternatives as $alternative) {
+            $alternatives[] = $this->rangeOperand($alternative, $source, $offset, $qualify);
+        }
+
+        return '(' . $subject . ($test->negated ? ' NOT IN (' : ' IN (') . implode(', ', $alternatives) . '))';
+    }
+
+    /**
+     * Renders a pure signed operand or its resolved reference.
+     */
+    public function rangeOperand(ColumnReference|IntegralColumnReference|RangeIntegerLiteral|NullLiteral $operand, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        return match (true) {
+            $operand instanceof RangeIntegerLiteral => $operand->toString(),
+            $operand instanceof ColumnReference, $operand instanceof IntegralColumnReference => $this->column($operand, $source, $offset, $qualify),
+            $operand instanceof NullLiteral => $this->expression($operand, $source, $offset, $qualify),
+        };
     }
 
     /**
@@ -162,7 +183,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);

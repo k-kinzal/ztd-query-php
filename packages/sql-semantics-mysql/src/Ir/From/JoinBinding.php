@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
@@ -110,6 +111,28 @@ final class JoinBinding
     }
 
     /**
+     * Resolves a signed read in the exact owning join input.
+     * @throws InvalidConstruction When the field is outside the signed input domain
+     */
+    public function membershipReference(Scalar $scalar): ColumnReference|IntegralColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($scalar)->resolution;
+        Check::input($resolution instanceof ResolvedColumn && $resolution->depth === 0, 'A membership column must resolve within this join scope.');
+        foreach ($this->inputs as $occurrence => $binding) {
+            if ($binding->relation() === $resolution->relation) {
+                $field = $binding instanceof SourceBinding ? $binding->membershipSlot($resolution) : $binding->resolved($resolution);
+                return match (true) {
+                    $field instanceof ColumnReference => new ColumnReference($field->slot, $occurrence),
+                    $field instanceof IntegralColumnReference => new IntegralColumnReference($field->slot, $occurrence),
+                    $field instanceof TextColumnReference => throw new InvalidConstruction('A membership column requires signed integral storage.'),
+                };
+            }
+        }
+
+        throw new InvalidConstruction('A membership column must resolve within this join scope.');
+    }
+
+    /**
      * Resolves a scalar field with the native kind required by a typed read.
      */
     public function field(Scalar $scalar): ColumnReference|TextColumnReference
@@ -176,7 +199,7 @@ final class JoinBinding
     /**
      * Resolves the explicit or merged condition of this join.
      */
-    public function predicate(): BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null
+    public function predicate(): BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null
     {
         if (!$this->join->operator->natural() && $this->join->using === []) {
             return (new PredicateLowering())->lower($this->join->on, $this);

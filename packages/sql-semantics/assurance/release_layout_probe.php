@@ -299,6 +299,30 @@ function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics
     ];
 }
 
+function observeMysqlSignedMembership(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.membership_release '
+        . '(a TINYINT, b SMALLINT NOT NULL, c MEDIUMINT, d INT NOT NULL, e BIGINT, unused INT)']);
+    $written = 'SELECT a NOT IN (b, c, d, e, NULL, 2147483648, 2147483648) AS selected FROM app.membership_release';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $integral = static fn (int $slot) => new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference($slot);
+    $number = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('2147483648');
+    $changing = $number;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership($integral(0), [
+        $integral(1), $integral(2), new SqlSemantics\Platform\MySql\Ir\ColumnReference(3), $integral(4),
+        new SqlSemantics\Platform\MySql\Ir\NullLiteral(), &$changing, $number,
+    ], true);
+    $changing = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('2147483649');
+
+    return [$analyzed == $batch, $direct == $analyzed->columns[0]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        array_map(static fn ($kind) => $kind instanceof SqlSemantics\Platform\MySql\Ir\From\IntegralSlot
+            ? [$kind->storage->value, $kind->nullable] : $kind->value, $analyzed->source->columnTypes),
+        array_map(static fn ($term) => $term->slot ?? $term->decimal ?? null, $direct->alternatives),
+        $direct->negated, $analyzed->toString()];
+}
+
 function observePostgresSignedMembership(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.membership_release (a INTEGER, unused BIGINT)']);
@@ -2073,6 +2097,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlVarcharPublication'] = observeMysqlVarchar($semantics);
             $details['mysqlExternalViews'] = observeMysqlExternalViews($semantics);
             $details['mysqlHaving'] = observeMysqlHaving($semantics);
+            $details['mysqlSignedMembership'] = observeMysqlSignedMembership($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

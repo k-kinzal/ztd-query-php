@@ -33,7 +33,7 @@ final class PredicateLowering
     /**
      * Resolves native signed integer operands or a constant truth value.
      */
-    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null
+    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null
     {
         return $condition === null ? null : $this->lowerValue($condition, $binding);
     }
@@ -41,7 +41,7 @@ final class PredicateLowering
     /**
      * Resolves a checked predicate or truth constant.
      */
-    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest
+    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest
     {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
@@ -73,7 +73,7 @@ final class PredicateLowering
             return new IntegerComparison($operator, $left, $right);
         }
         $constant = $expression->lower($condition, $binding);
-        Check::input($constant instanceof BooleanLiteral || $constant instanceof NullLiteral || $constant instanceof IntegerRange, 'A filter needs a Boolean or signed integer comparison.');
+        Check::input($constant instanceof BooleanLiteral || $constant instanceof NullLiteral || $constant instanceof IntegerRange || $constant instanceof IntegerMembership, 'A filter needs a Boolean or signed integer comparison.');
 
         return $constant;
     }

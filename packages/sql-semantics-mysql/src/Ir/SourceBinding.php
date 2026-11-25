@@ -6,9 +6,12 @@ namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralSlot;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\From\VarcharLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
@@ -43,7 +46,7 @@ final class SourceBinding
     private array $names = [];
 
     /**
-     * @var list<ColumnKind|Varchar> The native type of each consumed column
+     * @var list<ColumnKind|IntegralSlot|Varchar> The native type of each consumed column
      */
     private array $columnTypes = [];
 
@@ -99,6 +102,37 @@ final class SourceBinding
         Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
 
         return $this->resolved($resolution);
+    }
+
+    /**
+     * Resolves a native signed read in the owning occurrence.
+     */
+    public function membershipReference(Scalar $expression): ColumnReference|IntegralColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($expression)->resolution;
+        Check::input($resolution instanceof ResolvedColumn, 'A membership column must resolve to its input.');
+        return $this->membershipSlot($resolution);
+    }
+
+    /**
+     * Allocates the exact native storage and nullability for a signed comparison read.
+     */
+    public function membershipSlot(ResolvedColumn $resolution): ColumnReference|IntegralColumnReference
+    {
+        $column = $this->declared($resolution);
+        Check::input($column->type instanceof Integral && !$column->type->unsigned(), 'A membership column requires signed integral storage.');
+        if ($column->type->kind === IntegralKind::Int) {
+            return $this->slotFor($column);
+        }
+        $storage = match ($column->type->kind) {
+            IntegralKind::TinyInt => IntegerStorage::Tiny,
+            IntegralKind::SmallInt => IntegerStorage::Small,
+            IntegralKind::MediumInt => IntegerStorage::Medium,
+            IntegralKind::BigInt => IntegerStorage::Wide,
+        };
+        Check::input($column->nullability !== Nullability::Dependent, 'A membership column needs known nullability.');
+
+        return new IntegralColumnReference($this->allocate($column, new IntegralSlot($storage, $column->nullability !== Nullability::NotNull)));
     }
 
     /**
@@ -161,7 +195,7 @@ final class SourceBinding
     /**
      * Allocates one name and type together for the resolved physical position.
      */
-    public function allocate(Column $column, ColumnKind|Varchar $native): int
+    public function allocate(Column $column, ColumnKind|IntegralSlot|Varchar $native): int
     {
         Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');
         $key = spl_object_id($column);

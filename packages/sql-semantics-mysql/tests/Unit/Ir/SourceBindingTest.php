@@ -8,8 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralSlot;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -229,5 +232,41 @@ final class SourceBindingTest extends TestCase
         $binding = new SourceBinding($query->binding(), $query->statement->from);
 
         self::assertInstanceOf(TextColumnReference::class, $binding->updateField('label'));
+    }
+
+    public function testMembershipReferenceBindsThePhysicalWidth(): void
+    {
+        $inspection = new Inspection();
+        $declared = $inspection->inspect('CREATE TABLE ir_fixture.t (value BIGINT NOT NULL)');
+        $operation = $inspection->inspect('SELECT value FROM ir_fixture.t', [$declared]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $projection = $statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $projection);
+        $binding = new SourceBinding($operation->binding(), $statement->from);
+
+        $field = $binding->membershipReference($projection->expression);
+        self::assertInstanceOf(IntegralColumnReference::class, $field);
+        $native = $binding->source()?->columnTypes[$field->slot];
+        self::assertInstanceOf(IntegralSlot::class, $native);
+        self::assertSame(IntegerStorage::Wide, $native->storage);
+        self::assertFalse($native->nullable);
+    }
+
+    public function testMembershipSlotKeepsAResolvedMediumInteger(): void
+    {
+        $inspection = new Inspection();
+        $declaration = $inspection->inspect('CREATE TABLE ir_fixture.t (value MEDIUMINT)');
+        $operation = $inspection->inspect('SELECT value FROM ir_fixture.t', [$declaration]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $binding = $operation->binding();
+        $fields = $binding->facts->query($statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(0)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $source = new SourceBinding($binding, $statement->from);
+
+        self::assertInstanceOf(IntegralColumnReference::class, $source->membershipSlot($resolution));
     }
 }

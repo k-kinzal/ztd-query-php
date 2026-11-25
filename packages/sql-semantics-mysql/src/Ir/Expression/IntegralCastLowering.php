@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Expression;
 
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -51,7 +52,7 @@ final class IntegralCastLowering
         );
 
         $value = $this->lower($operand, $binding) ?? (new ExpressionLowering())->lower($operand, $binding, true);
-        Check::input(!$value instanceof IntegerRange, 'An integer cast requires a checked integral scalar input.');
+        Check::input(!$value instanceof IntegerRange && !$value instanceof IntegerMembership, 'An integer cast requires a checked integral scalar input.');
 
         return $target === CastKind::Signed ? new SignedCast($value) : new UnsignedCast($value);
     }

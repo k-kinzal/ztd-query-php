@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Query;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
@@ -78,6 +79,7 @@ final class CreateAsRecord
 
                 return [$bytes + ($bytes > 255 ? 2 : 1), InnoDbRecord::varcharBytes($type->length), $type->nullable, true];
             }
+            Check::invariant($type instanceof ColumnKind, 'An inherited INT projection must own a signed INT slot.');
             return [4, 4, $type->nullable(), false];
         }
 

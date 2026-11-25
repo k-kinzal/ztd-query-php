@@ -887,6 +887,10 @@ def faults(engine):
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
         shared.extend([
+            Fault("mysql-membership-use-caller-alternative-array", "Predicate/IntegerMembership::__construct",
+                  "$this->alternatives = $terms;", "$this->alternatives = $alternatives;"),
+            Fault("mysql-membership-skip-alternative-traversal", "From/OccurrenceScope::checkTree",
+                  "[$operand->subject, ...$operand->alternatives]", "[$operand->subject]"),
             Fault("admit-identical-copy-coordinates", "Schema/Like/CreateTableLike::__construct",
                   "$destination->quoted() !== $source->quoted()", "true"),
             Fault("erase-copy-source-kind", "Schema/Like/CreateTableLikeLowering::lower",

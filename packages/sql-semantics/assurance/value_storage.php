@@ -139,7 +139,7 @@ function checkValueStorage(
             continue;
         }
 
-        if ($rule === 'postgres-integer-membership-copy') {
+        if (in_array($rule, ['postgres-integer-membership-copy', 'mysql-integer-membership-copy'], true)) {
             requireShape($short === 'Predicate\\IntegerMembership' && $property === 'alternatives'
                 && in_array('Predicate/IntegerMembership::__construct', $checkedBoundaries, true)
                 && $write->expr instanceof Expr\Variable && $write->expr->name === 'terms',
