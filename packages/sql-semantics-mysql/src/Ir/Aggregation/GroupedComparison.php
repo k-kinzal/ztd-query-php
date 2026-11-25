@@ -33,6 +33,7 @@ final class GroupedComparison
         public readonly Aggregate|ColumnReference|IntegerLiteral|RangeIntegerLiteral $left,
         public readonly Aggregate|ColumnReference|IntegerLiteral|RangeIntegerLiteral $right,
     ) {
+        Check::input($operator !== IntegerOperator::NullSafeEqual, 'HAVING needs a supported numeric comparison operator.');
         foreach ([$left, $right] as $operand) {
             Check::input(!$operand instanceof Aggregate || !$operand->argument instanceof TextColumnReference
                 || $operand->operator === AggregateOperator::Count, 'A numeric HAVING comparison needs a numeric aggregate result.');

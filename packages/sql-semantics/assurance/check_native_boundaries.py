@@ -919,6 +919,8 @@ def faults(engine):
                   "MySQL VARCHAR binding source differs in src/Rules/TableDefinition/TableDeclaration.php"),
             Fault("allow-text-aggregate-as-numeric-having", "Aggregation/GroupedComparison::__construct",
                   "$operand->operator === AggregateOperator::Count,", "true,"),
+            Fault("allow-unchecked-null-safe-having", "Aggregation/GroupedComparison::__construct",
+                  "$operator !== IntegerOperator::NullSafeEqual,", "true,"),
             Fault("skip-mysql-having-key-membership", "Aggregation/GroupedSelect::__construct",
                   "$value->occurrence === 0 && isset($members[$value->slot]),", "true,"),
             Fault("allow-repeated-mysql-view-removal-target", "Schema/View/DropView::__construct",

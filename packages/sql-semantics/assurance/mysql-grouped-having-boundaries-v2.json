@@ -1,0 +1,22 @@
+{
+  "revision": "SemanticsIR/mysql-grouped-having-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-grouped-having-v2.json",
+  "rules": {
+    "Aggregation/GroupedComparison::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($operator !== \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerOperator::NullSafeEqual, 'HAVING needs a supported numeric comparison operator.');",
+        "foreach ([$left, $right] as $operand) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate || !$operand->argument instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $operand->operator === \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\AggregateOperator::Count, 'A numeric HAVING comparison needs a numeric aggregate result.');",
+        "}"
+      ]
+    }
+  }
+}
