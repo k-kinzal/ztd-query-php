@@ -112,7 +112,9 @@ def faults(engine, tag):
     return [
         RenderFault("wrong-derived-occurrence", target, "$this->alias($offset + $expression->occurrence)", "$this->alias($offset)",
                     both, "meaning-mismatch"),
-        RenderFault("wrong-definition-ordinal", target, "$name = $this->localColumn($expression->slot);", "$name = $this->localColumn(0);",
+        RenderFault("wrong-definition-ordinal", target,
+                    "$name = $this->localColumn($expression->slot," if engine == "mysql" else "$name = $this->localColumn($expression->slot);",
+                    "$name = $this->localColumn(0," if engine == "mysql" else "$name = $this->localColumn(0);",
                     binary(engine, tag, None, "right", "CROSS", (1, 0)), "meaning-mismatch"),
         RenderFault("remove-derived-null-extension", target, "$source->kind->value . ' JOIN '",
                     "($source->kind->value === 'LEFT' ? 'INNER' : $source->kind->value) . ' JOIN '",

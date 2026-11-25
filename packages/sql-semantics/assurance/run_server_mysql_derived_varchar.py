@@ -323,8 +323,8 @@ def faults(_, tag):
     return [
         RenderFault("read-other-derived-varchar-occurrence", renderer, "$this->alias($offset + $expression->occurrence)",
                     "$this->alias($offset)", dual, "meaning-mismatch"),
-        RenderFault("read-adjacent-derived-varchar-position", renderer, "$this->localColumn($expression->slot)",
-                    "$this->localColumn($expression instanceof TextColumnReference ? 1 : $expression->slot)",
+        RenderFault("read-adjacent-derived-varchar-position", renderer, "$this->localColumn($expression->slot,",
+                    "$this->localColumn($expression instanceof TextColumnReference ? 1 : $expression->slot,",
                     finite(tag, "cross", "right", "text-first", "unfiltered"), "meaning-mismatch"),
         RenderFault("omit-derived-varchar-filter", renderer, "if ($select->where !== null)", "if (false)",
                     finite(tag, "left", "right", "text-first", "only-nonnull"), "meaning-mismatch"),

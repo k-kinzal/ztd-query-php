@@ -289,7 +289,7 @@ def faults(_, tag):
     local_renderer = "sql-semantics-mysql/src/Ir/Rows/LocalProjectionSql.php"
     select_renderer = "sql-semantics-mysql/src/Ir/SelectSql.php"
     return [
-        RenderFault("change-local-varchar-slot", local_renderer, "$renderer->localColumn($column->slot)", "$renderer->localColumn(0)",
+        RenderFault("change-local-varchar-slot", local_renderer, "$renderer->localColumn($column->slot, $inherited)", "$renderer->localColumn(0, $inherited)",
                     finite(tag, 1, "populated", [2, 0], False), "meaning-mismatch"),
         RenderFault("remove-repeated-local-varchar-rows", local_renderer, "return 'SELECT '", "return 'SELECT DISTINCT '",
                     finite(tag, 1, "populated", [1, 1], False), "meaning-mismatch"),

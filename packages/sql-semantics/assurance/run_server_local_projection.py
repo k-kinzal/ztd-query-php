@@ -131,8 +131,10 @@ def faults(engine, tag):
     else:
         definition_render = "$renderer->render($source, true)"
         wrong_definition = wrong_query
+    local_layout = ", $inherited" if engine == "mysql" else ""
     result = [
-        RenderFault("misaddress-local-slot", target, "$renderer->localColumn($column->slot)", "$renderer->localColumn(0)",
+        RenderFault("misaddress-local-slot", target,
+                    f"$renderer->localColumn($column->slot{local_layout})", f"$renderer->localColumn(0{local_layout})",
                     case(engine, tag, definition(engine, tag, None), [1, 0]), "meaning-mismatch"),
         RenderFault("remove-local-row-multiplicity", target, "return 'SELECT '", "return 'SELECT DISTINCT '",
                     case(engine, tag, definition(engine, tag, "accounts"), [0]), "meaning-mismatch"),
