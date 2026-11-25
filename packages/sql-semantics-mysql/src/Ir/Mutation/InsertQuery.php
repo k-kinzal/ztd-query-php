@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
@@ -47,13 +48,15 @@ final class InsertQuery implements SemanticsIR
         );
         foreach ($query->columns as $position => $column) {
             $value = $column->expression;
-            if ($target->columnTypes[$position] instanceof Varchar) {
+            $type = $target->columnTypes[$position];
+            if ($type instanceof Varchar) {
                 Check::input(
                     $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof CollatedText || $value instanceof NullLiteral,
                     'A query INSERT VARCHAR field requires a native text value or NULL.',
                 );
                 continue;
             }
+            Check::input($type instanceof ColumnKind, 'An INSERT destination requires a writable signed INT or native VARCHAR slot.');
             Check::input(
                 $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,
                 'Each query INSERT field requires a signed value or NULL.',

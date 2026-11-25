@@ -299,7 +299,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "ae8b787caee3d25019b4723c82050b2f4ba482f13bae08bafbf800a6e75ac5b1"
+PUBLICATION = "7eb9e690a7ef18f3941c25e95a640c07eb41d06ca4608b64755c9ac947c2709a"
 
 
 def declared_constructors(dialects):
@@ -329,7 +329,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v94.json").read_bytes()
+    publication = (TOOL / "publication-v95.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)
@@ -379,6 +379,14 @@ def constructor_scope(by_class):
     generic_types = {kind.lower() for kind in generic["intrinsicKinds"]}
     non_ir_routes = {platform + "\\" + role: expected for platform in prefixes
                      for role, expected in generic["nonIrRoutes"].items()}
+    for route, detail in generic["dialectMetadataRoutes"].items():
+        owner, _, member = route.partition("::")
+        signature = detail["signature"]
+        if (owner not in definitions or not member or route in non_ir_routes or route in array_routes
+                or signature != sorted(set(signature)) or not generic_types.intersection(signature)
+                or not detail["boundary"]):
+            raise ValueError(f"Invalid dialect metadata route: {route}")
+        non_ir_routes[route] = signature
     expected_unconstrained = {**batch_routes, **{route: ["array"] for route in array_routes}, **non_ir_routes}
     found, unconstrained = {}, {}
     for clas, record in by_class.items():

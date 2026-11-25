@@ -8,12 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralSlot;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 
@@ -47,5 +49,19 @@ final class InsertQueryTest extends TestCase
         ]);
 
         self::assertSame("INSERT INTO `app`.`events` (`name`, `id`) SELECT 'a ' AS `label`, 7 AS `number`", (new InsertQuery($target, $select))->toString());
+    }
+
+    public function testRequiresATypeWithDefinedInsertAssignmentSemantics(): void
+    {
+        $target = new TableSource(
+            new Identifier('app'),
+            new Identifier('t'),
+            [new Identifier('n')],
+            [new IntegralSlot(IntegerStorage::Tiny, true)]
+        );
+        $query = new Select([new ResultColumn(new IntegerLiteral('7'), new Identifier('n'))]);
+        $this->expectExceptionMessage('An INSERT destination requires a writable signed INT or native VARCHAR slot.');
+
+        new InsertQuery($target, $query);
     }
 }

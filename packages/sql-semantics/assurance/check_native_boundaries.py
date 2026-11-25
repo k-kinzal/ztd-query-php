@@ -887,6 +887,10 @@ def faults(engine):
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
         shared.extend([
+            Fault("mysql-insert-accept-integral-read-slot", "Mutation/Insert::__construct",
+                  "$type instanceof ColumnKind || $type instanceof Varchar", "true"),
+            Fault("mysql-query-insert-accept-integral-read-slot", "Mutation/InsertQuery::__construct",
+                  "Check::input($type instanceof ColumnKind,", "Check::input(true,"),
             Fault("mysql-case-use-caller-arm-array", "Expression/Choice/SignedCase::__construct",
                   "$this->arms = $owned;", "$this->arms = $arms;"),
             Fault("mysql-case-skip-result-in-scope", "Expression/Choice/SignedCase::children",
