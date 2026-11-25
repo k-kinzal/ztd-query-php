@@ -28,8 +28,8 @@ final class LogicalPredicate
      */
     public function __construct(
         public readonly LogicalOperator $operator,
-        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self $left,
-        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self|null $right = null,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self $left,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self|null $right = null,
     ) {
         Check::input(($operator === LogicalOperator::Not) === ($right === null), 'Only logical NOT has one operand.');
     }

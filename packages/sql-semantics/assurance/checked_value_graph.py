@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v19.json"
-CONTRACT_DIGEST = "e6b3bcd6ac07454a9493c8e77d1886dada210fb8a34b919a768251db3cb88bbc"
+CONTRACT = "closed-value-graph-v20.json"
+CONTRACT_DIGEST = "4d7a76aada5fcbbfdaa429542daa6efc90dcee15014655e2ca002d8c8d2c8863"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -83,6 +83,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("erase-postgres-index-target-boundary", "value-closure-unverified-list"),
         ("erase-postgres-table-column-normalization", "value-closure-unverified-list"),
         ("erase-postgres-unique-key-normalization", "value-closure-unverified-list"),
+        ("erase-postgres-membership-copy", "value-closure-unverified-list"),
         ("erase-writable-trigger-boundary", "value-closure-unverified-list"),
         ("erase-ordered-trigger-action-boundary", "value-closure-unverified-list"),
         ("erase-sqlite-appended-bindings", "value-closure-unverified-list"),
@@ -126,6 +127,10 @@ def controls(manifest, constructors, outcomes, specification):
             after = None
         elif name == "erase-postgres-unique-key-normalization":
             before = "Schema/Key/TableKeySet::close"
+            mutated["postgres"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-postgres-membership-copy":
+            before = "Predicate/IntegerMembership::__construct"
             mutated["postgres"]["checkedBoundaries"].remove(before)
             after = None
         elif name == "erase-writable-trigger-boundary":

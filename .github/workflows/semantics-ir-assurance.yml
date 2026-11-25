@@ -82,6 +82,23 @@ jobs:
         with:
           name: postgres-sequence-order-proof
           path: ${{ runner.temp }}/postgres-sequence-order-proof/
+      - name: Check the signed membership theorems and candidate PHP correspondence
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/verify_postgres_signed_membership_proof.py \
+            --candidate candidate --candidate-sha "$CANDIDATE" \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --lean "$RUNNER_TEMP/lean-4.36.0-linux_aarch64" \
+            --archive "$RUNNER_TEMP/lean-4.36.0-linux_aarch64.tar.zst" \
+            --out "$RUNNER_TEMP/postgres-signed-membership-proof"
+      - name: Preserve signed membership receipts and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgres-signed-membership-proof
+          path: ${{ runner.temp }}/postgres-signed-membership-proof/
 
   initial-domain:
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
@@ -214,6 +231,12 @@ jobs:
         with:
           name: postgres-sequence-order-proof
           path: ${{ runner.temp }}/postgres-sequence-order-proof
+      - name: Download the signed membership receipts from this workflow run
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: postgres-signed-membership-proof
+          path: ${{ runner.temp }}/postgres-signed-membership-proof
       - name: Compile the candidate evidence index
         if: ${{ !cancelled() }}
         env:

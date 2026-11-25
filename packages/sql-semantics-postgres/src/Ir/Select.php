@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Limit;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Order;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
@@ -55,7 +56,7 @@ final class Select implements SemanticsIR
         array $columns,
         public readonly TableSource|Join|null $source = null,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
-        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
         public readonly bool $distinct = false,
         array $orderBy = [],
         public readonly ?Limit $limit = null,

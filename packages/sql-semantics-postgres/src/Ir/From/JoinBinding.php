@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseArm;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
@@ -231,7 +232,7 @@ final class JoinBinding
     /**
      * Resolves the explicit condition or normalizes the checked merged keys.
      */
-    public function predicate(): BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null
+    public function predicate(): BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null
     {
         $condition = $this->join->condition;
         if (!$this->join->natural && !$condition instanceof JoinUsing) {

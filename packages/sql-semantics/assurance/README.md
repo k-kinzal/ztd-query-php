@@ -173,6 +173,18 @@ python3 "$verifier/compare_assurance_revisions.py" \
 
 The report verifies the declared contract digests and records changed observations, limits, fault lists, native schedules, verifier files and available workflow and dependency lock files. It flags mechanically recognizable reductions, including a reduced exploration budget or a removed native domain. The report records the archive fingerprints and any unavailable supporting files. A reviewer assesses the effect of each change and records the independent decision.
 
+
+The [signed membership proof](formal/postgres_signed_membership/contract-v1.json) checks the nullable signed membership and negation laws in four kernels. Its receipt links the ordered PHP value, reference traversal and emitter to the fixed model. The [native contract](postgres-signed-membership-v1.json) tests PostgreSQL's signed equality, widening and NULL behavior on both pinned releases. The [native schedule](postgres-signed-membership-evidence-v1.json) includes both construction routes, joins and reversible write effects.
+
+```bash
+python3 "$verifier/verify_postgres_signed_membership_proof.py" \
+  --candidate "$candidate" --candidate-sha "$candidate_sha" \
+  --tool-autoload "$tool_autoload" --lean "$lean_toolchain" --archive "$lean_archive" \
+  --out "$evidence/postgres-signed-membership-proof"
+```
+
+Run `run_server_postgres_signed_membership.py` and `combine_server_postgres_signed_membership_evidence.py` for the native comparison and replay.
+
 ## Establish independent acceptance
 
 The proposed [manual evidence workflow](../../../.github/workflows/semantics-ir-assurance.yml) selects its checker from the workflow revision on `main` and reads an explicit candidate SHA. Keep it outside the candidate's pull-request checks and review the workflow, its action pins, locked dependencies, engine build, oracle, mutation fixtures and contract before using the evidence for acceptance. Require repository-owner control of changes to this workflow and its inputs, and an independently maintained decision keyed to the tested candidate SHA. Verify that the decision rejects missing or stale evidence. No repository-level control has been installed or verified in this change.

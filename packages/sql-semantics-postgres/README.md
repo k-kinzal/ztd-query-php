@@ -32,6 +32,8 @@ The six native signed comparison operators retain both operand widths. Mixed int
 
 `BETWEEN`, `IS DISTINCT FROM` and their negated forms also accept pure int4 and int8 operands, including explicit `CAST(NULL AS bigint)`. The IR retains each resolved field, signed literal and typed NULL. BETWEEN preserves both inclusive bounds and their symmetry policy. Distinctness returns a native non-null Boolean.
 
+A signed `IN` or `NOT IN` test keeps its subject, ordered alternatives, NULLs, and resolved int4 and int8 operands. Each field is bound to its exact occurrence. The rendered PostgreSQL uses qualified signed equality over a typed array. A matching non-NULL alternative wins over an UNKNOWN comparison. Negation keeps UNKNOWN, and a filter admits only TRUE. The supported inputs are pure signed literals, fields, and NULLs.
+
 An ordinary persistent `CREATE VIEW` returns `Ir\Schema\View\CreateView` with its resolved defining query, effective heading and native clause choices. A simple base-table projection can declare `LOCAL` or `CASCADED CHECK OPTION`. The optional security flags distinguish omitted settings from explicit true or false. The compiled declaration also accepts a checked standalone `VALUES` definition or a persistent ordinary-view source without a check option.
 
 `DROP VIEW` and `DROP MATERIALIZED VIEW` return `Ir\Schema\View\DropView` with the native kind, absolute names in statement order and both clause policies. Provide view declarations through the analysis context for named targets. An optional absent target requires an explicit known schema in a complete context. The rendered SQL leaves dependency checks and transactional effects to PostgreSQL.

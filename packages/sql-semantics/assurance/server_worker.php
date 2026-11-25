@@ -48,6 +48,7 @@ function constructOperand(string $namespace, array $data): object
         'unsigned-cast' => 'Expression\\UnsignedCast',
         'int4-range', 'signed-range' => 'Predicate\\IntegerRange',
         'int4-distinctness' => 'Predicate\\IntegerDistinctness',
+        'signed-membership' => 'Predicate\\IntegerMembership',
         'truth-test' => 'Predicate\\TruthTest',
         'null-test' => 'Predicate\\NullTest',
         'range-integer' => 'Predicate\\RangeIntegerLiteral',
@@ -87,6 +88,11 @@ function constructOperand(string $namespace, array $data): object
         'int4-distinctness' => new $type(
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
+            $data[1],
+        ),
+        'signed-membership' => new $type(
+            constructOperand($namespace, $data[2]),
+            array_map(static fn (array $item) => constructOperand($namespace, $item), $data[3]),
             $data[1],
         ),
         'signed-range' => new $type(
@@ -149,6 +155,8 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'Predicate\\TruthTest' => ['truth-test', $value->operator->value, observePredicate($namespace, $value->operand)],
         $namespace . 'Predicate\\IntegerDistinctness' => ['int4-distinctness', $value->negated,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
+        $namespace . 'Predicate\\IntegerMembership' => ['signed-membership', $value->negated,
+            observeOperand($namespace, $value->subject), array_map(static fn (object $item) => observeOperand($namespace, $item), $value->alternatives)],
         $namespace . 'Predicate\\IntegerRange' => [
             ...($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange
                 ? ['int4-range', $value->negated, $value->symmetric] : ['signed-range', $value->negated]),
@@ -333,7 +341,7 @@ function constructPredicate(string $namespace, ?array $test): ?object
             constructPredicate($namespace, $test[3] ?? null),
         ),
         'null-test' => new $nullTest(constructPredicate($namespace, $test[2]), $test[1]),
-        'boolean', 'null', 'slot', 'text-slot', 'bool-slot', 'wide-slot', 'integer', 'text-comparison', 'int4-range', 'signed-range', 'int4-distinctness', 'truth-test' => constructOperand($namespace, $test),
+        'boolean', 'null', 'slot', 'text-slot', 'bool-slot', 'wide-slot', 'integer', 'text-comparison', 'int4-range', 'signed-range', 'int4-distinctness', 'signed-membership', 'truth-test' => constructOperand($namespace, $test),
     };
 }
 
@@ -2583,7 +2591,7 @@ function observePredicate(string $namespace, ?object $condition): ?array
         $namespace . 'Predicate\\LogicalPredicate' => ['logic', $condition->operator->value, observePredicate($namespace, $condition->left), observePredicate($namespace, $condition->right)],
         $namespace . 'Predicate\\NullTest' => ['null-test', $condition->negated, observePredicate($namespace, $condition->operand)],
         $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'From\\TextColumnReference', $namespace . 'From\\BooleanColumnReference', $namespace . 'From\\WideIntegerColumnReference', $namespace . 'IntegerLiteral',
-        $namespace . 'Predicate\\IntegerRange', $namespace . 'Predicate\\IntegerDistinctness', $namespace . 'Predicate\\Text\\TextComparison', $namespace . 'Predicate\\TruthTest' => observeOperand($namespace, $condition),
+        $namespace . 'Predicate\\IntegerRange', $namespace . 'Predicate\\IntegerDistinctness', $namespace . 'Predicate\\IntegerMembership', $namespace . 'Predicate\\Text\\TextComparison', $namespace . 'Predicate\\TruthTest' => observeOperand($namespace, $condition),
     };
 }
 

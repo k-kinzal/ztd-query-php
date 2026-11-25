@@ -18,6 +18,7 @@ from constructor_trace import check_scope, trace
 from evidence_transcript import events as execution_events
 from formal_reindex_evidence import index_lexical_proof
 from formal_sequence_order_evidence import index_sequence_order_proof
+from formal_signed_membership_evidence import index_membership_proof
 from grammar_scope import inventory as grammar_inventory
 from native_counterexample_reduction import CONTROL_RESULTS as NATIVE_REDUCTION_CONTROLS, DIGEST as NATIVE_REDUCTION_DIGEST
 from native_postgres_fixture import DOMAINS as FIXTURE_DOMAINS, verify_link as verify_fixture
@@ -567,6 +568,10 @@ def main():
         prefix = "SqlSemantics\\Platform\\PostgreSql\\Ir\\"
         for role in ("Expression\\WideIntegerLiteral", "Schema\\Sequence\\SequenceParameters", "Schema\\Sequence\\Alter\\SequenceChanges"):
             role_trace["constructors"][prefix + role]["signedDecimalOrderProof"] = sequence_order["receipt"]
+    membership = index_membership_proof(evidence, manifest)
+    if membership is not None:
+        role = "SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership"
+        role_trace["constructors"][role]["signedMembershipProof"] = membership["receipt"]
     require(base.get("activeDeclarations") == role_trace["activeDeclarations"], "bundle-constructor-declaration-receipt")
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)
@@ -585,6 +590,7 @@ def main():
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
         "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],
         "postgresReindexLexicalProof": lexical, "postgresSequenceOrderProof": sequence_order,
+        "postgresSignedMembershipProof": membership,
         "observedBranchRules": rule_link, "requiredBranchStatuses": statuses,
         "missingEvidence": evidence.missing, "humanReview": "pending", "acceptanceProtection": "unverified",
         "requiredScope": base["scope"], "unresolved": base["open"],

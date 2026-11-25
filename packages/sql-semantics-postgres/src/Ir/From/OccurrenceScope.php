@@ -13,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
@@ -33,7 +34,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs
      */
     public function predicate(
-        BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $condition,
+        BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $condition,
         array $inputs,
         string $invalidSlot = 'A predicate slot must belong to a visible input occurrence.',
     ): void {
@@ -48,7 +49,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanColumnReference|BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TextLiteral|TruthTest|WideIntegerColumnReference|WideIntegerLiteral|WideIntegerNull $operand,
+        BooleanColumnReference|BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TextLiteral|TruthTest|WideIntegerColumnReference|WideIntegerLiteral|WideIntegerNull $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
@@ -62,6 +63,7 @@ final class OccurrenceScope
             $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],
             $operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison => [$operand->left, $operand->right],
             $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
+            $operand instanceof IntegerMembership => [$operand->subject, ...$operand->alternatives],
             $operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand],
             $operand instanceof BooleanLiteral, $operand instanceof BooleanColumnReference, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral, $operand instanceof WideIntegerColumnReference, $operand instanceof WideIntegerLiteral, $operand instanceof WideIntegerNull => [],
         };

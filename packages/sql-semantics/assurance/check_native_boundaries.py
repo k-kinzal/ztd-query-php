@@ -471,6 +471,10 @@ def faults(engine):
                   "$collation === null || $storage === CharacterStorage::Text", "true"),
             Fault("postgres-table-assume-unresolved-collation", "Schema/CreateColumnLowering::lower",
                   "DeclaredTextCollation::resolve($qualifier->collation->qualified(), $stockFirst) === DeclaredTextCollation::StockC", "true"),
+            Fault("postgres-membership-keep-caller-array", "Predicate/IntegerMembership::__construct",
+                  "$this->alternatives = $terms;", "$this->alternatives = $alternatives;"),
+            Fault("postgres-membership-skip-alternative-traversal", "From/OccurrenceScope::checkTree",
+                  "[$operand->subject, ...$operand->alternatives]", "[$operand->subject]"),
             Fault("postgres-btree-bypass-original-stock-lookup-path", "Schema/Index/Btree/CreateIndexLowering::lower",
                   "StockLookup::firstCatalog($context->searchPath)", "true"),
             Fault("postgres-btree-assume-stock-column-collation", "Schema/Index/Btree/IndexOperands::key",
@@ -787,10 +791,10 @@ def faults(engine):
                             "(new ReturningLayout())->check($target, $checked);", ""))
         shared.append(Fault("allow-excessive-int4-case-arms", "Expression/IntegerCase::__construct",
                             "count($arms) <= 32,", "true,"))
-        shared.append(Fault("ignore-case-condition-scope", "SelectBounds::check",
-                            "$nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);", ""))
-        shared.append(Fault("ignore-case-result-scope", "SelectBounds::check",
-                            "$pending[] = [$arm->result, $height + 1];", ""))
+        shared.append(Fault("ignore-case-condition-scope", "SelectBounds::caseArms",
+                            "$nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height, $nodes);", ""))
+        shared.append(Fault("ignore-case-result-scope", "SelectBounds::caseArms",
+                            "$branches[] = [$arm->result, $height];", ""))
         shared.append(Fault("allow-foreign-int4-operator", "ExpressionLowering::binary",
                             "($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],", "true,"))
         shared.append(Fault("bind-order-key-from-foreign-output", "Ordering/ResultLowering::target",

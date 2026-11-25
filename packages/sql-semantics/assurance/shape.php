@@ -120,11 +120,14 @@ if ($dialect === 'postgres') {
     $properties[$truthOperator] = $methods[$truthOperator] = [];
     $methods[$truthTest] = ['__construct'];
     $distinctness = 'Predicate\\IntegerDistinctness';
+    $membership = 'Predicate\\IntegerMembership';
+    $properties[$membership] = ['subject' => $rangeLeaves, 'alternatives' => ['array'], 'negated' => ['bool']];
+    $methods[$membership] = ['__construct'];
     $properties[$distinctness] = ['left' => $rangeLeaves, 'right' => $rangeLeaves, 'negated' => ['bool']];
     $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = $methods[$distinctness] = ['__construct'];
-    array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest, $textComparison, 'From\\BooleanColumnReference');
+    array_push($properties[$caseArm]['condition'], $range, $distinctness, $membership, $truthTest, $textComparison, 'From\\BooleanColumnReference');
     sort($properties[$caseArm]['condition']);
-    array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest, 'Predicate\\NullTest', 'Predicate\\IntegerComparison');
+    array_push($properties['ResultColumn']['expression'], $range, $distinctness, $membership, $truthTest, 'Predicate\\NullTest', 'Predicate\\IntegerComparison');
     $properties['Arithmetic']['left'][] = $integerCase;
     $properties['Arithmetic']['right'][] = $integerCase;
     $properties['ResultColumn']['expression'][] = $integerCase;
@@ -179,6 +182,7 @@ if ($dialect === 'postgres') {
     $internal[] = 'Predicate\\IntegerRangeLowering';
     $internal[] = 'Predicate\\IntegerAtomLowering';
     $internal[] = 'Predicate\\IntegerDistinctnessLowering';
+    $internal[] = 'Predicate\\Membership\\IntegerMembershipLowering';
     $internal[] = 'Predicate\\TruthTestLowering';
 }
 if ($dialect === 'mysql') {
@@ -800,7 +804,7 @@ if ($dialect !== 'sqlite') {
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
     $truthValues[] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
-        array_push($truthValues, 'From\\BooleanColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+        array_push($truthValues, 'From\\BooleanColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
         $truthValues[] = 'Predicate\\Text\\TextComparison';
     }
@@ -888,7 +892,7 @@ if ($dialect !== 'sqlite') {
     ];
     array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerRange', 'From\\TextColumnReference');
     if ($dialect === 'postgres') {
-        array_push($properties['Predicate\\NullTest']['operand'], 'From\\BooleanColumnReference', 'From\\WideIntegerColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+        array_push($properties['Predicate\\NullTest']['operand'], 'From\\BooleanColumnReference', 'From\\WideIntegerColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
         $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\Text\\TextComparison';
     }
@@ -1982,9 +1986,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v77.json';
+    $storagePath = __DIR__ . '/value-storage-v78.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '89f1fbde591aa624582a531af96468013e0731e97926f5e6f395a5879210000b',
+        hash_file('sha256', $storagePath) === '688d9daf5256997b6d126eb138b0deb03bf747a78d8acc2032e3f598a5053a07',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

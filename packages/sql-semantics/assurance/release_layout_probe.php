@@ -299,6 +299,26 @@ function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics
     ];
 }
 
+function observePostgresSignedMembership(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.membership_release (a INTEGER, unused BIGINT)']);
+    $written = 'SELECT a NOT IN (2147483648, NULL, 2147483648) AS selected FROM public.membership_release';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $wide = new SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral('2147483648');
+    $alias = $wide;
+    $subject = new SqlSemantics\Platform\PostgreSql\Ir\ColumnReference(0);
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership(
+        $subject, [&$alias, new SqlSemantics\Platform\PostgreSql\Ir\NullLiteral(), $wide], true,
+    );
+    $alias = new SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral('2147483649');
+
+    return [$analyzed == $batch, $direct == $analyzed->columns[0]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        array_map(static fn ($term) => $term->decimal ?? null, $direct->alternatives),
+        $direct->negated, $analyzed->toString()];
+}
+
 function observePostgresSignedDefault(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $value = $semantics->analyze('CREATE TABLE public.signed_default_decl (minimum SMALLINT DEFAULT -9223372036854775808, '
@@ -2055,6 +2075,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlHaving'] = observeMysqlHaving($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
+            $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);
             $namedDatabase = new SqlSemantics\Platform\PostgreSql\Semantics(
                 currentDatabase: new SqlSemantics\Platform\PostgreSql\Ir\Identifier('billing'),
             );

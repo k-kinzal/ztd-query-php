@@ -12,12 +12,14 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
@@ -35,13 +37,13 @@ final class SelectBounds
     /**
      * Checks every expression occurrence, including repeated uses of a shared value.
      *
-     * @param non-empty-list<Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral|WideIntegerColumnReference> $expressions The owned projection and ordering expressions
+     * @param non-empty-list<Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral|WideIntegerColumnReference> $expressions The owned projection and ordering expressions
      * @param TableSource|Join|null $source The source whose slots may be used
      */
     public function check(
         array $expressions,
         TableSource|Join|null $source,
-        BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
+        BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
     ): void {
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
         $scope = new OccurrenceScope();
@@ -52,19 +54,14 @@ final class SelectBounds
             $pending = [[$root, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
-                if ($expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {
+                if ($expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {
                     $nodes = $scope->checkTree($expression, $inputs, 'A tested predicate slot must belong to the SELECT source.', $height, $nodes);
                     continue;
                 }
                 Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
                 if ($expression instanceof IntegerCase) {
-                    foreach ($expression->arms as $arm) {
-                        $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);
-                        $pending[] = [$arm->result, $height + 1];
-                    }
-                    if ($expression->otherwise !== null) {
-                        $pending[] = [$expression->otherwise, $height + 1];
-                    }
+                    [$nodes, $branches] = $this->caseArms($expression, $scope, $inputs, $height + 1, $nodes);
+                    $pending = array_merge($pending, $branches);
                     continue;
                 }
                 match (true) {
@@ -77,5 +74,25 @@ final class SelectBounds
             }
         }
         Check::input(max([0, ...array_keys($positions)]) === count($positions), 'PostgreSQL parameter positions must cover the contiguous bound slots.');
+    }
+
+    /**
+     * Checks every CASE condition before enqueueing the scalar results.
+     *
+     * @param list<TableSource|DerivedSource> $inputs The full visible occurrence layout
+     * @return array{int, list<array{Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral, int}>}
+     */
+    public function caseArms(IntegerCase $expression, OccurrenceScope $scope, array $inputs, int $height, int $nodes): array
+    {
+        $branches = [];
+        foreach ($expression->arms as $arm) {
+            $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height, $nodes);
+            $branches[] = [$arm->result, $height];
+        }
+        if ($expression->otherwise !== null) {
+            $branches[] = [$expression->otherwise, $height];
+        }
+
+        return [$nodes, $branches];
     }
 }

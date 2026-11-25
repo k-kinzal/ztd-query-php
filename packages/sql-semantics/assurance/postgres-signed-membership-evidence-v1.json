@@ -1,0 +1,34 @@
+{
+  "revision": "SemanticsIR/postgres-signed-membership-evidence-1",
+  "approval": "pending-human-review",
+  "reference": {
+    "file": "postgres-signed-membership-v1.json",
+    "sha256": "38db102ed7fa366556e088ad6acf5c7747d0e681018cc506f79ea23186b347ac"
+  },
+  "negativeCount": 9,
+  "boundaryInputs": [
+    "8190 alternatives retain a final match through the constructor and analyzer",
+    "8190 alternatives retain UNKNOWN through the constructor and analyzer"
+  ],
+  "seedPlacements": [
+    "projection",
+    "filter",
+    "join",
+    "update",
+    "delete"
+  ],
+  "seedCompositions": [
+    "case",
+    "truth-test",
+    "null-test",
+    "logical"
+  ],
+  "observations": [
+    "Keep all finite coordinates separately on both construction routes.",
+    "Compare native declared type identifiers, column names, ordered positions, values and duplicate counts.",
+    "Measure unqualified operator shadowing through separate native comparison controls.",
+    "For a write, compare RETURNING and the complete fixture table after the operation, then roll it back.",
+    "Independently allocate compact local slots in consumed order and compare exact references. Derive finite physical identities from the candidate-reported visible occurrence and decoded field name with native kind.",
+    "Preserve duplicate, smaller-width, larger-width and nullable right operands for both original and emitted statements."
+  ]
+}

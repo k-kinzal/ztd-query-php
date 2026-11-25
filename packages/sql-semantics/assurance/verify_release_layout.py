@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v186.json"
-CONTRACT = "b90b40f2a3e11550b8f896ec1844526c3185f323676eb92fadb8220e665ad730"
+CONTRACT_NAME = "release-layout-v187.json"
+CONTRACT = "33ddd3b4c2298929358ee1bbb76f3b93b6b97fc4d2453549673d5c92d3320a91"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -806,6 +806,12 @@ def verify_probe(raw, catalog):
             copy = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`copy_probe` LIKE `app`.`accounts`"
             require(item.get("mysqlCreateLike") == ["app", "copy_probe", "temporary-table", "app", "accounts",
                     "table", True, copy, copy, True], "installed-mysql-create-like-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
+            require(item.get("postgresSignedMembership") == [True, True, ["a"], ["2147483648", None, "2147483648"], True,
+                'SELECT (NOT ("__ztd_source"."a" OPERATOR(pg_catalog.=) ANY (CAST(ARRAY[CAST(2147483648 AS pg_catalog.int8), '
+                'CAST(NULL AS pg_catalog.int4), CAST(2147483648 AS pg_catalog.int8)] AS pg_catalog.int8[])))) AS "selected" '
+                'FROM "public"."membership_release" AS "__ztd_source"'],
+                "installed-postgres-signed-membership-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\CreateTable"):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],

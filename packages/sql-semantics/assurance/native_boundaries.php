@@ -175,6 +175,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-table-width-boundaries-v1.json', 'f75aa4adb272500e54b7620c32392e6c279deb6c556cc72f15507d6b745a87b0'],
             ['postgres-collated-table-boundaries-v1.json', 'c260470f06d1b156b05c54cd00bdfd618f1f118c10c3b1aa877cafb9fae03864'],
             ['postgres-stock-collation-lookup-boundaries-v1.json', '594194bdb72a6333b1fda4b8ec2f4d1a0be20105ee5710c3439081138bdec683'],
+            ['postgres-signed-membership-boundaries-v2.json', 'e1adef24f8591807550c393fc9e25ee892ac93d264d39dba58f19d0d9a421798'],
         ],
         'sqlite' => [],
     };
@@ -339,6 +340,7 @@ function checkNativeBoundaries(
                 'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextComparisonLowering', 'Ir\\Predicate\\Text\\TextOperator',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',
                 'Ir\\Predicate\\IntegerDistinctness', 'Ir\\Predicate\\IntegerDistinctnessLowering', 'Ir\\Expression\\WideIntegerNull',
+                'Ir\\Predicate\\IntegerMembership', 'Ir\\Predicate\\Membership\\IntegerMembershipLowering',
                 'Ir\\Predicate\\TruthTest', 'Ir\\Predicate\\TruthOperator', 'Ir\\Predicate\\TruthTestLowering',
                 'Statement\\Expression\\Predicate\\BooleanTest as ParsedTruthTest',
                 'Statement\\Expression\\BinaryOperation', 'Statement\\Expression\\ColumnReference as ParsedColumn',

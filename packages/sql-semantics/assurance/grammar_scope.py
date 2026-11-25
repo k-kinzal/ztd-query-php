@@ -349,6 +349,11 @@ def inventory(root):
             )})
             related.update({alternative: ("postgres-int4-range-v1.json", "postgres-signed-range-widths-v1.json") for alternative in rules["a_expr"]
                             if " BETWEEN " in alternative})
+            related.update({alternative: ("postgres-signed-membership-v1.json",) for alternative in rules["a_expr"]
+                            if " IN_P in_expr" in alternative or " NOT_LA IN_P in_expr" in alternative})
+            for alternative in rules.get("in_expr", ()):
+                if "expr_list" in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "postgres-signed-membership-v1.json")
             related.update({alternative: ("postgres-int4-distinctness-v1.json", "postgres-signed-range-widths-v1.json") for rule in ("a_expr", "b_expr")
                             for alternative in rules[rule] if " DISTINCT FROM " in alternative})
             related.update({alternative: ("postgres-boolean-tests-v1.json",) for alternative in rules["a_expr"]

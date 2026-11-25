@@ -1,0 +1,137 @@
+{
+  "revision": "SemanticsIR/postgres-signed-membership-proof-1",
+  "approval": "pending-human-review",
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "claim": "For every nullable signed integer subject and every finite list of nullable signed integer alternatives, the source SQL three-valued IN fold equals typed-array ANY. The NOT IN fold equals the three-valued negation of that same ANY.",
+  "assumptions": [
+    "The verified PHP integer roles encode nullable mathematical integers and their exact resolved field coordinates. int4-to-int8 widening preserves the mathematical integer.",
+    "The checked emitter writes all alternatives once in their stored order, casts their array to the stock signed int8 array, uses pg_catalog signed equality, and applies outer SQL NOT exactly for the negated case.",
+    "The pinned PostgreSQL engines implement the stock SQL IN, NOT IN, array ANY, and logical operators according to the fixed semantic definitions. Source resolution must select the stock profile. The native schedule tests this premise separately.",
+    "All operands belong to the pure signed leaf domain, so source operator evaluation order and representation changes leave the observed equality result and effects intact."
+  ],
+  "bindings": {
+    "Predicate/IntegerMembership::__construct": {
+      "source": "packages/sql-semantics-postgres/src/Ir/Predicate/IntegerMembership.php",
+      "sourceDigest": "5a53525624fdbc130ec7245f811895b93dbc13c2d86a5599d12e7e77d9969894",
+      "template": "postgres-signed-membership-boundaries-v2.json",
+      "templateDigest": "e1adef24f8591807550c393fc9e25ee892ac93d264d39dba58f19d0d9a421798",
+      "body": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(array_is_list($alternatives) && $alternatives !== [] && count($alternatives) <= 8190, 'Signed membership requires an ordered list of one to 8190 alternatives.');",
+        "$terms = [];",
+        "foreach ($alternatives as $alternative) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerNull, 'A membership alternative must be a pure native signed operand.');",
+        "    $terms[] = $alternative;",
+        "}",
+        "$this->alternatives = $terms;"
+      ]
+    },
+    "From/OccurrenceScope::checkTree": {
+      "source": "packages/sql-semantics-postgres/src/Ir/From/OccurrenceScope.php",
+      "sourceDigest": "276e4e9475a64ba109ae4d1e0fd5cd860a58fa42178b4625e59b62179478ddcf",
+      "template": "postgres-signed-membership-boundaries-v2.json",
+      "templateDigest": "e1adef24f8591807550c393fc9e25ee892ac93d264d39dba58f19d0d9a421798",
+      "body": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference || $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference || $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference || $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference) {",
+        "    $this->column($operand, $inputs, $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerComparison, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctness, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\Text\\TextComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership => [$operand->subject, ...$operand->alternatives],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\NullTest, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTest => [$operand->operand],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerNull => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "return $count;"
+      ]
+    },
+    "SelectSql::expression": {
+      "source": "packages/sql-semantics-postgres/src/Ir/SelectSql.php",
+      "sourceDigest": "2882b00afb825824dc47354a298d98dd8fea17a28d6e8064db333620a0cb7aad",
+      "template": "postgres-signed-membership-boundaries-v2.json",
+      "templateDigest": "e1adef24f8591807550c393fc9e25ee892ac93d264d39dba58f19d0d9a421798",
+      "body": [
+        "return match (true) {",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership => $this->integerMembership($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\NullTest, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerComparison => $this->predicate($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTest => $this->truthTest($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CollatedText => $this->collated($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\Text\\TextComparison => $this->textComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral => 'NULL',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Binding\\Parameter => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "SelectSql::integerMembership": {
+      "source": "packages/sql-semantics-postgres/src/Ir/SelectSql.php",
+      "sourceDigest": "2882b00afb825824dc47354a298d98dd8fea17a28d6e8064db333620a0cb7aad",
+      "template": "postgres-signed-membership-boundaries-v2.json",
+      "templateDigest": "e1adef24f8591807550c393fc9e25ee892ac93d264d39dba58f19d0d9a421798",
+      "body": [
+        "$subject = $this->integerOrNull($test->subject, $source, $offset, $qualify);",
+        "$alternatives = [];",
+        "foreach ($test->alternatives as $alternative) {",
+        "    $alternatives[] = $this->integerOrNull($alternative, $source, $offset, $qualify);",
+        "}",
+        "$list = 'CAST(ARRAY[' . implode(', ', $alternatives) . '] AS pg_catalog.int8[])';",
+        "$match = '(' . $subject . ' OPERATOR(pg_catalog.=) ANY (' . $list . '))';",
+        "return $test->negated ? '(NOT ' . $match . ')' : $match;"
+      ]
+    },
+    "SelectSql::integerOrNull": {
+      "source": "packages/sql-semantics-postgres/src/Ir/SelectSql.php",
+      "sourceDigest": "2882b00afb825824dc47354a298d98dd8fea17a28d6e8064db333620a0cb7aad",
+      "template": "postgres-signed-range-widths-boundaries-v1.json",
+      "templateDigest": "28cd3860fb2bfbd1a7dea1897cd986b3db57b57376958dee3dc78256afa6782e",
+      "body": [
+        "return match (true) {",
+        "    $value instanceof NullLiteral => 'CAST(NULL AS pg_catalog.int4)',",
+        "    $value instanceof WideIntegerNull => 'CAST(NULL AS pg_catalog.int8)',",
+        "    $value instanceof Arithmetic, $value instanceof ColumnReference, $value instanceof IntegerCase,",
+        "    $value instanceof IntegerLiteral, $value instanceof WideIntegerColumnReference, $value instanceof WideIntegerLiteral",
+        "        => $this->expression($value, $source, $offset, $qualify),",
+        "};"
+      ]
+    }
+  },
+  "contractArtifacts": {
+    "MembershipSpec.lean": "6f163facca0980f667b258e0012275ddbe7ecd59a0c233103404b7ead6de8f32",
+    "Challenge.lean": "b1a75c96122758acf28981acd642e64bfe0f3b37dc63b481feab77385f5d2f9f",
+    "Solution.lean": "239e995a433d47a7829ec535539f67eb2e8b6f46cd0342ad81d1219fb6ab3fee",
+    "comparator.json": "21620eab7defd8e274a61d27e436b4fce012bbfd81ceeb711018a27479121f44",
+    "lean-toolchain": "582a63f8f9c5128067b688778c1051cf1464c3ca9d57b9325025c051c29b774a"
+  },
+  "toolchain": {
+    "version": "4.36.0",
+    "commit": "611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9",
+    "linuxAarch64": {
+      "name": "lean-4.36.0-linux_aarch64.tar.zst",
+      "sha256": "35471998152191ef809418ce5bf61f8fc5f209e5e3be05b48bdc4949fdb3e726"
+    }
+  },
+  "axioms": {
+    "propext": "Lean core integer comparison lemmas use propositional extensionality."
+  },
+  "controls": {
+    "weakened-theorem": "theorem statement do not match",
+    "unfinished-proof": "sorryAx"
+  },
+  "limits": "The proof verifies the signed three-valued combination under the listed PHP and native correspondence premises. It covers arbitrary finite lengths in the model. The completed PHP values are further subject to their verified local and enclosing size limits."
+}

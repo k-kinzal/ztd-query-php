@@ -20,6 +20,7 @@ CONTRACTS = {
     "postgres-boolean-tests-v1.json": "db8f3a718d0eec95297d153076a3af9d8b456e4d706ebd16f10238d3a7fda32d",
     "postgres-int4-distinctness-v1.json": "7389b300bd6ee4a8eb0094bdf5ba7bf9d8aaea4bde8ee87412e725e996278cdc",
     "postgres-int4-range-v1.json": "18d4b12d531f691206f92ba36a1bf7932421581d690c72be4829289999fcb676",
+    "postgres-signed-membership-v1.json": "38db102ed7fa366556e088ad6acf5c7747d0e681018cc506f79ea23186b347ac",
     "postgres-int4-case-v1.json": "7eb2ce7eefebccb894a7b47ce725a08d381978f2ff235a7475533f074da1620b",
     "sqlite-concatenation-v1.json": "0e6cf551291823e3fa6a60bcb9ffc0624b0583533c244aa68fc27c47a24842e4",
     "sqlite-collation-v1.json": "e6095ab2d70045c9ab7f0d49ea8c06248dd2195dd0828968690a35221d45dcd6",

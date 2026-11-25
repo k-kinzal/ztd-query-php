@@ -22,6 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
@@ -99,7 +100,7 @@ final class CompoundShape
             $column instanceof WideIntegerLiteral, $column instanceof WideIntegerColumnReference => ResultKind::WideInteger,
             $column instanceof TextLiteral, $column instanceof TextColumnReference, $column instanceof CollatedText => ResultKind::Text,
             $column instanceof NullLiteral => ResultKind::Unknown,
-            $column instanceof BooleanLiteral, $column instanceof BooleanColumnReference, $column instanceof IntegerComparison, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison => ResultKind::Boolean,
+            $column instanceof BooleanLiteral, $column instanceof BooleanColumnReference, $column instanceof IntegerComparison, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof IntegerMembership, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison => ResultKind::Boolean,
             $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral => ResultKind::Integer,
         };
     }

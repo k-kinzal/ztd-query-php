@@ -18,9 +18,11 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctnessLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRangeLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Membership\IntegerMembershipLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
@@ -40,6 +42,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\DistinctTest 
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\BooleanTest as ParsedTruthTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest as ParsedNullTest;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\InList as ParsedMembership;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral as ParsedBoolean;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
@@ -65,7 +68,7 @@ final class ExpressionLowering
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
         bool $simpleOutput = false,
-    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
+    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
@@ -84,6 +87,7 @@ final class ExpressionLowering
             $expression instanceof Collation => (new CollatedTextLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedDistinctness => (new IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof ParsedMembership => (new IntegerMembershipLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedNullTest => (new PredicateLowering())->nullTest($expression, $binding, $catalogFirst),
             $expression instanceof ParsedTruthTest => (new TruthTestLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),
@@ -107,7 +111,7 @@ final class ExpressionLowering
         ?ColumnKind $destination,
         bool $distinct = false,
         bool $simpleOutput = false,
-    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
+    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerMembership|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
         $bareText = $simpleOutput || $destination === ColumnKind::Text;
         if ($destination === ColumnKind::Boolean) {
             $bareText = $distinct;

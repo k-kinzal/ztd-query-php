@@ -21,6 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextOperator;
@@ -113,6 +114,15 @@ final class SelectSqlTest extends TestCase
             . '(CAST(1 AS pg_catalog.int4) IS NULL AND CAST(NULL AS pg_catalog.int4) IS NULL)))';
 
         self::assertSame($expected, (new SelectSql())->integerDistinctness($value, null, 0, true));
+    }
+
+    public function testIntegerMembershipPreservesTypedNullAndNegation(): void
+    {
+        $test = new IntegerMembership(new IntegerLiteral('2'), [new NullLiteral(), new IntegerLiteral('2')], true);
+        $expected = '(NOT (CAST(2 AS pg_catalog.int4) OPERATOR(pg_catalog.=) ANY ('
+            . 'CAST(ARRAY[CAST(NULL AS pg_catalog.int4), CAST(2 AS pg_catalog.int4)] AS pg_catalog.int8[]))))';
+
+        self::assertSame($expected, (new SelectSql())->integerMembership($test, null, 0, true));
     }
 
     public function testIntegerRangePreservesBothSymmetricIntervalsAndNegation(): void
