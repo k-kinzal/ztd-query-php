@@ -36,4 +36,18 @@ final class InnoDbRecordTest extends TestCase
         self::assertTrue(InnoDbRecord::fits(array_fill(0, 196, $field), false));
         self::assertFalse(InnoDbRecord::fits(array_fill(0, 197, $field), false));
     }
+
+    public function testFitsPayloadCountsTheImplicitClusteredHeader(): void
+    {
+        self::assertTrue(InnoDbRecord::fitsPayload(8101, 0, false));
+        self::assertFalse(InnoDbRecord::fitsPayload(8101, 1, false));
+        self::assertTrue(InnoDbRecord::fitsPayload(8101, 1, true));
+    }
+
+    public function testVarcharBytesIncludesTheInlineLengthAfterExternalization(): void
+    {
+        self::assertSame(37, InnoDbRecord::varcharBytes(9));
+        self::assertSame(41, InnoDbRecord::varcharBytes(10));
+        self::assertSame(41, InnoDbRecord::varcharBytes(64));
+    }
 }

@@ -224,6 +224,29 @@ function observeMysqlSessionCreateTable(SqlSemantics\Platform\MySql\Semantics $s
         $analyzed->target->kind->value, $direct->target == $analyzed->target, $analyzed->toString(), $direct->toString()];
 }
 
+function observeMysqlQueryBackedInnoDbWidth(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE TABLE app.layout_source (wide VARCHAR(64) COLLATE utf8mb4_bin NOT NULL, '
+        . 'required_value INT NOT NULL, optional_value INT NULL) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
+    ]);
+    $selected = array_map(static fn (int $position): string => 'wide AS field_' . $position, range(0, 196));
+    $tail = array_map(static fn (int $position): string => 'required_value AS tail_' . $position, range(0, 5));
+    $statement = 'CREATE TABLE app.layout_result ENGINE=InnoDB AS SELECT ' . implode(', ', [...$selected, ...$tail])
+        . ' FROM app.layout_source';
+    $accepted = $semantics->analyze($statement, $context);
+    $rejected = null;
+    try {
+        $semantics->analyze(str_replace('required_value AS', 'optional_value AS', $statement), $context);
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage();
+    }
+
+    return [count($accepted->query->columns), $accepted->query->source->columnTypes[0]->nullable,
+        $accepted->query->source->columnTypes[1]->nullable(), $accepted->query->columns[202]->expression->slot,
+        $accepted->query->columns[202]->name->value, $rejected];
+}
+
 function observeMysqlInnoDbDeclarationWidth(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $target = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
@@ -1797,6 +1820,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlCreateTableAs'] = [$result->target->name->schema->value, $result->target->name->table->value,
                 $result->target->kind->value, $result->ifNotExists, array_column(array_column($result->query->columns, 'name'), 'value'),
                 $first->expression::class, $result->profileId(), $result->toString(), $direct->toString(), $rejected];
+            $details['mysqlQueryBackedInnoDbWidth'] = observeMysqlQueryBackedInnoDbWidth($semantics);
             $from = $semantics->analyze(
                 'CREATE TABLE app.bound_probe AS SELECT id AS a, app.ctas_probe.id AS b FROM app.ctas_probe',
                 $semantics->context(['CREATE TABLE app.ctas_probe (id INT)', 'CREATE TEMPORARY TABLE app.ctas_probe (id INT NOT NULL)'])

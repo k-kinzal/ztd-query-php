@@ -307,7 +307,7 @@ function observeSource(object $source, string $dialect, string $namespace): arra
         $types = array_map(
             static fn ($type): array|string => $type instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar
                 ? ['varchar', $type->length, $type->collation->value, ...($type->nullable ? [] : [false])]
-                : $type->value,
+                : 'int',
             $source->columnTypes,
         );
         if ($types !== array_fill(0, count($columns['columns']), 'int')) {
@@ -983,6 +983,9 @@ function constructMysqlCreateAs(string $platform, array $input): SemanticsIR
 function observeMysqlCreateAs(string $namespace, object $value): array
 {
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlInputNullability' => $value->query->source instanceof SqlSemantics\Platform\MySql\Ir\TableSource
+            ? array_map(static fn ($type): bool => $type instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar
+                ? $type->nullable : $type->nullable(), $value->query->source->columnTypes) : [],
         'mysqlCreateTableAs' => [
             'target' => observeMysqlTableIdentity($value->target), 'ifNotExists' => $value->ifNotExists,
             'query' => observeSetQuery($namespace, $value->query, 'mysql'),

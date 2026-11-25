@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Relation;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
@@ -154,7 +155,7 @@ final class SourceBinding
     {
         Check::input($column->type instanceof Integral && $column->type->kind === IntegralKind::Int && !$column->type->unsigned(), 'The bound column must have the signed 32-bit integer type.');
 
-        return new ColumnReference($this->allocate($column, ColumnKind::SignedInt));
+        return new ColumnReference($this->allocate($column, $this->signedKind($column)));
     }
 
     /**
@@ -254,7 +255,17 @@ final class SourceBinding
         $column = $this->writeDeclaration($name);
         return $column->type instanceof Character
             ? [$column, (new VarcharLowering())->lower($column)]
-            : [$this->signedWrite($column), ColumnKind::SignedInt];
+            : [$this->signedWrite($column), $this->signedKind($column)];
+    }
+
+    /**
+     * Preserves exact declared nullability in a resolved native signed role.
+     */
+    public function signedKind(Column $column): ColumnKind
+    {
+        Check::input($column->nullability !== Nullability::Dependent, 'A native signed slot requires known column nullability.');
+
+        return $column->nullability === Nullability::NotNull ? ColumnKind::RequiredSignedInt : ColumnKind::SignedInt;
     }
 
     /**

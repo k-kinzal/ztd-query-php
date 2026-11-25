@@ -756,7 +756,8 @@ def inventory(root):
                 related[alternative] = (("server-create-table-v2.json", "postgres-create-text-v1.json",
                                          "postgres-create-signed-defaults-v1.json", "postgres-create-boolean-v2.json",
                                          "postgres-primary-key-evidence-v1.json", "postgres-table-width-evidence-v1.json")
-                                        if postgres else ("server-create-table-v2.json", "mysql-innodb-declaration-width-evidence-v1.json"))
+                                        if postgres else ("server-create-table-v2.json", "mysql-innodb-declaration-width-evidence-v1.json",
+                                                           "mysql-create-table-as-width-evidence-v1.json"))
         for rule in parameters:
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):

@@ -20,14 +20,32 @@ final class InnoDbRecord
      */
     public static function fits(array $columns, bool $hasPrimaryKey): bool
     {
-        $payload = $hasPrimaryKey ? 18 : 24;
+        $payload = 0;
         $nullable = 0;
         foreach ($columns as $column) {
             $storage = $column->storage;
-            $payload += $storage instanceof CharacterStorage ? min(4 * $storage->length, 40) + 1 : $storage->bytes();
+            $payload += $storage instanceof CharacterStorage ? self::varcharBytes($storage->length) : $storage->bytes();
             $nullable += (int) $column->nullable;
         }
 
-        return $payload + intdiv($nullable + 7, 8) < 8126;
+        return self::fitsPayload($payload, $nullable, $hasPrimaryKey);
+    }
+
+    /**
+     * Checks the clustered payload and its record header against the native page geometry.
+     */
+    public static function fitsPayload(int $payload, int $nullable, bool $hasPrimaryKey): bool
+    {
+        $header = $hasPrimaryKey ? 18 : 24;
+
+        return $header + $payload + intdiv($nullable + 7, 8) < 8126;
+    }
+
+    /**
+     * Computes the local variable field size in the DYNAMIC clustered record.
+     */
+    public static function varcharBytes(int $length): int
+    {
+        return min(4 * $length, 40) + 1;
     }
 }

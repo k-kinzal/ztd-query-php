@@ -81,8 +81,8 @@ final class OccurrenceScope
      */
     public function hasSlot(TableSource|DerivedSource|null $input, int $slot): bool
     {
-        return $input instanceof DerivedSource ? $input->columnType($slot) === ColumnKind::SignedInt
-            : ($input->columnTypes[$slot] ?? null) === ColumnKind::SignedInt;
+        return $input instanceof DerivedSource ? $input->columnType($slot) instanceof ColumnKind
+            : ($input->columnTypes[$slot] ?? null) instanceof ColumnKind;
     }
 
     /**
@@ -101,8 +101,8 @@ final class OccurrenceScope
         }
 
         $slot = $assignment->target->slot;
-        Check::input(($target->columnTypes[$slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE write slot must belong to the target.');
-        Check::input(!$value instanceof ColumnReference || ($target->columnTypes[$value->slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE read slot must belong to the target.');
+        Check::input(($target->columnTypes[$slot] ?? null) instanceof ColumnKind, 'An UPDATE write slot must belong to the target.');
+        Check::input(!$value instanceof ColumnReference || ($target->columnTypes[$value->slot] ?? null) instanceof ColumnKind, 'An UPDATE read slot must belong to the target.');
     }
 
     /**

@@ -10,7 +10,6 @@ from server_delete_cases import literal
 
 AXES = ("destinationKind", "topology", "ifNotExists", "declaration", "body")
 STORAGE = {"TINYINT": 8, "SMALLINT": 16, "MEDIUMINT": 24, "INTEGER": 32, "BIGINT": 64}
-LAYOUT_ERROR = "The combined CREATE TABLE AS heading can have at most 128 columns."
 NAME_ERROR = "CREATE TABLE AS cannot repeat an explicit column name."
 LIST_ERROR = "CREATE TABLE AS requires an ordered list of explicit columns."
 SIGNED_ERROR = "Explicit CREATE TABLE AS definitions require signed storage."
@@ -98,7 +97,8 @@ def negatives(tag):
     yield replace_declarations(item, {"owned": field}), LIST_ERROR
     yield replace_declarations(item, ["bad value"]), LIST_ERROR
     yield replace_declarations(item, [field, ["OTHER", "SMALLINT", True, None]]), NAME_ERROR
-    yield capacity(tag, 128), LAYOUT_ERROR
+    amendment = constants.native_width_amendment()
+    yield capacity(tag, amendment["combined"]["replacementExplicitWidth"]), amendment["message"]
     yield replace_declarations(item, [["n", ["varchar", 3, COLLATION], True, None]]), SIGNED_ERROR
     query = {**item["mysqlCreateTableAs"]["query"], "source": {"schema": "ir_fixture", "table": "known", "columns": ["n"]}}
     yield constants.replace_query(item, query), SOURCE_ERROR

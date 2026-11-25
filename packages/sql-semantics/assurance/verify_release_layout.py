@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v149.json"
-CONTRACT = "f6eda30cdc0ba0d5874d5672306c0101c6d910cf08b861fbd672235a533d15e8"
+CONTRACT_NAME = "release-layout-v150.json"
+CONTRACT = "6dd10555b0cc6f9607210782643f3342c4fa0eb626240fa9d4ddff6e8c06355e"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -706,6 +706,9 @@ def verify_probe(raw, catalog):
                 1017, 1017, 1016, "c1016", True, "The declared clustered InnoDB record must fit the native 8126-byte boundary.",
             ], "installed-mysql-innodb-width-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
+            require(item.get("mysqlQueryBackedInnoDbWidth") == [
+                203, False, False, 1, "tail_5", "The projected clustered InnoDB record must fit the native 8126-byte boundary.",
+            ], "installed-mysql-query-backed-width-mismatch", item)
             create_as = ("CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`result_probe` ENGINE=InnoDB "
                          "AS SELECT CAST(17 AS SIGNED) AS `n`, NULL AS `absent`")
             require(item.get("mysqlCreateTableAs") == ["app", "result_probe", "temporary-table", True, ["n", "absent"],

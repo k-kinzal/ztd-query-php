@@ -438,6 +438,8 @@ The [MySQL VARCHAR table creation contract](mysql-create-table-as-varchar-v1.jso
 
 The [MySQL explicit signed creation contract](mysql-create-table-as-declarations-v1.json) combines a checked declaration list with a source-free query. Its native comparison checks both column orders, selected conversions, defaults, collision effects and exact warning order. Run `run_server_mysql_create_table_as_declarations.py` and `combine_server_mysql_create_table_as_declarations_evidence.py` for all pinned MySQL profiles.
 
+The [MySQL query-backed width contract](mysql-create-table-as-width-evidence-v1.json) checks the effective heading after combining explicit definitions with the SELECT fields. It covers all selected native width boundaries, inherited NULL roles, repeated references and distinct stored rows and declarations. It records both former 128-column refusals as admitted inputs. Run `run_server_mysql_create_table_as_width.py` and `combine_server_mysql_create_table_as_width_evidence.py` across the nine stock releases.
+
 The [PostgreSQL truncation contract](postgres-truncate-v1.json) observes duplicate target order, inherited rows, transitive foreign-key effects, the lifetime of owned sequence state and before/after callback order. Run `run_server_postgres_truncate.py` and `combine_server_postgres_truncate_evidence.py` on both pinned releases.
 
 The [PostgreSQL view removal contract](postgres-drop-view-v1.json) covers persistent ordinary and materialized views. It compares exact qualified targets, dependency failures and transitive cascade, live and materialized rows in surviving objects, and native rollback. Run `run_server_postgres_drop_view.py` and `combine_server_postgres_drop_view_evidence.py` on both pinned releases.

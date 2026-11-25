@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\From;
 
 /**
- * The native signed integer type of a MySQL input slot.
+ * The two nullability roles of a native signed integer input slot.
  *
  * @visibility public
  * @example Reading the signed storage name
@@ -14,4 +14,16 @@ namespace SqlSemantics\Platform\MySql\Ir\From;
 enum ColumnKind: string
 {
     case SignedInt = 'int';
+    case RequiredSignedInt = 'int-not-null';
+
+    /**
+     * Gives the nullability of the resolved signed slot.
+     */
+    public function nullable(): bool
+    {
+        return match ($this) {
+            self::SignedInt => true,
+            self::RequiredSignedInt => false,
+        };
+    }
 }

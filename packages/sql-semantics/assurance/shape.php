@@ -139,7 +139,8 @@ if ($dialect === 'mysql') {
     $methods['From\\TextColumnReference'] = ['__construct'];
     $properties['From\\Varchar'] = ['length' => ['int'], 'collation' => ['From\\TextCollation'], 'nullable' => ['bool']];
     $methods['From\\Varchar'] = ['__construct'];
-    $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
+    $properties['From\\ColumnKind'] = [];
+    $methods['From\\ColumnKind'] = ['nullable'];
     $properties['From\\TextCollation'] = $methods['From\\TextCollation'] = [];
     $properties['TableSource']['columnTypes'] = ['array'];
     $properties['TableSource']['kind'] = ['From\\ExternalRelationKind'];
@@ -207,7 +208,7 @@ if ($dialect === 'mysql') {
     sort($properties['ResultColumn']['expression']);
     $internal[] = 'Expression\\IntegralCastLowering';
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
-    $enumCases['From\\ColumnKind'] = ['SignedInt' => 'int'];
+    $enumCases['From\\ColumnKind'] = ['SignedInt' => 'int', 'RequiredSignedInt' => 'int-not-null'];
     $enumCases['From\\ExternalRelationKind'] = ['BaseTable' => 'table', 'TemporaryTable' => 'temporary-table', 'View' => 'view'];
     $methods['From\\ExternalRelationKind'] = ['isTable'];
     $enumCases['From\\TextCollation'] = ['Utf8mb4Bin' => 'utf8mb4_bin'];
@@ -1411,8 +1412,8 @@ if ($dialect !== 'sqlite') {
         $methods[$copy] = ['__construct', 'profileId', 'toString'];
         $createAs = 'Schema\\Query\\CreateTableAs';
         $roots[] = $createAs;
-        array_push($internal, 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout');
-        $pureCollaborators[] = 'Schema\\Query\\CreateAsLayout';
+        array_push($internal, 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsRecord');
+        array_push($pureCollaborators, 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsRecord');
         $properties[$createAs] = ['target' => [$identity], 'query' => ['Select'], 'ifNotExists' => ['bool'],
             'declaredColumns' => ['array']];
         $methods[$createAs] = ['__construct', 'profileId', 'toString'];
@@ -2334,8 +2335,8 @@ try {
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
-                    || ($dialect === 'mysql' && in_array($short, ['Schema\\CreateTable', 'Schema\\Query\\CreateAsLayout'], true)
-                        && $call->name->toString() === 'intdiv')
+                    || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')
+                    || ($dialect === 'mysql' && $short === 'Schema\\Query\\CreateAsRecord' && in_array($call->name->toString(), ['intdiv', 'strlen'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\Storage\\InnoDbRecord' && in_array($call->name->toString(), ['min', 'intdiv'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\Alter\\RenameTable' && $call->name->toString() === 'array_key_exists')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
@@ -2399,7 +2400,7 @@ try {
             $operators = [];
             foreach ($class->stmts as $case) {
                 if ($case instanceof Stmt\ClassMethod && (
-                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'From\\ExternalRelationKind'], true))
+                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'From\\ExternalRelationKind', 'From\\ColumnKind'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Sequence\\SequencePersistence')
                 )) {
                     continue;

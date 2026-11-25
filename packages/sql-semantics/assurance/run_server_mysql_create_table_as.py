@@ -21,6 +21,7 @@ ORDER_CONTRACT = "f4795e89611f1f854d744d70f21e4ff8b7a273c91ef8fa2991c5cb417f09f3
 WIDTH_CONTRACT = "d66a2772798381aeb7e92509591c2e9028cb7ea343d0616f9219c3bcde01e815"
 SOURCE_CONTRACT = "9a04d8c983e9484e70279798569fd1d83ef5ac2ca55432fc261bfa4eb4fb0ffe"
 DECLARATION_CONTRACT = "aaad27fe95a548871d66f8878aea697079d87add3db128aff7e64e7e1add6ebc"
+NATIVE_WIDTH_CONTRACT = "597ce5dfcc3b68fe6558b2a2d2236692c4c29e8f82b867a800bfddf3783c55c7"
 POSITIVE_BIGINT = {"legacy": 1000000000, "modern": 100000000}
 LEGACY_ORDER = "CREATE TABLE ir_fixture.ir_create_target AS SELECT CAST(17 AS SIGNED) AS value FROM DUAL ORDER BY 1 DESC LIMIT 0"
 ANALYSIS_FAILURE = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"
@@ -34,6 +35,17 @@ NAME_ERROR = "CREATE TABLE AS requires ASCII column names of 1 to 64 characters 
 FIELD_ERROR = "CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast."
 BODY_ERROR = "CREATE TABLE AS requires a single projection without partitions or a duplicate policy."
 UNIQUE = "CREATE TABLE AS cannot repeat a column name."
+
+
+def native_width_amendment():
+    path = TOOL / "mysql-create-table-as-width-evidence-v1.json"
+    require(digest(path) == NATIVE_WIDTH_CONTRACT, "mysql-create-table-as-native-width-contract")
+    return json.loads(path.read_text())["predecessorReceipts"]
+
+
+def former_width_probe(tag, width=129):
+    return case(tag, "primary", "table", "absent", False,
+                select([[literal(1), f"c{at}"] for at in range(width)]))
 
 
 def specifications():
@@ -148,7 +160,8 @@ def negatives(tag):
     yield replace_query(item, select([[literal(1), "a"], [literal(2), "A"]])), UNIQUE
     for name in ("", "x" * 65, "x ", "é"):
         yield replace_query(item, select([[literal(1), name]])), NAME_ERROR
-    yield replace_query(item, select([[literal(1), f"c{at}"] for at in range(129)])), "CREATE TABLE AS can have at most 128 columns."
+    amendment = native_width_amendment()
+    yield former_width_probe(tag, amendment["projection"]["replacementProjectedWidth"]), amendment["message"]
     source = {"schema": "ir_fixture", "table": "known", "columns": ["metric"], "relationKind": "view"}
     yield replace_query(item, {**select([[literal(1), "c0"]]), "source": source}), "CREATE TABLE AS requires a source-free projection or one resolved table."
     for term in (["parameter", 1], ["integer", "1", 4, False], cast(["operation", "+", literal(1), literal(2)])):

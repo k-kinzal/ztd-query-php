@@ -56,8 +56,15 @@ final class DerivedSource
 
             return $type;
         }
-        Check::invariant($expression instanceof IntegerLiteral || $expression instanceof ColumnReference, 'A derived signed field has a checked expression.');
+        if ($expression instanceof IntegerLiteral) {
+            return ColumnKind::RequiredSignedInt;
+        }
+        Check::invariant($expression instanceof ColumnReference, 'A derived signed field has a checked expression.');
+        $source = $this->definition->source;
+        Check::invariant($source instanceof TableSource, 'A derived signed read has an independent physical source.');
+        $type = $source->columnTypes[$expression->slot] ?? null;
+        Check::invariant($type instanceof ColumnKind, 'A checked derived signed field has its declared role.');
 
-        return ColumnKind::SignedInt;
+        return $type;
     }
 }

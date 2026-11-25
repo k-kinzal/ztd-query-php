@@ -63,7 +63,7 @@ final class GroupedSelect implements SemanticsIR
         Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');
         $members = [];
         foreach ($grouping as $key) {
-            Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) === ColumnKind::SignedInt, 'Each grouping key must belong to its input.');
+            Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) instanceof ColumnKind, 'Each grouping key must belong to its input.');
             $members[$key->slot] = true;
         }
         $operands = [];
@@ -80,7 +80,7 @@ final class GroupedSelect implements SemanticsIR
             } elseif ($value instanceof Aggregate && $value->argument instanceof TextColumnReference) {
                 $scope->textColumn($value->argument, [$source]);
             } elseif ($value instanceof Aggregate) {
-                Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) === ColumnKind::SignedInt, 'The aggregate slot must belong to the group input.');
+                Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) instanceof ColumnKind, 'The aggregate slot must belong to the group input.');
             }
         }
         foreach ($results as $result) {

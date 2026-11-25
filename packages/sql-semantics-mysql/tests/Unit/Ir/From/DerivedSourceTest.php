@@ -45,7 +45,7 @@ final class DerivedSourceTest extends TestCase
             new ResultColumn(new TextColumnReference(0), $name),
         ], $input));
 
-        self::assertSame(ColumnKind::SignedInt, $source->columnType(0));
+        self::assertSame(ColumnKind::RequiredSignedInt, $source->columnType(0));
         self::assertSame($text, $source->columnType(1));
         self::assertNull($source->columnType(2));
     }

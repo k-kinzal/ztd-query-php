@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
-use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -36,7 +35,6 @@ final class CreateAsLayout
             $source === null || ($source instanceof TableSource && $source->kind->isTable()),
             'CREATE TABLE AS requires a source-free projection or one resolved table.'
         );
-        Check::input(count($query->columns) <= 128, 'CREATE TABLE AS can have at most 128 columns.');
         $filter = $query->where;
         Check::input(
             $filter === null || $filter instanceof BooleanLiteral || $filter instanceof NullLiteral
@@ -47,7 +45,6 @@ final class CreateAsLayout
         );
 
         $seen = [];
-        $bytes = intdiv(count($query->columns) + 7, 8);
         foreach ($query->columns as $column) {
             Check::input(
                 preg_match('/\A[\x01-\x7f]{1,64}(?<! )\z/D', $column->name->value) === 1,
@@ -58,23 +55,14 @@ final class CreateAsLayout
             $seen[$key] = true;
 
             $expression = $column->expression;
-            if ($expression instanceof TextColumnReference) {
-                $type = $source instanceof TableSource ? $source->columnTypes[$expression->slot] : null;
-                Check::invariant($type instanceof Varchar, 'The selecting table owns this native VARCHAR slot.');
-                $maximumBytes = $type->length * 4;
-                $bytes += $maximumBytes + ($maximumBytes > 255 ? 2 : 1);
-                continue;
-            }
-
             $term = $expression instanceof SignedCast ? $expression->operand : $expression;
             Check::input(
-                $expression instanceof ColumnReference || $term instanceof BooleanLiteral || $term instanceof NullLiteral
+                $expression instanceof ColumnReference || $expression instanceof TextColumnReference
+                    || $term instanceof BooleanLiteral || $term instanceof NullLiteral
                     || ($term instanceof IntegerLiteral && $term->leadingZeroes === 0 && !$term->negativeZero),
                 'CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast.'
             );
-            $bytes += 8;
         }
-        Check::input($bytes <= 65535, 'The projected logical table record cannot exceed 65535 bytes.');
     }
 
     /**
@@ -84,20 +72,14 @@ final class CreateAsLayout
      */
     public function declaration(Select $query, array $columns): void
     {
-        if ($columns === []) {
-            return;
-        }
-        Check::input($query->source === null, 'Explicit CREATE TABLE AS definitions require a source-free projection.');
+        Check::input($columns === [] || $query->source === null, 'Explicit CREATE TABLE AS definitions require a source-free projection.');
         $names = [];
         foreach ($columns as $column) {
             Check::input($column->storage instanceof IntegerStorage, 'Explicit CREATE TABLE AS definitions require signed storage.');
             $key = $column->name->key();
             Check::input(!isset($names[$key]), 'CREATE TABLE AS cannot repeat an explicit column name.');
-            $names[$key] = true;
+            $names[$key] = $column;
         }
-        foreach ($query->columns as $column) {
-            $names[$column->name->key()] = true;
-        }
-        Check::input(count($names) <= 128, 'The combined CREATE TABLE AS heading can have at most 128 columns.');
+        (new CreateAsRecord())->check($query, $names);
     }
 }

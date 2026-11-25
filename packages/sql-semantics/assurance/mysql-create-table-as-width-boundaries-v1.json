@@ -1,0 +1,272 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-width-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Compose exact inferred and explicit storage, including inherited signed nullability, in the effective native query-backed table record.",
+  "rules": {
+    "Schema/Query/CreateAsLayout::query": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $query->source;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source === null || $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource && $source->kind->isTable(), 'CREATE TABLE AS requires a source-free projection or one resolved table.');",
+        "$filter = $query->where;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($filter === null || $filter instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral || $filter instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral || $source !== null && ($filter instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerComparison || $filter instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\NullTest && ($filter->operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $filter->operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference)), 'CREATE TABLE AS requires a constant filter or a checked table predicate.');",
+        "$seen = [];",
+        "foreach ($query->columns as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[\\x01-\\x7f]{1,64}(?<! )\\z/D', $column->name->value) === 1, 'CREATE TABLE AS requires ASCII column names of 1 to 64 characters without trailing spaces.');",
+        "    $key = $column->name->key();",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'CREATE TABLE AS cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "    $expression = $column->expression;",
+        "    $term = $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast ? $expression->operand : $expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $term instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral || $term instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral || $term instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral && $term->leadingZeroes === 0 && !$term->negativeZero, 'CREATE TABLE AS requires a table slot, an unpadded integral or NULL literal, or its single signed cast.');",
+        "}"
+      ]
+    },
+    "Schema/Query/CreateAsLayout::declaration": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($columns === [] || $query->source === null, 'Explicit CREATE TABLE AS definitions require a source-free projection.');",
+        "$names = [];",
+        "foreach ($columns as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->storage instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage, 'Explicit CREATE TABLE AS definitions require signed storage.');",
+        "    $key = $column->name->key();",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($names[$key]), 'CREATE TABLE AS cannot repeat an explicit column name.');",
+        "    $names[$key] = $column;",
+        "}",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Query\\CreateAsRecord())->check($query, $names);"
+      ]
+    },
+    "Schema/Query/CreateAsRecord::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$columns = count($explicit);",
+        "$logical = $physical = $nullable = 0;",
+        "$packed = false;",
+        "foreach ($explicit as $field) {",
+        "    $bytes = $field->storageBytes();",
+        "    $logical += $bytes;",
+        "    $physical += $bytes;",
+        "    $nullable += (int) $field->nullable;",
+        "}",
+        "foreach ($query->columns as $result) {",
+        "    if (isset($explicit[$result->name->key()])) {",
+        "        continue;",
+        "    }",
+        "    ++$columns;",
+        "    [$storage, $local, $admitsNull, $variable] = $this->projected($query, $result);",
+        "    $logical += $storage;",
+        "    $physical += $local;",
+        "    $nullable += (int) $admitsNull;",
+        "    $packed = $packed || $variable;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($columns <= 1017, 'The effective InnoDB table heading can have at most 1017 columns.');",
+        "$bitmap = intdiv($nullable + ($packed ? 0 : 1) + 7, 8);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($logical + $bitmap <= 65535, 'The projected logical table record cannot exceed 65535 bytes.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Storage\\InnoDbRecord::fitsPayload($physical, $nullable, false), 'The projected clustered InnoDB record must fit the native 8126-byte boundary.');"
+      ]
+    },
+    "Schema/Query/CreateAsRecord::projected": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expression = $result->expression;",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference) {",
+        "    $source = $query->source;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource, 'An inherited table column has an owning native source.');",
+        "    $type = $source->columnTypes[$expression->slot];",
+        "    if ($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar) {",
+        "        $bytes = $type->length * 4;",
+        "        return [$bytes + ($bytes > 255 ? 2 : 1), \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Storage\\InnoDbRecord::varcharBytes($type->length), $type->nullable, true];",
+        "    }",
+        "    return [4, 4, $type->nullable(), false];",
+        "}",
+        "$release = $query->release;",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral) {",
+        "    $variable = match ($release) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql8044, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql810, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql820, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql830 => false,",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql847, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql901, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910 => true,",
+        "    };",
+        "    return [(int) $variable, 1, true, $variable];",
+        "}",
+        "$legacy = $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744;",
+        "$wide = $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast ? !$legacy : $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral && $expression->decimal[0] !== '-' && strlen($expression->decimal) >= ($legacy ? 10 : 9);",
+        "$bytes = $wide ? 8 : 4;",
+        "return [$bytes, $bytes, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast && $expression->operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, false];"
+      ]
+    },
+    "Schema/Storage/InnoDbRecord::fits": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$payload = 0;",
+        "$nullable = 0;",
+        "foreach ($columns as $column) {",
+        "    $storage = $column->storage;",
+        "    $payload += $storage instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\CharacterStorage ? self::varcharBytes($storage->length) : $storage->bytes();",
+        "    $nullable += (int) $column->nullable;",
+        "}",
+        "return self::fitsPayload($payload, $nullable, $hasPrimaryKey);"
+      ]
+    },
+    "Schema/Storage/InnoDbRecord::fitsPayload": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$header = $hasPrimaryKey ? 18 : 24;",
+        "return $header + $payload + intdiv($nullable + 7, 8) < 8126;"
+      ]
+    },
+    "Schema/Storage/InnoDbRecord::varcharBytes": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return min(4 * $length, 40) + 1;"
+      ]
+    },
+    "From/ColumnKind::nullable": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match ($this) {",
+        "    self::SignedInt => true,",
+        "    self::RequiredSignedInt => false,",
+        "};"
+      ]
+    },
+    "From/DerivedSource::columnType": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expression = $this->definition->columns[$slot]->expression ?? null;",
+        "if ($expression === null) {",
+        "    return null;",
+        "}",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference) {",
+        "    $source = $this->definition->source;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource, 'A derived VARCHAR read has an independent physical source.');",
+        "    $type = $source->columnTypes[$expression->slot] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar, 'A checked derived VARCHAR field has its declared type.');",
+        "    return $type;",
+        "}",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral) {",
+        "    return \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind::RequiredSignedInt;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference, 'A derived signed field has a checked expression.');",
+        "$source = $this->definition->source;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource, 'A derived signed read has an independent physical source.');",
+        "$type = $source->columnTypes[$expression->slot] ?? null;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'A checked derived signed field has its declared role.');",
+        "return $type;"
+      ]
+    },
+    "From/OccurrenceScope::hasSlot": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $input instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource ? $input->columnType($slot) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind : ($input->columnTypes[$slot] ?? null) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind;"
+      ]
+    },
+    "From/OccurrenceScope::updateAssignment": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$value = $assignment->value;",
+        "if ($assignment instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\TextUpdateAssignment) {",
+        "    $this->textColumn($assignment->target, [$target]);",
+        "    if ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference) {",
+        "        $this->textColumn($value, [$target]);",
+        "    }",
+        "    return;",
+        "}",
+        "$slot = $assignment->target->slot;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(($target->columnTypes[$slot] ?? null) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'An UPDATE write slot must belong to the target.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || ($target->columnTypes[$value->slot] ?? null) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'An UPDATE read slot must belong to the target.');"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$grouping = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($keys, \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "$operands = [];",
+        "foreach ($results as $result) {",
+        "    $operands[] = $result->value;",
+        "}",
+        "if ($having instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedComparison) {",
+        "    array_push($operands, $having->left, $having->right);",
+        "}",
+        "$scope = new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\OccurrenceScope();",
+        "foreach ($operands as $value) {",
+        "    if ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } elseif ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate && $value->argument instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference) {",
+        "        $scope->textColumn($value->argument, [$source]);",
+        "    } elseif ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    $name = $result->name->value;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $name === ltrim($name, \" \\t\\r\\n\\v\\f\") || $source->columns[$value->slot]->value === $name, 'An intrinsic MySQL grouped name must equal its physical input field.');",
+        "}",
+        "$scope->predicate($where, [$source]);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "SourceBinding::slotFor": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->type instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Integral && $column->type->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\IntegralKind::Int && !$column->type->unsigned(), 'The bound column must have the signed 32-bit integer type.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference($this->allocate($column, $this->signedKind($column)));"
+      ]
+    },
+    "SourceBinding::signedKind": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->nullability !== \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Type\\Nullability::Dependent, 'A native signed slot requires known column nullability.');",
+        "return $column->nullability === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Type\\Nullability::NotNull ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind::RequiredSignedInt : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind::SignedInt;"
+      ]
+    },
+    "SourceBinding::writableColumn": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$column = $this->writeDeclaration($name);",
+        "return $column->type instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Character ? [$column, (new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\VarcharLowering())->lower($column)] : [$this->signedWrite($column), $this->signedKind($column)];"
+      ]
+    }
+  }
+}

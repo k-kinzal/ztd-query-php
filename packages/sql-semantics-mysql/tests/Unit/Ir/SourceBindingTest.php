@@ -172,6 +172,18 @@ final class SourceBindingTest extends TestCase
         self::assertSame([ColumnKind::SignedInt], $binding->source()?->columnTypes);
     }
 
+    public function testSignedKindRetainsRequiredAndNullableDeclarations(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (required_id INT NOT NULL, optional_id INT NULL)');
+        $query = $inspection->inspect('SELECT required_id, optional_id FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $binding = new SourceBinding($query->binding(), $query->statement->from);
+
+        self::assertSame(ColumnKind::RequiredSignedInt, $binding->signedKind($binding->writeDeclaration('required_id')));
+        self::assertSame(ColumnKind::SignedInt, $binding->signedKind($binding->writeDeclaration('optional_id')));
+    }
+
     public function testFieldPreservesTheNativeVarcharKind(): void
     {
         $inspection = new Inspection();

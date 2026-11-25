@@ -17,4 +17,10 @@ final class ColumnKindTest extends TestCase
     {
         self::assertSame('int', ColumnKind::SignedInt->value);
     }
+
+    public function testNullableIsKnownForBothSignedRoles(): void
+    {
+        self::assertTrue(ColumnKind::SignedInt->nullable());
+        self::assertFalse(ColumnKind::RequiredSignedInt->nullable());
+    }
 }
