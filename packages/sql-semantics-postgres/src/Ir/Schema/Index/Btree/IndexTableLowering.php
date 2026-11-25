@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\IndexCreationVisibility;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\DeclaredTextCollation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
@@ -43,7 +45,8 @@ final class IndexTableLowering
         }
         $columns = [];
         $types = [];
-        foreach ($table->columns as $column) {
+        $collations = [];
+        foreach ($table->columns as $slot => $column) {
             $columns[] = new Identifier($column->name->value);
             $types[] = match ($column->type) {
                 Builtin::Int4 => ColumnKind::Int4,
@@ -52,10 +55,13 @@ final class IndexTableLowering
                 Builtin::Text => ColumnKind::Text,
                 default => null,
             };
+            if ($column->type === Builtin::Text && $column->collation === DeclaredTextCollation::StockC) {
+                $collations[$slot] = TextCollation::C;
+            }
         }
 
         $target = new IndexTarget(new Identifier($schema->value), new Identifier($table->name->name->value), $statement->table->only);
 
-        return new IndexHeading($target, $columns, $types);
+        return new IndexHeading($target, $columns, $types, collations: $collations);
     }
 }

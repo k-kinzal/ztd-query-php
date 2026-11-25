@@ -1172,6 +1172,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresIndexTextKeys'] = [
                 $directText == $textKey, $textKey->keys[0]->collation->value, $textKey->bindings[1]->kind->value, $textKey->toString(),
             ];
+            $copied = $semantics->context([
+                'CREATE TABLE public.collated_source (spare integer, code text COLLATE pg_catalog."C")',
+                'CREATE TABLE public.copy_fields (LIKE public.collated_source)',
+            ]);
+            $inherited = $semantics->analyze('CREATE INDEX inherited_ops ON public.copy_fields (code pg_catalog.text_ops)', $copied);
+            $explicit = $semantics->analyze('CREATE INDEX inherited_ops ON public.copy_fields (code COLLATE pg_catalog."C")', $copied);
+            $details['postgresDeclaredIndexCollation'] = [
+                $inherited == $explicit, [$inherited->keys[0]->slot, $inherited->keys[0]->collation->value],
+                $inherited->table->table->value, $inherited->bindings[1]->kind->value,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\RenameSchema') {
             $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');

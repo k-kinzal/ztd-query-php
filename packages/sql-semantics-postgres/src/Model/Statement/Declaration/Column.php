@@ -26,6 +26,7 @@ final class Column
      * @param Nullability $nullability Whether the column can hold NULL
      * @param bool $generated Whether the column is computed from other columns of its row and cannot be written
      * @param bool $identity Whether the column owns an identity sequence
+     * @param DeclaredTextCollation|null $collation A resolved declared collation, when known
      */
     public function __construct(
         public readonly Name $name,
@@ -33,6 +34,7 @@ final class Column
         public readonly Nullability $nullability = Nullability::Nullable,
         public readonly bool $generated = false,
         public readonly bool $identity = false,
+        public readonly ?DeclaredTextCollation $collation = null,
     ) {
     }
 }

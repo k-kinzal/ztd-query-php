@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\DeclaredTextCollation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\PostgreSql\Statement\Clause;
+use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ColumnCollation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\NamedOnPath;
@@ -76,5 +79,23 @@ final class ColumnTyping
         $named = new NamedOnPath($name, $fact->missing);
 
         return $type->array === null ? $named : new ArrayOf($named);
+    }
+
+    /**
+     * Resolves a known absolute stock collation on a listed column.
+     * @param list<Clause> $qualifiers Preserved column qualifier order
+     */
+    public function collation(array $qualifiers): ?DeclaredTextCollation
+    {
+        foreach ($qualifiers as $qualifier) {
+            if ($qualifier instanceof ColumnCollation) {
+                $name = $qualifier->collation->qualified();
+
+                return $name !== null && $name->catalog === null && $name->schema?->value === 'pg_catalog' && $name->name->value === 'C'
+                    ? DeclaredTextCollation::StockC : null;
+            }
+        }
+
+        return null;
     }
 }

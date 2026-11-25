@@ -61,7 +61,7 @@ def statement(item, *, original=False):
     included = " INCLUDE (" + ", ".join(quoted(names[slot]) for slot in cover) + ")" if cover else ""
     unique = "UNIQUE " if item["policy"] != "plain" else ""
     nulls = " NULLS NOT DISTINCT" if item["policy"] == "equal-null" else ""
-    return f"CREATE {unique}INDEX {quoted(item['name'])} ON {qualified(SCOPE, item['table'])} USING btree (" + (
+    return f"CREATE {unique}INDEX {quoted(item['name'])} ON {qualified(item.get('schema', SCOPE), item['table'])} USING btree (" + (
         ", ".join(rendered) + ")" + included + nulls + filtering(item))
 
 
@@ -85,7 +85,7 @@ def analyzed(item):
 
 def direct(item):
     return {"dialect": "postgres", "release": item["tag"], "createBtree": {
-        "name": item["name"], "table": [SCOPE, item["table"], item["columns"], KINDS, False],
+        "name": item["name"], "table": [item.get("schema", SCOPE), item["table"], item["columns"], KINDS, False],
         "keys": item["keys"], "included": item["included"],
         "predicate": None if item["condition"] is None else [item["condition"], True],
         "presence": "vacant", "ifNotExists": False, "concurrently": False,
@@ -135,7 +135,7 @@ def expected(item):
     positions = [term[0] for term in keys] + item["included"]
     return {
         "status": "postgres-text-btree", "command": "CREATE INDEX", "sqlState": "00000",
-        "owner": [SCOPE, item["table"]], "index": item["name"], "heading": [[field, kind] for field, kind in zip(item["columns"], KINDS)],
+        "owner": [item.get("schema", SCOPE), item["table"]], "index": item["name"], "heading": [[field, kind] for field, kind in zip(item["columns"], KINDS)],
         "positions": [slot + 1 for slot in positions], "options": [
             int(term[1].startswith("DESC")) + 2 * int(term[1].endswith("FIRST")) for term in keys],
         "collations": [["pg_catalog", "C"] if len(term) == 3 else None for term in keys],

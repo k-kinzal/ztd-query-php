@@ -82,12 +82,16 @@ def observe_writes(db, table, proposals):
 def observe(db, item, sql):
     if len(sql) > 8192 or ADMITTED.fullmatch(sql) is None:
         return {"status": "outside-postgres-text-btree-observer"}
-    table = qualified(SCOPE, item["table"])
-    name = qualified(SCOPE, item["name"])
+    scope = item.get("schema", SCOPE)
+    table = qualified(scope, item["table"])
+    name = qualified(scope, item["name"])
     rows = ", ".join(map(row, item["data"]))
     db.execute("BEGIN")
     try:
-        db.execute(definition(item) + f"; INSERT INTO {table} VALUES {rows}")
+        if "searchPath" in item:
+            db.execute("SET LOCAL search_path = " + ", ".join(map(quoted, item["searchPath"])))
+        setup = item["setup"] if "setup" in item else [definition(item)]
+        db.execute("; ".join([*setup, f"INSERT INTO {table} VALUES {rows}"]))
         reply = db.run(sql, diagnostic_error=True)
         if reply["sqlState"] != "00000":
             return {"status": "postgres-text-btree-native-refusal", "result": reply}

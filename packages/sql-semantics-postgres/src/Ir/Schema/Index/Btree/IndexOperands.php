@@ -32,16 +32,16 @@ final class IndexOperands
             : ($nullsFirst ? IndexOrder::AscendingNullsFirst : IndexOrder::AscendingNullsLast);
 
         $slot = $this->slot($table, $element);
-        if ($element->collation === null && $element->operatorClass === null) {
-            return new IndexKey($slot, $order);
+        $collation = $table->columnCollations[$slot] ?? null;
+        $unsupported = 'An explicitly collated PostgreSQL B-tree key requires stock pg_catalog.C and its default text operator class.';
+        if ($element->collation !== null) {
+            Check::input(array_column($element->collation->parts, 'value') === ['pg_catalog', 'C'], $unsupported);
+            $collation = TextCollation::C;
         }
-        Check::input(
-            $element->collation !== null && array_column($element->collation->parts, 'value') === ['pg_catalog', 'C']
-            && ($element->operatorClass === null || array_column($element->operatorClass->parts, 'value') === ['pg_catalog', 'text_ops']),
-            'An explicitly collated PostgreSQL B-tree key requires stock pg_catalog.C and its default text operator class.'
-        );
+        Check::input($element->operatorClass === null
+            || ($collation !== null && array_column($element->operatorClass->parts, 'value') === ['pg_catalog', 'text_ops']), $unsupported);
 
-        return new IndexKey($slot, $order, TextCollation::C);
+        return new IndexKey($slot, $order, $collation);
     }
 
     /**

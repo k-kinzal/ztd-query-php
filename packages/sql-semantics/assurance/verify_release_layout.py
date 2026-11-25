@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v183.json"
-CONTRACT = "1048458ebc4c3cff39cc2854d40efed22295f6a1a3da5d5eff4aeeb7682aa744"
+CONTRACT_NAME = "release-layout-v184.json"
+CONTRACT = "b341a8d5a834383b673c9854bd4f5348169b8bd7436c17a44d6a0a6d622ae438"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -296,6 +296,8 @@ def verify_probe(raw, catalog):
                 True, "C", "text", 'CREATE INDEX "codes" ON "public"."collated_index_owner" USING btree '
                 '("code" COLLATE pg_catalog."C" pg_catalog.text_ops ASC NULLS LAST) INCLUDE ("payload")',
             ], "installed-postgres-text-index-keys", item)
+            require(item.get("postgresDeclaredIndexCollation") == [True, [1, "C"], "copy_fields", "text"],
+                    "installed-postgres-declared-index-collation", item)
             emitted = ('CREATE UNIQUE INDEX "new index" ON "public"."ledger" USING btree '
                        '("wide" DESC NULLS LAST, "value" ASC NULLS FIRST) INCLUDE ("ready", "ready") NULLS NOT DISTINCT')
             require(item.get("postgresCreateBtree") == ["public", ["int4", "int8", "bool"],

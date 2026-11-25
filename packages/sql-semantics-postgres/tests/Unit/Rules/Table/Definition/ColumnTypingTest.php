@@ -77,4 +77,17 @@ final class ColumnTypingTest extends TestCase
           0 => 'a integer Nullable',
         ], array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns));
     }
+
+    public function testCollationBindsOnlyTheAbsoluteStockIdentity(): void
+    {
+        $analyzer = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $context = $analyzer->context(['CREATE TABLE public.colors '
+            . '(absolute text COLLATE pg_catalog."C", inherited text, unrelated text COLLATE pg_catalog."POSIX")']);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext::class, $context);
+        $columns = $context->tables[0]->columns;
+        self::assertSame(\SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\DeclaredTextCollation::StockC, $columns[0]->collation);
+        self::assertNull($columns[1]->collation);
+        self::assertNull($columns[2]->collation);
+    }
 }
