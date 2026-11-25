@@ -1,0 +1,59 @@
+{
+  "revision": "SemanticsIR/mysql-index-foreign-dependencies-1",
+  "approval": "pending-human-review",
+  "requiredScope": "Every MySQL index action remains in the required scope. This contract registers the ordinary InnoDB removal subset with settled physical keys and explicit native child support.",
+  "profiles": {
+    "releases": ["5.6.51", "5.7.44", "8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+    "defaults": "InnoDB, native markers, utf8mb4, empty sql_mode, lower_case_table_names=0, foreign_key_checks=1. restrict_fk_on_non_standard_key=ON on releases supplying that option."
+  },
+  "constructors": {},
+  "roots": ["Schema/Index/DropIndex", "Schema/Index/DropIndexes", "Schema/Index/Change/AlterIndexes"],
+  "domain": {
+    "owners": "Absolute persistent InnoDB owner with a complete settled catalog or the selected temporary InnoDB owner.",
+    "keys": "Originally declared simple physical B-tree keys and ordered ordinary removals. A whole indexed field contributes to the consecutive leading sequence until an expression or length-limited field is reached. FULLTEXT and spatial indexes cannot supply foreign-key support.",
+    "effects": "An ordinary removal changes the requested physical key set. It preserves all existing native foreign keys and qualified owner identity. A rename, including one reusing an original spelling, does not remove the physical key from the support set. Use the original key names when validating a mixed group.",
+    "conditions": "Every incoming and outgoing enforced constraint touching the persistent owner must still have one supporting key after removing the complete group. Check both sides of a self-reference separately. A dependency identifies its exact owning schema and relation. Native field comparison folds MySQL identifier case and matches ordered fields.",
+    "child": "The foreign key's ordered child fields must be first in an available B-tree index. A strict whole-field placement is required beginning with MySQL 8.0 for a replacement child support index. The legacy releases can use a clustered-primary suffix on a secondary key. Visibility does not affect constraint enforcement.",
+    "parent": "Through MySQL 8.3, the parent's referenced fields must be an ordered prefix of an available B-tree index, including eligible implicit clustered parts. MySQL 8.4 and MySQL 9 stock profiles require an exact whole unique or primary key for replacement support. Visibility is irrelevant. Replacement must retain native support after a possible change of clustered key.",
+    "construction": "The direct root is given the complete collection of checked affected-owner dependencies in the same external interpretation, with original names of keys that support the constraint before removal or can supply support in the settled resulting design. Each dependency must use the exact persistent owner. Reject when a dependency has no surviving support. The root retains its checked statement and discards dependencies after validation. Analysis derives the collection from the selected owner and a complete catalog.",
+    "open": [
+      "Implicit foreign-key indexes when native allocation cannot be resolved",
+      "Persisted metadata from upgrade paths and nonstandard parent-key session settings",
+      "Dynamically formed stored definitions, partitioning and non-InnoDB engines",
+      "Other index alterations, including visibility updates and statements that also create keys or add or remove foreign keys"
+    ]
+  },
+  "observation": [
+    "Ordered qualified operand and exact physical index identity",
+    "Before and after named indexes, uniqueness, ordered fields, directions, prefix lengths and native type",
+    "Before and after complete fixture foreign-key coordinates and ordered field pairs",
+    "Statement status, diagnostic class and transaction effect",
+    "A same-named control table and constraint with distinct native key properties",
+    "Original native input and rendered output each execute against independently restored state"
+  ],
+  "rejections": {
+    "lastSupportingIndex": "1553 HY000 under the default InnoDB policies. The legacy COPY path can report 1025 with InnoDB errno 150 when the referenced parent key is lost.",
+    "incompleteExternalFacts": "Reject before publication. This is an open premise, separate from a native refusal witness."
+  },
+  "evidence": {
+    "contract": ["Official foreign-key placement and native error-reference rules", "Fixed native calibration"],
+    "coverage": "Cross child and parent sides with one and multiple removals, irrelevant and alternative keys, proper and reversed field order, two-column constraints, visibility, release-specific parent restrictions, temporary shadowing and an original key renamed in the same action group.",
+    "positive": "Direct construction and analysis on a fixture independently known to admit the exact effect.",
+    "negative": "For each omitted last dependency, use a constructor input carrying the original support and compare the original rejected SQL against the exact fixture. A positive neighboring case must keep a supporting physical key.",
+    "controls": ["Delete the root survival guard", "Change ordered field matching to an unordered check", "Erase the cross-database owner", "Misclassify the MySQL 8.4 parent boundary", "Omit the second removal", "Erase a native key or constraint identity from the comparison"],
+    "trust": ["The provided complete native external catalog", "Pinned MySQL and PHP profiles", "Independent native settings, structure and effect observation"]
+  },
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/relnotes/mysql/8.4/en/news-8-4-0.html",
+    "https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_drop_index_fk"
+  ],
+  "calibrationTsvSha256": {
+    "5.6.51": "37a00674921f10120c12af4c3417ce1fec6417d53028159e5d459e08076168d7",
+    "5.7.44": "d0663d024848c14ae28729fcd90eb615c8c447af4c7b28a3ed0ef03f90673f82",
+    "8.0.44": "a2237849a42c19a0c7018c83eef4413e46ef49e6fdb5d5748cc388da1a16bb3d",
+    "8.4.7": "0f8b83817351045e9e82761766bb774956531165503db0826d49a64918347858",
+    "9.1.0": "d7d7dfc4f9019c1acf280f1eae061783c37159f671cd34933d15c13c2e73ba1b"
+  }
+}
