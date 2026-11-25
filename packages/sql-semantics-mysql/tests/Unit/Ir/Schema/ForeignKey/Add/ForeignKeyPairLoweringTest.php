@@ -1,0 +1,67 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Ir\Schema\ForeignKey\Add;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyPairLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
+use SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint;
+use SqlSemantics\Platform\MySql\Statement\Query\Direction;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
+use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Testing\MySql\NativeAdditionFixture;
+
+#[CoversClass(ForeignKeyPairLowering::class)]
+#[Medium]
+final class ForeignKeyPairLoweringTest extends TestCase
+{
+    public function testPairsSettlesCaseAndKeepsNamedFieldsInOrder(): void
+    {
+        $operation = NativeAdditionFixture::operation('ALTER TABLE app.child ADD FOREIGN KEY(Y, X) REFERENCES parent(B, A)');
+        self::assertInstanceOf(AlterTable::class, $operation->statement);
+        $command = $operation->statement->commands[0];
+        self::assertInstanceOf(AddConstraint::class, $command);
+        self::assertInstanceOf(ForeignKey::class, $command->element);
+        $parents = $operation->context->tables;
+        $pairs = (new ForeignKeyPairLowering())->pairs($command->element, $parents[1], $parents[0], GrammarRelease::MySql910);
+
+        self::assertSame(['y', 'x'], array_map(static fn ($pair): string => $pair->child->value, $pairs));
+        self::assertSame(['b', 'a'], array_map(static fn ($pair): string => $pair->parent->value, $pairs));
+    }
+
+    public function testPairRetainsTheNativeDirection(): void
+    {
+        $operation = NativeAdditionFixture::operation('ALTER TABLE app.child ADD FOREIGN KEY(x) REFERENCES parent(a)');
+        $tables = $operation->context->tables;
+        $part = new ColumnPart(new Name('Y'), direction: Direction::Descending);
+        $pair = (new ForeignKeyPairLowering())->pair($part, new Name('A'), $tables[1], $tables[0], false);
+
+        self::assertSame('y', $pair->child->value);
+        self::assertTrue($pair->descending);
+    }
+
+    public function testColumnBindsTheCanonicalDeclaredName(): void
+    {
+        $operation = NativeAdditionFixture::operation('ALTER TABLE app.child ADD FOREIGN KEY(x) REFERENCES parent(a)');
+        $column = (new ForeignKeyPairLowering())->column($operation->context->tables[1], new Name('Y'));
+
+        self::assertSame('y', $column->name->value);
+    }
+
+    public function testIntegerKeepsTheNativeWidthAndSign(): void
+    {
+        $type = new Integral(IntegralKind::MediumInt, '5', [NumericModifier::Unsigned]);
+
+        self::assertSame([IntegerStorage::Medium, true], (new ForeignKeyPairLowering())->integer($type));
+    }
+}

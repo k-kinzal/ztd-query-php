@@ -56,6 +56,7 @@ final class IndexCandidate
             in_array($this->kind, [IndexKind::Primary, IndexKind::Unique, IndexKind::Index], true) ? $this->autoIncrementField : null,
             array_column($this->prefix, 0),
             $this->clusterCandidate,
+            array_column($this->prefix, 1),
         );
     }
 }

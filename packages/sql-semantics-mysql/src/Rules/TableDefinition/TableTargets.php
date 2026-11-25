@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
 use SqlSemantics\Platform\MySql\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
@@ -76,9 +77,9 @@ final class TableTargets
     /**
      * Resolves the name of an existing table and answers its facts.
      */
-    public function existing(Derivation $derivation, QualifiedName $name): RelationFact
+    public function existing(Derivation $derivation, QualifiedName $name, TableNamespace $namespace = TableNamespace::Visible): RelationFact
     {
-        $resolution = $derivation->table($name, $derivation->environment());
+        $resolution = $derivation->table($name, $derivation->environment(), $namespace);
         if ($resolution instanceof DeclaredTable) {
             return new RelationFact($this->shape($resolution->table), $resolution);
         }

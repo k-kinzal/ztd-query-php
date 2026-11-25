@@ -826,6 +826,12 @@ def inventory(root):
             }
             for alternative in signatures & (foreign_removal | alter_index | implicit):
                 related[alternative] = (*related.get(alternative, ()), "mysql-drop-foreign-keys-evidence-v1.json")
+            foreign_addition = implicit | {
+                entry for entry in rules.get("alter_list_item", ()) if
+                entry.startswith("alter_list_item: ADD ") and any(term in entry for term in ("constraint", "foreign_key", "key_def"))
+            }
+            for alternative in signatures & (foreign_addition | alter_index):
+                related[alternative] = (*related.get(alternative, ()), "mysql-add-foreign-keys-evidence-v1.json")
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
             generated_keys = {

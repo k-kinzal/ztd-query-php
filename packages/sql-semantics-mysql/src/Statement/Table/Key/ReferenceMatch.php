@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 
 /**
- * The MATCH clause of a foreign key reference, which InnoDB parses and ignores.
+ * The written MATCH clause of a foreign key reference.
  *
  * Each case holds the keywords it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html.

@@ -33,4 +33,11 @@ final class IndexNameAllocationTest extends TestCase
         self::assertSame(str_repeat('x', 61) . '_2', $allocation->generated(new Name($prefix), $used, GrammarRelease::MySql8044)?->value);
         self::assertSame(str_repeat('x', 61) . '_2', $allocation->generated(new Name($prefix), $used, GrammarRelease::MySql910)?->value);
     }
+
+    public function testAvailableChoosesTheFirstUnoccupiedCaseFoldedSuffix(): void
+    {
+        $allocation = new IndexNameAllocation();
+
+        self::assertSame('Owner_Id_3', $allocation->available('Owner_Id', ['owner_id' => true, 'owner_id_2' => true], GrammarRelease::MySql910));
+    }
 }

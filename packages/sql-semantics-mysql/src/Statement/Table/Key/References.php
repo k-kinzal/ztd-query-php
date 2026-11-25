@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
@@ -22,8 +23,8 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
  * Rule: MYSQL-REFERENCES-001. The parent table is a table use: the node
  * records its resolution as a target. A table that refers to itself names
  * the table being defined, which the statement itself declares. At most one
- * action per event; the actions are kept in written order. MATCH is parsed
- * and ignored by InnoDB. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html.
+ * action per event; the actions are kept in written order. The complete IR
+ * resolves the native release rules for MATCH metadata and event behavior. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html.
  * Status: Implemented.
  *
  * @visibility SqlSemantics
@@ -66,6 +67,16 @@ final class References implements Node
     public function deriveReferences(Derivation $derivation, ?Table $defined = null, ?QualifiedName $definedName = null): RelationFact
     {
         return $derivation->target($this, (new TableTargets())->parent($derivation, $this->table, $defined, $definedName));
+    }
+
+    /**
+     * Binds ALTER TABLE references in the persistent dictionary of the child database.
+     */
+    public function deriveAlterReference(Derivation $derivation, Name $childDatabase): RelationFact
+    {
+        $written = new QualifiedName($this->table->name, $this->table->schema ?? $childDatabase);
+
+        return $derivation->target($this, (new TableTargets())->existing($derivation, $written, TableNamespace::Persistent));
     }
 
     /**

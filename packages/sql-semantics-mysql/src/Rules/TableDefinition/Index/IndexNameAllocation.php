@@ -22,8 +22,19 @@ final class IndexNameAllocation
      */
     public function generated(Name $first, array $used, GrammarRelease $release): ?Name
     {
+        $name = $this->available($first->value, array_fill_keys(array_keys($used), true), $release);
+
+        return $name === null ? null : new Name($name);
+    }
+
+    /**
+     * Selects the native first-field spelling or an unused suffix from a checked name set.
+     * @param array<array-key, true> $used Occupied native case keys
+     */
+    public function available(string $first, array $used, GrammarRelease $release): ?string
+    {
         $case = new NativeIdentifierCase();
-        $key = $case->fold($first->value);
+        $key = $case->fold($first);
         if ($key !== 'primary' && !isset($used[$key])) {
             return $first;
         }
@@ -33,14 +44,14 @@ final class IndexNameAllocation
             GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql901 => 30,
             GrammarRelease::MySql8044, GrammarRelease::MySql847, GrammarRelease::MySql910 => 61,
         };
-        $prefix = substr($first->value, 0, $bytes);
+        $prefix = substr($first, 0, $bytes);
         if (preg_match('//u', $prefix) !== 1) {
             return null;
         }
         for ($suffix = 2; $suffix < 100; ++$suffix) {
             $candidate = $prefix . '_' . $suffix;
             if (!isset($used[$case->fold($candidate)])) {
-                return new Name($candidate);
+                return $candidate;
             }
         }
 

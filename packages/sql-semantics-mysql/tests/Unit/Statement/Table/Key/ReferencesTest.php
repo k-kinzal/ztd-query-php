@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
+use SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
@@ -54,5 +56,22 @@ final class ReferencesTest extends TestCase
     public function testRenderWritesTheClause(): void
     {
         self::assertSame('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)', (new Inspection())->inspect('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)')->toString());
+    }
+
+    public function testDeriveAlterReferenceUsesThePersistentChildDatabase(): void
+    {
+        $semantics = new Inspection();
+        $parent = $semantics->inspect('CREATE TABLE warehouse.p (id INT PRIMARY KEY)');
+        $temporary = $semantics->inspect('CREATE TEMPORARY TABLE warehouse.p (other INT)');
+        $child = $semantics->inspect('CREATE TABLE warehouse.c (pid INT)');
+        $change = $semantics->inspect('ALTER TABLE warehouse.c ADD FOREIGN KEY (pid) REFERENCES p (id)', [$parent, $temporary, $child]);
+        self::assertInstanceOf(AlterTable::class, $change->statement);
+        $command = $change->statement->commands[0];
+        self::assertInstanceOf(AddConstraint::class, $command);
+        self::assertInstanceOf(ForeignKey::class, $command->element);
+        $bound = $change->facts->relation($command->element->references)->table;
+
+        self::assertInstanceOf(DeclaredTable::class, $bound);
+        self::assertSame($parent->declarations()[0], $bound->table);
     }
 }

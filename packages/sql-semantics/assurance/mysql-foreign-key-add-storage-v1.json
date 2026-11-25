@@ -1,0 +1,24 @@
+{
+  "revision": "SemanticsIR/mysql-foreign-key-add-storage-1",
+  "approval": "pending-human-review",
+  "records": {
+    "Schema/ForeignKey/Add/AddForeignKeys": {
+      "additions": [
+        "Schema/ForeignKey/Add/ForeignKeyAddition",
+        1
+      ]
+    },
+    "Schema/ForeignKey/Add/ForeignKeyAddition": {
+      "pairs": [
+        "Schema/ForeignKey/Add/ForeignKeyPair",
+        1
+      ]
+    },
+    "Schema/ForeignKey/Add/Catalog/ForeignKeyNativeKey": {
+      "fields": [
+        "Schema/ForeignKey/Add/Catalog/ForeignKeyKeyColumn",
+        0
+      ]
+    }
+  }
+}

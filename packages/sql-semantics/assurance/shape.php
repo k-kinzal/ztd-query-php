@@ -1462,6 +1462,42 @@ if ($dialect !== 'sqlite') {
         $enumCases[$foreignKind] = ['Constraint' => 'constraint', 'IgnoredOnTemporary' => 'ignored-on-temporary'];
         $methods[$foreignRemoval] = ['__construct', 'profileId', 'toString'];
         $methods[$foreignAction] = ['__construct', 'toString'];
+        $foreignAddBase = 'Schema\\ForeignKey\\Add\\';
+        $foreignAdd = $foreignAddBase . 'AddForeignKeys';
+        $foreignDefinition = $foreignAddBase . 'ForeignKeyAddition';
+        $foreignPair = $foreignAddBase . 'ForeignKeyPair';
+        $foreignEffects = $foreignAddBase . 'ForeignKeyEffects';
+        $foreignEvent = $foreignAddBase . 'ForeignKeyAction';
+        $foreignMatch = $foreignAddBase . 'ForeignKeyMatch';
+        $foreignKeyFact = $foreignAddBase . 'Catalog\\ForeignKeyNativeKey';
+        $foreignFieldFact = $foreignAddBase . 'Catalog\\ForeignKeyKeyColumn';
+        $foreignSymbolFact = $foreignAddBase . 'Catalog\\ForeignKeyConstraintIdentity';
+        $foreignBoundary = array_map(static fn (string $role): string => $foreignAddBase . $role, [
+            'ForeignKeyAdditionSet', 'ForeignKeyChildIndexes', 'ForeignKeyConstraintNamespace', 'ForeignKeyIndexPrefix',
+        ]);
+        array_push($internal, $foreignAddBase . 'ForeignKeyAdditionLowering', $foreignAddBase . 'ForeignKeyEffectsLowering',
+            $foreignAddBase . 'ForeignKeyPairLowering', $foreignAddBase . 'ForeignKeyTables', $foreignAddBase . 'Catalog\\ForeignKeyCatalogLowering');
+        array_push($internal, ...$foreignBoundary);
+        array_push($pureCollaborators, ...$foreignBoundary);
+        $roots[] = $foreignAdd;
+        $properties[$foreignAdd] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'additions' => ['array'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
+        $properties[$foreignDefinition] = ['parent' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier'], 'pairs' => ['array'],
+            'effects' => [$foreignEffects], 'generated' => ['bool'], 'indexName' => ['?Identifier'], 'createdIndex' => ['?Identifier']];
+        $properties[$foreignEffects] = ['update' => [$foreignEvent], 'delete' => [$foreignEvent], 'match' => [$foreignMatch]];
+        $properties[$foreignPair] = ['child' => ['Identifier'], 'parent' => ['Identifier'], 'storage' => ['Schema\\IntegerStorage'],
+            'unsigned' => ['bool'], 'nullable' => ['bool'], 'descending' => ['bool']];
+        $properties[$foreignKeyFact] = ['identity' => [$indexIdentity], 'fields' => ['array'], 'full' => ['bool'], 'referenceKey' => ['bool']];
+        $properties[$foreignFieldFact] = ['field' => ['Identifier'], 'descending' => ['bool']];
+        $properties[$foreignSymbolFact] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier']];
+        $properties[$foreignEvent] = $properties[$foreignMatch] = $methods[$foreignEvent] = $methods[$foreignMatch] = [];
+        $enumCases[$foreignEvent] = ['Restrict' => 'RESTRICT', 'NoAction' => 'NO ACTION', 'Cascade' => 'CASCADE',
+            'SetNull' => 'SET NULL', 'SetDefault' => 'SET DEFAULT'];
+        $enumCases[$foreignMatch] = ['None' => 'NONE', 'Full' => 'FULL', 'Partial' => 'PARTIAL'];
+        $methods[$foreignAdd] = ['__construct', 'profileId', 'toString'];
+        $methods[$foreignDefinition] = ['__construct', 'toString'];
+        $methods[$foreignEffects] = ['__construct', 'sql'];
+        $methods[$foreignPair] = $methods[$foreignKeyFact] = $methods[$foreignFieldFact] = $methods[$foreignSymbolFact] = ['__construct'];
         $indexRename = 'Schema\\Index\\Rename\\IndexRename';
         $renameIndexes = 'Schema\\Index\\Rename\\RenameIndexes';
         $renameNamespace = 'Schema\\Index\\Rename\\IndexRenameNamespace';
@@ -1837,7 +1873,7 @@ try {
             ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v8.json', '1ddeed039ec1ee1fbe8843c722d4ea78005b72f6bac3c8e8b461398cc2a0dd16', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v7.json', '38e230f70d2b36a9888464b671cfd8e5182ef9c598ca09f31c2ee9dba5c0b61f', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v8.json', '0760c189c97be98bad4e41dfa56bf4054f75c6b89ddf7defd882c58dc6cd2b20', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1902,6 +1938,11 @@ try {
             requireShape(array_intersect_key($current, $indexRecord['storage']) === [], 'Duplicate MySQL native index list storage rule');
             $storage[$indexRecord['owner']] = $current + $indexRecord['storage'];
         }
+        $foreignStorage = __DIR__ . '/mysql-foreign-key-add-storage-v1.json';
+        requireShape(hash_file('sha256', $foreignStorage) === '364231eb558ce8df0f3193045e90ee49e96af3d9d2bb5504806e14a9b5c6bfef', 'Native foreign-key addition list storage differs.');
+        $additionalStorage = json_decode(file_get_contents($foreignStorage), true, 512, JSON_THROW_ON_ERROR)['records'];
+        requireShape(array_intersect_key($storage, $additionalStorage) === [], 'Duplicate native foreign-key addition storage rule.');
+        $storage += $additionalStorage;
         ksort($storage);
     }
     $listFields = [];
@@ -2361,7 +2402,8 @@ try {
                     && $members[1]->isPublic() && !$members[1]->isStatic()
                     && $members[1]->name->toString() === 'lower' && $members[1]->returnType !== null
                     && types($members[1]->returnType, $prefix, $short) === [
-                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\Index\\Change\\AlterIndexes',
+                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\ForeignKey\\Add\\AddForeignKeys',
+                        'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\Index\\Change\\AlterIndexes',
                         'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes', 'Schema\\Index\\Rename\\RenameIndexes',
                         'Schema\\Index\\Visibility\\SetIndexVisibility', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
@@ -2475,10 +2517,18 @@ try {
                     'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
                     'Schema\\Index\\Dependency\\IndexDependencyClosure', 'Schema\\Index\\Dependency\\IndexForeignKeyRequirement',
                     'Schema\\ForeignKey\\ForeignKeyRemovalSet',
+                    'Schema\\ForeignKey\\Add\\ForeignKeyAddition', 'Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes',
+                    'Schema\\ForeignKey\\Add\\ForeignKeyConstraintNamespace', 'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix',
+                    'Schema\\ForeignKey\\Add\\Catalog\\ForeignKeyNativeKey',
                     'Schema\\Index\\Visibility\\IndexVisibilityEdit',
                     'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
                     'Schema\\Index\\Change\\MixedIndexNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
+                || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes'
+                    && $name->toString() === $platform . '\\Rules\\TableDefinition\\Index\\IndexNameAllocation')
+                || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'
+                    && in_array($name->toString(), [$prefix . 'Schema\\Index\\Dependency\\IndexDependencyKeys',
+                        $platform . '\\Model\\Diagnostic\\InvalidConstruction'], true))
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',
                     'Schema\\Sequence\\Authorization\\SequencePrincipal'], true)
@@ -2501,6 +2551,11 @@ try {
         foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
+                    || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyConstraintNamespace'
+                        && in_array($call->name->toString(), ['in_array', 'max', 'str_starts_with', 'substr', 'strlen'], true))
+                    || ($dialect === 'mysql' && in_array($short, ['Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes',
+                        'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'], true)
+                        && in_array($call->name->toString(), ['array_slice', 'in_array'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
                     || ($dialect === 'sqlite' && $short === 'Connection\\AttachmentName' && $call->name->toString() === 'explode')
                     || ($dialect === 'sqlite' && in_array($short, ['Schema\\Trigger\\TriggerChecks', 'Schema\\Trigger\\TriggerDestination', 'Schema\\Trigger\\TriggerInsert', 'Schema\\Trigger\\TriggerUpdateName', 'Schema\\Trigger\\TriggerSql'], true)

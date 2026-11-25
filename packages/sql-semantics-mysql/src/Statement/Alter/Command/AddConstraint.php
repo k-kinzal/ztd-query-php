@@ -7,9 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter\Command;
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 
 /**
@@ -36,8 +38,14 @@ final class AddConstraint implements AlterCommand
     /**
      * Derives the expressions of the element.
      */
-    public function deriveCommand(Derivation $derivation, Environment $scope): void
+    public function deriveCommand(Derivation $derivation, Environment $scope, ?Name $ownerDatabase = null): void
     {
+        if ($this->element instanceof ForeignKey && $ownerDatabase !== null) {
+            $this->element->deriveElement($derivation, $scope);
+            $this->element->references->deriveAlterReference($derivation, $ownerDatabase);
+
+            return;
+        }
         (new ElementFacts())->element($this->element, $derivation, $scope);
     }
 

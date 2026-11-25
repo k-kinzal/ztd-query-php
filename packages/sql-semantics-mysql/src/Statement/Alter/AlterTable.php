@@ -13,12 +13,14 @@ use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Relation;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnChanges;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
+use SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlterModifier;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\StandaloneCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\TrailingCommand;
@@ -85,8 +87,16 @@ final class AlterTable implements Statement, Relation
         $changes = new ColumnChanges();
         $fact = $derivation->target($this, new RelationFact($changes->apply($original, $this->commands, $derivation, true), $original->table));
         $scope = new Environment($derivation->context, null, [new VisibleRelation($this, $fact->shape, null, $this->table, [], $changes->implicit())]);
+        $writtenDatabase = $this->table->schema ?? $derivation->context->declarationSchema;
+        $database = $original->table instanceof DeclaredTable
+            ? ($original->table->table->name->schema ?? $writtenDatabase)
+            : $writtenDatabase;
         foreach ($this->commands as $command) {
-            $command->deriveCommand($derivation, $scope);
+            if ($command instanceof AddConstraint) {
+                $command->deriveCommand($derivation, $scope, $database);
+            } else {
+                $command->deriveCommand($derivation, $scope);
+            }
         }
     }
 

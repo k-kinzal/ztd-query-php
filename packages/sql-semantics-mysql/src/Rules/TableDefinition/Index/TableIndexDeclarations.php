@@ -86,7 +86,16 @@ final class TableIndexDeclarations
         }
         if ($firstCandidate !== null && !isset($used['primary'])) {
             $unique = $used[$firstCandidate];
-            $used[$firstCandidate] = new IndexDeclaration($unique->name, PhysicalIndexKind::Unique, true, true, $unique->autoIncrementField, $unique->leadingFields, true);
+            $used[$firstCandidate] = new IndexDeclaration(
+                $unique->name,
+                PhysicalIndexKind::Unique,
+                true,
+                true,
+                $unique->autoIncrementField,
+                $unique->leadingFields,
+                true,
+                $unique->leadingDescending
+            );
         }
 
         return array_values($used);

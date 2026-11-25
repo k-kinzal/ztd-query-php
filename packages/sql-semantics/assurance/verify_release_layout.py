@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v164.json"
-CONTRACT = "904cebb6412351b53824ce8cc09c89d6bc8b84de9b246da5bfb71460ab489b3a"
+CONTRACT_NAME = "release-layout-v165.json"
+CONTRACT = "2e80292032d544f4b3ffa61865fb3b97590d357b5529db6d1127034f7b4d054b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -879,6 +879,18 @@ def verify_probe(raw, catalog):
                 "This MySQL release must drop a referencing child before its parent.",
                 "DROP TABLE must include every referencing persistent child.",
             ], "installed-mysql-drop-table-dependency-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\Add\\AddForeignKeys"):
+            expected_sql = ("ALTER TABLE `app`.`fk_add_child` "
+                            "ADD CONSTRAINT `Live_Link` FOREIGN KEY (`x`) REFERENCES `app`.`fk_add_parent` (`a`) "
+                            "MATCH FULL ON UPDATE NO ACTION ON DELETE CASCADE, "
+                            "ADD FOREIGN KEY (`y` DESC) REFERENCES `app`.`fk_add_parent` (`b`) "
+                            "MATCH PARTIAL ON UPDATE SET NULL ON DELETE NO ACTION")
+            require(item.get("mysqlAddForeignKeys") == [
+                "`app`.`fk_add_parent`", "`app`.`fk_add_parent`", "BIGINT", True, "FULL", "PARTIAL",
+                "Live_Link", "fk_add_child_ibfk_1", "Live_Link", None, None,
+                expected_sql, expected_sql, [expected_sql],
+                ["The checked InnoDB profile needs copying and a compatible lock to add a native foreign key."],
+            ] and item["sql"] == expected_sql, "installed-mysql-add-foreign-keys-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"
