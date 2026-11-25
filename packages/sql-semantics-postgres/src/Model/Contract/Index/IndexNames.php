@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Key;
-
-use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+namespace SqlSemantics\Platform\PostgreSql\Model\Contract\Index;
 
 /**
  * Computes the native names shared by B-tree declarations and backing indexes.
@@ -15,15 +13,14 @@ final class IndexNames
 {
     /**
      * Allocates distinct physical attribute labels in index occurrence order.
-     * @param non-empty-list<Identifier> $fields Exact key and covering columns
+     * @param non-empty-list<string> $fields Exact key and covering columns
      * @return non-empty-list<string>
      */
     public static function attributes(array $fields): array
     {
         $seen = [];
         $labels = [];
-        foreach ($fields as $field) {
-            $original = $field->value;
+        foreach ($fields as $original) {
             $candidate = $original;
             $pass = 1;
             while (isset($seen[$candidate])) {

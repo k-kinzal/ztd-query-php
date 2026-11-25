@@ -9,9 +9,9 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IncludedColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexKey;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\IndexNames;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNames;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\IndexCreationVisibility;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
@@ -56,7 +56,7 @@ final class IndexNameLowering
         Check::input($closed, 'CREATE INDEX cannot allocate an automatic name in an open index namespace.');
         $attributes = [];
         foreach ([...$keys, ...$included] as $occurrence) {
-            $attributes[] = $heading->columns[$occurrence->slot];
+            $attributes[] = $heading->columns[$occurrence->slot]->value;
         }
         $namePart = implode('_', IndexNames::attributes($attributes));
         $table = $heading->target->table->value;

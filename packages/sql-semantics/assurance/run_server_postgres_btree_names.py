@@ -19,8 +19,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "postgres-btree-names"
 OBSERVER = "postgres_btree_name_observer.py"
-CONTRACT_NAME = "postgres-automatic-btree-name-evidence-v1.json"
-CONTRACT = "24ab8dff9d692510c6d1493380f49eb3c2952603f2b694037a3cf173b8a65530"
+CONTRACT_NAME = "postgres-automatic-btree-name-evidence-v2.json"
+CONTRACT = "f29da633f4214af1bf8a0130c346926748c2f7cbe0ff4021eacf6eb6dc214603"
 COMPLETE_SEEDS = True
 MEANING = "meaning-mismatch"
 REFUSAL = "postgres-btree-lost-automatic-name-admission"
@@ -83,7 +83,7 @@ def refusals(tag):
     item = standalone(tag, "single", "named-table", 0, "plain")
     ctx = analyzed(item)
     yield {**ctx, "complete": False}, OPEN
-    opaque = "CREATE INDEX ON " + NS + ".orders (id)"
+    opaque = "CREATE INDEX ON " + NS + ".orders ((id + 1))"
     yield {**ctx, "declarations": [*ctx["declarations"], opaque]}, OPEN
     wrong = direct(item)
     wrong["createBtree"] = {**wrong["createBtree"], "presence": "occupied"}
@@ -204,7 +204,7 @@ def faults(_, tag):
          standalone(tag, "includes", "named-table", 3, "plain"), MEANING),
         ("change-name-namespace", binder, "$name, $schema)", '$name, new Name("alternate_fixture"))',
          standalone(tag, "includes", "namespace-decoy", 3, "plain"), MEANING),
-        ("clip-one-more-character", source + "Key/IndexNames.php", "max($limit, 0)", "max($limit - 3, 0)",
+        ("clip-one-more-character", "sql-semantics-postgres/src/Model/Contract/Index/IndexNames.php", "max($limit, 0)", "max($limit - 3, 0)",
          standalone(tag, "equal-utf8-bytes", "named-table", 0, "plain"), MEANING),
         ("forget-earlier-schema-index", source + "Namespace/Index/SchemaIndexLowering.php",
          "$occupied[$index->name->value] ??= true;", "", schema_member(tag, "single", "none"), REFUSAL),

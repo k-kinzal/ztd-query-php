@@ -513,7 +513,8 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if ("opt_single_name ON" in alternative or alternative == "schema_stmt: IndexStmt"
                             or alternative == "opt_single_name:"):
-                        related[alternative] = (*related.get(alternative, ()), "postgres-automatic-btree-name-evidence-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-automatic-btree-name-evidence-v2.json",
+                                                "postgres-anonymous-catalog-index-evidence-v1.json")
             for alternative in rules.get("index_elem", ()):
                 if alternative == "index_elem: ColId index_elem_options":
                     related[alternative] = (*related.get(alternative, ()), "postgres-create-btree-v2.json")

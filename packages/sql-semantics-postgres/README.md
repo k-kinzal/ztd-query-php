@@ -72,6 +72,8 @@ Sequence `GRANT` and `REVOKE` support ordered lists of named sequences and `ALL 
 
 `DROP INDEX` returns `Ir\Schema\Index\DropIndex`. Provide the declarations of installed indexes and their indexed relations to `context()`. Include `CREATE SCHEMA` declarations when empty schemas or search order matter.
 
+For a complete declaration catalog, replaying an ordinary unnamed B-tree on direct columns resolves the same index name PostgreSQL allocates. Pass the declarations in their original order. Later analysis of `DROP INDEX`, `REINDEX INDEX`, and an unnamed `CREATE INDEX` uses those allocated identities, including indexes created in a fresh schema or in the session's temporary namespace. An unresolved declaration, an anonymous expression key, or an anonymous index on a partition hierarchy leaves its namespace open for inference.
+
 ```php
 $context = $semantics->context([
     'CREATE SCHEMA archive',

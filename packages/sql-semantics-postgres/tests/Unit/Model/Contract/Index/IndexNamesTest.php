@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir\Schema\Key;
+namespace Tests\Unit\Model\Contract\Index;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\IndexNames;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNames;
 
 #[CoversClass(IndexNames::class)]
 #[Small]
@@ -16,8 +15,8 @@ final class IndexNamesTest extends TestCase
 {
     public function testAttributesAllocatesTheFirstFreeLabelInOccurrenceOrder(): void
     {
-        $id = new Identifier('id');
-        $occupied = new Identifier('id1');
+        $id = 'id';
+        $occupied = 'id1';
 
         self::assertSame(['id', 'id1', 'id11', 'id2'], IndexNames::attributes([$id, $id, $occupied, $id]));
     }

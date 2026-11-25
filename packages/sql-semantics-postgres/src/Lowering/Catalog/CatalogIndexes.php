@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
+use SqlSemantics\Platform\PostgreSql\Lowering\Catalog\Index\AnonymousIndexName;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclaration;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexDeclarationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
@@ -109,13 +110,19 @@ final class CatalogIndexes
             if ($written->schema === null && $enclosing === null) {
                 $visibility->verifyPath($context, $this->indexes, $table, $schema);
             }
-            $name = $index->name;
-            if ($index->ifNotExists && $name !== null && $visibility->occupied($context, $this->indexes, $name, $schema)) {
-                continue;
-            }
-            if ($name === null || ($index->ifNotExists && (!$context->complete || $this->snapshot()->hasUnknownNames($schema)))) {
+            $name = $index->name ?? (new AnonymousIndexName())->resolve($binding, $index, $schema, $table, $this->snapshot());
+            if ($name === null) {
                 $this->opaque[] = $schema;
                 continue;
+            }
+            if ($index->ifNotExists) {
+                if ($visibility->occupied($context, $this->indexes, $name, $schema)) {
+                    continue;
+                }
+                if (!$context->complete || $this->snapshot()->hasUnknownNames($schema)) {
+                    $this->opaque[] = $schema;
+                    continue;
+                }
             }
             $kind = match ($this->partitioned[$key]->role ?? null) {
                 TablePartitionRole::Branch => IndexDeclarationKind::PartitionBranch,

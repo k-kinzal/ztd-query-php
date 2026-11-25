@@ -1145,6 +1145,17 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $named->name->value, $named == $explicit, $named->toString(),
                 $batch->indexes[0]->name->value, $batch->indexes[1]->name->value,
             ];
+            $catalog = $semantics->context([
+                'CREATE SCHEMA named_prior CREATE TABLE t (id integer) CREATE SEQUENCE t_id_idx'
+                . ' CREATE INDEX ON t (id) CREATE INDEX ON t (id)',
+            ]);
+            $dropPrior = $semantics->analyze('DROP INDEX named_prior.t_id_idx1', $catalog);
+            $rebuildPrior = $semantics->analyze('REINDEX INDEX named_prior.t_id_idx2', $catalog);
+            $newIndex = $semantics->analyze('CREATE INDEX ON named_prior.t (id)', $catalog);
+            $details['postgresAnonymousCatalog'] = [
+                $dropPrior->toString(), $rebuildPrior->target->schema->value, $rebuildPrior->target->index->value,
+                $rebuildPrior->target->table->value, $newIndex->name->value,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\RenameSchema') {
             $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');

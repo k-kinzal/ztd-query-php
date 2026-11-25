@@ -10,7 +10,11 @@ deptrac:
     - name: DatabaseModel
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Platform\\PostgreSql\\Model\\.*'
+          value: '^SqlSemantics\\Platform\\PostgreSql\\Model\\(?!Statement\\Declaration\\IndexHeading$).*'
+    - name: IndexConstructionInput
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\IndexHeading$'
     - name: Ir
       collectors:
         - type: classLike
@@ -38,7 +42,8 @@ deptrac:
   ruleset:
     Core: []
     DatabaseModel: [Core, Parser, Wiring]
-    Ir: [Core, DatabaseModel, Model, Wiring]
+    Ir: [Core, DatabaseModel, Model, Wiring, IndexConstructionInput]
+    IndexConstructionInput: [DatabaseModel, Ir]
     Parser: []
     Model: [Core, DatabaseModel, Rules]
     Rules: [Core, DatabaseModel, Model, Parser]

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Key;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNames;
 
 /**
  * Resolves a native automatic unique-index name inside a closed new schema.
@@ -38,6 +39,11 @@ final class UniqueKeyName
      */
     public static function attributeNames(UniqueKey $key): array
     {
-        return IndexNames::attributes([...$key->keys, ...$key->included]);
+        $values = [];
+        foreach ([...$key->keys, ...$key->included] as $field) {
+            $values[] = $field->value;
+        }
+
+        return IndexNames::attributes($values);
     }
 }

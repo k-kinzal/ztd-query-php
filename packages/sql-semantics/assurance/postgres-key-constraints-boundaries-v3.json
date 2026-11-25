@@ -1,0 +1,485 @@
+{
+  "revision": "SemanticsIR/postgres-key-constraints-boundaries-3",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-primary-key-boundaries-v1.json",
+  "scope": "Checked native primary and unique constraints, reduction, name allocation and namespace sequence.",
+  "rules": {
+    "Schema/CreateTable::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checked = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');",
+        "$seen = [];",
+        "foreach ($checked as $column) {",
+        "    $key = $column->name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "if ($primaryKey !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($primaryKey->name?->value !== $target->table->value, 'A primary key index cannot have its table name.');",
+        "    foreach ([...$primaryKey->keys, ...$primaryKey->included] as $column) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($seen[$column->value]), 'A primary key reference must select a declared column.');",
+        "    }",
+        "    $required = [];",
+        "    foreach ($primaryKey->keys as $column) {",
+        "        $required[$column->value] = true;",
+        "    }",
+        "    foreach ($checked as $position => $column) {",
+        "        if ($column->nullable && isset($required[$column->name->value])) {",
+        "            $checked[$position] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableColumn($column->name, $column->storage, false, $column->default);",
+        "        }",
+        "    }",
+        "}",
+        "$unique = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($uniqueKeys, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\UniqueKey::class, 'Table unique keys must form an ordered list.');",
+        "[$primary, $retained] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\TableKeySet::close($target->table, $seen, $primaryKey, $unique);",
+        "$this->columns = $checked;",
+        "$this->primaryKey = $primary;",
+        "$this->uniqueKeys = $retained;"
+      ]
+    },
+    "Schema/CreateTable::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $column->toString();",
+        "}",
+        "if ($this->primaryKey !== null) {",
+        "    $columns[] = $this->primaryKey->toString();",
+        "}",
+        "foreach ($this->uniqueKeys as $unique) {",
+        "    $columns[] = $unique->toString();",
+        "}",
+        "return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted() . ' (' . implode(', ', $columns) . ') USING heap';"
+      ]
+    },
+    "Schema/CreateTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native, 'CREATE TABLE requires the default native profile.');",
+        "$definition = $statement->definition;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($definition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ListedColumns && $definition->parents === [] && $statement->persistence === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Permanent && $statement->partitioning === null && $statement->options === [] && $statement->onCommit === null && $statement->tablespace === null, 'CREATE TABLE requires a persistent ordinary table with explicit columns.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->method === null || $statement->method->value === 'heap', 'CREATE TABLE requires the native heap storage role.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->name->catalog === null, 'CREATE TABLE requires an absolute schema location.');",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->name->value));",
+        "[$columns, $primary, $unique] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\KeyConstraintLowering())->definitions($operation, $definition);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable($name, $columns, $statement->ifNotExists, $profile->grammar, $primary, $unique);"
+      ]
+    },
+    "Schema/Key/PrimaryKey::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checkedKeys = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($keys, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier::class, 'A primary key requires ordered key columns.', 1);",
+        "$checkedIncluded = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($included, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier::class, 'Primary key payload references require an ordered column list.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($checkedKeys) + count($checkedIncluded) <= 32, 'A primary key index can reference at most 32 attributes.');",
+        "$seen = [];",
+        "foreach ($checkedKeys as $key) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$key->value]), 'A primary key cannot repeat a key column.');",
+        "    $seen[$key->value] = true;",
+        "}",
+        "$this->keys = $checkedKeys;",
+        "$this->included = $checkedIncluded;"
+      ]
+    },
+    "Schema/Key/PrimaryKey::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$keys = [];",
+        "foreach ($this->keys as $key) {",
+        "    $keys[] = $key->quoted();",
+        "}",
+        "$included = [];",
+        "foreach ($this->included as $column) {",
+        "    $included[] = $column->quoted();",
+        "}",
+        "$name = $this->name === null ? '' : 'CONSTRAINT ' . $this->name->quoted() . ' ';",
+        "$payload = $included === [] ? '' : ' INCLUDE (' . implode(', ', $included) . ')';",
+        "return $name . 'PRIMARY KEY (' . implode(', ', $keys) . ')' . $payload . ' ' . $this->timing->value;"
+      ]
+    },
+    "Schema/Key/PrimaryKeyName::allocate": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$pass = 0;",
+        "do {",
+        "    $suffix = $pass === 0 ? '_pkey' : '_pkey' . $pass;",
+        "    $length = min(strlen($table->value), 63 - strlen($suffix));",
+        "    while ($length < strlen($table->value) && (ord($table->value[$length]) & 0xc0) === 0x80) {",
+        "        --$length;",
+        "    }",
+        "    $candidate = substr($table->value, 0, $length) . $suffix;",
+        "    ++$pass;",
+        "} while (isset($occupied[$candidate]));",
+        "return $candidate;"
+      ]
+    },
+    "Schema/Namespace/SchemaRelationOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequences === [] && $tables === [] || $name !== null && !$guard, 'Schema tables and sequences require an unguarded, statically named namespace.');",
+        "$seen = [];",
+        "foreach ($sequences as $sequence) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->owner === null, 'A schema sequence cannot depend on a relation created after its sequence phase.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->name->schema->value === $name?->value && $sequence->release === $release, 'A schema sequence must belong to its namespace and release.');",
+        "    $coordinate = $sequence->name->name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$coordinate]) || $sequence->ifNotExists, 'A repeated schema sequence requires its own IF NOT EXISTS guard.');",
+        "    $seen[$coordinate] = true;",
+        "}",
+        "foreach ($tables as $table) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->target->schema->value === $name?->value && $table->release === $release, 'A schema table must belong to its namespace and release.');",
+        "    $coordinate = $table->target->table->value;",
+        "    if (isset($seen[$coordinate])) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->ifNotExists, 'A repeated schema table requires its own IF NOT EXISTS guard.');",
+        "        continue;",
+        "    }",
+        "    $seen[$coordinate] = $table;",
+        "    if ($table->primaryKey !== null) {",
+        "        $index = $table->primaryKey->name->value ?? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\PrimaryKeyName::allocate($table->target->table, $seen);",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$index]), 'A schema primary key index requires an unused relation name.');",
+        "        $seen[$index] = $table->target;",
+        "    }",
+        "    foreach ($table->uniqueKeys as $key) {",
+        "        $uniqueIndex = $key->name->value ?? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\UniqueKeyName::allocate($table->target->table, $key, $seen);",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$uniqueIndex]), 'A schema unique key index requires an unused relation name.');",
+        "        $seen[$uniqueIndex] = $table->target;",
+        "    }",
+        "}",
+        "return $seen;"
+      ]
+    },
+    "Schema/Namespace/CreateSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
+        "$owner = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering())->lower($context, $statement->authorization);",
+        "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
+        "$resolved = $name ?? ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $owner : null);",
+        "$sequences = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSequenceLowering())->lower($context, $statement, $resolved);",
+        "$tables = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaTableLowering())->lower($context, $statement, $resolved);",
+        "$views = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewLowering())->lower($operation, $statement, $resolved);",
+        "$release = $context->profile->grammar;",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::check($resolved, $statement->ifNotExists, $release, $sequences, $tables);",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewOrder::check($resolved, $statement->ifNotExists, $release, $occupied, $views);",
+        "$indexes = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Index\\SchemaIndexLowering())->lower($operation, $statement, $resolved, $occupied);",
+        "$grants = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Access\\SchemaGrantLowering())->lower($operation, $statement, $resolved, $indexes, $occupied);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $release, $tables, $sequences, $views, $indexes, $grants);"
+      ]
+    },
+    "Schema/Namespace/Access/SchemaGrantLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$grants = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccessLowering();",
+        "$context = null;",
+        "foreach ($schema->elements as $element) {",
+        "    if (!$element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant) {",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema grants require an unguarded, statically named namespace.');",
+        "    if ($context === null) {",
+        "        $name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($resolved->value);",
+        "        $relations = [];",
+        "        foreach ($occupied as $coordinate => $occupant) {",
+        "            if ($occupant instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableName) {",
+        "                $relations[] = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclaration($name, new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name((string) $coordinate), new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($occupant->table->value), \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::Ordinary);",
+        "            }",
+        "        }",
+        "        foreach ($indexes as $index) {",
+        "            if ($index->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant) {",
+        "                $relations[] = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclaration($name, new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($index->name->value), new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($index->table->table->value), \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::Ordinary);",
+        "            }",
+        "        }",
+        "        $context = (new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\SchemaMemberScope())->bind($operation->context, $name, $operation->facts->declarations, $relations);",
+        "    }",
+        "    $grant = $lowering->lower($context, $element);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($grant instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\GrantSequenceAccess, 'Schema grants require sequence grant operands.');",
+        "    $grants[] = $grant;",
+        "}",
+        "return $grants;"
+      ]
+    },
+    "Schema/Key/UniqueKey::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checkedKeys = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($keys, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier::class, 'A unique key requires ordered key columns.', 1);",
+        "$checkedIncluded = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($included, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier::class, 'Unique key payload references require an ordered column list.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($checkedKeys) + count($checkedIncluded) <= 32, 'A unique index can reference at most 32 attributes.');",
+        "$seen = [];",
+        "foreach ($checkedKeys as $key) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$key->value]), 'A unique key cannot repeat a key column.');",
+        "    $seen[$key->value] = true;",
+        "}",
+        "$this->keys = $checkedKeys;",
+        "$this->included = $checkedIncluded;"
+      ]
+    },
+    "Schema/Key/UniqueKey::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$keys = [];",
+        "foreach ($this->keys as $key) {",
+        "    $keys[] = $key->quoted();",
+        "}",
+        "$included = [];",
+        "foreach ($this->included as $column) {",
+        "    $included[] = $column->quoted();",
+        "}",
+        "$name = $this->name === null ? '' : 'CONSTRAINT ' . $this->name->quoted() . ' ';",
+        "$payload = $included === [] ? '' : ' INCLUDE (' . implode(', ', $included) . ')';",
+        "return $name . ($this->nullsNotDistinct ? 'UNIQUE NULLS NOT DISTINCT (' : 'UNIQUE NULLS DISTINCT (') . implode(', ', $keys) . ')' . $payload . ' ' . $this->timing->value;"
+      ]
+    },
+    "Schema/Key/KeyConstraintLowering::column": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$qualifiers = [];",
+        "$keys = [];",
+        "$pending = null;",
+        "$attributes = [];",
+        "$reference = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($column->name->value);",
+        "foreach ($column->qualifiers as $qualifier) {",
+        "    if ($pending !== null && $qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute) {",
+        "        $attributes[] = $qualifier;",
+        "        continue;",
+        "    }",
+        "    if ($pending !== null) {",
+        "        $keys[] = $this->key($pending, [$reference], [], $attributes);",
+        "        $pending = null;",
+        "        $attributes = [];",
+        "    }",
+        "    if ($qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\ColumnPrimaryKey || $qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\ColumnUnique) {",
+        "        $pending = $qualifier;",
+        "    } else {",
+        "        $qualifiers[] = $qualifier;",
+        "    }",
+        "}",
+        "if ($pending !== null) {",
+        "    $keys[] = $this->key($pending, [$reference], [], $attributes);",
+        "}",
+        "if ($keys === []) {",
+        "    return [$column, []];",
+        "}",
+        "$remaining = new \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnDefinition($column->name, $column->type, $column->storage, $column->compression, $column->options, $qualifiers);",
+        "return [$remaining, $keys];"
+      ]
+    },
+    "Schema/Key/KeyConstraintLowering::table": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->key($key, $this->references($key->columns), $this->references($key->included), $key->attributes);"
+      ]
+    },
+    "Schema/Key/KeyConstraintLowering::references": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$references = [];",
+        "foreach ($columns as $column) {",
+        "    $references[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($column->value);",
+        "}",
+        "return $references;"
+      ]
+    },
+    "Schema/Key/KeyConstraintLowering::key": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($constraint->options === [] && $constraint->tablespace === null, 'A table key requires default index parameters.');",
+        "$name = $constraint->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($constraint->name->value);",
+        "$timing = $this->timing($attributes);",
+        "if ($constraint instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\ColumnUnique || $constraint instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\TableUnique) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\UniqueKey($keys, $included, $name, $timing, $constraint->nullsDistinct === false);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\PrimaryKey($keys, $included, $name, $timing);"
+      ]
+    },
+    "Schema/Key/KeyConstraintLowering::timing": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$deferrable = null;",
+        "$deferred = null;",
+        "foreach ($attributes as $attribute) {",
+        "    switch ($attribute) {",
+        "        case \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::Deferrable:",
+        "        case \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::NotDeferrable:",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($deferrable === null, 'A table key can specify deferrability only once.');",
+        "            $deferrable = $attribute === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::Deferrable;",
+        "            break;",
+        "        case \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::InitiallyImmediate:",
+        "        case \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::InitiallyDeferred:",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($deferred === null, 'A table key can specify initial timing only once.');",
+        "            $deferred = $attribute === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::InitiallyDeferred;",
+        "            break;",
+        "        case \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::NotValid:",
+        "        case \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute::NoInherit:",
+        "            throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The attribute is outside the table key definition.');",
+        "    }",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($deferrable !== false || $deferred !== true, 'A not-deferrable table key cannot initially be deferred.');",
+        "return match (true) {",
+        "    $deferred === true => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\KeyTiming::InitiallyDeferred,",
+        "    $deferrable === true => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\KeyTiming::InitiallyImmediate,",
+        "    default => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\KeyTiming::NotDeferrable,",
+        "};"
+      ]
+    },
+    "Schema/Key/UniqueKeyName::allocate": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$attributes = implode('_', self::attributeNames($key));",
+        "$pass = 0;",
+        "do {",
+        "    $suffix = $pass === 0 ? 'key' : 'key' . $pass;",
+        "    $name = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexNames::candidate($table->value, $attributes, $suffix);",
+        "    ++$pass;",
+        "} while (isset($occupied[$name]));",
+        "return $name;"
+      ]
+    },
+    "Schema/Key/UniqueKeyName::attributeNames": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$values = [];",
+        "foreach ([...$key->keys, ...$key->included] as $field) {",
+        "    $values[] = $field->value;",
+        "}",
+        "return \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexNames::attributes($values);"
+      ]
+    },
+    "Schema/Key/TableKeySet::close": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$retained = [];",
+        "foreach ($unique as $candidate) {",
+        "    foreach ([...$candidate->keys, ...$candidate->included] as $field) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($fields[$field->value]), 'A unique key reference must select a declared column.');",
+        "    }",
+        "    if ($primary !== null && self::same($primary, $candidate)) {",
+        "        if ($primary->name === null && $candidate->name !== null) {",
+        "            $primary = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\PrimaryKey($primary->keys, $primary->included, $candidate->name, $primary->timing);",
+        "        }",
+        "        continue;",
+        "    }",
+        "    foreach ($retained as $index => $prior) {",
+        "        if (self::same($prior, $candidate)) {",
+        "            if ($prior->name === null && $candidate->name !== null) {",
+        "                $retained[$index] = $candidate;",
+        "            }",
+        "            continue 2;",
+        "        }",
+        "    }",
+        "    $retained[] = $candidate;",
+        "}",
+        "$claimed = [$table->value => true];",
+        "foreach ($primary === null ? $retained : [$primary, ...$retained] as $constraint) {",
+        "    if ($constraint->name !== null) {",
+        "        $name = $constraint->name->value;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($claimed[$name]), 'Retained table keys must use unused explicit index names.');",
+        "        $claimed[$name] = true;",
+        "    }",
+        "}",
+        "return [$primary, array_values($retained)];"
+      ]
+    },
+    "Schema/Key/TableKeySet::same": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$priorNullsEqual = $prior instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\UniqueKey && $prior->nullsNotDistinct;",
+        "return $priorNullsEqual === $candidate->nullsNotDistinct && $prior->timing === $candidate->timing && self::sameReferences($prior->keys, $candidate->keys) && self::sameReferences($prior->included, $candidate->included);"
+      ]
+    },
+    "Schema/Key/TableKeySet::sameReferences": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if (count($first) !== count($second)) {",
+        "    return false;",
+        "}",
+        "foreach ($first as $index => $field) {",
+        "    if ($field->value !== $second[$index]->value) {",
+        "        return false;",
+        "    }",
+        "}",
+        "return true;"
+      ]
+    },
+    "Schema/Key/KeyConstraintLowering::definitions": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$columns = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateColumnLowering();",
+        "$primary = null;",
+        "$unique = [];",
+        "foreach ($definition->elements as $element) {",
+        "    if ($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\TablePrimaryKey || $element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\TableUnique) {",
+        "        $constraints = [$this->table($element)];",
+        "    } else {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnDefinition, 'CREATE TABLE requires ordinary column definitions.');",
+        "        [$column, $constraints] = $this->column($element);",
+        "        $columns[] = $lowering->lower($operation, $column);",
+        "    }",
+        "    foreach ($constraints as $constraint) {",
+        "        if ($constraint instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\PrimaryKey) {",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($primary === null, 'CREATE TABLE can declare only one primary key.');",
+        "            $primary = $constraint;",
+        "        } else {",
+        "            $unique[] = $constraint;",
+        "        }",
+        "    }",
+        "}",
+        "return [$columns, $primary, $unique];"
+      ]
+    }
+  },
+  "extends": "postgres-key-constraints-boundaries-v2.json",
+  "sharedNamingSource": "postgres-declaration-binding-sources-v22.json"
+}
