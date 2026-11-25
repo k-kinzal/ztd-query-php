@@ -36,6 +36,11 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
     public readonly array $tables;
 
     /**
+     * @var list<ForeignKeyEdge> Native persistent reference edges from the supplied definitions
+     */
+    public readonly array $foreignKeys;
+
+    /**
      * @var non-empty-list<Name> The schemas searched for an unqualified relation name, in precedence order
      */
     public readonly array $searchPath;
@@ -53,6 +58,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
      * @param Comparison $relationNames How relation and schema names are compared
      * @param Comparison $columnNames How column names are compared
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
+     * @param list<ForeignKeyEdge> $foreignKeys Native persistent foreign keys in the declared catalog
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -62,6 +68,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         public readonly Comparison $relationNames = Comparison::Sensitive,
         public readonly Comparison $columnNames = Comparison::Sensitive,
         ?Name $declarationSchema = null,
+        array $foreignKeys = [],
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
@@ -71,6 +78,7 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         }
         $this->searchPath = $path;
         $this->tables = array_values($unique);
+        $this->foreignKeys = Check::listOf($foreignKeys, ForeignKeyEdge::class, 'The catalog has an ordered native foreign-key list.');
         $this->declarationSchema = $declarationSchema ?? $path[0];
     }
 

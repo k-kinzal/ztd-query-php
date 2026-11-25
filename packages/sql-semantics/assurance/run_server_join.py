@@ -129,6 +129,12 @@ def observe_finite_id(domain, engine, response, item, request):
     return domain.finite_id(engine, response, item)
 
 
+def native_rejection_sql(domain, request, item):
+    if "sql" in request:
+        return request["sql"]
+    return domain.rejection_sql(item, request)
+
+
 def seed_ids(specification):
     exploration = specification["exploration"]
     budgets = (("seed", exploration["casesPerSeed"]), ("direct-seed", exploration.get("directCasesPerSeed", 0)))
@@ -181,10 +187,13 @@ def execute(args, specification, tag, worker, db, domain=None):
                     require(rejects(response, rejection), f"server-{label}-negative-boundary", response)
                     witness = {}
                     if observe_rejection is not None and item is not None:
-                        verdict = db.request(domain.observer_request(item, current["sql"]))
-                        coordinate = observe_rejection(specification, item, verdict, current["sql"])
+                        sql = native_rejection_sql(domain, current, item)
+                        verdict = db.request(domain.observer_request(item, sql))
+                        coordinate = observe_rejection(specification, item, verdict, sql)
                         refusals[coordinate] += 1
                         witness["nativeRejection"] = verdict
+                        if "sql" not in current:
+                            witness["nativeRejectionSql"] = sql
                     ledger.record(key, "rejected", response=response, **witness)
                     continue
                 for (key, current, item, _), response in zip(batch, replies):

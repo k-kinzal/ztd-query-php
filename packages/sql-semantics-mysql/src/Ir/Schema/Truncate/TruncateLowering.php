@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
+use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -46,6 +47,38 @@ final class TruncateLowering
         $kind = $resolution->table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;
         $target = new TableName(new Identifier($schema), new Identifier($name->name->value));
 
-        return new TruncateTable(new TableIdentity($target, $kind), $profile->grammar);
+        $identity = new TableIdentity($target, $kind);
+
+        return new TruncateTable($identity, $this->referrers($context, $identity), $profile->grammar);
+    }
+
+    /**
+     * Settles the incoming persistent foreign keys of the selected native target.
+     * @return list<TableIdentity>
+     */
+    public function referrers(AnalysisContext $context, TableIdentity $target): array
+    {
+        if ($target->kind === ExternalRelationKind::TemporaryTable) {
+            return [];
+        }
+        Check::input($context->complete, 'A persistent truncation needs a complete catalog of referencing tables.');
+        $database = $target->name->schema->value;
+        $table = $target->name->table->value;
+        $children = [];
+        foreach ($context->foreignKeys as $edge) {
+            $parentSchema = $edge->parent->schema?->value;
+            if ($edge->parent->name->value !== $table || ($parentSchema !== $database && $parentSchema !== SessionDatabase::UNNAMED)) {
+                continue;
+            }
+            $childSchema = $edge->child->schema?->value;
+            Check::input(
+                $parentSchema !== SessionDatabase::UNNAMED && $childSchema !== null && $childSchema !== SessionDatabase::UNNAMED,
+                'The foreign-key dependency needs an absolute child and parent namespace.'
+            );
+            $name = new TableName(new Identifier($childSchema), new Identifier($edge->child->name->value));
+            $children[] = new TableIdentity($name, ExternalRelationKind::BaseTable);
+        }
+
+        return $children;
     }
 }

@@ -1401,6 +1401,8 @@ if ($dialect !== 'sqlite') {
         $truncate = 'Schema\\Truncate\\TruncateTable';
         $roots[] = $truncate;
         $internal[] = 'Schema\\Truncate\\TruncateLowering';
+        $internal[] = 'Schema\\Truncate\\TruncationDependents';
+        $pureCollaborators[] = 'Schema\\Truncate\\TruncationDependents';
         $index = 'Schema\\Index\\CreateIndex';
         $part = 'Schema\\Index\\IndexColumn';
         $policy = 'Schema\\Index\\Policy\\IndexChangePolicy';
@@ -1795,7 +1797,7 @@ try {
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v5.json', '7a1814a0d53a728f4cb57edcda6688a5390763adb35af826625b42f1dc707e24', 'MySQL session table binding'],
+            ['mysql-session-table-binding-v6.json', 'f276e3a3ed8ac2d545c325e55509405b3acf07bacb35577d34d12fc71f8442cd', 'MySQL session table binding'],
             ['mysql-native-index-binding-v5.json', '630a06f3b4142755ada05052b0aa05652067565ce6f718708efee31ea3c04c40', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
@@ -2391,6 +2393,7 @@ try {
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
                     'Schema\\Index\\DropIndexLowering' => $dialect === 'mysql' ? ['lower', 'identity', 'index'] : ['lower'],
+                    'Schema\\Truncate\\TruncateLowering' => $dialect === 'mysql' ? ['lower', 'referrers'] : ['lower'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };

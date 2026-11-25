@@ -418,7 +418,9 @@ The [PostgreSQL rebuild placement contract](postgres-reindex-tablespace-v2.json)
 
 The [MySQL ordered rename contract](mysql-ordered-table-rename-v2.json) verifies each original table identity through left-to-right name transitions. The native observer checks both schemas, matching column metadata and duplicate and NULL rows, exact errors, atomic replacement of names and implicit commit. Run `run_server_mysql_ordered_table_rename.py` and `combine_server_mysql_ordered_table_rename_evidence.py` on all nine pinned releases.
 
-The [MySQL truncation contract](mysql-truncate-v2.json) checks exact persistent and session-owned targets. Two connections observe the namespace distinction, matching declarations, referential restrictions, generated identities and transaction effects. Run `run_server_mysql_truncate.py` and `combine_server_mysql_truncate_evidence.py` on all nine pinned releases.
+The [MySQL truncation contract](mysql-truncate-v3.json) checks exact persistent and session-owned targets. Two connections observe the namespace distinction, matching declarations, referential restrictions, generated identities and transaction effects. Run `run_server_mysql_truncate.py` and `combine_server_mysql_truncate_evidence.py` on all nine pinned releases.
+
+The [MySQL native truncation dependency contract](mysql-truncate-foreign-dependencies-v2.json) fixes the required incoming constraint checks and external catalog interpretation. Earlier finite and seeded refusals retain their native SQL witnesses and transactional effects. Run `run_server_mysql_truncate_foreign_keys.py` and `combine_server_mysql_truncate_foreign_keys_evidence.py` for the [fixed cross-schema foreign-key observations](mysql-truncate-foreign-keys-evidence-v1.json).
 
 The [MySQL session table contract](mysql-session-table-sources-v1.json) checks both relational namespaces on two independent connections. It compares source roles, typed query results, mutation counts, retained permanent rows, rollback and persistent rename through an overlay. Run `run_server_mysql_session_table_sources.py` and `combine_server_mysql_session_table_sources_evidence.py` on all nine pinned releases.
 

@@ -2434,6 +2434,38 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $local = $semantics->analyze('TRUNCATE app.accounts', $temporary);
             $details['mysqlTruncate'] = [$result->target->name->schema->value, $result->target->name->table->value,
                 $result->target->kind->value, $local->target->kind->value];
+            $parent = 'CREATE TABLE app.fk_parent (id INT PRIMARY KEY)';
+            $tableReference = 'CREATE TABLE app.fk_child (pid INT, FOREIGN KEY (pid) REFERENCES fk_parent(id))';
+            $inlineReference = 'CREATE TABLE app.fk_child (pid INT REFERENCES fk_parent(id))';
+            $truncateParent = 'TRUNCATE TABLE app.fk_parent';
+            $checked = new SqlSemantics\Platform\MySql\Semantics('mysql-9.0.1');
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-8.4.7');
+            $dependencies = [$checked->context([$parent, $tableReference]), $checked->context([$parent, $inlineReference])];
+            $errors = [];
+            foreach ($dependencies as $known) {
+                try {
+                    $checked->analyze($truncateParent, $known);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $errors[] = $error->getMessage();
+                }
+            }
+            $earlier = $legacy->analyze($truncateParent, $legacy->context([$parent, $inlineReference]));
+            $shadow = $checked->analyze($truncateParent, $checked->context([$parent, $tableReference, 'CREATE TEMPORARY TABLE app.fk_parent (id INT)']));
+            $type = SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable::class;
+            $child = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+                new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+                    new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('fk_child')
+                ), SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable
+            );
+            $unsafe = [[null, []], [$earlier->target, [$child]]];
+            foreach ($unsafe as [$target, $referrers]) {
+                try {
+                    new $type($target, $referrers);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $errors[] = $error->getMessage();
+                }
+            }
+            $details['mysqlTruncateDependencies'] = [$earlier->toString(), $shadow->target->kind->value, $errors];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $details['postgresTruncate'] = [$result->restartIdentity, $result->cascade, []];

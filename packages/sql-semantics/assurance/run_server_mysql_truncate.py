@@ -13,8 +13,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-truncate"
 OBSERVER = "mysql_truncate_observer.php"
-CONTRACT_NAME = "mysql-truncate-v2.json"
-CONTRACT = "ae66fbc18e9d2fc59120550865194a38c82d6f6ad0b1da1f320988562e76414d"
+CONTRACT_NAME = "mysql-truncate-v3.json"
+CONTRACT = "dd0846981c177b548590b345ae043fc2238b28c4c7a2cdab70d707486a760d74"
+DEPENDENCIES = "360b2331f177deb6e7e060341d3441d3dab037f874836b8debd3cc65149ee57c"
 PREVIOUS_CONTRACT = "33bda84cb25fd77b42926291742bfd32a3b66616db27c65e00cdc4b3c8406dd4"
 OBSERVER_CONTRACT = "5d9d281f54a92ce6f015c0f8e776081522d613a9a9140cb081ea34d6ed75ba2f"
 COMPLETE_SEEDS = True
@@ -25,6 +26,8 @@ SESSION = "temporary-table"
 NAME_FAILURE = "An absolute MySQL table name needs 1 to 64 characters without path separators or a trailing space."
 BIND_FAILURE = "TRUNCATE TABLE requires a resolved base table."
 KIND_FAILURE = "A resolved table identity requires a persistent or temporary table."
+DEPENDENCY_FAILURE = "TRUNCATE TABLE is blocked by a foreign key from another table."
+OPEN_CATALOG = "A persistent truncation needs a complete catalog of referencing tables."
 ROLE_MISMATCH = "mysql-truncate-target-role"
 
 
@@ -33,7 +36,14 @@ def specifications():
     require(digest(path) == CONTRACT and digest(TOOL / "mysql-truncate-v1.json") == PREVIOUS_CONTRACT, "mysql-truncate-contract-mismatch")
     require(digest(TOOL / "mysql-truncate-observer-v1.json") == OBSERVER_CONTRACT,
             "mysql-truncate-observer-contract-mismatch")
-    return json.loads(path.read_text()), profiles()[1]
+    dependencies = TOOL / "mysql-truncate-foreign-dependencies-v2.json"
+    require(digest(dependencies) == DEPENDENCIES, "mysql-truncate-dependency-contract-digest")
+    definition = json.loads(path.read_text())
+    inherited = TOOL / "mysql-truncate-v2.json"
+    require(digest(inherited) == "ae66fbc18e9d2fc59120550865194a38c82d6f6ad0b1da1f320988562e76414d",
+            "mysql-truncate-legacy-contract-digest")
+    same(json.loads(inherited.read_text())["exploration"], definition["exploration"])
+    return definition, profiles()[1]
 
 
 def targets():
@@ -48,14 +58,23 @@ def targets():
 
 
 def case(tag, fixture, target, variant=0, kind="table"):
-    return {"dialect": "mysql", "release": tag, "fixture": fixture, "variant": variant, "mysqlTruncate": [*target, kind]}
+    referrers = []
+    if kind == "table" and target == [SCHEMA, A]:
+        if fixture.startswith("foreign-key-"):
+            referrers.append([SCHEMA, REF, "table"])
+        if fixture == "self-reference":
+            referrers.append([SCHEMA, A, "table"])
+    return {"dialect": "mysql", "release": tag, "fixture": fixture, "variant": variant,
+            "mysqlTruncate": [*target, kind], "referrers": referrers}
 
 
 def finite_ids(_, spec, _tag):
     finite = spec["finite"]
     expected = set(product(*(finite[axis] for axis in AXES)))
     require(len(expected) == finite["identities"], "mysql-truncate-grid-size")
-    return expected
+    admitted = {point for point in expected if unavailable(case(_tag, point[0], targets()[point[1]], kind=point[2])) is None}
+    same(finite["admitted"], len(admitted))
+    return admitted
 
 
 def finite_id(_, reply, item):
@@ -81,6 +100,22 @@ def analyzed_request(tag, sql, declarations=None, complete=True, temporary=None)
     return {"dialect": "mysql", "release": tag, "currentDatabase": SCHEMA, "declarations": declarations, "sql": sql, "complete": complete}
 
 
+def declarations(item):
+    fixture = item["fixture"]
+    initial_tables = []
+    for label, name in targets().items():
+        if label == "absent":
+            continue
+        self_reference = fixture == "self-reference" and label == "primary"
+        clause = ", FOREIGN KEY (parent_id) REFERENCES " + qualified(name) + "(id)" if self_reference else ""
+        initial_tables.append(f"CREATE TABLE {qualified(name)} (id INT PRIMARY KEY, parent_id INT{clause})")
+    if fixture.startswith("foreign-key-"):
+        child = qualified([SCHEMA, REF])
+        parent = qualified([SCHEMA, A])
+        initial_tables.append(f"CREATE TABLE {child} (id INT PRIMARY KEY, parent_id INT, FOREIGN KEY (parent_id) REFERENCES {parent}(id))")
+    return initial_tables
+
+
 def analyzed(tag):
     names = targets()
     yield f"TRUNCATE {A}", case(tag, "plain", names["primary"])
@@ -103,6 +138,7 @@ def negatives(tag):
     yield analyzed_request(tag, f"TRUNCATE {ABSENT}"), SEMANTIC, "does not exist"
     yield analyzed_request(tag, f"TRUNCATE {ABSENT}", complete=False), DIAGNOSTIC, BIND_FAILURE
     yield analyzed_request(tag, f"TRUNCATE {A}", [f"CREATE VIEW {SCHEMA}.{A} AS SELECT 1 AS id"]), SEMANTIC, "is a view"
+    yield analyzed_request(tag, f"TRUNCATE {A}", complete=False), DIAGNOSTIC, OPEN_CATALOG
     yield case(tag, "plain", targets()["primary"], kind="view"), DIAGNOSTIC, KIND_FAILURE
 
 
@@ -116,21 +152,74 @@ def seeded(tag, spec, seed, count):
         yield case(tag, fixture, target, 0 if position == 0 else variant, kind)
 
 
-def requests(_, tag, spec):
+def unavailable(item):
+    effect = prediction(item)["effect"]
+    return {1146: BIND_FAILURE, 1701: DEPENDENCY_FAILURE}.get(effect[-1])
+
+
+def direct_request(item):
+    return {**item, "mysqlTruncate": None} if unavailable(item) == BIND_FAILURE else item
+
+
+def rejection(name, item, wire, boundary):
+    return "negative/" + name, wire, {**item, "rejectionId": name}, {"exception": DIAGNOSTIC, "message": boundary}
+
+
+def native_refusals(tag, spec):
     for index, (fixture, target, kind) in enumerate(product(*(spec["finite"][axis] for axis in AXES))):
         item = case(tag, fixture, targets()[target], kind=kind)
-        yield f"finite/{index}", item, item, None
+        message = unavailable(item)
+        if message is not None:
+            yield rejection(f"finite/{index}", item, direct_request(item), message)
+    for index, (sql, item) in enumerate(analyzed(tag)):
+        message = unavailable(item)
+        if message is not None:
+            wire = analyzed_request(tag, sql, declarations(item), temporary=session_target(item))
+            yield rejection(f"analyze/{index}", item, wire, message)
+    for seed in spec["exploration"]["seeds"]:
+        for index, item in enumerate(seeded(tag, spec, seed, spec["exploration"]["casesPerSeed"])):
+            message = unavailable(item)
+            if message is not None:
+                yield rejection(f"seed/{seed}/{index}", item, direct_request(item), message)
+
+
+def requests(engine, tag, spec):
+    for index, (fixture, target, kind) in enumerate(product(*(spec["finite"][axis] for axis in AXES))):
+        item = case(tag, fixture, targets()[target], kind=kind)
+        if unavailable(item) is None:
+            yield f"finite/{index}", item, item, None
     written = list(analyzed(tag))
     require(len(written) == len(spec["analysis"]), "mysql-truncate-analysis-count")
     for index, (sql, item) in enumerate(written):
-        yield f"analyze/{index}", analyzed_request(tag, sql, temporary=session_target(item)), item, None
+        if unavailable(item) is None:
+            yield f"analyze/{index}", analyzed_request(tag, sql, declarations(item), temporary=session_target(item)), item, None
     for seed in spec["exploration"]["seeds"]:
         for index, item in enumerate(seeded(tag, spec, seed, spec["exploration"]["casesPerSeed"])):
+            if unavailable(item) is not None:
+                item = case(tag, item["fixture"], item["mysqlTruncate"][:2], item["variant"], SESSION)
             yield f"seed/{seed}/{index}", item, item, None
+    observed = list(native_refusals(tag, spec))
+    same(spec["refusalsWithNativeEvidence"], len(observed))
+    yield from observed
     bad = list(negatives(tag))
     require(len(bad) == len(spec["negative"]), "mysql-truncate-negatives-count")
+    same(spec["negativeCount"], len(bad) + len(observed))
     for index, (item, exception, message) in enumerate(bad):
-        yield f"negative/{index}", item, None, {"exception": exception, "message": message}
+        yield f"negative/local/{index}", item, None, {"exception": exception, "message": message}
+
+
+def rejection_sql(item, _request):
+    return "TRUNCATE TABLE " + qualified(item["mysqlTruncate"][:2])
+
+
+def observe_rejection(_, item, actual, sql):
+    require(unavailable(item) is not None, "mysql-truncate-expected-native-refusal", item)
+    check_observation(item, observation(actual), sql)
+    return item["rejectionId"]
+
+
+def rejected_finite_ids(spec, tag):
+    return {item["rejectionId"] for _, _, item, _ in native_refusals(tag, spec)}
 
 
 def coordinate(target):
@@ -222,7 +311,7 @@ def observation(raw):
 
 def check_value(item, response):
     require(response["status"] == "constructed"
-            and response["profile"] == item["release"] + "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+            and response["profile"] == item["release"] + "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/foreign-key-checks=1",
             "mysql-truncate-positive-rejected", response)
     require(item["mysqlTruncate"] == response["mysqlTruncate"], ROLE_MISMATCH,
             {"sql": response["sql"], "expected": item["mysqlTruncate"], "observed": response["mysqlTruncate"]})
@@ -319,7 +408,13 @@ def faults(_, tag):
     local = case(tag, "foreign-key-filled", targets()["primary"], kind=SESSION)
     local_request = analyzed_request(tag, f"TRUNCATE {A}", temporary=targets()["primary"])
     bad_path = 'strpbrk($identifier->value, \'/\\\\.\') === false && '
+    blocked = case(tag, "foreign-key-filled", names["primary"])
+    inbound_guard = """$child->kind === ExternalRelationKind::BaseTable
+                && $child->name->schema->value === $target->name->schema->value
+                && $child->name->table->value === $target->name->table->value"""
     return [
+        RenderFault("truncate-publish-blocked-parent", f"{root}/Truncate/TruncationDependents.php", inbound_guard, "true",
+                    {"boundary": {"exception": DIAGNOSTIC, "message": DEPENDENCY_FAILURE}}, "mysql-truncate-invalid-published", blocked),
         RenderFault("truncate-erase-schema", table, "$this->target->quoted()", "$this->target->name->table->quoted()",
                     case(tag, "plain", names["decoy"]), "meaning-mismatch"),
         RenderFault("truncate-redirect-to-decoy", table, "$this->target->quoted()", repr(qualified(names["decoy"])),

@@ -14,7 +14,7 @@ from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, diges
 from renderer_fault_dispatch import verify as verify_fault_dispatch
 from run_server import check_profile, check_transport, rejects, same
 import run_server_join
-from run_server_join import check_fault_obligations, direct_identities, negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
+from run_server_join import check_fault_obligations, direct_identities, native_rejection_sql, negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -47,7 +47,10 @@ def replay(path, report, specification, domain=run_server_join):
             require(rejects(frame["response"], rejection), f"server-{label}-replay-rejection", key)
             if observe_rejection is not None and item is not None:
                 require("nativeRejection" in frame, f"server-{label}-replay-native-rejection-missing", key)
-                coordinate = observe_rejection(specification, item, frame["nativeRejection"], request["sql"])
+                sql = native_rejection_sql(domain, request, item)
+                if "sql" not in request:
+                    same(sql, frame.get("nativeRejectionSql"))
+                coordinate = observe_rejection(specification, item, frame["nativeRejection"], sql)
                 refusals[coordinate] += 1
             else:
                 require("nativeRejection" not in frame, f"server-{label}-replay-unexpected-native-rejection", key)

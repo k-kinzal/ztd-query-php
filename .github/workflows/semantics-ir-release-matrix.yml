@@ -1093,6 +1093,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-mysql-truncate-evidence"
+      - name: Compare MySQL truncation foreign-key observations
+        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_truncate_foreign_keys.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-mysql-truncate-foreign-keys-evidence"
       - name: Compare MySQL session table sources and writes
         if: ${{ !cancelled() && matrix.engine == 'mysql' }}
         env:
@@ -2977,6 +2992,12 @@ jobs:
         with:
           name: native-mysql-truncate-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-mysql-truncate-evidence/
+      - name: Preserve MySQL truncation foreign-key observations
+        if: ${{ always() && matrix.engine == 'mysql' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-mysql-truncate-foreign-keys-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-mysql-truncate-foreign-keys-evidence/
       - name: Preserve MySQL session table observations and any failure
         if: ${{ always() && matrix.engine == 'mysql' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
@@ -156,5 +157,18 @@ final class PlatformTest extends TestCase
     public function testSharedReusesTheDatabasePlatform(): void
     {
         self::assertSame(Platform::shared(), Platform::shared());
+    }
+
+    public function testForeignKeysBindsTheDeclaredParentSchema(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-9.0.1', null, ParameterStyle::Native);
+        $root = $platform->context($profile, ['default_db'], [], false);
+        $binder = new StatementBinder($platform->parser($profile));
+        $definition = $binder->resolve('CREATE TABLE app.c (pid INT REFERENCES parent(id))', $root);
+        $keys = $platform->foreignKeys($definition);
+
+        self::assertCount(1, $keys);
+        self::assertSame('app', $keys[0]->parent->schema?->value);
     }
 }

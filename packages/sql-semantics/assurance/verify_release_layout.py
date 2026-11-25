@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v158.json"
-CONTRACT = "cd4ccce9116abf641d046dafc038a0635ef49dc8f1866954f2c70a9abce6e9eb"
+CONTRACT_NAME = "release-layout-v159.json"
+CONTRACT = "fbea6c081a5eb3576ddef40c60610708ea494a95826ad7094fa01c4345b01d56"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -863,6 +863,11 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlTruncate") == ["app", "accounts", "table", "temporary-table"]
                     and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",
                     "installed-mysql-truncate-mismatch", item)
+            refused = "TRUNCATE TABLE is blocked by a foreign key from another table."
+            require(item.get("mysqlTruncateDependencies") == [
+                "TRUNCATE TABLE `app`.`fk_parent`", "temporary-table",
+                [refused, refused, "TRUNCATE TABLE requires a resolved base table.", refused],
+            ], "installed-mysql-truncate-dependency-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Truncate\\TruncateTable"):
             require(item.get("postgresTruncate") == [True, True, [["public", "accounts", True], ["public", "accounts", False]]]
                     and item["sql"] == 'TRUNCATE TABLE ONLY "public"."accounts", "public"."accounts" RESTART IDENTITY CASCADE',

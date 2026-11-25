@@ -1191,7 +1191,10 @@ function constructMysqlTruncate(string $platform, array $input): SemanticsIR
     $namespace = $platform . 'Ir\\';
     $statement = $namespace . 'Schema\\Truncate\\TruncateTable';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
-    return new $statement(mysqlTableIdentity($namespace, $input['mysqlTruncate']), $release::from($input['release']));
+    $target = $input['mysqlTruncate'] === null ? null : mysqlTableIdentity($namespace, $input['mysqlTruncate']);
+    $referrers = array_map(static fn (array $referrer) => mysqlTableIdentity($namespace, $referrer), $input['referrers']);
+
+    return new $statement($target, $referrers, $release::from($input['release']));
 }
 
 function observeMysqlTruncate(object $value): array
@@ -2289,7 +2292,7 @@ function observeStatement(array $input): array
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
             isset($input['rename']) => constructPostgresRename($platform, $input),
             isset($input['tableRename']) => constructMysqlRename($platform, $input),
-            isset($input['mysqlTruncate']) => constructMysqlTruncate($platform, $input),
+            array_key_exists('mysqlTruncate', $input) => constructMysqlTruncate($platform, $input),
             isset($input['truncateTable']) => constructPostgresTruncate($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),

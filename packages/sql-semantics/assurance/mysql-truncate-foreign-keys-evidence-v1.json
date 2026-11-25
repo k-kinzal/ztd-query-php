@@ -1,0 +1,101 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-foreign-keys-evidence-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-truncate-foreign-dependencies-v2.json",
+    "mysql-truncate-v3.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Stock InnoDB, lower_case_table_names=0, sql_mode empty, utf8mb4, foreign_key_checks=1, native parameters.",
+  "constructors": {},
+  "existingRoles": [
+    "Schema/Truncate/TruncateTable",
+    "Schema/Identity/TableIdentity"
+  ],
+  "finite": {
+    "forms": [
+      "none",
+      "same",
+      "cross-explicit",
+      "cross-local",
+      "self",
+      "inline",
+      "ignored-engine",
+      "shadow-child",
+      "like"
+    ],
+    "schemas": [
+      "ir_fixture",
+      "ir_fk_decoy"
+    ],
+    "lifetimes": [
+      "persistent",
+      "temporary-shadow"
+    ],
+    "identities": 36,
+    "before9Admitted": 31,
+    "mysql9Admitted": 30,
+    "enumeration": "Observe the full direct/analysis cross of each form, selected schema and lifetime. A statically blocked pair is required to refuse both routes and both compare its exact independent native behavior."
+  },
+  "exploration": {
+    "seeds": [
+      2213,
+      5107,
+      7147
+    ],
+    "casesPerSeed": 18,
+    "directCasesPerSeed": 18,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": []
+  },
+  "negativeCount": {
+    "mysql-9.0.1": 32,
+    "mysql-9.1.0": 32,
+    "default": 24
+  },
+  "negative": [
+    "Every native 1701 case must reject both direct and analyzed construction. Include an empty known child and driven cases from each structural seed."
+  ],
+  "observations": [
+    "Compare exact native resolved information-schema child and referenced parent coordinates under explicit and default naming.",
+    "Observe native 1701 and 1146 in the independent observer after the required construction refusal, including original rows and implicit commit. A native observation of a refused input uses the independent statement witness.",
+    "Compare absence and self-reference success, unqualified child schema, a child or parent temporary shadow, LIKE copies, inline references and ignored non-enforcing engine clauses.",
+    "Keep earlier full-state comparison of concrete data, metadata, next identity, transactional marker, and unaffected sibling.",
+    "Two persistent parent tables with different rows and allocation, the actual referencing schema and table, child contents, temporary shadow, retained LIKE copy and before-and-after metadata.",
+    "The fixed observer measures the attempted statement, exact native 1701 on a blocked target, the retained transaction marker, native affected rows and the next generated identifier.",
+    "Read the native foreign-key checking setting, autocommit mode, allocation increment and offset before every observation."
+  ],
+  "evidence": {
+    "P01": "Resolve one known target and the complete native static dependency boundary.",
+    "P02": "Reject an absent target, incomplete persistent catalog, and distinct native child before publishing the value.",
+    "P03": "Keep no relation declarations or binding artifacts in the completed value.",
+    "P04": "Compose the exact target namespace with complete incoming persistent references before construction.",
+    "P05": "Close direct inputs to TableIdentity through checked list traversal and store immutable target and release.",
+    "P06": "Compare the admitted native operation and separately observe native effects of blocked statements."
+  },
+  "obligations": {
+    "Q01": "Audit the input check, typed condition and binding path, and test an explicit known blocking reference in direct construction.",
+    "Q02": "Require admitted self-references, complete unrelated catalogs and both lifetimes, including temporary shadows and ignored definition forms.",
+    "Q03": "Verify physical namespace selection and exact owning schema for each foreign-key edge.",
+    "Q04": "Observe resulting native rows, keys, transaction, allocation, and deterministic error for statically refused statements.",
+    "Q05": "Compare installed constructors, independent native witnesses and normalized checked runtime boundaries on the exact distribution."
+  },
+  "faults": [
+    "Erase the origin of a persistent foreign-key declaration.",
+    "Redirect emitted truncation to the parent with the same name in the other database."
+  ],
+  "trust": "The exact stock native MySQL session, explicit complete external declarations, independent observation and measured fixture invariants."
+}

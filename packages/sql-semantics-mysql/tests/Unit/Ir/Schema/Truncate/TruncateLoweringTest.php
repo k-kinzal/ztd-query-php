@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
+use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Semantics;
 
@@ -36,5 +37,20 @@ final class TruncateLoweringTest extends TestCase
 
         self::assertInstanceOf(TruncateTable::class, $table);
         self::assertSame(ExternalRelationKind::TemporaryTable, $table->target->kind);
+    }
+
+    public function testReferrersDoNotCrossTheExactDatabaseBoundary(): void
+    {
+        $semantics = new Semantics();
+        $catalog = $semantics->context([
+            'CREATE TABLE first_db.parent (id INT PRIMARY KEY)',
+            'CREATE TABLE second_db.parent (id INT PRIMARY KEY)',
+            'CREATE TABLE second_db.child (pid INT, FOREIGN KEY (pid) REFERENCES parent(id))',
+        ]);
+        $result = $semantics->analyze('TRUNCATE first_db.parent', $catalog);
+        self::assertInstanceOf(TruncateTable::class, $result);
+
+        self::assertInstanceOf(AnalysisContext::class, $catalog);
+        self::assertSame([], (new TruncateLowering())->referrers($catalog, $result->target));
     }
 }
