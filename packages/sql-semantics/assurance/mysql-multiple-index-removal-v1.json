@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/mysql-multiple-index-removal-1",
+  "approval": "pending-human-review",
+  "extends": ["mysql-alter-index-removal-evidence-v1.json", "mysql-index-auto-increment-evidence-v1.json"],
+  "language": "The nine pinned native MySQL releases in the ordinary stock InnoDB profile, exact owner comparison and native session namespaces.",
+  "scope": "One ALTER TABLE with two to 64 physical index removals and its native algorithm and lock options. Admit each DROP INDEX, DROP KEY and DROP PRIMARY KEY spelling and the legacy qualifiers of the single removal family. The whole group is one DDL operation on one resolved table.",
+  "constructor": {
+    "type": "Schema/Index/DropIndexes",
+    "role": "Remove an ordered set of distinct native keys from one table atomically.",
+    "structure": "A detached ordered list of two to 64 IndexIdentity operands, a native grammar release, a single physical index policy, and the explicit legacy IGNORE bit.",
+    "conditions": "Every target has the same absolute owner and lifetime. Native system comparison makes every physical name distinct. At most one target supplies clustered identity. The selected mode permits the effective algorithm and lock for the whole group. If targets support a generating field, their complete backing names and field identity agree. At least one such backing name lies outside the set of removed keys.",
+    "meaning": "One native DDL operation removes all selected physical keys, preserving other keys, rows, supported AUTO_INCREMENT generation, commit behavior and the legacy warning where written. A missing or duplicate physical target and the loss of the final supporting key are static refusal conditions.",
+    "sql": "Emit ALTER TABLE with the quoted absolute owner and the DROP INDEX clauses in retained order, followed by the effective comma-separated native policy. Legacy ALTER IGNORE is preserved."
+  },
+  "finite": {
+    "lifetimes": ["persistent", "temporary", "temporary-shadow"],
+    "sizes": [2, 3, 8, 63, 64],
+    "physicalRoleCases": ["secondary-only", "explicit-primary-and-secondary", "clustered-unique-and-secondary"],
+    "effectCases": ["distinct-keys", "duplicate-target", "absent-target", "retained-auto-increment-support", "removed-all-auto-increment-support"],
+    "directBounds": [0, 1, 2, 64, 65],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Exact ordered operands in construction and emission, selected session namespace, native before-and-after key rows, field metadata and retained data.",
+    "Physically emitted SQL runs as one statement. Native 1091 for missing or duplicate targets leaves the index catalog unchanged. Native 1075 for removal of the final backing key leaves the full group in place.",
+    "Check implicit commit and the legacy warning. A successful generating-field case shows a functioning retained key and a subsequent generated identifier."
+  ],
+  "faults": [
+    "Omit the second removed key.",
+    "Check each backing key independently instead of requiring a survivor outside the complete set.",
+    "Reuse the permanent sibling or accept mixed owners.",
+    "Weaken native-case uniqueness or accept a false second clustered primary.",
+    "Drop the legacy warning or ignore a changed native retained key."
+  ],
+  "trackedBeyondThisSlice": ["Mixed ALTER TABLE action sets, dependency-aware foreign keys and non-B-tree targets remain required separate domains."],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-limits.html"
+  ]
+}
