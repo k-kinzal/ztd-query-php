@@ -1,0 +1,627 @@
+{
+  "approval": "pending-human-review",
+  "claims": [
+    "P02 list membership and minimum length",
+    "P05 readonly transitive value edges and detached list storage"
+  ],
+  "dialects": {
+    "mysql": {
+      "Aggregation/GroupedSelect": {
+        "columns": [
+          "Aggregation/GroupColumn",
+          1
+        ],
+        "keys": [
+          "ColumnReference",
+          0
+        ]
+      },
+      "Mutation/Insert": {
+        "rows": [
+          "Mutation/InsertRow",
+          1
+        ]
+      },
+      "Mutation/InsertRow": {
+        "values": [
+          "Mutation/InsertCell",
+          1
+        ]
+      },
+      "Mutation/Update": {
+        "assignments": "native-assignment-copy"
+      },
+      "Rows/LocalProjection": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/RecursiveSeries": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/With/WithProjection": {
+        "definitions": [
+          "Rows/With/WithDefinition",
+          1
+        ]
+      },
+      "Rows/With/WithRead": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Schema/Alter/RenameTable": {
+        "moves": [
+          "Schema/Alter/TableRename",
+          1
+        ]
+      },
+      "Schema/CreateTable": {
+        "columns": [
+          "Schema/TableColumn",
+          1
+        ]
+      },
+      "Schema/DropTable": {
+        "targets": "native-drop-target-copy"
+      },
+      "Schema/Index/CreateIndex": {
+        "columns": [
+          "Schema/Index/IndexColumn",
+          1
+        ]
+      },
+      "Schema/Key/PrimaryKey": {
+        "terms": [
+          "Schema/Key/PrimaryKeyColumn",
+          1
+        ]
+      },
+      "Schema/Query/CreateTableAs": {
+        "declaredColumns": [
+          "Schema/TableColumn",
+          0
+        ]
+      },
+      "Schema/View/CreateView": {
+        "columns": [
+          "Schema/View/ViewColumn",
+          1
+        ]
+      },
+      "Schema/View/DropView": {
+        "targets": [
+          "Schema/View/ViewName",
+          1
+        ]
+      },
+      "Select": {
+        "columns": [
+          "ResultColumn",
+          1
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "TableSource": {
+        "columnTypes": "native-slot-copy",
+        "columns": [
+          "Identifier",
+          0
+        ]
+      }
+    },
+    "postgres": {
+      "Aggregation/GroupedSelect": {
+        "columns": [
+          "Aggregation/GroupColumn",
+          1
+        ],
+        "keys": [
+          "ColumnReference",
+          0
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "Expression/IntegerCase": {
+        "arms": [
+          "Expression/IntegerCaseArm",
+          1
+        ]
+      },
+      "Mutation/Delete": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Mutation/Insert": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ],
+        "rows": [
+          "Mutation/InsertRow",
+          1
+        ]
+      },
+      "Mutation/Insert/Destination": {
+        "written": [
+          "Mutation/Insert/WriteSlot",
+          1
+        ]
+      },
+      "Mutation/InsertQuery": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Mutation/InsertRow": {
+        "values": [
+          "Mutation/InsertCell",
+          1
+        ]
+      },
+      "Mutation/Update": {
+        "assignments": [
+          "Mutation/UpdateAssignment",
+          1
+        ],
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Rows/LocalProjection": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/RecursiveSeries": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/Values/ValuesQuery": {
+        "rows": [
+          "Rows/Values/ValuesRow",
+          1
+        ]
+      },
+      "Rows/Values/ValuesRow": {
+        "cells": [
+          "Rows/Values/ValuesCell",
+          1
+        ]
+      },
+      "Rows/With/WithProjection": {
+        "definitions": [
+          "Rows/With/WithDefinition",
+          1
+        ]
+      },
+      "Rows/With/WithRead": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Schema/CreateTable": {
+        "columns": "postgres-primary-column-copy",
+        "uniqueKeys": "postgres-unique-list-copy"
+      },
+      "Schema/DropTable": {
+        "targets": [
+          "Schema/TableName",
+          1
+        ]
+      },
+      "Schema/Index/Btree/CreateIndex": {
+        "keys": [
+          "Schema/Index/Btree/IndexKey",
+          1
+        ],
+        "included": [
+          "Schema/Index/Btree/IncludedColumn",
+          0
+        ]
+      },
+      "Schema/Index/DropIndex": {
+        "targets": "postgres-index-target-copy"
+      },
+      "Schema/Key/PrimaryKey": {
+        "keys": [
+          "Identifier",
+          1
+        ],
+        "included": [
+          "Identifier",
+          0
+        ]
+      },
+      "Schema/Key/UniqueKey": {
+        "keys": [
+          "Identifier",
+          1
+        ],
+        "included": [
+          "Identifier",
+          0
+        ]
+      },
+      "Schema/Namespace/CreateSchema": {
+        "tables": [
+          "Schema/CreateTable",
+          0
+        ],
+        "sequences": [
+          "Schema/Sequence/CreateSequence",
+          0
+        ],
+        "views": [
+          "Schema/View/CreateView",
+          0
+        ],
+        "indexes": [
+          "Schema/Index/Btree/CreateIndex",
+          0
+        ],
+        "grants": [
+          "Schema/Sequence/Access/GrantSequenceAccess",
+          0
+        ]
+      },
+      "Schema/Namespace/DropSchema": {
+        "targets": [
+          "Schema/Namespace/SchemaDropTarget",
+          1
+        ]
+      },
+      "Schema/Query/CreateTableAs": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/Sequence/Access/NamedSequences": {
+        "sequences": [
+          "Schema/Sequence/SequenceSelector",
+          1
+        ]
+      },
+      "Schema/Sequence/Access/SequenceAccess": {
+        "rights": [
+          "Schema/Sequence/Access/SequenceRight",
+          0
+        ],
+        "grantees": [
+          "Schema/Sequence/Access/SequenceGrantee",
+          1
+        ]
+      },
+      "Schema/Sequence/Access/SequencesInSchemas": {
+        "schemas": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/Sequence/Alter/SetSequenceLogging": {
+        "modes": [
+          "Schema/Sequence/Alter/SequenceLogging",
+          0
+        ]
+      },
+      "Schema/Sequence/Authorization/AlterSequenceAuthorization": {
+        "actions": [
+          "Schema/Sequence/Authorization/SequenceAuthorizationAction",
+          0
+        ]
+      },
+      "Schema/Sequence/Defaults/SequenceDefaultPolicy": {
+        "creators": [
+          "Schema/Sequence/Authorization/SequencePrincipal",
+          0
+        ],
+        "schemas": [
+          "Identifier",
+          0
+        ],
+        "rights": [
+          "Schema/Sequence/Access/SequenceRight",
+          0
+        ],
+        "grantees": [
+          "Schema/Sequence/Access/SequenceGrantee",
+          1
+        ]
+      },
+      "Schema/Sequence/DropSequence": {
+        "targets": [
+          "Schema/Sequence/SequenceSelector",
+          1
+        ]
+      },
+      "Schema/Truncate/TruncateTable": {
+        "targets": [
+          "Schema/Truncate/TruncateTarget",
+          1
+        ]
+      },
+      "Schema/View/CreateMaterializedView": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/View/CreateView": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/View/DropView": {
+        "targets": [
+          "Schema/View/ViewName",
+          1
+        ]
+      },
+      "Select": {
+        "columns": [
+          "ResultColumn",
+          1
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "TableSource": {
+        "columnKinds": [
+          "From/ColumnKind",
+          0
+        ],
+        "columns": [
+          "Identifier",
+          0
+        ]
+      }
+    },
+    "sqlite": {
+      "Aggregation/GroupedSelect": {
+        "columns": [
+          "Aggregation/GroupColumn",
+          1
+        ],
+        "keys": [
+          "Aggregation/GroupKey",
+          0
+        ]
+      },
+      "Expression/CaseExpression": {
+        "branches": [
+          "Expression/CaseBranch",
+          1
+        ]
+      },
+      "Expression/Nulls/Coalesce": {
+        "arguments": [
+          "Expression/Nulls/CoalesceArgument",
+          2
+        ]
+      },
+      "Maintenance/Vacuum/VacuumRegistrations": {
+        "bindings": [
+          "Parameter",
+          1
+        ]
+      },
+      "Mutation/Delete": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Mutation/Insert": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ],
+        "writes": [
+          "ColumnReference",
+          0
+        ]
+      },
+      "Mutation/Update": {
+        "assignments": [
+          "Mutation/UpdateAssignment",
+          1
+        ],
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Predicate/FoldedMembership": {
+        "bindings": [
+          "Parameter",
+          0
+        ]
+      },
+      "Predicate/MembershipTest": {
+        "items": [
+          "Predicate/MembershipItem",
+          0
+        ]
+      },
+      "Rows/Compound": {
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ],
+        "steps": [
+          "Rows/CompoundStep",
+          1
+        ]
+      },
+      "Rows/LocalSource": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Rows/RecursiveDefinition": {
+        "step": [
+          "Rows/RecursiveColumn",
+          1
+        ]
+      },
+      "Rows/ValueRow": {
+        "values": "closed-scalar-copy"
+      },
+      "Rows/ValuesQuery": {
+        "rows": [
+          "Rows/ValueRow",
+          1
+        ]
+      },
+      "Schema/Alter/AddColumn": {
+        "checks": [
+          "Schema/Predicate/CheckConstraint",
+          0
+        ],
+        "priorHeading": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/Alter/AddGeneratedColumn": {
+        "checks": [
+          "Schema/Predicate/CheckConstraint",
+          0
+        ],
+        "priorHeading": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/Alter/DropColumn": {
+        "heading": [
+          "Schema/Alter/DropMember",
+          2
+        ]
+      },
+      "Schema/CreateTable": {
+        "checks": [
+          "Schema/Predicate/CheckConstraint",
+          0
+        ],
+        "columns": [
+          "Schema/TableColumn",
+          1
+        ],
+        "keys": "ordered-table-key-copy"
+      },
+      "Schema/Index/CreateIndex": {
+        "heading": [
+          "Identifier",
+          1
+        ],
+        "terms": [
+          "Schema/Index/IndexTerm",
+          1
+        ]
+      },
+      "Schema/Key/PrimaryKey": {
+        "terms": [
+          "Schema/Key/KeyTerm",
+          1
+        ]
+      },
+      "Schema/Key/UniqueKey": {
+        "terms": [
+          "Schema/Key/KeyTerm",
+          1
+        ]
+      },
+      "Schema/Predicate/DefinitionSource": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/Trigger/CreateTrigger": {
+        "program": "sqlite-trigger-action-copy",
+        "selectors": [
+          "Schema/Trigger/TriggerUpdateName",
+          0
+        ]
+      },
+      "Schema/Trigger/Mutation/TriggerUpdate": {
+        "assignments": [
+          "Schema/Trigger/Mutation/TriggerAssignment",
+          1
+        ]
+      },
+      "Schema/Trigger/TriggerDestination": {
+        "writable": "sqlite-trigger-writable-copy"
+      },
+      "Schema/Trigger/TriggerInsert": {
+        "rows": [
+          "Schema/Trigger/TriggerInsertRow",
+          1
+        ]
+      },
+      "Schema/Trigger/TriggerInsertRow": {
+        "fields": [
+          "Schema/Trigger/TriggerInsertField",
+          1
+        ]
+      },
+      "Schema/View/CreateView": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Select": {
+        "columns": [
+          "ResultColumn",
+          1
+        ],
+        "joins": [
+          "From/Join",
+          0
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "TableSource": {
+        "columns": [
+          "Identifier",
+          0
+        ]
+      }
+    }
+  },
+  "exclusions": "External schema truth, SQL fidelity, root clause constraints beyond list storage, and privileged reflection remain separate obligations.",
+  "extends": "value-storage-v72.json",
+  "replaces": "value-storage-v5.json",
+  "requirements": "A published array is assigned in its constructor from a copy of the admitted list elements. Its member type and minimum length are checked. All implicit and explicit constructor paths are free of reference parameters, array aliases and early successful exits. Non-array edges use closed readonly PHP property types. Restoration is blocked by the pinned Snapshot primitive.",
+  "revision": "SemanticsIR/value-storage-73",
+  "revises": "value-storage-v71.json"
+}

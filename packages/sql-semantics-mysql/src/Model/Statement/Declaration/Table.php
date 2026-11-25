@@ -40,6 +40,8 @@ final class Table
      * @param bool $complete Whether the column list is the complete member list of the relation
      * @param RelationKind $kind Whether the relation is a base table, a view, or another kind of relation
      * @param bool $temporary Whether this declaration creates a session-temporary table
+     * @param string|null $storageEngine The decoded engine of a known table declaration
+     * @param bool $hasIdentityKey A prior declared primary or eligible visible unique key
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -49,6 +51,8 @@ final class Table
         public readonly bool $complete = true,
         public readonly RelationKind $kind = RelationKind::BaseTable,
         public readonly bool $temporary = false,
+        public readonly ?string $storageEngine = null,
+        public readonly bool $hasIdentityKey = false,
     ) {
         Check::input(!$temporary || $kind === RelationKind::BaseTable, 'Only a base table can be a temporary declaration.');
         $this->columns = Check::listOf($columns, Column::class, 'Table columns are an ordered list of column declarations.');

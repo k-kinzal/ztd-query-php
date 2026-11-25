@@ -193,7 +193,17 @@ final class TableDeclaration
             }
         }
 
-        return $this->split($definition->name, [...$all, ...$selected], $derivation->context->profile, $complete, $definition->temporary());
+        $columns = [...$all, ...$selected];
+
+        return $this->split(
+            $definition->name,
+            $columns,
+            $derivation->context->profile,
+            $complete,
+            $definition->temporary(),
+            (new DeclaredTableStorage())->resolve($definition),
+            (new TableIdentityKeys())->hasIdentity($definition, $columns, $comparison)
+        );
     }
 
     /**
@@ -201,7 +211,7 @@ final class TableDeclaration
      *
      * @param list<array{ColumnDefinition|null, Column}> $columns Each column with the definition it comes from, if any
      */
-    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false): Table
+    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false, ?string $storageEngine = null, bool $identityKey = false): Table
     {
         $visible = [];
         $implicit = [];
@@ -214,7 +224,7 @@ final class TableDeclaration
             }
         }
 
-        return new Table($name, $profile, $visible, $implicit, $complete, temporary: $temporary);
+        return new Table($name, $profile, $visible, $implicit, $complete, temporary: $temporary, storageEngine: $storageEngine, hasIdentityKey: $identityKey);
     }
 
     /**
@@ -257,7 +267,16 @@ final class TableDeclaration
             $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability, $hidden->column->generated, $hidden->column->collation));
         }
 
-        return new Table($name, $profile, $columns, $implicit, $source->complete, temporary: $temporary);
+        return new Table(
+            $name,
+            $profile,
+            $columns,
+            $implicit,
+            $source->complete,
+            temporary: $temporary,
+            storageEngine: $source->storageEngine,
+            hasIdentityKey: $source->hasIdentityKey
+        );
     }
 
     /**

@@ -967,6 +967,42 @@ function observeMysqlTableIdentity(object $identity): array
     return [$identity->name->schema->value, $identity->name->table->value, $identity->kind->value];
 }
 
+function constructMysqlCreateIndex(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $index = $namespace . 'Schema\\Index\\CreateIndex';
+    $column = $namespace . 'Schema\\Index\\IndexColumn';
+    $name = $namespace . 'Identifier';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $definition = $input['mysqlCreateIndex'];
+    $target = constructSource($platform, $definition['target'], 'mysql');
+    $parts = [];
+    foreach ($definition['columns'] as $position => $reference) {
+        $parts[$position] = is_array($reference) ? new $column($reference[0], $reference[1]) : $reference;
+    }
+
+    return new $index($target, new $name($definition['name']), $parts, $definition['unique'], $definition['visible'],
+        $release::from($input['release']), $definition['ownerHasIdentityKey']);
+}
+
+function observeMysqlCreateIndex(string $namespace, SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex $value): array
+{
+    $target = observeSource($value->target, 'mysql', $namespace);
+    $target['columnTypes'] = array_map(
+        static fn ($kind): string|array => $kind instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar
+            ? ['varchar', $kind->length, $kind->collation->value, ...($kind->nullable ? [] : [false])] : $kind->value,
+        $value->target->columnTypes
+    );
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlCreateIndex' => [
+            'target' => $target, 'name' => $value->name->value, 'unique' => $value->unique, 'visible' => $value->visible,
+            'ownerHasIdentityKey' => $value->ownerHasIdentityKey,
+            'columns' => array_map(static fn ($column): array => [$column->slot, $column->descending], $value->columns),
+        ],
+    ];
+}
+
 function constructMysqlCreateAs(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -2090,6 +2126,7 @@ function observeStatement(array $input): array
             isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['createLike']) => constructMysqlCreateLike($platform, $input),
             isset($input['mysqlCreateTableAs']) => constructMysqlCreateAs($platform, $input),
+            isset($input['mysqlCreateIndex']) => constructMysqlCreateIndex($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -2181,6 +2218,9 @@ function observeStatement(array $input): array
                 'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
             ],
         ];
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex) {
+        return observeMysqlCreateIndex($namespace, $value);
     }
     if ($dialect === 'mysql' && $value::class === $namespace . 'Schema\\Query\\CreateTableAs') {
         return observeMysqlCreateAs($namespace, $value);

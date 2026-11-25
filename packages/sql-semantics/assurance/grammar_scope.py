@@ -785,6 +785,17 @@ def inventory(root):
                         related[alternative] = (*related[alternative], "mysql-local-varchar-v2.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if mysql:
+            btree_forms = {
+                "create: CREATE opt_unique INDEX_SYM ident key_alg ON table_ident ( key_list ) normal_key_options opt_index_lock_algorithm",
+                "create_index_stmt: CREATE opt_unique INDEX_SYM ident opt_index_type_clause ON_SYM table_ident ( key_list_with_expression ) opt_index_options opt_index_lock_and_algorithm",
+                "key_part: ident", "key_part: ident opt_ordering_direction", "key_part_with_expression: key_part",
+                "index_type: BTREE_SYM", "index_type_clause: USING index_type",
+            }
+            for rule in ("key_list", "key_list_with_expression", "order_dir", "opt_ordering_direction",
+                         "ordering_direction", "opt_unique", "visibility", "opt_index_type_clause"):
+                btree_forms.update(rules.get(rule, []))
+            for alternative in signatures & btree_forms:
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-btree-index-evidence-v1.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):
                 for alternative in rules.get(rule, []):
                     if rule != "rename" or "table_to_table_list" in alternative:

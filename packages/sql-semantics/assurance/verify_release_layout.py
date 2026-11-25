@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v150.json"
-CONTRACT = "6dd10555b0cc6f9607210782643f3342c4fa0eb626240fa9d4ddff6e8c06355e"
+CONTRACT_NAME = "release-layout-v151.json"
+CONTRACT = "d642a9dc7e9142de6d3701d07ff66784a9f543a6cd1e6e562429cab594071d26"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -705,6 +705,10 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlInnoDbDeclarationWidth") == [
                 1017, 1017, 1016, "c1016", True, "The declared clustered InnoDB record must fit the native 8126-byte boundary.",
             ], "installed-mysql-innodb-width-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\CreateIndex"):
+            index_sql = "CREATE UNIQUE INDEX `test_ix` ON `app`.`session_index` (`a` DESC) INVISIBLE"
+            require(item.get("mysqlBtreeIndex") == ["temporary-table", "int-not-null", True, True, False,
+                    index_sql, index_sql, "An implicit primary index must be visible."], "installed-mysql-btree-index-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
             require(item.get("mysqlQueryBackedInnoDbWidth") == [
                 203, False, False, 1, "tail_5", "The projected clustered InnoDB record must fit the native 8126-byte boundary.",

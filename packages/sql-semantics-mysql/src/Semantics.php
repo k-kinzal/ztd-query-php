@@ -32,6 +32,8 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateRelationLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndexLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike;
 use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
@@ -71,6 +73,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback as ParsedR
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint as ParsedRollbackToSavepoint;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint as ParsedSavepoint;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction as ParsedStartTransaction;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex as ParsedCreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable as ParsedCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike as ParsedCreateTableLike;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView as ParsedCreateView;
@@ -150,7 +153,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -162,6 +165,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedCompound, $statement instanceof ParsedParenthesized => (new CompoundLowering())->lower($operation, $statement),
             $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateIndex => (new CreateIndexLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateTableLike, $statement instanceof ParsedCreateView => (new CreateRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedDrop, $statement instanceof ParsedDropView, $statement instanceof ParsedRenameTable, $statement instanceof ParsedTruncateTable => (new RelationChangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
@@ -177,7 +181,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection>
+     * @return list<Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

@@ -1401,6 +1401,17 @@ if ($dialect !== 'sqlite') {
         $truncate = 'Schema\\Truncate\\TruncateTable';
         $roots[] = $truncate;
         $internal[] = 'Schema\\Truncate\\TruncateLowering';
+        $index = 'Schema\\Index\\CreateIndex';
+        $part = 'Schema\\Index\\IndexColumn';
+        $roots[] = $index;
+        array_push($internal, 'Schema\\Index\\CreateIndexLowering', 'Schema\\Index\\IndexOptionsLowering',
+            'Schema\\Index\\IndexTableLowering', 'Schema\\Index\\IndexPartsLowering');
+        $properties[$index] = ['target' => ['TableSource'], 'name' => ['Identifier'], 'columns' => ['array'],
+            'unique' => ['bool'], 'visible' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+            'ownerHasIdentityKey' => ['bool']];
+        $properties[$part] = ['slot' => ['int'], 'descending' => ['bool']];
+        $methods[$index] = ['__construct', 'profileId', 'toString'];
+        $methods[$part] = ['__construct'];
         $identity = 'Schema\\Identity\\TableIdentity';
         $properties[$identity] = ['name' => [$tableName], 'kind' => ['From\\ExternalRelationKind']];
         $methods[$identity] = ['__construct', 'quoted'];
@@ -1586,6 +1597,8 @@ try {
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesList => (new \\' . $prefix
             . 'Rows\\Values\\ValuesLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
+        . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateIndex => (new \\'
+            . $prefix . 'Schema\\Index\\CreateIndexLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'mysql'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\Table\\CreateTableLike, $statement instanceof \\' . $platform
@@ -1723,9 +1736,10 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v5.json', '1039329131e0b89f6eab37a54962abb072739fc96b62851488ca39c2d07c358a', 'MySQL VARCHAR binding'],
-            ['mysql-ordered-table-rename-binding-v4.json', '4b99341a225f348f40a39e89cd0c870e87b6415722c2a855dda8473d17b166f2', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v3.json', 'f9c7f548cb0d727552417e2ebed47e503fe7c6c53181bb70fdba067269ce9692', 'MySQL session table binding'],
+            ['mysql-varchar-binding-v6.json', 'd1e5a90ad5187a2685700f486eeb04d130146334db702a918faed7bf77409362', 'MySQL VARCHAR binding'],
+            ['mysql-ordered-table-rename-binding-v5.json', '32a45b7df8471daa07eee24a217fb785d0efac1d84194343a27a0d7563be52c2', 'MySQL ordered rename binding'],
+            ['mysql-session-table-binding-v4.json', '15dc5b5cbd57d4ebdf2fc4a8b0c26e9d57acc4e4d9915b38bf2d6cd40eb6287c', 'MySQL session table binding'],
+            ['mysql-btree-index-binding-v1.json', 'd206ac408565712daad5d45663b3c666b7aa75f0f0bb8bcdd7a86fa773e42989', 'MySQL B-tree index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1766,9 +1780,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v72.json';
+    $storagePath = __DIR__ . '/value-storage-v73.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '43a813cd84242b9efb8cea2bf62743a3896492e829c4f850bc69d3567db5bf57',
+        hash_file('sha256', $storagePath) === '229a0450ee240af9aedc213e7bf2c6ca87e889b05e41dcaac93d877a8279abdb',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

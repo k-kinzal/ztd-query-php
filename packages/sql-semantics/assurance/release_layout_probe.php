@@ -726,6 +726,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\View\\DropView'] = 'DROP VIEW IF EXISTS app.absent_view CASCADE';
         $queries['Schema\\Alter\\RenameTable'] = 'RENAME TABLE app.accounts TO app.staged, app.staged TO app.archived';
         $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE app.accounts';
+        $queries['Schema\\Index\\CreateIndex'] = 'CREATE INDEX lookup ON app.accounts (id DESC) INVISIBLE';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -2243,6 +2244,27 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                     $drop->toString()],
                 [$result, $mixed, $local]
             );
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\CreateIndex') {
+            $context = $semantics->context([
+                'CREATE TABLE app.session_index (permanent_field INT NOT NULL)',
+                'CREATE TEMPORARY TABLE app.session_index (a INT NOT NULL, b INT NOT NULL, UNIQUE INDEX prior_identity (b)) ENGINE=InnoDB',
+            ]);
+            $indexed = $semantics->analyze('CREATE UNIQUE INDEX test_ix ON app.session_index (a DESC) INVISIBLE', $context);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
+                $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, true,
+            );
+            $rejected = null;
+            try {
+                new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
+                    $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, false,
+                );
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage();
+            }
+            $details['mysqlBtreeIndex'] = [$indexed->target->kind->value, $indexed->target->columnTypes[0]->value,
+                $indexed->ownerHasIdentityKey, $indexed->columns[0]->descending, $indexed->visible,
+                $indexed->toString(), $direct->toString(), $rejected];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);

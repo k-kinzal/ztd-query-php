@@ -58,6 +58,8 @@ Use `TINYINT`, `SMALLINT`, `MEDIUMINT`, `INTEGER` or `BIGINT` for an ordinary si
 
 An ordinary signed `PRIMARY KEY` retains the ordered positions of its required fields. Inline and table clauses resolve to the same key type. The column layout records effective defaults for the selected release, including the zero default that MySQL 5.6 can assign when a table key makes a column required. Key terms retain descending storage from MySQL 8.0.
 
+Use \`CREATE INDEX\` or \`CREATE UNIQUE INDEX\` to declare an ordinary InnoDB B-tree index over declared signed INT fields. Supply the owning table declaration. The resolved owner exposes the selected fields in declaration order, and the ordered index parts refer to those fields by slot. A session-temporary table shadows a permanent table with the same name. MySQL 5.6 and 5.7 store the key parts in ascending order. Newer releases retain effective descending direction and index visibility. The first required-only unique index must stay visible when no earlier key supplies primary identity. Executing the output can still fail on existing data, for example when a unique tuple repeats.
+
 Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.
