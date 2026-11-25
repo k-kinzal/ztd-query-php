@@ -1,0 +1,53 @@
+{
+  "revision": "SemanticsIR/native-workflow-routing-2",
+  "approval": "pending-human-review",
+  "authority": "The native registry, released fixture profiles, recursive syntax-availability contract and verified workflow revision define the checked schedule.",
+  "observations": [
+    "Each required native domain and the older-release recursive availability control has exactly one runner and exactly one matching artifact upload.",
+    "Each route selects exactly the releases in the independent native launch plan.",
+    "Runners invoke the exact acceptance copy with the candidate as data and preserve every expected output, including failures.",
+    "The trusted workflow SHA and candidate input are checked out in distinct roles with credentials disabled.",
+    "For a domain with a registered release subset, its own verifier replay profile list must identify exactly the launch and artifact release pairs."
+  ],
+  "shape": {
+    "workflow": ".github/workflows/semantics-ir-release-matrix.yml",
+    "job": "comparison",
+    "stepSyntax": "Fixed indentation, named ordinary steps, explicit command or artifact action and exact current allowlisted engine/release condition expressions.",
+    "runtimeSource": "trusted/packages/sql-semantics/assurance",
+    "candidatePath": "candidate",
+    "toolAutoload": "trusted/packages/sql-semantics-sqlite/vendor/autoload.php",
+    "artifactAction": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+    "expressionScope": "Native workflow conditions select only by matrix.engine and matrix.release. Runtime status guards are success or !cancelled for comparison and always for preservation."
+  },
+  "faults": [
+    {
+      "id": "duplicate-native-comparison",
+      "expected": "native-workflow-duplicate-runner"
+    },
+    {
+      "id": "missing-native-comparison",
+      "expected": "native-workflow-runner-inventory"
+    },
+    {
+      "id": "narrowed-native-release-condition",
+      "expected": "native-workflow-route-selection"
+    },
+    {
+      "id": "mismatched-native-upload-path",
+      "expected": "native-workflow-artifact-path"
+    },
+    {
+      "id": "candidate-native-verifier-path",
+      "expected": "native-workflow-runner-command"
+    }
+  ],
+  "success": "Observe the exact expected route identities, argument layouts and profiles. Require the unchanged healthy workflow to pass and each injected configuration defect to produce its specified rejection.",
+  "evidence": [
+    "Workflow and checker digests",
+    "Exact recognized comparison and artifact routes with release identities",
+    "Control differences, candidate inputs and expected signals",
+    "Exact runner replay profiles for each domain with a fixed release subset"
+  ],
+  "scope": "This check covers the fixed native comparison job shape and its handoff to native artifacts. External evaluation, durable storage and branch enforcement require their own evidence.",
+  "extends": "native-workflow-routing-v1.json"
+}

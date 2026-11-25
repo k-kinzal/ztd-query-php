@@ -1,6 +1,7 @@
 """Measure the fixed native GitHub Actions routing against the independent launch plan."""
 
 import argparse
+from importlib import import_module
 import json
 import re
 from pathlib import Path
@@ -9,12 +10,13 @@ from native_postgres_fixture import (
     DOMAINS as FIXTURE_DOMAINS, ENV as FIXTURE_CONTAINER, fixed_contract, fixed_storage, observe_storage,
     storage_option, verify_storage,
 )
+from native_schedule import release_subset
 from run import TOOL, digest, require
 from scope import CONTRACTS
 
 
-CONTRACT_NAME = "native-workflow-routing-v1.json"
-CONTRACT = "d9b89a29b87927a986d0665675abf4d049ae8702efe2721fb227f50084767778"
+CONTRACT_NAME = "native-workflow-routing-v2.json"
+CONTRACT = "00b0b9f2073190d95b32dbe0a19eb9b2c2253e24c0f5efc8995c9fde1da849dc"
 WORKFLOW = ".github/workflows/semantics-ir-release-matrix.yml"
 WORKER = "trusted/packages/sql-semantics/assurance"
 TOOL_AUTOLOAD = "trusted/packages/sql-semantics-sqlite/vendor/autoload.php"
@@ -90,6 +92,18 @@ def route_index(authorized_steps):
     return runners, uploads
 
 
+def verify_domain_replay_profile(domain, runner, planned):
+    """Require the independently registered subset at both execution and replay."""
+    if release_subset(domain) is None:
+        return None
+    module = import_module(Path(runner).stem)
+    _, acceptance = module.specifications()
+    profiles = sorted((engine, release) for engine, scope in acceptance.items() for release in scope["releases"])
+    require(profiles == sorted(planned), "native-workflow-replay-profile-selection",
+            {"domain": domain, "planned": sorted(planned), "replay": profiles})
+    return [list(profile) for profile in profiles]
+
+
 def audit(workflow, plan):
     document = TOOL / CONTRACT_NAME
     require(digest(document) == CONTRACT, "native-workflow-contract-mismatch")
@@ -153,8 +167,10 @@ def audit(workflow, plan):
         preserved = selected_profiles(upload, "always()", plan)
         require(compared == sorted(profiles) == preserved, "native-workflow-route-selection",
                 {"domain": domain, "expected": sorted(profiles), "compared": compared, "preserved": preserved})
+        replay = verify_domain_replay_profile(domain, runner, compared)
         routes[domain] = {"runner": runner, "output": out, "artifact": artifact, "profiles": [list(p) for p in compared],
-                          **({"fixtureIsolation": isolation} if isolation else {})}
+                          **({"fixtureIsolation": isolation} if isolation else {}),
+                          **({"replayProfiles": replay} if replay is not None else {})}
     return {"contract": CONTRACT, "checker": digest(Path(__file__)), "workflow": digest(workflow),
             "postgresFixtureStorage": fixed_storage(), "routes": routes}
 
