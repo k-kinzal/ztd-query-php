@@ -51,17 +51,8 @@ final class AlterIndexRemovalLowering
     {
         $actions = $this->removals($statement);
         Check::input($actions !== null, 'ALTER TABLE index removal requires an ordered list of key actions.');
-        $last = [];
-        foreach ($statement->commands as $command) {
-            if ($command instanceof AlgorithmOption) {
-                $last['algorithm'] = $command;
-            } elseif ($command instanceof LockOption) {
-                $last['lock'] = $command;
-            }
-        }
-
         $release = $operation->context->profile->grammar;
-        $policy = (new IndexPolicyLowering())->lower(array_values($last));
+        $policy = (new IndexPolicyLowering())->alteration($statement);
         $identities = new DropIndexLowering();
         $targets = [];
         foreach ($actions as $action) {

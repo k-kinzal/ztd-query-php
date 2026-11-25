@@ -6,8 +6,8 @@ from run import digest, require
 from scope import CONTRACTS, public_scope
 
 
-DECLARATIONS = "constructor-declarations-v25.json"
-DECLARATION_DIGEST = "b2eb887ba7141f82d2557a989303ad2c0ed1abfb838df8d7b669c90025833ef9"
+DECLARATIONS = "constructor-declarations-v26.json"
+DECLARATION_DIGEST = "785a4120acccd2e59e1458b8b0da3a5d2f2507a5890e85fecfb16b2207a983c7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 FIELDS = {
     "role": ("role", "roles"),

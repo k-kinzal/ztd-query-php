@@ -1026,6 +1026,32 @@ function constructMysqlDropIndexes(array $input): SqlSemantics\Platform\MySql\Ir
     );
 }
 
+function constructMysqlIndexVisibility(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility
+{
+    $spec = $input['mysqlIndexVisibility'];
+    $edits = array_map(static fn (array $edit): SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\IndexVisibilityEdit =>
+        new SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\IndexVisibilityEdit(
+            new SqlSemantics\Platform\MySql\Ir\Identifier($edit[0]),
+            SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SecondaryIndexKind::from($edit[1]),
+            $edit[2]
+        ), $spec['edits']);
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility(
+        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']), $edits,
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexPolicy($spec['policy'])
+    );
+}
+
+function observeMysqlIndexVisibility(SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility $value): array
+{
+    $edits = array_map(static fn (object $edit): array => [$edit->index->value, $edit->kind->value, $edit->visible], $value->edits);
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlIndexVisibility' => ['owner' => observeMysqlTableIdentity($value->owner), 'edits' => $edits,
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
+}
+
 function constructMysqlIndexRenames(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes
 {
     $spec = $input['mysqlIndexRenames'];
@@ -2281,6 +2307,7 @@ function observeStatement(array $input): array
             isset($input['mysqlDropIndexes']) => constructMysqlDropIndexes($input),
             isset($input['mysqlIndexRenames']) => constructMysqlIndexRenames($input),
             isset($input['mysqlMixedIndexes']) => constructMysqlMixedIndexes($input),
+            isset($input['mysqlIndexVisibility']) => constructMysqlIndexVisibility($input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -2388,6 +2415,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes) {
         return observeMysqlMixedIndexes($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility) {
+        return observeMysqlIndexVisibility($value);
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes) {
         return observeMysqlIndexRenames($value);

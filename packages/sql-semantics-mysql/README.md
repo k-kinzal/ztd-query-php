@@ -72,6 +72,8 @@ When a single `ALTER TABLE` mixes native index removal and renaming, `AlterIndex
 
 Persistent InnoDB index removal requires a complete catalog of foreign-key dependencies. The entire removal group must leave an eligible supporting index on each affected side. A renamed surviving index can still provide support. On the default MySQL 8.4 and 9 profiles, a referenced parent side requires a whole unique or primary key in the declared field order. Direct construction supplies the complete applicable support sets as `IndexForeignKeyRequirement` values.
 
+On MySQL 8.0 and later, `ALTER TABLE ... ALTER INDEX ... VISIBLE` or `INVISIBLE` returns `SetIndexVisibility`. The value resolves each secondary key in its table and keeps every requested flag in written order. The final request for a key determines its optimizer visibility. Its physical definition and uniqueness remain in effect. Both visibility directions require a secondary key.
+
 Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.

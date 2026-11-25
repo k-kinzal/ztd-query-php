@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\IndexAlteration;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
@@ -91,7 +92,7 @@ final class AlterMixedIndexesLowering
             $this->unmoved($resolved->table->indexes, $modified),
             (new IndexDependencyLowering())->resolve($operation, $statement, $removed),
             $operation->context->profile->grammar,
-            $renames->policy($statement),
+            (new IndexPolicyLowering())->alteration($statement),
         );
     }
 

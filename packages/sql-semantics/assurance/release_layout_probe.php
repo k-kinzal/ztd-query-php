@@ -639,6 +639,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'MySql') {
         $declarations[] = 'CREATE TABLE app.index_drop_probe (id INT, KEY ready (id))';
         $declarations[] = 'CREATE TABLE app.index_rename_probe (a INT, b INT, c INT, KEY by_a (a), KEY by_b (b), KEY by_c (c))';
+        $declarations[] = 'CREATE TABLE app.visibility_probe (a INT, b INT, KEY no_shadow (a))';
+        $declarations[] = 'CREATE TEMPORARY TABLE app.visibility_probe (a INT, b INT, KEY first_key (a), UNIQUE KEY second_key (b))';
         $declarations[] = 'CREATE TABLE app.batch_index (a INT AUTO_INCREMENT, b INT NOT NULL, c INT, PRIMARY KEY (a), KEY by_a (a,b), KEY keeps_a (a,c))';
     }
     if ($platform === 'Sqlite') {
@@ -736,6 +738,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\DropIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, DROP KEY by_a';
         $queries['Schema\\Index\\Rename\\RenameIndexes'] = 'ALTER TABLE app.index_rename_probe RENAME KEY by_a TO by_b, RENAME INDEX by_b TO by_a';
         $queries['Schema\\Index\\Change\\AlterIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, RENAME INDEX by_a TO new_a';
+        $queries['Schema\\Index\\Visibility\\SetIndexVisibility'] = 'ALTER TABLE app.visibility_probe ALTER INDEX FIRST_KEY INVISIBLE, ALTER INDEX first_key VISIBLE, ALTER INDEX SECOND_KEY INVISIBLE, ALGORITHM=COPY, LOCK=NONE';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -2500,6 +2503,31 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 [$renamed->source->value, $renamed->destination->value],
                 array_map(static fn ($name): string => $name->value, $rebuilt->unmoved),
                 $rebuilt->toString(), $overlap, $legacy,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\Visibility\\SetIndexVisibility') {
+            $runtimeType = SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility::class;
+            $first = $result->edits[0];
+            $edits = $result->edits;
+            $edits[0] = &$first;
+            $rebuilt = new $runtimeType($result->owner, $edits, $result->release, $result->policy);
+            $first = $edits[1];
+            $refusals = [];
+            try {
+                new $runtimeType($result->owner, $result->edits, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5744);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            $implicit = $semantics->context(['CREATE TABLE app.implicit_visibility (a INT NOT NULL, UNIQUE KEY native_primary (a))']);
+            try {
+                $semantics->analyze('ALTER TABLE app.implicit_visibility ALTER INDEX native_primary VISIBLE', $implicit);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            $details['mysqlIndexVisibility'] = [
+                $result->owner->kind->value,
+                array_map(static fn ($edit): array => [$edit->index->value, $edit->kind->value, $edit->visible], $rebuilt->edits),
+                $result->toString(), $rebuilt->toString(), $refusals,
             ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {

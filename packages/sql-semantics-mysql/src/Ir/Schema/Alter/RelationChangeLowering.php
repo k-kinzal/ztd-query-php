@@ -11,6 +11,8 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\IndexVisibilityLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
@@ -42,15 +44,18 @@ final class RelationChangeLowering
             || ($statement instanceof ParsedAlterTable && (
                 (new AlterIndexRemovalLowering())->removals($statement) !== null || (new AlterIndexRenameLowering())->moves($statement) !== null
                 || (new AlterMixedIndexesLowering())->changes($statement) !== null
+                || (new IndexVisibilityLowering())->edits($statement) !== null
             ));
     }
 
     /**
      * Publishes the specific operation after its relation has been bound.
      */
-    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): AlterIndexes|DropIndex|DropIndexes|DropTable|DropView|RenameIndexes|RenameTable|TruncateTable
+    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): AlterIndexes|DropIndex|DropIndexes|DropTable|DropView|RenameIndexes|RenameTable|SetIndexVisibility|TruncateTable
     {
         return match (true) {
+            $statement instanceof ParsedAlterTable && (new IndexVisibilityLowering())->edits($statement) !== null
+                => (new IndexVisibilityLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable && (new AlterMixedIndexesLowering())->changes($statement) !== null
                 => (new AlterMixedIndexesLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable && (new AlterIndexRenameLowering())->moves($statement) !== null

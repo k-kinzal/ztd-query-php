@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v88.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v89.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -461,6 +461,8 @@ The [native MySQL index rename contract](mysql-index-renames-evidence-v1.json) c
 The [mixed MySQL index alteration contract](mysql-mixed-index-alteration-evidence-v2.json) checks the original resolved namespace and the simultaneous destination namespace. It runs independent checks of both actions and retained sequence generation after a supporting key changes its name. Run `run_server_mysql_mixed_index_alteration.py` and replay with `combine_server_mysql_mixed_index_alteration_evidence.py`.
 
 The [MySQL foreign-key index removal contract](mysql-index-foreign-keys-evidence-v1.json) measures affected parent and child indexes before and after removal under ordinary stock InnoDB. It preserves support through atomic removals and renames of surviving keys and records the native MySQL 8.4 whole unique parent boundary. The observer retains ordered key fields, prefix lengths, directions, visibility, native foreign-key coordinates and transaction effects. Run `run_server_mysql_index_foreign_keys.py` and replay with `combine_server_mysql_index_foreign_keys_evidence.py`.
+
+The [MySQL index visibility contract](mysql-index-visibility-evidence-v1.json) checks ordered optimizer flag updates, unchanged physical keys and unique enforcement, temporary shadowing and native algorithm and lock boundaries. Run `run_server_mysql_index_visibility.py` and replay with `combine_server_mysql_index_visibility_evidence.py`.
 
 For the [MySQL identifier case audit](mysql-native-index-case-v1.json), run `verify_mysql_identifier_case.py prepare --out observation.sql`. Execute the generated script on each pinned disposable database with a UTF-8 client in tabular batch mode. Run `verify_mysql_identifier_case.py replay --candidate /path/to/checkout --commit COMMIT --out evidence.json --native RELEASE=PATH`, supplying one `--native` argument for each release. The checker requires the complete ordered native alphabet and compares each scalar with the PHP implementation recorded in the distribution. It also checks each fixed case table's source bytes.
 

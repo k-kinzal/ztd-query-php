@@ -833,6 +833,9 @@ def inventory(root):
             }
             for alternative in signatures & native_index_rename:
                 related[alternative] = (*related.get(alternative, ()), "mysql-index-renames-evidence-v1.json")
+            visibility = {"alter_list_item: ALTER INDEX_SYM ident visibility"}
+            for alternative in signatures & visibility:
+                related[alternative] = (*related.get(alternative, ()), "mysql-index-visibility-evidence-v1.json")
             for alternative in signatures & (batch_index | native_index_rename):
                 related[alternative] = (*related.get(alternative, ()), "mysql-mixed-index-alteration-evidence-v2.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):

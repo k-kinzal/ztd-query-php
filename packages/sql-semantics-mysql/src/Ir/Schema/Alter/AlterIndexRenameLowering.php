@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Alter;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
-use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes;
@@ -74,7 +73,7 @@ final class AlterIndexRenameLowering
             $moves,
             $this->unmoved($resolution->table->indexes, $moves),
             $operation->context->profile->grammar,
-            $this->policy($statement),
+            (new IndexPolicyLowering())->alteration($statement),
         );
     }
 
@@ -111,22 +110,5 @@ final class AlterIndexRenameLowering
         }
 
         return $remaining;
-    }
-
-    /**
-     * Resolves the last physical option of each kind.
-     */
-    public function policy(AlterTable $statement): IndexChangePolicy
-    {
-        $last = [];
-        foreach ($statement->commands as $command) {
-            if ($command instanceof AlgorithmOption) {
-                $last['algorithm'] = $command;
-            } elseif ($command instanceof LockOption) {
-                $last['lock'] = $command;
-            }
-        }
-
-        return (new IndexPolicyLowering())->lower(array_values($last));
     }
 }

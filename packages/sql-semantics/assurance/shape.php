@@ -1459,6 +1459,18 @@ if ($dialect !== 'sqlite') {
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
         $methods[$indexRename] = ['__construct', 'toString'];
         $methods[$renameIndexes] = ['__construct', 'profileId', 'toString'];
+        $visibilityRoot = 'Schema\\Index\\Visibility\\SetIndexVisibility';
+        $visibilityEdit = 'Schema\\Index\\Visibility\\IndexVisibilityEdit';
+        $secondaryIndex = 'Schema\\Index\\Visibility\\SecondaryIndexKind';
+        $roots[] = $visibilityRoot;
+        $internal[] = 'Schema\\Index\\Visibility\\IndexVisibilityLowering';
+        $properties[$visibilityRoot] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'edits' => ['array'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
+        $methods[$visibilityRoot] = ['__construct', 'profileId', 'toString'];
+        $properties[$visibilityEdit] = ['index' => ['Identifier'], 'kind' => [$secondaryIndex], 'visible' => ['bool']];
+        $methods[$visibilityEdit] = ['__construct', 'toString'];
+        $properties[$secondaryIndex] = $methods[$secondaryIndex] = [];
+        $enumCases[$secondaryIndex] = ['Ordinary' => 'ordinary', 'Unique' => 'unique', 'FullText' => 'fulltext', 'Spatial' => 'spatial'];
         $mixedAlter = 'Schema\\Index\\Change\\AlterIndexes';
         $indexAlteration = 'Schema\\Index\\Change\\IndexAlteration';
         $mixedChanges = 'Schema\\Index\\Change\\MixedIndexChanges';
@@ -1863,6 +1875,7 @@ try {
             ['mysql-index-namespace-storage-v1.json', '90a0725227d5c8931a4b9cb2ea92567cb4a93798161a81590874659da33c412d'],
             ['mysql-index-auto-increment-storage-v1.json', '6b6a146f979bb53a4dce55a241f642a75e4fdb61d541c7ba254ae158aa3344c7'],
             ['mysql-index-foreign-key-storage-v1.json', '53ab347ce233a749cd3ec986c1005857615bf16e9f80e7b7d18f3c7aefebec7e'],
+            ['mysql-index-visibility-storage-v1.json', '3b9a4fb0ba21938c1ba8af07b9e8a906c111c4b2117e2a42f6429c85e4e49727'],
             ['mysql-index-removal-set-storage-v1.json', 'ed343981fe207cd80b7d6628cdd6685787c39f241bfc5bc27cee629e80e243a1'],
             ['mysql-index-rename-storage-v1.json', 'ffc8cd41e898f15ecae3343c9dfdcfbe1a72678249e21fb2edbe8d02c1d73831'],
             ['mysql-mixed-index-storage-v1.json', '281216083a6a07e02dc27a5730a9b347b9f512f77e4507b1037a39557a28490f'],
@@ -2303,10 +2316,17 @@ try {
             if ($dialect === 'mysql' && $short === 'Schema\\Alter\\AlterIndexRenameLowering') {
                 $members = $class->getMethods();
                 requireShape(array_map(static fn ($method) => $method->name->toString(), $members) === [
-                    'moves', 'lower', 'qualifier', 'unmoved', 'policy',
+                    'moves', 'lower', 'qualifier', 'unmoved',
                 ] && $members[1]->isPublic() && !$members[1]->isStatic() && $members[1]->returnType !== null
                     && types($members[1]->returnType, $prefix, $short) === ['Schema\\Index\\Rename\\RenameIndexes'],
                     'Unexpected MySQL index rename publication');
+            }
+            if ($dialect === 'mysql' && $short === 'Schema\\Index\\Visibility\\IndexVisibilityLowering') {
+                $members = $class->getMethods();
+                requireShape(array_map(static fn ($method) => $method->name->toString(), $members) === ['edits', 'lower', 'edit']
+                    && $members[1]->isPublic() && !$members[1]->isStatic() && $members[1]->returnType !== null
+                    && types($members[1]->returnType, $prefix, $short) === ['Schema\\Index\\Visibility\\SetIndexVisibility'],
+                    'Unexpected MySQL index visibility publication');
             }
             if ($dialect === 'mysql' && $short === 'Schema\\Alter\\AlterIndexRemovalLowering') {
                 $members = $class->getMethods();
@@ -2328,7 +2348,7 @@ try {
                     && types($members[1]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\Change\\AlterIndexes',
                         'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes', 'Schema\\Index\\Rename\\RenameIndexes',
-                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Index\\Visibility\\SetIndexVisibility', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RelationChangeLowering') {
@@ -2439,6 +2459,7 @@ try {
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace', 'Schema\\Index\\IndexAutoIncrement',
                     'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
                     'Schema\\Index\\Dependency\\IndexDependencyClosure', 'Schema\\Index\\Dependency\\IndexForeignKeyRequirement',
+                    'Schema\\Index\\Visibility\\IndexVisibilityEdit',
                     'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
                     'Schema\\Index\\Change\\MixedIndexNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')

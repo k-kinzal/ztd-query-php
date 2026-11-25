@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v161.json"
-CONTRACT = "81d57a36c3e6eff50e8f1ca891e680dc15aa895218778f339aece9277314912e"
+CONTRACT_NAME = "release-layout-v162.json"
+CONTRACT = "e08ba0a15132f872f6fca73fec67df2a142cae6a92c3ae12f9237dab7363a9f5"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -874,6 +874,14 @@ def verify_probe(raw, catalog):
                 "This MySQL release must drop a referencing child before its parent.",
                 "DROP TABLE must include every referencing persistent child.",
             ], "installed-mysql-drop-table-dependency-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\Visibility\\SetIndexVisibility"):
+            changes = ("ALTER TABLE `app`.`visibility_probe` ALTER INDEX `first_key` INVISIBLE, ALTER INDEX `first_key` VISIBLE, "
+                       "ALTER INDEX `second_key` INVISIBLE, ALGORITHM=COPY, LOCK=NONE")
+            require(item.get("mysqlIndexVisibility") == [
+                "temporary-table", [["first_key", "ordinary", False], ["first_key", "ordinary", True], ["second_key", "unique", False]],
+                changes, changes,
+                ["Native index visibility requires MySQL 8.0 or later.", "Native index visibility requires a secondary key."],
+            ], "installed-mysql-index-visibility-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Truncate\\TruncateTable"):
             require(item.get("mysqlTruncate") == ["app", "accounts", "table", "temporary-table"]
                     and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",

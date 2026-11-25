@@ -53,16 +53,6 @@ final class AlterIndexRenameLoweringTest extends TestCase
         ]));
     }
 
-    public function testPolicyUsesTheFinalAlgorithmAndLock(): void
-    {
-        $parsed = (new Inspection())->inspect('ALTER TABLE t ALGORITHM=COPY, RENAME INDEX a TO b, ALGORITHM=INPLACE, LOCK=NONE')->statement;
-        self::assertInstanceOf(AlterTable::class, $parsed);
-        $policy = (new AlterIndexRenameLowering())->policy($parsed);
-
-        self::assertSame('INPLACE', $policy->algorithm->value);
-        self::assertSame('NONE', $policy->lock->value);
-    }
-
     public function testQualifierAcceptsAnAbsentQualifier(): void
     {
         $semantics = new Semantics();

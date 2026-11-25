@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy;
 
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 
@@ -38,5 +39,22 @@ final class IndexPolicyLowering
         }
 
         return new IndexChangePolicy($algorithm, $lock);
+    }
+
+    /**
+     * Resolves the last physical option of each kind.
+     */
+    public function alteration(AlterTable $statement): IndexChangePolicy
+    {
+        $last = [];
+        foreach ($statement->commands as $command) {
+            if ($command instanceof AlgorithmOption) {
+                $last['algorithm'] = $command;
+            } elseif ($command instanceof LockOption) {
+                $last['lock'] = $command;
+            }
+        }
+
+        return $this->lower(array_values($last));
     }
 }
