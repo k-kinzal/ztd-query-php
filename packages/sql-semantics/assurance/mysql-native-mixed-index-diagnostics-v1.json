@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/mysql-native-mixed-index-diagnostics-1",
+  "approval": "pending-human-review",
+  "profile": "Exact observed stock InnoDB mixed-index ALTER under the fixed profiles and the same declaring table",
+  "rules": [
+    "An explicit physical key whose effective ordered whole columns and index kind duplicate another surviving declaration reports diagnostic 1831. The pinned MySQL 5.6 release uses Note, and each measured later release uses Warning.",
+    "Preserve exact names and native diagnostic order. Earlier duplicate-definition diagnostics can precede the first collision of physical names and its native code 1061. The statement is atomic on that collision.",
+    "Compare original and emitted SQL under the same declared schema, including the exact diagnostic level, code and index and owner names."
+  ],
+  "change": "Correct the independent mixed key oracle's diagnostic level and statement stage. Retain all result observations, routes, finite axes, seeds and budgets.",
+  "calibration": {
+    "recipes": "3e9b5e438929a226a299205c9290d55feab5f699ac0de60cbf01e6d7fd9c290d",
+    "casesPerRelease": 256,
+    "firstPdoOriginalAndCanonical": "153a475354dd5e7bbeab14203aca8775f799c0cf9caa22eca60dc01ede592438",
+    "diagnostics": {
+      "5.6.51": {
+        "sha256": "05c44bf181acb39251cfea46fc88359d9b941afeecf47e31dc941dc7c7f5529e",
+        "duplicateDefinitions": {
+          "Note": 24
+        }
+      },
+      "5.7.44": {
+        "sha256": "b910bf02755f4d0d87258c2ef05e5b360dea89a88049b515aecda82fe0cdaa08",
+        "duplicateDefinitions": {
+          "Warning": 24
+        }
+      },
+      "8.0.44": {
+        "sha256": "9fabe53f534ccb3908d3d258c99fae434d73c92002b4f82b803074994a4124ef",
+        "duplicateDefinitions": {
+          "Warning": 8
+        }
+      },
+      "8.4.7": {
+        "sha256": "8908f683b351d5c0e583412c6bb1f6858e120a0040058871d842a3bd65e3f311",
+        "duplicateDefinitions": {
+          "Warning": 8
+        }
+      },
+      "9.1.0": {
+        "sha256": "be374d615ea5207992e11338cf65c724b74de1957f026f1cb442842aa324903a",
+        "duplicateDefinitions": {
+          "Warning": 8
+        }
+      }
+    }
+  },
+  "obligations": [
+    "P04",
+    "P06",
+    "Q04",
+    "Q05"
+  ]
+}
