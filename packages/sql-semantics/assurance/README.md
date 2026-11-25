@@ -695,7 +695,7 @@ The checker compares ordered column names and an unordered bag of typed rows. It
 
 The result, DELETE and VALUES suites share evidence setup, ledger checks and renderer fault execution. Their 240-second observation budgets are specified in their contracts. The renderer controls and mutations use a separate 180-second worker startup window followed by a 45-second probe budget. A startup or probe timeout yields a failure record and no successful index. Runtime fault detection requires the specified failure signal after the candidate executes.
 
-The [renderer fault dispatch contract](renderer-fault-dispatch-v1.json) records the independent comparison input and the exact worker request for each fault in `fault-dispatch.json`. A dispatch failure leaves a `fault-dispatch-failure.json` record with its phase and request. Replay checks the planned requests and the digest on every completed fault receipt alongside the source overlays and comparison witnesses. The assurance controls try a malformed worker response and three altered dispatch artifacts.
+The [renderer fault dispatch contract](renderer-fault-dispatch-v1.json) records the independent comparison input and the exact worker request for each fault in `fault-dispatch.json`. A dispatch failure leaves a `fault-dispatch-failure.json` record with its phase and request. Replay checks the planned requests and the digest on every completed fault receipt alongside the source overlays and comparison witnesses. The native runner checks that each scheduled renderer fault has a witness replay function before opening the observer. The assurance controls try a malformed worker response and three altered dispatch artifacts.
 
 ## SQLite local row sources
 

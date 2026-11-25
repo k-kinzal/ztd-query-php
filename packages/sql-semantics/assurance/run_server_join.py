@@ -322,6 +322,9 @@ def main(domain):
     fixture = None
     try:
         mutations = checked_fault_plan(domain, args.engine, tag)
+        require(not mutations or any(callable(getattr(domain, method, None))
+                                     for method in ("replay_fault", "check_fault_witness")),
+                "native-fault-replay-unregistered", domain.LABEL)
         comparator_controls = domain.controls()
         structure = shape(args, dialect=args.engine)
         if container is not None:

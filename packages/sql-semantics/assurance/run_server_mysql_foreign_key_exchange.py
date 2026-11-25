@@ -220,11 +220,20 @@ def observation(value):
     return value
 
 
+def expected_observation(item):
+    expected = laws.prediction(item["model"])
+    expected["affected"] = len(laws.ROWS) if expected["effect"] == ["executed"] else None
+    return expected
+
+
+def check_fault_witness(item, witness):
+    same(expected_observation(item), witness["expected"])
+    same(laws.STATUS, witness["observed"].get("status"))
+
+
 def check_observation(item, actual, sql):
-    model = item["model"]
-    expected = laws.prediction(model)
+    expected = expected_observation(item)
     effect = expected["effect"]
-    expected["affected"] = len(laws.ROWS) if effect == ["executed"] else None
     witness = {"expected": expected, "observed": actual, "sql": sql}
     require(actual.get("status") == laws.STATUS, "mysql-foreign-key-exchange-not-observed", witness)
     require({key: actual.get(key) for key in expected} == expected, "meaning-mismatch", witness)

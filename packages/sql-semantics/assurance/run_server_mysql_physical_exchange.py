@@ -215,7 +215,17 @@ def check_observation(value, actual, sql):
     if value["case"]["id"].startswith("generating/"):
         counters = [reference[stage]["tables"]["affected"]["next"] for stage in ("before", "after", "result")]
         same([3, 3, 4], counters)
-    compare(actual["observed"], reference, sql)
+    try:
+        compare(actual["observed"], reference, sql)
+    except Failure as failure:
+        raise Failure(failure.signal, {"expected": expected, "observed": actual, "sql": sql}) from failure
+
+
+def check_fault_witness(value, witness):
+    same(value["case"]["outcomes"][release_for_expected(value["tag"])], witness["expected"])
+    same(LABEL, witness["observed"].get("status"))
+    require("reference" in witness["observed"] and "statisticsExpiry" in witness["observed"],
+            "physical-exchange-replay-witness", witness["observed"].keys())
 
 
 def rejection_sql(value, _):

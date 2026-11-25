@@ -195,9 +195,18 @@ def diagnostics(value, outcome):
     return warnings
 
 
-def check_observation(item, actual, sql):
+def expected_observation(item):
     value, result = item["model"], item["result"]
-    expected = {**laws.prediction(value, result), "diagnostics": diagnostics(value, result)}
+    return {**laws.prediction(value, result), "diagnostics": diagnostics(value, result)}
+
+
+def check_fault_witness(item, witness):
+    same(expected_observation(item), witness["expected"])
+    same("mysql-mixed-support", witness["observed"].get("status"))
+
+
+def check_observation(item, actual, sql):
+    expected = expected_observation(item)
     witness = {"expected": expected, "observed": actual, "sql": sql}
     require(actual.get("status") == "mysql-mixed-support", "mysql-mixed-support-not-observed", witness)
     require(actual == expected, "meaning-mismatch", witness)
