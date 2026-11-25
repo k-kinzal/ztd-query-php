@@ -1,0 +1,40 @@
+{
+  "revision": "SemanticsIR/mysql-native-overlapping-cascade-observation-1",
+  "approval": "pending-human-review",
+  "scope": "Independent observation of the parent UPDATE probe with two active native foreign-key constraints on the same child row. Preserve exact errors and unchanged committed data.",
+  "profile": "Stock InnoDB under the fixed MySQL releases with active referential checks, empty sql_mode, rollback after each witness, and a single resolved parent.",
+  "rules": [
+    "An ON UPDATE CASCADE can change data observed by another active child constraint. Check its changed non-NULL foreign-key tuple against the original parent rows at the staged child update. The original parent replacement tuple may still be unavailable.",
+    "The measured update which changes a populated shared parent key returns SQLSTATE 23000 with native code 1452 if another active child key's changed tuple does not exist. Its statement is atomic and leaves the parent and child rows at their original values.",
+    "Distinguish another constraint over a separate field, an unchanged UPDATE, nullable bypass of a composite constraint, and the separately observed deletion actions. Keep original and emitted SQL observations and the same parent update probe."
+  ],
+  "change": "Corrects the independent effect interpreter. Keeps all previous domain schedules and the complete observable outcome. Records the original native counterexample.",
+  "nativeCalibration": {
+    "casesPerRelease": 18,
+    "recipes": "be59d0293d6c682c1166d7f768f5e9d78ee23c2fe26cebf3c46a4bc62c58cd9e",
+    "firstCounterexample": "8ed4455cce5edbdc69c8b0d74ed0805b1baa8db2ca67e8a740e5fd42467bdaef",
+    "receipts": {
+      "5.6.51.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "5.6.51.stdout": "0a7ce05962f4d3492a4e81dbc6403197e1f937a511b94cc9a9798129b4522e19",
+      "5.6.51.stderr": "7cf541f3b96c7590650fbe9525aa2a6c616e0d47578da25c50e47896e4e4b61b",
+      "5.7.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "5.7.44.stdout": "9ad6291448967abb272454435a8be6c5a5728de60e16a33a56596589d641d2fd",
+      "5.7.44.stderr": "7cf541f3b96c7590650fbe9525aa2a6c616e0d47578da25c50e47896e4e4b61b",
+      "8.0.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "8.0.44.stdout": "98c9b182342cb09408d272cd87c5494bb7cddc3402c5bea89b13148dbba74a83",
+      "8.0.44.stderr": "7e58298a6d4536d757e25057c317c119dc05952bac50775e1cc8b34025cd61fb",
+      "8.4.7.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "8.4.7.stdout": "d82c603cde433652968dc265428427e0fcd7cf775aaaeb461b75e78b495dd9b5",
+      "8.4.7.stderr": "7e58298a6d4536d757e25057c317c119dc05952bac50775e1cc8b34025cd61fb",
+      "9.1.0.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "9.1.0.stdout": "87993c9b4d15153db8adb42b8f5b3a81e4f646e049b4dd94190bc2b33b8bc18c",
+      "9.1.0.stderr": "7cf541f3b96c7590650fbe9525aa2a6c616e0d47578da25c50e47896e4e4b61b"
+    }
+  },
+  "obligations": [
+    "P04",
+    "P06",
+    "Q04",
+    "Q05"
+  ]
+}
