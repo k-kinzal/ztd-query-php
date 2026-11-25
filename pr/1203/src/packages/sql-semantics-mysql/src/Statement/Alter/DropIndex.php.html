@@ -58,8 +58,10 @@
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * Mirrors PT_drop_index_stmt. Rule: MYSQL-DROP-INDEX-001. The table resolves</span></span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact of the</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * statement node; `PRIMARY` names the primary key. A declaration context</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * holds no indexes, so the index name is kept unresolved. The ALGORITHM and</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> * statement node; `PRIMARY` names the primary key. A declaration context</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> * holds no indexes, so the index name is kept unresolved. The ALGORITHM and</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * statement node. The completed MySQL IR resolves the physical index name</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * against the resolved owner&#039;s declaration. The ALGORITHM and</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * LOCK options are kept in the order written. The statement changes no</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * declaration and provides none.</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-index.html.</span></span>
