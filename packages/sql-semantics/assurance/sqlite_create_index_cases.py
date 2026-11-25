@@ -5,7 +5,7 @@ from random import Random
 
 from run_sqlite_create_table import quoted
 from run_sqlite_scalars import evaluate
-from sqlite_add_column_cases import SCHEMAS, error, statement
+from sqlite_add_column_cases import SCHEMAS, error, operand_slots, statement
 from sqlite_engine import typed
 from sqlite_generated_column_cases import arithmetic, column, integer
 
@@ -13,7 +13,7 @@ TABLE = "ledger"
 INDEX = "tag"
 HEADING = ("id", "code", "amount", "note")
 AXES = ("schemas", "keys", "predicates", "unique", "existing", "population")
-FIELDS = ("operation", "schema", "index", "table", "heading", "terms", "where", "unique", "ifNotExists")
+FIELDS = ("operation", "schema", "index", "table", "terms", "where", "unique", "ifNotExists")
 CASEFOLD = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
 STORED = {
     "main": ((11, "A", 1, "main"), (12, "a", -2, "main"), (13, None, 3, "main"), (14, "A ", 4, "main")),
@@ -52,6 +52,12 @@ def case(schema="main", term="amount", predicate="all", unique=False, existing="
     }
 
 
+def binding_projection(item):
+    operands = [*(expression for expression, _ in item["terms"]), item["where"]]
+    slots = set().union(*(operand_slots(operand) for operand in operands))
+    return [[slot, item["heading"][slot]] for slot in sorted(slots)]
+
+
 def finite(contract):
     for choices in product(*(contract[axis] for axis in AXES)):
         yield case(*choices)
@@ -82,6 +88,11 @@ def explored(contract, seed, amount):
                      existing="guarded" if i % 5 == 0 else "absent", population=contract["population"][i % 2],
                      heading=heading, index=f'{i}"名' if i % 2 else f"index_{i}",
                      guarded=True if i % 5 == 0 else bool(rng.getrandbits(1)))
+        if i == amount - 1:
+            value["terms"] = [[integer(rng.randrange(-50, 51)), bool(rng.getrandbits(1))]]
+            value["where"] = None
+            yield value
+            continue
         terms = []
         for position in range(1 + i % 3):
             role = (i + position) % 6
@@ -320,7 +331,12 @@ def predicate_sql(item):
 def forms(measured):
     value, result = measured
     yield "schema/" + value["schema"]
-    yield f"width/{len(value['heading'])}"
+    width = len(result["before"][value["schema"]]["fields"])
+    slots = len(value["bindings"])
+    yield f"width/{width}"
+    yield f"bindings/{'empty' if slots == 0 else 'single' if slots == 1 else 'multiple'}"
+    if 0 < slots < width:
+        yield "bindings/sparse"
     yield f"keys/{len(value['terms'])}"
     yield f"partial/{value['where'] is not None}"
     yield f"unique/{value['unique']}"
@@ -336,4 +352,4 @@ def required(_):
     return {"schema/main", "schema/temp", "keys/1", "keys/2", "keys/3", "partial/True", "partial/False", "unique/True",
             "unique/False", "guarded/True", "guarded/False", "key/column", "key/collate", "key/arithmetic",
             "key/folded-membership", "descending/True", "descending/False", "previous-index/True", "previous-index/False",
-            "refused/True", "refused/False", *(f"width/{width}" for width in range(4, 9))}
+            "refused/True", "refused/False", "bindings/empty", "bindings/single", "bindings/multiple", "bindings/sparse", *(f"width/{width}" for width in range(4, 9))}

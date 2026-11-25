@@ -405,7 +405,7 @@ if ($dialect === 'sqlite') {
     $internal[] = 'Schema\\Alter\\DropColumnLowering';
     $indexOperands = array_values(array_diff($operands, ['Parameter']));
     $properties['Schema\\Index\\CreateIndex'] = [
-        'schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier'], 'heading' => ['array'],
+        'schema' => ['Identifier'], 'index' => ['Identifier'], 'table' => ['Identifier'], 'bindings' => ['array'],
         'terms' => ['array'], 'where' => [...$indexOperands, 'null'], 'unique' => ['bool'], 'ifNotExists' => ['bool'],
     ];
     $properties['Schema\\Index\\IndexTerm'] = ['expression' => $indexOperands, 'descending' => ['bool']];
@@ -1967,9 +1967,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v75.json';
+    $storagePath = __DIR__ . '/value-storage-v76.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'ace6616eac37de806ac4f9b83f9ff0735680e04e60cfe4ba48125d41b50b0a88',
+        hash_file('sha256', $storagePath) === '290ed0337b7bb9b93dfbaef4ad546dd692090466a026e0a346be3c0f6ea8ec9d',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2617,6 +2617,7 @@ try {
                         && in_array($call->name->toString(), ['array_keys', 'array_values'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\AppendColumnBounds' && $call->name->toString() === 'ksort')
+                    || ($dialect === 'sqlite' && $short === 'Schema\\Index\\CreateIndex' && $call->name->toString() === 'ksort')
                     || ($dialect === 'sqlite' && $short === 'Schema\\Predicate\\DefinitionSource' && $call->name->toString() === 'is_int')
                     || ($dialect === 'sqlite' && $short === 'Connection\\AttachmentName' && $call->name->toString() === 'explode')
                     || ($dialect === 'sqlite' && in_array($short, ['Schema\\Trigger\\TriggerChecks', 'Schema\\Trigger\\TriggerDestination', 'Schema\\Trigger\\TriggerInsert', 'Schema\\Trigger\\TriggerUpdateName', 'Schema\\Trigger\\TriggerSql'], true)

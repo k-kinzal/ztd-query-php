@@ -858,7 +858,7 @@ function observeCreateIndex(CreateIndex $value, bool $render): array
         'schema' => $value->schema->value,
         'index' => $value->index->value,
         'table' => $value->table->value,
-        'heading' => array_map(static fn (Identifier $name): string => $name->value, $value->heading),
+        'bindings' => observeColumnBindings($value->bindings),
         'terms' => array_map(static fn (IndexTerm $term): array => [observeOperand($term->expression), $term->descending], $value->terms),
         'where' => $value->where === null ? null : observeOperand($value->where),
         'unique' => $value->unique,
@@ -1500,13 +1500,19 @@ function directAddColumn(array $input): AddColumn|AddGeneratedColumn
         : new AddColumn($schema, $table, $heading, $input['strict'], $column, $checks);
 }
 
+function observeColumnBindings(array $bindings): array
+{
+    $values = [];
+    foreach ($bindings as $slot => $name) {
+        $values[] = [$slot, $name->value];
+    }
+
+    return $values;
+}
+
 function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): array
 {
     $column = $value->column;
-    $bindings = [];
-    foreach ($value->bindings as $slot => $name) {
-        $bindings[] = [$slot, $name->value];
-    }
 
     return [
         'status' => 'constructed',
@@ -1515,7 +1521,7 @@ function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): ar
         'schema' => $value->schema->value,
         'table' => $value->table->value,
         'slot' => $value->slot,
-        'bindings' => $bindings,
+        'bindings' => observeColumnBindings($value->bindings),
         'strict' => $value->strict,
         'column' => [
             $column->name->value, $column->type->value, $column->notNull?->value ?? false,

@@ -981,7 +981,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
             $activeContext = $semantics->context([
                 'CREATE TABLE main.indexed_rows (code TEXT, id INTEGER)',
-                'CREATE TABLE temp.indexed_rows (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE)',
+                'CREATE TABLE temp.indexed_rows (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE, ignored INTEGER)',
             ]);
         }
         $result = $semantics->analyze($sql, $activeContext);
@@ -3274,10 +3274,17 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
             $term = $result->terms[0];
             $keys = [&$term];
+            $code = new SqlSemantics\Platform\Sqlite\Ir\Identifier('code');
+            $heading = [new SqlSemantics\Platform\Sqlite\Ir\Identifier('id'), &$code, new SqlSemantics\Platform\Sqlite\Ir\Identifier('ignored')];
             $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex(
-                $result->schema, $result->index, $result->table, $result->heading, $keys,
+                $result->schema, $result->index, $result->table, $heading, $keys,
                 $result->where, $result->unique, $result->ifNotExists,
             );
+            $code = new SqlSemantics\Platform\Sqlite\Ir\Identifier('wrong');
+            $details['sqliteIndexOperandBindings'] = [
+                array_keys($result->bindings), array_column($result->bindings, 'value'),
+                array_keys($detached->bindings), array_column($detached->bindings, 'value'),
+            ];
             $term = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm(new SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0));
             $expression = $detached->terms[0]->expression;
             if (!$expression instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference

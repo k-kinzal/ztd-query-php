@@ -2,13 +2,14 @@
 
 import copy
 import hashlib
+import json
 
-from run import Failure, Worker, compare, require
+from run import Failure, TOOL, Worker, compare, digest, require
 from run_sqlite_add_column import CATALOG, FIXTURE
 from run_sqlite_create_table import quoted
 from run_sqlite_unique_keys import values_sql
 from sqlite_create_index_cases import (
-    FIELDS, SCHEMAS, case, declarations, expected, finite_id, finite_ids, forms, input_rows, missing_slot,
+    FIELDS, SCHEMAS, binding_projection, case, declarations, expected, finite_id, finite_ids, forms, input_rows, missing_slot,
     negatives, predicate_sql, requests, required, writes,
 )
 from sqlite_domain import RenderFault, check_render_faults, run_domain
@@ -16,8 +17,8 @@ from sqlite_engine import Database, ObserverAuthorizationError
 from sqlite_generated_column_cases import column
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-create-index-v5.json"
-CONTRACT = "5de8d76708ad174043a3ee7d09855244f6ba45830226ad20e506244e207cdde0"
+CONTRACT_NAME = "sqlite-create-index-v6.json"
+CONTRACT = "a6e90befc22a682f8c5bfb0b5c5d050f4440c1f7247ba662b02f7ca1576cfee0"
 CREATE_ACTION = {b"main": 1, b"temp": 3}
 INVALID = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\InvalidConstruction"
 
@@ -140,9 +141,25 @@ def observe(template, item, sql, observe_later=later):
         db.close(db.db)
 
 
+def check_binding_contract(specification):
+    name = "sqlite-index-operand-bindings-v1.json"
+    fingerprint = "3339223aae208f8133fa3161eefceaed3b0e167afabca3ba0d14dc105e31e1f1"
+    require(specification["bindingContract"] == {name: fingerprint} and digest(TOOL / name) == fingerprint,
+            "sqlite-index-operand-binding-contract", name)
+    for reference, expected_digest in json.loads((TOOL / name).read_text())["references"].items():
+        require(digest(TOOL / reference) == expected_digest, "sqlite-index-prior-observation-contract", reference)
+
+
+def check_binding_projection(item, reply):
+    expected = binding_projection(item)
+    require(reply.get("bindings") == expected, "sqlite-index-operand-bindings",
+            {"expected": expected, "actual": reply.get("bindings")})
+
+
 def probe(item, reply, db, ledger=None, key=None, original=None):
     require(reply["status"] == "constructed" and all(reply.get(field) == item[field] for field in FIELDS),
             "sqlite-create-index-structure", {"expected": item, "actual": reply})
+    check_binding_projection(item, reply)
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
     result = {"observation": observe(db, item, reply["sql"])}
@@ -180,6 +197,7 @@ def controls(db):
 
 
 def execute(args, specification, db, worker_factory=Worker):
+    check_binding_contract(specification)
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: controls(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe,
                             measured_input=lambda reply, response: (reply, response))
@@ -203,11 +221,13 @@ def check_faults(args, db, runner=check_render_faults):
     scalar = base + "SelectSql.php"
     multiple = {**case(), "terms": [[column(2), False], [column(1), True]]}
     return runner(args, db, [
-        RenderFault("omit-index-operand-scope", index, "(new ExpressionScope())->check([count($columns)], $operands, false);", "",
+        RenderFault("omit-index-operand-scope", index, "$references = (new ExpressionScope())->check([count($columns)], $operands, false);", "$references = [];",
                     {**missing_slot(), "probe": "create-index-construction"}, "sqlite-create-index-operand-scope-escaped"),
         RenderFault("index-other-schema", index, "$this->schema->quoted()", "'temp'", case(), "sqlite-create-index-target-mismatch"),
         RenderFault("reverse-index-keys", index, "foreach ($this->terms as $term) {", "foreach (array_reverse($this->terms) as $term) {",
                     multiple, "meaning-mismatch"),
+        RenderFault("render-index-different-bound-field", index, "new DefinitionSource($this->bindings)",
+                    "new DefinitionSource([2 => new Identifier('note')])", case(), "meaning-mismatch"),
         RenderFault("omit-index-filter", index, "$this->where === null ? '' : ' WHERE ' . $expressions->expression($this->where, $source)",
                     "''", case(term="inherited-code", predicate="positive", unique=True), "meaning-mismatch"),
         RenderFault("drop-index-explicit-collation", scalar, " . ' COLLATE ' . $expression->collation->value . ", " . ",

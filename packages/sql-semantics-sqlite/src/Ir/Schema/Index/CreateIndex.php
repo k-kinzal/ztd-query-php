@@ -47,9 +47,9 @@ final class CreateIndex implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<Identifier> The owning table's declared column order
+     * @var array<int, Identifier> The exact declared names selected by the key and predicate slots
      */
-    public readonly array $heading;
+    public readonly array $bindings;
 
     /**
      * @var non-empty-list<IndexTerm> The key terms in native order
@@ -90,8 +90,13 @@ final class CreateIndex implements SemanticsIR
         if ($where !== null) {
             $operands[] = [$where, 0, 1];
         }
-        (new ExpressionScope())->check([count($columns)], $operands, false);
-        $this->heading = $columns;
+        $references = (new ExpressionScope())->check([count($columns)], $operands, false);
+        $resolvedNames = [];
+        foreach ($references as $reference) {
+            $resolvedNames[$reference->slot] = $columns[$reference->slot];
+        }
+        ksort($resolvedNames);
+        $this->bindings = $resolvedNames;
         $this->terms = $keys;
     }
 
@@ -109,7 +114,7 @@ final class CreateIndex implements SemanticsIR
     public function toString(): string
     {
         $expressions = new SelectSql(preserveEmptyMembership: true);
-        $source = new DefinitionSource($this->heading);
+        $source = new DefinitionSource($this->bindings);
         $keys = [];
         foreach ($this->terms as $term) {
             $keys[] = $expressions->expression($term->expression, $source) . ($term->descending ? ' DESC' : ' ASC');

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v173.json"
-CONTRACT = "47da62cbeb5884868f72caa8f7c74efbdf8089f3c70a89f9112aa6099d95469e"
+CONTRACT_NAME = "release-layout-v174.json"
+CONTRACT = "4d393a2c66317b92ea1bad5fcd836bc407dcf168749fb475bf479f0de49c0bf4"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -1138,6 +1138,8 @@ def verify_probe(raw, catalog):
                 'CREATE UNIQUE INDEX IF NOT EXISTS "temp"."indexed_tag" ON "indexed_rows" ("code" DESC) '
                 'WHERE ((CASE WHEN ?09 THEN 0 WHEN ?1 THEN 0 END) NOT IN ())',
             ] and item["sql"] == item["createIndex"][-1], "installed-sqlite-create-index-mismatch", item)
+            require(item.get("sqliteIndexOperandBindings") == [[1], ["code"], [1], ["code"]],
+                    "installed-sqlite-index-operand-bindings", item)
             native_cast_sql = (
                 'CREATE INDEX "temp"."native_cast" ON "indexed_rows" (IFNULL((CAST("id" AS "int")), 0) ASC)'
             )

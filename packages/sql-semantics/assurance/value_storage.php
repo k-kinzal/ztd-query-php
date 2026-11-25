@@ -158,6 +158,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'sqlite-index-slot-copy') {
+            requireShape($short === 'Schema\\Index\\CreateIndex' && $property === 'bindings'
+                && in_array('Schema/Index/CreateIndex::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'resolvedNames',
+                'SQLite index definitions require the verified detached operand slot map.');
+
+            continue;
+        }
+
         if ($rule === 'sqlite-definition-slot-copy') {
             requireShape($short === 'Schema\\Predicate\\DefinitionSource' && $property === 'columns'
                 && in_array('Schema/Predicate/DefinitionSource::__construct', $checkedBoundaries, true)

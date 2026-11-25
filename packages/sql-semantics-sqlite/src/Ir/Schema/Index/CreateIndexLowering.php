@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex as ParsedIndex;
 final class CreateIndexLowering
 {
     /**
-     * Exports the declared table heading, keys and optional closed partial predicate.
+     * Resolves the ordered keys and predicate against the declared table.
      *
      * @throws InvalidConstruction When a name or expression lacks a supported binding
      */

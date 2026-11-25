@@ -4,7 +4,7 @@ import copy
 import hashlib
 
 from run import Failure, Worker, compare, require
-from run_sqlite_create_index import FIXTURE, IndexDatabase, later, observe
+from run_sqlite_create_index import FIXTURE, IndexDatabase, check_binding_contract, check_binding_projection, later, observe
 from run_sqlite_create_table import quoted
 from run_sqlite_scalars import evaluate, order_value
 from sqlite_cast_semantics import convert
@@ -17,8 +17,8 @@ from sqlite_index_expression_spelling_cases import (
 )
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-index-expression-spelling-v1.json"
-CONTRACT = "704f6ef9139e3edc1d8844301211f474bba4c175e9f59ec31dc89b51c2c38e51"
+CONTRACT_NAME = "sqlite-index-expression-spelling-v2.json"
+CONTRACT = "134cb0f660c983504545ad053bb4cfecc934cc8cf56d3e91492af20bd6a47a29"
 NO_PLAN = "SQLite 1: no query solution"
 SQLITE_FUNCTION = 31
 SLOT = '"amount"'
@@ -146,6 +146,7 @@ def compare_observations(expected, actual):
 def probe(item, reply, db, ledger=None, key=None, original=None):
     require(reply["status"] == "constructed" and all(reply.get(field) == item[field] for field in FIELDS),
             "sqlite-index-spelling-structure", {"expected": item, "actual": reply})
+    check_binding_projection(item, reply)
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
     observations = {"observation": observe(db, item, reply["sql"], future)}
@@ -189,6 +190,7 @@ def controls(db):
 
 
 def execute(args, specification, db, worker_factory=Worker):
+    check_binding_contract(specification)
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: controls(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe,
                             measured_input=lambda reply, result: (reply, result))

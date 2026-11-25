@@ -1,0 +1,174 @@
+{
+  "revision": "SemanticsIR/sqlite-index-expression-spelling-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2, UTF-8, stock SQLite affinity, index planner and file format, exact bound ordinary table identity.",
+  "scope": "Native CAST type names and binary IFNULL used in complete index operands and partial predicates.",
+  "constructors": {
+    "Expression/CastTypeName": {
+      "role": "The resolved native SQLite type name in a planner-sensitive CAST.",
+      "structure": "Case-sensitive UTF-8 type name bytes as the SQLite token denotes after decoding, independent of the original quoting syntax.",
+      "conditions": "The name contains no zero byte, fits the fixed statement envelope, and determines one effective CAST target through the ordered SQLite affinity rule.",
+      "meaning": "The type name's bytes distinguish SQLite planner matches. The effective type determines conversion of the operand including NULL.",
+      "externalInterpretation": "Use SQLite 3.47.2 and its native byte-exact type-name matching when a query forces a partial index.",
+      "sql": "Write this semantic type name as one double-quoted type identifier, doubling embedded delimiters, and account for its UTF-8 payload.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Expression/CastExpression": {
+      "role": "Convert an operand with the checked native CAST target and optional planner-sensitive native type name.",
+      "structure": "Effective closed CastTarget, resolved scalar operand, and optional immutable CastTypeName.",
+      "conditions": "If a native type name is given its derived target equals the effective target. The enclosing expression scope checks the child and combined payload.",
+      "meaning": "Convert as the effective target requests, preserving NULL and the given native planner name when it is part of the role.",
+      "externalInterpretation": "The token spelling was resolved before construction. Interpret its exact native type name in SQLite index matching.",
+      "sql": "Emit CAST with checked operand, effective canonical name when the type name is absent, or the safely quoted exact semantic type name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Expression/Nulls/Coalesce": {
+      "role": "Evaluate the first non-NULL input, with an explicit native binary IFNULL selection when planner matching requires it.",
+      "structure": "An immutable ordered argument list and a Boolean selecting the binary native IFNULL spelling.",
+      "conditions": "COALESCE has two through 127 arguments. IFNULL has exactly two. Every argument remains a checked scalar under its enclosing ordinal scope.",
+      "meaning": "Evaluate ordered inputs until the first non-NULL. Preserve the specified builtin identity for SQLite index planner matching.",
+      "externalInterpretation": "Use the pinned builtin meanings and exact context-appropriate native planner selection.",
+      "sql": "Write IFNULL or COALESCE as selected by the value and emit the ordered arguments.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/Index/CreateIndex",
+    "Schema/Index/IndexTerm",
+    "ColumnReference",
+    "Expression/CastTarget",
+    "Expression/Nulls/CoalesceArgument"
+  ],
+  "rules": [
+    "SQLite uses the exact decoded CAST name in expression matching, including letter case, spanning trivia and numeric modifiers when unquoted. A leading delimited token uses its decoded name and discards following tokens. An empty native name has NUMERIC conversion.",
+    "Independently observed canonical quoted type-name emission preserves the native planner identity across these forms. Capture only the semantic type name in a completed value. Lowering may inspect parsed tokens before constructing it.",
+    "Choose the effective cast target using the native priority INT, then CHAR/CLOB/TEXT, then BLOB, then REAL/FLOA/DOUB, then NUMERIC. Embedded trivia can contribute to a native type token and its conversion. A name is never SQL code.",
+    "IFNULL and COALESCE share the first-non-NULL rule but differ in native index matching. A binary explicitly retained IFNULL operation emits IFNULL. Other callers may use the common COALESCE role.",
+    "Admit supported forms through the same direct and analyzed CreateIndex routes and retain all previous index coverage, forced-index and fault checks."
+  ],
+  "observations": [
+    "Compare effective cast affinity and typed keys, index catalog data, partial membership, same-shape forced-index success, different native-shape refusal, exact names and row state after later writes and rollback.",
+    "Compare index explanation for an expression-key probe whose equality must use the same expression. Compare ordered rows separately.",
+    "Exercise quoted, unquoted, absent, modifier, mixed case, multibyte and comment-bearing type names, with embedded quotes safely encoded as data. Independently compare original and emitted SQL.",
+    "Independently check selected name bindings from the authored operands and retain the full native heading in the fixture."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "placement": [
+      "key",
+      "partial"
+    ],
+    "predicates": [
+      "direct-cast",
+      "cast-through-ifnull",
+      "cast-through-coalesce"
+    ],
+    "nativeNames": [
+      "INT",
+      "int",
+      "INTEGER",
+      "TEXT",
+      "numeric",
+      "FOO /* INT */ BAR",
+      "DECIMAL (4,2)",
+      "DECIMAL (04, 02)",
+      "",
+      "χμε",
+      "Name \"with\" INT",
+      "BLOB"
+    ],
+    "population": [
+      "empty",
+      "mixed"
+    ],
+    "identity": "All 288 coordinates in printed axis order, independently recovered from the built operand graph and actual table data."
+  },
+  "exploration": {
+    "seeds": [
+      24493,
+      61339,
+      93031
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 310,
+    "allowedExclusions": [],
+    "domain": "Vary case, words, embedded quote characters, whitespace, modifiers, typed values, NULL, conversions, placement and nested builtin alias."
+  },
+  "negative": [
+    "Mismatched effective and named CAST targets",
+    "Embedded zero byte in type name",
+    "Malformed UTF-8 in type name",
+    "IFNULL with three operands",
+    "Nonliteral runtime argument leaks into index scope"
+  ],
+  "faults": [
+    "Normalize exact CAST name to affinity",
+    "Change CAST case",
+    "Omit type-name quote escaping",
+    "Substitute COALESCE for an indexed IFNULL",
+    "Omit the CAST's typed operand",
+    "Ignore an indexed expression shape difference"
+  ],
+  "open": [
+    "The general schema-index language and full grammar coverage remain independently registered. Further planner-sensitive operators require actual source and semantic obligations."
+  ],
+  "trust": [
+    "Exact native SQLite type-name decoding, affinity and planner ABI",
+    "Checked diagnostic and CAST name extraction from the admitted parse shape",
+    "Independent SQL and row oracles in the fixed profile"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "exactCases": "21a7616a9508415e6f0d1e5673feb2c3dd8077931c62fed938e5a648fcce5bf2",
+    "exactDriver": "e3eac206ae4e79c85112d7c5b5b4e247a31038403bd68d7ffa50f4bac9e6b0f9",
+    "forms": "f68ae4ff0192a5dc5bc0315ce87bd6a447d94f7e8ab23009c9c62c1322848c65",
+    "planner": "3fed6871ad9bdc657ee78724d5b38690c564b378566c5e40a0be1e089707a454"
+  },
+  "extends": "sqlite-index-expression-spelling-v1.json",
+  "change": "Verify the exact selected operand names under the fixed binding contract. Retain all prior finite cases, seeds, outcomes, native observations and faults.",
+  "bindingContract": {
+    "sqlite-index-operand-bindings-v1.json": "3339223aae208f8133fa3161eefceaed3b0e167afabca3ba0d14dc105e31e1f1"
+  }
+}

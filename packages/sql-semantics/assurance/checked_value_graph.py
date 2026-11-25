@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v13.json"
-CONTRACT_DIGEST = "e85450e5f82a7a9e09110ff24ac23aeaffff82abd771ed5cff890945f84a5434"
+CONTRACT = "closed-value-graph-v14.json"
+CONTRACT_DIGEST = "00d009eba951865225d296788131308a7386158edc282cb7f85a495b0341a98c"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -86,6 +86,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("erase-writable-trigger-boundary", "value-closure-unverified-list"),
         ("erase-ordered-trigger-action-boundary", "value-closure-unverified-list"),
         ("erase-sqlite-appended-bindings", "value-closure-unverified-list"),
+        ("erase-sqlite-index-operand-bindings", "value-closure-unverified-list"),
         ("change-external-definition", "value-closure-external-definition"),
     )
     evidence = []
@@ -136,6 +137,10 @@ def controls(manifest, constructors, outcomes, specification):
             after = None
         elif name == "erase-sqlite-appended-bindings":
             before = "Schema/Alter/AppendColumnBounds::bindings"
+            mutated["sqlite"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-sqlite-index-operand-bindings":
+            before = "Schema/Index/CreateIndex::__construct"
             mutated["sqlite"]["checkedBoundaries"].remove(before)
             after = None
         else:
