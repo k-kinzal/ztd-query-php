@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Semantics;
 #[CoversClass(SchemaIndexOrder::class)]
 final class SchemaIndexOrderTest extends TestCase
 {
-    public function testCheckRequiresTheFullPhysicalHeading(): void
+    public function testCheckRequiresTheExactOperandSlot(): void
     {
         $semantics = new Semantics();
         $context = $semantics->context(['CREATE TABLE archive.ledger (zero integer, kept bigint)']);
@@ -26,7 +26,7 @@ final class SchemaIndexOrderTest extends TestCase
         self::assertInstanceOf(CreateIndex::class, $index);
         self::assertInstanceOf(CreateTable::class, $table);
         $this->expectException(AnalysisException::class);
-        $this->expectExceptionMessage('A schema index needs the full ordered physical heading.');
+        $this->expectExceptionMessage('A schema index needs the exact ordered operand bindings.');
 
         new CreateSchema(new Identifier('archive'), tables: [$table], indexes: [$index]);
     }

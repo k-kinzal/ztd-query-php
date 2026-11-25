@@ -159,17 +159,19 @@ def faults(_, tag):
     source = "sql-semantics-postgres/src/Ir/Schema/Index/Btree/CreateIndex.php"
     condition = "sql-semantics-postgres/src/Ir/Schema/Index/Btree/IndexCondition.php"
     partial = build(tag, [(0, "ASC NULLS LAST")], 0, True, unique=True, nulls=True)
-    mismatch = build(tag, [(1, "ASC NULLS LAST")], 1, False, unique=True)
+    mismatch = build(tag, [(1, "ASC NULLS LAST")], 1, False, unique=True, included=[0])
     invalid, boundary = list(negatives(tag))[1]
     return [
         RenderFault("postgres-partial-btree-drop-null-filter", source, "$this->predicate === null ? '' : IndexCondition::sql",
                     "true ? '' : IndexCondition::sql", partial, "meaning-mismatch"),
-        RenderFault("postgres-partial-btree-other-null-column", condition, "$table->columns[$node->slot]->quoted() . ($node->negated",
-                    "$table->columns[0]->quoted() . ($node->negated", mismatch, "meaning-mismatch"),
+        RenderFault("postgres-partial-btree-other-null-column", condition, "$fields[$node->slot]->name->quoted() . ($node->negated",
+                    "$fields[0]->name->quoted() . ($node->negated", mismatch, "meaning-mismatch"),
         RenderFault("postgres-partial-btree-invert-null-condition", condition, "$node->negated ? ' IS NOT NULL)'",
                     "!$node->negated ? ' IS NOT NULL)'", partial, "meaning-mismatch"),
         RenderFault("postgres-partial-btree-admit-absent-null-column", condition,
-                    "isset($table->columns[$node->slot])", "true",
+                    "Check::input(isset($heading->columns[$node->slot]), 'A partial B-tree predicate must refer to a column of the indexed table.');"
+                    + "\n                $fields[$node->slot] = $heading->field($node->slot);",
+                    "$fields[$node->slot] = $heading->field(0);",
                     {"boundary": boundary}, INVALID, {**invalid, "constructionOnly": True}),
     ]
 

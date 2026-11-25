@@ -5,7 +5,7 @@ import json
 from random import Random
 import sys
 
-from postgres_create_btree_cases import refusal
+from postgres_create_btree_cases import published, refusal
 from postgres_index_catalog_cases import (
     COLUMNS, DATABASE, FOREIGN_SPELLINGS, NEGATIVE_ROLES, ROLES, SCHEMAS, SPELLINGS, STATUS,
     analyzed, case, expected, sql,
@@ -90,11 +90,11 @@ def result_shape(item):
     schema = SCHEMAS[item["target"]]
     name, table, role = item["index"], item["table"], item["role"]
     if role == "create":
-        return "createBtree", {
+        return "createBtree", published({
             "table": [schema, table, list(COLUMNS), ["int4", "int4"], False],
             "name": name, "predicate": None, "keys": [[item["slot"], "ASC NULLS LAST"]], "included": [],
             "presence": "vacant", "ifNotExists": False, "unique": False, "nullsNotDistinct": False, "concurrently": False,
-        }
+        })
     if role == "drop":
         return "dropIndex", {"targets": [["bound", schema, name, table]], "ifExists": False, "cascade": False, "mode": "ordinary"}
     if role == "rebuild-owner":

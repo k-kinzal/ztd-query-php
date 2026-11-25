@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
-use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
-use SqlSemantics\Platform\PostgreSql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
-use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexField;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
-use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexSchemas;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -20,7 +19,8 @@ use SqlSemantics\SemanticsIR;
  * @visibility public
  * @example Creating a B-tree on a resolved integer heading
  *     $name = \SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
- *     $table = new \SqlSemantics\Platform\PostgreSql\Ir\TableSource(new $name('public'), new $name('orders'), [new $name('id')]);
+ *     $owner = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget(new $name('public'), new $name('orders'));
+ *     $table = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading($owner, [new $name('id')], [\SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::Int4]);
  *     (new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex($table, new $name('idx'), [new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexKey(0)]))->name->value // => 'idx'
  */
 final class CreateIndex implements SemanticsIR
@@ -38,13 +38,23 @@ final class CreateIndex implements SemanticsIR
     public readonly array $included;
 
     /**
+     * The exact ordinary table coordinate of the index.
+     */
+    public readonly IndexTarget $table;
+
+    /**
+     * @var array<int, IndexField> The consumed fields keyed by original physical slot
+     */
+    public readonly array $bindings;
+
+    /**
      * Validates both operand lists against the fixed heading and index creation policies.
      *
      * @param list<IndexKey> $keys
      * @param list<IncludedColumn> $included
      */
     public function __construct(
-        public readonly TableSource $table,
+        IndexHeading $heading,
         public readonly Identifier $name,
         array $keys,
         array $included = [],
@@ -56,25 +66,26 @@ final class CreateIndex implements SemanticsIR
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         public readonly NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate|null $predicate = null,
     ) {
-        Check::input($table->kind === ExternalRelationKind::BaseTable && !IndexSchemas::system($table->schema->value)
-            && !IndexSchemas::sessionInternal($table->schema->value), 'A B-tree needs a resolved ordinary application or temporary table.');
         Check::input($presence === IndexPresence::Vacant || $ifNotExists, 'An occupied index name requires IF NOT EXISTS.');
-        Check::input($table->table->value !== $name->value || $presence === IndexPresence::Occupied, 'An indexed table already occupies its own name.');
+        Check::input($heading->target->table->value !== $name->value || $presence === IndexPresence::Occupied, 'An indexed table already occupies its own name.');
         $checkedKeys = Check::listOf($keys, IndexKey::class, 'A B-tree needs a nonempty ordered list of key occurrences.', 1);
         $checkedIncluded = Check::listOf($included, IncludedColumn::class, 'B-tree payload positions must be included column occurrences.');
         Check::input(count($checkedKeys) + count($checkedIncluded) <= 32, 'A B-tree supports at most 32 key and covering occurrences.');
-        foreach ($table->columnKinds as $kind) {
-            Check::input($kind !== ColumnKind::Text, 'A B-tree in this profile requires integer or Boolean physical column types.');
-        }
+        $resolvedFields = [];
         foreach ($checkedKeys as $key) {
-            Check::input(isset($table->columns[$key->slot]), 'A B-tree key must refer to a column of the indexed table.');
+            Check::input(isset($heading->columns[$key->slot]), 'A B-tree key must refer to a column of the indexed table.');
+            $resolvedFields[$key->slot] = $heading->field($key->slot);
         }
         foreach ($checkedIncluded as $column) {
-            Check::input(isset($table->columns[$column->slot]), 'An included position must refer to a column of the indexed table.');
+            Check::input(isset($heading->columns[$column->slot]), 'An included position must refer to a column of the indexed table.');
+            $resolvedFields[$column->slot] = $heading->field($column->slot);
         }
         if ($predicate !== null) {
-            IndexCondition::check($table, $predicate);
+            $resolvedFields += IndexCondition::bindings($heading, $predicate);
         }
+        ksort($resolvedFields, SORT_NUMERIC);
+        $this->table = $heading->target;
+        $this->bindings = $resolvedFields;
         $this->keys = $checkedKeys;
         $this->included = $checkedIncluded;
     }
@@ -94,11 +105,11 @@ final class CreateIndex implements SemanticsIR
     {
         $keys = [];
         foreach ($this->keys as $key) {
-            $keys[] = $this->table->columns[$key->slot]->quoted() . ' ' . $key->order->value;
+            $keys[] = $this->bindings[$key->slot]->name->quoted() . ' ' . $key->order->value;
         }
         $included = [];
         foreach ($this->included as $column) {
-            $included[] = $this->table->columns[$column->slot]->quoted();
+            $included[] = $this->bindings[$column->slot]->name->quoted();
         }
 
         return 'CREATE ' . ($this->unique ? 'UNIQUE ' : '') . 'INDEX ' . ($this->concurrently ? 'CONCURRENTLY ' : '')
@@ -107,6 +118,6 @@ final class CreateIndex implements SemanticsIR
             . ' USING btree (' . implode(', ', $keys) . ')'
             . ($included === [] ? '' : ' INCLUDE (' . implode(', ', $included) . ')')
             . ($this->nullsNotDistinct ? ' NULLS NOT DISTINCT' : '')
-            . ($this->predicate === null ? '' : IndexCondition::sql($this->table, $this->predicate));
+            . ($this->predicate === null ? '' : IndexCondition::sql($this->bindings, $this->predicate));
     }
 }

@@ -41,7 +41,7 @@ final class CreateIndexLowering
         $target = (new IndexTableLowering())->lower($operation, $statement, $memberNamespace);
         $presence = $memberPresence;
         if ($presence === null) {
-            $schema = new Name($target->schema->value);
+            $schema = new Name($target->target->schema->value);
             $occupied = (new IndexCreationVisibility())->occupied($context, $context->indexNamespace->indexes, $statement->name, $schema);
             Check::input(
                 $occupied || ($context->complete && !$context->indexNamespace->hasUnknownNames($schema)),

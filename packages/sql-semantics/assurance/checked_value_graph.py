@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v18.json"
-CONTRACT_DIGEST = "927150b1da1c783c8c73fb755a122e7c63e0d01ce1c5d0ad497be2d13375cfe9"
+CONTRACT = "closed-value-graph-v19.json"
+CONTRACT_DIGEST = "e6b3bcd6ac07454a9493c8e77d1886dada210fb8a34b919a768251db3cb88bbc"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 

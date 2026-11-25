@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
-use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ColumnKey;
@@ -22,7 +22,7 @@ final class IndexOperands
     /**
      * Binds and orders one written key.
      */
-    public function key(TableSource $table, IndexElement $element): IndexKey
+    public function key(IndexHeading $table, IndexElement $element): IndexKey
     {
         $descending = $element->direction === SortDirection::Descending;
         $nullsFirst = $element->nulls === NullsOrder::First || ($element->nulls === null && $descending);
@@ -36,7 +36,7 @@ final class IndexOperands
     /**
      * Binds one INCLUDE occurrence.
      */
-    public function covering(TableSource $table, IndexElement $element): IncludedColumn
+    public function covering(IndexHeading $table, IndexElement $element): IncludedColumn
     {
         Check::input($element->direction === null && $element->nulls === null, 'An included column cannot specify key order.');
 
@@ -48,7 +48,7 @@ final class IndexOperands
      *
      * @throws InvalidConstruction When the column is unavailable
      */
-    public function slot(TableSource $table, IndexElement $element): int
+    public function slot(IndexHeading $table, IndexElement $element): int
     {
         Check::input($element->key instanceof ColumnKey && $element->collation === null
             && $element->operatorClass === null && $element->classOptions === [], 'A B-tree operand needs a direct column and its default operator class.');

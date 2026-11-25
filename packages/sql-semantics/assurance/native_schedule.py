@@ -62,7 +62,7 @@ NATIVE = {
     "postgres_sequence_access": "postgres-sequence-access-v1.json",
     "postgres_schema_sequence_grants": "postgres-schema-sequence-grants-v2.json",
     "postgres_sequence_default_access": "postgres-sequence-default-access-v2.json",
-    "postgres_create_btree": "postgres-create-btree-v1.json",
+    "postgres_create_btree": "postgres-create-btree-v2.json",
     "postgres_partial_btree": "postgres-partial-btree-v1.json",
     "postgres_boolean_index_predicate": "postgres-boolean-index-predicate-v1.json",
     "postgres_index_truth_tests": "postgres-index-truth-tests-v1.json",

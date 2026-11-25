@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v179.json"
-CONTRACT = "cc0750c5c04190d0039113315cdd3f234f3667f218da3e607e0636f991af06bc"
+CONTRACT_NAME = "release-layout-v180.json"
+CONTRACT = "cf37b3a61478bb468f9d9fc80cc85bc4902be1c2b886990d59c46fc500cbce3c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -280,6 +280,11 @@ def verify_probe(raw, catalog):
                     and item["sql"] == 'REFRESH MATERIALIZED VIEW "public"."snapshot" WITH NO DATA',
                     "installed-postgres-refresh-materialized-view-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Index\\Btree\\CreateIndex"):
+            bound_only = ('CREATE INDEX "bound_only" ON "public"."bound_fields" USING btree '
+                          '("amount" ASC NULLS LAST) WHERE ("flags" IS TRUE)')
+            require(item.get("postgresIndexOperandBindings") == [
+                True, [[1, "amount", "int4"], [2, "flags", "bool"]], bound_only, bound_only,
+            ], "installed-postgres-index-operand-bindings", item)
             emitted = ('CREATE UNIQUE INDEX "new index" ON "public"."ledger" USING btree '
                        '("wide" DESC NULLS LAST, "value" ASC NULLS FIRST) INCLUDE ("ready", "ready") NULLS NOT DISTINCT')
             require(item.get("postgresCreateBtree") == ["public", ["int4", "int8", "bool"],

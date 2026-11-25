@@ -6,11 +6,11 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
-use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\IndexCreationVisibility;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
@@ -24,11 +24,9 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 final class IndexTableLowering
 {
     /**
-     * Obtains an absolute ordinary table with the supported physical heading.
-     *
-     * @throws InvalidConstruction When a declared physical type is outside the B-tree profile
+     * Resolves the original heading before selecting the consumed fields.
      */
-    public function lower(BoundStatement $operation, CreateIndex $statement, ?Identifier $memberNamespace = null): TableSource
+    public function lower(BoundStatement $operation, CreateIndex $statement, ?Identifier $memberNamespace = null): IndexHeading
     {
         $resolution = $operation->facts->relation($statement)->table;
         Check::input($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable
@@ -51,10 +49,12 @@ final class IndexTableLowering
                 Builtin::Int4 => ColumnKind::Int4,
                 Builtin::Int8 => ColumnKind::Int8,
                 Builtin::Bool => ColumnKind::Boolean,
-                default => throw new InvalidConstruction('A B-tree in this profile requires integer or Boolean physical column types.'),
+                default => null,
             };
         }
 
-        return new TableSource(new Identifier($schema->value), new Identifier($table->name->name->value), $columns, $statement->table->only, $types);
+        $target = new IndexTarget(new Identifier($schema->value), new Identifier($table->name->name->value), $statement->table->only);
+
+        return new IndexHeading($target, $columns, $types);
     }
 }

@@ -7,22 +7,24 @@ namespace Tests\Unit\Ir\Schema\Index\Btree;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexCondition;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexKey;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate;
-use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
 
 #[CoversClass(IndexCondition::class)]
 #[Small]
 final class IndexConditionTest extends TestCase
 {
-    public function testCheckKeepsBothBoundBranches(): void
+    public function testBindingsKeepsBothBoundBranches(): void
     {
-        $table = new TableSource(new Identifier('app'), new Identifier('orders'), [new Identifier('id'), new Identifier('second')]);
+        $table = new IndexHeading(new IndexTarget(new Identifier('app'), new Identifier('orders')), [new Identifier('id'), new Identifier('second')], [ColumnKind::Int4, ColumnKind::Int4]);
         $predicate = new IndexBooleanPredicate(
             LogicalOperator::And,
             new NullIndexPredicate(0),
@@ -36,7 +38,7 @@ final class IndexConditionTest extends TestCase
 
     public function testSqlUsesAnIterativeTraversalForDeepTrees(): void
     {
-        $table = new TableSource(new Identifier('app'), new Identifier('orders'), [new Identifier('Key"1'), new Identifier('second')]);
+        $table = new IndexHeading(new IndexTarget(new Identifier('app'), new Identifier('orders')), [new Identifier('Key"1'), new Identifier('second')], [ColumnKind::Int4, ColumnKind::Int4]);
         $predicate = array_reduce(
             range(1, 4000),
             static fn (IndexBooleanPredicate $child): IndexBooleanPredicate => new IndexBooleanPredicate(LogicalOperator::Not, $child),

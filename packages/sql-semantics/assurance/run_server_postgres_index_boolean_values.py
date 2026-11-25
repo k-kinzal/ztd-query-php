@@ -226,20 +226,20 @@ def controls():
 def faults(_, tag):
     source = "sql-semantics-postgres/src/Ir/Schema/Index/Btree/IndexCondition.php"
     incorrect, reason = list(negatives(tag))[3]
-    reading = build(tag, [2, "column"], unique=False)
+    reading = build(tag, [2, "column"], unique=False, included=[3])
     negation = build(tag, ["NOT", [2, "column"], None], unique=False)
-    bare = "$table->columns[$node->slot]->quoted() . ')'"
+    bare = "$fields[$node->slot]->name->quoted() . ')'"
     nullable = inference(tag, "p", "p", rows=[[1, 0, True, True], [2, 1, False, False], [3, 2, False, None]])
     return [
         RenderFault("postgres-index-boolean-value-admit-int", source,
-                    "($table->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean", "true",
+                    "($heading->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean", "true",
                     {"boundary": reason}, INVALID, {**incorrect, "constructionOnly": True}),
         RenderFault("postgres-index-boolean-value-bind-other-field", source, bare,
-                    "$table->columns[3]->quoted() . ')'", reading, "meaning-mismatch"),
+                    "$fields[3]->name->quoted() . ')'", reading, "meaning-mismatch"),
         RenderFault("postgres-index-boolean-value-force-truth", source, bare,
-                    "$table->columns[$node->slot]->quoted() . ' IS TRUE)'", nullable, "meaning-mismatch"),
+                    "$fields[$node->slot]->name->quoted() . ' IS TRUE)'", nullable, "meaning-mismatch"),
         RenderFault("postgres-index-boolean-value-collapse-unknown-under-not", source, bare,
-                    "$table->columns[$node->slot]->quoted() . ' AND ' . $table->columns[$node->slot]->quoted() . ' IS NOT NULL)'",
+                    "$fields[$node->slot]->name->quoted() . ' AND ' . $fields[$node->slot]->name->quoted() . ' IS NOT NULL)'",
                     negation, "meaning-mismatch"),
     ]
 

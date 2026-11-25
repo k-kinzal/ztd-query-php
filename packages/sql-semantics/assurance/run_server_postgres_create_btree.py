@@ -7,8 +7,9 @@ import sys
 from evidence_transcript import canonical
 from postgres_create_btree_cases import (
     BITS, HEADINGS, KEY_AXES, PATH, ROUTE_AXES, ROWS, analyzed, binding_coordinates,
-    case, expected, grid, key_case, refusal, route_case,
+    case, expected, grid, key_case, published, refusal, route_case,
 )
+from postgres_index_operand_cases import direct as projection_request, identities, projected_case, recipes
 from run import Failure, TOOL, digest, require
 from run_server import rejects, same
 from run_server_drop_table import specifications as drop_contract
@@ -17,8 +18,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "postgres-create-btree"
 OBSERVER = "postgres_create_btree_observer.py"
-CONTRACT_NAME = "postgres-create-btree-v1.json"
-CONTRACT = "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629"
+CONTRACT_NAME = "postgres-create-btree-v2.json"
+CONTRACT = "fb2bf03a058c6b1ae1e0c25f00bfacea7cbcce7cf1339767d9b63e0112d9860b"
 COMPLETE_SEEDS = True
 GRAPH = "postgres-btree-typed-graph"
 INVALID = "postgres-btree-invalid-published"
@@ -41,7 +42,7 @@ def coordinates(spec):
     refused = {coordinate for coordinate in routes if not coordinate[4] and coordinate[5] != "vacant"}
     require(len(full_keys) == 320 and len(routes) == 48 and len(refused) == 16, "postgres-btree-finite-size")
 
-    return (full_keys | (routes - refused)), refused
+    return (full_keys | (routes - refused) | identities(spec["finite"])), refused
 
 
 def finite_ids(_, spec, _tag):
@@ -65,7 +66,7 @@ def analysis_finite_id(engine, actual, item, _authored):
 
 
 def observe_rejection(spec, item, actual, sql):
-    coordinate = binding_coordinates(item, item)
+    coordinate = binding_coordinates(item)
     require(coordinate in rejected_finite_ids(spec, item["release"]), "postgres-btree-negative-coordinate")
     check_observation(item, actual, sql)
 
@@ -129,13 +130,16 @@ def generated(tag, seed, count):
 def requests(_, tag, spec):
     finite = [key_case(tag, *values) for values in grid(spec, KEY_AXES)]
     finite.extend(route_case(tag, *values) for values in grid(spec, ROUTE_AXES))
+    finite.extend(projected_case(tag, *values) for values in recipes(spec["finite"]))
     rejected = rejected_finite_ids(spec, tag)
     for number, item in enumerate(finite):
-        if binding_coordinates(item, item) in rejected:
+        if binding_coordinates(item) in rejected:
             yield f"rejected-finite/{number}", analyzed(item), item, refusal("occupied index name requires IF NOT EXISTS")
         else:
-            yield f"finite/{number}", analyzed(item), item, None
-            yield f"direct/{number}", item, item, None
+            projection = item["coordinate"][0] == "projection"
+            yield f"finite/{number}", analyzed(item, unqualified=projection), item, None
+            request = projection_request(item) if projection else item
+            yield f"direct/{number}", request, item, None
     for number, (item, unqualified) in enumerate(edge_cases(tag)):
         yield f"edge/{number}", analyzed(item, unqualified=unqualified), item, None
     for seed in spec["exploration"]["seeds"]:
@@ -149,8 +153,9 @@ def check_value(item, reply):
     require(reply["status"] == "constructed"
             and reply["profile"] == item["release"] + "/utf8/standard-conforming-strings/native",
             "postgres-btree-positive-rejected", reply)
-    require(reply["createBtree"] == item["createBtree"], GRAPH,
-            {"sql": reply["sql"], "expected": item["createBtree"], "observed": reply["createBtree"]})
+    projected = published(item["createBtree"])
+    require(reply["createBtree"] == projected, GRAPH,
+            {"sql": reply["sql"], "expected": projected, "observed": reply["createBtree"]})
 
 
 def prepare(_, db):
@@ -179,6 +184,7 @@ def check_observation(item, actual, sql):
 
 def sample_forms(forms, reply, _, item):
     index = reply["createBtree"]
+    kinds = {slot: kind for slot, _, kind in index["bindings"]}
     keys = [slot for slot, _ in index["keys"]]
     covering = index["included"]
     for label in ("ifNotExists", "unique", "nullsNotDistinct", "concurrently"):
@@ -192,7 +198,7 @@ def sample_forms(forms, reply, _, item):
     forms[f"cover-repeat/{len(set(covering)) != len(covering)}"] += 1
     forms[f"cover-overlap/{bool(set(covering) & set(keys))}"] += 1
     for slot, order in index["keys"]:
-        forms[f"kind/{index['table'][3][slot]}"] += 1
+        forms[f"kind/{kinds[slot]}"] += 1
         forms[f"order/{order}"] += 1
 
 
@@ -259,7 +265,11 @@ def faults(_, tag):
     concurrent = case(tag, [key], concurrently=True, transaction=True)
     guarded = case(tag, [key], occupied="existing-table", guard=True)
     invalid, boundary = list(direct_negatives(tag))[1]
+    projected = projected_case(tag, "first", "bytea", "covering")
     return [
+        RenderFault("postgres-btree-wrong-projected-key", root,
+                    "$this->bindings[$key->slot]->name->quoted()", "$this->bindings[3]->name->quoted()",
+                    projected, "meaning-mismatch", projection_request(projected)),
         RenderFault("postgres-btree-wrong-scope", root, "$this->table->schema->quoted()", """'"fixture"'""", temp, "meaning-mismatch"),
         RenderFault("postgres-btree-reverse-key-order", root, "foreach ($this->keys as $key)", "foreach (array_reverse($this->keys) as $key)", order, "meaning-mismatch"),
         RenderFault("postgres-btree-erase-covered-columns", root, """($included === [] ? '' : ' INCLUDE (' . implode(', ', $included) . ')')""", "''", order, "meaning-mismatch"),

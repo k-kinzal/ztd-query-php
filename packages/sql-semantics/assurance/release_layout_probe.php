@@ -1051,17 +1051,21 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresRefreshMaterializedView'] = [$result->name->schema->value, $result->name->view->value, $result->withData];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Btree\\CreateIndex') {
+            $id = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $kind = SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::class;
+            $heading = SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading::class;
+            $ledger = new $heading($result->table, [new $id('value'), new $id('wide'), new $id('ready')], [$kind::Int4, $kind::Int8, $kind::Boolean]);
             $first = $result->keys[0];
             $keys = [&$first, $result->keys[1]];
             $reconstructed = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
-                $result->table, $result->name, $keys, $result->included, $result->presence, $result->ifNotExists,
+                $ledger, $result->name, $keys, $result->included, $result->presence, $result->ifNotExists,
                 $result->unique, $result->nullsNotDistinct, $result->concurrently, $result->release,
             );
             $first = $result->keys[1];
             $guarded = $semantics->analyze('CREATE INDEX IF NOT EXISTS existing ON ledger (ready)', $activeContext);
             $details['postgresCreateBtree'] = [
                 $reconstructed->table->schema->value,
-                array_map(static fn ($kind) => $kind->value, $reconstructed->table->columnKinds),
+                array_map(static fn ($field) => $field->kind->value, $reconstructed->bindings),
                 array_map(static fn ($key) => [$key->slot, $key->order->value], $reconstructed->keys),
                 array_map(static fn ($inc) => $inc->slot, $reconstructed->included),
                 $reconstructed->presence->value, $reconstructed->toString(), $guarded->presence->value, $guarded->ifNotExists,
@@ -1071,7 +1075,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $partial->predicate->slot, $partial->predicate->negated,
             );
             $partialCopy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
-                $partial->table, $partial->name, $partial->keys, $partial->included,
+                $ledger, $partial->name, $partial->keys, $partial->included,
                 release: $partial->release, predicate: $predicate,
             );
             $details['postgresPartialBtree'] = [$predicate->slot, $predicate->negated, $partial->toString(), $partialCopy->toString()];
@@ -1083,7 +1087,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $logical = SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator::class;
             $leaf = SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate::class;
             $detached = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
-                $formula->table, $formula->name, $formula->keys, release: $formula->release,
+                $ledger, $formula->name, $formula->keys, release: $formula->release,
                 predicate: new $node($logical::Not, new $node($logical::Or, new $leaf(0), new $leaf(2, true))),
             );
             $parsedPredicate = $formula->predicate;
@@ -1101,7 +1105,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator::IsNotUnknown,
             );
             $copy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
-                $truth->table, $truth->name, $truth->keys, release: $truth->release, predicate: $test,
+                $ledger, $truth->name, $truth->keys, release: $truth->release, predicate: $test,
             );
             $details['postgresIndexTruthTest'] = [
                 $truth->predicate->slot, $truth->predicate->operator->value,
@@ -1111,12 +1115,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $value = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn(2);
             $negated = new $node($logical::Not, $value);
             $detachedField = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
-                $field->table, $field->name, $field->keys, release: $field->release, predicate: $negated,
+                $ledger, $field->name, $field->keys, release: $field->release, predicate: $negated,
             );
             $details['postgresIndexBooleanValue'] = [
                 $field->predicate->operator->value, $field->predicate->left->slot,
                 $field->toString(), $detachedField->toString(), $negated == $field->predicate,
             ];
+            $leftContext = $semantics->context(['CREATE TABLE public.bound_fields (spare TEXT, amount INT, flags BOOLEAN, irrelevant DATE)']);
+            $rightContext = $semantics->context(['CREATE TABLE public.bound_fields (decoy JSONB, amount INT, flags BOOLEAN, remark BYTEA)']);
+            $source = 'CREATE INDEX bound_only ON public.bound_fields (amount) WHERE flags IS TRUE';
+            $left = $semantics->analyze($source, $leftContext);
+            $right = $semantics->analyze($source, $rightContext);
+            $detail = [];
+            foreach ($left->bindings as $slot => $binding) {
+                $detail[] = [$slot, $binding->name->value, $binding->kind->value];
+            }
+            $details['postgresIndexOperandBindings'] = [$left == $right, $detail, $left->toString(), $right->toString()];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\RenameSchema') {
             $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');

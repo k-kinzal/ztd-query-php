@@ -11,6 +11,17 @@ SCHEMAS = {"persistent": "fixture", "temporary": "pg_temp"}
 HEADINGS = ["a", "b", "payload"]
 KINDS = ["int4", "int8", "bool"]
 SQL_TYPES = {"int4": "integer", "int8": "bigint", "bool": "boolean"}
+UNRELATED_TYPES = {
+    "integer": ("int4", "integer"),
+    "text": ("text", "text"),
+    "text-c-collation": ("text", 'text COLLATE "C"'),
+    "jsonb": ("jsonb", "jsonb"),
+    "numeric-8-2": ("numeric", "numeric(8,2)"),
+    "date": ("date", "date"),
+    "bytea": ("bytea", "bytea"),
+    "uuid": ("uuid", "uuid"),
+    "integer-array": ("_int4", "integer[]"),
+}
 OPCLASSES = {"int4": "int4_ops", "int8": "int8_ops", "bool": "bool_ops"}
 ROWS = [[1, 17, False], [2, 19, True], [None, 21, True], [None, 31, None]]
 OLD_INDEX = [[1, "DESC NULLS LAST"]]
@@ -115,7 +126,11 @@ def declarations(item):
     index = item["createBtree"]
     schema, relation, columns, kinds, _ = index["table"]
     table = qualified(schema, relation)
-    column_sql = ", ".join(quoted(name) + " " + SQL_TYPES[kind] for name, kind in zip(columns, kinds))
+    fixture_types = item.get("fixtureTypes", {})
+    column_sql = ", ".join(
+        quoted(name) + " " + (UNRELATED_TYPES[fixture_types[str(slot)]][1] if str(slot) in fixture_types else SQL_TYPES[kind])
+        for slot, (name, kind) in enumerate(zip(columns, kinds))
+    )
     target_schema = "CREATE SCHEMA fixture"
     if schema == "pg_temp":
         targets = [f"CREATE TABLE fixture.{quoted(relation)} (decoy integer)", f"CREATE TEMP TABLE {table} ({column_sql})"]
@@ -272,8 +287,25 @@ def expected(item):
     return result
 
 
-def binding_coordinates(item, actual):
+def published(index):
+    """Project the independent declared model to the exact completed value."""
+    namespace, owner, names, kinds, only = index["table"]
+    used = set(index["included"]) | {slot for slot, _ in index["keys"]}
+    pending = [] if index["predicate"] is None else [index["predicate"]]
+    while pending:
+        current = pending.pop()
+        if len(current) == 2:
+            used.add(current[0])
+        else:
+            pending.extend(child for child in current[1:] if child is not None)
+    bindings = [[slot, names[slot], kinds[slot]] for slot in sorted(used)]
+    return {**index, "table": [namespace, owner, only], "bindings": bindings}
+
+
+def binding_coordinates(item, actual=None):
     coord = item["coordinate"]
-    require(coord is not None and actual["createBtree"] == item["createBtree"], "postgres-btree-observed-coordinate")
+    require(coord is not None, "postgres-btree-expected-coordinate")
+    if actual is not None:
+        require(actual["createBtree"] == published(item["createBtree"]), "postgres-btree-observed-coordinate")
     # Explicit SQL spelling is a coordinate even when two spellings give the same native bits.
     return tuple(tuple(value) if isinstance(value, list) else value for value in coord)

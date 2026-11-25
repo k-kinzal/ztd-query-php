@@ -42,7 +42,7 @@ A namespace with members has a static name and an unguarded parent declaration. 
 
 An ordered `CREATE OR REPLACE VIEW` can replace an earlier ordinary view. Existing fields retain their names, types and collations in order. A later view can use an appended field, and earlier dependents continue to refer to the replaced view.
 
-A named B-tree index in the schema binds to an ordinary table created by the table phase. Its position-bearing keys, covering columns and predicate use that table’s full physical heading. A guarded index name can preserve a sequence, table, view or earlier index. A concurrent build requires a separate statement.
+A named B-tree index in the schema binds to an ordinary table created by the table phase. Each key, covering column and predicate leaf binds to an exact name and type at its physical position in that table. A guarded index name can preserve a sequence, table, view or earlier index. A concurrent build requires a separate statement.
 
 A sequence grant can name earlier local sequences or declared external sequences. It can also select all sequences in named schemas. PostgreSQL applies the grants after creating the other members, using the schema owner as the effective role. Within a grant, `SESSION_USER` still selects the authenticated role.
 
@@ -87,7 +87,7 @@ Each installed target records its absolute schema, index name and indexed relati
 
 For `CREATE INDEX`, `DROP INDEX`, `REINDEX INDEX` and `REINDEX TABLE`, a three-part owner or index name can explicitly select the current database. Supply that database through `Semantics(currentDatabase: ...)`. The analyzer checks the decoded database name before publishing the local schema and object coordinates. The rendered statements use those verified coordinates.
 
-A named `CREATE INDEX` on a declared ordinary table returns `Ir\Schema\Index\Btree\CreateIndex` for the stock B-tree profile. The value retains the table's physical integer, bigint and Boolean column kinds, the effective direction and NULL placement of each key, and every `INCLUDE` occurrence. Keys and payload may repeat. A guarded name may already be occupied in the target table's namespace. PostgreSQL determines uniqueness failures and the resulting live catalog state when the SQL runs.
+A named `CREATE INDEX` on a declared ordinary table returns `Ir\Schema\Index\Btree\CreateIndex` for the stock B-tree profile. The value retains the absolute table coordinate and the physical positions, names and types of the integer, bigint and Boolean columns it uses. Unused columns may have other types. Each key keeps its effective direction and NULL placement, and every `INCLUDE` occurrence keeps its position. Keys and payload may repeat. A guarded name may already be occupied in the target table's namespace. PostgreSQL determines uniqueness failures and the resulting live catalog state when the SQL runs.
 
 The same B-tree value can carry a direct scalar `IS NULL` or `IS NOT NULL` predicate as a resolved physical slot. For example, `CREATE INDEX queued ON app.orders (id) WHERE app.orders.is_closed IS NULL` checks the exact indexed column if the declared physical type belongs to the supported B-tree profile. A unique partial index checks only the rows that satisfy its predicate.
 

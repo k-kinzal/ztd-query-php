@@ -198,16 +198,16 @@ def controls():
 def faults(_, tag):
     source = "sql-semantics-postgres/src/Ir/Schema/Index/Btree/IndexCondition.php"
     invalid, boundary = list(negatives(tag))[2]
-    truth = build(tag, [2, "IS TRUE"], unique=False)
+    truth = build(tag, [2, "IS TRUE"], unique=False, included=[3])
     unknown = build(tag, [2, "IS UNKNOWN"], unique=False)
     spelling = "$node->operator->value . ')'"
-    prefix = "$table->columns[$node->slot]->quoted() . ' ' . "
+    prefix = "$fields[$node->slot]->name->quoted() . ' ' . "
     return [
         RenderFault("postgres-index-truth-admit-int", source,
-                    "($table->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean", "true",
+                    "($heading->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean", "true",
                     {"boundary": boundary}, INVALID, {**invalid, "constructionOnly": True}),
         RenderFault("postgres-index-truth-bind-other-column", source, prefix + spelling,
-                    "$table->columns[3]->quoted() . ' ' . " + spelling, truth, "meaning-mismatch"),
+                    "$fields[3]->name->quoted() . ' ' . " + spelling, truth, "meaning-mismatch"),
         RenderFault("postgres-index-truth-accept-unknown-as-true", source, prefix + spelling,
                     prefix + "'IS NOT FALSE' . ')'", truth, "meaning-mismatch"),
         RenderFault("postgres-index-truth-negate-unknown", source, prefix + spelling,

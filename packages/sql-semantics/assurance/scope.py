@@ -146,7 +146,8 @@ CONTRACTS = {
     "postgres-reindex-tablespace-v2.json": "979def3b0e84b55d3cb2d59b1c15db302aac721667c59c05fbc3b95e48d17754",
     "postgres-index-catalog-binding-v1.json": "c2f6d6e7a8f4e72cc90fc15daef3d6d3204538ec836ddece4c9a9453467ca128",
     "postgres-local-catalog-binding-v1.json": "855a3af17e33095b5a1603198d563d69a9b6ba373b879b716629f9a5b1ffc3ce",
-    "postgres-create-btree-v1.json": "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629",
+    "postgres-create-btree-v2.json": "fb2bf03a058c6b1ae1e0c25f00bfacea7cbcce7cf1339767d9b63e0112d9860b",
+    "postgres-btree-projected-roles-v1.json": "d8f3c5c5ae9375c8e671ab7d4bd83f877a35af3781e762d121bd79d26c77bc26",
     "postgres-drop-index-v1.json": "d26bab1348dec92d608759e02d68f184ee28461aadbaf015e836f911dced5faa",
     "postgres-drop-schema-v2.json": "0cbded9faaeb487e6eb711a1f2be7a93caa5e1b1c580e612806a0c432018b58d",
     "postgres-create-schema-v4.json": "43be3791d0f01cc784f84975e844c032b8bd144c6b8fbcf6987b3e7bdb368d37",
@@ -289,7 +290,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "e594a2c133f28615c5c153bca2ad3c92503442163ebd30c60f8f7fad90910d04"
+PUBLICATION = "ae8b787caee3d25019b4723c82050b2f4ba482f13bae08bafbf800a6e75ac5b1"
 
 
 def declared_constructors(dialects):
@@ -319,7 +320,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v93.json").read_bytes()
+    publication = (TOOL / "publication-v94.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)
@@ -352,10 +353,17 @@ def constructor_scope(by_class):
         if owner not in definitions or not members or members[0] != "array" or set(members[1:]) - definitions.keys():
             raise ValueError(f"Array publication route has unregistered roles: {route}")
     typed_value_routes = publication["typedValueRoutes"]
+    registered_inputs = set(publication["constructionInputTypes"])
+    for input_type in registered_inputs:
+        source = by_class.get(input_type)
+        if (not source or source["visibility"] != "public" or source["kind"] != "Stmt_Class"
+                or source["abstract"] or input_type in definitions):
+            raise ValueError(f"Wrong or missing construction input type: {input_type}")
     for route, members in typed_value_routes.items():
         owner, _, member = route.partition("::")
         concrete = set(members) - {"null"}
-        if (owner not in definitions or not member or not concrete or len(members) != len(set(members))
+        if (owner not in definitions and owner not in registered_inputs
+                or not member or not concrete or len(members) != len(set(members))
                 or concrete - definitions.keys()):
             raise ValueError(f"Typed publication route has unregistered roles: {route}")
     generic = publication["unconstrainedReturns"]

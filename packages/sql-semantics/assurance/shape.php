@@ -1053,11 +1053,14 @@ if ($dialect !== 'sqlite') {
             $btree . 'IndexPredicateLowering', $btree . 'IndexCondition');
         $pureCollaborators[] = $btree . 'IndexCondition';
         $properties[$btreeCreate] = [
-            'keys' => ['array'], 'included' => ['array'], 'table' => ['TableSource'], 'name' => ['Identifier'],
+            'keys' => ['array'], 'included' => ['array'], 'table' => [$btree . 'Binding\\IndexTarget'], 'bindings' => ['array'], 'name' => ['Identifier'],
             'presence' => [$btree . 'IndexPresence'], 'ifNotExists' => ['bool'], 'unique' => ['bool'],
             'nullsNotDistinct' => ['bool'], 'concurrently' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
             'predicate' => [$btree . 'IndexBooleanColumn', $btree . 'IndexBooleanPredicate', $btree . 'IndexTruthTest', $btree . 'NullIndexPredicate', 'null'],
         ];
+        $properties[$btree . 'Binding\\IndexTarget'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'only' => ['bool']];
+        $properties[$btree . 'Binding\\IndexField'] = ['name' => ['Identifier'], 'kind' => ['From\\ColumnKind']];
+        $methods[$btree . 'Binding\\IndexTarget'] = $methods[$btree . 'Binding\\IndexField'] = ['__construct'];
         $properties[$btree . 'IndexKey'] = ['slot' => ['int'], 'order' => [$btree . 'IndexOrder']];
         $properties[$btree . 'IncludedColumn'] = ['slot' => ['int']];
         $properties[$btree . 'NullIndexPredicate'] = ['slot' => ['int'], 'negated' => ['bool']];
@@ -1928,6 +1931,7 @@ try {
             ['postgres-declaration-binding-sources-v21.json', 'afd456fecc404053b0b0f0a695eaea123057eb268ddab7f7daea94fad14f4796', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
+            ['postgres-btree-heading-source-v1.json', 'a5f561bc58f3f01ff6c250fcf7e5f0e90e5551a21c16a3fe9b88a67734d88b30', 'PostgreSQL B-tree heading binding'],
         ],
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
@@ -1976,9 +1980,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v76.json';
+    $storagePath = __DIR__ . '/value-storage-v77.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '290ed0337b7bb9b93dfbaef4ad546dd692090466a026e0a346be3c0f6ea8ec9d',
+        hash_file('sha256', $storagePath) === '89f1fbde591aa624582a531af96468013e0731e97926f5e6f395a5879210000b',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2156,7 +2160,6 @@ try {
                 'Schema\\Alter\\DropColumnLowering' => 'Schema\\Alter\\DropColumn',
                 'Schema\\Index\\CreateIndexLowering' => 'Schema\\Index\\CreateIndex',
                 'Schema\\Index\\Btree\\CreateIndexLowering' => 'Schema\\Index\\Btree\\CreateIndex',
-                'Schema\\Index\\Btree\\IndexTableLowering' => 'TableSource',
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
                 'Schema\\Trigger\\Binding\\DropTriggerLowering' => 'Schema\\Trigger\\DropTrigger',
                 'Schema\\Trigger\\Binding\\TriggerRaiseLowering' => 'Schema\\Trigger\\Program\\TriggerRaise',
@@ -2348,7 +2351,7 @@ try {
                 }
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexCondition') {
-                $returns = ['check' => 'void', 'sql' => 'string'];
+                $returns = ['bindings' => 'array', 'sql' => 'string'];
                 $members = $class->getMethods();
                 requireShape(count($members) === count($returns), 'Unexpected PostgreSQL partial-index condition method count');
                 foreach ($members as $member) {
@@ -2357,6 +2360,12 @@ try {
                         && types($member->returnType, $prefix, $short) === [($returns[$method] ?? '')],
                         'Unexpected PostgreSQL partial-index condition traversal');
                 }
+            }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexTableLowering') {
+                $lower = $class->getMethod('lower');
+                requireShape(count($class->getMethods()) === 1 && $lower !== null && $lower->isPublic() && !$lower->isStatic()
+                    && $lower->returnType?->toString() === $platform . '\\Model\\Statement\\Declaration\\IndexHeading',
+                    'Unexpected PostgreSQL index heading publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexOperands') {
                 $methodsByName = $class->getMethods();
@@ -2611,13 +2620,15 @@ try {
                     'Schema\\Sequence\\Authorization\\SequencePrincipal'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\StockRoles')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\IndexReference', 'Schema\\Index\\ConstraintIndexReference', 'Schema\\Index\\ExclusionIndexReference',
-                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\CreateIndex', 'Schema\\Namespace\\SchemaDropTarget',
+                    'Schema\\Index\\MissingIndex', 'Schema\\Index\\Btree\\Binding\\IndexTarget', 'Schema\\Namespace\\SchemaDropTarget',
                     'Schema\\Namespace\\ChangeSchemaOwner', 'Schema\\Namespace\\RenameSchema', 'Schema\\Sequence\\SequenceName',
                     'Schema\\Sequence\\SequenceSelector', 'Schema\\Sequence\\Ownership\\SequenceOwner', 'Schema\\Sequence\\Alter\\MoveSequence',
                     'Schema\\Sequence\\Access\\SequencesInSchemas', 'Schema\\Sequence\\Defaults\\SequenceDefaultPolicy',
                     'Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Index\\ReindexTableTarget',
                     'Schema\\Index\\Partition\\PartitionIndexReference', 'Schema\\Index\\Partition\\ReindexPartitionTable'], true)
                     && $name->toString() === $platform . '\\Model\\Contract\\Index\\IndexSchemas')
+                || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\Btree\\CreateIndex', 'Schema\\Index\\Btree\\IndexCondition'], true)
+                    && $name->toString() === $platform . '\\Model\\Statement\\Declaration\\IndexHeading')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Index\\DropIndex', 'Schema\\Sequence\\SequenceSelector'], true)
                     && in_array($name->toString(), [
                     $platform . '\\Model\\Contract\\Index\\StockIndexNames',
@@ -2669,7 +2680,8 @@ try {
                     || ($dialect === 'postgres' && $short === 'From\\DerivedSource' && $call->name->toString() === 'array_keys')
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')
                     || ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexCondition'
-                        && in_array($call->name->toString(), ['array_pop', 'is_string'], true))),
+                        && in_array($call->name->toString(), ['array_pop', 'is_string'], true))
+                    || ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\CreateIndex' && $call->name->toString() === 'ksort')),
                 "Unexpected function in $short",
             );
         }

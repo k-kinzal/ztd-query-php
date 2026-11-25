@@ -75,7 +75,7 @@ def chosen(item):
     index = item["createBtree"]
     schema, table, columns, _, _ = index["table"]
 
-    return qualified(schema, table), qualified(schema, index["name"]), quoted(columns[1])
+    return qualified(schema, table), qualified(schema, index["name"]), quoted(columns[item.get("sortSlot", 1)])
 
 
 def initialize(db, trial, path):

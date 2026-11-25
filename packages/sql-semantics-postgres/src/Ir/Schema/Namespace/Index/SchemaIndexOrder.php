@@ -40,12 +40,12 @@ final class SchemaIndexOrder
             Check::input(!$index->concurrently, 'A schema index cannot be built concurrently.');
             $table = $occupied[$index->table->table->value] ?? null;
             Check::input($table instanceof CreateTable, 'A schema index must resolve to a preceding base table.');
-            Check::input(count($index->table->columns) === count($table->columns), 'A schema index needs the full ordered physical heading.');
-            foreach ($table->columns as $slot => $column) {
+            foreach ($index->bindings as $slot => $field) {
+                $column = $table->columns[$slot] ?? null;
                 Check::input(
-                    $column->name->value === $index->table->columns[$slot]->value
-                    && SchemaRelationOrder::columnKind($column) === $index->table->columnKind($slot),
-                    'A schema index needs the full ordered physical heading.'
+                    $column !== null && $column->name->value === $field->name->value
+                    && SchemaRelationOrder::columnKind($column) === $field->kind,
+                    'A schema index needs the exact ordered operand bindings.'
                 );
             }
             $coordinate = $index->name->value;

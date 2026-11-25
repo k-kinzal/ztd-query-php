@@ -8,7 +8,7 @@ from random import Random
 import sys
 
 from native_postgres_fixture import ENV as FIXTURE_CONTAINER
-from postgres_create_btree_cases import refusal
+from postgres_create_btree_cases import published, refusal
 from postgres_schema_indexes_cases import (
     DECOY, INDEX_ORDERS, LAYOUTS, NS, ORDERS, OWNERS, PREDICATES, STATUS, analyzed, direct, expected, generator, sql, tables, trial, view,
 )
@@ -120,7 +120,7 @@ def refusals(tag):
     yield request, None, refusal("A schema index must belong to its namespace and release.")
     request = direct(item)
     request["createSchema"]["indexes"][0]["table"][3] = ["int8", "int8", "bool"]
-    yield request, None, refusal("A schema index needs the full ordered physical heading.")
+    yield request, None, refusal("A schema index needs the exact ordered operand bindings.")
     request = direct(item)
     request["createSchema"]["sequences"][0]["target"] = [item["namespace"], item["relation"]]
     request["createSchema"]["tables"][0]["ifNotExists"] = True
@@ -158,7 +158,7 @@ def check_value(item, response):
     same([sequence_shape(generator(item), True)], response["schemaSequences"])
     definition = view(item)
     same([{**definition, "query": graph(definition["query"])}], response["schemaViews"])
-    same(schema["indexes"], response["schemaIndexes"])
+    same([published(index) for index in schema["indexes"]], response["schemaIndexes"])
 
 
 def measure(state, item, witness):
@@ -283,11 +283,11 @@ def faults(_, tag):
     return [
         RenderFault("schema-indexes-omit-phase", schema, "foreach ($this->indexes as $index)",
                     "foreach ([] as $index)", item, "meaning-mismatch", direct(item)),
-        RenderFault("schema-indexes-move-key", index, "$this->table->columns[$key->slot]->quoted()",
-                    "$this->table->columns[$key->slot + 1]->quoted()", item, "meaning-mismatch", direct(item)),
+        RenderFault("schema-indexes-move-key", index, "$this->bindings[$key->slot]->name->quoted()",
+                    "$this->bindings[2]->name->quoted()", item, "meaning-mismatch", direct(item)),
         RenderFault("schema-indexes-omit-null-policy", index, "($this->nullsNotDistinct ? ' NULLS NOT DISTINCT' : '')",
                     "''", item, "meaning-mismatch", direct(item)),
-        RenderFault("schema-indexes-omit-predicate", index, "($this->predicate === null ? '' : IndexCondition::sql($this->table, $this->predicate))",
+        RenderFault("schema-indexes-omit-predicate", index, "($this->predicate === null ? '' : IndexCondition::sql($this->bindings, $this->predicate))",
                     "''", item, "meaning-mismatch", direct(item)),
     ]
 

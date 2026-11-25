@@ -167,6 +167,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'postgres-index-slot-copy') {
+            requireShape($short === 'Schema\\Index\\Btree\\CreateIndex' && $property === 'bindings'
+                && in_array('Schema/Index/Btree/CreateIndex::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'resolvedFields',
+                'PostgreSQL B-tree definitions require the checked detached operand slot map.');
+
+            continue;
+        }
+
         if ($rule === 'sqlite-definition-slot-copy') {
             requireShape($short === 'Schema\\Predicate\\DefinitionSource' && $property === 'columns'
                 && in_array('Schema/Predicate/DefinitionSource::__construct', $checkedBoundaries, true)

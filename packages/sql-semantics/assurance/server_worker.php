@@ -1630,11 +1630,11 @@ function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql
     $value = $input['createBtree'];
     [$schema, $table, $names, $kinds, $only] = $value['table'];
     $identifier = \SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
-    $owner = new \SqlSemantics\Platform\PostgreSql\Ir\TableSource(
-        new $identifier($schema), new $identifier($table),
+    $target = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget(new $identifier($schema), new $identifier($table), $only);
+    $owner = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading(
+        $target,
         array_map(static fn (string $column) => new $identifier($column), $names),
-        $only,
-        array_map(\SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::from(...), $kinds),
+        array_map(static fn (?string $kind) => $kind === null ? null : \SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::from($kind), $kinds),
     );
     $keys = [];
     foreach ($value['keys'] as [$slot, $order]) {
@@ -1659,14 +1659,15 @@ function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql
 function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex $index, bool $render): array
 {
     $table = $index->table;
+    $bindings = [];
+    foreach ($index->bindings as $slot => $field) {
+        $bindings[] = [$slot, $field->name->value, $field->kind->value];
+    }
     return [
         'status' => 'constructed', 'profile' => $index->profileId(), 'sql' => $render ? $index->toString() : null,
         'createBtree' => [
-            'table' => [
-                $table->schema->value, $table->table->value,
-                array_map(static fn ($name) => $name->value, $table->columns),
-                array_map(static fn ($kind) => $kind->value, $table->columnKinds), $table->only,
-            ],
+            'table' => [$table->schema->value, $table->table->value, $table->only],
+            'bindings' => $bindings,
             'name' => $index->name->value,
             'predicate' => observePostgresIndexPredicate($index->predicate),
             'keys' => array_map(static fn ($key) => [$key->slot, $key->order->value], $index->keys),

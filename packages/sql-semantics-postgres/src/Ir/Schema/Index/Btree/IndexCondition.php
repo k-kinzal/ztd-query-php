@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
-use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexField;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
 
 /**
  * Checks and renders the closed partial-index condition against its owner.
@@ -16,19 +17,23 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 final class IndexCondition
 {
     /**
-     * Checks all leaf slots at the complete index boundary.
+     * Checks and projects all leaf slots at the complete index boundary.
+     * @return array<int, IndexField>
      */
-    public static function check(
-        TableSource $table,
+    public static function bindings(
+        IndexHeading $heading,
         NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate $predicate,
-    ): void {
+    ): array {
         $pending = [$predicate];
+        $fields = [];
         while ($pending !== []) {
             $node = array_pop($pending);
             if ($node instanceof NullIndexPredicate) {
-                Check::input(isset($table->columns[$node->slot]), 'A partial B-tree predicate must refer to a column of the indexed table.');
+                Check::input(isset($heading->columns[$node->slot]), 'A partial B-tree predicate must refer to a column of the indexed table.');
+                $fields[$node->slot] = $heading->field($node->slot);
             } elseif ($node instanceof IndexTruthTest || $node instanceof IndexBooleanColumn) {
-                Check::input(($table->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean, 'A partial index Boolean operand needs a Boolean column of the indexed table.');
+                Check::input(($heading->columnKinds[$node->slot] ?? null) === ColumnKind::Boolean, 'A partial index Boolean operand needs a Boolean column of the indexed table.');
+                $fields[$node->slot] = $heading->field($node->slot);
             } else {
                 $pending[] = $node->left;
                 if ($node->right !== null) {
@@ -36,13 +41,16 @@ final class IndexCondition
                 }
             }
         }
+
+        return $fields;
     }
 
     /**
      * Emits an explicitly grouped WHERE clause from the checked roles.
+     * @param array<int, IndexField> $fields The complete leaf binding subset
      */
     public static function sql(
-        TableSource $table,
+        array $fields,
         NullIndexPredicate|IndexTruthTest|IndexBooleanColumn|IndexBooleanPredicate $predicate,
     ): string {
         $pending = [$predicate];
@@ -52,11 +60,11 @@ final class IndexCondition
             if (is_string($node)) {
                 $sql .= $node;
             } elseif ($node instanceof NullIndexPredicate) {
-                $sql .= '(' . $table->columns[$node->slot]->quoted() . ($node->negated ? ' IS NOT NULL)' : ' IS NULL)');
+                $sql .= '(' . $fields[$node->slot]->name->quoted() . ($node->negated ? ' IS NOT NULL)' : ' IS NULL)');
             } elseif ($node instanceof IndexTruthTest) {
-                $sql .= '(' . $table->columns[$node->slot]->quoted() . ' ' . $node->operator->value . ')';
+                $sql .= '(' . $fields[$node->slot]->name->quoted() . ' ' . $node->operator->value . ')';
             } elseif ($node instanceof IndexBooleanColumn) {
-                $sql .= '(' . $table->columns[$node->slot]->quoted() . ')';
+                $sql .= '(' . $fields[$node->slot]->name->quoted() . ')';
             } elseif ($node->right === null) {
                 $sql .= '(' . $node->operator->value . ' ';
                 $pending[] = ')';
