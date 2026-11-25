@@ -1,0 +1,480 @@
+{
+  "revision": "SemanticsIR/mysql-create-view-9",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL view creation in persistent named schemas, utf8mb4 connection, empty sql_mode and case-sensitive database and relation names.",
+  "extends": [
+    "mysql-create-view-v1.json",
+    "mysql-external-views-v1.json",
+    "mysql-drop-view-v2.json",
+    "server-projection-v1.json",
+    "mysql-create-view-v2.json",
+    "mysql-create-view-v3.json",
+    "mysql-create-view-v4.json",
+    "mysql-create-view-v5.json",
+    "mysql-create-view-v6.json",
+    "mysql-create-view-v7.json",
+    "mysql-create-view-v8.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/View/CreateView"
+  ],
+  "constructors": {
+    "CreateView": {
+      "type": "Schema/View/CreateView",
+      "role": "A complete persistent MySQL view declaration with its creation and execution policies.",
+      "structure": "An absolute view identity, resolved result heading, checked SELECT body, creation policy, algorithm and SQL security mode. An optional resolved native view check policy. A resolved session definer rule or a named account identity.",
+      "conditions": "Require an unbounded checked plain or DISTINCT projection from one persistent base relation or independent literals. Check all existing heading, identity, scope, parameter, and policy boundaries. A check policy requires a mergeable base-table projection. MySQL 5.6 and 5.7 admit an all-constant base projection with a check option. Later profiles require a projected writable base field when a check option is present.",
+      "meaning": "Create, replace or preserve the named view under the stored policy. The native view reuses the resolved query and exposes its explicitly indicated result names and native field order. The default definer is the executing account. A named definer supplies the exact account identity. SQL SECURITY specifies the effective privilege context for view use. Its requested directive remains fixed. The installed algorithm is derivable from the body and the directive if a new definition takes effect. The check policy controls whether inserts or updates through the view must satisfy its predicate.",
+      "sql": "Emit the exact absolute target with the resulting column list, creation option, algorithm, security and closed SELECT. Generate distinct internal query labels inside the ordered heading. Write the canonical native CHECK OPTION for the resolved policy."
+    },
+    "ViewColumn": {
+      "type": "Schema/View/ViewColumn",
+      "role": "A name in the catalog heading of a persistent MySQL view.",
+      "structure": "One checked identifier for the resulting position.",
+      "conditions": "This domain admits one through 64 non-NUL ASCII characters without a trailing space. Compare heading names with ASCII case folding and reject duplicates in the owner.",
+      "meaning": "Name this exact catalog position for future qualification or wildcard expansion.",
+      "sql": "Quote the decoded identifier in the explicit heading list."
+    },
+    "ViewCreationPolicy": {
+      "type": "Schema/View/ViewCreationPolicy",
+      "role": "The persistent view collision policy.",
+      "structure": "Require new, replace a view, or preserve an existing name.",
+      "conditions": "The modes are mutually exclusive. The checked preserve mode is available on the MySQL 9.1.0 pin.",
+      "meaning": "Respect the native existing-object outcome of the selected creation statement.",
+      "sql": "Emit ordinary CREATE VIEW, CREATE OR REPLACE VIEW, or CREATE VIEW IF NOT EXISTS."
+    },
+    "ViewAlgorithm": {
+      "type": "Schema/View/ViewAlgorithm",
+      "role": "The requested native view evaluation algorithm and its installed interpretation.",
+      "structure": "UNDEFINED, MERGE or TEMPTABLE.",
+      "conditions": "All three algorithm requests may be used with checked plain or DISTINCT projections over a persistent base table or independent literals.",
+      "meaning": "A requested MERGE over an independent or DISTINCT projection emits warning 1354 and installs UNDEFINED on successful creation. The diagnostic is ordered before a same-name collision warning or error. A distinct body always materializes.",
+      "sql": "Emit the requested algorithm. The server performs the effective algorithm fallback and reports its native warning."
+    },
+    "ViewSecurity": {
+      "type": "Schema/View/ViewSecurity",
+      "role": "The native execution security context of the view.",
+      "structure": "DEFINER or INVOKER.",
+      "conditions": "The input selects one mode and uses the implicit definer of the creation execution.",
+      "meaning": "Evaluate the view under the privileges of the definer or invoker as declared.",
+      "sql": "Emit the matching SQL SECURITY clause and leave the native implicit definer selection intact."
+    },
+    "ViewCheckOption": {
+      "type": "Schema/View/ViewCheckOption",
+      "role": "The native rule for a new row written through an installed view.",
+      "structure": "None, LOCAL or CASCADED.",
+      "conditions": "Require a base source with a mergeable query and an algorithm that permits merging. MySQL 5.6 and 5.7 admit an all-constant base projection with a check option. Later profiles require a projected writable base field when a check option is present. A legacy all-constant view still has a nonupdatable catalog flag. A filter is optional. Unqualified WITH CHECK OPTION denotes CASCADED.",
+      "meaning": "Without a check option, a write through the view can install rows that the view does not display. With a check option, the view predicate must be TRUE for a new row image. FALSE and UNKNOWN cause native check error 1369 and preserve the underlying data. LOCAL and CASCADED enforce the same predicate over a base table but have independently visible catalog modes.",
+      "sql": "Omit the clause for None. Emit WITH LOCAL CHECK OPTION or WITH CASCADED CHECK OPTION for the corresponding modes."
+    },
+    "ViewDefiner": {
+      "type": "Schema/View/ViewDefiner",
+      "role": "An explicit MySQL account identity assigned to a persistent view.",
+      "structure": "Two distinct decoded UTF-8 fields. User spelling is case-sensitive. Host spelling uses the native simple lowercase normalization.",
+      "conditions": "Decode and trim native ASCII space padding, reject embedded NUL and require the checked BMP name repertoire. Omitted host denotes %, while an explicitly empty host remains empty. The owner enforces release-specific user and host character limits after normalization. Both components may be empty.",
+      "meaning": "Record the two-part account identity independently of account existence and grants. The requested SQL SECURITY mode chooses execution under the definer or invoker. Account availability and privileges are external and produce native effects, including diagnostics.",
+      "sql": "Emit DEFINER with each component quoted separately. Preserve delimiters, escape characters, and UTF-8 text as data. Normalize CURRENT_USER and CURRENT_USER() clauses to the session definer rule."
+    }
+  },
+  "existingRoles": [
+    "Schema/View/ViewName",
+    "Select",
+    "TableSource",
+    "ResultColumn",
+    "Identifier",
+    "From/TextColumnReference",
+    "ColumnReference"
+  ],
+  "structure": "A checked persistent declaration retains the query and exact result positions. Every external reference is absolute. The definition includes explicit policy values and an effective heading independent of the source spelling.",
+  "conditions": "Admit checked ordinary unbounded projections over a resolved persistent base table or independent literals, with explicit ALL or DISTINCT semantics and all three algorithm requests. Retain all previously checked exclusions and boundaries. Accept each native check mode over a mergeable direct base projection. Reject check policies for independent, DISTINCT, and TEMPTABLE queries. MySQL 5.6 and 5.7 admit an all-constant base projection with a check option. Later profiles require a projected writable base field when a check option is present.",
+  "meaning": "The declaration creates a server view with an explicit result heading and uses the body when read. Preserve data multiplicity and NULL over future changes to the input. Retain native catalog behavior for existing objects, algorithm, security and implicit commit. View writes preserve the catalogued check policy and the exact native accept, reject, and row-change effects.",
+  "sql": "Render the definition from the scoped SELECT and exact heading, with stable quoting and no stored SQL fragment. Normalize omitted algorithm and security to their native defaults. Use the native DUAL singleton for the earlier releases when an isolated projection needs a FROM clause. The view body requires no subquery to supply that row. Normalize an unqualified CHECK OPTION to explicit CASCADED.",
+  "observations": [
+    "Status, native diagnostics and implicit commit or rollback marker",
+    "Exact catalog object, heading names, order, signed or VARCHAR metadata, collation and nullable values",
+    "Native updatability and security flags for simple base projections",
+    "Before and after live view reads after an independent base mutation",
+    "Replacement and preserved existing definitions",
+    "Native admission and NULL or empty-result behavior for the isolated literal definition with a native DUAL source",
+    "Warning 1354 before a same-name collision diagnostic, where required by the pinned native release",
+    "The installed algorithm for source-free MERGE compared with the requested directive and effective execution data",
+    "Distinct views preserve the typed native duplicate eliminations including NULLs, become non-updatable, and retain the diagnostic and effect of an explicit MERGE request.",
+    "Check policy in the native catalog for omitted, LOCAL, CASCADED and unqualified input.",
+    "Through-view insertion of a false, unknown or true predicate and update of duplicate visible source rows to a false predicate. Compare error status, affected row count and full ordered or multiset state of the underlying table and view after each operation.",
+    "Observe the native definition and preserve the original view on a creation collision. A write probe applies only when the candidate definition takes effect.",
+    "Check native creation and updatability separately for all-constant projections, mixed fields and constants, and repeated base fields.",
+    "A structurally nonmergeable view with a check option returns native error 1368. Preserve warning 1354 before that rejection when MERGE was requested for a source-free or DISTINCT query.",
+    "Observe both catalog definer fields and SQL SECURITY with native typed rows or a specific native privilege outcome.",
+    "Preserve the ordered definer-existence diagnostic when an elevated creator supplies an absent account. Compare both the decoded identity and SQL origin.",
+    "Check that the named user case and host component select distinguishable fixture privileges. Contrast unqualified session spelling and the same account under explicit CURRENT_USER.",
+    "Compare the same all-constant view coordinate on legacy and modern releases. Record native error 1368 and the unchanged view catalog for rejected modern profiles."
+  ],
+  "finite": {
+    "algorithm": [
+      "automatic",
+      "merge",
+      "temporary"
+    ],
+    "security": [
+      "definer",
+      "invoker"
+    ],
+    "policy": [
+      "require-new",
+      "replace"
+    ],
+    "body": [
+      "base-all",
+      "base-filtered",
+      "unit-plain",
+      "unit-retained",
+      "unit-empty",
+      "base-distinct-all",
+      "base-distinct-filtered",
+      "unit-distinct",
+      "unit-distinct-empty"
+    ],
+    "fixture": [
+      "absent",
+      "existing-view"
+    ],
+    "identities": {
+      "standard": 216,
+      "mysql-9.1.0": 324
+    },
+    "completeness": "Recover the requested algorithm, security, policy, relation and filter form, and the measured fixture pre-state. Execute the complete product through direct construction and analysis on every pinned release.",
+    "policyAdditionalByRelease": {
+      "mysql-9.1.0": [
+        "preserve"
+      ]
+    }
+  },
+  "analysis": [
+    "View with inherited projected names",
+    "View with explicit renamed heading",
+    "Native MERGE and DEFINER",
+    "TEMPTABLE with INVOKER",
+    "Base filter and an exact resolved field",
+    "An independent literal definition",
+    "An existing view replaced under OR REPLACE",
+    "Isolated literal projection with FROM DUAL and a false filter"
+  ],
+  "optionalNativeForms": {
+    "mysql-9.1.0": [
+      "Preserve an existing definition through IF NOT EXISTS",
+      "Create an absent definition through IF NOT EXISTS"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      1901,
+      12049,
+      43613
+    ],
+    "casesPerSeed": 16,
+    "timeoutSecondsPerRelease": 900,
+    "allowedExclusions": [],
+    "requiredForms": "Vary relative field positions, duplicate source values, explicit heading order, quoted names, policies, algorithms, security and case-sensitive source identities. Also generate source-free literal values, all three algorithms and both nonempty and empty row effects. Retain all earlier base and literal samples and exercise duplicate-eliminating definitions with live physical data. Vary the physical check mode, field aliases, result field order, threshold, security, creation policy and existing definition. Preserve all previous finite and explored requests. Generate new named definers with varied user and host content, delimiters, BMP characters, spaces, creation order, the two security policies and both mergeable algorithms. The grant fixture identifies the newly generated names as absent.",
+    "directCasesPerSeed": 44,
+    "plainDirectCasesPerSeed": 12,
+    "checkCasesPerSeed": 12,
+    "definerCasesPerSeed": 8
+  },
+  "negative": [
+    "Incorrect heading width",
+    "Case-folded duplicate heading",
+    "A projected native marker",
+    "A reference to the declared view itself",
+    "Unsupported view source kind",
+    "Version-inapplicable IF NOT EXISTS through the public constructor",
+    "A CHECK OPTION with an independent literal projection through direct construction",
+    "A CHECK OPTION with a duplicate-eliminating projection through direct construction",
+    "A CHECK OPTION with a TEMPTABLE algorithm through direct construction",
+    "A parsed CHECK OPTION on a duplicate-eliminating definition",
+    "An embedded NUL in a directly supplied account component",
+    "A user name one native character above the owning release limit",
+    "A host name one native character above the owning release limit"
+  ],
+  "faults": [
+    "Change the view's absolute identity",
+    "Swap two resulting heading positions",
+    "Omit OR REPLACE",
+    "Switch SQL SECURITY mode",
+    "Allow a duplicated result label",
+    "Write UNDEFINED before the server can report the requested MERGE fallback",
+    "Ignore a missing native view fallback warning while still comparing the installed catalog",
+    "Drop DISTINCT from a view definition with native duplicate rows",
+    "Publish a CHECK OPTION on a nonupdatable projection",
+    "Drop the CHECK OPTION clause from an updatable view with a distinguishing predicate",
+    "Ignore an incorrect affected row count after a permitted write through an otherwise matching view",
+    "Replace an explicit named definer with the session account",
+    "Emit a different host for the same user",
+    "Compare native rows and security but ignore the installed definer identity"
+  ],
+  "evidence": {
+    "P01": "Fix query operand and source roles, physical identity, heading and all admitted policy values. Resolve current-session selection or separate user and host identity.",
+    "P02": "Enforce query, scope, role, placement and heading conditions in every publication path.",
+    "P03": "Retain the typed body and the definition's stable semantic information without SQL text or analysis state.",
+    "P04": "Derive the resulting view from the body, effective heading and declared native policy.",
+    "P05": "Own a detached heading and use closed immutable values throughout the definition.",
+    "P06": "Render the native view effect from its complete immutable structure.",
+    "Q01": "Check each malformed or unsupported placement at the owning boundary.",
+    "Q02": "Consume the fixed finite product and all independently authored native cases. Previously refused CURRENT_USER forms are now checked as native positives.",
+    "Q03": "Compare catalog and transaction effects with the independent fixture evaluator.",
+    "Q04": "Preserve native observations across original and rendered statements at each release.",
+    "Q05": "Connect direct and analyzed construction and rendering to the actual distributed PHP."
+  },
+  "open": [
+    "Supplementary-character definer conversion and check cascades through dependent views",
+    "Views depending on other views or temporary relations, grouped, joined, compound and correlated inputs",
+    "Non-ASCII catalog heading equivalence and arbitrary grant configurations"
+  ],
+  "trust": [
+    "Truthful persistent base-table declarations and database profile",
+    "Independent native fixture, result and DDL observer",
+    "Loaded PHP values and reviewed acceptance tools",
+    "The native observer captures the ordered, typed view creation diagnostics, which also distinguish a requested MERGE from an already normalized UNDEFINED.",
+    "The independent effect evaluator applies the resolved predicate to the candidate new row image using three-valued SQL truth. Both native executions use the fixed authorized disposable fixture.",
+    "The native 5.6 calibration distinguishes admission and the installed IS_UPDATABLE flag for a base projection of constants.",
+    "Definer access is observed independently with three disjoint grant-table identities and an authorized fixture creator. Access checks depend on the same external authorization state on both sides.",
+    "Four native account-spelling calibrations observed BMP normalization and release width bounds. Supplementary characters require separate diagnostics and retained semantic spelling.",
+    "The native 8.0.44 rejection was found by comparing both authored SQL and emitted SQL. The 5.7 calibration independently confirms the legacy boundary."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/view-algorithms.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-view.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/view-check-option.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/view-updatability.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/account-names.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/stored-objects-security.html"
+  ],
+  "versionedFrom": {
+    "path": "mysql-create-view-v8.json",
+    "sha256": "1eb124f19189913a46c3fb1e09393e8fac297448baab3b2b13750d6cbd47badd"
+  },
+  "checkFinite": {
+    "algorithm": [
+      "automatic",
+      "merge"
+    ],
+    "security": [
+      "definer",
+      "invoker"
+    ],
+    "policy": [
+      "require-new",
+      "replace"
+    ],
+    "body": [
+      "base-all",
+      "base-filtered",
+      "base-false"
+    ],
+    "fixture": [
+      "absent",
+      "existing-view"
+    ],
+    "mode": [
+      "NONE",
+      "LOCAL",
+      "CASCADED",
+      "IMPLICIT"
+    ],
+    "policyAdditionalByRelease": {
+      "mysql-9.1.0": [
+        "preserve"
+      ]
+    },
+    "identities": {
+      "analysis": {
+        "standard": 192,
+        "mysql-9.1.0": 288
+      },
+      "direct": {
+        "standard": 144,
+        "mysql-9.1.0": 216
+      }
+    },
+    "completeness": "Reconstruct the installed semantic check mode from the graph and the spelling discriminator from the actual frozen analyzed input. Check that unqualified and explicit CASCADED produce the same graph. Compare the complete independent coordinate sets separately for analysis and direct construction."
+  },
+  "writeProbes": {
+    "rows": [
+      [
+        0,
+        "low"
+      ],
+      [
+        null,
+        "unknown"
+      ],
+      [
+        5,
+        "high"
+      ]
+    ],
+    "update": {
+      "visibleId": 2,
+      "candidateId": 0
+    },
+    "rule": "Run the three inserts and the update in the given order through the installed policy fixture. Compare each effect to the independent base-row evaluator. The bounded write fixture uses distinct id and label columns, signed id and exact text, duplicated id and label pairs, and SQL NULL. The placement checks are independent of those values."
+  },
+  "checkCatalogFinite": {
+    "algorithm": [
+      "automatic",
+      "merge"
+    ],
+    "mode": [
+      "NONE",
+      "LOCAL",
+      "CASCADED",
+      "IMPLICIT"
+    ],
+    "body": [
+      "base-constant",
+      "base-mixed",
+      "base-duplicate"
+    ],
+    "security": "definer",
+    "policy": "require-new",
+    "fixture": "absent",
+    "identities": {
+      "analysis": 24,
+      "direct": 18
+    },
+    "observation": "Compare creation effect, ordered native fields, duplicate multiplicity, catalog check and updatability. The write probe domain uses the two distinct writable fields defined under writeProbes.",
+    "rejections": {
+      "profiles": [
+        "mysql-8.0.44",
+        "mysql-8.1.0",
+        "mysql-8.2.0",
+        "mysql-8.3.0",
+        "mysql-8.4.7",
+        "mysql-9.0.1",
+        "mysql-9.1.0"
+      ],
+      "body": "base-constant",
+      "modes": [
+        "LOCAL",
+        "CASCADED",
+        "IMPLICIT"
+      ],
+      "identities": {
+        "analysis": 6,
+        "direct": 4
+      },
+      "nativeCode": 1368,
+      "policy": "Retain the original analyzed and direct coordinates. Each rejected coordinate requires a typed PHP rejection and separate native rejection with no newly installed view."
+    }
+  },
+  "nativeNegative": [
+    [
+      "independent",
+      "MERGE",
+      "CASCADED"
+    ],
+    [
+      "distinct",
+      "UNDEFINED",
+      "LOCAL"
+    ],
+    [
+      "base",
+      "TEMPTABLE",
+      "CASCADED"
+    ],
+    [
+      "distinct",
+      "MERGE",
+      "CASCADED"
+    ]
+  ],
+  "definerFinite": {
+    "algorithm": [
+      "automatic",
+      "merge"
+    ],
+    "security": [
+      "definer",
+      "invoker"
+    ],
+    "roles": [
+      "session-default",
+      "session-keyword",
+      "session-call",
+      "granted",
+      "folded-host",
+      "space-trimmed",
+      "same-user-other-host",
+      "host-default",
+      "case-distinct-user",
+      "absent-account",
+      "empty",
+      "accented",
+      "escaped",
+      "tabbed"
+    ],
+    "analysisOnly": [
+      "session-keyword",
+      "session-call"
+    ],
+    "identities": {
+      "analysis": 56,
+      "direct": 48
+    },
+    "fixture": "Create an absent view over the same nonempty physical table in an isolated root session. The fixture includes duplicate and NULL rows. Only ir_def_reader@localhost is granted physical reads. Also create ir_def_reader@% and the case-distinct Ir_Def_Reader@localhost without that grant. Distinct absent named accounts remain absent. Check the root@% identity from CURRENT_USER at initialization.",
+    "completeness": "Recover both source spellings and the normalized account fields from independently observed construction and fixture requests. Resolve every spelling to the individually specified canonical definer. Enumerate the independent product of algorithm, SQL security and supported account spelling per route.",
+    "widthWitnesses": {
+      "roles": [
+        "user-maximum",
+        "host-maximum"
+      ],
+      "algorithm": "automatic",
+      "security": "invoker",
+      "identitiesPerRoute": 2,
+      "scope": "Construct the maximum user and host widths measured in the corresponding release. Compare exact effective definer and native rows under INVOKER."
+    }
+  },
+  "definerLimits": {
+    "userCharacters": {
+      "mysql-5.6.51": 16,
+      "other": 32
+    },
+    "hostCharacters": {
+      "mysql-5.6.51": 60,
+      "mysql-5.7.44": 60,
+      "other": 255
+    },
+    "negative": [
+      "absent SQL account part cannot produce a complete named identity",
+      "embedded NUL",
+      "overlong user",
+      "overlong host"
+    ],
+    "sourceWarnings": "Observe native bounds with isolated server probes. Supplementary characters use a separate lossy-conversion rule that is open here."
+  },
+  "negativeCount": {
+    "default": 13,
+    "mysql-8.0.44": 23,
+    "mysql-8.1.0": 23,
+    "mysql-8.2.0": 23,
+    "mysql-8.3.0": 23,
+    "mysql-8.4.7": 23,
+    "mysql-9.0.1": 23,
+    "mysql-9.1.0": 23
+  }
+}
