@@ -193,6 +193,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'postgres-unique-list-copy') {
+            requireShape($short === 'Schema\\CreateTable' && $property === 'uniqueKeys'
+                && in_array('Schema/CreateTable::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'retained',
+                'The unique key list must come from the verified native normalization of detached values.');
+
+            continue;
+        }
+
         if ($rule === 'postgres-primary-column-copy') {
             requireShape($short === 'Schema\\CreateTable' && $property === 'columns'
                 && in_array('Schema/CreateTable::__construct', $checkedBoundaries, true)

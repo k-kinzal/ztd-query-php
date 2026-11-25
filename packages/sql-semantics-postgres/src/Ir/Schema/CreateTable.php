@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKey;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\TableKeySet;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -31,16 +33,29 @@ final class CreateTable implements SemanticsIR
     public readonly array $columns;
 
     /**
+     * The retained native primary constraint, including its effective name.
+     */
+    public readonly ?PrimaryKey $primaryKey;
+
+    /**
+     * @var list<UniqueKey> Retained native unique constraints in index creation order
+     */
+    public readonly array $uniqueKeys;
+
+
+    /**
      * Closes the ordered definition with an absolute target identity.
      *
      * @param list<TableColumn> $columns The column definitions
+     * @param list<UniqueKey> $uniqueKeys The ordered unique definitions
      */
     public function __construct(
         public readonly TableName $target,
         array $columns,
         public readonly bool $ifNotExists = false,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
-        public readonly ?PrimaryKey $primaryKey = null,
+        ?PrimaryKey $primaryKey = null,
+        array $uniqueKeys = [],
     ) {
         $checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);
         Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');
@@ -65,7 +80,11 @@ final class CreateTable implements SemanticsIR
                 }
             }
         }
+        $unique = Check::listOf($uniqueKeys, UniqueKey::class, 'Table unique keys must form an ordered list.');
+        [$primary, $retained] = TableKeySet::close($target->table, $seen, $primaryKey, $unique);
         $this->columns = $checked;
+        $this->primaryKey = $primary;
+        $this->uniqueKeys = $retained;
     }
 
     /**
@@ -88,6 +107,10 @@ final class CreateTable implements SemanticsIR
 
         if ($this->primaryKey !== null) {
             $columns[] = $this->primaryKey->toString();
+        }
+
+        foreach ($this->uniqueKeys as $unique) {
+            $columns[] = $unique->toString();
         }
 
         return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()

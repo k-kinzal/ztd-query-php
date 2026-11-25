@@ -289,6 +289,33 @@ function observePostgresPrimaryKey(SqlSemantics\Platform\PostgreSql\Semantics $s
         $value->toString(), $direct->toString(), $rejected];
 }
 
+function observePostgresUniqueKey(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze(
+        'CREATE TABLE public.retained_unique (a INTEGER UNIQUE NULLS NOT DISTINCT, b INTEGER PRIMARY KEY,'
+        . ' CONSTRAINT transferred UNIQUE (b), CONSTRAINT discarded UNIQUE (b),'
+        . ' CONSTRAINT deferred_unique UNIQUE (a) INITIALLY DEFERRED)',
+    );
+    $definition = $value->uniqueKeys[0];
+    $fromCaller = [&$definition, $value->uniqueKeys[1]];
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+        $value->target, $value->columns, primaryKey: $value->primaryKey, uniqueKeys: $fromCaller,
+    );
+    $definition = $value->uniqueKeys[1];
+    $reject = false;
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+            $value->target, [$value->columns[1]], uniqueKeys: $fromCaller,
+        );
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $reject = $error->getMessage() === 'A unique key reference must select a declared column.';
+    }
+
+    return [$value->primaryKey->name->value, array_map(static fn ($key): array => [
+        array_column($key->keys, 'value'), $key->name?->value, $key->nullsNotDistinct, $key->timing->value,
+    ], $direct->uniqueKeys), $value->toString(), $direct->toString(), $reject];
+}
+
 function observePostgresBooleanFields(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled pg_catalog.bool)']);
@@ -1684,6 +1711,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);
             $details['postgresBooleanDefault'] = observePostgresBooleanDefault($semantics);
             $details['postgresPrimaryKey'] = observePostgresPrimaryKey($semantics);
+            $details['postgresUniqueKey'] = observePostgresUniqueKey($semantics);
         }
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);

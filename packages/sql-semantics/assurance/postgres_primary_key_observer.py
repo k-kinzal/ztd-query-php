@@ -13,7 +13,7 @@ from run import require
 FAULTS = ("reverse", "drop-payload", "erase-timing", "drop-key", "wrong-column")
 
 
-def snapshot(db, schema):
+def snapshot(db, schema, physical_index_details=False):
     records = db.execute(
         "SELECT c.relname,c.oid,c.relkind,am.amname FROM pg_catalog.pg_class c "
         "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
@@ -36,16 +36,22 @@ def snapshot(db, schema):
             (row,) = db.execute(
                 "SELECT i.indrelid,i.indexrelid,i.indkey::text,i.indnkeyatts,i.indnatts,i.indisprimary,"
                 "i.indisunique,i.indimmediate,p.conrelid,p.conindid,p.conname,"
-                "array_to_json(p.conkey)::text,p.condeferrable,p.condeferred,p.contype "
+                "array_to_json(p.conkey)::text,p.condeferrable,p.condeferred,p.contype,i.indnullsnotdistinct "
                 "FROM pg_catalog.pg_index i LEFT JOIN pg_catalog.pg_constraint p ON p.conindid=i.indexrelid "
                 f"AND p.conrelid=i.indrelid WHERE i.indexrelid={oid}"
             )
             (table_oid, index_oid, indkey, key_count, count, primary, unique, immediate,
-             owner_oid, physical_oid, constraint, keys, deferrable, deferred, ctype) = row
+             owner_oid, physical_oid, constraint, keys, deferrable, deferred, ctype, nulls_equal) = row
             values[name] = [kind, access, identities.get(int(table_oid)), constraint, json.loads(keys) if keys else None,
                             [int(x) for x in indkey.split()], int(key_count), int(count), primary == "t", unique == "t",
                             immediate == "t", deferrable == "t", deferred == "t"]
             links[name] = [int(x) if x is not None else None for x in (table_oid, index_oid, owner_oid, physical_oid)] + [ctype]
+            if physical_index_details:
+                attributes = db.execute(
+                    "SELECT attname FROM pg_catalog.pg_attribute "
+                    f"WHERE attrelid={oid} AND attnum>0 AND NOT attisdropped ORDER BY attnum"
+                )
+                values[name].extend([nulls_equal == "t", [label for (label,) in attributes], ctype])
         else:
             values[name] = [kind, access]
     return values, {name: oid for oid, name in identities.items()}, links

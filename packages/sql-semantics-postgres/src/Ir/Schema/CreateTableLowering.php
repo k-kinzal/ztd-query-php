@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKeyLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\KeyConstraintLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table\TablePrimaryKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable as ParsedCreateTable;
-use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
 
@@ -43,24 +41,8 @@ final class CreateTableLowering
         Check::input($statement->name->catalog === null, 'CREATE TABLE requires an absolute schema location.');
         $schema = ($statement->name->schema ?? $context->declarationSchema)->value;
         $name = new TableName(new Identifier($schema), new Identifier($statement->name->name->value));
-        $columns = [];
-        $lowering = new CreateColumnLowering();
-        $primaryKey = null;
-        $keys = new PrimaryKeyLowering();
-        foreach ($definition->elements as $element) {
-            if ($element instanceof TablePrimaryKey) {
-                $key = $keys->table($element);
-            } else {
-                Check::input($element instanceof ColumnDefinition, 'CREATE TABLE requires ordinary column definitions.');
-                [$column, $key] = $keys->column($element);
-                $columns[] = $lowering->lower($operation, $column);
-            }
-            if ($key !== null) {
-                Check::input($primaryKey === null, 'CREATE TABLE can declare only one primary key.');
-                $primaryKey = $key;
-            }
-        }
+        [$columns, $primary, $unique] = (new KeyConstraintLowering())->definitions($operation, $definition);
 
-        return new CreateTable($name, $columns, $statement->ifNotExists, $profile->grammar, $primaryKey);
+        return new CreateTable($name, $columns, $statement->ifNotExists, $profile->grammar, $primary, $unique);
     }
 }

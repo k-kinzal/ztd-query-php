@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Schema\CharacterStorage;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKeyName;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\UniqueKeyName;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
@@ -62,6 +63,11 @@ final class SchemaRelationOrder
                 $index = $table->primaryKey->name->value ?? PrimaryKeyName::allocate($table->target->table, $seen);
                 Check::input(!isset($seen[$index]), 'A schema primary key index requires an unused relation name.');
                 $seen[$index] = $table->target;
+            }
+            foreach ($table->uniqueKeys as $key) {
+                $uniqueIndex = $key->name->value ?? UniqueKeyName::allocate($table->target->table, $key, $seen);
+                Check::input(!isset($seen[$uniqueIndex]), 'A schema unique key index requires an unused relation name.');
+                $seen[$uniqueIndex] = $table->target;
             }
         }
 

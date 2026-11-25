@@ -638,6 +638,8 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
             ? ['primaryKey' => new $primary(array_map(static fn ($slot) => new $term($slot[0], $slot[1]), $create['primaryKey']))] : []),
         ...($input['dialect'] === 'postgres' && isset($create['primaryKey'])
             ? ['primaryKey' => constructPostgresPrimaryKey($create['primaryKey'])] : []),
+        ...($input['dialect'] === 'postgres' && isset($create['uniqueKeys'])
+            ? ['uniqueKeys' => array_map(constructPostgresUniqueKey(...), $create['uniqueKeys'])] : []),
     );
 }
 
@@ -650,6 +652,26 @@ function constructPostgresPrimaryKey(array $input): \SqlSemantics\Platform\Postg
         $input['name'] === null ? null : $identifier($input['name']),
         \SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\KeyTiming::from($input['timing']),
     );
+}
+
+function constructPostgresUniqueKey(array $input): \SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\UniqueKey
+{
+    $identifier = static fn ($field) => is_string($field) ? new \SqlSemantics\Platform\PostgreSql\Ir\Identifier($field) : $field;
+    return new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\UniqueKey(
+        array_map($identifier, $input['keys']),
+        array_map($identifier, $input['included']),
+        $input['name'] === null ? null : $identifier($input['name']),
+        \SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\KeyTiming::from($input['timing']),
+        $input['nullsNotDistinct'],
+    );
+}
+
+function observePostgresUniqueKey(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\UniqueKey $key): array
+{
+    return [
+        'keys' => array_column($key->keys, 'value'), 'included' => array_column($key->included, 'value'),
+        'name' => $key->name?->value, 'timing' => $key->timing->value, 'nullsNotDistinct' => $key->nullsNotDistinct,
+    ];
 }
 
 function observePostgresPrimaryKey(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKey $key): array
@@ -1720,6 +1742,7 @@ function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema
                 ], $table->columns),
                 'ifNotExists' => $table->ifNotExists,
                 ...($table->primaryKey === null ? [] : ['primaryKey' => observePostgresPrimaryKey($table->primaryKey)]),
+                ...($table->uniqueKeys === [] ? [] : ['uniqueKeys' => array_map(observePostgresUniqueKey(...), $table->uniqueKeys)]),
             ];
         }, $schema->tables),
         'schemaViews' => array_map(
@@ -2173,6 +2196,9 @@ function observeStatement(array $input): array
         }
         if ($dialect === 'postgres' && $value->primaryKey !== null) {
             $observed['primaryKey'] = observePostgresPrimaryKey($value->primaryKey);
+        }
+        if ($dialect === 'postgres' && $value->uniqueKeys !== []) {
+            $observed['uniqueKeys'] = array_map(observePostgresUniqueKey(...), $value->uniqueKeys);
         }
         foreach ($value->columns as $column) {
             $storage = $column->storage;

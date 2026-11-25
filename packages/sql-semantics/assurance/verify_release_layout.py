@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v146.json"
-CONTRACT = "9d11a55474964b0f1745c0fefe8cf06eb253db4f8f450ca5fe039a3376e567d9"
+CONTRACT_NAME = "release-layout-v147.json"
+CONTRACT = "add06ae2bba742e0e1444baad7e3e7d4fb5bbaa880af1b058041c4813cc7f34a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -750,6 +750,14 @@ def verify_probe(raw, catalog):
             require(item.get("postgresPrimaryKey") == [
                 ["b", "a"], ["note", "b", "note"], "my key", "DEFERRABLE INITIALLY DEFERRED", [False, False, True], key, key, True,
             ], "installed-postgres-primary-key-mismatch", item)
+            unique = ('CREATE TABLE "public"."retained_unique" ("a" INTEGER NULL, "b" INTEGER NOT NULL, '
+                      'CONSTRAINT "transferred" PRIMARY KEY ("b") NOT DEFERRABLE, UNIQUE NULLS NOT DISTINCT ("a") NOT DEFERRABLE, '
+                      'CONSTRAINT "deferred_unique" UNIQUE NULLS DISTINCT ("a") DEFERRABLE INITIALLY DEFERRED) USING heap')
+            require(item.get("postgresUniqueKey") == [
+                "transferred", [[["a"], None, True, "NOT DEFERRABLE"],
+                                [["a"], "deferred_unique", False, "DEFERRABLE INITIALLY DEFERRED"]],
+                unique, unique, True,
+            ], "installed-postgres-unique-key-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],

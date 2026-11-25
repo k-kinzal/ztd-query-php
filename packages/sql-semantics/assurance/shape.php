@@ -1036,8 +1036,14 @@ if ($dialect !== 'sqlite') {
             'NotDeferrable' => 'NOT DEFERRABLE', 'InitiallyImmediate' => 'DEFERRABLE INITIALLY IMMEDIATE',
             'InitiallyDeferred' => 'DEFERRABLE INITIALLY DEFERRED',
         ];
-        array_push($internal, $key . 'PrimaryKeyLowering', $key . 'PrimaryKeyName');
-        $pureCollaborators[] = $key . 'PrimaryKeyName';
+        $properties['Schema\\CreateTable']['uniqueKeys'] = ['array'];
+        $properties[$key . 'UniqueKey'] = [
+            'keys' => ['array'], 'included' => ['array'], 'name' => ['?Identifier'],
+            'timing' => [$key . 'KeyTiming'], 'nullsNotDistinct' => ['bool'],
+        ];
+        $methods[$key . 'UniqueKey'] = ['__construct', 'toString'];
+        array_push($internal, $key . 'KeyConstraintLowering', $key . 'PrimaryKeyName', $key . 'UniqueKeyName', $key . 'TableKeySet');
+        array_push($pureCollaborators, $key . 'PrimaryKeyName', $key . 'UniqueKeyName', $key . 'TableKeySet');
         $btree = 'Schema\\Index\\Btree\\';
         $btreeCreate = $btree . 'CreateIndex';
         $roots[] = $btreeCreate;
@@ -1758,9 +1764,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v71.json';
+    $storagePath = __DIR__ . '/value-storage-v72.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '170c5c0e1a9fdbbc6fc3d452d7b2cd29d918db8e32656c22c238ac07e15624ad',
+        hash_file('sha256', $storagePath) === '43a813cd84242b9efb8cea2bf62743a3896492e829c4f850bc69d3567db5bf57',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2321,6 +2327,8 @@ try {
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerUpdate' && $call->name->toString() === 'in_array')
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerMutationSql' && $call->name->toString() === 'strtoupper')
                     || ($dialect === 'postgres' && $short === 'Schema\\Key\\PrimaryKeyName' && in_array($call->name->toString(), ['min', 'ord', 'substr'], true))
+                    || ($dialect === 'postgres' && $short === 'Schema\\Key\\UniqueKeyName' && in_array($call->name->toString(), ['min', 'max', 'ord', 'substr'], true))
+                    || ($dialect === 'postgres' && $short === 'Schema\\Key\\TableKeySet' && $call->name->toString() === 'array_values')
                     || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && $call->name->toString() === 'array_intersect_key')
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')

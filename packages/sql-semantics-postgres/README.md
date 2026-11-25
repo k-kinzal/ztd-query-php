@@ -145,6 +145,8 @@ An ordinary CREATE TABLE can use an int4 or int8 literal as a default for SMALLI
 
 An ordinary `CREATE TABLE` can also declare one primary key. `CreateTable::$primaryKey` holds the ordered local key columns, the ordered optional `INCLUDE` columns, the explicit constraint name when given, and the native deferral policy. Key columns are required in the published heading. Included columns may repeat and keep their own nullability unless they also serve as key columns. An unnamed key uses the database's native name allocation. In `CREATE SCHEMA`, the backing index occupies its name before later members run.
 
+Ordinary tables may also carry `UniqueKey` constraints. The declared columns retain their own nullability, and each unique key records whether NULLs compare as equal. The table's `uniqueKeys` are the constraints that survive PostgreSQL's native redundancy rule. A redundant unique constraint can supply the explicit name of a retained unnamed constraint, including the primary key.
+
 An ordinary BOOLEAN column holds a native TRUE, FALSE, or NULL default, or omits the default. A quoted input such as `' YE '` uses the builtin Boolean input rules during analysis. Use `BOOLEAN` or `pg_catalog.bool` to select the builtin type explicitly. An unqualified `bool` name requires a declaration context that resolves it.
 
 Concrete types are under `SqlSemantics\Platform\PostgreSql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).
