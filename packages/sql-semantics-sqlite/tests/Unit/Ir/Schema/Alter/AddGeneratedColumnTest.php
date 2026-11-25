@@ -26,14 +26,20 @@ final class AddGeneratedColumnTest extends TestCase
             DeclaredDatatypeName::Integer,
             generated: new ColumnGeneration(Storage::Stored, new ColumnReference(1)),
         );
+        $peer = new Identifier('peer"slot');
+        $heading = [new Identifier('id'), &$peer];
         $value = new AddGeneratedColumn(
             new Identifier('temp'),
             new Identifier('entries'),
-            [new Identifier('id'), new Identifier('peer"slot')],
+            $heading,
             true,
             $column,
         );
 
+        $peer = new Identifier('changed');
+
+        self::assertSame(2, $value->slot);
+        self::assertSame([1 => 'peer"slot'], array_map(static fn (Identifier $name): string => $name->value, $value->bindings));
         self::assertSame('ALTER TABLE "temp"."entries" ADD COLUMN "computed" INTEGER GENERATED ALWAYS AS ("peer""slot") STORED', $value->toString());
     }
 

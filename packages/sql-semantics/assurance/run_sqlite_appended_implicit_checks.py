@@ -6,6 +6,7 @@ import hashlib
 from run import Failure, Worker, compare, require
 from run_sqlite_add_column import FIXTURE
 from run_sqlite_appended_checks import CheckedAdditionDatabase, observe
+from sqlite_add_column_cases import binding_projection, check_binding_contract
 from sqlite_appended_checks_cases import FIELDS
 from sqlite_appended_implicit_check_cases import (
     case, expected, finite_id, finite_ids, forms, inherited, inherited_request, invalid_binding, invalid_order, negatives,
@@ -14,8 +15,8 @@ from sqlite_appended_implicit_check_cases import (
 from sqlite_domain import RenderFault, check_render_faults, run_domain
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-appended-implicit-checks-v1.json"
-CONTRACT = "8a3b2d3ffb466f8ca0087ca18bdcebd1a6e448ae2801ee79792bdc1626520e4f"
+CONTRACT_NAME = "sqlite-appended-implicit-checks-v2.json"
+CONTRACT = "050bf40f741cb7799f3a8351828bf844adb58632218923384e7eb26224ee1169"
 BOUNDARY = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\InvalidConstruction"
 
 
@@ -33,7 +34,8 @@ def measure(db, item, sql):
 
 
 def probe(item, reply, db, ledger=None, key=None, original=None):
-    require(reply["status"] == "constructed" and all(reply.get(field) == item[field] for field in FIELDS),
+    require(reply["status"] == "constructed" and all(reply.get(field) == item[field] for field in FIELDS)
+            and (reply.get("slot"), reply.get("bindings")) == binding_projection(item),
             "sqlite-appended-implicit-structure", {"expected": item, "actual": reply})
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
@@ -67,6 +69,7 @@ def control(db):
 
 
 def execute(args, specification, db, worker_factory=Worker):
+    check_binding_contract(specification)
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: control(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe,
                             measured_input=lambda reply, observation: (reply, observation))
@@ -78,7 +81,8 @@ def fault_probe(item, reply, db):
         probe(item, reply, db)
         return
     if reply["status"] == "constructed":
-        require(all(reply.get(field) == item[field] for field in FIELDS) and "sql" not in reply,
+        require(all(reply.get(field) == item[field] for field in FIELDS)
+                    and (reply.get("slot"), reply.get("bindings")) == binding_projection(item) and "sql" not in reply,
                 "sqlite-appended-implicit-unexpected-mutant-value", reply)
         raise Failure("sqlite-appended-implicit-construction-escaped", reply)
     require(reply["status"] == "rejected" and reply["exception"] == BOUNDARY and boundary in reply["message"],

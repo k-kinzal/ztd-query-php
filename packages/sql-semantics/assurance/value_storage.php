@@ -148,6 +148,25 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'sqlite-append-ordinary-slot-copy' || $rule === 'sqlite-append-generated-slot-copy') {
+            requireShape(in_array($role = str_replace('\\', '/', $short), ['Schema/Alter/AddColumn', 'Schema/Alter/AddGeneratedColumn'], true)
+                && $property === 'bindings' && in_array($role . '::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\MethodCall && $write->expr->name instanceof Identifier
+                && $write->expr->name->toString() === 'bindings',
+                'SQLite appended bindings must be the detached projection of the verified operands.');
+
+            continue;
+        }
+
+        if ($rule === 'sqlite-definition-slot-copy') {
+            requireShape($short === 'Schema\\Predicate\\DefinitionSource' && $property === 'columns'
+                && in_array('Schema/Predicate/DefinitionSource::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'bindings',
+                'SQLite definition source requires the verified detached slot map.');
+
+            continue;
+        }
+
         if ($rule === 'sqlite-trigger-action-copy') {
             requireShape($short === 'Schema\\Trigger\\CreateTrigger' && $property === 'program'
                 && in_array('Schema/Trigger/CreateTrigger::__construct', $checkedBoundaries, true)

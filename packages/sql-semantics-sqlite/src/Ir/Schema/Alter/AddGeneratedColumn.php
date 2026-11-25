@@ -27,9 +27,14 @@ final class AddGeneratedColumn implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<Identifier> The prior declared fields that can supply the generated value
+     * The appended column's zero-based position in the resolved table.
      */
-    public readonly array $priorHeading;
+    public readonly int $slot;
+
+    /**
+     * @var array<int, Identifier> The declared names selected by the checked operands
+     */
+    public readonly array $bindings;
 
     /**
      * @var list<CheckConstraint> The inline conditions in evaluation order
@@ -52,11 +57,13 @@ final class AddGeneratedColumn implements SemanticsIR
     ) {
         $heading = Check::listOf($priorHeading, Identifier::class, 'A column addition requires a nonempty ordered prior heading of identifiers.', 1);
         $conditions = Check::listOf($checks, CheckConstraint::class, 'An appended column requires an ordered list of checked conditions.');
-        (new AppendColumnBounds())->check($schema, $table, $heading, $strict, $column, $conditions);
+        $bounds = new AppendColumnBounds();
+        $references = $bounds->check($schema, $table, $heading, $strict, $column, $conditions);
         $generation = $column->generated;
         Check::input($generation !== null, 'A generated column addition needs a generation expression.');
-        (new ExpressionScope())->check([count($heading)], [[$generation->expression, 0, 1]], false);
-        $this->priorHeading = $heading;
+        $inputs = (new ExpressionScope())->check([count($heading)], [[$generation->expression, 0, 1]], false);
+        $this->slot = count($heading);
+        $this->bindings = $bounds->bindings([...$heading, $column->name], [...$references, ...$inputs]);
         $this->checks = $conditions;
     }
 
@@ -73,7 +80,7 @@ final class AddGeneratedColumn implements SemanticsIR
      */
     public function toString(): string
     {
-        $definition = (new TableDeclarationSql())->addition($this->column, $this->priorHeading, $this->checks);
+        $definition = (new TableDeclarationSql())->addition($this->column, $this->bindings, $this->checks);
 
         return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted() . ' ADD COLUMN ' . $definition;
     }

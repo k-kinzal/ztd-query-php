@@ -7,15 +7,15 @@ from run import Failure, Worker, compare, require
 from run_sqlite_create_table import quoted
 from run_sqlite_unique_keys import values_sql
 from sqlite_add_column_cases import (
-    SCHEMAS, TARGET_FIELDS, addition, declarations, expected, finite_id, finite_ids, forms, generated,
+    SCHEMAS, TARGET_FIELDS, addition, binding_projection, check_binding_contract, declarations, expected, finite_id, finite_ids, forms, generated,
     negatives, original_rows, probe_values, requests, required,
 )
 from sqlite_domain import RenderFault, check_render_faults, run_domain
 from sqlite_engine import Database, ObserverAuthorizationError, typed
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-add-column-v3.json"
-CONTRACT = "156f45b0a77b3944d3735c2c26ca3b78b2035e035f16d28c6559acbdaeb3c662"
+CONTRACT_NAME = "sqlite-add-column-v4.json"
+CONTRACT = "9d19dcac2a0706782d956878b9dafb26a9e922370765ab7627031f129d65cc5b"
 FIXTURE = "PRAGMA foreign_keys=ON; PRAGMA legacy_alter_table=OFF; PRAGMA writable_schema=OFF;"
 CATALOG = {b"main": b"sqlite_master", b"temp": b"sqlite_temp_master"}
 INTERNAL = frozenset((b"printf", b"substr", b"length", b"glob"))
@@ -154,7 +154,8 @@ def observe(template, item, sql):
 
 def probe(item, reply, db, ledger=None, key=None, original=None):
     require(reply["status"] == "constructed", "sqlite-add-column-positive-rejected", reply)
-    require(all(reply.get(field) == item[field] for field in TARGET_FIELDS),
+    require(all(reply.get(field) == item[field] for field in TARGET_FIELDS)
+            and (reply.get("slot"), reply.get("bindings")) == binding_projection(item),
             "sqlite-add-column-structure-mismatch", reply)
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
@@ -206,6 +207,7 @@ def controls(db):
 
 
 def execute(args, specification, db, worker_factory=Worker):
+    check_binding_contract(specification)
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: controls(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe,
                             measured_input=lambda reply, observation: (reply, observation))

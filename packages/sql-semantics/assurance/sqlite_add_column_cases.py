@@ -1,8 +1,10 @@
 """Inputs and independent state transitions for SQLite ordinary column addition."""
 
+import json
 from itertools import product
 from random import Random
 
+from run import TOOL, digest, require
 from run_sqlite_create_table import quoted
 from run_sqlite_scalars import evaluate
 from sqlite_default_cases import value_at_affinity
@@ -11,7 +13,7 @@ from sqlite_engine import typed
 SCHEMAS = ("main", "temp")
 TABLE = "ir_add"
 AXES = ("schemas", "existingRows", "layout", "default", "notNull")
-TARGET_FIELDS = ("operation", "schema", "table", "priorHeading", "strict", "column")
+TARGET_FIELDS = ("operation", "schema", "table", "strict", "column")
 COLLATIONS = ("BINARY", "NOCASE", "RTRIM")
 REQUIRED_DEFAULT = "Cannot add a NOT NULL column with default value NULL"
 STRICT_CHECK_HEADING = (
@@ -25,6 +27,36 @@ def addition(schema="main", *, heading=("id", "note"), name="added", kind="INTEG
              policy=None, collation="BINARY", strict=False, rows=True, table=TABLE):
     return {"operation": "add-column", "schema": schema, "table": table, "priorHeading": list(heading),
             "strict": strict, "column": [name, kind, policy or False, default, collation], "rows": rows}
+
+
+def operand_slots(operand):
+    if not isinstance(operand, list):
+        return set()
+    if len(operand) >= 2 and operand[0] == "column" and type(operand[1]) is int:
+        return {operand[1]}
+    return set().union(*(operand_slots(child) for child in operand))
+
+
+def check_binding_contract(specification):
+    name = "sqlite-append-column-bindings-v1.json"
+    expected = "a0e76514694986a9651b08bb646f108bb8cccfa7912fceea17e097d14072342c"
+    files = specification["publicationContracts"]
+    require(files[name] == expected, "sqlite-append-column-contract-pointer")
+    for file, fingerprint in files.items():
+        require(digest(TOOL / file) == fingerprint, "sqlite-append-column-contract-digest", file)
+    for file, fingerprint in json.loads((TOOL / name).read_text())["references"].items():
+        require(digest(TOOL / file) == fingerprint, "sqlite-append-column-prior-contract-digest", file)
+
+
+def binding_projection(item):
+    heading = item["priorHeading"]
+    column = item["column"]
+    operands = [check["condition"] for check in item.get("checks", ())]
+    if len(column) == 6:
+        operands.append(column[5][1])
+    names = [*heading, column[0]]
+    positions = set().union(*(operand_slots(operand) for operand in operands))
+    return len(heading), [[slot, names[slot]] for slot in sorted(positions)]
 
 
 def specifications(domain):

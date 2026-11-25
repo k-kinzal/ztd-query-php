@@ -17,9 +17,10 @@ final class DefinitionSourceTest extends TestCase
     public function testOwnsTheDeclaredNamesWithoutRetainingArrayReferences(): void
     {
         $name = new Identifier('original');
-        $source = new DefinitionSource([&$name]);
+        $source = new DefinitionSource([3 => &$name]);
         $name = new Identifier('different');
 
-        self::assertSame('original', $source->columns[0]->value);
+        self::assertSame([3], array_keys($source->columns));
+        self::assertSame('original', $source->columns[3]->value);
     }
 }

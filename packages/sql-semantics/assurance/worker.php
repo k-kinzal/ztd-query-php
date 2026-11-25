@@ -1503,6 +1503,10 @@ function directAddColumn(array $input): AddColumn|AddGeneratedColumn
 function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): array
 {
     $column = $value->column;
+    $bindings = [];
+    foreach ($value->bindings as $slot => $name) {
+        $bindings[] = [$slot, $name->value];
+    }
 
     return [
         'status' => 'constructed',
@@ -1510,7 +1514,8 @@ function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): ar
         'profile' => $value->profileId(),
         'schema' => $value->schema->value,
         'table' => $value->table->value,
-        'priorHeading' => array_map(static fn (Identifier $name): string => $name->value, $value->priorHeading),
+        'slot' => $value->slot,
+        'bindings' => $bindings,
         'strict' => $value->strict,
         'column' => [
             $column->name->value, $column->type->value, $column->notNull?->value ?? false,

@@ -17,16 +17,14 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 #[Small]
 final class AddColumnTest extends TestCase
 {
-    public function testToStringUsesTheOwnedHeadingAndLiteralForm(): void
+    public function testToStringUsesTheAppendPositionAndLiteralForm(): void
     {
-        $name = new Identifier('id');
-        $heading = [&$name];
+        $heading = [new Identifier('id')];
         $column = new TableColumn(new Identifier('quoted"name'), DeclaredDatatypeName::Text, default: new RealLiteral('1', null, '2', uppercaseExponent: true));
         $value = new AddColumn(new Identifier('main'), new Identifier('t'), $heading, false, $column);
 
-        $name = $column->name;
-
-        self::assertSame('id', $value->priorHeading[0]->value);
+        self::assertSame(1, $value->slot);
+        self::assertSame([], $value->bindings);
         self::assertSame('ALTER TABLE "main"."t" ADD COLUMN "quoted""name" TEXT DEFAULT 1E2', $value->toString());
     }
 

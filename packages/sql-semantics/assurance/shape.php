@@ -389,7 +389,7 @@ if ($dialect === 'sqlite') {
     array_push($internal, 'Schema\\Alter\\RenameLowering', 'Schema\\Alter\\AddColumnLowering', 'Schema\\Alter\\AlterTargetLowering', 'Schema\\Alter\\AppendColumnBounds');
     $pureCollaborators[] = 'Schema\\Alter\\AppendColumnBounds';
     $properties['Schema\\Alter\\AddColumn'] = [
-        'schema' => ['Identifier'], 'table' => ['Identifier'], 'priorHeading' => ['array'],
+        'schema' => ['Identifier'], 'table' => ['Identifier'], 'slot' => ['int'], 'bindings' => ['array'],
         'strict' => ['bool'], 'column' => ['Schema\\TableColumn'], 'checks' => ['array'],
     ];
     $properties['Schema\\Alter\\AddGeneratedColumn'] = $properties['Schema\\Alter\\AddColumn'];
@@ -1865,7 +1865,7 @@ try {
     if ($dialect === 'sqlite') {
         $contracts = [
             'sqlite-rename-boundaries-v2.json' => 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3',
-            'sqlite-add-column-boundaries-v5.json' => 'b33bcc1f10e3cca71f4dfc4ce1b5e2098a4fc817abfb41acd78c212b5c2c7c76',
+            'sqlite-add-column-boundaries-v6.json' => '4b949371405bb2b5f13e3331206a11875510cc0778057bb6d0a1ab3eafd79d0b',
         ];
         foreach ($contracts as $name => $digest) {
             $boundary = __DIR__ . '/' . $name;
@@ -1959,9 +1959,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v73.json';
+    $storagePath = __DIR__ . '/value-storage-v74.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '229a0450ee240af9aedc213e7bf2c6ca87e889b05e41dcaac93d877a8279abdb',
+        hash_file('sha256', $storagePath) === '6fa8d2715cff0c691b94726eddcf565d03458bf3d7ecf6bc5912b2f213daf2eb',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -2605,6 +2605,8 @@ try {
                         'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'], true)
                         && in_array($call->name->toString(), ['array_slice', 'in_array'], true))
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
+                    || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\AppendColumnBounds' && $call->name->toString() === 'ksort')
+                    || ($dialect === 'sqlite' && $short === 'Schema\\Predicate\\DefinitionSource' && $call->name->toString() === 'is_int')
                     || ($dialect === 'sqlite' && $short === 'Connection\\AttachmentName' && $call->name->toString() === 'explode')
                     || ($dialect === 'sqlite' && in_array($short, ['Schema\\Trigger\\TriggerChecks', 'Schema\\Trigger\\TriggerDestination', 'Schema\\Trigger\\TriggerInsert', 'Schema\\Trigger\\TriggerUpdateName', 'Schema\\Trigger\\TriggerSql'], true)
                         && in_array($call->name->toString(), ['in_array', 'is_int', 'strtoupper'], true))

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Alter;
 
+use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
@@ -23,8 +24,9 @@ final class AppendColumnBounds
      *
      * @param non-empty-list<Identifier> $heading The complete declared heading of the identified table
      * @param list<CheckConstraint> $checks The inline conditions for the appended column
+     * @return list<ColumnReference> The checked inline condition references
      */
-    public function check(Identifier $schema, Identifier $table, array $heading, bool $strict, TableColumn $column, array $checks): void
+    public function check(Identifier $schema, Identifier $table, array $heading, bool $strict, TableColumn $column, array $checks): array
     {
         Check::input($schema->value !== '', 'An ALTER TABLE target needs a nonempty schema identifier.');
         Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A column addition cannot target the reserved SQLite namespace.');
@@ -47,6 +49,24 @@ final class AppendColumnBounds
             $named = $check->label instanceof Identifier;
             $expressions[] = [$check->condition, 0, 1];
         }
-        (new ExpressionScope())->check([$owner + 1], $expressions, false);
+        return (new ExpressionScope())->check([$owner + 1], $expressions, false);
+    }
+
+    /**
+     * Copies the exact names selected by the checked references in ascending slot order.
+     *
+     * @param non-empty-list<Identifier> $scope The checked table heading including the new field
+     * @param list<ColumnReference> $references The checked operand occurrences
+     * @return array<int, Identifier>
+     */
+    public function bindings(array $scope, array $references): array
+    {
+        $bindings = [];
+        foreach ($references as $reference) {
+            $bindings[$reference->slot] = $scope[$reference->slot];
+        }
+        ksort($bindings);
+
+        return $bindings;
     }
 }

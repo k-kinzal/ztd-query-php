@@ -7,7 +7,7 @@ from run import Failure, Worker, compare, require
 from run_sqlite_add_column import AddColumnDatabase, FIXTURE as ADD_FIXTURE
 from run_sqlite_create_table import quoted
 from run_sqlite_unique_keys import values_sql
-from sqlite_add_column_cases import SCHEMAS, TARGET_FIELDS
+from sqlite_add_column_cases import SCHEMAS, TARGET_FIELDS, binding_projection, check_binding_contract
 from sqlite_add_generated_column_cases import (
     declarations, expected, finite_id, finite_ids, forms, input_rows, item, negatives, requests, required, table_topology,
     write_values,
@@ -17,8 +17,8 @@ from sqlite_engine import ObserverAuthorizationError, typed
 from sqlite_generated_column_cases import column
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-add-generated-column-v1.json"
-CONTRACT = "606754be160a3039b0a6e8fc2a52314b00f2bc5055ecc7f59a1fd0436c627a60"
+CONTRACT_NAME = "sqlite-add-generated-column-v2.json"
+CONTRACT = "a4cefb6be815783ddecb77b0bdde88f864e4f3a4f71911431b81233a848fef27"
 FIXTURE = ADD_FIXTURE
 
 
@@ -135,7 +135,8 @@ def observe(template, case, sql):
 
 
 def probe(case, reply, db, ledger=None, key=None, original=None):
-    require(reply["status"] == "constructed" and all(reply.get(field) == case[field] for field in TARGET_FIELDS),
+    require(reply["status"] == "constructed" and all(reply.get(field) == case[field] for field in TARGET_FIELDS)
+            and (reply.get("slot"), reply.get("bindings")) == binding_projection(case),
             "sqlite-add-generated-structure-mismatch", reply)
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
@@ -169,6 +170,7 @@ def controls(db):
 
 
 def execute(args, specification, db, worker_factory=Worker):
+    check_binding_contract(specification)
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: controls(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe,
                             measured_input=lambda reply, observation: (reply, observation))
@@ -177,7 +179,8 @@ def execute(args, specification, db, worker_factory=Worker):
 def fault_probe(case, reply, db):
     if case.get("boundary") == "outside-heading":
         if reply["status"] == "constructed":
-            require(all(reply.get(field) == case[field] for field in TARGET_FIELDS) and "sql" not in reply,
+            require(all(reply.get(field) == case[field] for field in TARGET_FIELDS)
+                    and (reply.get("slot"), reply.get("bindings")) == binding_projection(case) and "sql" not in reply,
                     "sqlite-add-generated-unexpected-mutant-value", reply)
             raise Failure("sqlite-add-generated-scope-escape", reply)
         expected = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\InvalidConstruction"
@@ -193,16 +196,16 @@ def check_faults(args, db, runner=check_render_faults):
     renderer = base + "Schema/TableDeclarationSql.php"
     return runner(args, db, [
         RenderFault("allow-added-slot-as-own-input", generated,
-                    "(new ExpressionScope())->check([count($heading)],",
-                    "(new ExpressionScope())->check([count($heading) + 1],",
+                    "$inputs = (new ExpressionScope())->check([count($heading)],",
+                    "$inputs = (new ExpressionScope())->check([count($heading) + 1],",
                     {**item(expression=column(2)), "boundary": "outside-heading", "probe": "add-generated-construction"},
                     "sqlite-add-generated-scope-escape"),
         RenderFault("redirect-generated-alter-to-temp", generated, "$this->schema->quoted()", "'temp'",
                     item(), "sqlite-add-generated-target-mismatch"),
         RenderFault("persist-virtual-generated-column", renderer, "$generated->mode->value", "'STORED'",
                     item(), "meaning-mismatch"),
-        RenderFault("reverse-generated-input-bindings", renderer, "new DefinitionSource([...$priorHeading, $column->name])",
-                    "new DefinitionSource([$priorHeading[1], $priorHeading[0], $column->name])",
+        RenderFault("reverse-generated-input-bindings", renderer, "new DefinitionSource($bindings)",
+                    "new DefinitionSource([0 => new Identifier('operand')] + $bindings)",
                     item(expression=column(0)), "meaning-mismatch"),
         RenderFault("drop-generated-null-policy", renderer, "$type . $constraint . $default", "$type . $default",
                     item(expression=column(1), policy="FAIL"), "meaning-mismatch"),

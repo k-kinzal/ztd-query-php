@@ -8,6 +8,7 @@ from run_sqlite_add_column import FIXTURE
 from run_sqlite_add_generated_column import GeneratedAddDatabase
 from run_sqlite_create_table import quoted
 from run_sqlite_unique_keys import values_sql
+from sqlite_add_column_cases import binding_projection, check_binding_contract
 from sqlite_appended_checks_cases import (
     FIELDS, SCHEMAS, before_rows, case, entry, expected, finite_id, finite_ids, forms, negatives,
     prior_definitions, requests, required, write_inputs,
@@ -17,8 +18,8 @@ from sqlite_engine import ObserverAuthorizationError, typed
 from sqlite_generated_column_cases import column, integer
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-appended-column-checks-v2.json"
-CONTRACT = "d51fd4ee7cda94276cf5e9156ce139a8ca793c1383e2e9f75d0d2e90bd9dd75f"
+CONTRACT_NAME = "sqlite-appended-column-checks-v3.json"
+CONTRACT = "8def6d35fcfb83cd4eeb8b569894d898a8f628b2a4f2605b99cb9b109fd50c02"
 
 
 class CheckedAdditionDatabase(GeneratedAddDatabase):
@@ -125,7 +126,8 @@ def rename(db, item, change):
 
 
 def probe(item, reply, db, ledger=None, key=None, original=None):
-    require(reply["status"] == "constructed" and all(reply.get(field) == item[field] for field in FIELDS),
+    require(reply["status"] == "constructed" and all(reply.get(field) == item[field] for field in FIELDS)
+            and (reply.get("slot"), reply.get("bindings")) == binding_projection(item),
             "sqlite-appended-checks-structure-mismatch", {"expected": item, "actual": reply})
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
@@ -161,6 +163,7 @@ def controls(db):
 
 
 def execute(args, specification, db, worker_factory=Worker):
+    check_binding_contract(specification)
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: controls(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe,
                             measured_input=lambda reply, observation: (reply, observation))
@@ -171,7 +174,8 @@ def fault_probe(item, reply, db):
         probe(item, reply, db)
         return
     if reply["status"] == "constructed":
-        require(all(reply.get(field) == item[field] for field in FIELDS) and "sql" not in reply,
+        require(all(reply.get(field) == item[field] for field in FIELDS)
+                    and (reply.get("slot"), reply.get("bindings")) == binding_projection(item) and "sql" not in reply,
                 "sqlite-appended-checks-unexpected-mutant-value", reply)
         raise Failure("sqlite-appended-checks-owner-escape", reply)
     require(reply["status"] == "rejected" and reply["exception"] ==
@@ -189,8 +193,8 @@ def check_faults(args, db, runner=check_render_faults):
                     {**case(), "checks": [entry("wrong owner", None, integer(1))],
                      "probe": "appended-check-construction", "boundary": "wrong-owner"},
                     "sqlite-appended-checks-owner-escape"),
-        RenderFault("reverse-appended-check-inputs", renderer, "new DefinitionSource([...$priorHeading, $column->name])",
-                    "new DefinitionSource([$priorHeading[1], $priorHeading[0], $column->name])",
+        RenderFault("reverse-appended-check-inputs", renderer, "new DefinitionSource($bindings)",
+                    "new DefinitionSource([1 => new Identifier('id')] + $bindings)",
                     case(population="below", predicate="old-positive"), "meaning-mismatch"),
         RenderFault("omit-first-appended-check", renderer, iteration,
                     "foreach (array_slice($conditions, 1) as $check) {\n            $definition .=",

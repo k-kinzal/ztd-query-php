@@ -607,6 +607,17 @@ function observePostgresSourceOrder(SqlSemantics\Platform\PostgreSql\Semantics $
         array_map(static fn ($key) => $key->target, $distinct->orderBy), $distinct->toString()];
 }
 
+function observeSqliteAppendBindings(
+    SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn|SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn $value,
+): array {
+    $bindings = [];
+    foreach ($value->bindings as $slot => $name) {
+        $bindings[] = [$slot, $name->value];
+    }
+
+    return $bindings;
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -2752,9 +2763,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->destination->value, $result->quoteReferences];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddColumn') {
-            $first = $result->priorHeading[0];
-            $heading = $result->priorHeading;
-            $heading[0] = &$first;
+            $first = new SqlSemantics\Platform\Sqlite\Ir\Identifier('id');
+            $heading = [&$first];
             $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn($result->schema, $result->table, $heading, $result->strict, $result->column);
             $first = $result->column->name;
             $refused = false;
@@ -2763,7 +2773,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction) {
                 $refused = true;
             }
-            $details['addColumn'] = [$result->schema->value, $result->table->value, array_column($direct->priorHeading, 'value'),
+            $details['addColumn'] = [$result->schema->value, $result->table->value, $direct->slot, observeSqliteAppendBindings($direct),
                 $result->strict, $result->column->name->value, $result->column->type->value, $result->column->collation->value,
                 $result->column->default->value, $refused, $direct->toString()];
             $alter = $semantics->analyze('ALTER TABLE main.accounts ADD total INTEGER DEFAULT (7 - (5 - 2))', $context);
@@ -2786,7 +2796,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $firstCheck = $checked->checks[0];
             $checks = [&$firstCheck];
             $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn(
-                $checked->schema, $checked->table, $checked->priorHeading, $checked->strict, $checked->column, $checks,
+                $checked->schema, $checked->table, [new SqlSemantics\Platform\Sqlite\Ir\Identifier('id')], $checked->strict, $checked->column, $checks,
             );
             $firstCheck = new SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint(
                 new SqlSemantics\Platform\Sqlite\Ir\Identifier('other'),
@@ -2801,7 +2811,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed ordinary addition lost its checked slots.');
             }
             $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
-                $condition->condition->right->slot, $detached->toString()];
+                $condition->condition->right->slot, observeSqliteAppendBindings($detached), $detached->toString()];
             $implicit = $semantics->analyze('ALTER TABLE main.accounts ADD total INTEGER CHECK (TOTAL >= 007)', $context);
             $condition = $implicit->checks[0];
             if (!$condition->label instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel
@@ -2810,7 +2820,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed implicit comparison lost its checked source slot.');
             }
             $details['implicitAppendedCheck'] = [$condition->label->columnName->value, $condition->label->token->value,
-                $condition->label->leadingZeroes, $condition->condition->left->slot, $implicit->toString()];
+                $condition->label->leadingZeroes, $condition->condition->left->slot, observeSqliteAppendBindings($implicit), $implicit->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddGeneratedColumn') {
             $generation = $result->column->generated;
@@ -2820,14 +2830,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 || !$generation->expression->right instanceof SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral) {
                 throw new RuntimeException('The installed generated column addition lost its checked input roles.');
             }
-            $first = $result->priorHeading[0];
-            $heading = $result->priorHeading;
-            $heading[0] = &$first;
+            $first = new SqlSemantics\Platform\Sqlite\Ir\Identifier('id');
+            $heading = [&$first];
             $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn(
                 $result->schema, $result->table, $heading, $result->strict, $result->column,
             );
             $first = $result->column->name;
-            $details['addGeneratedColumn'] = [$result->schema->value, $result->table->value, array_column($direct->priorHeading, 'value'),
+            $details['addGeneratedColumn'] = [$result->schema->value, $result->table->value, $direct->slot, observeSqliteAppendBindings($direct),
                 $result->strict, $result->column->name->value, $generation->mode->value, $generation->expression->operator->value,
                 $generation->expression->left->slot, $generation->expression->right->decimal, $direct->toString()];
             $checked = $semantics->analyze(
@@ -2842,7 +2851,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed generated addition lost its checked slots.');
             }
             $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
-                $condition->condition->right->slot, $checked->toString()];
+                $condition->condition->right->slot, observeSqliteAppendBindings($checked), $checked->toString()];
             $carried = $semantics->analyze(
                 'ALTER TABLE main.accounts ADD total AS (id + 7) CONSTRAINT range CHECK (total > id) CHECK (total < 100)',
                 $context,

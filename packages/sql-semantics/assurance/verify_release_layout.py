@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v169.json"
-CONTRACT = "27dbed83726afcd4e10258568e19fd908e537f67058bdf144960d0a8e3e0ba2b"
+CONTRACT_NAME = "release-layout-v170.json"
+CONTRACT = "f204f9332ca735e8ac2f37b1519f4619f8cd571175ea28981c87b5a2da8ede33"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -958,7 +958,7 @@ def verify_probe(raw, catalog):
                     "installed-column-rename-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\AddColumn"):
             require(item.get("addColumn") == [
-                "main", "accounts", ["id"], False, "added", "TEXT", "NOCASE", "value", True,
+                "main", "accounts", 1, [], False, "added", "TEXT", "NOCASE", "value", True,
                 """ALTER TABLE "main"."accounts" ADD COLUMN "added" TEXT DEFAULT 'value' COLLATE NOCASE""",
             ] and item["sql"] == item["addColumn"][-1], "installed-sqlite-add-column-mismatch", item)
             require(item.get("computedDefaults") == [
@@ -967,19 +967,19 @@ def verify_probe(raw, catalog):
                 'CREATE TABLE "main"."calculated" ("amount" TEXT DEFAULT ((2 + 3)))',
             ], "installed-sqlite-computed-default-mismatch", item)
             require(item.get("appendedChecks") == [
-                "minimum", 1, 1, 0,
+                "minimum", 1, 1, 0, [[0, "id"], [1, "total"]],
                 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER DEFAULT 7 CONSTRAINT "minimum" CHECK (("total" > "id"))',
             ], "installed-sqlite-ordinary-appended-check-mismatch", item)
             require(item.get("implicitAppendedCheck") == [
-                "TOTAL", ">=", 2, 1, 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER CHECK (TOTAL >= 007)',
+                "TOTAL", ">=", 2, 1, [[1, "total"]], 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER CHECK (TOTAL >= 007)',
             ], "installed-sqlite-implicit-appended-check-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\AddGeneratedColumn"):
             require(item.get("addGeneratedColumn") == [
-                "main", "accounts", ["id"], False, "total", "STORED", "+", 0, "7",
+                "main", "accounts", 1, [[0, "id"]], False, "total", "STORED", "+", 0, "7",
                 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER GENERATED ALWAYS AS (("id" + 7)) STORED',
             ] and item["sql"] == item["addGeneratedColumn"][-1], "installed-sqlite-add-generated-column-mismatch", item)
             require(item.get("appendedChecks") == [
-                "large", 1, 1, 0,
+                "large", 1, 1, 0, [[0, "id"], [1, "total"]],
                 'ALTER TABLE "main"."accounts" ADD COLUMN "total" INTEGER GENERATED ALWAYS AS (("id" + 7)) '
                 'VIRTUAL CONSTRAINT "large" CHECK (("total" > "id"))',
             ], "installed-sqlite-generated-appended-check-mismatch", item)

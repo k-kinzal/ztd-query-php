@@ -12,7 +12,7 @@ from sqlite_generated_column_cases import arithmetic, column, integer
 
 TABLE = "ir_add_checks"
 AXES = ("schemas", "columnForms", "strict", "population", "predicates", "checkCounts")
-FIELDS = ("operation", "schema", "table", "priorHeading", "strict", "column", "checks")
+FIELDS = ("operation", "schema", "table", "strict", "column", "checks")
 LOADED = "CHECK constraint failed"
 
 

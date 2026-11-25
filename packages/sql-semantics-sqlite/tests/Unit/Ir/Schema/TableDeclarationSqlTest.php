@@ -45,7 +45,7 @@ final class TableDeclarationSqlTest extends TestCase
 
         self::assertSame(
             '"appended" INTEGER CONSTRAINT "minimum" CHECK (("appended" > "operand")) CONSTRAINT "upper""bound" CHECK ("appended")',
-            (new TableDeclarationSql())->addition($column, [$prior], $checks),
+            (new TableDeclarationSql())->addition($column, [$prior, $column->name], $checks),
         );
     }
 

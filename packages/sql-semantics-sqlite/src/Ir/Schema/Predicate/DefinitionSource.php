@@ -18,16 +18,21 @@ final class DefinitionSource
     use Snapshot;
 
     /**
-     * @var non-empty-list<Identifier>
+     * @var array<int, Identifier>
      */
     public readonly array $columns;
 
     /**
-     * Supplies the checked declaration names in slot order.
-     * @param non-empty-list<Identifier> $columns
+     * Supplies the checked declaration names at their bound slots.
+     * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $columns
      */
     public function __construct(array $columns)
     {
-        $this->columns = Check::listOf($columns, Identifier::class, 'A definition source has a nonempty list of column names.', 1);
+        $bindings = [];
+        foreach ($columns as $slot => $name) {
+            Check::input(is_int($slot) && $slot >= 0 && $name instanceof Identifier, 'A definition source needs identifiers at valid column slots.');
+            $bindings[$slot] = $name;
+        }
+        $this->columns = $bindings;
     }
 }

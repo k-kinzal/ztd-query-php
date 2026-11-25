@@ -1,0 +1,168 @@
+{
+  "revision": "SemanticsIR/sqlite-add-column-boundaries-6",
+  "approval": "pending-human-review",
+  "scope": "Exact checked storage, ordinary and generated ADD COLUMN publication, target identity, generation input and named and implicit CHECK binding, and closed ordered emission. Scope validation uses the full prior heading. Completed additions retain only the appended position and the exact identifiers selected by their operand occurrences.",
+  "rules": {
+    "Schema/Alter/AddColumn::__construct": {
+      "common": [
+        "$heading = \\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::listOf($priorHeading, \\SqlSemantics\\Platform\\Sqlite\\Ir\\Identifier::class, 'A column addition requires a nonempty ordered prior heading of identifiers.', 1);",
+        "$conditions = \\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::listOf($checks, \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Predicate\\CheckConstraint::class, 'An appended column requires an ordered list of checked conditions.');",
+        "$bounds = new \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Alter\\AppendColumnBounds();",
+        "$references = $bounds->check($schema, $table, $heading, $strict, $column, $conditions);",
+        "\\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input($column->generated === null, 'An ordinary column addition cannot have a generation expression.');",
+        "$this->slot = count($heading);",
+        "$this->bindings = $bounds->bindings([...$heading, $column->name], $references);",
+        "$this->checks = $conditions;"
+      ]
+    },
+    "Schema/Alter/AddColumn::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Alter/AddColumn::toString": {
+      "common": [
+        "$definition = (new \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\TableDeclarationSql())->addition($this->column, $this->bindings, $this->checks);",
+        "return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted() . ' ADD COLUMN ' . $definition;"
+      ]
+    },
+    "Schema/Alter/AddColumnLowering::lower": {
+      "common": [
+        "[$schema, $name, $table] = (new AlterTargetLowering())->resolve($operation, $statement);",
+        "$constraints = $statement->column->constraints;",
+        "foreach ($constraints as $position => $constraint) {",
+        "    if ($constraint instanceof ConstraintName) {",
+        "        Check::input(($constraints[$position + 1] ?? null) instanceof ColumnCheck, 'A column addition supports constraint names on inline CHECK conditions.');",
+        "        continue;",
+        "    }",
+        "    Check::input(",
+        "        $constraint instanceof ParsedCollation || $constraint instanceof DefaultExpression",
+        "            || $constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord || $constraint instanceof NotNull",
+        "            || $constraint instanceof Generated || $constraint instanceof ColumnCheck,",
+        "        'This constraint has no complete column addition representation.',",
+        "    );",
+        "}",
+        "",
+        "$type = $operation->facts->relation($statement)->shape->slots[count($table->columns)]->type ?? null;",
+        "Check::invariant($type instanceof Known && $type->descriptor instanceof ColumnDomain, 'The new member has its resolved SQLite declared domain.');",
+        "$strict = $type->descriptor->strict;",
+        "$heading = [];",
+        "foreach ($table->columns as $column) {",
+        "    Check::input($column->type instanceof ColumnDomain && $column->type->strict === $strict, 'A column addition requires a resolved and consistent table type mode.');",
+        "    $heading[] = new Identifier($column->name->value);",
+        "}",
+        "$binding = new SourceBinding($operation, $statement, [...$heading, new Identifier($statement->column->name->value)]);",
+        "$column = (new CreateColumnLowering())->lower($statement->column, $operation, $binding, $type->descriptor);",
+        "$checks = (new CheckLowering())->collect($binding, $constraints, count($heading));",
+        "",
+        "return $column->generated === null",
+        "    ? new AddColumn($schema, $name, $heading, $strict, $column, $checks)",
+        "    : new AddGeneratedColumn($schema, $name, $heading, $strict, $column, $checks);"
+      ]
+    },
+    "Schema/Alter/AlterTargetLowering::resolve": {
+      "common": [
+        "$comparison = NameComparison::AsciiInsensitive;",
+        "$path = $operation->context->searchPath;",
+        "Check::input(",
+        "    $operation->context->relationNames === $comparison && $operation->context->columnNames === $comparison",
+        "        && isset($path[1]) && $comparison->equal($path[0]->value, 'temp') && $comparison->equal($path[1]->value, 'main'),",
+        "    'ALTER TABLE requires SQLite identifier comparison and schema search order.',",
+        ");",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "Check::input(",
+        "    $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable && $resolution->table->complete,",
+        "    'ALTER TABLE requires a resolved ordinary table with a complete declaration.',",
+        ");",
+        "$table = $resolution->table;",
+        "",
+        "return [",
+        "    new Identifier(($table->name->schema ?? $operation->context->declarationSchema)->value),",
+        "    new Identifier($table->name->name->value),",
+        "    $table,",
+        "];"
+      ]
+    },
+    "Schema/Alter/AddGeneratedColumn::__construct": {
+      "common": [
+        "$heading = \\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::listOf($priorHeading, \\SqlSemantics\\Platform\\Sqlite\\Ir\\Identifier::class, 'A column addition requires a nonempty ordered prior heading of identifiers.', 1);",
+        "$conditions = \\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::listOf($checks, \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Predicate\\CheckConstraint::class, 'An appended column requires an ordered list of checked conditions.');",
+        "$bounds = new \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Alter\\AppendColumnBounds();",
+        "$references = $bounds->check($schema, $table, $heading, $strict, $column, $conditions);",
+        "$generation = $column->generated;",
+        "\\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input($generation !== null, 'A generated column addition needs a generation expression.');",
+        "$inputs = (new \\SqlSemantics\\Platform\\Sqlite\\Ir\\Predicate\\ExpressionScope())->check([count($heading)], [[$generation->expression, 0, 1]], false);",
+        "$this->slot = count($heading);",
+        "$this->bindings = $bounds->bindings([...$heading, $column->name], [...$references, ...$inputs]);",
+        "$this->checks = $conditions;"
+      ]
+    },
+    "Schema/Alter/AddGeneratedColumn::toString": {
+      "common": [
+        "$definition = (new \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\TableDeclarationSql())->addition($this->column, $this->bindings, $this->checks);",
+        "return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted() . ' ADD COLUMN ' . $definition;"
+      ]
+    },
+    "Schema/Alter/AddGeneratedColumn::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Alter/AppendColumnBounds::check": {
+      "common": [
+        "\\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input($schema->value !== '', 'An ALTER TABLE target needs a nonempty schema identifier.');",
+        "\\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A column addition cannot target the reserved SQLite namespace.');",
+        "\\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input(count($heading) < 2000, 'A column addition cannot exceed 2,000 declared columns.');",
+        "$keys = [];",
+        "foreach ($heading as $identifier) {",
+        "    $key = $identifier->key();",
+        "    \\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input(!isset($keys[$key]), 'The prior heading must have distinct declared names.');",
+        "    $keys[$key] = true;",
+        "}",
+        "\\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input(!isset($keys[$column->name->key()]), 'The added column must have a distinct declared name.');",
+        "\\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input(!$strict || $column->type !== \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\DeclaredDatatypeName::Untyped, 'A STRICT column addition requires a standard type.');",
+        "$owner = count($heading);",
+        "$scope = [...$heading, $column->name];",
+        "$expressions = [];",
+        "$named = false;",
+        "foreach ($checks as $check) {",
+        "    \\SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check::input($check->column === $owner, 'An appended CHECK must belong to the new column slot.');",
+        "    $check->checkPresentation($scope, $named);",
+        "    $named = $check->label instanceof \\SqlSemantics\\Platform\\Sqlite\\Ir\\Identifier;",
+        "    $expressions[] = [$check->condition, 0, 1];",
+        "}",
+        "return (new \\SqlSemantics\\Platform\\Sqlite\\Ir\\Predicate\\ExpressionScope())->check([$owner + 1], $expressions, false);"
+      ]
+    },
+    "Schema/TableDeclarationSql::addition": {
+      "common": [
+        "$source = new \\SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Predicate\\DefinitionSource($bindings);",
+        "$expressions = new \\SqlSemantics\\Platform\\Sqlite\\Ir\\SelectSql();",
+        "$definition = $this->column($column, $expressions, $source);",
+        "foreach ($conditions as $check) {",
+        "    $definition .= ' ' . $this->checkClause($check, $expressions, $source);",
+        "}",
+        "return $definition;"
+      ]
+    },
+    "Schema/Alter/AppendColumnBounds::bindings": {
+      "common": [
+        "$bindings = [];",
+        "foreach ($references as $reference) {",
+        "    $bindings[$reference->slot] = $scope[$reference->slot];",
+        "}",
+        "ksort($bindings);",
+        "return $bindings;"
+      ]
+    }
+  },
+  "artifacts": {
+    "src/Model/Resolution/TableLookup.php": "5edb3f51ad243d93443cf6a512eccfc312d02fa9203d3f7a6828cd5bd1570bc6",
+    "src/Rules/Definition/AlterationProblems.php": "ebb5363684a2f82fe26bb3ceeb415c61ab3254983b9369c0506781ff642c3a0e",
+    "src/Statement/Schema/AlterAddColumn.php": "92a5bcc65585876dbff099e5835018f13b4cab6059e2a21dea122475a756ae69",
+    "src/Lowering/Definition/SchemaRule.php": "92b74ef0fd5b1f49809957f7db728ec13ae672271b475e728b1b4adb96460e41",
+    "src/Lowering/Leaf/LiteralRule.php": "7cde00d30ea97526eb7d62d761c159a94926222da41e651199ad5d46340a2765",
+    "src/Statement/Expression/Literal/RealLiteral.php": "206f1f202d2884669312f3e7ce8c4c034ae87eec5263cfecef77b50f297814a9"
+  },
+  "extends": "sqlite-add-column-boundaries-v4.json"
+}

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 #[Small]
 final class AddColumnLoweringTest extends TestCase
 {
-    public function testLowerPublishesTheOrderedHeadingAndStrictModeOfTheResolvedTemporaryTable(): void
+    public function testLowerPublishesTheAppendPositionAndStrictModeOfTheResolvedTemporaryTable(): void
     {
         $semantics = new Semantics();
         $declarations = $semantics->context(['CREATE TABLE tasks (id INTEGER)', 'CREATE TEMP TABLE tasks (ID INT, label TEXT) STRICT']);
@@ -26,7 +26,8 @@ final class AddColumnLoweringTest extends TestCase
 
         self::assertInstanceOf(AddColumn::class, $value);
         self::assertSame('temp', $value->schema->value);
-        self::assertSame(['ID', 'label'], array_column($value->priorHeading, 'value'));
+        self::assertSame(2, $value->slot);
+        self::assertSame([], $value->bindings);
         self::assertTrue($value->strict);
         self::assertSame(NotNullConflict::Fail, $value->column->notNull);
         self::assertNull($value->column->default);
