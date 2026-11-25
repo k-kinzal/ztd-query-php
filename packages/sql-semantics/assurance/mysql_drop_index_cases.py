@@ -48,7 +48,7 @@ def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=
         name = field
     written = name if spelling == "declared" else name.swapcase()
     fields = [field, "c"] if origin != "inline" and composite else [field]
-    role = "clustered-unique" if kind == "unique" and not nullable and anchor not in ("primary", "prior") else kind
+    role = "clustered-unique" if kind == "unique" and not (nullable and "c" in fields) and anchor not in ("primary", "prior") else kind
     target = [SCHEMA, TABLE, "table" if life == "persistent" else "temporary-table"]
     return {"dialect": "mysql", "release": tag, "mysqlDropIndex": {"owner": target, "role": role, "name": name, "policy": ["DEFAULT", "DEFAULT"]},
             "point": list(point), "written": written, "fields": fields, "field": field, "label": label,
@@ -60,11 +60,14 @@ def cases(tag, seed, count):
     for ordinal in range(count):
         kind = tuple(KINDS)[ordinal % len(KINDS)]
         origin = rng.choice(KINDS[kind])
+        nullable = ordinal == 1
+        if nullable and origin == "inline":
+            origin = "automatic-in-order"
         point = (LIFETIMES[(ordinal // len(KINDS)) % len(LIFETIMES)], kind, origin,
                  rng.choice(SPELLINGS), rng.choice(QUALIFIERS))
         yield definition(tag, point, field=rng.choice(("Ab", "Avec", "AccentÉ", "NÅme", "Nom")) + str(ordinal),
-                         label=f"résult {ordinal} ` {seed}", composite=bool(rng.getrandbits(1)), offset=rng.randrange(20),
-                         option=rng.choice(("", " ALGORITHM=DEFAULT", " LOCK DEFAULT ALGORITHM=DEFAULT")))
+                         label=f"résult {ordinal} ` {seed}", composite=bool(rng.getrandbits(1)) or nullable, offset=rng.randrange(20),
+                         option=rng.choice(("", " ALGORITHM=DEFAULT", " LOCK DEFAULT ALGORITHM=DEFAULT")), nullable=nullable)
 
 
 def keys(item, sibling=False):
