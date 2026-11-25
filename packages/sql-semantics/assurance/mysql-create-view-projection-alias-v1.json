@@ -1,0 +1,116 @@
+{
+  "revision": "SemanticsIR/mysql-create-view-projection-alias-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-5.7.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.0.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.2.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.3.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.0.1/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native"
+  ],
+  "scope": "Persistent MySQL CREATE VIEW with an explicit ASCII catalog heading and an independent signed literal projection. The checked view definition preserves requested aliases and distinguishes stored column names, native field types and preparation or execution diagnostics.",
+  "constructors": {
+    "Schema/View/CreateView": {
+      "role": "A persistent view with a checked query, independent output heading and native alias placement.",
+      "structure": "The resolved absolute view name, ordered stored heading, creation policy and security mode, and an immutable scalar query whose aliases may retain exact requested names.",
+      "conditions": "Each written SELECT alias is nonempty, at most 64 BMP characters and has no trailing ASCII space. Validate authored aliases before lowering and every retained requested alias at the direct CREATE VIEW boundary. The ordered catalog heading remains subject to the view name, width and uniqueness checks.",
+      "meaning": "Install the explicit catalog heading, security mode and query. A requested name can cause a warning while leaving the final label fixed by the declared heading. MySQL canonicalizes numeric literal width when storing a view, while preserving the projected value and signed type distinction.",
+      "externalInterpretation": "Pinned MySQL v5.6 through 9.1 and utf8mb4 with the tested privileges and initial view absent. Observe native prepare and text statement execution, and read the installed view through the same database.",
+      "sql": "Render ordinary query labels with checked local names because the declared view list owns the public positions. Emit retained requested names exactly when needed for diagnostic behavior. Always emit the exact ordered catalog view heading.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "Create and read the actual persistent view on a clean fixture. Compare installed order, names, native result value, integer type, nullability, canonical emitted width, algorithm, security and definer context.",
+    "Compare preparation and execution warnings exactly and compare warnings when reading the installed view. In native prepared mode the name warnings are observed at prepare. In text mode they are observed at execute.",
+    "Keep raw catalog metadata and SHOW CREATE VIEW in the ledger. The comparison observes persistent query meaning and native catalog layout. An alias whose only role is internal to a stored projection can have a different spelling when an explicit catalog heading fixes all exposed names."
+  ],
+  "finite": {
+    "aliasShapes": [
+      "ordinary",
+      "trim",
+      "leading-del",
+      "only-control",
+      "quoted-delimiters",
+      "nbsp",
+      "ascii64",
+      "bmp64",
+      "leading64",
+      "intrinsic"
+    ],
+    "atoms": [
+      "00011",
+      "-2147483649",
+      "-9223372036854775808"
+    ],
+    "order": [
+      "source-order",
+      "reverse"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "coordinatesPerRoute": 60,
+    "protocols": [
+      "native-prepared",
+      "text"
+    ],
+    "complete": "Verify the product of alias shape, signed value and view output order through the two construction paths. Require both protocol observations and a completed catalog read per compared execution.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      9241,
+      30967,
+      55711
+    ],
+    "casesPerSeed": 20,
+    "directCasesPerSeed": 20,
+    "timeoutSecondsPerRelease": 480,
+    "shape": "Vary two to four ordered operands, decoded names with different normalization, repeated requested aliases, distinct catalog headings and signed numeric widths.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Analyze an empty explicit inner alias.",
+    "Analyze an inner alias with a trailing ASCII space.",
+    "Analyze a 65-character ASCII inner alias.",
+    "Analyze a 65-character BMP inner alias.",
+    "Construct a retained alias outside the view's 64-character boundary."
+  ],
+  "faults": [
+    "Erase the requested alias at the view boundary while leaving the ordered exposed names.",
+    "Swap ordered view column names at publication.",
+    "Ignore a missing persistent catalog row when the queried row is unchanged."
+  ],
+  "trust": [
+    "Independent native observation and exact runtime construction boundary.",
+    "The stated effect evaluates the installed persistent view and records the current session profile."
+  ],
+  "open": [
+    "Catalog-visible non-ASCII names and inherited empty or clipped result labels have separate requirements.",
+    "UTF-8 supplementary alias conversion, privileges, temporary namespace interaction, advanced view SELECT forms and optimizer modes are tracked separately."
+  ],
+  "referenceSources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-view.html"
+  ]
+}
