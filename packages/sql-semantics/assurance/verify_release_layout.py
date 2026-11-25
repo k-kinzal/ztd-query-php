@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v200.json"
-CONTRACT = "8ee186e0dff320006de9462aa3bdf8fde376b58ecbfd8caa37923c7ca6de5480"
+CONTRACT_NAME = "release-layout-v201.json"
+CONTRACT = "67817a8ce46fc6624f08865d752c7d13b6ef16f5d289bc303a0507ceb6902184"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -628,6 +628,12 @@ def verify_probe(raw, catalog):
                 'SELECT `__ztd_local`.`second` AS `selected` FROM '
                 '(SELECT 41 AS ` First`, 53 AS ` second`) AS `__ztd_local`',
             ], "installed-legacy-mysql-inherited-alias-mismatch", legacy_inherited)
+            native_names = item.get("mysqlNativeLocalColumnNames")
+            require(native_names == [
+                True, True, [0, 1], 1, " " + "漢" * 90, "漢" * 85,
+                'SELECT `__ztd_local`.`__ztd_c0` AS `first_value`, `__ztd_local`.`__ztd_c1` AS `second_value` FROM '
+                '(SELECT 41 AS ` K`, 53 AS ` É`) AS `__ztd_local` (`__ztd_c0`, `__ztd_c1`)',
+            ], "installed-mysql-native-column-name-mismatch", native_names)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

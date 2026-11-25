@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
@@ -57,7 +58,7 @@ final class DerivedShapes
             }
             $this->unique($slots, $derivation);
 
-            return new RowShape($slots, $shape->missing);
+            return new RowShape($slots, $shape->missing, nativeColumnNames: true);
         }
         $problem = null;
         if ($shape->complete() && count($shape->slots) !== count($columns)) {
@@ -77,7 +78,7 @@ final class DerivedShapes
         }
         $this->unique($slots, $derivation);
 
-        return new RowShape($slots);
+        return new RowShape($slots, nativeColumnNames: true);
     }
 
     /**
@@ -88,11 +89,12 @@ final class DerivedShapes
     public function unique(array $slots, Derivation $derivation): void
     {
         $seen = [];
+        $names = new NativeLocalNames();
         foreach ($slots as $slot) {
             if ($slot->name === null) {
                 continue;
             }
-            $key = $derivation->context->columnNames->fold($slot->name->value);
+            $key = $names->key($slot->name->value);
             if (isset($seen[$key])) {
                 $derivation->report(new Misuse(MisuseRule::DuplicateColumn));
 

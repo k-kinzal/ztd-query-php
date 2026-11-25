@@ -33,8 +33,9 @@ final class RowShape
     /**
      * @param list<OutputSlot> $slots The known positions in order
      * @param list<MissingInput> $missing The inputs whose absence leaves the shape open
+     * @param bool $nativeColumnNames Whether the relation exposes native local identifier keys
      */
-    public function __construct(array $slots, array $missing = [])
+    public function __construct(array $slots, array $missing = [], public readonly bool $nativeColumnNames = false)
     {
         $this->slots = Check::listOf($slots, OutputSlot::class, 'A row shape holds an ordered list of output slots.');
         $this->missing = Check::listOf($missing, MissingInput::class, 'An open row shape names missing inputs.');

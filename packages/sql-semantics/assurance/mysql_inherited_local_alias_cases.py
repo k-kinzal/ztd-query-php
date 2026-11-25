@@ -43,16 +43,24 @@ def finite(tag, shape, place, layout):
             "order": [list(binding) for binding in order], "natural": layout == "repeat"}
 
 
+def nested_layout(item):
+    labels = item["exposed"][0]
+    return [[slot, label] for slot, label in derived.nested_names(len(labels)) if labels[slot] is not None]
+
+
 def source_names(item, side):
     if item["placement"] == "nested":
-        return [name for _, name in derived.nested_names(len(item["exposed"][side]))]
+        return [name for _, name in nested_layout(item)]
     return item["exposed"][side]
 
 
 def reads(item):
     for position, (side, slot) in enumerate(item["order"]):
         name = source_names(item, side)[slot]
-        written = name.swapcase() if position % 2 == 0 else name
+        if "referenceNames" in item and item["placement"] != "nested":
+            written = item["referenceNames"][side][slot] if position % 2 == 0 else name
+        else:
+            written = name.swapcase() if position % 2 == 0 else name
         inherited = name if item["placement"] == "nested" and item["tag"] != "mysql-5.6.51" else written
         yield side, slot, written, inherited if item["natural"] and position == 0 else f"out_{position}"
 
@@ -73,7 +81,7 @@ def structure(item, observed=False):
     if place in CTE:
         return program(item["tag"], [child], read(0, local_columns))
     if place == "nested":
-        child = derived.local(child, derived.nested_names(len(item["exposed"][0])))
+        child = derived.local(child, nested_layout(item))
     return profile | derived.local(child, local_columns)
 
 
@@ -91,7 +99,7 @@ def command(item):
             body = "WITH inner_d(n) AS (SELECT 1 AS control) " + body
         source = f"({body}) AS {name}"
         if place == "nested":
-            layout = derived.nested_names(len(item["exposed"][side]))
+            layout = nested_layout(item)
             fields = ", ".join(f"{name}.{quote(item['exposed'][side][slot])} AS {label}" for slot, label in layout)
             source = f"(SELECT {fields} FROM {source}) AS {name}"
         sources.append(source)
@@ -105,7 +113,11 @@ def command(item):
 
 
 def expected(item):
-    result = derived.expected(item)
+    row_plan = item
+    if item["placement"] == "nested":
+        bindings = nested_layout(item)
+        row_plan = {**item, "placement": "local", "order": [[side, bindings[slot][0]] for side, slot in item["order"]]}
+    result = derived.expected(row_plan)
     labels = [output for _, _, _, output in reads(item)]
     for outcome in result.values():
         for field, label in zip(outcome["fields"], labels, strict=True):

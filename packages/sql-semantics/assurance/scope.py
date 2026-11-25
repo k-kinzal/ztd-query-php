@@ -41,6 +41,7 @@ CONTRACTS = {
     "mysql-inherited-local-alias-v2.json": "bf8092d648b1800c51fcd22ca61a13ca17758b35f1dbc63554530f2a0810ba44",
     "mysql-legacy-inherited-alias-v1.json": "ef89ac259b7255d67bb14867e3c60124bcdcbd48458d8d8731b1f11423a894e6",
     "mysql-legacy-inherited-alias-v2.json": "93d4657509db3fd7129a1d78364332f94ec4f533ad94341d563358dc2094650b",
+    "mysql-native-local-column-names-v1.json": "079088225b5a90cf54915864f4381557629eb83160e3e469b69590106c630b36",
     "mysql-create-view-projection-alias-v1.json": "fbb47880cde2e45f72899d6bf18abc720c75fdf9fc2587bd7f02bc447486eecf",
     "mysql-signed-casts-v2.json": "b6a092682ba55ea4ca044c0131d35612de5cb42a8d85130e2834bb8ea395c069",
     "mysql-unsigned-casts-v3.json": "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b",

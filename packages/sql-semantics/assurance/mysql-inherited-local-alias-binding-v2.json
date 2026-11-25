@@ -1,0 +1,40 @@
+{
+  "revision": "SemanticsIR/mysql-inherited-local-alias-binding-2",
+  "approval": "pending-human-review",
+  "related": "mysql-native-local-column-names-v1.json",
+  "purpose": "Identify inherited ASCII labels from the owning lexical items before the relation verifies distinct headings and exposes positions to the consumer.",
+  "artifacts": {
+    "src/Model/Resolution/LookupLevel.php": {
+      "sha256": "9a143012dc0ecdaa2504c0c3c2636d603e733493bb1d09f928dcfa5c9f8aa022"
+    },
+    "src/Model/Statement/Identifier/NativeLocalNames.php": {
+      "sha256": "cb753343c9619d2ee6ea5252b2feff5f3ebb991f712e3181eeb1257f6626c7ed"
+    },
+    "src/Model/Statement/Shape/RowShape.php": {
+      "sha256": "0415a23af4b91aae5b74921ccfdc602971e14f372e45a28f5b07540e65fc5573"
+    },
+    "src/Rules/Query/CommonTables.php": {
+      "sha256": "009dc716ab2b698af3ba7c2a12b4768c163737af7fefd89497fdbd5458202dae"
+    },
+    "src/Rules/Query/DerivedShapes.php": {
+      "sha256": "f80c04298604530d6ca468c53fceac1a82bb0778c1c2fe1eadd7344e37822b11"
+    },
+    "src/Rules/Query/InheritedAliases.php": {
+      "sha256": "4b53ec61dd7d1de992066c875a0271219ee8b6d995e5d24a29d3862323193f55"
+    },
+    "src/Statement/Relation/DerivedTable.php": {
+      "sha256": "f4d3ca5ce600c173e9e813ca89fafea5256da8b755d93a4b9fe3ef865eb8e70b"
+    }
+  },
+  "extends": {
+    "path": "mysql-inherited-local-alias-binding-v1.json",
+    "sha256": "d097324aca116894b6b55e08dad4d3a7b64599baa3ed4063165b848afed50097"
+  },
+  "caseTableEvidence": "mysql-native-local-case-pairs-v1.json",
+  "sharedBindings": {
+    "src/Rules/Query/From/Joining.php": {
+      "contract": "mysql-from-binding-v3.json",
+      "sha256": "1a58b8ee64d5685b7673225f385da543e9c0454b368a1a139fc53802b31a2f4a"
+    }
+  }
+}

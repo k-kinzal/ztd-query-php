@@ -154,7 +154,7 @@ final class Joining
             $implicit[] = new ImplicitSlot($slot->names, $this->nullable($slot->slot));
         }
 
-        return new VisibleRelation($relation->relation, new RowShape($slots, $relation->shape->missing), $relation->alias, $relation->name, $relation->hidden, $implicit);
+        return new VisibleRelation($relation->relation, new RowShape($slots, $relation->shape->missing, $relation->shape->nativeColumnNames), $relation->alias, $relation->name, $relation->hidden, $implicit);
     }
 
     /**

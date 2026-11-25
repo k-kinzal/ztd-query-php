@@ -1798,6 +1798,9 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
+if ($dialect === 'mysql') {
+    $allowed[] = $platform . '\\Model\\Statement\\Identifier\\NativeLocalNames';
+}
 $pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_shift','array_push','array_merge','array_is_list','is_object','strpbrk','substr_count','str_repeat','bin2hex'];
 
 function requireShape(bool $condition, string $detail): void
@@ -2018,7 +2021,7 @@ try {
             ['postgres-btree-heading-source-v3.json', '72148fef0bc32212ccecdee664e95de1f0d5c22d74a0c2cabaaa667551611a55', 'PostgreSQL B-tree heading binding'],
         ],
         'mysql' => [
-            ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
+            ['mysql-from-binding-v3.json', '60836859d7d580e8a4476f77ee9e3c526f6fc4bb4593506deeffc1c235789246', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v10.json', '4f223c9722dae50667ffeea8d9ddb6b7e279ba61891569ae1ee51ef01ae08007', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v7.json', '99c1136783f445921aab242f7d33d415c4f4352756d4c2eb1f4a83a7a5cbf05a', 'MySQL ordered rename binding'],
@@ -2026,7 +2029,7 @@ try {
             ['mysql-native-index-binding-v13.json', 'b7627313fe23c1fdde9d4b202d9206e60b08286d159a9de439177c36f2697913', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
-            ['mysql-inherited-local-alias-binding-v1.json', 'd097324aca116894b6b55e08dad4d3a7b64599baa3ed4063165b848afed50097', 'MySQL inherited alias binding'],
+            ['mysql-inherited-local-alias-binding-v2.json', '461369c922f4d7948d0e75c32497fb97203df5e61d27c46cf0c02af891692919', 'MySQL inherited alias binding'],
         ],
     };
     $providedBindings = [];

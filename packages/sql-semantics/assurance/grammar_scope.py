@@ -270,7 +270,7 @@ def inventory(root):
             for rule in ("with_clause", "with_list", "common_table_expr"):
                 for alternative in rules.get(rule, ()):
                     if alternative != rule + ":" and "RECURSIVE_SYM" not in alternative:
-                        related[alternative] = (*related.get(alternative, ()), "mysql-with-projection-v1.json", "mysql-with-projection-alias-v1.json", "mysql-inherited-local-alias-v2.json")
+                        related[alternative] = (*related.get(alternative, ()), "mysql-with-projection-v1.json", "mysql-with-projection-alias-v1.json", "mysql-inherited-local-alias-v2.json", "mysql-native-local-column-names-v1.json")
             for rule in ("table_factor", "single_table"):
                 for alternative in rules.get(rule, ()):
                     if alternative in ("table_factor: single_table", "single_table: table_ident opt_use_partition opt_table_alias opt_key_definition",
@@ -279,7 +279,7 @@ def inventory(root):
             for alternative in rules.get("table_factor", ()):
                 if alternative in ("table_factor: ( select_derived_union ) opt_table_alias",
                                    "table_factor: ( get_select_lex select_derived_union ) opt_table_alias"):
-                    related[alternative] = (*related.get(alternative, ()), "mysql-legacy-inherited-alias-v2.json")
+                    related[alternative] = (*related.get(alternative, ()), "mysql-legacy-inherited-alias-v2.json", "mysql-native-local-column-names-v1.json")
             for rule in ("derived_table", "opt_derived_column_list"):
                 for alternative in rules.get(rule, ()):
                     if alternative in {"derived_table: table_subquery opt_table_alias opt_derived_column_list",
@@ -287,7 +287,7 @@ def inventory(root):
                         related[alternative] = (*related.get(alternative, ()), "mysql-derived-projection-alias-v1.json")
                     if alternative in {"derived_table: table_subquery opt_table_alias opt_derived_column_list",
                                        "opt_derived_column_list:"}:
-                        related[alternative] = (*related.get(alternative, ()), "mysql-inherited-local-alias-v2.json")
+                        related[alternative] = (*related.get(alternative, ()), "mysql-inherited-local-alias-v2.json", "mysql-native-local-column-names-v1.json")
             for rule in ("varchar", "simple_ident", "simple_ident_q", "table_wild", "opt_charset_with_opt_binary"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-slots-v2.json")

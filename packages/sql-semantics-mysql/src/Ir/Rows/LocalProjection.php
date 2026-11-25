@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
 use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -52,6 +54,13 @@ final class LocalProjection implements SemanticsIR
         $width = $definition instanceof WithProjection ? $definition->width() : count($definition->columns);
         foreach ($checked as $column) {
             Check::input($column->slot < $width, 'The local slot must belong to the definition.');
+            if ($inheritsRequestedAliases && $definition instanceof Select) {
+                $name = $definition->columns[$column->slot]->name;
+                Check::input(
+                    !$name instanceof RequestedResultAlias || (new NativeLocalNames())->readable($name->requested),
+                    'An inherited local field needs a complete UTF-8 name.'
+                );
+            }
             Check::input($column->name->value === ltrim($column->name->value, " \t\r\n\v\f"), 'A MySQL result name cannot start with SQL whitespace.');
         }
         $this->columns = $checked;

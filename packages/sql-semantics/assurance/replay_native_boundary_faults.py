@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from check_native_boundaries import ENGINES, FAULT_REPLAY, fault_plan, faults
+from mysql_native_local_case_table import candidate_table
 from mysql_signed_storage_certificate import certificate as signed_storage_certificate
 from replay_sqlite_faults import checked_file, exact_patch, links, verify_artifacts
 from run import Failure, candidate_distribution, digest, require, verify_distribution, write_json
@@ -73,6 +74,14 @@ def replay(checkout, directory, index, distribution):
         "candidate": index["candidate"], "distribution": index["distribution"],
         "certificate": signed_storage_certificate(distribution, index["results"]["mysql"]["healthy"]),
     }, "mysql-signed-certificate-mismatch")
+    names = index["mysqlLocalCaseTable"]
+    require(names["path"] == "mysql-local-case-table.json", "mysql-local-name-case-receipt-path")
+    recorded_names = checked_file(directory, directory / names["path"])
+    table = candidate_table(checkout)
+    require(distribution[table["file"]] == table["sha256"] and digest(recorded_names) == names["sha256"]
+            and json.loads(recorded_names.read_text()) == {
+                "candidate": index["candidate"], "distribution": index["distribution"], "table": table,
+            }, "mysql-local-name-case-receipt-mismatch")
     results = {}
     for engine in ENGINES:
         shape = index["results"][engine]
@@ -99,6 +108,7 @@ def replay(checkout, directory, index, distribution):
         results[engine] = witnesses
     return {"status": "provisional-native-fault-replay", "candidate": index["candidate"], "contract": FAULT_REPLAY,
             "plan": descriptor, "dialects": results, "mysqlSignedStorage": signed,
+            "mysqlLocalCaseTable": names,
             "methodEquivalence": {engine: index["results"][engine]["methodControl"] for engine in ENGINES},
             "controls": comparator_controls(checkout, planned["sqlite"], index["results"]["sqlite"]["faults"])}
 

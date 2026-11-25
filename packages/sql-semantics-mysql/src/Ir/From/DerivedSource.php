@@ -7,9 +7,11 @@ namespace SqlSemantics\Platform\MySql\Ir\From;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -47,10 +49,12 @@ final class DerivedSource
      */
     public function columnType(int $slot): ColumnKind|Varchar|null
     {
-        $expression = $this->definition->columns[$slot]->expression ?? null;
-        if ($expression === null) {
+        $field = $this->definition->columns[$slot] ?? null;
+        if ($field === null || ($this->inheritsRequestedAliases && $field->name instanceof RequestedResultAlias
+                && !(new NativeLocalNames())->readable($field->name->requested))) {
             return null;
         }
+        $expression = $field->expression;
         if ($expression instanceof TextColumnReference) {
             $source = $this->definition->source;
             Check::invariant($source instanceof TableSource, 'A derived VARCHAR read has an independent physical source.');

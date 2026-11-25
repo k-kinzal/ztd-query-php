@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 
 /**
  * Checks a child whose consumer replaces its result aliases with local names.
@@ -31,6 +32,7 @@ final class LocalProjectionAliases
             return;
         }
         $seen = [];
+        $names = new NativeLocalNames();
         foreach ($output->columns as $column) {
             $name = $column->name;
             $operand = $column->expression;
@@ -39,9 +41,8 @@ final class LocalProjectionAliases
                 && ($name instanceof Identifier || $name instanceof RequestedResultAlias),
                 'Inherited requested aliases need exact signed literal fields.'
             );
-            $requested = $name instanceof RequestedResultAlias ? $name->requested : $name->value;
-            Check::input(preg_match('/\A[\x01-\x7f]*\z/', $requested) === 1, 'Inherited requested aliases require ASCII names.');
-            $key = $name->key();
+            $prefix = $name instanceof RequestedResultAlias ? $names->prefix($name->requested) : $name->value;
+            $key = $names->key($prefix);
             Check::input(!isset($seen[$key]), 'Inherited requested aliases must resolve to distinct names.');
             $seen[$key] = true;
         }

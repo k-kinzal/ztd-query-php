@@ -207,6 +207,27 @@ function observeLegacyMysqlInheritedAliases(): array
         $local->columns[0]->slot, $nested->columns[0]->name->value, $local->toString()];
 }
 
+function observeMysqlNativeLocalColumnNames(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $selection = 'SELECT 41 AS ` K`, 53 AS ` É`';
+    $sql = 'SELECT d.k AS first_value, d.é AS second_value FROM (' . $selection . ') AS d';
+    $analyzed = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $definition = $semantics->analyze($selection);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($definition, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('first_value')),
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('second_value')),
+    ]);
+    $requested = ' ' . str_repeat('漢', 90);
+    $wire = str_repeat('漢', 85);
+    $clipped = $semantics->analyze('SELECT d.`' . $wire . '` AS retained FROM (SELECT 66 AS `' . $requested
+        . '`, 99 AS `' . $wire . '`) AS d');
+    $child = $clipped->definition->columns[0]->name;
+
+    return [$analyzed == $batch, $analyzed == $direct, [$analyzed->columns[0]->slot, $analyzed->columns[1]->slot],
+        $clipped->columns[0]->slot, $child->requested, $child->value, $analyzed->toString()];
+}
+
 function observeMysqlCreateViewProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $sql = 'CREATE VIEW app.alias_effect (stored_heading) AS SELECT -2147483649 AS ` requested`';
@@ -2354,6 +2375,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlDerivedProjectionAlias'] = observeMysqlDerivedProjectionAlias($semantics);
             $details['mysqlInheritedLocalAliases'] = observeMysqlInheritedLocalAliases($semantics);
             $details['mysqlLegacyInheritedAliases'] = observeLegacyMysqlInheritedAliases();
+            $details['mysqlNativeLocalColumnNames'] = observeMysqlNativeLocalColumnNames($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

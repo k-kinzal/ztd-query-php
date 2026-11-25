@@ -608,12 +608,15 @@ def main():
     else:
         report["assuranceChanges"] = None
     report["valueClosure"] = report["scalarDispatch"] = report["nativeBoundaryFaultReplay"] = report["mysqlSignedStorage"] = None
+    report["mysqlLocalCaseTable"] = None
     if guards:
         audit = output / "native-boundary-fault-replay.json"
         write_json(audit, replay_native_faults(checkout, guards[0].parent, guards[2], manifest))
         report["nativeBoundaryFaultReplay"] = evidence.checked(audit)[1]
         signed = guards[2]["mysqlSignedStorage"]
         report["mysqlSignedStorage"] = evidence.checked(guards[0].parent / signed["path"], signed["sha256"])[1]
+        names = guards[2]["mysqlLocalCaseTable"]
+        report["mysqlLocalCaseTable"] = evidence.checked(guards[0].parent / names["path"], names["sha256"])[1]
         sources = {dialect: result["healthy"] for dialect, result in guards[2]["results"].items()}
         graph = certificate(manifest, roles["registeredConstructors"], sources)
         reference = guards[2]["valueClosure"]

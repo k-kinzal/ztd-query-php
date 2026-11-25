@@ -10,6 +10,7 @@ from typing import NamedTuple, Optional
 
 from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import DIALECTS, certificate
+from mysql_native_local_case_table import candidate_table
 from mysql_signed_storage_certificate import certificate as signed_storage_certificate
 from scope import declared_constructors
 from run import TOOL, Failure, candidate_distribution, digest, require, shape, verify_candidate, write_json
@@ -941,6 +942,11 @@ def faults(engine):
                   "$aliases->check($definition);", ""),
             Fault("accept-derived-alias-column-list-in-legacy-mysql", "Ordering/LocalProjectionAliases::checkDerived",
                   "!$needsInherited || $inherited,", "true,"),
+            Fault("replace-mysql-native-column-name-lookup", "LookupLevel::__construct",
+                  "$relation->shape->nativeColumnNames ? new NativeLocalNames() : null", "null",
+                  "src/Model/Resolution/LookupLevel.php", "MySQL inherited alias binding source differs in src/Model/Resolution/LookupLevel.php"),
+            Fault("replace-mysql-native-column-name-map", "NativeLocalNames::key", "strtr($name, self::LOWER)", "$name",
+                  "src/Model/Statement/Identifier/NativeLocalNames.php", "MySQL inherited alias binding source differs in src/Model/Statement/Identifier/NativeLocalNames.php"),
             Fault("bypass-mysql-inherited-alias-binding", "InheritedAliases::names", "new Name($name)", "$item->alias",
                   "src/Rules/Query/InheritedAliases.php", "MySQL inherited alias binding source differs in src/Rules/Query/InheritedAliases.php"),
             Fault("omit-authored-mysql-view-alias-bound", "Schema/View/CreateViewLowering::lower",
@@ -1600,6 +1606,10 @@ def main():
     write_json(dispatch, {**envelope, "certificate": dispatch_certificate(outcomes, values)})
     signed = args.out / "mysql-signed-storage.json"
     write_json(signed, {**envelope, "certificate": signed_storage_certificate(manifest, outcomes["mysql"])})
+    names = args.out / "mysql-local-case-table.json"
+    table = candidate_table(args.candidate)
+    require(manifest[table["file"]] == table["sha256"], "mysql-local-native-case-distribution")
+    write_json(names, {**envelope, "table": table})
     results = {}
     for engine, healthy in outcomes.items():
         cases = faults(engine)
@@ -1625,6 +1635,7 @@ def main():
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},
         "mysqlSignedStorage": {"path": signed.name, "sha256": digest(signed)},
+        "mysqlLocalCaseTable": {"path": names.name, "sha256": digest(names)},
     })
     print(args.out)
 
