@@ -42,7 +42,7 @@ External view fields use the native UTF-8 identifier comparison. An unaliased re
 
 Create or replace a persistent view over a checked ordinary SELECT. The IR exposes the effective ordered catalog heading, view algorithm and SQL security policy. A definition can read a single declared base table or return independent literals. MySQL 9.1 also supports `CREATE VIEW IF NOT EXISTS`.
 
-For a source-free view requested with `ALGORITHM=MERGE`, `installedAlgorithm` holds `UNDEFINED`. The emitted SQL keeps the requested `MERGE` directive so the server reports warning 1354 when it applies the fallback.
+For a source-free view or a view with `SELECT DISTINCT` requested with `ALGORITHM=MERGE`, `installedAlgorithm` holds `UNDEFINED`. The emitted SQL keeps the requested `MERGE` directive so the server reports warning 1354 when it applies the fallback. A DISTINCT view materializes its input and preserves the results of native duplicate elimination.
 
 Issue `DROP VIEW` against absolute persistent view identities. Supply the referenced declarations for required targets. `IF EXISTS` also admits a known absence in a named database. The emitted statement retains MySQL's release-specific removal and transaction effects.
 

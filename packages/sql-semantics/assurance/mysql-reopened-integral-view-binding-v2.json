@@ -1,0 +1,28 @@
+{
+  "revision": "SemanticsIR/mysql-reopened-integral-view-binding-2",
+  "approval": "pending-human-review",
+  "related": "mysql-reopened-integral-view-fields-v3.json",
+  "purpose": "Bind the exact reopened signed field rule and the analysis-only declaration certainty flag to the selected persistent view provider.",
+  "artifacts": {
+    "src/Rules/TableDefinition/ViewReadLayout.php": {
+      "sha256": "8bdab48cca36b6b2aad041ef99b795f8ae9fcc996372630eb8cd12946b5055a5"
+    },
+    "src/Model/Statement/Declaration/Column.php": {
+      "sha256": "9ba8e38a5ae993d427dfc51e65a842c001553172ce982bf335a5efce7e44fa4d"
+    }
+  },
+  "sharedBindings": {
+    "src/Rules/TableDefinition/ViewFacts.php": {
+      "contract": "mysql-generated-view-binding-v4.json",
+      "sha256": "b4c77221ba9ebcc05489a56e8428f5e98d4f8cd9630a66e85b901506d858bf99"
+    },
+    "src/Rules/TableDefinition/TableDeclaration.php": {
+      "contract": "mysql-varchar-binding-v12.json",
+      "sha256": "b90ee33cdfa225c222e2c7319c5202dc88507c278cc060ced0670c85104c1c34"
+    }
+  },
+  "versionedFrom": {
+    "path": "mysql-reopened-integral-view-binding-v1.json",
+    "sha256": "4b055dd329710ca723a74f18010033fd72229e4d784da11297a64c7537ca3cc1"
+  }
+}

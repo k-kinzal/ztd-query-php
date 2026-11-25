@@ -41,14 +41,15 @@ final class ViewFacts
         $fields = $declaration->settled($output);
         $heading = new ViewColumns($derivation->context->profile);
         $names = $definition->columns === null ? $heading->names($definition->query, $fields) : $heading->declared($definition->columns);
-        $sourceFree = (new ViewReadLayout())->noInput($definition->query);
+        $layout = new ViewReadLayout();
+        $sourceFree = $layout->noInput($definition->query);
         $table = $declaration->view(
             $definition->name,
             $output,
             $names,
             $definition->columns !== null,
             $derivation->context->profile,
-            $definition->algorithm === ViewAlgorithm::TempTable || $sourceFree,
+            $definition->algorithm === ViewAlgorithm::TempTable || $sourceFree || $layout->distinct($definition->query),
             $sourceFree
         );
         if ($definition->columns === null) {

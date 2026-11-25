@@ -25,7 +25,7 @@ function admitViewDefinition(string $sql): bool
     $filter = '(?: WHERE \(?(?:FALSE|TRUE|' . $slot . ' > [0-9])\)?)?';
 
     return preg_match('/\ACREATE(?: OR REPLACE)?(?: ALGORITHM=(?:UNDEFINED|MERGE|TEMPTABLE))?(?: SQL SECURITY (?:DEFINER|INVOKER))?'
-        . ' VIEW (?:IF NOT EXISTS )?' . $target . $head . ' AS SELECT ' . $input . '(?:, ?' . $input . '){0,4}'
+        . ' VIEW (?:IF NOT EXISTS )?' . $target . $head . ' AS SELECT (?:DISTINCT )?' . $input . '(?:, ?' . $input . '){0,4}'
         . '(?: FROM (?:DUAL|' . $origin . '))?' . $filter . '\z/D', $sql) === 1;
 }
 

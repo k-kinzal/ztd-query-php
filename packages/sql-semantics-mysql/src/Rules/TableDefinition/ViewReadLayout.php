@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -31,11 +32,31 @@ final class ViewReadLayout
      */
     public function noInput(Query $query): bool
     {
+        $block = $this->block($query);
+
+        return $block !== null && ($block->from === null || $block->from instanceof Dual);
+    }
+
+    /**
+     * Recognizes the duplicate elimination that blocks merging a SELECT view.
+     */
+    public function distinct(Query $query): bool
+    {
+        $block = $this->block($query);
+
+        return $block !== null && in_array(SelectOption::Distinct, $block->options, true);
+    }
+
+    /**
+     * Finds the SELECT supplied by a single query block or transparent grouping.
+     */
+    public function block(Query $query): ?Select
+    {
         while ($query instanceof ParenthesizedQuery) {
             $query = $query->query;
         }
 
-        return $query instanceof Select && ($query->from === null || $query->from instanceof Dual);
+        return $query instanceof Select ? $query : null;
     }
 
     /**

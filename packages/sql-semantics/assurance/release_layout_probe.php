@@ -1525,6 +1525,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             );
             $details['literalMergeFallback'] = [$merged == $direct, $merged == $batch, $merged->algorithm->value,
                 $merged->installedAlgorithm->value, $merged->toString()];
+            $input = 'CREATE TABLE app.unique_input (id INT NOT NULL)';
+            $definition = 'CREATE ALGORITHM=MERGE VIEW app.unique_v (`K`) AS SELECT DISTINCT id FROM app.unique_input';
+            $distinct = $semantics->analyze($definition, $semantics->context([$input]));
+            $read = $semantics->analyze('SELECT v.k FROM app.unique_v AS v', $semantics->context([$input, $definition]));
+            $details['distinctViewEffect'] = [
+                $distinct->query->distinct, $distinct->algorithm->value, $distinct->installedAlgorithm->value,
+                $read->source->materializedView, $read->source->columns[0]->value, $read->columns[0]->name->value,
+                $read->columns[0]->expression->slot, $read->toString(),
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Rows\\With\\WithProjection') {
             $table = $semantics->analyze('WITH q AS MATERIALIZED (VALUES (5,TRUE), (NULL,FALSE)) SELECT column2 AS flag,column1 AS id FROM q');

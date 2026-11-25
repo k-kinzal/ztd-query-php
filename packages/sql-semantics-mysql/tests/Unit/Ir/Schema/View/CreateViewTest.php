@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Schema\View;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
@@ -17,6 +18,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewCreationPolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewSecurity;
 use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Ir\TableSource;
 
 #[CoversClass(CreateView::class)]
 #[Small]
@@ -58,5 +60,17 @@ final class CreateViewTest extends TestCase
         self::assertSame(ViewAlgorithm::Merge, $view->algorithm);
         self::assertSame(ViewAlgorithm::Undefined, $view->installedAlgorithm);
         self::assertStringStartsWith('CREATE ALGORITHM=MERGE ', $view->toString());
+    }
+
+    public function testInstalledAlgorithmDerivesTheDistinctPhysicalMergeFallback(): void
+    {
+        $schema = new Identifier('app');
+        $column = new Identifier('value');
+        $source = new TableSource($schema, new Identifier('items'), [$column]);
+        $selection = new Select([new ResultColumn(new ColumnReference(0), $column)], $source, distinct: true);
+        $view = new CreateView(new ViewName($schema, new Identifier('unique_items')), $selection, [new ViewColumn($column)], algorithm: ViewAlgorithm::Merge);
+
+        self::assertSame(ViewAlgorithm::Undefined, $view->installedAlgorithm);
+        self::assertStringContainsString(' AS SELECT DISTINCT ', $view->toString());
     }
 }

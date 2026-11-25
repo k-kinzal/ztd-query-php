@@ -29,7 +29,7 @@ final class ViewQueryBounds
      */
     public function check(Select $query, ViewName $target): void
     {
-        Check::input(!$query->distinct && $query->orderBy === [] && $query->limit === null, 'A checked view requires an ordinary unbounded projection.');
+        Check::input($query->orderBy === [] && $query->limit === null, 'A checked view requires an unbounded projection without ordering.');
         $source = $query->source;
         Check::input(
             $source === null || ($source instanceof TableSource && $source->kind === ExternalRelationKind::BaseTable),

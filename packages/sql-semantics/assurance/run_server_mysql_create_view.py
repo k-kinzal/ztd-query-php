@@ -16,13 +16,14 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-view"
 OBSERVER = "mysql_create_view_observer.php"
-CONTRACT_NAME = "mysql-create-view-v3.json"
-CONTRACT = "0d57ca2240a3e8742f6cb1a3fcd3aa0e7810ee313f080cc64e309ca925d28e00"
+CONTRACT_NAME = "mysql-create-view-v4.json"
+CONTRACT = "dbd93b8348cdd08f7d839eb409451ad2b9d7196debb0ba97fc351a8ee8ea2db2"
 BASE_CONTRACT = "7465a47332cd41088ffc7ed5bc997353a35a553e8aade2c51e8392b09e904d1c"
 COMPLETE_SEEDS = True
 AXES = ("algorithm", "security", "policy", "body", "fixture")
 ALGORITHMS = {"automatic": "UNDEFINED", "merge": "MERGE", "temporary": "TEMPTABLE"}
 LITERALS = {"unit-plain": None, "unit-retained": ["boolean", True], "unit-empty": ["boolean", False]}
+DISTINCT_LITERALS = {"unit-distinct": None, "unit-distinct-empty": ["boolean", False]}
 COMPARATOR_FAULTS = {"Ignore a missing native view fallback warning while still comparing the installed catalog": "missing-fallback"}
 SCHEMA, MAIN, DECOY, BASE = "ir_fixture", "ir_cv_main", "ir_cv_decoy", "ir_cv_source"
 TARGET = f"{SCHEMA}.{MAIN}"
@@ -71,8 +72,10 @@ def case(tag, body, fields=("id", "label"), policy="require-new", algorithm="UND
 
 
 def finite(tag, algorithm, security, policy, body, fixture):
-    literal = body in LITERALS
-    query = constant(where=LITERALS[body]) if literal else scan(body == "base-filtered")
+    literal_forms = {**LITERALS, **DISTINCT_LITERALS}
+    literal = body in literal_forms
+    query = constant(where=literal_forms[body]) if literal else scan(body.endswith("filtered"))
+    query["distinct"] = body in DISTINCT_LITERALS or body.startswith("base-distinct-")
     return case(tag, query, ("value",) if literal else HEADING, policy, ALGORITHMS[algorithm], security.upper(),
                 fixture == "existing-view")
 
@@ -87,7 +90,8 @@ def finite_ids(_, spec, tag):
     grid = list(finite_grid(spec, tag))
     policies = ("require-new", "replace", "preserve") if tag == "mysql-9.1.0" else ("require-new", "replace")
     independent = {(algorithm, security, policy, body, fixture) for fixture in ("absent", "existing-view")
-                   for body in ("base-all", "base-filtered", *LITERALS) for policy in policies
+                   for body in ("base-all", "base-filtered", "base-distinct-all", "base-distinct-filtered", *LITERALS, *DISTINCT_LITERALS)
+                   for policy in policies
                    for security in ("definer", "invoker") for algorithm in ALGORITHMS}
     require(len(grid) == len(independent) == spec["finite"]["identities"].get(tag, spec["finite"]["identities"]["standard"])
             and set(grid) == independent, "mysql-create-view-finite-size")
@@ -98,11 +102,12 @@ def finite_id(_, actual, item):
     view = actual["createView"]
     query = view["query"]
     if query["source"] is None:
-        observed = [name for name, predicate in LITERALS.items() if predicate == query["where"]]
+        forms = DISTINCT_LITERALS if query["distinct"] else LITERALS
+        observed = [name for name, predicate in forms.items() if predicate == query["where"]]
         require(len(observed) == 1, "mysql-create-view-literal-coordinate", query)
         body = observed[0]
     else:
-        body = "base-filtered" if query["where"] else "base-all"
+        body = ("base-distinct-" if query["distinct"] else "base-") + ("filtered" if query["where"] else "all")
     return (next(name for name, role in ALGORITHMS.items() if role == view["algorithm"]), view["security"].lower(),
             view["policy"], body, "existing-view" if item["existing"] else "absent")
 
@@ -113,10 +118,11 @@ def finite_sql(item):
     start = "CREATE OR REPLACE" if view["policy"] == "replace" else "CREATE"
     preserve = "IF NOT EXISTS " if view["policy"] == "preserve" else ""
     names = ", ".join(view["columns"])
+    projection = "SELECT DISTINCT " if query["distinct"] else "SELECT "
     if query["source"] is not None:
-        body = f"SELECT id, label FROM {ORIGIN}" + (" WHERE id > 1" if query["where"] else "")
+        body = projection + f"id, label FROM {ORIGIN}" + (" WHERE id > 1" if query["where"] else "")
     else:
-        body = "SELECT 42 AS value"
+        body = projection + "42 AS value"
         if query["where"] is not None:
             body += " FROM DUAL WHERE " + ("TRUE" if query["where"][1] else "FALSE")
     return f"{start} ALGORITHM={view['algorithm']} SQL SECURITY {view['security']} VIEW {preserve}{TARGET} ({names}) AS {body}"
@@ -192,6 +198,17 @@ def seeded_literal(tag, seed, count):
                    rng.choice(("DEFINER", "INVOKER")), bool(rng.getrandbits(1)))
 
 
+def seeded_distinct(tag, seed, count):
+    rng = Random(seed)
+    for index in range(count):
+        literal = index % 2 == 0
+        body = constant(rng.randint(-99, 99), where=rng.choice(tuple(DISTINCT_LITERALS.values()))) if literal else (
+            scan(bool(rng.getrandbits(1)), bool(rng.getrandbits(1)), rng.randrange(1, 3)))
+        names = ("answer",) if literal else ("distinct_id", "distinct_label")
+        yield case(tag, {**body, "distinct": True}, names, rng.choice(("require-new", "replace")),
+                   rng.choice(tuple(ALGORITHMS.values())), rng.choice(("DEFINER", "INVOKER")), bool(rng.getrandbits(1)))
+
+
 def requests(_, tag, spec):
     for index, dimensions in enumerate(finite_grid(spec, tag)):
         item = finite(tag, *dimensions)
@@ -206,7 +223,10 @@ def requests(_, tag, spec):
     for seed in spec["exploration"]["seeds"]:
         for index, item in enumerate(seeded(tag, seed, spec["exploration"]["casesPerSeed"])):
             yield f"seed/{seed}/{index}", item, item, None
-        for index, item in enumerate(seeded_literal(tag, seed + 1, spec["exploration"]["directCasesPerSeed"])):
+        plain = spec["exploration"]["plainDirectCasesPerSeed"]
+        for index, item in enumerate(seeded_literal(tag, seed + 1, plain)):
+            yield f"direct-seed/{seed}/{index}", item, item, None
+        for index, item in enumerate(seeded_distinct(tag, seed + 2, spec["exploration"]["directCasesPerSeed"] - plain), plain):
             yield f"direct-seed/{seed}/{index}", item, item, None
     for index, (item, reason) in enumerate(negatives(tag)):
         yield f"negative/{index}", item, None, reason
@@ -222,7 +242,10 @@ def relation(body, names, algorithm, security, data):
     rows = [(tuple(row),) for row in data] if table is not None else [()]
     fields = [[label, *TYPES[term[0]]] for (term, _), label in zip(body["columns"], names)]
     contents = [[value(term, row, "mysql") for term, _ in body["columns"]] for row in rows if truth(body["where"], row, "mysql")]
-    return {"algorithm": algorithm, "security": security, "updatable": "YES" if table is not None and algorithm != "TEMPTABLE" else "NO",
+    if body["distinct"]:
+        contents = list({canonical(row): row for row in contents}.values())
+    updatable = table is not None and algorithm != "TEMPTABLE" and not body["distinct"]
+    return {"algorithm": algorithm, "security": security, "updatable": "YES" if updatable else "NO",
             "check": "NONE", "columns": fields, "rows": sorted(contents, key=canonical)}
 
 
@@ -239,7 +262,7 @@ def prediction(item):
     update = [(key, "changed" if key == 2 else label) for key, label in DATA] + [(4, "new")]
     collision = existing and view["policy"] != "replace"
     failed = collision and view["policy"] == "require-new"
-    fallback = view["algorithm"] == "MERGE" and view["query"]["source"] is None
+    fallback = view["algorithm"] == "MERGE" and (view["query"]["source"] is None or view["query"]["distinct"])
     stored = "UNDEFINED" if fallback else view["algorithm"]
     after, later = (fixture(existing, data, [0, 7]) for data in (DATA, update))
     if not collision:
@@ -291,6 +314,9 @@ def sample_forms(forms, reply, _, item):
     forms["filter/" + ("present" if query_["where"] else "absent")] += 1
     forms["slot/" + query_["columns"][0][0][0]] += 1
     forms["fixture/" + str(item["existing"])] += 1
+    forms["distinct/" + str(query_["distinct"])] += 1
+    if query_["distinct"]:
+        forms["distinct-source/" + ("literal" if query_["source"] is None else "physical")] += 1
     if query_["source"] is None:
         forms["literal/" + str(query_["where"] == ["boolean", False])] += 1
         forms["literal-algorithm/" + value_["algorithm"]] += 1
@@ -299,7 +325,8 @@ def sample_forms(forms, reply, _, item):
 def required_forms(*_):
     return {"filter/present", "filter/absent", "slot/slot", "slot/text-slot", "fixture/True", "fixture/False",
             "policy/require-new", "policy/replace", "security/DEFINER", "security/INVOKER",
-            "slot/integer", "literal/False", "literal/True",
+            "slot/integer", "literal/False", "literal/True", "distinct/False", "distinct/True",
+            "distinct-source/literal", "distinct-source/physical",
             *("algorithm/" + role for role in ALGORITHMS.values()),
             *("literal-algorithm/" + role for role in ALGORITHMS.values())}
 
@@ -360,6 +387,7 @@ def faults(_, tag):
     path = "sql-semantics-mysql/src/Ir/Schema/View/CreateView.php"
     model = finite(tag, "merge", "invoker", "replace", "base-all", "existing-view")
     fallback = finite(tag, "merge", "invoker", "replace", "unit-empty", "existing-view")
+    unique = finite(tag, "automatic", "invoker", "replace", "base-distinct-all", "existing-view")
     invalid, reason = list(negatives(tag))[1]
     return [
         RenderFault("replace-another-view-definition", path, "$this->name->quoted()", "'`ir_fixture`.`ir_cv_decoy`'", model, "meaning-mismatch"),
@@ -370,6 +398,9 @@ def faults(_, tag):
                     {"boundary": reason}, "mysql-create-view-invalid-published", invalid),
         RenderFault("erase-requested-view-merge-fallback", path, "$this->algorithm->value", "$this->installedAlgorithm->value",
                     fallback, "meaning-mismatch"),
+        RenderFault("erase-distinct-from-view-body", "sql-semantics-mysql/src/Ir/SelectSql.php",
+                    "($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ')", "'SELECT '",
+                    unique, "meaning-mismatch"),
     ]
 
 

@@ -1,6 +1,7 @@
 """Compare persistent MySQL view reference bindings and read headings."""
 
 from collections import Counter
+from itertools import chain
 import json
 import sys
 
@@ -14,8 +15,8 @@ from run_server_mysql_signed_membership import refusal
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-external-view-read-names"
-CONTRACT_NAME = "mysql-external-view-read-names-v2.json"
-CONTRACT = "c995f94d2554e292aed4d3edb48b3c768f39362f6f577f6356f6d5a3fa3df6ec"
+CONTRACT_NAME = "mysql-external-view-read-names-v3.json"
+CONTRACT = "a8b732cbd4b3aa179550ce683bb8f97bc6bf4fb7ae1d54404cba56710379e7c5"
 MEANING = "meaning-mismatch"
 GRAPH = "mysql-view-read-graph"
 COMPARATOR_FAULTS = {"Ignore an exact visible result heading mismatch.": "missingViewHeading"}
@@ -142,10 +143,16 @@ def requests(_, tag, contract):
     for index, (request, item, reason) in enumerate(negatives(tag)):
         yield f"negative/{index}", request, item, reason
     settings = contract["exploration"]
+    retained_analyze = settings["retainedCasesPerSeed"]
+    retained_direct = settings["retainedDirectCasesPerSeed"]
     for seed in settings["seeds"]:
-        for index, item in enumerate(law.seeded(tag, seed, settings["casesPerSeed"])):
+        analyze = chain(law.seeded(tag, seed, retained_analyze),
+                        law.seeded(tag, seed + 31, settings["casesPerSeed"] - retained_analyze, distinct=True))
+        direct = chain(law.seeded(tag, seed + 1, retained_direct),
+                       law.seeded(tag, seed + 32, settings["directCasesPerSeed"] - retained_direct, distinct=True))
+        for index, item in enumerate(analyze):
             yield f"seed/{seed}/{index}", law.analyzed(item), item, None
-        for index, item in enumerate(law.seeded(tag, seed + 1, settings["directCasesPerSeed"])):
+        for index, item in enumerate(direct):
             yield f"direct-seed/{seed}/{index}", law.direct(item), item, None
 
 
@@ -180,6 +187,8 @@ def check_observation(item, actual, sql):
 def sample_forms(forms, response, _engine, item):
     source = response["source"]
     forms[f"materialized/{source.get('materializedView', False)}"] += 1
+    if item["shape"] == "distinct-input":
+        forms["distinct-algorithm/" + item["algorithm"]] += 1
     forms[f"width/{len(response['columns'])}"] += 1
     seen = []
     for (reference, label), (_, written, explicit) in zip(response["columns"], item["projection"], strict=True):
@@ -198,7 +207,7 @@ def sample_forms(forms, response, _engine, item):
 def required_forms(_, tag):
     common = {"materialized/True", "materialized/False", "width/2", "width/6", "empty/True", "empty/False",
               "non-ASCII/True", "non-ASCII/False", "repeat/True", "repeat/False", "alternate-implicit/True",
-              "nullability/int-not-null", "nullability/int"}
+              "nullability/int-not-null", "nullability/int", *("distinct-algorithm/" + mode for mode in law.ALGORITHMS)}
     return common | ({"wide/True"} if tag in law.LEGACY else set())
 
 
@@ -223,6 +232,7 @@ def faults(_, tag):
     folded["wrongRejection"] = "Column k does not exist.\nColumn é does not exist."
     materialized = law.finite(tag, "explicit-leading", "TEMPTABLE", "folded", "alias")
     consumed = law.finite(tag, "exact-utf8", "MERGE", "twice-mixed", "alias")
+    distinct = law.finite(tag, "distinct-input", "UNDEFINED", "folded", "alias")
     return [
         RenderFault("read-raw-declared-view-alias", source + "Rules/TableDefinition/ViewColumns.php",
                     "$inputs->assignedAlias($item->alias->value)", "$item->alias->value",
@@ -236,6 +246,9 @@ def faults(_, tag):
         RenderFault("lose-materialized-view-name-rule", source + "Rules/TableDefinition/ViewFacts.php",
                     "$definition->algorithm === ViewAlgorithm::TempTable", "false",
                     materialized, GRAPH, law.analyzed(materialized)),
+        RenderFault("ignore-distinct-materialized-view-heading", source + "Rules/TableDefinition/ViewFacts.php",
+                    "$layout->distinct($definition->query)", "false",
+                    distinct, GRAPH, law.analyzed(distinct)),
     ]
 
 

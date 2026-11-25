@@ -66,7 +66,7 @@ final class CreateView implements SemanticsIR
             $seen[$key] = true;
         }
         $this->columns = $heading;
-        $this->installedAlgorithm = $algorithm === ViewAlgorithm::Merge && $query->source === null
+        $this->installedAlgorithm = $algorithm === ViewAlgorithm::Merge && ($query->source === null || $query->distinct)
             ? ViewAlgorithm::Undefined : $algorithm;
     }
 

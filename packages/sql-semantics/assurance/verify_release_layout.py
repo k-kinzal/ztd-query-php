@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v206.json"
-CONTRACT = "d86dd4cc5710a976507a8df31e081ad03816c9dc919bc83c74c1bd7b6b2d8e91"
+CONTRACT_NAME = "release-layout-v207.json"
+CONTRACT = "04cabcaed85bf8f300d5dc0321872af25ea55608438d9a5b0eb3cb005956c0ec"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -556,6 +556,10 @@ def verify_probe(raw, catalog):
                 'CREATE ALGORITHM=MERGE SQL SECURITY DEFINER VIEW `app`.`filtered` (`value`) '
                 'AS SELECT 42 AS `__ztd_c0` FROM DUAL WHERE FALSE',
             ], "installed-mysql-literal-view-merge-fallback-mismatch", fallback)
+            distinct = item.get("distinctViewEffect")
+            require(distinct == [True, "MERGE", "UNDEFINED", True, "K", "k", 0,
+                'SELECT `__ztd_source`.`K` AS `k` FROM `app`.`unique_v` AS `__ztd_source`',
+            ], "installed-mysql-distinct-view-effect-mismatch", distinct)
             view_alias = item.get("createViewAlias")
             require(view_alias == [
                 True, True, "stored_heading", " requested", "-2147483649",

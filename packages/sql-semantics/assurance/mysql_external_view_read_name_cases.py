@@ -22,6 +22,7 @@ DECLARED = {
     "over-display-width": ("a" * 65, "É", "x"),
     "explicit-empty": ("", "É", "x"),
     "trailing-whitespace": ("ed\t", "É", "x"),
+    "distinct-input": ("K", "É", "e", "œ", "oe"),
 }
 LEGACY_SHAPES = ("over-display-width", "explicit-empty", "trailing-whitespace")
 INHERITED = ("inherited-leading", "inherited-empty")
@@ -73,7 +74,8 @@ def declaration(shape, algorithm):
         fields = [f"{field} AS {quote(name)}" for field, name in zip(fields, written, strict=True)]
     else:
         header = " (" + ", ".join(map(quote, written)) + ")"
-    return (f"CREATE ALGORITHM={algorithm} VIEW {SCHEMA}.{identity(shape, algorithm)}{header} AS SELECT "
+    distinct = "DISTINCT " if shape == "distinct-input" else ""
+    return (f"CREATE ALGORITHM={algorithm} VIEW {SCHEMA}.{identity(shape, algorithm)}{header} AS SELECT {distinct}"
             + ", ".join(fields) + f" FROM {SCHEMA}.{BASE}")
 
 
@@ -106,9 +108,13 @@ def sql(item):
 def effective_result(item, index, requested, label):
     if label is not None:
         return label
-    if item["algorithm"] == "TEMPTABLE":
+    if materialized(item):
         return requested
     return headings(item["tag"], item["shape"])[index]
+
+
+def materialized(item):
+    return item["algorithm"] == "TEMPTABLE" or item["shape"] == "distinct-input"
 
 
 def graph(item):
@@ -120,7 +126,7 @@ def graph(item):
     kinds = [KINDS[index] for index in ordered]
     if any(kind != "int" for kind in kinds):
         source["columnTypes"] = kinds
-    if item["algorithm"] == "TEMPTABLE":
+    if materialized(item):
         source["materializedView"] = True
     selection = [
         [["slot", ordered.index(index)], effective_result(item, index, written, label)]
@@ -139,17 +145,19 @@ def direct(item):
 
 
 def predict(item):
+    rows = ROWS[:2] if item["shape"] == "distinct-input" else ROWS
     return {
         "status": "rows", "fields": [[effective_result(item, index, requested, label), "LONG"]
                                      for index, requested, label in item["projection"]],
-        "rows": [[row[index] for index, _, _ in item["projection"]] for row in ROWS],
+        "rows": [[row[index] for index, _, _ in item["projection"]] for row in rows],
     }
 
 
-def seeded(tag, seed, count):
+def seeded(tag, seed, count, distinct=False):
     rng = Random(seed)
+    admitted = ("distinct-input",) if distinct else tuple(shape for shape in shapes(tag) if shape != "distinct-input")
     for step in range(count):
-        shape = shapes(tag)[step % len(shapes(tag))]
+        shape = admitted[step % len(admitted)]
         algorithm = rng.choice(ALGORITHMS)
         names = headings(tag, shape)
         fields = []

@@ -2032,9 +2032,9 @@ try {
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
             ['mysql-inherited-local-alias-binding-v3.json', 'fc990ebf9544903fe3f058f71c402592fff06b51f283a19328d51769dd25f263', 'MySQL inherited alias binding'],
-            ['mysql-generated-view-binding-v3.json', 'da8f9ed47955c804089380dcd8a678fe64eb37b34a7f4f521be93ed6a0a08ef2', 'MySQL generated view binding'],
-            ['mysql-external-view-read-binding-v2.json', 'd022673e74fb1a43a4a6d9960e30d1b7c44fbe288467e708edb3d44cade003e1', 'MySQL external view read binding'],
-            ['mysql-reopened-integral-view-binding-v1.json', '4b055dd329710ca723a74f18010033fd72229e4d784da11297a64c7537ca3cc1', 'MySQL reopened integral view binding'],
+            ['mysql-generated-view-binding-v4.json', '5d2d92bf4b9121e83fc6cb52917f0e7a413313932a70b3d248c7f2d8b547bbce', 'MySQL generated view binding'],
+            ['mysql-external-view-read-binding-v3.json', '2f9668fa294e83c68c88ab4ddcc6d1864bec7686f5cb4e3284758160a8348250', 'MySQL external view read binding'],
+            ['mysql-reopened-integral-view-binding-v2.json', 'd6a04348a7b9c7c80f8a92ebd9b97902b5f023014e3bebcac481eadeb943c077', 'MySQL reopened integral view binding'],
         ],
     };
     $providedBindings = [];

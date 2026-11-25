@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Testing\MySql\Inspection;
@@ -32,6 +33,28 @@ final class ViewReadLayoutTest extends TestCase
         $layout = new ViewReadLayout();
         self::assertTrue($layout->noInput($withDual));
         self::assertFalse($layout->noInput($withTable));
+    }
+
+    public function testBlockUnwrapsTheParenthesizedProjection(): void
+    {
+        $statement = (new Inspection())->inspect('(SELECT 1)')->statement;
+        self::assertInstanceOf(ParenthesizedQuery::class, $statement);
+        $layout = new ViewReadLayout();
+
+        self::assertInstanceOf(Select::class, $layout->block($statement));
+    }
+
+    public function testDistinctRecognizesTheNativeMaterializationRule(): void
+    {
+        $inspection = new Inspection();
+        $distinct = $inspection->inspect('SELECT DISTINCT 1')->statement;
+        $ordinary = $inspection->inspect('SELECT 1')->statement;
+        self::assertInstanceOf(Select::class, $distinct);
+        self::assertInstanceOf(Select::class, $ordinary);
+        $layout = new ViewReadLayout();
+
+        self::assertTrue($layout->distinct($distinct));
+        self::assertFalse($layout->distinct($ordinary));
     }
 
     public function testIntegerUsesReopenedDimensionsAcrossTheReleaseBoundary(): void

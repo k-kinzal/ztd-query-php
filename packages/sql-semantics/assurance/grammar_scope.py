@@ -256,7 +256,7 @@ def inventory(root):
             for rule in ("create_view", "view_tail", "view_query_block", "view_algorithm", "view_suid"):
                 for alternative in rules.get(rule, ()):
                     if alternative != rule + ":":
-                        related[alternative] = (*related.get(alternative, ()), "mysql-create-view-v3.json")
+                        related[alternative] = (*related.get(alternative, ()), "mysql-create-view-v4.json")
                         if rule in ("create_view", "view_tail", "view_query_block"):
                             related[alternative] = (*related[alternative], "mysql-create-view-projection-alias-v1.json",
                                                     "mysql-create-view-output-names-v2.json", "mysql-generated-view-headings-v2.json")
@@ -277,7 +277,7 @@ def inventory(root):
                     if alternative in ("table_factor: single_table", "single_table: table_ident opt_use_partition opt_table_alias opt_key_definition",
                                        "table_factor: table_ident opt_use_partition opt_table_alias opt_key_definition"):
                         related[alternative] = (*related.get(alternative, ()), "mysql-external-views-v1.json",
-                                                "mysql-external-view-read-names-v2.json", "mysql-reopened-integral-view-fields-v3.json")
+                                                "mysql-external-view-read-names-v3.json", "mysql-reopened-integral-view-fields-v3.json")
             for alternative in rules.get("table_factor", ()):
                 if alternative in ("table_factor: ( select_derived_union ) opt_table_alias",
                                    "table_factor: ( get_select_lex select_derived_union ) opt_table_alias"):
