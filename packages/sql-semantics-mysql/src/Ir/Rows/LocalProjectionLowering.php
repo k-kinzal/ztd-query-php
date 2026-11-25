@@ -40,12 +40,17 @@ final class LocalProjectionLowering
             $definition->from instanceof DerivedTable => $this->lower($operation, $definition, $remaining - 1),
             default => (new SelectLowering())->lower($operation, $definition),
         };
+        $aliases = new LocalProjectionAliases();
         if ($statement->from->columns === []) {
-            (new LocalProjectionAliases())->check($source);
+            $aliases->check($source);
         }
         $width = $source instanceof WithProjection ? $source->width() : count($source->columns);
         Check::input(count($operation->facts->relation($statement->from)->shape->slots) === $width, 'The local definition must resolve all output positions.');
 
-        return new LocalProjection($source, $local->columns($operation, $statement, $statement->from));
+        return new LocalProjection(
+            $source,
+            $local->columns($operation, $statement, $statement->from),
+            $statement->from->columns === [] && $aliases->needsInherited($source),
+        );
     }
 }

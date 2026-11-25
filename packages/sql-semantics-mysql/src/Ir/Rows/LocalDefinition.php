@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
@@ -72,7 +73,8 @@ final class LocalDefinition
                 'Each local result must read a resolved local slot.'
             );
             $slot = array_search($resolution->slot, $inputs, true);
-            $name = $item->alias === null && $resolution->slot->origin?->origin !== null
+            $merged = $operation->context->profile->grammar !== GrammarRelease::MySql5651;
+            $name = $merged && $item->alias === null && $resolution->slot->origin?->origin !== null
                 ? $resolution->slot->name
                 : $fields->at($position)->name;
             Check::input($slot !== false && $name !== null, 'A local result needs a named, resolved slot.');

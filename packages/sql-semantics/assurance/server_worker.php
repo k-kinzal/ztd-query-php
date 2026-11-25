@@ -211,7 +211,9 @@ function constructSource(string $platform, array $source, string $dialect): obje
     }
     if (isset($source['derived'])) {
         $derived = $namespace . 'From\\DerivedSource';
-        return new $derived(constructSelect($platform, $source['derived']));
+        $selection = constructSelect($platform, $source['derived']);
+
+        return $dialect === 'mysql' ? new $derived($selection, $source['inheritsRequestedAliases'] ?? false) : new $derived($selection);
     }
     $identifier = $namespace . 'Identifier';
     $table = $namespace . 'TableSource';
@@ -332,7 +334,12 @@ function observeSource(object $source, string $dialect, string $namespace, bool 
     }
 
     if ($source::class === $namespace . 'From\\DerivedSource') {
-        return ['derived' => observeSetQuery($namespace, $source->definition, $dialect)];
+        $derived = ['derived' => observeSetQuery($namespace, $source->definition, $dialect)];
+        if ($dialect === 'mysql' && $source->inheritsRequestedAliases) {
+            $derived['inheritsRequestedAliases'] = true;
+        }
+
+        return $derived;
     }
     if ($source::class !== $namespace . 'TableSource') {
         throw new RuntimeException('Unknown native table source role.');
@@ -409,7 +416,9 @@ function constructLocalProjection(string $platform, array $input): SemanticsIR
         default => constructSelect($platform, $definition),
     };
 
-    return new $statement($source, $columns);
+    return ($input['dialect'] ?? '') === 'mysql'
+        ? new $statement($source, $columns, $local['inheritsRequestedAliases'] ?? false)
+        : new $statement($source, $columns);
 }
 
 function constructWith(string $platform, array $input): SemanticsIR
@@ -529,10 +538,15 @@ function observeSetQuery(string $namespace, object $value, string $dialect, bool
         ]];
     }
     if ($value::class === $namespace . 'Rows\\LocalProjection') {
-        return ['local' => [
+        $local = [
             'definition' => observeSetQuery($namespace, $value->definition, $dialect),
             'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
-        ]];
+        ];
+        if ($dialect === 'mysql' && $value->inheritsRequestedAliases) {
+            $local['inheritsRequestedAliases'] = true;
+        }
+
+        return ['local' => $local];
     }
     if ($value::class !== $namespace . 'Select') {
         throw new RuntimeException('Unknown result query role.');

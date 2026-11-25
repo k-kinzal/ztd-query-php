@@ -77,11 +77,15 @@ final class SelectSql
     }
 
     /**
-     * Names one slot inside a derived projection.
+     * Names one slot under its generated or checked inherited heading.
      */
-    public function localColumn(int $slot): string
+    public function localColumn(int $slot, ?Select $inherited = null): string
     {
-        return '`__ztd_c' . $slot . '`';
+        if ($inherited === null) {
+            return '`__ztd_c' . $slot . '`';
+        }
+
+        return (new Identifier($inherited->columns[$slot]->name->value))->quoted();
     }
 
     /**
@@ -143,7 +147,7 @@ final class SelectSql
         $input = $inputs[$expression->occurrence] ?? null;
         if ($input instanceof DerivedSource) {
             Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');
-            $name = $this->localColumn($expression->slot);
+            $name = $this->localColumn($expression->slot, $input->inheritsRequestedAliases ? $input->definition : null);
         } else {
             Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
             $name = $input->columns[$expression->slot]->quoted();
@@ -259,7 +263,7 @@ final class SelectSql
             $definition = $source->definition;
             $retain = (new LocalProjectionAliases())->requiresRequested($definition);
             return '(' . $this->render($definition, !$retain) . ') AS ' . $this->alias($offset)
-                . ($retain ? $this->localColumnList(count($definition->columns)) : '');
+                . ($retain && !$source->inheritsRequestedAliases ? $this->localColumnList(count($definition->columns)) : '');
         }
         if ($source instanceof TableSource) {
             return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($offset);

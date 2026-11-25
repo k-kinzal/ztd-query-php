@@ -1963,6 +1963,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-mysql-inherited-local-alias-evidence"
+      - name: Compare legacy MySQL inherited aliases and positions
+        if: ${{ !cancelled() && matrix.engine == 'mysql' && (matrix.release == '5.6.51' || matrix.release == '5.7.44') }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_legacy_inherited_alias.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-mysql-legacy-inherited-alias-evidence"
       - name: Compare MySQL VARCHAR presence and join scopes
         if: ${{ !cancelled() && matrix.engine == 'mysql' }}
         env:
@@ -3775,6 +3790,12 @@ jobs:
         with:
           name: native-mysql-inherited-local-alias-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-mysql-inherited-local-alias-evidence/
+      - name: Preserve legacy MySQL inherited alias observations and any failure
+        if: ${{ always() && matrix.engine == 'mysql' && (matrix.release == '5.6.51' || matrix.release == '5.7.44') }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-mysql-legacy-inherited-alias-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-mysql-legacy-inherited-alias-evidence/
       - name: Preserve MySQL VARCHAR presence observations and any failure
         if: ${{ always() && matrix.engine == 'mysql' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v199.json"
-CONTRACT = "ed5c69624c4f5ff7a58fc303879a86d8a799c0836e678da340e77e17f00b51ea"
+CONTRACT_NAME = "release-layout-v200.json"
+CONTRACT = "8ee186e0dff320006de9462aa3bdf8fde376b58ecbfd8caa37923c7ca6de5480"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -622,6 +622,12 @@ def verify_probe(raw, catalog):
                 'WITH `__ztd_cte_0` (`__ztd_c0`, `__ztd_c1`) AS (SELECT 41 AS ` First`, 53 AS ` second`) '
                 'SELECT `__ztd_cte_0`.`__ztd_c1` AS `selected`, `__ztd_cte_0`.`__ztd_c0` AS `original` FROM `__ztd_cte_0`',
             ], "installed-mysql-inherited-local-alias-mismatch", inherited)
+            legacy_inherited = item.get("mysqlLegacyInheritedAliases")
+            require(legacy_inherited == [
+                True, True, True, 1, "UPPER_NAME",
+                'SELECT `__ztd_local`.`second` AS `selected` FROM '
+                '(SELECT 41 AS ` First`, 53 AS ` second`) AS `__ztd_local`',
+            ], "installed-legacy-mysql-inherited-alias-mismatch", legacy_inherited)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

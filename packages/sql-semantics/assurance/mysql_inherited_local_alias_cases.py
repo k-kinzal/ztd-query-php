@@ -53,7 +53,7 @@ def reads(item):
     for position, (side, slot) in enumerate(item["order"]):
         name = source_names(item, side)[slot]
         written = name.swapcase() if position % 2 == 0 else name
-        inherited = name if item["placement"] == "nested" else written
+        inherited = name if item["placement"] == "nested" and item["tag"] != "mysql-5.6.51" else written
         yield side, slot, written, inherited if item["natural"] and position == 0 else f"out_{position}"
 
 
@@ -113,9 +113,9 @@ def expected(item):
     return result
 
 
-def seeded(tag, seed, count):
+def seeded(tag, seed, count, placements=PLACEMENTS):
     rng = Random(seed)
-    places = list(PLACEMENTS)
+    places = list(placements)
     rng.shuffle(places)
     for index in range(count):
         place = places[index % len(places)]

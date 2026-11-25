@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
 #[CoversClass(LocalProjectionAliases::class)]
 #[Small]
@@ -40,5 +41,17 @@ final class LocalProjectionAliasesTest extends TestCase
         $aliases->checkDerived($child);
 
         self::assertTrue($aliases->requiresRequested($child));
+    }
+
+    public function testNeedsInheritedUsesTheNativeHeadingOnMySql57(): void
+    {
+        $child = new Select(
+            [new ResultColumn(new IntegerLiteral('1'), new RequestedResultAlias(' item'))],
+            release: GrammarRelease::MySql5744,
+        );
+        $aliases = new LocalProjectionAliases();
+        $aliases->checkDerived($child, true);
+
+        self::assertTrue($aliases->needsInherited($child));
     }
 }

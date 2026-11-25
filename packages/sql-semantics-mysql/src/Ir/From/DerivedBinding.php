@@ -39,10 +39,11 @@ final class DerivedBinding
         $from = JoinBinding::ungroup($query->from);
         Check::input(!$from instanceof ParsedJoin && !$from instanceof DerivedTable && !$from instanceof TableList, 'A derived join input must be independent of any joined input.');
         $definition = (new SelectLowering())->lower($operation, $query);
+        $aliases = new LocalProjectionAliases();
         if ($input->columns === []) {
-            (new LocalProjectionAliases())->check($definition);
+            $aliases->check($definition);
         }
-        $this->value = new DerivedSource($definition);
+        $this->value = new DerivedSource($definition, $input->columns === [] && $aliases->needsInherited($definition));
     }
 
     /**

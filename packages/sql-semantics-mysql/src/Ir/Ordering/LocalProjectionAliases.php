@@ -48,16 +48,26 @@ final class LocalProjectionAliases
     }
 
     /**
-     * Checks whether a derived table can declare separate positional column names.
+     * Closes the chosen local name layout on the child's release.
      */
-    public function checkDerived(Select|LocalProjection|WithProjection $child): void
+    public function checkDerived(Select|LocalProjection|WithProjection $child, bool $inherited = false): void
     {
-        if ($child instanceof Select && $this->requiresRequested($child)) {
-            Check::input(
-                $child->release !== GrammarRelease::MySql5651 && $child->release !== GrammarRelease::MySql5744,
-                'A derived table with requested aliases requires MySQL 8.0 or later.'
-            );
+        $needsInherited = $this->needsInherited($child);
+        Check::input(!$needsInherited || $inherited, 'A derived table with requested aliases requires MySQL 8.0 or later.');
+        Check::input(!$inherited || $needsInherited, 'Retaining inherited derived aliases requires a legacy SELECT with requested aliases.');
+        if ($inherited) {
+            $this->check($child);
         }
+    }
+
+    /**
+     * Tells whether this SELECT needs its inherited names to retain alias diagnostics.
+     */
+    public function needsInherited(Select|LocalProjection|WithProjection $child): bool
+    {
+        return $child instanceof Select
+            && ($child->release === GrammarRelease::MySql5651 || $child->release === GrammarRelease::MySql5744)
+            && $this->requiresRequested($child);
     }
 
     /**

@@ -913,6 +913,9 @@ if ($dialect !== 'sqlite') {
         'right' => ['From\\DerivedSource', 'From\\Join', 'TableSource'], 'on' => $conditions,
     ];
     $properties['From\\DerivedSource'] = ['definition' => ['Select']];
+    if ($dialect === 'mysql') {
+        $properties['From\\DerivedSource']['inheritsRequestedAliases'] = ['bool'];
+    }
     $methods['From\\DerivedSource'] = ['__construct', $dialect === 'postgres' ? 'columnKind' : 'columnType'];
     $methods['From\\Join'] = ['__construct', 'inputs'];
     $properties['From\\JoinKind'] = $methods['From\\JoinKind'] = [];
@@ -1020,6 +1023,9 @@ if ($dialect !== 'sqlite') {
         $internal[] = 'Mutation\\UpdateAssignmentLowering';
     }
     $properties['Rows\\LocalProjection'] = ['definition' => ['Rows\\LocalProjection', 'Select'], 'columns' => ['array']];
+    if ($dialect === 'mysql') {
+        $properties['Rows\\LocalProjection']['inheritsRequestedAliases'] = ['bool'];
+    }
     if ($dialect === 'mysql' || $dialect === 'postgres') {
         $with = 'Rows\\With\\WithProjection';
         $withRead = 'Rows\\With\\WithRead';

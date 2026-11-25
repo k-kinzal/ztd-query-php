@@ -24,19 +24,22 @@ final class LocalProjectionSql
     {
         $renderer = new SelectSql();
         $alias = '`__ztd_local`';
+        $source = $projection->definition;
+        $inherited = $projection->inheritsRequestedAliases && $source instanceof Select ? $source : null;
         $columns = [];
         foreach ($projection->columns as $position => $column) {
             $name = $localNames ? $renderer->localColumn($position) : $column->name->quoted();
-            $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;
+            $columns[] = $alias . '.' . $renderer->localColumn($column->slot, $inherited) . ' AS ' . $name;
         }
-        $source = $projection->definition;
         $retain = (new LocalProjectionAliases())->requiresRequested($source);
         $input = match (true) {
             $source instanceof Select => $renderer->render($source, !$retain),
             $source instanceof WithProjection => (new WithSql())->render($source, !$retain),
             $source instanceof LocalProjection => $this->render($source, true),
         };
-        $names = $retain ? $renderer->localColumnList($source instanceof WithProjection ? $source->width() : count($source->columns)) : '';
+        $names = $retain && $inherited === null
+            ? $renderer->localColumnList($source instanceof WithProjection ? $source->width() : count($source->columns))
+            : '';
 
         return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias . $names;
     }

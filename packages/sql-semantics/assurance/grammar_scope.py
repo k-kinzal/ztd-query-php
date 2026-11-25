@@ -276,6 +276,10 @@ def inventory(root):
                     if alternative in ("table_factor: single_table", "single_table: table_ident opt_use_partition opt_table_alias opt_key_definition",
                                        "table_factor: table_ident opt_use_partition opt_table_alias opt_key_definition"):
                         related[alternative] = (*related.get(alternative, ()), "mysql-external-views-v1.json")
+            for alternative in rules.get("table_factor", ()):
+                if alternative in ("table_factor: ( select_derived_union ) opt_table_alias",
+                                   "table_factor: ( get_select_lex select_derived_union ) opt_table_alias"):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-legacy-inherited-alias-v2.json")
             for rule in ("derived_table", "opt_derived_column_list"):
                 for alternative in rules.get(rule, ()):
                     if alternative in {"derived_table: table_subquery opt_table_alias opt_derived_column_list",

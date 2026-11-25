@@ -26,10 +26,11 @@ final class DerivedSource
 
     /**
      * Establishes the independently printable query and its native slot types.
+     * @param bool $inheritsRequestedAliases Uses the checked native heading on MySQL 5.6 or 5.7
      */
-    public function __construct(public readonly Select $definition)
+    public function __construct(public readonly Select $definition, public readonly bool $inheritsRequestedAliases = false)
     {
-        (new LocalProjectionAliases())->checkDerived($definition);
+        (new LocalProjectionAliases())->checkDerived($definition, $inheritsRequestedAliases);
         Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');
         Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');
         foreach ($definition->columns as $column) {

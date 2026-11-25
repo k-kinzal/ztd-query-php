@@ -188,6 +188,25 @@ function observeMysqlInheritedLocalAliases(SqlSemantics\Platform\MySql\Semantics
         $local->toString(), $cte->toString()];
 }
 
+function observeLegacyMysqlInheritedAliases(): array
+{
+    $semantics = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+    $body = 'SELECT 41 AS ` First`, 53 AS ` second`';
+    $sql = 'SELECT d.SECOND AS selected FROM (' . $body . ') AS d';
+    $local = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $definition = $semantics->analyze($body);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($definition, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('selected')),
+    ], inheritsRequestedAliases: true);
+    $nested = $semantics->analyze(
+        'SELECT d.UPPER_NAME FROM (SELECT q.first AS upper_name FROM (' . $body . ') AS q) AS d'
+    );
+
+    return [$local == $batch, $local == $direct, $local->inheritsRequestedAliases,
+        $local->columns[0]->slot, $nested->columns[0]->name->value, $local->toString()];
+}
+
 function observeMysqlCreateViewProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $sql = 'CREATE VIEW app.alias_effect (stored_heading) AS SELECT -2147483649 AS ` requested`';
@@ -2334,6 +2353,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedProjectionAlias'] = observeMysqlSignedProjectionAlias($semantics);
             $details['mysqlDerivedProjectionAlias'] = observeMysqlDerivedProjectionAlias($semantics);
             $details['mysqlInheritedLocalAliases'] = observeMysqlInheritedLocalAliases($semantics);
+            $details['mysqlLegacyInheritedAliases'] = observeLegacyMysqlInheritedAliases();
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

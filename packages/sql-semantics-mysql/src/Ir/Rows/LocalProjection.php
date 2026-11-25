@@ -34,10 +34,14 @@ final class LocalProjection implements SemanticsIR
      * Closes every slot reference over the corresponding independent definition.
      *
      * @param list<LocalResultColumn> $columns The outer result positions
+     * @param bool $inheritsRequestedAliases Uses the checked native heading on MySQL 5.6 or 5.7
      */
-    public function __construct(public readonly Select|self|WithProjection $definition, array $columns)
-    {
-        (new LocalProjectionAliases())->checkDerived($definition);
+    public function __construct(
+        public readonly Select|self|WithProjection $definition,
+        array $columns,
+        public readonly bool $inheritsRequestedAliases = false,
+    ) {
+        (new LocalProjectionAliases())->checkDerived($definition, $inheritsRequestedAliases);
         Check::input(!$definition instanceof Select || ($definition->orderBy === [] && $definition->limit === null), 'The local definition requires an unbounded projection without ordering.');
         $layers = 1;
         for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {
