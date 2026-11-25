@@ -116,7 +116,7 @@ NATIVE = {
     "mysql_create_table_as_declarations": "mysql-create-table-as-declarations-v1.json",
     "mysql_create_table_as_width": "mysql-create-table-as-width-evidence-v1.json",
     "mysql_create_btree_index": "mysql-create-btree-index-evidence-v2.json",
-    "mysql_drop_index": "mysql-drop-native-index-evidence-v1.json",
+    "mysql_drop_index": "mysql-drop-native-index-evidence-v2.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
     "mysql_grouped_having": "mysql-grouped-having-v2.json",

@@ -28,8 +28,12 @@ final class IndexNameAllocation
             return $first;
         }
 
-        $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
-        $prefix = substr($first->value, 0, $legacy ? 30 : 61);
+        $bytes = match ($release) {
+            GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql810,
+            GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql901 => 30,
+            GrammarRelease::MySql8044, GrammarRelease::MySql847, GrammarRelease::MySql910 => 61,
+        };
+        $prefix = substr($first->value, 0, $bytes);
         if (preg_match('//u', $prefix) !== 1) {
             return null;
         }

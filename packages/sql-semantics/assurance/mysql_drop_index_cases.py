@@ -17,6 +17,13 @@ KINDS = {
 }
 SPELLINGS = ("declared", "permitted-case-variant")
 QUALIFIERS = ("explicit", "current-database")
+# The releases are pinned individually. The 8.0 and 8.4 maintenance branches
+# contain the wider native buffer, as does 9.1.0.
+SUFFIX_BYTES = {
+    "mysql-5.6.51": 30, "mysql-5.7.44": 30, "mysql-8.0.44": 61,
+    "mysql-8.1.0": 30, "mysql-8.2.0": 30, "mysql-8.3.0": 30,
+    "mysql-8.4.7": 61, "mysql-9.0.1": 30, "mysql-9.1.0": 61,
+}
 ABSENT = ["db-error", "42000", 1091]
 DUPLICATE = ["db-error", "23000", 1062]
 
@@ -26,15 +33,17 @@ def coordinates():
             for kind, origins in KINDS.items() for origin in origins}
 
 
-def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=0, option=""):
+def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=0, option="", suffix=2):
     life, kind, origin, spelling, qualifier = point
+    occupied = None
     if kind == "primary":
         name = "PRIMARY"
     elif origin in ("explicit", "constraint"):
         name = label
     elif origin == "automatic-suffixed":
-        prefix = field.encode()[:30 if tag in OLD else 61].decode()
-        name = prefix + "_2"
+        prefix = field.encode()[:SUFFIX_BYTES[tag]].decode()
+        name = f"{prefix}_{suffix}"
+        occupied = prefix + "_2" if suffix == 3 else None
     else:
         name = field
     written = name if spelling == "declared" else name.swapcase()
@@ -42,7 +51,7 @@ def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=
     target = [SCHEMA, TABLE, "table" if life == "persistent" else "temporary-table"]
     return {"dialect": "mysql", "release": tag, "mysqlDropIndex": {"owner": target, "role": kind, "name": name},
             "point": list(point), "written": written, "fields": fields, "field": field, "label": label,
-            "offset": offset, "option": option}
+            "offset": offset, "option": option, "occupied": occupied}
 
 
 def cases(tag, seed, count):
@@ -63,6 +72,8 @@ def keys(item, sibling=False):
     keep = [["retained_b", "unique", ["b"]], ["retained_c", "ordinary", ["c", "b"]]]
     if origin == "automatic-suffixed":
         keep.append([item["field"], "ordinary", ["b"]])
+        if item["occupied"] is not None:
+            keep.append([item["occupied"], "ordinary", ["b"]])
     if sibling:
         return [*keep, ["persistent_only", "ordinary", [item["field"]]]]
     return [*keep, [name, kind, item["fields"]]]
@@ -78,6 +89,8 @@ def table_definition(item, temporary, sibling=False):
                "UNIQUE INDEX `retained_b` (`b`)", "INDEX `retained_c` (`c`, `b`)"]
     if origin == "automatic-suffixed":
         columns.append("INDEX " + quote(field) + " (`b`)")
+        if item["occupied"] is not None:
+            columns.append("INDEX " + quote(item["occupied"]) + " (`b`)")
     if sibling:
         columns.append("INDEX `persistent_only` (" + quote(field) + ")")
     elif origin != "inline":

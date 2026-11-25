@@ -6,7 +6,7 @@ import json
 import sys
 
 from mysql_drop_index_cases import (
-    ABSENT, KINDS, LIFETIMES, QUALIFIERS, SPELLINGS, STATUS, analyze, cases, command,
+    ABSENT, KINDS, LIFETIMES, QUALIFIERS, SPELLINGS, STATUS, SUFFIX_BYTES, analyze, cases, command,
     coordinates, declarations, definition, field_rows, prediction,
 )
 from run import Failure, TOOL, digest, require
@@ -17,8 +17,9 @@ from sqlite_domain import RenderFault
 
 
 LABEL = "mysql-drop-index"
-NAME = "mysql-drop-native-index-evidence-v1.json"
-CONTRACT = "9c4162c9dd7d48a5403d636711ab9ab13aa132e67c9d098d883bfe5ab887be1b"
+NAME = "mysql-drop-native-index-evidence-v2.json"
+CONTRACT = "687ecd388a40b985a8075fd4954b1a85d5e32024adff1808d2e65a011baf6c5c"
+SUFFIX_CONTRACT = "cba633bc81924ce3a8e7eee3507b0af23294bce1dbb634c894b3f2d05e8e9902"
 BASE = "b913362b3246efb53355e3bbe9128134f7bb9d80b408d18c616f70579a73b309"
 CASE_CONTRACT = "a1c9a4243a939dc8d13a1971277bc84f5b91e5366ef1c5a96ab41c21eb34a307"
 PRESENTATION = "377fae924fbac47b1c370e0a49f118162d8fa812370d0a4455aaedd4a280a230"
@@ -37,6 +38,9 @@ def specifications():
     require(digest(path) == CONTRACT and digest(TOOL / "mysql-drop-native-index-v1.json") == BASE
             and digest(TOOL / "mysql-native-index-case-v1.json") == CASE_CONTRACT
             and digest(TOOL / "mysql-drop-index-native-metadata-v1.json") == PRESENTATION, "mysql-drop-index-contract")
+    names = TOOL / "mysql-native-index-generated-name-v2.json"
+    require(digest(names) == SUFFIX_CONTRACT, "mysql-drop-index-suffix-contract")
+    same(json.loads(names.read_text())["bytesByRelease"], {tag.removeprefix("mysql-"): width for tag, width in SUFFIX_BYTES.items()})
     spec = json.loads(path.read_text())
     profiles = native_profiles()[1]
     same(spec["releases"], profiles["mysql"]["releases"])
@@ -105,6 +109,13 @@ def negative_cases(tag):
         model = {**model, "written": written}
         yield name, analyze(model), {"model": model, "id": name, "nativeError": ABSENT}, RESOLUTION
 
+    long_field = "W" * 64
+    wrong_width = 61 if SUFFIX_BYTES[tag] == 30 else 30
+    model = definition(tag, ("persistent", "ordinary", "automatic-suffixed", "declared", "explicit"), field=long_field)
+    model["written"] = long_field[:wrong_width] + "_2"
+    case_id = "wrong-release-suffix-width"
+    yield case_id, analyze(model), {"model": model, "id": case_id, "nativeError": ABSENT}, RESOLUTION
+
     outside = analyze(plain, context=[ddl.replace("InnoDB", "MyISAM") for ddl in declarations(plain)])
     yield "different-engine", outside, None, "resolved ordinary InnoDB declaration"
 
@@ -123,6 +134,7 @@ def requests(engine, tag, spec):
     automatic = ("temporary-shadow", "unique", "automatic-suffixed", "permitted-case-variant", "current-database")
     for name, field in (("ascii-suffix-capacity", "X" * 64), ("utf8-suffix-capacity", "é" * 20)):
         yield from case_pair("edge", name, definition(tag, automatic, field=field))
+    yield from case_pair("edge", "ascii-first-free-suffix", definition(tag, automatic, field="X" * 64, suffix=3))
     primary = definition(tag, ("persistent", "primary", "table", "permitted-case-variant", "explicit"))
     primary = {**primary, "written": "PRİMARY", "option": " LOCK=DEFAULT ALGORITHM DEFAULT"}
     yield from case_pair("edge", "native-dotted-I-selects-primary", primary)
@@ -136,7 +148,7 @@ def requests(engine, tag, spec):
 
 
 def rejected_finite_ids(_, _tag):
-    return {"unknown", "implicit-is-not-primary", "shadow-is-not-persistent"}
+    return {"unknown", "implicit-is-not-primary", "shadow-is-not-persistent", "wrong-release-suffix-width"}
 
 
 def check_value(item, response):

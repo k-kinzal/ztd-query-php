@@ -926,7 +926,7 @@ def faults(engine):
             Fault("omit-mysql-index-removal-publication", "Schema/Alter/RelationChangeLowering::applies",
                   "$statement instanceof ParsedDropIndex || ", ""),
             Fault("apply-wrong-mysql-index-name-byte-capacity", "IndexNameAllocation::generated",
-                  "substr($first->value, 0, $legacy ? 30 : 61)", "substr($first->value, 0, 61)",
+                  "substr($first->value, 0, $bytes)", "substr($first->value, 0, 61)",
                   "src/Rules/TableDefinition/Index/IndexNameAllocation.php",
                   "MySQL native index binding source differs in src/Rules/TableDefinition/Index/IndexNameAllocation.php"),
             Fault("strip-mysql-native-case-mapping", "NativeIdentifierCase::fold",

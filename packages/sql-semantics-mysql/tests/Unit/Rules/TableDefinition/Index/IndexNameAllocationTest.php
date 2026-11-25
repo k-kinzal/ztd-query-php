@@ -28,6 +28,9 @@ final class IndexNameAllocationTest extends TestCase
         $allocation = new IndexNameAllocation();
 
         self::assertSame(str_repeat('x', 30) . '_3', $allocation->generated(new Name($prefix), $used, GrammarRelease::MySql5651)?->value);
+        self::assertSame(str_repeat('x', 30) . '_3', $allocation->generated(new Name($prefix), $used, GrammarRelease::MySql810)?->value);
+        self::assertSame(str_repeat('x', 30) . '_3', $allocation->generated(new Name($prefix), $used, GrammarRelease::MySql901)?->value);
+        self::assertSame(str_repeat('x', 61) . '_2', $allocation->generated(new Name($prefix), $used, GrammarRelease::MySql8044)?->value);
         self::assertSame(str_repeat('x', 61) . '_2', $allocation->generated(new Name($prefix), $used, GrammarRelease::MySql910)?->value);
     }
 }

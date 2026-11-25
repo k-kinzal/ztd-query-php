@@ -1750,7 +1750,7 @@ try {
             ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v5.json', '7a1814a0d53a728f4cb57edcda6688a5390763adb35af826625b42f1dc707e24', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v2.json', '7df292a54bb9e9ccf4593c3f7751f7775f7018d70ef5ba83e6248fa4f6a7183c', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v3.json', '2e88b842eb8627ad997d2b481ee423a15ee54cabed6bdfd3e3ec20c195f533f9', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
