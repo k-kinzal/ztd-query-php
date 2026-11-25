@@ -1,0 +1,55 @@
+{
+  "revision": "SemanticsIR/mysql-index-removal-construction-facts-1",
+  "approval": "pending-human-review",
+  "profile": "Native InnoDB with the fixed MySQL release and exact persistent or session table identity used by each registered root.",
+  "references": {
+    "mysql-index-auto-increment-evidence-v1.json": "5098698d21b21312f6adad59f5b2a912a620025c143561a4c0d74d833c334f56",
+    "mysql-drop-native-index-evidence-v3.json": "78d4213562da75d0be5f161366dd851ff8e542db561d084ad7ceb4cea1ae8fda",
+    "mysql-multiple-index-removal-evidence-v1.json": "1309c74f71d04c1926a6de8fcb3f7b2dbb9710a2ad6af5a7152c34d8510b83ec",
+    "mysql-mixed-index-alteration-evidence-v3.json": "b9c0633048a26a9a38a9ab8994c1346e52073c7510b23a06e646007b156630fd",
+    "mysql-drop-foreign-keys-evidence-v1.json": "85c7a4092c281ed0920a9b69a84c8f4c647758e4d1266142002e1f2ed7f08c39"
+  },
+  "constructors": {
+    "Schema/Index/IndexIdentity": "The absolute resolved owner, exact physical index name and effective key role.",
+    "Schema/Index/DropIndex": "Removes a checked single physical key.",
+    "Schema/Index/DropIndexes": "Removes an atomic ordered list of physical keys.",
+    "Schema/Index/Change/AlterIndexes": "Removes and renames checked physical keys in a single ordered operation.",
+    "Schema/ForeignKey/DropForeignKeys": "Removes checked foreign constraints and any explicitly removed native physical keys."
+  },
+  "rules": [
+    "At construction require the exact resolved removal targets and all relevant original generating-field support facts. Distinguish a target that participates in AUTO_INCREMENT from a target with no generating dependency.",
+    "Every affected removal must use the same original owner and complete generating-field backing set. Reject removal of the last leading support unless a native supported replacement is part of the operation.",
+    "Completed targets store the exact owner, physical name and effective ordinary, primary, unique or clustered-unique role. The containing operation stores only the requested edits and physical policy. Generation-validation facts and unrelated alternate index names are transient.",
+    "Render each physical removal from the exact checked identity and use the same native owner, algorithm and lock. The generation semantics after removal are determined by the checked original external catalog and the specified removal.",
+    "All original finite, negative, seed, diagnostics and post-removal allocation observations from the registered removal domains persist. The structural oracle checks the projection and measures the full prior and final physical catalog independently."
+  ],
+  "observations": [
+    "Compare the exact physical owner and ordered index effects, indexed columns, preserved generation count, next generated value, release-specific errors, transaction effects and unrelated preserved data.",
+    "Observe two admissible layouts with the same removed target and different unaffected backing labels. The completed value carries the same semantic coordinates while the fixture observes each actual remaining label.",
+    "Verify that the only-support case and the simultaneous removal of all backing keys continue to be refused at the public construction boundary."
+  ],
+  "faults": [
+    "Keep an original backing list inside the completed role.",
+    "Accept a removal without checking the declared original generating role, or leak a caller-owned ordered list reference.",
+    "Drop alternate-coverage validation, hide a native bound failure or render the wrong retained field role."
+  ],
+  "calibration": {
+    "5.6.51.out": "4eb8098ef4d49610f9f560136a2d9fecd1172ef969c1e82a35b611f1961f8eb9",
+    "5.7.44.out": "9fa5501c6b38d06c004d3dc815237fa0520090e8c586952889bb75d4b4d52231",
+    "8.0.44.out": "e56bc396235aca4e84bfc693f2527941fc220e18f7fb7f1bb3fdd5bdcc7c9b90",
+    "9.1.0.out": "5493b56c5fb32d5c0dc6e5c2b42a0aa08b15ff295d16705f34e0b85a002fe25a"
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ]
+}
