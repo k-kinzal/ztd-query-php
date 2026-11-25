@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 
@@ -40,14 +41,24 @@ final class ForeignKeyStringLowering
             CharacterKind::TinyText, CharacterKind::Text, CharacterKind::MediumText, CharacterKind::LongText,
             CharacterKind::Long, CharacterKind::LongVarChar, CharacterKind::LongCharVarying => null,
         };
-        $collation = ForeignKeyTextCollation::tryFrom(strtolower($column->collation->value ?? ''));
-        $charset = $type->charset;
-        if ($kind === null || $collation === null
-            || ($charset !== null && ($charset->binary() || strtolower($charset->charset->value ?? '') !== 'utf8mb4'))) {
+        $collation = $this->collation($column, $type->charset);
+        if ($kind === null || $collation === null) {
             return null;
         }
 
         return new ForeignKeyStringStorage($kind, $this->length($type->length, $kind), $collation);
+    }
+
+    /**
+     * Reads the explicitly settled collation of a native utf8mb4 field.
+     */
+    public function collation(Column $column, ?CharsetAttribute $charset): ?ForeignKeyTextCollation
+    {
+        if ($charset !== null && ($charset->binary() || strtolower($charset->charset->value ?? '') !== 'utf8mb4')) {
+            return null;
+        }
+
+        return ForeignKeyTextCollation::tryFrom(strtolower($column->collation->value ?? ''));
     }
 
     /**

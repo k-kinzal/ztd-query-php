@@ -2620,6 +2620,23 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $value->toString(),
             ];
         }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
+            $labels = $semantics->context([
+                'CREATE TABLE app.label_parent (p TINYINT UNSIGNED PRIMARY KEY, q SMALLINT UNSIGNED NOT NULL UNIQUE)',
+                "CREATE TABLE app.label_child (x ENUM('green ', ' red', ''), y SET('a','b','c','d','e','f','g','h','i'))"
+                    . ' DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin',
+            ]);
+            $value = $semantics->analyze('ALTER TABLE app.label_child '
+                . 'ADD CONSTRAINT Ordinal_Link FOREIGN KEY (x) REFERENCES label_parent(p), '
+                . 'ADD CONSTRAINT Mask_Link FOREIGN KEY (y) REFERENCES label_parent(q)', $labels);
+            $observed = [];
+            foreach ($value->additions as $addition) {
+                $domain = $addition->pairs[0]->domain;
+                $observed[] = [$domain->child->kind->value, array_column($domain->child->members, 'value'),
+                    $domain->child->collation->value, $domain->parent->storage->value, $domain->childKeyBytes()];
+            }
+            $details['mysqlForeignKeyEnumerationDomains'] = [$observed, $value->toString()];
+        }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\DropForeignKeys') {
             $runtimeType = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys::class;
             $first = $result->actions[0];

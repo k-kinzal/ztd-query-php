@@ -1494,10 +1494,16 @@ if ($dialect !== 'sqlite') {
         $foreignScalar = $foreignDomains . 'ForeignKeyScalarDomain';
         $foreignScalarStorage = $foreignDomains . 'ForeignKeyScalarStorage';
         $foreignScalarKind = $foreignDomains . 'ForeignKeyScalarKind';
+        $foreignEnumeration = $foreignAddBase . 'Enumeration\\';
+        $foreignEnumerationDomain = $foreignEnumeration . 'ForeignKeyEnumerationDomain';
+        $foreignEnumerationStorage = $foreignEnumeration . 'ForeignKeyEnumerationStorage';
+        $foreignEnumerationKind = $foreignEnumeration . 'ForeignKeyEnumerationKind';
+        $foreignEnumerationMember = $foreignEnumeration . 'ForeignKeyEnumerationMember';
+        $internal[] = $foreignEnumeration . 'ForeignKeyEnumerationLowering';
         $foreignCapacity = $foreignDomains . 'ForeignKeyKeyCapacity';
         array_push($internal, $foreignCapacity, $foreignDomains . 'ForeignKeyStringLowering', $foreignDomains . 'ForeignKeyScalarLowering');
         $pureCollaborators[] = $foreignCapacity;
-        $properties[$foreignPair] = ['child' => ['Identifier'], 'parent' => ['Identifier'], 'domain' => [$foreignInteger, $foreignScalar, $foreignString],
+        $properties[$foreignPair] = ['child' => ['Identifier'], 'parent' => ['Identifier'], 'domain' => [$foreignInteger, $foreignScalar, $foreignString, $foreignEnumerationDomain],
             'nullable' => ['bool'], 'descending' => ['bool']];
         $properties[$foreignInteger] = ['storage' => ['Schema\\IntegerStorage'], 'unsigned' => ['bool']];
         $properties[$foreignString] = ['child' => [$foreignStringStorage], 'parent' => [$foreignStringStorage]];
@@ -1513,6 +1519,15 @@ if ($dialect !== 'sqlite') {
         $methods[$foreignScalarKind] = ['packed', 'dimensions', 'accepts'];
         $methods[$foreignStringKind] = ['text', 'fixed'];
         $methods[$foreignCollation] = [];
+        $unsignedStorage = [$foreignInteger, $foreignScalarStorage, $foreignEnumerationStorage];
+        $properties[$foreignEnumerationDomain] = ['child' => $unsignedStorage, 'parent' => $unsignedStorage];
+        $properties[$foreignEnumerationStorage] = ['kind' => [$foreignEnumerationKind], 'members' => ['array'], 'collation' => [$foreignCollation]];
+        $properties[$foreignEnumerationMember] = ['value' => ['string']];
+        $properties[$foreignEnumerationKind] = $methods[$foreignEnumerationKind] = [];
+        $methods[$foreignEnumerationDomain] = ['__construct', 'childKeyBytes', 'unsignedBytes', 'checkRelease'];
+        $methods[$foreignEnumerationStorage] = ['__construct', 'keyBytes', 'checkRelease'];
+        $methods[$foreignEnumerationMember] = ['__construct'];
+        $enumCases[$foreignEnumerationKind] = ['Enum' => 'ENUM', 'Set' => 'SET'];
         $enumCases[$foreignStringKind] = ['Char' => 'CHAR', 'Varchar' => 'VARCHAR', 'Binary' => 'BINARY', 'Varbinary' => 'VARBINARY'];
         $enumCases[$foreignCollation] = ['Binary' => 'utf8mb4_bin', 'General' => 'utf8mb4_general_ci', 'Unicode' => 'utf8mb4_unicode_ci'];
         $enumCases[$foreignScalarKind] = ['Decimal' => 'DECIMAL', 'Bit' => 'BIT', 'Single' => 'FLOAT', 'Double' => 'DOUBLE',
@@ -1900,10 +1915,10 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v8.json', '6795d76b3fee333e32c4c390802b3874a7803592ea0aa1576fa0816fca633f60', 'MySQL VARCHAR binding'],
+            ['mysql-varchar-binding-v9.json', '4f223c9722dae50667ffeea8d9ddb6b7e279ba61891569ae1ee51ef01ae08007', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v7.json', '99c1136783f445921aab242f7d33d415c4f4352756d4c2eb1f4a83a7a5cbf05a', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v9.json', '6f50b02a129f3dbc38b518180c2c18c7dc7e6f1571aa9b252afefad25cce27ff', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v9.json', '76d398c3bc88a94f659ec56c70341cb56fbc1a70bc6bb76f7bf7e93488bc0514', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v10.json', 'dca89baa33c3e0d7af7d6a2e8333259df624ed04d3d675e1b38f93ac838cdd01', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1968,8 +1983,8 @@ try {
             requireShape(array_intersect_key($current, $indexRecord['storage']) === [], 'Duplicate MySQL native index list storage rule');
             $storage[$indexRecord['owner']] = $current + $indexRecord['storage'];
         }
-        $foreignStorage = __DIR__ . '/mysql-foreign-key-add-storage-v1.json';
-        requireShape(hash_file('sha256', $foreignStorage) === '364231eb558ce8df0f3193045e90ee49e96af3d9d2bb5504806e14a9b5c6bfef', 'Native foreign-key addition list storage differs.');
+        $foreignStorage = __DIR__ . '/mysql-foreign-key-add-storage-v2.json';
+        requireShape(hash_file('sha256', $foreignStorage) === 'b72134447d55a5f70638d127ea59d0c12c54e0733094ef9b026f389548b622d6', 'Native foreign-key addition list storage differs.');
         $additionalStorage = json_decode(file_get_contents($foreignStorage), true, 512, JSON_THROW_ON_ERROR)['records'];
         requireShape(array_intersect_key($storage, $additionalStorage) === [], 'Duplicate native foreign-key addition storage rule.');
         $storage += $additionalStorage;
@@ -2607,6 +2622,8 @@ try {
                     || ($dialect === 'mysql' && $short === 'Schema\\Storage\\InnoDbRecord' && in_array($call->name->toString(), ['min', 'intdiv'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyScalarStorage'
                         && in_array($call->name->toString(), ['min', 'intdiv'], true))
+                    || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\Enumeration\\ForeignKeyEnumerationStorage'
+                        && in_array($call->name->toString(), ['intdiv', 'str_contains', 'str_ends_with'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\Alter\\RenameTable' && $call->name->toString() === 'array_key_exists')
                     || ($dialect === 'mysql' && $short === 'Schema\\Index\\Batch\\AutoIncrementRemovalSet'
                         && in_array($call->name->toString(), ['ksort', 'array_diff_key'], true))

@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyIntegerDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Enumeration\ForeignKeyEnumerationDomain;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
@@ -31,7 +32,7 @@ final class ForeignKeyPair
     public function __construct(
         public readonly Identifier $child,
         public readonly Identifier $parent,
-        public readonly ForeignKeyIntegerDomain|ForeignKeyScalarDomain|ForeignKeyStringDomain $domain,
+        public readonly ForeignKeyEnumerationDomain|ForeignKeyIntegerDomain|ForeignKeyScalarDomain|ForeignKeyStringDomain $domain,
         public readonly bool $nullable,
         public readonly bool $descending = false,
     ) {

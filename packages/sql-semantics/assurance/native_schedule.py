@@ -131,6 +131,7 @@ NATIVE = {
     "mysql_add_foreign_keys": "mysql-add-foreign-keys-evidence-v1.json",
     "mysql_foreign_key_strings": "mysql-foreign-key-string-evidence-v1.json",
     "mysql_foreign_key_scalars": "mysql-foreign-key-scalar-evidence-v2.json",
+    "mysql_foreign_key_enumerations": "mysql-foreign-key-enumeration-evidence-v2.json",
     "mysql_index_visibility": "mysql-index-visibility-evidence-v2.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
@@ -304,6 +305,7 @@ SINGLE_ENGINE = {
     "mysql_add_foreign_keys": "mysql",
     "mysql_foreign_key_strings": "mysql",
     "mysql_foreign_key_scalars": "mysql",
+    "mysql_foreign_key_enumerations": "mysql",
     "mysql_index_visibility": "mysql",
     "mysql_session_table_sources": "mysql",
     "mysql_create_view": "mysql",
@@ -343,6 +345,7 @@ def release_subset(domain):
         "mysql_add_foreign_keys": "releases",
         "mysql_foreign_key_strings": "releases",
         "mysql_foreign_key_scalars": "releases",
+        "mysql_foreign_key_enumerations": "releases",
         "mysql_index_visibility": "releases",
     }.get(domain)
     if field is None:

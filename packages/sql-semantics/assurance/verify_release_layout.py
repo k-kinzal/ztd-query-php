@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v167.json"
-CONTRACT = "5ad578252822ac52e2592dae6fde531a1e31fca6792183dc50f15e2a3d0e1954"
+CONTRACT_NAME = "release-layout-v168.json"
+CONTRACT = "d59a875d5d4f25ae08a797f2317cca67dc61689b06ab7e983ad2bcfe7411b60b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -906,6 +906,13 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlForeignKeyScalarDomains") == [
                 ["VARBINARY", 4, "DECIMAL", 9, 0, 4], ["DATE", "MEDIUMINT", False, 3], ["TIME", 1, "TIME", 2, 4], scalar_sql,
             ], "installed-mysql-foreign-key-scalar-domain-mismatch", item)
+            enumeration_sql = ("ALTER TABLE `app`.`label_child` "
+                               "ADD CONSTRAINT `Ordinal_Link` FOREIGN KEY (`x`) REFERENCES `app`.`label_parent` (`p`) ON UPDATE NO ACTION ON DELETE NO ACTION, "
+                               "ADD CONSTRAINT `Mask_Link` FOREIGN KEY (`y`) REFERENCES `app`.`label_parent` (`q`) ON UPDATE NO ACTION ON DELETE NO ACTION")
+            require(item.get("mysqlForeignKeyEnumerationDomains") == [
+                [["ENUM", ["green", " red", ""], "utf8mb4_bin", "TINYINT", 1],
+                 ["SET", list("abcdefghi"), "utf8mb4_bin", "SMALLINT", 2]], enumeration_sql,
+            ], "installed-mysql-foreign-key-enumeration-domain-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"

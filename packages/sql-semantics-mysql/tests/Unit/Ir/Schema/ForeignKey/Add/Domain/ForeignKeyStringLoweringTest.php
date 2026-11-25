@@ -37,4 +37,12 @@ final class ForeignKeyStringLoweringTest extends TestCase
         self::assertSame(1, $lowering->length(null, ForeignKeyStringKind::Binary));
         self::assertSame(768, $lowering->length('768', ForeignKeyStringKind::Varbinary));
     }
+
+    public function testCollationReadsTheNativeUtf8mb4Identity(): void
+    {
+        $ddl = 'CREATE TABLE app.labels (v CHAR(8) COLLATE utf8mb4_general_ci)';
+        $column = (new Inspection())->inspect($ddl)->declarations()[0]->columns[0];
+
+        self::assertSame(ForeignKeyTextCollation::General, (new ForeignKeyStringLowering())->collation($column, null));
+    }
 }

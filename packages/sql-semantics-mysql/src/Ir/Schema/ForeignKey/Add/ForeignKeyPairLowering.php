@@ -12,6 +12,9 @@ use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalar
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringStorage;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Enumeration\ForeignKeyEnumerationDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Enumeration\ForeignKeyEnumerationLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Enumeration\ForeignKeyEnumerationStorage;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -80,10 +83,19 @@ final class ForeignKeyPairLowering
     /**
      * Settles the checked native comparison between the effective field encodings.
      */
-    public function domain(Column $child, Column $parent, GrammarRelease $release): ForeignKeyIntegerDomain|ForeignKeyScalarDomain|ForeignKeyStringDomain
+    public function domain(Column $child, Column $parent, GrammarRelease $release): ForeignKeyEnumerationDomain|ForeignKeyIntegerDomain|ForeignKeyScalarDomain|ForeignKeyStringDomain
     {
         $left = $this->field($child, $release);
         $right = $this->field($parent, $release);
+        if ($left instanceof ForeignKeyEnumerationStorage || $right instanceof ForeignKeyEnumerationStorage) {
+            Check::input(
+                $left !== null && $right !== null
+                    && !$left instanceof ForeignKeyStringStorage && !$right instanceof ForeignKeyStringStorage,
+                'A native ENUM or SET reference requires equal-width unsigned field encodings.'
+            );
+
+            return new ForeignKeyEnumerationDomain($left, $right);
+        }
         if ($left instanceof ForeignKeyIntegerDomain && $right instanceof ForeignKeyIntegerDomain
             && $left->storage === $right->storage && $left->unsigned === $right->unsigned) {
             return $left;
@@ -103,14 +115,16 @@ final class ForeignKeyPairLowering
     /**
      * Reads the physical field role without retaining the source declaration.
      */
-    public function field(Column $column, GrammarRelease $release): ForeignKeyIntegerDomain|ForeignKeyScalarStorage|ForeignKeyStringStorage|null
+    public function field(Column $column, GrammarRelease $release): ForeignKeyEnumerationStorage|ForeignKeyIntegerDomain|ForeignKeyScalarStorage|ForeignKeyStringStorage|null
     {
         $integer = $this->integer($column->type);
         if ($integer !== null) {
             return new ForeignKeyIntegerDomain($integer[0], $integer[1]);
         }
 
-        return (new ForeignKeyStringLowering())->storage($column) ?? (new ForeignKeyScalarLowering())->storage($column->type, $release);
+        return (new ForeignKeyStringLowering())->storage($column)
+            ?? (new ForeignKeyScalarLowering())->storage($column->type, $release)
+            ?? (new ForeignKeyEnumerationLowering())->storage($column, $release);
     }
 
     /**

@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyKeyCapacity;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Enumeration\ForeignKeyEnumerationDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexAlgorithm;
@@ -71,17 +72,19 @@ final class ForeignKeyAdditionSet
      */
     public function release(ForeignKeyAddition $addition, bool $legacy): void
     {
-        if (!$legacy) {
-            return;
+        if ($legacy) {
+            $effects = $addition->effects;
+            Check::input($effects->match === ForeignKeyMatch::None, 'Legacy MySQL foreign keys have no MATCH metadata.');
+            Check::input(
+                $effects->update !== ForeignKeyAction::SetDefault && $effects->delete !== ForeignKeyAction::SetDefault,
+                'Legacy InnoDB rejects effective SET DEFAULT on a foreign key.'
+            );
         }
-        $effects = $addition->effects;
-        Check::input($effects->match === ForeignKeyMatch::None, 'Legacy MySQL foreign keys have no MATCH metadata.');
-        Check::input(
-            $effects->update !== ForeignKeyAction::SetDefault && $effects->delete !== ForeignKeyAction::SetDefault,
-            'Legacy InnoDB rejects effective SET DEFAULT on a foreign key.'
-        );
         foreach ($addition->pairs as $pair) {
-            Check::input(!$pair->descending, 'Legacy MySQL foreign keys do not accept native index direction.');
+            Check::input(!$legacy || !$pair->descending, 'Legacy MySQL foreign keys do not accept native index direction.');
+            if ($pair->domain instanceof ForeignKeyEnumerationDomain) {
+                $pair->domain->checkRelease($legacy);
+            }
         }
     }
 }

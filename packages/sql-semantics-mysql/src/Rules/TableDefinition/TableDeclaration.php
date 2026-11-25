@@ -34,6 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
 
 /**
  * Derives the declaration a table or view definition provides.
@@ -110,6 +111,9 @@ final class TableDeclaration
             return count($collations) === 1 ? $collations[0] : null;
         }
         $type = $specification->dataType();
+        if ($type instanceof Enumeration && $type->charset === null) {
+            return $tableCollation;
+        }
 
         return $type instanceof Character && !$type->national && $type->charset === null ? $tableCollation : null;
     }
