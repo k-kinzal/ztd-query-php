@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v205.json"
-CONTRACT = "0c0232f0f89e31888fa9ee7c9a131c54a8cdb7d54f0b8a1132bb817f689fcce9"
+CONTRACT_NAME = "release-layout-v206.json"
+CONTRACT = "d86dd4cc5710a976507a8df31e081ad03816c9dc919bc83c74c1bd7b6b2d8e91"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -551,6 +551,11 @@ def verify_probe(raw, catalog):
                                                'AS SELECT 42 AS `__ztd_c0` FROM DUAL WHERE FALSE']
                     and item["sql"] == 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `app`.`answer` (`value`) AS SELECT 42 AS `__ztd_c0`',
                     "installed-mysql-create-view-mismatch", item)
+            fallback = item.get("literalMergeFallback")
+            require(fallback == [True, True, "MERGE", "UNDEFINED",
+                'CREATE ALGORITHM=MERGE SQL SECURITY DEFINER VIEW `app`.`filtered` (`value`) '
+                'AS SELECT 42 AS `__ztd_c0` FROM DUAL WHERE FALSE',
+            ], "installed-mysql-literal-view-merge-fallback-mismatch", fallback)
             view_alias = item.get("createViewAlias")
             require(view_alias == [
                 True, True, "stored_heading", " requested", "-2147483649",

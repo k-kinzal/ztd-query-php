@@ -47,4 +47,16 @@ final class CreateViewTest extends TestCase
 
         self::assertSame('mysql-9.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/view-definition', $view->profileId());
     }
+
+    public function testInstalledAlgorithmDerivesTheSourceFreeMergeFallback(): void
+    {
+        $column = new Identifier('answer');
+        $name = new ViewName(new Identifier('app'), $column);
+        $selection = new Select([new ResultColumn(new IntegerLiteral('42'), $column)]);
+        $view = new CreateView($name, $selection, [new ViewColumn($column)], algorithm: ViewAlgorithm::Merge);
+
+        self::assertSame(ViewAlgorithm::Merge, $view->algorithm);
+        self::assertSame(ViewAlgorithm::Undefined, $view->installedAlgorithm());
+        self::assertStringStartsWith('CREATE ALGORITHM=MERGE ', $view->toString());
+    }
 }

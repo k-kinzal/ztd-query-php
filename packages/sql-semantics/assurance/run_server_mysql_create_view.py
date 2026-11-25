@@ -16,12 +16,14 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-view"
 OBSERVER = "mysql_create_view_observer.php"
-CONTRACT_NAME = "mysql-create-view-v2.json"
-CONTRACT = "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108"
+CONTRACT_NAME = "mysql-create-view-v3.json"
+CONTRACT = "0d57ca2240a3e8742f6cb1a3fcd3aa0e7810ee313f080cc64e309ca925d28e00"
 BASE_CONTRACT = "7465a47332cd41088ffc7ed5bc997353a35a553e8aade2c51e8392b09e904d1c"
 COMPLETE_SEEDS = True
 AXES = ("algorithm", "security", "policy", "body", "fixture")
 ALGORITHMS = {"automatic": "UNDEFINED", "merge": "MERGE", "temporary": "TEMPTABLE"}
+LITERALS = {"unit-plain": None, "unit-retained": ["boolean", True], "unit-empty": ["boolean", False]}
+COMPARATOR_FAULTS = {"Ignore a missing native view fallback warning while still comparing the installed catalog": "missing-fallback"}
 SCHEMA, MAIN, DECOY, BASE = "ir_fixture", "ir_cv_main", "ir_cv_decoy", "ir_cv_source"
 TARGET = f"{SCHEMA}.{MAIN}"
 ORIGIN = f"{SCHEMA}.{BASE}"
@@ -31,12 +33,16 @@ TYPES = {"slot": ["int", None, None, "YES"], "text-slot": ["varchar", 8, COLLATI
 DATA = [(1, "alpha"), (2, "beta"), (2, "beta"), (3, None), (None, "orphan")]
 DECLARATIONS = [f"CREATE TABLE {ORIGIN} (id INT, label VARCHAR(8) COLLATE {COLLATION})"]
 INVALID = DIAGNOSTICS + "InvalidConstruction"
+MERGE_WARNING = ["Warning", 1354, "View merge algorithm can't be used here for now (assumed undefined algorithm)"]
 
 
 def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT and digest(TOOL / "mysql-create-view-v1.json") == BASE_CONTRACT, "mysql-create-view-contract-mismatch")
-    return json.loads(path.read_text()), {"mysql": native_profiles()[1]["mysql"]}
+    contract = json.loads(path.read_text())
+    prior = contract["versionedFrom"]
+    same(prior["sha256"], digest(TOOL / prior["path"]))
+    return contract, {"mysql": native_profiles()[1]["mysql"]}
 
 
 def source(identity=BASE, relation="table"):
@@ -65,20 +71,65 @@ def case(tag, body, fields=("id", "label"), policy="require-new", algorithm="UND
 
 
 def finite(tag, algorithm, security, policy, body, fixture):
-    return case(tag, scan(body == "base-filtered"), policy=policy, algorithm=ALGORITHMS[algorithm], security=security.upper(),
-                existing=fixture == "existing-view")
+    literal = body in LITERALS
+    query = constant(where=LITERALS[body]) if literal else scan(body == "base-filtered")
+    return case(tag, query, ("value",) if literal else HEADING, policy, ALGORITHMS[algorithm], security.upper(),
+                fixture == "existing-view")
 
 
-def finite_ids(_, spec, _tag):
-    grid = set(product(*(spec["finite"][axis] for axis in AXES)))
-    require(len(grid) == spec["finite"]["identities"], "mysql-create-view-finite-size")
-    return grid
+def finite_grid(spec, tag):
+    coordinates = {axis: spec["finite"][axis] for axis in AXES}
+    coordinates["policy"] = coordinates["policy"] + spec["finite"]["policyAdditionalByRelease"].get(tag, [])
+    return product(*(coordinates[axis] for axis in AXES))
+
+
+def finite_ids(_, spec, tag):
+    grid = list(finite_grid(spec, tag))
+    policies = ("require-new", "replace", "preserve") if tag == "mysql-9.1.0" else ("require-new", "replace")
+    independent = {(algorithm, security, policy, body, fixture) for fixture in ("absent", "existing-view")
+                   for body in ("base-all", "base-filtered", *LITERALS) for policy in policies
+                   for security in ("definer", "invoker") for algorithm in ALGORITHMS}
+    require(len(grid) == len(independent) == spec["finite"]["identities"].get(tag, spec["finite"]["identities"]["standard"])
+            and set(grid) == independent, "mysql-create-view-finite-size")
+    return independent
 
 
 def finite_id(_, actual, item):
     view = actual["createView"]
+    query = view["query"]
+    if query["source"] is None:
+        observed = [name for name, predicate in LITERALS.items() if predicate == query["where"]]
+        require(len(observed) == 1, "mysql-create-view-literal-coordinate", query)
+        body = observed[0]
+    else:
+        body = "base-filtered" if query["where"] else "base-all"
     return (next(name for name, role in ALGORITHMS.items() if role == view["algorithm"]), view["security"].lower(),
-            view["policy"], "base-filtered" if view["query"]["where"] else "base-all", "existing-view" if item["existing"] else "absent")
+            view["policy"], body, "existing-view" if item["existing"] else "absent")
+
+
+def finite_sql(item):
+    view = item["createView"]
+    query = view["query"]
+    start = "CREATE OR REPLACE" if view["policy"] == "replace" else "CREATE"
+    preserve = "IF NOT EXISTS " if view["policy"] == "preserve" else ""
+    names = ", ".join(view["columns"])
+    if query["source"] is not None:
+        body = f"SELECT id, label FROM {ORIGIN}" + (" WHERE id > 1" if query["where"] else "")
+    else:
+        body = "SELECT 42 AS value"
+        if query["where"] is not None:
+            body += " FROM DUAL WHERE " + ("TRUE" if query["where"][1] else "FALSE")
+    return f"{start} ALGORITHM={view['algorithm']} SQL SECURITY {view['security']} VIEW {preserve}{TARGET} ({names}) AS {body}"
+
+
+def analysis_finite_id(engine, actual, item, sql):
+    same(finite_sql(item), sql)
+    return finite_id(engine, actual, item)
+
+
+def direct_finite_id(engine, actual, item, request):
+    same(item, request)
+    return finite_id(engine, actual, item)
 
 
 def request(tag, sql):
@@ -131,10 +182,21 @@ def seeded(tag, seed, count):
                    rng.choice(("DEFINER", "INVOKER")), bool(rng.getrandbits(1)))
 
 
+def seeded_literal(tag, seed, count):
+    rng = Random(seed)
+    for index in range(count):
+        guard = LITERALS[tuple(LITERALS)[index % len(LITERALS)]]
+        body = constant(rng.randint(-99, 99), where=guard)
+        yield case(tag, body, (rng.choice(("counter", "recent", "projected value")),),
+                   rng.choice(("require-new", "replace")), rng.choice(tuple(ALGORITHMS.values())),
+                   rng.choice(("DEFINER", "INVOKER")), bool(rng.getrandbits(1)))
+
+
 def requests(_, tag, spec):
-    for index, dimensions in enumerate(product(*(spec["finite"][axis] for axis in AXES))):
+    for index, dimensions in enumerate(finite_grid(spec, tag)):
         item = finite(tag, *dimensions)
-        yield f"finite/{index}", item, item, None
+        yield f"finite/{index}", request(tag, finite_sql(item)), item, None
+        yield f"direct/{index}", item, item, None
     inputs = list(analyzed(tag))
     require(len(inputs) == len(spec["analysis"]), "mysql-create-view-analysis-count")
     for index, (sql, item) in enumerate(inputs):
@@ -144,6 +206,8 @@ def requests(_, tag, spec):
     for seed in spec["exploration"]["seeds"]:
         for index, item in enumerate(seeded(tag, seed, spec["exploration"]["casesPerSeed"])):
             yield f"seed/{seed}/{index}", item, item, None
+        for index, item in enumerate(seeded_literal(tag, seed + 1, spec["exploration"]["directCasesPerSeed"])):
+            yield f"direct-seed/{seed}/{index}", item, item, None
     for index, (item, reason) in enumerate(negatives(tag)):
         yield f"negative/{index}", item, None, reason
 
@@ -175,11 +239,15 @@ def prediction(item):
     update = [(key, "changed" if key == 2 else label) for key, label in DATA] + [(4, "new")]
     collision = existing and view["policy"] != "replace"
     failed = collision and view["policy"] == "require-new"
+    fallback = view["algorithm"] == "MERGE" and view["query"]["source"] is None
+    stored = "UNDEFINED" if fallback else view["algorithm"]
     after, later = (fixture(existing, data, [0, 7]) for data in (DATA, update))
     if not collision:
         for snapshot, data in ((after, DATA), (later, update)):
-            snapshot["views"][MAIN] = relation(view["query"], view["columns"], view["algorithm"], view["security"], data)
-    diagnostics = [["Error" if failed else "Note", 1050, "Table 'ir_cv_main' already exists"]] if collision else []
+            snapshot["views"][MAIN] = relation(view["query"], view["columns"], stored, view["security"], data)
+    diagnostics = [MERGE_WARNING] if fallback else []
+    if collision:
+        diagnostics.append(["Error" if failed else "Note", 1050, "Table 'ir_cv_main' already exists"])
     return {"status": "view-definition", "result": ["db-error", "42S01", 1050] if failed else ["created"], "diagnostics": diagnostics,
             "active": False, "initial": fixture(existing, DATA, [0]), "after": after, "afterRollback": after, "afterSourceChange": later}
 
@@ -223,12 +291,17 @@ def sample_forms(forms, reply, _, item):
     forms["filter/" + ("present" if query_["where"] else "absent")] += 1
     forms["slot/" + query_["columns"][0][0][0]] += 1
     forms["fixture/" + str(item["existing"])] += 1
+    if query_["source"] is None:
+        forms["literal/" + str(query_["where"] == ["boolean", False])] += 1
+        forms["literal-algorithm/" + value_["algorithm"]] += 1
 
 
 def required_forms(*_):
     return {"filter/present", "filter/absent", "slot/slot", "slot/text-slot", "fixture/True", "fixture/False",
             "policy/require-new", "policy/replace", "security/DEFINER", "security/INVOKER",
-            *("algorithm/" + role for role in ALGORITHMS.values())}
+            "slot/integer", "literal/False", "literal/True",
+            *("algorithm/" + role for role in ALGORITHMS.values()),
+            *("literal-algorithm/" + role for role in ALGORITHMS.values())}
 
 
 def controls():
@@ -236,12 +309,19 @@ def controls():
     healthy = prediction(item)
     check_observation(item, healthy, "view definition control")
     wrong = prediction({**item, "createView": {**item["createView"], "security": "DEFINER"}})
-    try:
-        check_observation(item, wrong, "wrong native security context")
-    except Failure as error:
-        same("meaning-mismatch", error.signal)
-        return {"wrong-security": {"input": item, **error.detail}}
-    raise Failure("mysql-create-view-comparator-accepted")
+    fallback = finite("mysql-9.1.0", "merge", "invoker", "replace", "unit-empty", "existing-view")
+    merged = prediction(fallback)
+    check_observation(fallback, merged, "native merge fallback control")
+    observed = {}
+    for key, case_, mismatch in (("wrong-security", item, wrong), ("missing-fallback", fallback, {**merged, "diagnostics": []})):
+        try:
+            check_observation(case_, mismatch, key)
+        except Failure as error:
+            same("meaning-mismatch", error.signal)
+            observed[key] = {"input": case_, **error.detail}
+        else:
+            raise Failure("mysql-create-view-comparator-accepted", key)
+    return observed
 
 
 def boundary(item, reply):
@@ -279,6 +359,7 @@ def replay_fault(rule, record):
 def faults(_, tag):
     path = "sql-semantics-mysql/src/Ir/Schema/View/CreateView.php"
     model = finite(tag, "merge", "invoker", "replace", "base-all", "existing-view")
+    fallback = finite(tag, "merge", "invoker", "replace", "unit-empty", "existing-view")
     invalid, reason = list(negatives(tag))[1]
     return [
         RenderFault("replace-another-view-definition", path, "$this->name->quoted()", "'`ir_fixture`.`ir_cv_decoy`'", model, "meaning-mismatch"),
@@ -287,6 +368,8 @@ def faults(_, tag):
         RenderFault("switch-view-security-mode", path, "$this->security->value", "'DEFINER'", model, "meaning-mismatch"),
         RenderFault("allow-repeated-view-heading-name", path, "!isset($seen[$key]),", "true,",
                     {"boundary": reason}, "mysql-create-view-invalid-published", invalid),
+        RenderFault("erase-requested-view-merge-fallback", path, "$this->algorithm->value", "$this->installedAlgorithm()->value",
+                    fallback, "meaning-mismatch"),
     ]
 
 

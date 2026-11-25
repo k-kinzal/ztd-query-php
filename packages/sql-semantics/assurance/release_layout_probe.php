@@ -1507,6 +1507,24 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
             $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,
                 array_map(static fn ($field): string => $field->name->value, $result->columns), $filtered->toString()];
+            $statement = 'CREATE ALGORITHM=MERGE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE';
+            $merged = $legacy->analyze($statement);
+            [$batch] = $legacy->analyzeAll($statement);
+            $name = new SqlSemantics\Platform\MySql\Ir\Identifier('value');
+            $selection = new SqlSemantics\Platform\MySql\Ir\Select([
+                new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('42'), $name),
+            ], release: $legacy->profile()->grammar, where: new SqlSemantics\Platform\MySql\Ir\BooleanLiteral(false));
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+                    new SqlSemantics\Platform\MySql\Ir\Identifier('app'),
+                    new SqlSemantics\Platform\MySql\Ir\Identifier('filtered')
+                ),
+                $selection,
+                [new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($name)],
+                algorithm: SqlSemantics\Platform\MySql\Ir\Schema\View\ViewAlgorithm::Merge
+            );
+            $details['literalMergeFallback'] = [$merged == $direct, $merged == $batch, $merged->algorithm->value,
+                $merged->installedAlgorithm()->value, $merged->toString()];
         }
         if ($platform === 'PostgreSql' && $role === 'Rows\\With\\WithProjection') {
             $table = $semantics->analyze('WITH q AS MATERIALIZED (VALUES (5,TRUE), (NULL,FALSE)) SELECT column2 AS flag,column1 AS id FROM q');

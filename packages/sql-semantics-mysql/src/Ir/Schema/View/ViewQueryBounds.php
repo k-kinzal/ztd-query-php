@@ -27,7 +27,7 @@ final class ViewQueryBounds
     /**
      * Checks structural conditions owned by the DDL boundary.
      */
-    public function check(Select $query, ViewName $target, ViewAlgorithm $algorithm): void
+    public function check(Select $query, ViewName $target): void
     {
         Check::input(!$query->distinct && $query->orderBy === [] && $query->limit === null, 'A checked view requires an ordinary unbounded projection.');
         $source = $query->source;
@@ -35,7 +35,6 @@ final class ViewQueryBounds
             $source === null || ($source instanceof TableSource && $source->kind === ExternalRelationKind::BaseTable),
             'A checked view reads one persistent base table or an independent literal projection.'
         );
-        Check::input($source !== null || $algorithm !== ViewAlgorithm::Merge, 'A MERGE view requires a mergeable base-table projection.');
         if ($source !== null) {
             Check::input(
                 $source->schema->value !== $target->schema->value || $source->table->value !== $target->view->value,

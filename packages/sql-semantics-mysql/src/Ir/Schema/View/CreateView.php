@@ -34,6 +34,7 @@ final class CreateView implements SemanticsIR
     /**
      * Establishes the creation policy and checks the stored heading and complete body.
      * @param list<ViewColumn> $columns Checked names in output order
+     * @param ViewAlgorithm $algorithm The requested algorithm, including requests that trigger a server fallback
      */
     public function __construct(
         public readonly ViewName $name,
@@ -47,7 +48,7 @@ final class CreateView implements SemanticsIR
             $policy !== ViewCreationPolicy::Preserve || $query->release === GrammarRelease::MySql910,
             'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.'
         );
-        (new ViewQueryBounds())->check($query, $name, $algorithm);
+        (new ViewQueryBounds())->check($query, $name);
         Check::input(count($columns) <= 4096, 'A MySQL view permits at most 4096 result columns.');
         $heading = Check::listOf($columns, ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);
         Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');
@@ -68,6 +69,15 @@ final class CreateView implements SemanticsIR
     public function profileId(): string
     {
         return $this->query->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/view-definition';
+    }
+
+    /**
+     * Gives the algorithm recorded in the catalog when this definition is installed.
+     */
+    public function installedAlgorithm(): ViewAlgorithm
+    {
+        return $this->algorithm === ViewAlgorithm::Merge && $this->query->source === null
+            ? ViewAlgorithm::Undefined : $this->algorithm;
     }
 
     /**

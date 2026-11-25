@@ -20,7 +20,7 @@ function admitViewDefinition(string $sql): bool
     $head = '(?: \(' . $word . '(?:, ?' . $word . '){0,4}\))?';
     $origin = $table . '(?:ir_cv_source|`ir_cv_source`)(?: AS ' . $word . ')?';
     $slot = '(?:' . $word . '\.)?(?:id|label|`id`|`label`)';
-    $scalar = '(?:[0-9]{1,2}|NULL|' . $slot . ')';
+    $scalar = '(?:-?[0-9]{1,2}|NULL|' . $slot . ')';
     $input = $scalar . '(?: AS ' . $word . ')?';
     $filter = '(?: WHERE \(?(?:FALSE|TRUE|' . $slot . ' > [0-9])\)?)?';
 

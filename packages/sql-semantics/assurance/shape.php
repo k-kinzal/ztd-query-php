@@ -1751,7 +1751,7 @@ if ($dialect !== 'sqlite') {
         $properties[$viewCreate] = ['name' => [$viewName], 'query' => ['Select'], 'columns' => ['array'],
             'policy' => [$viewPolicy], 'algorithm' => [$viewAlgorithm], 'security' => [$viewSecurity]];
         $properties[$viewColumn] = ['name' => ['Identifier', 'Ordering\\RequestedResultAlias']];
-        $methods[$viewCreate] = ['__construct', 'profileId', 'toString'];
+        $methods[$viewCreate] = ['__construct', 'profileId', 'installedAlgorithm', 'toString'];
         $methods[$viewColumn] = ['__construct'];
         $properties[$viewAlgorithm] = $properties[$viewSecurity] = $properties[$viewPolicy] = [];
         $methods[$viewAlgorithm] = $methods[$viewSecurity] = $methods[$viewPolicy] = [];

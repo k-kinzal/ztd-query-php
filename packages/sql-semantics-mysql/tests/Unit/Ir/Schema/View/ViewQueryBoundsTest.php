@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
-use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewAlgorithm;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewQueryBounds;
 use SqlSemantics\Platform\MySql\Ir\Select;
@@ -24,7 +23,7 @@ final class ViewQueryBoundsTest extends TestCase
         $name = new ViewName(new Identifier('app'), new Identifier('answer'));
         $query = new Select([new ResultColumn(new IntegerLiteral('42'), new Identifier('answer'))]);
 
-        (new ViewQueryBounds())->check($query, $name, ViewAlgorithm::Undefined);
+        (new ViewQueryBounds())->check($query, $name);
         $this->addToAssertionCount(1);
     }
 }

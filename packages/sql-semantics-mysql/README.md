@@ -42,6 +42,8 @@ External view fields use the native UTF-8 identifier comparison. An unaliased re
 
 Create or replace a persistent view over a checked ordinary SELECT. The IR exposes the effective ordered catalog heading, view algorithm and SQL security policy. A definition can read a single declared base table or return independent literals. MySQL 9.1 also supports `CREATE VIEW IF NOT EXISTS`.
 
+For a source-free view requested with `ALGORITHM=MERGE`, `installedAlgorithm()` gives `UNDEFINED`. The emitted SQL keeps the requested `MERGE` directive so the server reports warning 1354 when it applies the fallback.
+
 Issue `DROP VIEW` against absolute persistent view identities. Supply the referenced declarations for required targets. `IF EXISTS` also admits a known absence in a named database. The emitted statement retains MySQL's release-specific removal and transaction effects.
 
 An ordinary INSERT VALUES can write text, signed integer and NULL literals to an explicit list of resolved native destinations. Each row follows the destination order. With empty SQL mode, NULL in a required VARCHAR causes a single-row INSERT to fail. A multi-row INSERT stores the implicit empty value and emits a warning.
