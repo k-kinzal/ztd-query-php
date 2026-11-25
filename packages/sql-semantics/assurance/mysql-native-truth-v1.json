@@ -1,0 +1,152 @@
+{
+  "revision": "SemanticsIR/mysql-native-truth-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/sql-mode-empty/utf8mb4/native",
+    "mysql-5.7.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.0.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.1.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.2.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.3.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.4.7/sql-mode-empty/utf8mb4/native",
+    "mysql-9.0.1/sql-mode-empty/utf8mb4/native",
+    "mysql-9.1.0/sql-mode-empty/utf8mb4/native"
+  ],
+  "scope": "Native MySQL IS TRUE, IS FALSE, IS UNKNOWN and their three NOT forms. Accept a pure signed value, Boolean or SQL NULL, a checked predicate, or another truth test. Preserve projection, filter, join and single-table writes.",
+  "constructors": {
+    "Predicate/Truth/TruthTest": {
+      "role": "An always-known native integer test of exactly one operand and one declared native comparison form.",
+      "structure": "Closed operand union for nullable signed values, Boolean and checked predicate shapes, with a fixed operation. The containing host binds any field references before publication.",
+      "conditions": "Verify all visible physical and derived occurrences, exact signed width and declared NULL roles, and recursively admitted predicate inputs. Reject an unsupported scalar or a displaced reference at its enclosing boundary.",
+      "meaning": "TRUE is any nonnull nonzero value. FALSE is nonnull zero. UNKNOWN is NULL. The corresponding NOT reverses the complete test and remains nonnull. Project native integer 0 or 1. A filter, join condition or write predicate admits only 1.",
+      "externalInterpretation": "Use the same bound physical or derived input fields with the named native signed widths and declared nullability. Interpret nested predicate nodes by their own checked contracts.",
+      "sql": "Parenthesize the complete checked operand and IS operation as needed to preserve binding and nesting. Emit the exact registered truth token sequence. Preserve labels and native integer metadata.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Predicate/Truth/TruthOperator": {
+      "role": "Select the explicit native truth class and polarity.",
+      "structure": "Exactly TRUE, FALSE, UNKNOWN, NOT TRUE, NOT FALSE and NOT UNKNOWN.",
+      "conditions": "Select one declared closed enum case.",
+      "meaning": "Yes for the selected operand class, unless the operator chooses the complement. No other operand class matches.",
+      "externalInterpretation": "None.",
+      "sql": "Emit its exact tokens after IS.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "finite": {
+    "sources": [
+      "unit",
+      "five-widths"
+    ],
+    "placements": [
+      "projection",
+      "filter"
+    ],
+    "operators": [
+      "TRUE",
+      "FALSE",
+      "UNKNOWN",
+      "NOT TRUE",
+      "NOT FALSE",
+      "NOT UNKNOWN"
+    ],
+    "atoms": [
+      "NULL",
+      "0",
+      "2"
+    ],
+    "physicalWidths": [
+      "TINYINT",
+      "SMALLINT",
+      "MEDIUMINT",
+      "INT",
+      "BIGINT"
+    ],
+    "operandShapes": {
+      "atom": "Each literal and each available physical field.",
+      "membership": "Each available probe, each ordered alternative list [NULL], [2] or [2,NULL], and both membership polarities.",
+      "nestedTruth": "Each available atom and each of the six inner tests."
+    },
+    "coordinatesPerRoute": 1716,
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "completion": "Compute coordinate identities independently from the fixed typed dimensions. Verify every distinct observed term and physical occurrence on both routes.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      12479,
+      23761,
+      48031
+    ],
+    "casesPerSeed": 48,
+    "directCasesPerSeed": 48,
+    "timeoutSecondsPerRelease": 720,
+    "shape": "Choose operations and signed widths, signed integer extrema, leading zeros, NULL, repetitions and truth outcomes in both construction routes. Explore recursively nested tests and predicates, all projection and selection contexts, distinctions between joined slot owners, and full UPDATE and DELETE effects. Test the expanded tree depth boundary and precise refusal.",
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare derived references and closed operand structure, result name, the nonnull LONGLONG result, row statements with duplicates and NULL, and affected and restored tables for writes.",
+    "Preserve explicit result ordering when an ORDER BY is selected. Otherwise compare the typed row multiset.",
+    "Run original and rendered SQL against the same pinned fixture. Preserve all six truth operators and graph-published parent contexts."
+  ],
+  "faults": [
+    "Lose the typed truth operand scope check",
+    "Render a different truth operation",
+    "Erase nested operands",
+    "Swap the physical occurrence of a signed truth atom",
+    "Compare only the first observed row",
+    "Ignore a known native integer or nullability difference"
+  ],
+  "trust": [
+    "Native locked MySQL runtimes and stock lexical profile",
+    "Closed PHP roles and source-correspondence checks",
+    "Independent Boolean classifier, observed database values and recorded harness provenance",
+    "Pending independent human approval of the stated contract"
+  ],
+  "unmetAdjacentAreas": [
+    "Resolve native truth coercions for text, approximate numbers, decimal, temporal and other untouched domains.",
+    "Preserve documented native query hints and context-dependent imprecise expression naming with their own profiles."
+  ],
+  "source": "https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_is",
+  "calibration": {
+    "5.6.51": "02ead804a5a9615b27f440b8d77702e13464c69a60a343aaa07acd28689b0842",
+    "5.7.44": "e91b28cd3460cd66a4fed0fa01bbb5299fe1bed479b9b4ae7a1103db09506623",
+    "8.0.44": "849e1a457dad5bc69dd4adbc60a27326b87661e565189c3a04156dc533d3b18e",
+    "8.1.0": "0c5a48b6259eccb489b8a7c3a36c0b0ca64717d030acb1df6517d8168ef61b8d",
+    "8.2.0": "f92f0185a3ed4399102a2f2067dad0a2e0f1c2642c7ff22323335a93e374b9cd",
+    "8.3.0": "eb3f68d23a36552fb93a4dc9e1d870010741b51115d45a42078d6635eca38fb1",
+    "8.4.7": "6ddf246cc6cb97698cb491040ef45b9446fcc3b4fbbbe89ed82e87da899ece2b",
+    "9.0.1": "8d93e49ae25153eb6bd9a05e3ad3ab805543244268705e2aa5ad6c4ee6a5e900",
+    "9.1.0": "9128541ea6e397c6c3d87818a8c4dd59b563339341346acd5e05a32a16addeec"
+  }
+}
