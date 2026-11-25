@@ -8,7 +8,7 @@ from random import Random
 import sys
 
 from native_postgres_fixture import ENV as FIXTURE_CONTAINER
-from postgres_create_btree_cases import refusal
+from postgres_create_btree_cases import published, refusal
 from postgres_primary_key_cases import FIXED_TYPES, TIMINGS
 from postgres_reindex_cases import qualified
 from postgres_unique_key_cases import (
@@ -22,8 +22,8 @@ from run_server_postgres_create_schema import specifications as namespace_profil
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-unique-key"
-NAME = "postgres-unique-key-evidence-v1.json"
-CONTRACT = "e0e40fd22b94b2f7ffbdffda4f3819e7773bf14dfe63f6bb15c3a8b5cee2a516"
+NAME = "postgres-unique-key-evidence-v2.json"
+CONTRACT = "155537d5813e188ae121f5af111619db9098f27913906fa53186466f7e80e4ed"
 BASE = "e7cd49f3bfd471204d7d67729a8e6aad1097e46e9b28a8ddb7cd01604a1c2195"
 OBSERVER = "postgres_unique_key_observer.py"
 AXES = ("kind", "nullableInput", "nullEquality", "timing", "naming", "payload")
@@ -258,7 +258,8 @@ def check_value(item, response):
         header = direct(item)["createSchema"]
         same({key: header[key] for key in ("name", "owner", "ifNotExists")}, response["createSchema"])
         same([resolve(member) for member in header["tables"]], response["schemaTables"])
-        same(header["indexes"], response["schemaIndexes"])
+        same([published({key: value for key, value in index.items() if key != "release"})
+              for index in header["indexes"]], response["schemaIndexes"])
         for role in ("schemaSequences", "schemaViews", "schemaGrants"):
             same([], response[role])
     else:

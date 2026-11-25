@@ -406,7 +406,7 @@ The [PostgreSQL view replacement contract](postgres-schema-view-replacement-v1.j
 
 The [PostgreSQL primary-key contract](postgres-create-primary-key-v1.json) records the ordered physical key and payload references, the constraint and index naming policy, and the three write-check timing roles. The [native comparison](postgres-primary-key-evidence-v1.json) observes physical table-to-index links, required fields, duplicate and NULL writes, single-statement key swaps, deferred checks and schema occupancy. The [source checks](postgres-primary-key-boundaries-v1.json) connect those roles to the detached constructors and installed declaration.
 
-The [PostgreSQL unique-key contract](postgres-create-unique-keys-v1.json) adds ordered retained constraints, native NULL equality, deferral policy and deterministic name transfer. The [native comparison](postgres-unique-key-evidence-v1.json) checks the actual constraint and index objects and attributes, rollback, decisions about NULL and duplicates, and typed returned values.
+The [PostgreSQL unique-key contract](postgres-create-unique-keys-v1.json) adds ordered retained constraints, native NULL equality, deferral policy and deterministic name transfer. The [native comparison](postgres-unique-key-evidence-v2.json) checks the actual constraint and index objects and attributes, rollback, decisions about NULL and duplicates, and typed returned values.
 
 The [PostgreSQL table-width contract](postgres-table-width-v1.json) verifies zero-field and 1600-field declarations in the native heap profile. The observer compares the full physical heading, zero-column tuple count, guarded relation identity, physical width errors and rollback. The earlier empty-list refusal is retained as a required positive witness.
 

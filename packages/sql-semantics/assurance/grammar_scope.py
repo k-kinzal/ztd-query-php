@@ -640,7 +640,7 @@ def inventory(root):
             for rule in ("ColConstraintElem", "ConstraintElem", "opt_c_include", "opt_unique_null_treatment", "ConstraintAttr"):
                 for alternative in rules.get(rule, ()):
                     if ("UNIQUE opt_unique_null_treatment" in alternative or rule.startswith("opt_") or rule == "ConstraintAttr"):
-                        related[alternative] = (*related.get(alternative, ()), "postgres-unique-key-evidence-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-unique-key-evidence-v2.json")
             for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "IndexStmt"):
                 for alternative in rules.get(rule, ()):
                     if rule in ("CreateSchemaStmt", "IndexStmt") or alternative in {
