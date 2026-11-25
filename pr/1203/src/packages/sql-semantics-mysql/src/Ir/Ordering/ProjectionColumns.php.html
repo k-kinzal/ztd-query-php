@@ -51,8 +51,8 @@
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\ExpressionLowering</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\From\JoinBinding</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparisonLowering</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Predicate\ComparisonLowering</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthLowering</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\ResultColumn</span>;</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Ir\SourceBinding</span>;</span>
@@ -84,7 +84,7 @@
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    {</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-var">$expressions</span> = <span class="tok-kw">new</span> <span class="tok-id">ExpressionLowering</span>();</span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-var">$casts</span> = <span class="tok-kw">new</span> <span class="tok-id">IntegralCastLowering</span>();</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-var">$comparisons</span> = <span class="tok-kw">new</span> <span class="tok-id">TextComparisonLowering</span>();</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-var">$comparisons</span> = <span class="tok-kw">new</span> <span class="tok-id">ComparisonLowering</span>();</span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-var">$strings</span> = <span class="tok-kw">new</span> <span class="tok-id">TextLiteralLowering</span>();</span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-var">$fields</span> = <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$statement</span>)-&gt;<span class="tok-id">fields</span>();</span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$fields</span> !== <span class="tok-id">null</span>, <span class="tok-str">&#039;A complete projection requires a resolved output shape.&#039;</span>);</span>

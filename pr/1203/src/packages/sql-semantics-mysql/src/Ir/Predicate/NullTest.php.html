@@ -54,7 +54,7 @@
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * A scalar null test whose result always has a known truth value.</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * A scalar null test in the statement&#039;s grammar release, with an always-known result.</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @example Testing whether a table slot is present</span></span>
@@ -66,7 +66,7 @@
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * Stores the tested scalar and whether to invert the result.</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * Stores the scalar and selects the native IS NULL or IS NOT NULL operation.</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">BooleanLiteral</span>|<span class="tok-id">ColumnReference</span>|<span class="tok-id">IntegerComparison</span>|<span class="tok-id">IntegerMembership</span>|<span class="tok-id">IntegerRange</span>|<span class="tok-id">TextComparison</span>|<span class="tok-id">IntegerLiteral</span>|<span class="tok-id">LogicalPredicate</span>|<span class="tok-id">NullLiteral</span>|<span class="tok-id">TextColumnReference</span>|<span class="tok-id">TruthTest</span>|<span class="tok-id">self</span> <span class="tok-var">$operand</span>,</span>
