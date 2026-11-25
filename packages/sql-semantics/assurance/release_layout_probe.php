@@ -638,6 +638,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     $declarations = ["CREATE TABLE $table (id INTEGER)"];
     if ($platform === 'MySql') {
         $declarations[] = 'CREATE TABLE app.index_drop_probe (id INT, KEY ready (id))';
+        $declarations[] = 'CREATE TABLE app.index_rename_probe (a INT, b INT, c INT, KEY by_a (a), KEY by_b (b), KEY by_c (c))';
         $declarations[] = 'CREATE TABLE app.batch_index (a INT AUTO_INCREMENT, b INT NOT NULL, c INT, PRIMARY KEY (a), KEY by_a (a,b), KEY keeps_a (a,c))';
     }
     if ($platform === 'Sqlite') {
@@ -733,6 +734,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Index\\CreateIndex'] = 'CREATE INDEX lookup ON app.accounts (id DESC) INVISIBLE';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX READY ON app.index_drop_probe';
         $queries['Schema\\Index\\DropIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, DROP KEY by_a';
+        $queries['Schema\\Index\\Rename\\RenameIndexes'] = 'ALTER TABLE app.index_rename_probe RENAME KEY by_a TO by_b, RENAME INDEX by_b TO by_a';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -2358,6 +2360,44 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_map(static fn ($key): string => $key->role->value, $rebuilt->targets),
                 array_map(static fn ($key): string => $key->value, $rebuilt->targets[0]->autoIncrement->alternates),
                 $rebuilt->toString(), $rejected,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\Rename\\RenameIndexes') {
+            $moves = $result->moves;
+            $unmoved = $result->unmoved;
+            $first = $moves[0];
+            $moves[0] = &$first;
+            $untouched = $unmoved[0];
+            $unmoved[0] = &$untouched;
+            $roleType = SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes::class;
+            $rebuilt = new $roleType($result->owner, $moves, $unmoved, $result->release, $result->policy);
+            $first = $moves[1];
+            $untouched = $first->source;
+            $occupied = $legacyDirect = $legacyAnalysis = null;
+            try {
+                $semantics->analyze('ALTER TABLE app.index_rename_probe RENAME INDEX by_a TO by_c', $activeContext);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $occupied = $error->getMessage();
+            }
+            $unavailable = SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651;
+            try {
+                new $roleType($result->owner, $result->moves, $result->unmoved, $unavailable);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $legacyDirect = $error->getMessage();
+            }
+            $legacy = new SqlSemantics\Platform\MySql\Semantics($unavailable->value);
+            try {
+                $legacy->analyze(
+                    'ALTER TABLE app.index_rename_probe RENAME INDEX by_a TO by_c',
+                    $legacy->context(['CREATE TABLE app.index_rename_probe (a INT, KEY by_a (a))']),
+                );
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException $error) {
+                $legacyAnalysis = str_contains($error->getMessage(), "Unexpected 'INDEX'");
+            }
+            $details['mysqlIndexRename'] = [
+                array_map(static fn ($move): array => [$move->source->value, $move->destination->value], $rebuilt->moves),
+                array_map(static fn ($name): string => $name->value, $rebuilt->unmoved),
+                $rebuilt->toString(), $occupied, $legacyDirect, $legacyAnalysis,
             ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {

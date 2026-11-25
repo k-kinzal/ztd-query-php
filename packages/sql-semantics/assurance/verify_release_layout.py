@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v156.json"
-CONTRACT = "baefb80c4629ebaf900731a7c8825702426097a5db039fb1f67e31ad2e66a3b4"
+CONTRACT_NAME = "release-layout-v157.json"
+CONTRACT = "51820852dc399cf8332546ceea667ae41ebdab2d36756b4bd8d0335d8995b24c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -734,6 +734,14 @@ def verify_probe(raw, catalog):
                 ["PRIMARY", "by_a"], ["primary", "ordinary"], ["by_a", "keeps_a"], drop_set,
                 "Atomic removal must retain a backing key for the AUTO_INCREMENT field.",
             ] and item["sql"] == drop_set, "installed-mysql-atomic-index-removal-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\Rename\\RenameIndexes"):
+            rename = ("ALTER TABLE `app`.`index_rename_probe` RENAME INDEX `by_a` TO `by_b`, "
+                      "RENAME INDEX `by_b` TO `by_a`")
+            require(item.get("mysqlIndexRename") == [
+                [["by_a", "by_b"], ["by_b", "by_a"]], ["by_c"], rename,
+                "The resulting native index names must be distinct.",
+                "Native index renaming requires MySQL 5.7 or later.", True,
+            ] and item["sql"] == rename, "installed-mysql-index-rename-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
             require(item.get("mysqlQueryBackedInnoDbWidth") == [
                 203, False, False, 1, "tail_5", "The projected clustered InnoDB record must fit the native 8126-byte boundary.",

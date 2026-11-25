@@ -51,6 +51,7 @@ CONTRACTS = {
     "mysql-alter-index-removal-evidence-v1.json": "a3d9f469bdf68a59640d35e9840c8a41c3c2a841b44e5592db85c4786ed7af3c",
     "mysql-index-auto-increment-evidence-v1.json": "5098698d21b21312f6adad59f5b2a912a620025c143561a4c0d74d833c334f56",
     "mysql-multiple-index-removal-evidence-v1.json": "1309c74f71d04c1926a6de8fcb3f7b2dbb9710a2ad6af5a7152c34d8510b83ec",
+    "mysql-index-renames-evidence-v1.json": "a0447f8248759f8627ee3cf4bba74c0396678d9de97e5f471554e6a652eb0074",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
@@ -274,7 +275,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "a495b8b98946e3e8b225de51bd690fdf6bec6b60c95d8c2b0d6a16851c43c276"
+PUBLICATION = "7aa8a4172702407cca04e72df898920ec152ac07e46040ff849624a8ca99c689"
 
 
 def declared_constructors(dialects):
@@ -304,7 +305,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v86.json").read_bytes()
+    publication = (TOOL / "publication-v87.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

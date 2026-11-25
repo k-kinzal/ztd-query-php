@@ -1439,6 +1439,17 @@ if ($dialect !== 'sqlite') {
         $properties[$dropIndexes] = ['targets' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
             'policy' => [$policy], 'ignore' => ['bool']];
         $methods[$dropIndexes] = ['__construct', 'profileId', 'toString'];
+        $indexRename = 'Schema\\Index\\Rename\\IndexRename';
+        $renameIndexes = 'Schema\\Index\\Rename\\RenameIndexes';
+        $renameNamespace = 'Schema\\Index\\Rename\\IndexRenameNamespace';
+        $roots[] = $renameIndexes;
+        array_push($internal, 'Schema\\Alter\\AlterIndexRenameLowering', $renameNamespace);
+        $pureCollaborators[] = $renameNamespace;
+        $properties[$indexRename] = ['source' => ['Identifier'], 'destination' => ['Identifier']];
+        $properties[$renameIndexes] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'moves' => ['array'], 'unmoved' => ['array'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
+        $methods[$indexRename] = ['__construct', 'toString'];
+        $methods[$renameIndexes] = ['__construct', 'profileId', 'toString'];
         $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
         $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole],
             'autoIncrement' => ['?' . $indexAutoIncrement]];
@@ -1825,6 +1836,7 @@ try {
             ['mysql-index-namespace-storage-v1.json', '90a0725227d5c8931a4b9cb2ea92567cb4a93798161a81590874659da33c412d'],
             ['mysql-index-auto-increment-storage-v1.json', '6b6a146f979bb53a4dce55a241f642a75e4fdb61d541c7ba254ae158aa3344c7'],
             ['mysql-index-removal-set-storage-v1.json', 'ed343981fe207cd80b7d6628cdd6685787c39f241bfc5bc27cee629e80e243a1'],
+            ['mysql-index-rename-storage-v1.json', 'ffc8cd41e898f15ecae3343c9dfdcfbe1a72678249e21fb2edbe8d02c1d73831'],
         ] as [$catalogue, $digest]) {
             $indexStorage = __DIR__ . '/' . $catalogue;
             requireShape(hash_file('sha256', $indexStorage) === $digest, 'MySQL native index list storage differs from its recorded revision');
@@ -2252,6 +2264,14 @@ try {
                     ],
                     'Unexpected PostgreSQL rename publication');
             }
+            if ($dialect === 'mysql' && $short === 'Schema\\Alter\\AlterIndexRenameLowering') {
+                $members = $class->getMethods();
+                requireShape(array_map(static fn ($method) => $method->name->toString(), $members) === [
+                    'moves', 'lower', 'qualifier', 'unmoved', 'policy',
+                ] && $members[1]->isPublic() && !$members[1]->isStatic() && $members[1]->returnType !== null
+                    && types($members[1]->returnType, $prefix, $short) === ['Schema\\Index\\Rename\\RenameIndexes'],
+                    'Unexpected MySQL index rename publication');
+            }
             if ($dialect === 'mysql' && $short === 'Schema\\Alter\\AlterIndexRemovalLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 2 && $members[0]->isPublic() && !$members[0]->isStatic()
@@ -2271,7 +2291,7 @@ try {
                     && $members[1]->name->toString() === 'lower' && $members[1]->returnType !== null
                     && types($members[1]->returnType, $prefix, $short) === [
                         'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes',
-                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
+                        'Schema\\Index\\Rename\\RenameIndexes', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RelationChangeLowering') {
@@ -2379,7 +2399,8 @@ try {
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace', 'Schema\\Index\\IndexAutoIncrement',
-                    'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet'], true)
+                    'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
+                    'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',

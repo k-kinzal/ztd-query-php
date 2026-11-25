@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
@@ -37,15 +38,19 @@ final class RelationChangeLowering
     {
         return $statement instanceof ParsedDropIndex || $statement instanceof ParsedDropTable || $statement instanceof ParsedDropView
             || $statement instanceof ParsedRenameTable || $statement instanceof ParsedTruncateTable
-            || ($statement instanceof ParsedAlterTable && (new AlterIndexRemovalLowering())->removals($statement) !== null);
+            || ($statement instanceof ParsedAlterTable && (
+                (new AlterIndexRemovalLowering())->removals($statement) !== null || (new AlterIndexRenameLowering())->moves($statement) !== null
+            ));
     }
 
     /**
      * Publishes the specific operation after its relation has been bound.
      */
-    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): DropIndex|DropIndexes|DropTable|DropView|RenameTable|TruncateTable
+    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): DropIndex|DropIndexes|DropTable|DropView|RenameIndexes|RenameTable|TruncateTable
     {
         return match (true) {
+            $statement instanceof ParsedAlterTable && (new AlterIndexRenameLowering())->moves($statement) !== null
+                => (new AlterIndexRenameLowering())->lower($operation, $statement),
             $statement instanceof ParsedAlterTable => (new AlterIndexRemovalLowering())->lower($operation, $statement),
             $statement instanceof ParsedDropIndex => (new DropIndexLowering())->lower($operation, $statement),
             $statement instanceof ParsedDropTable => (new DropTableLowering())->lower($operation, $statement),

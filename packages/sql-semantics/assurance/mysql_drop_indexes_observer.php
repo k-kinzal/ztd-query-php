@@ -34,7 +34,7 @@ function batchIndexSql(string $sql): bool
 function batchIndexFixture(string $sql): bool
 {
     $table = str_replace('%', chr(96), '%ir_fixture%.%ir_index_set%');
-    $key = '(?:PRIMARY KEY|(?:UNIQUE )?KEY ' . DROP_INDEX_NAME . ') \([abc](?:, [abc])?\)';
+    $key = '(?:PRIMARY KEY|(?:UNIQUE )?KEY ' . DROP_INDEX_NAME . ') \([abc](?: DESC)?(?:, [abc])?\)(?: INVISIBLE)?';
     $pattern = '/\ACREATE (?:TEMPORARY )?TABLE ' . $table . ' \(a INT NOT NULL(?: AUTO_INCREMENT)?, b INT NOT NULL, c INT NULL'
         . '(?:, (?&key)){2,64}\) ENGINE=InnoDB\z(?(DEFINE)(?<key>' . $key . '))/Du';
     if (strlen($sql) > 18000) {
@@ -65,10 +65,10 @@ function prepareBatchIndexFixture(PDO $catalog, PDO $owner, array $request): voi
     }
 }
 
-function observeIndexRemovalSet(PDO $catalog, PDO $owner, array $request): array
+function observeNativeIndexChange(PDO $catalog, PDO $owner, array $request, Closure $admits, string $status): array
 {
     $fixtures = $request['declarations'];
-    if (!batchIndexSql($request['sql']) || !is_bool($request['generated']) || count($fixtures) < 1 || count($fixtures) > 2
+    if (!$admits($request['sql']) || !is_bool($request['generated']) || count($fixtures) < 1 || count($fixtures) > 2
         || count(array_filter($fixtures, batchIndexFixture(...))) !== count($fixtures)) {
         return ['status' => 'outside-observer-scope'];
     }
@@ -84,8 +84,15 @@ function observeIndexRemovalSet(PDO $catalog, PDO $owner, array $request): array
         $advanced = dropIndexState($owner, 'a', BATCH_INDEX_TABLE);
     }
 
-    return ['status' => 'mysql-index-removal-set', 'initial' => $before, ...$effect, 'after' => $after,
+    return ['status' => $status, 'initial' => $before, ...$effect, 'after' => $after,
         'afterGenerated' => $advanced, 'catalog' => dropIndexState($catalog, 'a', BATCH_INDEX_TABLE), 'generated' => $generated];
 }
 
-runMysqlIndexObserver($argv, initIndexRemovalSet(...), observeIndexRemovalSet(...));
+function observeIndexRemovalSet(PDO $catalog, PDO $owner, array $request): array
+{
+    return observeNativeIndexChange($catalog, $owner, $request, batchIndexSql(...), 'mysql-index-removal-set');
+}
+
+if (realpath($argv[0] ?? '') === __FILE__) {
+    runMysqlIndexObserver($argv, initIndexRemovalSet(...), observeIndexRemovalSet(...));
+}

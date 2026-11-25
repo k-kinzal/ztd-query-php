@@ -36,6 +36,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndexLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike;
 use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
@@ -151,7 +152,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropIndex|DropIndexes|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropIndex|DropIndexes|DropTable|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -181,7 +182,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropIndex|DropIndexes|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection>
+     * @return list<Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropIndex|DropIndexes|DropTable|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

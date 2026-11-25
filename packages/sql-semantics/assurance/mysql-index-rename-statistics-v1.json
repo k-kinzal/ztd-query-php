@@ -1,0 +1,24 @@
+{
+  "revision": "SemanticsIR/mysql-index-rename-statistics-1",
+  "approval": "pending-human-review",
+  "strongerObservation": "Include the ordered database warnings of persistent InnoDB index statistics for every admitted input. Temporary tables have no persistent statistics rows. The native metadata update may complete while a statistics rename is deferred by a duplicate key.",
+  "fixturePolicy": "Stock persistent InnoDB statistics of the named non-partitioned fixture with physical rows. The observer reads the complete ordered SHOW WARNINGS output after ALTER.",
+  "effect": "The resulting physical namespace is evaluated atomically from the original keys. In the stock in-place path, statistics names move in action order. A move into a still-occupied exact statistics name emits Warning 1025 and leaves that statistics name in place. On an available name the statistics name moves. Identical before and after names have no move. This observation is separate from the resulting catalog and required to agree for original and emitted SQL.",
+  "scope": "Stock releases and the fixed measured fixture. General persistent statistics states outside the fixture remain open.",
+  "nativeEvidence": {
+    "5.7.44": {
+      "wideNativeTranscript": "827e4440b1fbb82206e3e3012c6104e8160496a4725ce302e6ceb0f4e59fe6d2",
+      "calibrationTranscript": "e709f6bdaaa4fee39763222c6c4114ef31c6af89b78830371de151c0cc3ae421"
+    },
+    "8.0.44": {
+      "wideNativeTranscript": "594458a9a718e4b629008de92dff56611d060a0c0544f4508fa73bee1a165145",
+      "calibrationTranscript": "18a7456a7ed9d631a907b800c13ea9125957547ef1ac2518a4eec463bb710855"
+    },
+    "9.1.0": {
+      "wideNativeTranscript": "8fcd91c75782a489c007b3bc16392e3d608a686d1ccf4720b1f6716320e7237f",
+      "calibrationTranscript": "c2529460cf4594cde38b51debee14e2f144abd7bfa78677286d3854d3fe2b3ca"
+    }
+  },
+  "wideScript": "8d1f5bfbaac63e18d95ba85a4907880f5e1100645cfb0ece1cac8ba42d80ffb4",
+  "fault": "Dropping the first required native statistics warning must fail even when all observed catalog effects agree."
+}

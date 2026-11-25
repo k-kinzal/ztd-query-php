@@ -121,6 +121,7 @@ NATIVE = {
     "mysql_alter_index_removal": "mysql-alter-index-removal-evidence-v1.json",
     "mysql_index_auto_increment": "mysql-index-auto-increment-evidence-v1.json",
     "mysql_drop_indexes": "mysql-multiple-index-removal-evidence-v1.json",
+    "mysql_index_rename": "mysql-index-renames-evidence-v1.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
     "mysql_grouped_having": "mysql-grouped-having-v2.json",
@@ -283,6 +284,7 @@ SINGLE_ENGINE = {
     "mysql_alter_index_removal": "mysql",
     "mysql_index_auto_increment": "mysql",
     "mysql_drop_indexes": "mysql",
+    "mysql_index_rename": "mysql",
     "mysql_session_table_sources": "mysql",
     "mysql_create_view": "mysql",
     "mysql_grouped_having": "mysql",
@@ -311,13 +313,14 @@ SINGLE_ENGINE = {
 
 @lru_cache(maxsize=None)
 def release_subset(domain):
-    if domain != "mysql_with_projection":
+    field = {"mysql_with_projection": "profiles", "mysql_index_rename": "releases"}.get(domain)
+    if field is None:
         return None
     path = NATIVE[domain]
     contract = (TOOL / path).read_bytes()
     if hashlib.sha256(contract).hexdigest() != CONTRACTS[path]:
         raise ValueError(f"The native release scope for {domain} has changed")
-    return tuple(tag.removeprefix("mysql-") for tag in json.loads(contract)["profiles"])
+    return tuple(tag.removeprefix("mysql-") for tag in json.loads(contract)[field])
 
 
 def reports(raw, layout, domain):

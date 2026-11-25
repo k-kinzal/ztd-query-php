@@ -64,6 +64,8 @@ Use `DROP INDEX` with the owning relation declaration to remove a resolved physi
 
 A single `ALTER TABLE` with multiple index removals returns `DropIndexes`. It keeps their order and emits one atomic statement, with one native algorithm and lock policy for the whole set. Every target must belong to the same physical table. The set must retain a backing key for any `AUTO_INCREMENT` field supported by the removed indexes.
 
+Use `ALTER TABLE ... RENAME INDEX` on MySQL 5.7 or later. `RenameIndexes` resolves all renames in the original owning table and publishes them together. For example, two indexes can exchange names in one statement. Their fields, uniqueness and visibility follow the original indexes. An unmoved index keeps its name, so another index cannot claim that name. A case-only spelling change retains the requested spelling.
+
 Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.

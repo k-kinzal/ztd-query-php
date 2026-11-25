@@ -1011,6 +1011,30 @@ function constructMysqlDropIndexes(array $input): SqlSemantics\Platform\MySql\Ir
     );
 }
 
+function constructMysqlIndexRenames(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes
+{
+    $spec = $input['mysqlIndexRenames'];
+    $name = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+    $moves = array_map(static fn (array $move): SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename =>
+        new SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename(new $name($move[0]), new $name($move[1])), $spec['moves']);
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes(
+        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']), $moves,
+        array_map(static fn (string $unmoved): SqlSemantics\Platform\MySql\Ir\Identifier => new $name($unmoved), $spec['unmoved']),
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexPolicy($spec['policy'])
+    );
+}
+
+function observeMysqlIndexRenames(SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlIndexRenames' => ['owner' => observeMysqlTableIdentity($value->owner),
+            'moves' => array_map(static fn (object $move): array => [$move->source->value, $move->destination->value], $value->moves),
+            'unmoved' => array_map(static fn (object $key): string => $key->value, $value->unmoved),
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
+}
+
 function observeMysqlIndexIdentity(SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity $target): array
 {
     $increment = $target->autoIncrement;
@@ -2200,6 +2224,7 @@ function observeStatement(array $input): array
             isset($input['mysqlCreateIndex']) => constructMysqlCreateIndex($platform, $input),
             isset($input['mysqlDropIndex']) => constructMysqlDropIndex($input),
             isset($input['mysqlDropIndexes']) => constructMysqlDropIndexes($input),
+            isset($input['mysqlIndexRenames']) => constructMysqlIndexRenames($input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -2304,6 +2329,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes) {
         return observeMysqlDropIndexes($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes) {
+        return observeMysqlIndexRenames($value);
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex) {
         return observeMysqlCreateIndex($namespace, $value);
