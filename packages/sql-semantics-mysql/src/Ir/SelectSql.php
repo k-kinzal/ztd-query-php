@@ -75,7 +75,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -84,6 +84,7 @@ final class SelectSql
             $expression instanceof SignedCase => $this->signedCase($expression, $source, $offset, $qualify),
             $expression instanceof SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',
             $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',
+            $expression instanceof IntegerComparison => $this->integerComparison($expression, $source, $offset, $qualify),
             $expression instanceof IntegerMembership => $this->integerMembership($expression, $source, $offset, $qualify),
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
             $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),
@@ -188,6 +189,17 @@ final class SelectSql
     }
 
     /**
+     * Emits the native signed comparison between the two resolved operands.
+     */
+    public function integerComparison(IntegerComparison $test, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $left = $this->rangeOperand($test->left, $source, $offset, $qualify);
+        $right = $this->rangeOperand($test->right, $source, $offset, $qualify);
+
+        return '(' . $left . ' ' . $test->operator->value . ' ' . $right . ')';
+    }
+
+    /**
      * Emits native IN with its complete signed operand list in order.
      */
     public function integerMembership(IntegerMembership $test, TableSource|Join|null $source, int $offset, bool $qualify): string
@@ -204,10 +216,10 @@ final class SelectSql
     /**
      * Renders a pure signed operand or its resolved reference.
      */
-    public function rangeOperand(ColumnReference|IntegralColumnReference|RangeIntegerLiteral|NullLiteral $operand, TableSource|Join|null $source, int $offset, bool $qualify): string
+    public function rangeOperand(ColumnReference|IntegralColumnReference|IntegerLiteral|RangeIntegerLiteral|NullLiteral $operand, TableSource|Join|null $source, int $offset, bool $qualify): string
     {
         return match (true) {
-            $operand instanceof RangeIntegerLiteral => $operand->toString(),
+            $operand instanceof IntegerLiteral, $operand instanceof RangeIntegerLiteral => $operand->toString(),
             $operand instanceof ColumnReference, $operand instanceof IntegralColumnReference => $this->column($operand, $source, $offset, $qualify),
             $operand instanceof NullLiteral => $this->expression($operand, $source, $offset, $qualify),
         };
@@ -239,11 +251,7 @@ final class SelectSql
     public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TruthTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
-            $left = $this->expression($condition->left, $source, $offset, $qualify);
-            $right = $this->expression($condition->right, $source, $offset, $qualify);
-            $operator = $condition->operator->value;
-
-            return '(' . $left . ' ' . $operator . ' ' . $right . ')';
+            return $this->integerComparison($condition, $source, $offset, $qualify);
         }
 
         if ($condition instanceof LogicalPredicate) {

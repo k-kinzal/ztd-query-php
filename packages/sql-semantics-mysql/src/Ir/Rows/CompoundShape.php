@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
@@ -83,7 +84,7 @@ final class CompoundShape
                 IntegerStorage::Tiny, IntegerStorage::Small, IntegerStorage::Medium, IntegerStorage::Standard => ResultKind::Integer,
             },
             $column instanceof ColumnReference => ResultKind::Integer,
-            $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerMembership, $column instanceof IntegerRange, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,
+            $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerComparison, $column instanceof IntegerMembership, $column instanceof IntegerRange, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,
         };
     }
 

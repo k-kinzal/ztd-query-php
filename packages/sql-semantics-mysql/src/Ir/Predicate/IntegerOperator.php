@@ -19,4 +19,5 @@ enum IntegerOperator: string
     case LessOrEqual = '<=';
     case Greater = '>';
     case GreaterOrEqual = '>=';
+    case NullSafeEqual = '<=>';
 }

@@ -107,6 +107,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-signed-case-boundaries-v1.json', '250c6f50078c0865367fa9050a8cc9763775b79910256152c4e59d55bcd60feb'],
             ['mysql-insert-destination-boundaries-v1.json', '7a05a83d59223fd369886720ea24c2894695dd33f9f107344960b36208a89e2a'],
             ['mysql-native-truth-boundaries-v1.json', 'd54b034739fe6a1fd2823478166a9da9d06d3a85c711b358ebf04a017622c39f'],
+            ['mysql-signed-comparison-widths-boundaries-v1.json', '2996f620a3a9f15c1e51356a75865ca030a077cb6689a55cb0a5d030837db0fa'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -414,6 +415,7 @@ function checkNativeBoundaries(
                 'Ir\\Expression\\Choice\\SignedCase', 'Ir\\Expression\\Choice\\SimpleCaseArm', 'Ir\\Expression\\Choice\\SearchedCaseArm',
                 'Ir\\Expression\\Choice\\CaseLayout', 'Ir\\Expression\\Choice\\SignedCaseLowering', 'Statement\\Expression\\Branching\\CaseExpression',
                 'Ir\\Predicate\\Truth\\TruthOperator', 'Ir\\Predicate\\Truth\\TruthTest', 'Ir\\Predicate\\Truth\\TruthLowering',
+                'Ir\\Predicate\\ComparisonLowering',
                 'Statement\\Expression\\TruthTest as ParsedTruthTest',
                 'Ir\\From\\MergedJoinLowering', 'Ir\\SourceBinding', 'Ir\\Predicate\\PredicateLowering', 'Statement\\Relation\\Join\\JoinOperator', 'Statement\\Relation\\TableList', 'Model\\Statement\\Identifier\\Name',
                 'Statement\\Expression\\Operator\\Arithmetic as ParsedArithmetic', 'Statement\\Expression\\Predicate\\Between as ParsedRange',

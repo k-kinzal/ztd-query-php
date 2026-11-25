@@ -226,9 +226,18 @@ def inventory(root):
                             if " BETWEEN_SYM " in alternative})
             related.update({alternative: ("mysql-signed-membership-v2.json",) for alternative in rules["predicate"]
                             if alternative.endswith((" IN_SYM ( expr )", " IN_SYM ( expr , expr_list )"))})
+            for alternative in rules.get("predicate", ()):
+                if " BETWEEN_SYM " in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "mysql-signed-comparison-widths-v2.json")
+            for alternative in rules.get("bool_pri", ()):
+                if (alternative == "bool_pri: bool_pri comp_op predicate" or " EQUAL_SYM " in alternative
+                        or alternative.startswith("bool_pri: bool_pri IS ") and alternative.endswith(" NULL_SYM")):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-signed-comparison-widths-v2.json")
+            for alternative in rules.get("comp_op", ()):
+                related[alternative] = (*related.get(alternative, ()), "mysql-signed-comparison-widths-v2.json")
             for alternative in rules.get("expr", ()):
                 if alternative.startswith("expr: bool_pri IS ") and alternative.endswith((" TRUE_SYM", " FALSE_SYM", " UNKNOWN_SYM")):
-                    related[alternative] = (*related.get(alternative, ()), "mysql-native-truth-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "mysql-native-truth-v1.json", "mysql-signed-comparison-widths-v2.json")
             for rule in ("simple_expr", "when_list", "opt_else", "opt_expr"):
                 for alternative in rules.get(rule, ()):
                     if rule != "simple_expr" or " CASE_SYM " in alternative:

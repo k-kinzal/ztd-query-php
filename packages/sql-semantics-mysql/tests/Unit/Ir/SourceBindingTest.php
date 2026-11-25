@@ -269,4 +269,40 @@ final class SourceBindingTest extends TestCase
 
         self::assertInstanceOf(IntegralColumnReference::class, $source->membershipSlot($resolution));
     }
+
+    public function testComparisonFieldKeepsTheNativeSignedWidth(): void
+    {
+        $inspection = new Inspection();
+        $declared = $inspection->inspect('CREATE TABLE ir_fixture.t (value SMALLINT NOT NULL)');
+        $operation = $inspection->inspect('SELECT value FROM ir_fixture.t', [$declared]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $projection = $statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $projection);
+        $binding = new SourceBinding($operation->binding(), $statement->from);
+
+        $field = $binding->comparisonField($projection->expression);
+        self::assertInstanceOf(IntegralColumnReference::class, $field);
+        $native = $binding->source()?->columnTypes[$field->slot];
+        self::assertInstanceOf(IntegralSlot::class, $native);
+        self::assertSame(IntegerStorage::Small, $native->storage);
+        self::assertFalse($native->nullable);
+    }
+
+    public function testComparisonSlotChoosesACharacterSlotWhenDeclared(): void
+    {
+        $inspection = new Inspection();
+        $declaration = $inspection->inspect('CREATE TABLE ir_fixture.t (value VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin)');
+        $operation = $inspection->inspect('SELECT value FROM ir_fixture.t', [$declaration]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $binding = $operation->binding();
+        $fields = $binding->facts->query($statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(0)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $source = new SourceBinding($binding, $statement->from);
+
+        self::assertInstanceOf(TextColumnReference::class, $source->comparisonSlot($resolution));
+    }
 }

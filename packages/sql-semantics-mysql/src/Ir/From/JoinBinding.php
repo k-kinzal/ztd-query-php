@@ -134,6 +134,29 @@ final class JoinBinding
     }
 
     /**
+     * Resolves the exact native comparison field in a visible occurrence.
+     * @throws InvalidConstruction When the field does not belong to this scope
+     */
+    public function comparisonField(Scalar $expression): ColumnReference|IntegralColumnReference|TextColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($expression)->resolution;
+        Check::input($resolution instanceof ResolvedColumn && $resolution->depth === 0, 'A comparison field must resolve within its join scope.');
+        foreach ($this->inputs as $occurrence => $binding) {
+            if ($binding->relation() === $resolution->relation) {
+                $field = $binding instanceof SourceBinding ? $binding->comparisonSlot($resolution) : $binding->resolved($resolution);
+
+                return match (true) {
+                    $field instanceof ColumnReference => new ColumnReference($field->slot, $occurrence),
+                    $field instanceof IntegralColumnReference => new IntegralColumnReference($field->slot, $occurrence),
+                    $field instanceof TextColumnReference => new TextColumnReference($field->slot, $occurrence),
+                };
+            }
+        }
+
+        throw new InvalidConstruction('A comparison field must resolve within its join scope.');
+    }
+
+    /**
      * Resolves a scalar field with the native kind required by a typed read.
      */
     public function field(Scalar $scalar): ColumnReference|TextColumnReference

@@ -47,8 +47,7 @@ final class RecursiveStepLowering
         }
         Check::input($change instanceof Arithmetic && $test instanceof Comparison, 'A recursive step requires addition and a bound comparison.');
         Check::input($change->operator->value === '+', 'A recursive step requires addition.');
-        $operator = IntegerOperator::tryFrom($test->operator->value);
-        Check::input($operator !== null, 'A recursive step needs a signed comparison.');
+        $operator = IntegerOperator::from($test->operator->value);
         $binding->read($operation, $change->left, $source);
         $binding->read($operation, $test->left, $source);
         $constant = new SourceBinding($operation, null);

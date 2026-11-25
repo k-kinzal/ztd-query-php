@@ -49,8 +49,7 @@ final class HavingLowering
             return new BooleanLiteral($condition->value);
         }
         Check::input($condition instanceof ParsedComparison, 'HAVING needs a numeric group comparison, a Boolean constant or NULL.');
-        $operator = IntegerOperator::tryFrom($condition->operator->value);
-        Check::input($operator !== null, 'HAVING needs a supported numeric comparison operator.');
+        $operator = IntegerOperator::from($condition->operator->value);
 
         return new GroupedComparison(
             $operator,

@@ -165,7 +165,9 @@ if ($dialect === 'mysql') {
     $range = 'Predicate\\IntegerRange';
     $rangeLiteral = 'Predicate\\RangeIntegerLiteral';
     $rangeLeaves = ['ColumnReference', 'NullLiteral', $rangeLiteral];
-    $properties[$range] = ['subject' => $rangeLeaves, 'lower' => $rangeLeaves, 'upper' => $rangeLeaves, 'negated' => ['bool']];
+    $rangeInputs = [...$rangeLeaves, 'From\\IntegralColumnReference'];
+    sort($rangeInputs);
+    $properties[$range] = ['subject' => $rangeInputs, 'lower' => $rangeInputs, 'upper' => $rangeInputs, 'negated' => ['bool']];
     $properties[$rangeLiteral] = $properties['IntegerLiteral'];
     $methods[$range] = ['__construct'];
     $methods[$rangeLiteral] = ['__construct', 'toString'];
@@ -193,7 +195,7 @@ if ($dialect === 'mysql') {
     }
     $methods[$simpleCaseArm] = $methods[$searchedCaseArm] = ['__construct'];
     $methods[$signedCase] = ['__construct', 'children'];
-    array_push($properties['ResultColumn']['expression'], $range, $membership, $signedCase, 'Predicate\\Truth\\TruthTest');
+    array_push($properties['ResultColumn']['expression'], $range, $membership, 'Predicate\\IntegerComparison', $signedCase, 'Predicate\\Truth\\TruthTest');
     sort($properties['ResultColumn']['expression']);
 }
 $selectBounds = $dialect === 'sqlite' ? 'From\\SelectBounds' : 'SelectBounds';
@@ -858,6 +860,7 @@ if ($dialect !== 'sqlite') {
             'NotTrue' => 'NOT TRUE', 'NotFalse' => 'NOT FALSE', 'NotUnknown' => 'NOT UNKNOWN',
         ];
         $internal[] = 'Predicate\\Truth\\TruthLowering';
+        $internal[] = 'Predicate\\ComparisonLowering';
     }
     $conditions = [...$truthValues, 'null'];
     $properties['Aggregation\\GroupedSelect']['where'] = $conditions;
@@ -918,6 +921,11 @@ if ($dialect !== 'sqlite') {
     $properties['Predicate\\IntegerComparison'] = [
         'operator' => ['Predicate\\IntegerOperator'], 'left' => ['ColumnReference', 'IntegerLiteral'], 'right' => ['ColumnReference', 'IntegerLiteral'],
     ];
+    if ($dialect === 'mysql') {
+        $signed = ['ColumnReference', 'From\\IntegralColumnReference', 'IntegerLiteral', 'NullLiteral', 'Predicate\\RangeIntegerLiteral'];
+        $properties['Predicate\\IntegerComparison']['left'] = $signed;
+        $properties['Predicate\\IntegerComparison']['right'] = $signed;
+    }
     if ($dialect === 'postgres') {
         $signed = ['ColumnReference', 'Expression\\WideIntegerLiteral', 'From\\WideIntegerColumnReference', 'IntegerLiteral'];
         $properties['Predicate\\IntegerComparison']['left'] = $signed;
@@ -1756,6 +1764,7 @@ if ($dialect !== 'sqlite') {
 }
 if ($dialect === 'mysql') {
     array_splice($methods['Select'], 1, 0, ['signedCaseLayout']);
+    $enumCases['Predicate\\IntegerOperator']['NullSafeEqual'] = '<=>';
 }
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
 $allowed = [

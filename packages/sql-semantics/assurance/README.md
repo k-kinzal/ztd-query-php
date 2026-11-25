@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v93.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v95.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -190,6 +190,8 @@ The [MySQL signed membership contract](mysql-signed-membership-v2.json) covers a
 The [MySQL signed CASE contract](mysql-signed-case-v1.json) fixes native branch selection, ordered width aggregation and heading nullability. For both direct and analyzed projections the checker compares the bound operands and the computed layout with an independent evaluator. Use `run_server_mysql_signed_case.py` to observe the original and emitted statements against each pinned release, and `combine_server_mysql_signed_case_evidence.py` to replay the typed results, finite coordinates and injected faults. [Fixed schedule](mysql-signed-case-evidence-v1.json)
 
 The [MySQL native truth contract](mysql-native-truth-v1.json) fixes the six native truth tests and the typed operand and result roles. Use `run_server_mysql_native_truth.py` to compare the original and emitted statements against each native release. The [fixed schedule](mysql-native-truth-evidence-v1.json) covers both construction routes, distinct record values, nested tests, order, join occurrence binding and reversible write effects. Use `combine_server_mysql_native_truth_evidence.py` to replay those comparisons and fault receipts.
+
+The [MySQL comparison and range contract](mysql-signed-comparison-widths-v2.json) fixes nullable integer comparisons in the five native signed field widths and exact signed 64-bit literals. The [fixed schedule](mysql-signed-comparison-widths-evidence-v2.json) checks operand order, typed NULL and result metadata, join-bound occurrence identities and reversible effects. Run `run_server_mysql_signed_comparison_widths.py` on each pinned release and replay the complete records with `combine_server_mysql_signed_comparison_widths_evidence.py`.
 
 ## Establish independent acceptance
 

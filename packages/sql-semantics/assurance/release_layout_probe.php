@@ -299,6 +299,24 @@ function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics
     ];
 }
 
+function observeMysqlSignedComparisonWidths(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.ordered_input (lo SMALLINT NOT NULL, val BIGINT, hi MEDIUMINT)']);
+    $written = 'SELECT val <=> NULL AS same, val NOT BETWEEN lo AND hi AS outside_window FROM app.ordered_input';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $reference = static fn (int $slot) => new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference($slot);
+    $test = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison(
+        SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator::NullSafeEqual, $reference(0),
+        new SqlSemantics\Platform\MySql\Ir\NullLiteral(),
+    );
+    $range = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange($reference(0), $reference(1), $reference(2), true);
+
+    return [$analyzed == $batch, $test == $analyzed->columns[0]->expression, $range == $analyzed->columns[1]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        array_map(static fn ($type) => [$type->storage->value, $type->nullable], $analyzed->source->columnTypes), $analyzed->toString()];
+}
+
 function observeMysqlNativeTruth(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE app.truth_release (wide BIGINT, unused INTEGER)']);
@@ -2141,6 +2159,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedMembership'] = observeMysqlSignedMembership($semantics);
             $details['mysqlSignedCase'] = observeMysqlSignedCase($semantics);
             $details['mysqlNativeTruth'] = observeMysqlNativeTruth($semantics);
+            $details['mysqlSignedComparisonWidths'] = observeMysqlSignedComparisonWidths($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

@@ -136,6 +136,26 @@ final class SourceBinding
     }
 
     /**
+     * Classifies a comparison field from its resolved physical declaration.
+     */
+    public function comparisonField(Scalar $expression): ColumnReference|IntegralColumnReference|TextColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($expression)->resolution;
+        Check::input($resolution instanceof ResolvedColumn, 'A comparison field must resolve to its input.');
+
+        return $this->comparisonSlot($resolution);
+    }
+
+    /**
+     * Allocates the exact signed or character role used by a native comparison.
+     */
+    public function comparisonSlot(ResolvedColumn $resolution): ColumnReference|IntegralColumnReference|TextColumnReference
+    {
+        return $this->declared($resolution)->type instanceof Character
+            ? $this->projected($resolution) : $this->membershipSlot($resolution);
+    }
+
+    /**
      * Resolves a scalar field with the native kind required by a typed read.
      */
     public function field(Scalar $expression): ColumnReference|TextColumnReference

@@ -129,10 +129,13 @@ def observation(value):
 
 
 def check_observation(item,value,command):
-    expected=law.expected(item)
+    check_native_observation(item,value,command,law.expected(item),LABEL)
+
+
+def check_native_observation(item,value,command,expected,label):
     role=item["placement"]
     detail={"sql":command,"expected":expected,"observed":value}
-    require(value["status"]==(role if role in ("update","delete") else "rows"),"mysql-native-truth-native-refusal",detail)
+    require(value["status"]==(role if role in ("update","delete") else "rows"),label+"-native-refusal",detail)
     try:
         require(value["warnings"]==0,MEANING,detail)
         if role in ("update","delete"):

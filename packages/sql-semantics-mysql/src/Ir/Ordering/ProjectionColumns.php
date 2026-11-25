@@ -11,8 +11,8 @@ use SqlSemantics\Platform\MySql\Ir\Expression\IntegralCastLowering;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\ComparisonLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
-use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparisonLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthLowering;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
@@ -44,7 +44,7 @@ final class ProjectionColumns
     {
         $expressions = new ExpressionLowering();
         $casts = new IntegralCastLowering();
-        $comparisons = new TextComparisonLowering();
+        $comparisons = new ComparisonLowering();
         $strings = new TextLiteralLowering();
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');

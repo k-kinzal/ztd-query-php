@@ -18,7 +18,8 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
- * A native integer test of one resolved truth operand.
+ * A native integer test of one resolved truth operand in the statement's grammar release.
+ * MySQL 5.6 and 5.7 inspect the operands of NULL-safe equality for IS NOT UNKNOWN.
  *
  * @visibility public
  * @example Inspecting a NULL test against the unknown truth class

@@ -64,7 +64,7 @@ final class SelectBounds
         $pending = [[$result->expression, 0]];
         while ($pending !== []) {
             [$expression, $height] = array_pop($pending);
-            if ($expression instanceof SignedCase || $expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {
+            if ($expression instanceof SignedCase || $expression instanceof IntegerComparison || $expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {
                 $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
                     : 'A predicate slot must belong to the SELECT source.';
                 $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);

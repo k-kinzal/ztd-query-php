@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
- * A scalar null test whose result always has a known truth value.
+ * A scalar null test in the statement's grammar release, with an always-known result.
  *
  * @visibility public
  * @example Testing whether a table slot is present
@@ -26,7 +26,7 @@ final class NullTest
     use Snapshot;
 
     /**
-     * Stores the tested scalar and whether to invert the result.
+     * Stores the scalar and selects the native IS NULL or IS NOT NULL operation.
      */
     public function __construct(
         public readonly BooleanLiteral|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|TextColumnReference|TruthTest|self $operand,

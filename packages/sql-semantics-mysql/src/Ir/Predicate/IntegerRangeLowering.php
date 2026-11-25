@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Predicate;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Literal\IntegerTokenLowering;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
@@ -40,7 +41,7 @@ final class IntegerRangeLowering
      * Resolves one leaf of the signed comparison role.
      * @throws InvalidConstruction When the leaf has another comparison category
      */
-    public function operand(Scalar $expression, SourceBinding|JoinBinding $binding): ColumnReference|RangeIntegerLiteral|NullLiteral
+    public function operand(Scalar $expression, SourceBinding|JoinBinding $binding): ColumnReference|IntegralColumnReference|RangeIntegerLiteral|NullLiteral
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -52,7 +53,7 @@ final class IntegerRangeLowering
 
         return match (true) {
             $expression instanceof ParsedNull => new NullLiteral(),
-            $expression instanceof ColumnUse => $binding->reference($expression),
+            $expression instanceof ColumnUse => $binding->membershipReference($expression),
             default => throw new InvalidConstruction('A range operand requires a pure signed integer or NULL.'),
         };
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Predicate;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
@@ -24,9 +25,9 @@ final class IntegerRange
      * Holds the subject and both bounds in their written roles.
      */
     public function __construct(
-        public readonly ColumnReference|RangeIntegerLiteral|NullLiteral $subject,
-        public readonly ColumnReference|RangeIntegerLiteral|NullLiteral $lower,
-        public readonly ColumnReference|RangeIntegerLiteral|NullLiteral $upper,
+        public readonly ColumnReference|IntegralColumnReference|RangeIntegerLiteral|NullLiteral $subject,
+        public readonly ColumnReference|IntegralColumnReference|RangeIntegerLiteral|NullLiteral $lower,
+        public readonly ColumnReference|IntegralColumnReference|RangeIntegerLiteral|NullLiteral $upper,
         public readonly bool $negated = false,
     ) {
     }

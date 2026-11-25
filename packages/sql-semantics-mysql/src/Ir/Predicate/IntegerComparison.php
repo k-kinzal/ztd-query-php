@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Predicate;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -25,8 +27,8 @@ final class IntegerComparison
      */
     public function __construct(
         public readonly IntegerOperator $operator,
-        public readonly ColumnReference|IntegerLiteral $left,
-        public readonly ColumnReference|IntegerLiteral $right,
+        public readonly ColumnReference|IntegralColumnReference|IntegerLiteral|RangeIntegerLiteral|NullLiteral $left,
+        public readonly ColumnReference|IntegralColumnReference|IntegerLiteral|RangeIntegerLiteral|NullLiteral $right,
     ) {
     }
 }

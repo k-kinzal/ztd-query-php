@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v190.json"
-CONTRACT = "561a1f9e53645f6b674f1ee3bf654888742ca399f3d867eb8895c8f8075cc00d"
+CONTRACT_NAME = "release-layout-v191.json"
+CONTRACT = "fc018a3af3a5665503fba1a3705bfd00402afc2f3166b1bc338c70b174cfe19c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -547,6 +547,11 @@ def verify_probe(raw, catalog):
                     and item["sql"] == 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `app`.`answer` (`value`) AS SELECT 42 AS `__ztd_c0`',
                     "installed-mysql-create-view-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
+            require(item.get("mysqlSignedComparisonWidths") == [True, True, True, ["val", "lo", "hi"],
+                [["BIGINT", True], ["SMALLINT", False], ["MEDIUMINT", True]],
+                "SELECT (`__ztd_source`.`val` <=> NULL) AS `same`, "
+                "(`__ztd_source`.`val` NOT BETWEEN `__ztd_source`.`lo` AND `__ztd_source`.`hi`) AS `outside_window` "
+                "FROM `app`.`ordered_input` AS `__ztd_source`"], "installed-mysql-signed-comparison-widths-mismatch", item)
             require(item.get("mysqlNativeTruth") == [True, True, ["wide"], "BIGINT",
                 "SELECT ((`__ztd_source`.`wide` IS NOT UNKNOWN) IS TRUE) AS `visible` FROM `app`.`truth_release` AS `__ztd_source`"],
                 "installed-mysql-native-truth-mismatch", item)

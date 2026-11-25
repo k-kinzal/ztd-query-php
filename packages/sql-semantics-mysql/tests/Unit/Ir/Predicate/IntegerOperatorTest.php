@@ -15,6 +15,6 @@ final class IntegerOperatorTest extends TestCase
 {
     public function testCasesFixTheNativeComparisonIdentities(): void
     {
-        self::assertSame(['=', '<>', '<', '<=', '>', '>='], array_column(IntegerOperator::cases(), 'value'));
+        self::assertSame(['=', '<>', '<', '<=', '>', '>=', '<=>'], array_column(IntegerOperator::cases(), 'value'));
     }
 }

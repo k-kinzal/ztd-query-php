@@ -185,4 +185,22 @@ final class JoinBindingTest extends TestCase
         self::assertSame(1, $field->occurrence);
         self::assertSame(0, $field->slot);
     }
+
+    public function testComparisonFieldRetainsTheExactJoinOccurrence(): void
+    {
+        $inspection = new Inspection();
+        $declaration = $inspection->inspect('CREATE TABLE ir_fixture.t (n SMALLINT)');
+        $operation = $inspection->inspect('SELECT right_table.n FROM ir_fixture.t left_table CROSS JOIN ir_fixture.t right_table', [$declaration]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $projection = $statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $projection);
+        $binding = JoinBinding::bind($operation->binding(), $statement->from);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $field = $binding->comparisonField($projection->expression);
+        self::assertInstanceOf(IntegralColumnReference::class, $field);
+        self::assertSame(1, $field->occurrence);
+        self::assertSame(0, $field->slot);
+    }
 }

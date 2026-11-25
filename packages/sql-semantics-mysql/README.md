@@ -96,7 +96,7 @@ On MySQL 8.0 and later, `ALTER TABLE ... ALTER INDEX ... VISIBLE` or `INVISIBLE`
 
 Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
 
-Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.
+Signed integer comparisons preserve the ordered operands, exact native widths, NULL and signed 64-bit values. The `<=>` operator returns a nonnull native integer and matches two NULLs. Signed integer `BETWEEN` and `NOT BETWEEN` retain their inclusive bounds and accept resolved fields in all five signed integer widths. A known out-of-range comparison determines the result even when the other bound is NULL.
 
 `Ir\Predicate\IntegerMembership` represents signed integer `IN` and `NOT IN` with one subject and 1 to 8190 ordered alternatives. The leaves can be signed literals, NULL or resolved fields with TINYINT, SMALLINT, MEDIUMINT, INT or BIGINT storage. The owning source retains each consumed field's storage width and NULL policy. Projections return MySQL's native `1`, `0` or NULL. Filters, join conditions and write predicates select a row only when the test is true. The emitted SQL keeps duplicates, literal format and occurrence bindings. Supply an explicit projection alias.
 

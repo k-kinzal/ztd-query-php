@@ -6,13 +6,10 @@ namespace SqlSemantics\Platform\MySql\Ir\Predicate;
 
 use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
-use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
-use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparisonLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
@@ -63,21 +60,11 @@ final class PredicateLowering
         if ($condition instanceof ParsedNullTest) {
             return $this->nullTest($condition, $binding);
         }
-        $expression = new ExpressionLowering();
         if ($condition instanceof ParsedComparison) {
-            $text = (new TextComparisonLowering())->lower($condition, $binding);
-            if ($text !== null) {
-                return $text;
-            }
-            $operator = IntegerOperator::tryFrom($condition->operator->value);
-            Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');
-            $left = $expression->lower($condition->left, $binding);
-            $right = $expression->lower($condition->right, $binding);
-            Check::input(($left instanceof ColumnReference || $left instanceof IntegerLiteral)
-                && ($right instanceof ColumnReference || $right instanceof IntegerLiteral), 'A predicate comparison needs two signed integer operands.');
-
-            return new IntegerComparison($operator, $left, $right);
+            return (new ComparisonLowering())->lower($condition, $binding);
         }
+
+        $expression = new ExpressionLowering();
         $constant = $expression->lower($condition, $binding);
         Check::input($constant instanceof BooleanLiteral || $constant instanceof NullLiteral || $constant instanceof IntegerRange || $constant instanceof IntegerMembership, 'A filter needs a Boolean or signed integer comparison.');
 

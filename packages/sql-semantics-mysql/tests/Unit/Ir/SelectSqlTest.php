@@ -18,7 +18,9 @@ use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Ordering\Order;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
@@ -152,5 +154,16 @@ final class SelectSqlTest extends TestCase
         $value = new TruthTest(TruthOperator::NotUnknown, new RangeIntegerLiteral('0', 2, true));
 
         self::assertSame('(-000 IS NOT UNKNOWN)', (new SelectSql())->truthTest($value, null, 0, true));
+    }
+
+    public function testIntegerComparisonEmitsNullSafeEqualityAndExactWidenedOperand(): void
+    {
+        $comparison = new IntegerComparison(
+            IntegerOperator::NullSafeEqual,
+            new RangeIntegerLiteral('-9223372036854775808'),
+            new NullLiteral()
+        );
+
+        self::assertSame('(-9223372036854775808 <=> NULL)', (new SelectSql())->integerComparison($comparison, null, 0, true));
     }
 }
