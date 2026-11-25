@@ -169,7 +169,10 @@ def controls():
     witnessed = [["INFO", "00000", 'index "main" was reindexed', "CPU: user: 0.10 s, system: 0.00 s, elapsed: 0.02 s", None],
                  ["INFO", "00000", 'index "unrelated" was reindexed', None, None]]
     same(expected, observed_notices(witnessed))
-    for fault in (witnessed[1:], list(reversed(witnessed)),
+    signed_clock = [[*witnessed[0][:3], "CPU: user: 0.00 s, system: 0.00 s, elapsed: -1.68 s", None], witnessed[1]]
+    same(expected, observed_notices(signed_clock))
+    incorrect_cpu = [[*witnessed[0][:3], "CPU: user: -1.68 s, system: 0.00 s, elapsed: 0.02 s", None], witnessed[1]]
+    for fault in (witnessed[1:], list(reversed(witnessed)), incorrect_cpu,
                   [[*witnessed[0][0:3], "changed diagnostic detail", None], witnessed[1]]):
         try:
             same(expected, observed_notices(fault))
@@ -177,7 +180,8 @@ def controls():
             same("meaning-mismatch", error.signal)
         else:
             raise Failure("postgres-verbose-comparator-accepted-loss", fault)
-    return {"ordered-report-required": {"expected": expected, "native": witnessed, "mutant": witnessed[1:]}}
+    return {"ordered-report-required": {"expected": expected, "native": witnessed, "mutant": witnessed[1:],
+                                        "wallClockControl": signed_clock, "unrelatedNegativeCpu": incorrect_cpu}}
 
 
 def fault_probe(item, response, db):

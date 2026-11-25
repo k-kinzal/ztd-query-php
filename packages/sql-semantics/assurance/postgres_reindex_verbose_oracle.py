@@ -10,7 +10,9 @@ from postgres_stock_catalog import check as check_stock
 from run import Failure, require
 from run_server import same
 
-RUSAGE = re.compile(r"CPU: user: [0-9]+\.[0-9]+ s, system: [0-9]+\.[0-9]+ s, elapsed: [0-9]+\.[0-9]+ s\.?")
+# pg_rusage_show subtracts wall-clock timestamps. Elapsed time can be negative
+# after a clock correction even when both process CPU counters advance.
+RUSAGE = re.compile(r"CPU: user: [0-9]+\.[0-9]+ s, system: [0-9]+\.[0-9]+ s, elapsed: -?[0-9]+\.[0-9]+ s\.?")
 SCOPED = {"ordinary-schema", "vacant-schema", "database", "system"}
 MULTIPLE = {*SCOPED, "partition-branch"}
 
