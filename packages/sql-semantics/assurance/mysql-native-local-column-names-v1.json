@@ -1,0 +1,175 @@
+{
+  "revision": "SemanticsIR/mysql-native-local-column-names-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "extends": {
+    "mysql-inherited-local-alias-v2.json": "bf8092d648b1800c51fcd22ca61a13ca17758b35f1dbc63554530f2a0810ba44",
+    "mysql-legacy-inherited-alias-v2.json": "93d4657509db3fd7129a1d78364332f94ec4f533ad94341d563358dc2094650b"
+  },
+  "constructors": {
+    "Rows/LocalProjection": {
+      "role": "A scoped projection reading an independent derived source.",
+      "structure": "Closed definitions, exact operand positions and original requested aliases when they influence native diagnostics.",
+      "conditions": "An inherited heading is unique under the native case comparison. Every referenced slot has a name accepted by the native identifier lexer and resolves in its owning occurrence. Modern derived tables and CTEs can emit a separate generated heading. In a profile without a separate heading, a consumed inherited slot must have a valid native name before publication.",
+      "meaning": "Resolve names by native UTF-8 scalar lowercase equivalence without losing accents, expansions, grapheme distinctions or trailing spaces. Use the server's original internal prefix for lookup. The displayed result prefix avoids partial UTF-8 bytes. A clipped field can remain unused in an inherited definition.",
+      "externalInterpretation": "Stock MySQL system utf8mb3 character tables, client utf8mb4 and closed empty SQL mode. MySQL 5.6 has materialized derived scopes, later pinned releases have derived_merge=on. Native prepared and text protocols.",
+      "sql": "Preserve authored normalization diagnostics. Name derived slots by generated coordinates when supported or by the checked complete inherited names on the older releases. Preserve each consumer label under its own projection rule.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Rows/With/WithDefinition": {
+      "role": "A nonrecursive definition whose own field positions can be read by another SELECT.",
+      "structure": "Closed definitions, exact operand positions and original requested aliases when they influence native diagnostics.",
+      "conditions": "An inherited heading is unique under the native case comparison. Every referenced slot has a name accepted by the native identifier lexer and resolves in its owning occurrence. Modern derived tables and CTEs can emit a separate generated heading. In a profile without a separate heading, a consumed inherited slot must have a valid native name before publication.",
+      "meaning": "Resolve names by native UTF-8 scalar lowercase equivalence without losing accents, expansions, grapheme distinctions or trailing spaces. Use the server's original internal prefix for lookup. The displayed result prefix avoids partial UTF-8 bytes. A clipped field can remain unused in an inherited definition.",
+      "externalInterpretation": "Stock MySQL system utf8mb3 character tables, client utf8mb4 and closed empty SQL mode. MySQL 5.6 has materialized derived scopes, later pinned releases have derived_merge=on. Native prepared and text protocols.",
+      "sql": "Preserve authored normalization diagnostics. Name derived slots by generated coordinates when supported or by the checked complete inherited names on the older releases. Preserve each consumer label under its own projection rule.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/DerivedSource": {
+      "role": "An independent joined input whose names settle within its own occurrence.",
+      "structure": "Closed definitions, exact operand positions and original requested aliases when they influence native diagnostics.",
+      "conditions": "An inherited heading is unique under the native case comparison. Every referenced slot has a name accepted by the native identifier lexer and resolves in its owning occurrence. Modern derived tables and CTEs can emit a separate generated heading. In a profile without a separate heading, a consumed inherited slot must have a valid native name before publication.",
+      "meaning": "Resolve names by native UTF-8 scalar lowercase equivalence without losing accents, expansions, grapheme distinctions or trailing spaces. Use the server's original internal prefix for lookup. The displayed result prefix avoids partial UTF-8 bytes. A clipped field can remain unused in an inherited definition.",
+      "externalInterpretation": "Stock MySQL system utf8mb3 character tables, client utf8mb4 and closed empty SQL mode. MySQL 5.6 has materialized derived scopes, later pinned releases have derived_merge=on. Native prepared and text protocols.",
+      "sql": "Preserve authored normalization diagnostics. Name derived slots by generated coordinates when supported or by the checked complete inherited names on the older releases. Preserve each consumer label under its own projection rule.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "scope": "Inherited native UTF-8 names in independent signed scalar projections, including exact alias clipping and character case. Cover nonrecursive CTEs on the modern profiles and derived reads on all profiles.",
+  "caseTable": {
+    "space": "U+0001 through U+FFFF excluding surrogates",
+    "coordinates": 63487,
+    "changed": 696,
+    "sha256": "a002141b7b301a55ca42a0f76606554e3758a29959f308ef3b6859d92b918445",
+    "fromServer": "Observe the native lowercase of each character grouped by Unicode scalar coordinate. Verify a second independently defined native lookup and duplicate corpus for each mapped pair.",
+    "candidateLink": "Compare the compiled PHP table with the exact name pair schedule as data. Check the caller's code shape, underlying name source and PHP distribution linkage."
+  },
+  "observations": [
+    "Compare names as UTF-8 bytes and retain the native catalog prefix up to 256 bytes. A visible UTF-8 prefix ending before an incomplete character cannot serve as a lookup alias for the incomplete native name.",
+    "Compare exact projected values, position, native type and width, and warning phases in both protocols. Include qualifying both sides of a join and proving a case-equivalent spelling binds the same slot.",
+    "Check that accents, exact trailing spaces and expanded spellings stay distinct. The input profiles admit BMP aliases and explicitly record supplementary conversion as open."
+  ],
+  "finite": {
+    "aliasShapes": [
+      "accent-case",
+      "accent-distinct",
+      "normalization-distinct",
+      "case-to-ascii",
+      "no-expanded-match",
+      "complete-clipped",
+      "incomplete-clipped-unused"
+    ],
+    "layout": [
+      "in-order",
+      "reverse",
+      "repeat"
+    ],
+    "standardPlacements": [
+      "local",
+      "nested",
+      "join"
+    ],
+    "ctePlacements": [
+      "definition",
+      "nested-definition",
+      "with-local"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "coordinatesPerRoute": {
+      "legacy": 63,
+      "modern": 126
+    },
+    "complete": "Recover the checked native case pair, whether a prefix was clipped and which positions each normal or joined route consumes. Require a separate exact bitmap for each finite route and compare all cells.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      1753,
+      9743,
+      53017
+    ],
+    "casesPerSeed": 24,
+    "directCasesPerSeed": 24,
+    "timeoutSecondsPerRelease": 600,
+    "shape": "Vary mapped and unmapped Unicode characters, exact separator bytes, source widths, nested and cross-occurrence definitions, common definitions, distinct names and read order.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "A reference to the complete displayed prefix of a clipped incomplete catalog name is a native unknown column.",
+    "Two native case-equivalent output aliases without a separate column list cause a duplicate, including the two case-equivalent ASCII and non-ASCII spellings.",
+    "Accent and composed versus decomposed spelling do not become the same alias.",
+    "A directly selected unprintable inherited position cannot be emitted on a profile without a separate list."
+  ],
+  "faults": [
+    "Use the displayed prefix for catalog binding.",
+    "Use only ASCII case comparison for lookup.",
+    "Apply accent-insensitive or expansion folding.",
+    "Render a retained derived coordinate using a different complete lookup name.",
+    "Ignore a native name or warning difference."
+  ],
+  "trust": [
+    "Native lookup shares the vendor's Unicode case table generation rule with lowercase observation. The independent schedules exercise equality and duplicate detection through actual derived expressions.",
+    "No model-side environment is retained. The pure executable lowercase table is separate from the observers and candidate proof logs."
+  ],
+  "open": [
+    "Supplementary Unicode aliases, non-UTF-8 client settings, wildcard reads of an unprintable label, recursive and lateral definitions, and general expression placements remain independent obligations."
+  ],
+  "referenceSources": [
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/strings/ctype-utf8.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_base.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_view.cc",
+    "https://dev.mysql.com/doc/refman/8.4/en/identifier-length.html"
+  ]
+}
