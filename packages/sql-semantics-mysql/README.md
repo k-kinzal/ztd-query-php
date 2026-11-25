@@ -46,7 +46,9 @@ An ordinary `INSERT ... SELECT` can write native VARCHAR fields, text literals, 
 
 COUNT can read a native VARCHAR field in a global or signed-key grouped query. COUNT skips NULL and COUNT DISTINCT counts the field’s case-sensitive PAD SPACE equivalence classes.
 
-For a grouped projection, `HAVING` can compare signed keys and literals with numeric `COUNT`, `SUM`, `MIN` or `MAX` results. Its operands are resolved before the grouped value is published. An output alias refers to its computed value, while a grouping field of the same name takes precedence under the MySQL resolution rules.
+For a grouped projection, `HAVING` can compare signed keys, integer literals, explicit NULL and numeric `COUNT`, `SUM`, `MIN` or `MAX` results. A NULL-safe comparison such as `HAVING SUM(amount) <=> NULL` also applies to a global group over an empty table. The IR keeps the exact operator and operand order. An output alias refers to its computed value, while a grouping field of the same name takes precedence under the MySQL resolution rules.
+
+When a bare name refers to a grouping field and also names a different projected value, the IR retains that field's coordinate and the decoded name spelling. This preserves stock MySQL's release-specific collision warnings and leaves the grouping field available as a resolved reference for downstream consumers.
 
 MIN and MAX over a native VARCHAR field use its PAD SPACE ordering. They return the original bytes of an extremal value, including trailing spaces, or NULL when no non-NULL value enters the aggregate. Equal extremal values can have different stored bytes.
 

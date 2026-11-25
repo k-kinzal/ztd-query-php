@@ -37,7 +37,7 @@ final class GroupedSelect implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var list<ColumnReference> The ordered partitioning keys. Empty for the global group.
+     * @var list<ColumnReference|GroupNameReference> The ordered partitioning keys. Empty for the global group.
      */
     public readonly array $keys;
 
@@ -49,7 +49,7 @@ final class GroupedSelect implements SemanticsIR
     /**
      * Checks the projected and grouped fields under the same absolute input layout.
      *
-     * @param list<ColumnReference> $keys The ordered key tuple
+     * @param array<array-key, mixed> $keys The ordered key tuple
      * @param non-empty-list<GroupColumn> $columns The named output fields
      */
     public function __construct(
@@ -60,15 +60,17 @@ final class GroupedSelect implements SemanticsIR
         public readonly BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|TruthTest|null $where = null,
         public readonly GroupedComparison|BooleanLiteral|NullLiteral|null $having = null,
     ) {
-        $grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');
         $results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);
-        Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');
-        $members = [];
-        foreach ($grouping as $key) {
-            Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) instanceof ColumnKind, 'Each grouping key must belong to its input.');
-            $members[$key->slot] = true;
+        Check::input(count($keys) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');
+        $message = 'A grouped SELECT needs an owned list of input keys.';
+        Check::input(array_is_list($keys), $message);
+        $grouping = $operands = [];
+        foreach ($keys as $key) {
+            Check::input($key instanceof ColumnReference || $key instanceof GroupNameReference, $message);
+            $grouping[] = $key;
         }
-        $operands = [];
+        $names = new GroupNameScope();
+        $members = $names->members($grouping, $source, $results);
         foreach ($results as $result) {
             $operands[] = $result->value;
         }
@@ -77,6 +79,9 @@ final class GroupedSelect implements SemanticsIR
         }
         $scope = new OccurrenceScope();
         foreach ($operands as $value) {
+            if ($value instanceof GroupNameReference) {
+                $value = $names->owned($value, $source, $results);
+            }
             if ($value instanceof ColumnReference) {
                 Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');
             } elseif ($value instanceof Aggregate && $value->argument instanceof TextColumnReference) {

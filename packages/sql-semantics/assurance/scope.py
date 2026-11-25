@@ -76,6 +76,8 @@ CONTRACTS = {
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
     "mysql-grouped-having-v2.json": "85cdba2d69bb1e59b56b4c734197cabd6dfc8434bf7b38bd88b877e35dd812a1",
+    "mysql-grouped-having-v3.json": "9869fea2af06cafc1c0cc04246324eafcf77c47be01c1d25bd12bff5fbc45895",
+    "mysql-grouped-having-v4.json": "0890ac5e254cbe8a6836bf96ae3df0f2681b11eefea21e5f9af0c6d5c44dca3e",
     "mysql-physical-text-admission-v1.json": "1a03057e1f901d6e680ca329471a99fd7b8b169c39d19fd678cd145891a3b3e2",
     "mysql-physical-text-admission-v2.json": "2b3e592e2799f9f5a810d927c81a554eef8de52ebe370035f17947c7e6c22c25",
     "mysql-varchar-presence-v1.json": "c95df7be6ac93b7b423036791a4b967515d549f48002a342d67bcab4165c1e66",

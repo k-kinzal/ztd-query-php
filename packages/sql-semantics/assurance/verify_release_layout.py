@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v191.json"
-CONTRACT = "fc018a3af3a5665503fba1a3705bfd00402afc2f3166b1bc338c70b174cfe19c"
+CONTRACT_NAME = "release-layout-v192.json"
+CONTRACT = "c7ecf6cc3f4ad2229958cb5fdc19fcf59cc890d4a67f5470437a02f4abd24d55"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -583,11 +583,16 @@ def verify_probe(raw, catalog):
             mysql_ir = r"SqlSemantics\Platform\MySql\Ir" + chr(92)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
-                mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + "ColumnReference", 0,
+                mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,
                 'SELECT `__ztd_source`.`id` AS `id`, sum(`__ztd_source`.`amount`) AS `total` '
                 'FROM `app`.`having_rows` AS `__ztd_source` GROUP BY `__ztd_source`.`id` HAVING (sum(`__ztd_source`.`amount`) > 4294967292)',
-                'SELECT count(*) AS `id` FROM `app`.`having_rows` AS `__ztd_source` GROUP BY `__ztd_source`.`id` HAVING (`__ztd_source`.`id` > 1)',
+                'SELECT count(*) AS `id` FROM `app`.`having_rows` AS `__ztd_source` GROUP BY `id` HAVING (`id` > 1)',
             ], "installed-mysql-having-mismatch", item)
+            require(item.get("mysqlNullableHaving") == [
+                True, True, "<=>", mysql_ir + "NullLiteral", True, 0,
+                'SELECT sum(`__ztd_source`.`amount`) AS `total` FROM `app`.`having_rows` AS `__ztd_source` '
+                'HAVING (NULL <=> sum(`__ztd_source`.`amount`))',
+            ], "installed-mysql-nullable-having-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Mutation\\Delete"):
             require(item.get("booleanReturning") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True,

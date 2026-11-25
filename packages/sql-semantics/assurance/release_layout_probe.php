@@ -54,8 +54,33 @@ function observeMysqlHaving(SqlSemantics\Platform\MySql\Semantics $semantics): a
     $condition = $query->having;
 
     return [$condition::class, $condition->left === $query->columns[1]->value, $condition->left->operator->value,
-        $condition->right::class, $condition->right->decimal, $shadow->having->left::class, $shadow->having->left->slot,
+        $condition->right::class, $condition->right->decimal, $shadow->having->left::class, $shadow->having->left->column->slot,
         $query->toString(), $shadow->toString()];
+}
+
+function observeMysqlNullableHaving(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.having_rows (amount INT)']);
+    $sql = 'SELECT SUM(amount) AS total FROM app.having_rows HAVING NULL <=> SUM(amount)';
+    $query = $semantics->analyze($sql, $context);
+    $batch = $semantics->analyzeAll($sql, $context)[0];
+    $condition = $query->having;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect(
+        $query->source,
+        [],
+        $query->columns,
+        $query->release,
+        null,
+        new SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedComparison(
+            SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator::NullSafeEqual,
+            new SqlSemantics\Platform\MySql\Ir\NullLiteral(),
+            $query->columns[0]->value,
+        ),
+    );
+
+    return [$query == $direct, $query == $batch, $condition->operator->value,
+        $condition->left::class, $condition->right == $query->columns[0]->value,
+        $condition->right->argument->slot, $query->toString()];
 }
 
 function observeMysqlWithAvailability(string $sql, object $definition, object $body): array
@@ -2156,6 +2181,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlVarcharPublication'] = observeMysqlVarchar($semantics);
             $details['mysqlExternalViews'] = observeMysqlExternalViews($semantics);
             $details['mysqlHaving'] = observeMysqlHaving($semantics);
+            $details['mysqlNullableHaving'] = observeMysqlNullableHaving($semantics);
             $details['mysqlSignedMembership'] = observeMysqlSignedMembership($semantics);
             $details['mysqlSignedCase'] = observeMysqlSignedCase($semantics);
             $details['mysqlNativeTruth'] = observeMysqlNativeTruth($semantics);

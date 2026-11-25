@@ -253,7 +253,7 @@ def inventory(root):
             for rule in ("having_clause", "opt_having_clause"):
                 for alternative in rules.get(rule, ()):
                     if " HAVING " in alternative or " HAVING_SYM " in alternative:
-                        related[alternative] = (*related.get(alternative, ()), "mysql-grouped-having-v2.json")
+                        related[alternative] = (*related.get(alternative, ()), "mysql-grouped-having-v4.json")
             for rule in ("with_clause", "with_list", "common_table_expr"):
                 for alternative in rules.get(rule, ()):
                     if alternative != rule + ":" and "RECURSIVE_SYM" not in alternative:

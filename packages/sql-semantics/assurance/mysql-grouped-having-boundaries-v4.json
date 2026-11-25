@@ -1,0 +1,240 @@
+{
+  "revision": "SemanticsIR/mysql-grouped-having-boundaries-4",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-grouped-having-v4.json",
+  "rules": {
+    "Aggregation/GroupNameReference::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->occurrence === 0, 'A bare group reference must belong to its single input.');"
+      ]
+    },
+    "Aggregation/GroupNameScope::collides": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$key = $name->key();",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($result->name->key() === $key && (!$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $value->slot !== $column->slot || $value->occurrence !== $column->occurrence)) {",
+        "        return true;",
+        "    }",
+        "}",
+        "return false;"
+      ]
+    },
+    "Aggregation/GroupNameScope::owned": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$name = $source->columns[$value->column->slot] ?? null;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name !== null && $name->key() === $value->name->key(), 'A bare group name must match its physical input field.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($this->collides($value->column, $value->name, $results), 'A bare group name must match a different projected value.');",
+        "return $value->column;"
+      ]
+    },
+    "Aggregation/GroupNameScope::members": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$members = [];",
+        "foreach ($keys as $key) {",
+        "    $column = $key instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameReference ? $this->owned($key, $source, $results) : $key;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->occurrence === 0 && ($source->columnTypes[$column->slot] ?? null) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'Each grouping key must belong to its input.');",
+        "    $members[$column->slot] = true;",
+        "}",
+        "return $members;"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$results = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($keys) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$message = 'A grouped SELECT needs an owned list of input keys.';",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(array_is_list($keys), $message);",
+        "$grouping = $operands = [];",
+        "foreach ($keys as $key) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($key instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $key instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameReference, $message);",
+        "    $grouping[] = $key;",
+        "}",
+        "$names = new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameScope();",
+        "$members = $names->members($grouping, $source, $results);",
+        "foreach ($results as $result) {",
+        "    $operands[] = $result->value;",
+        "}",
+        "if ($having instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedComparison) {",
+        "    array_push($operands, $having->left, $having->right);",
+        "}",
+        "$scope = new \\SqlSemantics\\Platform\\MySql\\Ir\\From\\OccurrenceScope();",
+        "foreach ($operands as $value) {",
+        "    if ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameReference) {",
+        "        $value = $names->owned($value, $source, $results);",
+        "    }",
+        "    if ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } elseif ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate && $value->argument instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference) {",
+        "        $scope->textColumn($value->argument, [$source]);",
+        "    } elseif ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    $name = $result->name->value;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $name === ltrim($name, \" \\t\\r\\n\\v\\f\") || $source->columns[$value->slot]->value === $name, 'An intrinsic MySQL grouped name must equal its physical input field.');",
+        "}",
+        "$scope->predicate($where, [$source]);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$renderer = new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $column) {",
+        "    $result = $this->operand($column->value, $query->source, $renderer);",
+        "    $name = $column->name->value;",
+        "    $items[] = $result . ($name === ltrim($name, \" \\t\\r\\n\\v\\f\") ? ' AS ' . $column->name->quoted() : '');",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->predicate($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $this->operand($key, $query->source, $renderer);",
+        "}",
+        "$sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);",
+        "if ($query->having instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedComparison) {",
+        "    $left = $this->operand($query->having->left, $query->source, $renderer);",
+        "    $right = $this->operand($query->having->right, $query->source, $renderer);",
+        "    $sql .= ' HAVING (' . $left . ' ' . $query->having->operator->value . ' ' . $right . ')';",
+        "} elseif ($query->having !== null) {",
+        "    $sql .= ' HAVING ' . $renderer->expression($query->having, $query->source);",
+        "}",
+        "return $sql;"
+      ]
+    },
+    "Aggregation/GroupedSql::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameReference) {",
+        "    return $value->name->quoted();",
+        "}",
+        "if (!$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate) {",
+        "    return $renderer->expression($value, $source);",
+        "}",
+        "$argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $source);",
+        "return $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';"
+      ]
+    },
+    "Aggregation/GroupedLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native, 'A grouped projection requires the native language profile.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()), 'A grouped projection requires default MySQL lexical settings.');",
+        "$binding = new \\SqlSemantics\\Platform\\MySql\\Ir\\SourceBinding($operation, $statement->from);",
+        "$aggregate = new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\AggregateBinding();",
+        "$grouping = new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedKeys();",
+        "$keys = $grouping->lower($statement, $binding);",
+        "$where = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\PredicateLowering())->lower($statement->where, $binding);",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($fields !== null, 'A grouped projection requires a resolved output shape.');",
+        "$columns = [];",
+        "$labels = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ProjectionLabel();",
+        "foreach ($statement->items as $index => $target) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression, 'A grouped projection requires explicit result fields.');",
+        "    $field = $fields->at($index);",
+        "    $name = $field->name;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name !== null, 'A grouped result must have a resolved name.');",
+        "    $value = $target->expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate ? $aggregate->lower($target->expression, $binding) : $binding->reference($target->expression);",
+        "    $columns[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupColumn($value, $labels->lower($statement, $field, $name->value));",
+        "}",
+        "$having = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\HavingLowering())->lower($statement->having, $operation, $binding, $aggregate, $columns);",
+        "$source = $binding->source();",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source !== null, 'A grouped SELECT needs one resolved input and at least one named result.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedSelect($source, $grouping->withNames($statement, $keys, $columns), $columns, $profile->grammar, $where, $having);"
+      ]
+    },
+    "Aggregation/GroupedKeys::withNames": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$scope = new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameScope();",
+        "$checked = [];",
+        "foreach ($keys as $index => $key) {",
+        "    $expression = $statement->groupBy->items[$index]->expression ?? null;",
+        "    while ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "        $expression = $expression->operand;",
+        "    }",
+        "    $name = $expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse && $expression->qualifier === null ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($expression->name->value) : null;",
+        "    $checked[] = $name !== null && $scope->collides($key, $name, $results) ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameReference($key, $name) : $key;",
+        "}",
+        "return $checked;"
+      ]
+    },
+    "Aggregation/HavingLowering::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate) {",
+        "    return $aggregate->lower($operand, $binding);",
+        "}",
+        "if ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse) {",
+        "    $resolution = $operation->facts->scalar($operand)->resolution;",
+        "    if ($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Column\\AliasTarget) {",
+        "        $column = $columns[$resolution->field->position] ?? null;",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column !== null, 'A HAVING alias needs an exact projected value.');",
+        "        return $column->value;",
+        "    }",
+        "    $column = $binding->reference($operand);",
+        "    $name = $operand->qualifier === null ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($operand->name->value) : null;",
+        "    return $name !== null && (new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameScope())->collides($column, $name, $columns) ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupNameReference($column, $name) : $column;",
+        "}",
+        "$value = (new \\SqlSemantics\\Platform\\MySql\\Ir\\ExpressionLowering())->lower($operand, $binding, true);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, 'A HAVING comparison needs a numeric group value, an integer literal or SQL NULL.');",
+        "return $value;"
+      ]
+    }
+  },
+  "previousBoundary": {
+    "file": "mysql-grouped-having-boundaries-v3.json",
+    "sha256": "0211d6023bda597910c87c6ca20fc5cbc07531677c07311ae51f37fc7992dc4c"
+  },
+  "retiredFault": {
+    "identifier": "allow-unchecked-null-safe-having",
+    "reason": "Native NULL-safe numeric HAVING is required by the expanded domain.",
+    "replacement": "replace-mysql-null-safe-having"
+  },
+  "sourceFaults": [
+    "allow-mysql-group-name-of-another-field",
+    "force-mysql-group-name-qualification",
+    "retain-mysql-group-key-array-reference"
+  ]
+}

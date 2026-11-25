@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Aggregation;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
+use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator;
@@ -62,7 +63,7 @@ final class HavingLowering
      * Projects an already-resolved result alias or lowers a direct group operand.
      * @param list<GroupColumn> $columns Resolved exposed values by result position
      */
-    public function operand(Scalar $operand, BoundStatement $operation, SourceBinding $binding, AggregateBinding $aggregate, array $columns): Aggregate|ColumnReference|IntegerLiteral|RangeIntegerLiteral
+    public function operand(Scalar $operand, BoundStatement $operation, SourceBinding $binding, AggregateBinding $aggregate, array $columns): Aggregate|ColumnReference|GroupNameReference|IntegerLiteral|NullLiteral|RangeIntegerLiteral
     {
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
@@ -79,10 +80,17 @@ final class HavingLowering
                 return $column->value;
             }
 
-            return $binding->reference($operand);
+            $column = $binding->reference($operand);
+            $name = $operand->qualifier === null ? new Identifier($operand->name->value) : null;
+
+            return $name !== null && (new GroupNameScope())->collides($column, $name, $columns)
+                ? new GroupNameReference($column, $name) : $column;
         }
         $value = (new ExpressionLowering())->lower($operand, $binding, true);
-        Check::input($value instanceof IntegerLiteral || $value instanceof RangeIntegerLiteral, 'A HAVING comparison needs a numeric group value or an integer literal.');
+        Check::input(
+            $value instanceof IntegerLiteral || $value instanceof RangeIntegerLiteral || $value instanceof NullLiteral,
+            'A HAVING comparison needs a numeric group value, an integer literal or SQL NULL.'
+        );
 
         return $value;
     }

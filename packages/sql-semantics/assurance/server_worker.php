@@ -554,7 +554,7 @@ function constructGrouped(string $platform, array $input): SemanticsIR
     }
     return new $select(
         constructSource($platform, $grouped['source'], $input['dialect']),
-        array_map(static fn (array $key): object => constructOperand($namespace, $key), $grouped['keys']),
+        array_map(static fn (array $key): object => constructGroupOperand($namespace, $key), $grouped['keys']),
         $columns,
         $release::from($input['release']),
         constructPredicate($namespace, $grouped['where']),
@@ -567,6 +567,11 @@ function constructGrouped(string $platform, array $input): SemanticsIR
 
 function constructGroupOperand(string $namespace, array $term): object
 {
+    if ($term[0] === 'group-name') {
+        $reference = $namespace . 'Aggregation\\GroupNameReference';
+        $identifier = $namespace . 'Identifier';
+        return new $reference(constructOperand($namespace, $term[1]), new $identifier($term[2]));
+    }
     if ($term[0] !== 'aggregate') {
         return constructOperand($namespace, $term);
     }
@@ -589,6 +594,9 @@ function constructHaving(string $namespace, ?array $term): ?object
 
 function observeGroupOperand(string $namespace, object $value): array
 {
+    if ($value::class === $namespace . 'Aggregation\\GroupNameReference') {
+        return ['group-name', observeOperand($namespace, $value->column), $value->name->value];
+    }
     return $value::class === $namespace . 'Aggregation\\Aggregate'
         ? ['aggregate', $value->operator->value, $value->argument === null ? null : observeOperand($namespace, $value->argument), $value->distinct]
         : observeOperand($namespace, $value);
@@ -612,7 +620,7 @@ function observeGrouped(string $namespace, object $query, string $dialect): arra
         'status' => 'constructed', 'profile' => $query->profileId(), 'sql' => $query->toString(),
         'grouped' => [
             'source' => observeSource($query->source, $dialect, $namespace), 'columns' => $columns,
-            'keys' => array_map(static fn ($key): array => observeOperand($namespace, $key), $query->keys),
+            'keys' => array_map(static fn ($key): array => observeGroupOperand($namespace, $key), $query->keys),
             'where' => observePredicate($namespace, $query->where),
             ...($dialect === 'postgres' ? [
                 'orderBy' => array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $query->orderBy),

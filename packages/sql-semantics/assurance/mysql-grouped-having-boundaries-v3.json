@@ -1,0 +1,67 @@
+{
+  "revision": "SemanticsIR/mysql-grouped-having-boundaries-3",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-grouped-having-v3.json",
+  "rules": {
+    "Aggregation/GroupedComparison::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ([$left, $right] as $operand) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate || !$operand->argument instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $operand->operator === \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\AggregateOperator::Count, 'A numeric HAVING comparison needs a numeric aggregate result.');",
+        "}"
+      ]
+    },
+    "Aggregation/HavingLowering::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate) {",
+        "    return $aggregate->lower($operand, $binding);",
+        "}",
+        "if ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse) {",
+        "    $resolution = $operation->facts->scalar($operand)->resolution;",
+        "    if ($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Column\\AliasTarget) {",
+        "        $column = $columns[$resolution->field->position] ?? null;",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column !== null, 'A HAVING alias needs an exact projected value.');",
+        "        return $column->value;",
+        "    }",
+        "    return $binding->reference($operand);",
+        "}",
+        "$value = (new \\SqlSemantics\\Platform\\MySql\\Ir\\ExpressionLowering())->lower($operand, $binding, true);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, 'A HAVING comparison needs a numeric group value, an integer literal or SQL NULL.');",
+        "return $value;"
+      ]
+    },
+    "Aggregation/GroupedSql::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if (!$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\Aggregate) {",
+        "    return $renderer->expression($value, $source);",
+        "}",
+        "$argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $source);",
+        "return $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';"
+      ]
+    }
+  },
+  "previousBoundary": {
+    "file": "mysql-grouped-having-boundaries-v2.json",
+    "sha256": "e4abae1a346683fb3fef78c7cfc0d6578d1e640f7c1d0be2e3dceb9aba77122c"
+  },
+  "retiredFault": {
+    "identifier": "allow-unchecked-null-safe-having",
+    "reason": "Native NULL-safe numeric HAVING is required by the expanded domain.",
+    "replacement": "replace-mysql-null-safe-having"
+  }
+}

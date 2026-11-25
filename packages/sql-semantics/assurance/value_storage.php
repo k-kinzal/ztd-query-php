@@ -157,6 +157,16 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'mysql-grouping-key-copy') {
+            requireShape($short === 'Aggregation\\GroupedSelect' && $property === 'keys'
+                && in_array('Aggregation/GroupedSelect::__construct', $checkedBoundaries, true)
+                && in_array('Aggregation/GroupNameScope::members', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'grouping',
+                'MySQL grouping keys must come from the checked detached key sequence.');
+
+            continue;
+        }
+
         if ($rule === 'postgres-index-target-copy') {
             requireShape($short === 'Schema\\Index\\DropIndex' && $property === 'targets'
                 && in_array('Schema/Index/DropIndex::__construct', $checkedBoundaries, true)

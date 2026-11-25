@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Aggregation;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 
@@ -39,5 +42,28 @@ final class GroupedKeys
         }
 
         return $keys;
+    }
+
+    /**
+     * Retains a bare spelling when the resolved grouping key also names a different result.
+     * @param list<ColumnReference> $keys
+     * @param list<GroupColumn> $results
+     * @return list<ColumnReference|GroupNameReference>
+     */
+    public function withNames(Select $statement, array $keys, array $results): array
+    {
+        $scope = new GroupNameScope();
+        $checked = [];
+        foreach ($keys as $index => $key) {
+            $expression = $statement->groupBy->items[$index]->expression ?? null;
+            while ($expression instanceof Grouped) {
+                $expression = $expression->operand;
+            }
+            $name = $expression instanceof ColumnUse && $expression->qualifier === null
+                ? new Identifier($expression->name->value) : null;
+            $checked[] = $name !== null && $scope->collides($key, $name, $results) ? new GroupNameReference($key, $name) : $key;
+        }
+
+        return $checked;
     }
 }

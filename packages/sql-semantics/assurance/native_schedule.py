@@ -149,7 +149,7 @@ NATIVE = {
     "mysql_index_visibility": "mysql-index-visibility-evidence-v2.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
-    "mysql_grouped_having": "mysql-grouped-having-v2.json",
+    "mysql_grouped_having": "mysql-grouped-having-v4.json",
     "mysql_with_projection": "mysql-with-projection-v1.json",
     "mysql_varchar_presence": "mysql-varchar-presence-v1.json",
     "mysql_varchar_effects": "mysql-varchar-effects-v1.json",

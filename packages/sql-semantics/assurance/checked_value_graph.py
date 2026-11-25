@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v22.json"
-CONTRACT_DIGEST = "922c953d65d278b102228463b928c65bf626243b80d67bfe9afdd8a654af6cd2"
+CONTRACT = "closed-value-graph-v23.json"
+CONTRACT_DIGEST = "e10a775f8875ffa8c5849fdf6029e2c3cd32fcf89829aa1035baa2d8b3ee1787"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -86,6 +86,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("erase-postgres-membership-copy", "value-closure-unverified-list"),
         ("erase-mysql-membership-copy", "value-closure-unverified-list"),
         ("erase-mysql-case-copy", "value-closure-unverified-list"),
+        ("erase-mysql-group-key-scope", "value-closure-unverified-list"),
         ("erase-writable-trigger-boundary", "value-closure-unverified-list"),
         ("erase-ordered-trigger-action-boundary", "value-closure-unverified-list"),
         ("erase-sqlite-appended-bindings", "value-closure-unverified-list"),
@@ -141,6 +142,10 @@ def controls(manifest, constructors, outcomes, specification):
             after = None
         elif name == "erase-mysql-case-copy":
             before = "Expression/Choice/SignedCase::__construct"
+            mutated["mysql"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-mysql-group-key-scope":
+            before = "Aggregation/GroupNameScope::owned"
             mutated["mysql"]["checkedBoundaries"].remove(before)
             after = None
         elif name == "erase-writable-trigger-boundary":

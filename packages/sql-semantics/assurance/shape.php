@@ -825,6 +825,10 @@ if ($dialect !== 'sqlite') {
     $properties['Aggregation\\Aggregate'] = ['operator' => ['Aggregation\\AggregateOperator'], 'argument' => ['?ColumnReference'], 'distinct' => ['bool']];
     if ($dialect === 'mysql') {
         $properties['Aggregation\\Aggregate']['argument'] = ['ColumnReference', 'From\\TextColumnReference', 'null'];
+        $properties['Aggregation\\GroupNameReference'] = ['column' => ['ColumnReference'], 'name' => ['Identifier']];
+        $methods['Aggregation\\GroupNameReference'] = ['__construct'];
+        $internal[] = 'Aggregation\\GroupNameScope';
+        $pureCollaborators[] = 'Aggregation\\GroupNameScope';
     }
     $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Aggregate', 'ColumnReference'], 'name' => ['Identifier']];
     $methods['Aggregation\\Aggregate'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
@@ -871,6 +875,10 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'mysql' || $dialect === 'postgres') {
         $properties['Aggregation\\GroupedSelect']['having'] = ['Aggregation\\GroupedComparison', 'BooleanLiteral', 'NullLiteral', 'null'];
         $groupTerms =  ['Aggregation\\Aggregate', 'ColumnReference', $dialect === 'mysql' ? 'Predicate\\RangeIntegerLiteral' : 'Expression\\WideIntegerLiteral', 'IntegerLiteral'];
+        if ($dialect === 'mysql') {
+            $groupTerms[] = 'Aggregation\\GroupNameReference';
+            $groupTerms[] = 'NullLiteral';
+        }
         sort($groupTerms);
         $properties['Aggregation\\GroupedComparison'] = ['operator' => ['Predicate\\IntegerOperator'], 'left' => $groupTerms, 'right' => $groupTerms];
         $methods['Aggregation\\GroupedComparison'] = ['__construct'];
@@ -2040,9 +2048,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v78.json';
+    $storagePath = __DIR__ . '/value-storage-v79.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '688d9daf5256997b6d126eb138b0deb03bf747a78d8acc2032e3f598a5053a07',
+        hash_file('sha256', $storagePath) === '7e5a1d0144293ac7fae4ba02e9d355e803ee49d8655911cf37264b644c6d646c',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

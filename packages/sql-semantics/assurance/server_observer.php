@@ -117,7 +117,12 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
             $result['collations'] = postgresResultCollations($pdo, $input['sql'], count($fields));
         }
         if ($warnings) {
-            $result['warningCount'] = warningCount($pdo);
+            $details = ($input['observeMysqlGroupWarnings'] ?? false) === true;
+            $result['warningCount'] = warningCount($pdo, $details);
+            if (is_array($result['warningCount'])) {
+                $result['nativeWarnings'] = $result['warningCount'];
+                $result['warningCount'] = count($result['nativeWarnings']);
+            }
         }
     } catch (PDOException $error) {
         $result = ['status' => 'db-error', 'state' => $error->errorInfo[0]];
@@ -194,10 +199,13 @@ function postgresResultCollations(PDO $pdo, string $sql, int $width): array
     return $result;
 }
 
-function warningCount(PDO $pdo): int
+function warningCount(PDO $pdo, bool $details = false): int|array
 {
     $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
     try {
+        if ($details) {
+            return $pdo->query('SHOW WARNINGS')->fetchAll(PDO::FETCH_NUM);
+        }
         $count = $pdo->query('SHOW COUNT(*) WARNINGS')->fetchColumn();
         if (!is_numeric($count)) {
             throw new RuntimeException('Expected a server warning count.');

@@ -109,6 +109,8 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-native-truth-boundaries-v1.json', 'd54b034739fe6a1fd2823478166a9da9d06d3a85c711b358ebf04a017622c39f'],
             ['mysql-signed-comparison-widths-boundaries-v1.json', '2996f620a3a9f15c1e51356a75865ca030a077cb6689a55cb0a5d030837db0fa'],
             ['mysql-grouped-having-boundaries-v2.json', 'e4abae1a346683fb3fef78c7cfc0d6578d1e640f7c1d0be2e3dceb9aba77122c'],
+            ['mysql-grouped-having-boundaries-v3.json', '0211d6023bda597910c87c6ca20fc5cbc07531677c07311ae51f37fc7992dc4c'],
+            ['mysql-grouped-having-boundaries-v4.json', '8bbc6cc1ae54317929f711ed902463b6f72fe6c4f092d15907363575e2ea0783'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],

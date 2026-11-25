@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Aggregation;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
@@ -35,7 +36,7 @@ final class GroupedSql
         }
         $keys = [];
         foreach ($query->keys as $key) {
-            $keys[] = $renderer->expression($key, $query->source);
+            $keys[] = $this->operand($key, $query->source, $renderer);
         }
 
         $sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);
@@ -51,10 +52,13 @@ final class GroupedSql
     }
 
     /**
-     * Emits a checked grouping field, numeric literal or aggregate.
+     * Emits a checked grouping field, literal or aggregate.
      */
-    public function operand(Aggregate|ColumnReference|IntegerLiteral|RangeIntegerLiteral $value, TableSource $source, SelectSql $renderer): string
+    public function operand(Aggregate|ColumnReference|GroupNameReference|IntegerLiteral|NullLiteral|RangeIntegerLiteral $value, TableSource $source, SelectSql $renderer): string
     {
+        if ($value instanceof GroupNameReference) {
+            return $value->name->quoted();
+        }
         if (!$value instanceof Aggregate) {
             return $renderer->expression($value, $source);
         }
