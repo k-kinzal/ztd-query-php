@@ -111,7 +111,7 @@
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-var">$kind</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">columnKinds</span>[<span class="tok-var">$slot</span>] ?? <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(</span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>            <span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-var">$slot</span>]) &amp;&amp; <span class="tok-var">$kind</span> !== <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-str">&#039;A B-tree in this profile requires integer or Boolean physical column types.&#039;</span></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-str">&#039;A B-tree in this profile requires integer, Boolean or text physical column types.&#039;</span></span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        );</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">IndexField</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-var">$slot</span>], <span class="tok-var">$kind</span>);</span>
