@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v188.json"
-CONTRACT = "530419e94c9afa2ee66d69e3e3076f121f00224f9e3203468cf31dc2903cdbb2"
+CONTRACT_NAME = "release-layout-v189.json"
+CONTRACT = "203195a048fcf9c5a2b131b501dea000ef78bacd32ab7e81367cd83327db9822"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -547,6 +547,13 @@ def verify_probe(raw, catalog):
                     and item["sql"] == 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `app`.`answer` (`value`) AS SELECT 42 AS `__ztd_c0`',
                     "installed-mysql-create-view-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
+            choice = (
+                "SELECT (CASE WHEN NULL THEN 2147483648 WHEN 1 THEN `__ztd_source`.`b` ELSE `__ztd_source`.`a` END) "
+                "AS `choice` FROM `app`.`case_release` AS `__ztd_source`"
+            )
+            require(item.get("mysqlSignedCase") == [True, True,
+                {"storage":"INTEGER","nullable":True}, {"storage":"BIGINT","nullable":False},
+                ["b","a"], choice, choice], "installed-mysql-signed-case-mismatch", item)
             require(item.get("mysqlSignedMembership") == [True, True, ["a", "b", "c", "d", "e"],
                 [["TINYINT", True], ["SMALLINT", False], ["MEDIUMINT", True], "int-not-null", ["BIGINT", True]],
                 [1, 2, 3, 4, None, "2147483648", "2147483648"], True,

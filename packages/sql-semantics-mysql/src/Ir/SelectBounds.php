@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
@@ -51,7 +52,7 @@ final class SelectBounds
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
-                if ($expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TextComparison) {
+                if ($expression instanceof SignedCase || $expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TextComparison) {
                     $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
                         : 'A predicate slot must belong to the SELECT source.';
                     $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);

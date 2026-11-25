@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Ordering;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\ParameterLowering;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCaseLowering;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedTextLowering;
 use SqlSemantics\Platform\MySql\Ir\Expression\IntegralCastLowering;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
@@ -17,6 +18,7 @@ use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison as ParsedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
@@ -49,9 +51,8 @@ final class ProjectionColumns
         $parameterPosition = 0;
         $labels = new ProjectionLabel();
         foreach ($fields as $field) {
-            $name = $field->name;
-            Check::input($name !== null, 'The result must have a resolved name.');
-            $label = $labels->lower($statement, $field, $name->value);
+            Check::input($field->name !== null, 'The result must have a resolved name.');
+            $label = $labels->lower($statement, $field, $field->name->value);
             $expression = $field->expression;
             if ($expression === null || $expression instanceof ColumnUse) {
                 $resolution = $field->resolution;
@@ -68,6 +69,7 @@ final class ProjectionColumns
                 continue;
             }
             $typed = match (true) {
+                $operand instanceof CaseExpression => (new SignedCaseLowering())->lower($operand, $binding),
                 $operand instanceof ParsedComparison => $comparisons->lower($operand, $binding),
                 $operand instanceof Collated => (new CollatedTextLowering())->lower($operand, $binding),
                 default => null,

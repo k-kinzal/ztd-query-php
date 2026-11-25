@@ -299,6 +299,27 @@ function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics
     ];
 }
 
+function observeMysqlSignedCase(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $legacy = new SqlSemantics\Platform\MySql\Semantics(grammarVersion: 'mysql-5.6.51');
+    $declarations = ['CREATE TABLE app.case_release (a MEDIUMINT NOT NULL, b BIGINT NOT NULL)'];
+    $written = 'SELECT CASE WHEN NULL THEN 2147483648 WHEN 1 THEN b ELSE a END AS choice FROM app.case_release';
+    $modern = $semantics->analyze($written, $semantics->context($declarations));
+    $historical = $legacy->analyze($written, $legacy->context($declarations));
+    [$batch] = $semantics->analyzeAll($written, $semantics->context($declarations));
+    $true = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('1');
+    $wide = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('2147483648');
+    $null = new SqlSemantics\Platform\MySql\Ir\NullLiteral();
+    $direct = new SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase([
+        new SqlSemantics\Platform\MySql\Ir\Expression\Choice\SearchedCaseArm($null, $wide),
+        new SqlSemantics\Platform\MySql\Ir\Expression\Choice\SearchedCaseArm($true, new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(0)),
+    ], otherwise: new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(1));
+
+    return [$modern == $batch, $direct == $modern->columns[0]->expression,
+        $historical->signedCaseLayout(0), $modern->signedCaseLayout(0),
+        array_map(static fn ($name) => $name->value, $modern->source->columns), $modern->toString(), $historical->toString()];
+}
+
 function observeMysqlSignedMembership(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE app.membership_release '
@@ -2098,6 +2119,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlExternalViews'] = observeMysqlExternalViews($semantics);
             $details['mysqlHaving'] = observeMysqlHaving($semantics);
             $details['mysqlSignedMembership'] = observeMysqlSignedMembership($semantics);
+            $details['mysqlSignedCase'] = observeMysqlSignedCase($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

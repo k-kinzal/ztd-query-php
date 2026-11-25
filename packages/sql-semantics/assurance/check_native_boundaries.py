@@ -887,6 +887,10 @@ def faults(engine):
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
         shared.extend([
+            Fault("mysql-case-use-caller-arm-array", "Expression/Choice/SignedCase::__construct",
+                  "$this->arms = $owned;", "$this->arms = $arms;"),
+            Fault("mysql-case-skip-result-in-scope", "Expression/Choice/SignedCase::children",
+                  "$children[] = $arm->result;", ""),
             Fault("mysql-membership-use-caller-alternative-array", "Predicate/IntegerMembership::__construct",
                   "$this->alternatives = $terms;", "$this->alternatives = $alternatives;"),
             Fault("mysql-membership-skip-alternative-traversal", "From/OccurrenceScope::checkTree",

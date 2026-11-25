@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
@@ -19,6 +20,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
@@ -74,6 +76,11 @@ final class CompoundShape
             $column instanceof CollatedText => ResultKind::Text,
             $column instanceof UnsignedCast => ResultKind::UnsignedInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
+            $column instanceof SignedCase => match ($query->signedCaseLayout($position)['storage'] ?? null) {
+                null => ResultKind::Unknown,
+                IntegerStorage::Wide => ResultKind::WideInteger,
+                IntegerStorage::Tiny, IntegerStorage::Small, IntegerStorage::Medium, IntegerStorage::Standard => ResultKind::Integer,
+            },
             $column instanceof ColumnReference => ResultKind::Integer,
             $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerMembership, $column instanceof IntegerRange, $column instanceof NullTest, $column instanceof TextComparison, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,
         };

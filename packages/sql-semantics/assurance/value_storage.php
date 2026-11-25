@@ -148,6 +148,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'mysql-signed-case-arm-copy') {
+            requireShape($short === 'Expression\\Choice\\SignedCase' && $property === 'arms'
+                && in_array('Expression/Choice/SignedCase::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'owned',
+                'Signed CASE arms must come from the verified detached copy.');
+
+            continue;
+        }
+
         if ($rule === 'postgres-index-target-copy') {
             requireShape($short === 'Schema\\Index\\DropIndex' && $property === 'targets'
                 && in_array('Schema/Index/DropIndex::__construct', $checkedBoundaries, true)

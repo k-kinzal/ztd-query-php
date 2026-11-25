@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SimpleCaseArm;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
@@ -127,5 +129,19 @@ final class SelectSqlTest extends TestCase
         $comparison = new TextComparison(TextOperator::NullSafeEqual, new TextColumnReference(0), new NullLiteral());
 
         self::assertSame('(`__ztd_source`.`label` <=> NULL)', (new SelectSql())->textComparison($comparison, $source, 0, true));
+    }
+
+    public function testSignedCaseEmitsAllSimpleBranchesAndFallback(): void
+    {
+        $one = new RangeIntegerLiteral('1');
+        $null = new NullLiteral();
+        $case = new SignedCase([new SimpleCaseArm($one, $null), new SimpleCaseArm($null, $one)], $one, $null);
+
+        self::assertSame('(CASE 1 WHEN 1 THEN NULL WHEN NULL THEN 1 ELSE NULL END)', (new SelectSql())->signedCase($case, null, 0, true));
+    }
+
+    public function testCaseOperandEmitsAnExplicitBoolean(): void
+    {
+        self::assertSame('TRUE', (new SelectSql())->caseOperand(new BooleanLiteral(true), null, 0, true));
     }
 }

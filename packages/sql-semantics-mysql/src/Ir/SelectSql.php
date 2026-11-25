@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
@@ -73,11 +74,12 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
+            $expression instanceof SignedCase => $this->signedCase($expression, $source, $offset, $qualify),
             $expression instanceof SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',
             $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',
             $expression instanceof IntegerMembership => $this->integerMembership($expression, $source, $offset, $qualify),
@@ -132,6 +134,42 @@ final class SelectSql
         $upper = $this->rangeOperand($range->upper, $source, $offset, $qualify);
 
         return '(' . $subject . ($range->negated ? ' NOT BETWEEN ' : ' BETWEEN ') . $lower . ' AND ' . $upper . ')';
+    }
+
+    /**
+     * Emits the native decision form and every ordered branch.
+     */
+    public function signedCase(SignedCase $choice, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $sql = '(CASE';
+        if ($choice->subject !== null) {
+            $sql .= ' ' . $this->caseOperand($choice->subject, $source, $offset, $qualify);
+        }
+        foreach ($choice->arms as $arm) {
+            $sql .= ' WHEN ' . $this->caseOperand($arm->decision, $source, $offset, $qualify)
+                . ' THEN ' . $this->caseOperand($arm->result, $source, $offset, $qualify);
+        }
+        if ($choice->otherwise !== null) {
+            $sql .= ' ELSE ' . $this->caseOperand($choice->otherwise, $source, $offset, $qualify);
+        }
+
+        return $sql . ' END)';
+    }
+
+    /**
+     * Emits a checked signed decision or result from the same occurrence.
+     */
+    public function caseOperand(
+        BooleanLiteral|ColumnReference|IntegralColumnReference|IntegerMembership|NullLiteral|RangeIntegerLiteral|SignedCase $value,
+        TableSource|Join|null $source,
+        int $offset,
+        bool $qualify,
+    ): string {
+        return match (true) {
+            $value instanceof ColumnReference, $value instanceof IntegralColumnReference => $this->column($value, $source, $offset, $qualify),
+            $value instanceof BooleanLiteral, $value instanceof NullLiteral, $value instanceof RangeIntegerLiteral,
+            $value instanceof IntegerMembership, $value instanceof SignedCase => $this->expression($value, $source, $offset, $qualify),
+        };
     }
 
     /**

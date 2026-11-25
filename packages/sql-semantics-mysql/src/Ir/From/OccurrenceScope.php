@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\From;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
@@ -49,7 +50,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanLiteral|CollatedText|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral|IntegralColumnReference|TextColumnReference|TextLiteral $operand,
+        BooleanLiteral|CollatedText|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral|SignedCase|IntegralColumnReference|TextColumnReference|TextLiteral $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
@@ -72,6 +73,7 @@ final class OccurrenceScope
         $children = match (true) {
             $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],
             $operand instanceof IntegerComparison, $operand instanceof TextComparison => [$operand->left, $operand->right],
+            $operand instanceof SignedCase => $operand->children(),
             $operand instanceof IntegerMembership => [$operand->subject, ...$operand->alternatives],
             $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
             $operand instanceof NullTest => [$operand->operand],

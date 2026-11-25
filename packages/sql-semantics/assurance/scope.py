@@ -29,6 +29,7 @@ CONTRACTS = {
     "sqlite-between-v1.json": "8cf61799f6bd352e6b182ce1c8e9fc1f43d2015b1c9b3b7fa835fd38920cd639",
     "mysql-signed-range-v3.json": "2c2a318ddc782dd6052e9e9935880ce64c83d7106b0a85867adf70ddd42a35be",
     "mysql-signed-membership-v2.json": "bbef029acbce1b20be90aff24c796fc395b4ee13ccd1b5d2e58a9e1334aac7bf",
+    "mysql-signed-case-v1.json": "8441115abb49621405f9b4edae5ef4a06a5e006ccd6b20bb1e612c4753f19046",
     "mysql-signed-casts-v2.json": "b6a092682ba55ea4ca044c0131d35612de5cb42a8d85130e2834bb8ea395c069",
     "mysql-unsigned-casts-v3.json": "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b",
     "mysql-signed-quotient-v1.json": "66925621bd8a6e02a6e006be1163f34622ba75af77497f1958e052b7f9097996",

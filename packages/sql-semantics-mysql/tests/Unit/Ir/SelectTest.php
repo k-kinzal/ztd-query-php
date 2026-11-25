@@ -8,8 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SearchedCaseArm;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
@@ -51,5 +54,15 @@ final class SelectTest extends TestCase
         $quote = chr(96);
         self::assertSame('SELECT ' . $quote . '__ztd_source' . $quote . '.' . $quote . ' amount' . $quote
             . ' FROM ' . $quote . 'app' . $quote . '.' . $quote . 'events' . $quote . ' AS ' . $quote . '__ztd_source' . $quote, $value->toString());
+    }
+
+    public function testSignedCaseLayoutDistinguishesNullStorageAndMissingPosition(): void
+    {
+        $null = new NullLiteral();
+        $case = new SignedCase([new SearchedCaseArm($null, $null)]);
+        $result = new Select([new ResultColumn($case, new Identifier('answer'))]);
+
+        self::assertSame(['storage' => null, 'nullable' => true], $result->signedCaseLayout(0));
+        self::assertNull($result->signedCaseLayout(1));
     }
 }

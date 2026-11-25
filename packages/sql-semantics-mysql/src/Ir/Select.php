@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\CaseLayout;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\Ordering\Limit;
@@ -14,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -71,6 +74,17 @@ final class Select implements SemanticsIR
         foreach ($this->orderBy as $key) {
             Check::input($key->position <= count($results), 'An output order position must belong to the projection.');
         }
+    }
+
+    /**
+     * Gives the native output heading for a signed CASE at the zero-based result position.
+     * @return array{storage:IntegerStorage|null,nullable:bool}|null
+     */
+    public function signedCaseLayout(int $position): ?array
+    {
+        $expression = $this->columns[$position]->expression ?? null;
+
+        return $expression instanceof SignedCase ? (new CaseLayout())->resolve($expression, $this->release, $this->source) : null;
     }
 
     /**

@@ -104,6 +104,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-create-btree-index-boundaries-v3.json', '4ab7ab260a3d18b982a41b0d38662d64ee43086302a05c171909b67cc8810771'],
             ['mysql-drop-native-index-boundaries-v21.json', 'eb6daee6e9270f91f6a85584cdd6b1eb2c1f5b6409be7977909ece83f1430c9f'],
             ['mysql-signed-membership-boundaries-v1.json', 'c0e54569795d25fc2a0d3ecba052b8fdc102268c15972db62cd7f3debd5ae753'],
+            ['mysql-signed-case-boundaries-v1.json', '250c6f50078c0865367fa9050a8cc9763775b79910256152c4e59d55bcd60feb'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -408,6 +409,8 @@ function checkNativeBoundaries(
                 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\RangeIntegerLiteral',
                 'Ir\\Predicate\\IntegerMembership', 'Ir\\Predicate\\Membership\\IntegerMembershipLowering',
                 'Ir\\From\\IntegralColumnReference', 'Ir\\From\\IntegralSlot', 'Statement\\Expression\\Predicate\\InList',
+                'Ir\\Expression\\Choice\\SignedCase', 'Ir\\Expression\\Choice\\SimpleCaseArm', 'Ir\\Expression\\Choice\\SearchedCaseArm',
+                'Ir\\Expression\\Choice\\CaseLayout', 'Ir\\Expression\\Choice\\SignedCaseLowering', 'Statement\\Expression\\Branching\\CaseExpression',
                 'Ir\\From\\MergedJoinLowering', 'Ir\\SourceBinding', 'Ir\\Predicate\\PredicateLowering', 'Statement\\Relation\\Join\\JoinOperator', 'Statement\\Relation\\TableList', 'Model\\Statement\\Identifier\\Name',
                 'Statement\\Expression\\Operator\\Arithmetic as ParsedArithmetic', 'Statement\\Expression\\Predicate\\Between as ParsedRange',
                 'Statement\\Literal\\BooleanLiteral as ParsedBoolean', 'Statement\\Literal\\NullLiteral as ParsedNull',

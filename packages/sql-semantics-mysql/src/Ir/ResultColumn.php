@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
@@ -33,7 +34,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast $expression,
+        public readonly Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast $expression,
         public readonly Identifier $name,
     ) {
         Check::input($expression instanceof ColumnReference || $expression instanceof TextColumnReference || $name->value === ltrim($name->value, " \t\r\n\v\f"), 'A MySQL result name cannot start with SQL whitespace.');

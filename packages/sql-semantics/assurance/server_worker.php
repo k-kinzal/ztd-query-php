@@ -43,6 +43,7 @@ function constructOperand(string $namespace, array $data): object
         'integral-slot' => 'From\\IntegralColumnReference',
         'operation' => 'Arithmetic',
         'comparison' => 'Predicate\\IntegerComparison',
+        'signed-case' => 'Expression\\Choice\\SignedCase',
         'int4-case' => 'Expression\\IntegerCase',
         'builtin-cast' => 'Expression\\BuiltinCast',
         'signed-cast' => 'Expression\\SignedCast',
@@ -90,6 +91,17 @@ function constructOperand(string $namespace, array $data): object
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
             $data[1],
+        ),
+        'signed-case' => new $type(
+            array_map(static function (array $arm) use ($namespace): object {
+                $kind = match ($arm[0]) {
+                    'simple' => $namespace . 'Expression\\Choice\\SimpleCaseArm',
+                    'searched' => $namespace . 'Expression\\Choice\\SearchedCaseArm',
+                };
+                return new $kind(constructOperand($namespace, $arm[1]), constructOperand($namespace, $arm[2]));
+            }, $data[2]),
+            $data[1] === null ? null : constructOperand($namespace, $data[1]),
+            $data[3] === null ? null : constructOperand($namespace, $data[3]),
         ),
         'signed-membership' => new $type(
             constructOperand($namespace, $data[2]),
@@ -165,6 +177,13 @@ function observeOperand(string $namespace, object $value): array
             observeOperand($namespace, $value->subject), observeOperand($namespace, $value->lower), observeOperand($namespace, $value->upper),
         ],
         $namespace . 'Predicate\\RangeIntegerLiteral' => ['range-integer', $value->decimal, $value->leadingZeroes, $value->negativeZero],
+        $namespace . 'Expression\\Choice\\SignedCase' => ['signed-case',
+            $value->subject === null ? null : observeOperand($namespace, $value->subject),
+            array_map(static fn ($arm): array => [
+                $arm instanceof SqlSemantics\Platform\MySql\Ir\Expression\Choice\SimpleCaseArm ? 'simple' : 'searched',
+                observeOperand($namespace, $arm->decision), observeOperand($namespace, $arm->result),
+            ], $value->arms),
+            $value->otherwise === null ? null : observeOperand($namespace, $value->otherwise)],
         $namespace . 'Expression\\IntegerCase' => ['int4-case',
             array_map(static fn ($arm) => [observePredicate($namespace, $arm->condition), observeOperand($namespace, $arm->result)], $value->arms),
             $value->otherwise === null ? null : observeOperand($namespace, $value->otherwise)],
@@ -2927,6 +2946,8 @@ function observeStatement(array $input): array
         'status' => 'constructed',
         'profile' => $value->profileId(),
         ...observeSetQuery($namespace, $value, $input['dialect'], ($input['observeExactIntegralSlots'] ?? false) === true),
+        ...(($input['observeSignedCaseLayouts'] ?? false) === true && $value instanceof SqlSemantics\Platform\MySql\Ir\Select
+            ? ['signedCaseLayouts' => array_map($value->signedCaseLayout(...), array_keys($value->columns))] : []),
         ...($value instanceof SqlSemantics\Platform\MySql\Ir\Rows\Compound ? ['resultKinds' => mysqlSetKinds($value)] : []),
         'sql' => $value->toString(),
     ];

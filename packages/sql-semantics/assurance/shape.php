@@ -177,7 +177,23 @@ if ($dialect === 'mysql') {
     $properties[$membership] = ['subject' => [...$rangeLeaves, $integralReference], 'alternatives' => ['array'], 'negated' => ['bool']];
     sort($properties[$membership]['subject']);
     $methods[$integralReference] = $methods[$integralType] = $methods[$membership] = ['__construct'];
-    array_push($properties['ResultColumn']['expression'], $range, $membership);
+    $signedCase = 'Expression\\Choice\\SignedCase';
+    $simpleCaseArm = 'Expression\\Choice\\SimpleCaseArm';
+    $searchedCaseArm = 'Expression\\Choice\\SearchedCaseArm';
+    $caseAtoms = ['BooleanLiteral', 'ColumnReference', $integralReference, 'NullLiteral', $rangeLiteral];
+    $caseResults = [...$caseAtoms, $signedCase];
+    $properties[$simpleCaseArm] = ['decision' => $caseAtoms, 'result' => $caseResults];
+    $properties[$searchedCaseArm] = ['decision' => [...$caseAtoms, $membership], 'result' => $caseResults];
+    $properties[$signedCase] = ['subject' => [...$caseAtoms, 'null'], 'otherwise' => [...$caseResults, 'null'], 'arms' => ['array']];
+    foreach ([$simpleCaseArm, $searchedCaseArm, $signedCase] as $caseRole) {
+        foreach ($properties[$caseRole] as &$typeSet) {
+            sort($typeSet);
+        }
+        unset($typeSet);
+    }
+    $methods[$simpleCaseArm] = $methods[$searchedCaseArm] = ['__construct'];
+    $methods[$signedCase] = ['__construct', 'children'];
+    array_push($properties['ResultColumn']['expression'], $range, $membership, $signedCase);
     sort($properties['ResultColumn']['expression']);
 }
 $selectBounds = $dialect === 'sqlite' ? 'From\\SelectBounds' : 'SelectBounds';
@@ -197,6 +213,10 @@ if ($dialect === 'mysql') {
     array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'Predicate\\Membership\\IntegerMembershipLowering', 'From\\VarcharLowering', 'Predicate\\Text\\TextComparisonLowering', 'Expression\\CollatedTextLowering');
 }
 $pureCollaborators = [$selectBounds, 'SelectSql'];
+if ($dialect === 'mysql') {
+    array_push($internal, 'Expression\\Choice\\CaseLayout', 'Expression\\Choice\\SignedCaseLowering');
+    $pureCollaborators[] = 'Expression\\Choice\\CaseLayout';
+}
 if ($dialect === 'postgres') {
     $internal[] = 'Binding\\ParameterSignature';
     $pureCollaborators[] = 'Binding\\ParameterSignature';
@@ -1720,6 +1740,9 @@ if ($dialect !== 'sqlite') {
     $methods['Predicate\\IntegerOperator'] = [];
     $enumCases['Predicate\\IntegerOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
 }
+if ($dialect === 'mysql') {
+    array_splice($methods['Select'], 1, 0, ['signedCaseLayout']);
+}
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
 $allowed = [
     $snapshot, 'SqlSemantics\\SemanticsIR',
@@ -1728,7 +1751,7 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
-$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','is_object','strpbrk','substr_count','str_repeat','bin2hex'];
+$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_shift','array_push','array_merge','array_is_list','is_object','strpbrk','substr_count','str_repeat','bin2hex'];
 
 function requireShape(bool $condition, string $detail): void
 {
@@ -2011,6 +2034,7 @@ try {
             ['mysql-mixed-index-storage-v2.json', '1cf5804f5b41033e809de4ec592ea89334b69bc2dc3a1c80db0c4c8ba50c59cb'],
             ['mysql-foreign-key-drop-storage-v1.json', 'c75c4457de69363e2d1cb77c933d45dad428b9ab423b0bc2f9c48118c3587c69'],
             ['mysql-signed-membership-storage-v1.json', 'b921dc06175b3c42d6b95feef9e2df8b8ab36e074e94c18d5d4dbb8661545099'],
+            ['mysql-signed-case-storage-v1.json', '9d0613b8bd943beece04426f91b8067e92ab68be33a3959d4d9f665d0aea4b54'],
         ] as [$catalogue, $digest]) {
             $indexStorage = __DIR__ . '/' . $catalogue;
             requireShape(hash_file('sha256', $indexStorage) === $digest, 'MySQL native index list storage differs from its recorded revision');

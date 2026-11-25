@@ -1,0 +1,8 @@
+{
+  "revision": "SemanticsIR/mysql-signed-case-storage-1",
+  "approval": "pending-human-review",
+  "owner": "Expression/Choice/SignedCase",
+  "storage": {
+    "arms": "mysql-signed-case-arm-copy"
+  }
+}
