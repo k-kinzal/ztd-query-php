@@ -258,8 +258,7 @@ def check_value(item, response):
         header = direct(item)["createSchema"]
         same({key: header[key] for key in ("name", "owner", "ifNotExists")}, response["createSchema"])
         same([resolve(member) for member in header["tables"]], response["schemaTables"])
-        same([published({key: value for key, value in index.items() if key != "release"})
-              for index in header["indexes"]], response["schemaIndexes"])
+        same([published(index) for index in header["indexes"]], response["schemaIndexes"])
         for role in ("schemaSequences", "schemaViews", "schemaGrants"):
             same([], response[role])
     else:
