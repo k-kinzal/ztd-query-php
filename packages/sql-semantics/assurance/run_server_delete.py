@@ -121,7 +121,10 @@ def faults(engine, tag):
     fork = case(engine, tag, ["comparison", "<", ["slot", 0], literal(1)])
     comparison = "$left . ' ' . $operator . ' ' . $right"
     swapped = "$right . ' ' . $operator . ' ' . $left"
-    if engine == "postgres":
+    if engine == "mysql":
+        comparison = "$left . ' ' . $test->operator->value . ' ' . $right"
+        swapped = "$right . ' ' . $test->operator->value . ' ' . $left"
+    elif engine == "postgres":
         operator = "$operator = 'OPERATOR(pg_catalog.' . $condition->operator->value . ')';"
         prefix = operator + "\n\n            return '(' . "
         comparison, swapped = prefix + comparison, prefix + swapped

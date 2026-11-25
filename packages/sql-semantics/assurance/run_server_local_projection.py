@@ -125,12 +125,18 @@ def faults(engine, tag):
     target = f"sql-semantics-{engine}/src/Ir/Rows/LocalProjectionSql.php"
     synthetic = chr(96) if engine == "mysql" else '"'
     wrong_query = repr("SELECT -19 AS " + synthetic + "__ztd_c0" + synthetic)
+    if engine == "mysql":
+        definition_render = "$source instanceof Select => $renderer->render($source, !$retain),"
+        wrong_definition = "$source instanceof Select => " + wrong_query + ","
+    else:
+        definition_render = "$renderer->render($source, true)"
+        wrong_definition = wrong_query
     result = [
         RenderFault("misaddress-local-slot", target, "$renderer->localColumn($column->slot)", "$renderer->localColumn(0)",
                     case(engine, tag, definition(engine, tag, None), [1, 0]), "meaning-mismatch"),
         RenderFault("remove-local-row-multiplicity", target, "return 'SELECT '", "return 'SELECT DISTINCT '",
                     case(engine, tag, definition(engine, tag, "accounts"), [0]), "meaning-mismatch"),
-        RenderFault("replace-local-definition", target, "$renderer->render($source, true)", wrong_query,
+        RenderFault("replace-local-definition", target, definition_render, wrong_definition,
                     case(engine, tag, definition(engine, tag, None), [0]), "meaning-mismatch"),
         RenderFault("bypass-nested-slot-layout", target, "$this->render($source, true)", "$renderer->render($source->definition, true)",
                     case(engine, tag, case(engine, tag, definition(engine, tag, None), [1, 0]), [0]), "meaning-mismatch"),
@@ -139,9 +145,10 @@ def faults(engine, tag):
         padded = leaf(engine, tag, [[["integer", "1", 9, False], "c0"]])
         result.append(RenderFault("erase-materialized-integer-width", "sql-semantics-mysql/src/Ir/SelectSql.php",
                                   "$expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, "
-                                  "$expression instanceof TextLiteral => $expression->toString(),",
+                                  "$expression instanceof ProjectedIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),",
                                   "$expression instanceof IntegerLiteral => $expression->decimal, "
-                                  "$expression instanceof RangeIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),",
+                                  "$expression instanceof RangeIntegerLiteral, $expression instanceof ProjectedIntegerLiteral, "
+                                  "$expression instanceof TextLiteral => $expression->toString(),",
                                   case(engine, tag, padded, [0]), "meaning-mismatch"))
     return result
 

@@ -145,7 +145,7 @@ def faults(_, tag):
         RenderFault("omit-varchar-null-probe", ir + "SelectSql.php", "if ($select->where !== null)", "if (false)", selected, "meaning-mismatch"),
         RenderFault("leave-repeated-varchar-equivalence-classes", ir + "SelectSql.php", "$select->distinct ? 'SELECT DISTINCT ' : 'SELECT '",
                     "'SELECT '", selected, "meaning-mismatch"),
-        RenderFault("admit-large-logical-record", ir + "Schema/Query/CreateAsLayout.php", "$bytes <= 65535", "true",
+        RenderFault("admit-large-logical-record", ir + "Schema/Query/CreateAsRecord.php", "$logical + $bitmap <= 65535", "true",
                     {"boundary": {"exception": exception, "message": message}}, constants.INVALID, invalid),
         RenderFault("erase-varchar-row-count", ir + "Ordering/ResultSql.php", "$sql .= ' LIMIT ' . $select->limit->count;",
                     "$sql .= ' LIMIT 2147483647';", limit, "meaning-mismatch"),

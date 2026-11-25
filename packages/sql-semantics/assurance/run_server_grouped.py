@@ -132,13 +132,18 @@ def faults(engine, tag):
     source = table(engine, "accounts")
     count = [[aggregate("count"), "n"], [aggregate("sum", slot(1)), "s"]]
     column_count = case(engine, tag, source, [], [[aggregate("count", slot(1)), "n"]])
+    if engine == "mysql":
+        key = "$this->operand($key, $query->source, $renderer)"
+        wrong_key = "$this->operand(new ColumnReference(1), $query->source, $renderer)"
+    else:
+        key = "$renderer->expression($key, $query->source)"
+        wrong_key = "$renderer->expression(new ColumnReference(1), $query->source)"
     result = [
         RenderFault("erase-aggregate-distinct", target, "($value->distinct ? 'DISTINCT ' : '')", "''",
                     case(engine, tag, source, [], [[aggregate("count", slot(1), True), "n"]]), "meaning-mismatch"),
         RenderFault("count-nulls-as-fields", target, "$value->argument === null ? '*'", "$value->operator === AggregateOperator::Count ? '*'",
                     column_count, "meaning-mismatch"),
-        RenderFault("group-by-wrong-field", target, "$renderer->expression($key, $query->source)",
-                    "$renderer->expression(new ColumnReference(1), $query->source)",
+        RenderFault("group-by-wrong-field", target, key, wrong_key,
                     case(engine, tag, source, [slot(0)], count), "meaning-mismatch"),
         RenderFault("erase-group-input-filter", target, "if ($query->where !== null)", "if (false)",
                     case(engine, tag, source, [], count, compare(">", slot(1), literal(1))), "meaning-mismatch"),

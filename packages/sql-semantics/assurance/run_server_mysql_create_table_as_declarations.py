@@ -172,7 +172,7 @@ def faults(_, tag):
                     "' DEFAULT 0'", materialize, "meaning-mismatch"),
         RenderFault("allow-duplicate-explicit-heading", bounds, "!isset($names[$key])", "true",
                     boundary(name_error), constants.INVALID, invalid_name),
-        RenderFault("allow-oversized-combined-heading", bounds, "count($names) <= 128", "true",
+        RenderFault("allow-oversized-combined-heading", folder + "Query/CreateAsRecord.php", "$columns <= 1017", "true",
                     boundary(size_error), constants.INVALID, oversized),
     ]
 
