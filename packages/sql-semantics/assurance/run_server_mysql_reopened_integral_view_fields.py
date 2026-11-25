@@ -14,8 +14,8 @@ from run_server_mysql_signed_membership import refusal
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-reopened-integral-view-fields"
-CONTRACT_NAME = "mysql-reopened-integral-view-fields-v1.json"
-CONTRACT = "afcff89841d8be93117716dd68b25612ad5584db96edbb5153044e051e64ed4a"
+CONTRACT_NAME = "mysql-reopened-integral-view-fields-v2.json"
+CONTRACT = "302d0f263f9ca22bd3ae5d3ab12013399bc64c75cc17caeeaf59f590340809e0"
 GRAPH = "mysql-reopened-integral-field-graph"
 MEANING = "meaning-mismatch"
 COMPARATOR_FAULTS = {"Ignore a changed native type or nullability in an otherwise equal observation": "wrongMetadata"}
