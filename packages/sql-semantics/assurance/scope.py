@@ -277,7 +277,7 @@ CONTRACTS = {
     "sqlite-trigger-mutations-v2.json": "38eebbe8868778d844c8d18bd74a5faa45c36442f34c8e7ef82217d8b5061b56",
     "sqlite-trigger-insert-batches-v1.json": "37bb1ec003e68968ca96f1d387e36f5092d94725c36d05277f129639c6b4dde4",
     "sqlite-trigger-raise-v1.json": "24d974e9718d5d92eed53e53d76393ec2dac2e99f550924d131fa8adf40c47bb",
-    "sqlite-drop-column-v3.json": "ec3c4a2625f4ecca94d5b40bbbf25ed6394295f4e4f38c69167cab66e78a1fac",
+    "sqlite-drop-column-v4.json": "4dd63d8c4bcd8925a0a8e0caa5600b11a8618436163a7533a8ee8220fe515319",
     "sqlite-add-generated-column-v2.json": "a4cefb6be815783ddecb77b0bdde88f864e4f3a4f71911431b81233a848fef27",
     "sqlite-appended-column-checks-v3.json": "8def6d35fcfb83cd4eeb8b569894d898a8f628b2a4f2605b99cb9b109fd50c02",
     "sqlite-appended-implicit-checks-v2.json": "050bf40f741cb7799f3a8351828bf844adb58632218923384e7eb26224ee1169",

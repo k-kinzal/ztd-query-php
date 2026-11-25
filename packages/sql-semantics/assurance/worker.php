@@ -1481,7 +1481,7 @@ function observeDropColumn(DropColumn $value, bool $render): array
         'profile' => $value->profileId(),
         'schema' => $value->schema->value,
         'table' => $value->table->value,
-        'heading' => array_map(static fn (DropMember $member): array => [$member->name->value, $member->generated, $member->protected], $value->heading),
+        'column' => [$value->column->value, $value->generated],
         'slot' => $value->slot,
         ...($render ? ['sql' => $value->toString()] : []),
     ];

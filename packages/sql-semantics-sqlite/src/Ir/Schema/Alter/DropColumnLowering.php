@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
 final class DropColumnLowering
 {
     /**
-     * Exports only the closed member heading and the absolute target.
+     * Checks declaration restrictions and publishes the selected member on its absolute table.
      *
      * @throws InvalidConstruction When the target or declaration-local facts are unavailable
      */

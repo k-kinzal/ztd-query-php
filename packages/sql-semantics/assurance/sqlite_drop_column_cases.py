@@ -9,7 +9,7 @@ from sqlite_engine import typed
 
 TABLE = "ir_drop"
 AXES = ("schemas", "topology", "positions", "population", "definitions", "externalEffects")
-FIELDS = ("operation", "schema", "table", "heading", "slot")
+FIELDS = ("operation", "schema", "table", "slot")
 SIBLING = ("id", "other_note")
 DEPENDENT = "dependent_object"
 
@@ -312,7 +312,7 @@ def forms(measured):
     yield f"strict/{prior['strict']}"
     yield f"without-rowid/{prior['withoutRowid']}"
     yield f"success/{observed['statement']['evaluationError'] is None}"
-    yield f"selected-generated/{built['heading'][built['slot']][1]}"
+    yield f"selected-generated/{built['column'][1]}"
     if prior["dependency"] is not None:
         yield f"dependency/{prior['dependency']['kind']}"
 

@@ -23,9 +23,14 @@ final class DropColumn implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<DropMember> The prior members in declared order
+     * The exact declared name of the removed member.
      */
-    public readonly array $heading;
+    public readonly Identifier $column;
+
+    /**
+     * Whether the selected member has a generation expression.
+     */
+    public readonly bool $generated;
 
     /**
      * Validates the selected coordinate within the prior table definition.
@@ -53,7 +58,8 @@ final class DropColumn implements SemanticsIR
             $ordinary = $ordinary || ($ordinal !== $slot && !$member->generated);
         }
         Check::input($ordinary, 'A column removal must retain an ordinary column.');
-        $this->heading = $members;
+        $this->column = $members[$slot]->name;
+        $this->generated = $members[$slot]->generated;
     }
 
     /**
@@ -70,6 +76,6 @@ final class DropColumn implements SemanticsIR
     public function toString(): string
     {
         return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted()
-            . ' DROP COLUMN ' . $this->heading[$this->slot]->name->quoted();
+            . ' DROP COLUMN ' . $this->column->quoted();
     }
 }

@@ -2859,9 +2859,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['carriedAppendedChecks'] = [$carried->checks[0]->label->value, $carried->checks[1]->label->value, $carried->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\DropColumn') {
-            $selected = $result->heading[$result->slot];
-            $heading = $result->heading;
-            $heading[$result->slot] = &$selected;
+            $member = SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropMember::class;
+            $identifier = SqlSemantics\Platform\Sqlite\Ir\Identifier::class;
+            $selected = new $member(new $identifier('old'));
+            $heading = [new $member(new $identifier('id'), protected: true),
+                new $member(new $identifier('keep'), protected: true), &$selected,
+                new $member(new $identifier('total'), generated: true)];
             $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropColumn($result->schema, $result->table, $heading, $result->slot);
             $selected = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropMember(new SqlSemantics\Platform\Sqlite\Ir\Identifier('other'));
             $protected = false;
@@ -2871,7 +2874,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $protected = str_contains($error->getMessage(), 'declaration-local removal restriction');
             }
             $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
-                array_map(static fn ($member): array => [$member->name->value, $member->generated, $member->protected], $detached->heading),
+                [$result->column->value, $result->generated], [$detached->column->value, $detached->generated],
                 $protected, $detached->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Connection\\Attach') {

@@ -3,7 +3,7 @@
 import copy
 import hashlib
 
-from run import Failure, Worker, compare, require
+from run import TOOL, digest, Failure, Worker, compare, require
 from run_sqlite_add_column import CATALOG, FIXTURE
 from run_sqlite_create_table import quoted
 from run_sqlite_unique_keys import values_sql
@@ -15,8 +15,8 @@ from sqlite_drop_column_cases import (
 from sqlite_engine import Database, ObserverAuthorizationError, typed
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-drop-column-v3.json"
-CONTRACT = "ec3c4a2625f4ecca94d5b40bbbf25ed6394295f4e4f38c69167cab66e78a1fac"
+CONTRACT_NAME = "sqlite-drop-column-v4.json"
+CONTRACT = "4dd63d8c4bcd8925a0a8e0caa5600b11a8618436163a7533a8ee8220fe515319"
 FUNCTIONS = frozenset((b"like", b"sqlite_rename_test", b"sqlite_rename_quotefix", b"sqlite_drop_column"))
 CATALOG_FIELDS = frozenset((b"name", b"type", b"sql", b"tbl_name"))
 INVALID = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\InvalidConstruction"
@@ -191,8 +191,13 @@ def observe(template, item, sql):
         db.close(db.db)
 
 
+def matches_drop_value(item, reply):
+    return (all(reply.get(field) == item[field] for field in FIELDS)
+            and reply.get("column") == item["heading"][item["slot"]][:2])
+
+
 def probe(item, reply, db, ledger=None, key=None, original=None):
-    require(reply["status"] == "constructed" and all(reply.get(field) == item[field] for field in FIELDS),
+    require(reply["status"] == "constructed" and matches_drop_value(item, reply),
             "sqlite-drop-column-structure", {"expected": item, "actual": reply})
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
@@ -251,6 +256,10 @@ def controls(db):
 
 
 def execute(args, specification, db, worker_factory=Worker):
+    require(specification["extends"] == {"sqlite-drop-column-v3.json": "ec3c4a2625f4ecca94d5b40bbbf25ed6394295f4e4f38c69167cab66e78a1fac"},
+            "sqlite-drop-column-prior-contract-pointer")
+    for version, expected_digest in specification["extends"].items():
+        require(digest(TOOL / version) == expected_digest, "sqlite-drop-column-prior-contract-digest", version)
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: controls(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe,
                             measured_input=lambda reply, observation: (reply, observation))
@@ -261,7 +270,7 @@ def shape_fault(item, reply, db):
         probe(item, reply, db)
         return
     if reply["status"] == "constructed":
-        require(all(reply.get(field) == item[field] for field in FIELDS) and "sql" not in reply,
+        require(matches_drop_value(item, reply) and "sql" not in reply,
                 "sqlite-drop-column-unexpected-value", reply)
         raise Failure("sqlite-drop-column-construction-escaped", reply)
     require(reply["status"] == "rejected" and reply["exception"] == INVALID and item["boundary"] in reply["message"],
@@ -281,7 +290,7 @@ def check_faults(args, db, runner=check_render_faults):
                     direct, "sqlite-drop-column-construction-escaped"),
         RenderFault("allow-dropping-last-ordinary-member", root, "Check::input($ordinary,", "Check::input(true,",
                     only_ordinary, "sqlite-drop-column-construction-escaped"),
-        RenderFault("drop-adjacent-column", root, "$this->heading[$this->slot]->name", "$this->heading[$this->slot + 1]->name",
+        RenderFault("drop-adjacent-column", root, "$this->column->quoted()", "'\"amount\"'",
                     case(), "sqlite-drop-column-target-mismatch"),
         RenderFault("drop-column-in-shadow-schema", root, "$this->schema->quoted()", "'temp'",
                     case(sibling=("id", "old")), "sqlite-drop-column-target-mismatch"),

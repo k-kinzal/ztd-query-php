@@ -16,7 +16,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-rename-boundaries-v2.json', 'f6fccd438228146e360b5dffb17aa17e16342a09069faef53d2a7b05ad08ddf3'],
             ['sqlite-create-index-boundaries-v1.json', '0a0c16a74cda0d7598ad696581a4db0cbbe9050423e4512a75e0d042f54a2769'],
             ['sqlite-drop-index-boundaries-v2.json', '3dede0e8cf427de163c80b2fc736d88fc7da708899f246a5bab6feacb792538b'],
-            ['sqlite-drop-column-boundaries-v1.json', 'cdb8c0184c1950dc37897c17c43a427e17216eceb66d27a54ed7beb0bb43b01e'],
+            ['sqlite-drop-column-boundaries-v2.json', '2730553c598e2a0150445a51278b00403c4992053e945bfe5136c8800d8b8cba'],
             ['sqlite-add-column-boundaries-v6.json', '4b949371405bb2b5f13e3331206a11875510cc0778057bb6d0a1ab3eafd79d0b'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
             ['sqlite-query-scope-boundaries-v9.json', 'bda4f3f5e8f81d04f57629a4f47e81cb2ba2f8a5b2761ffaceb7e42692f68006'],

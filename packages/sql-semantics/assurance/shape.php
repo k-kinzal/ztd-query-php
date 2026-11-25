@@ -395,7 +395,8 @@ if ($dialect === 'sqlite') {
     $properties['Schema\\Alter\\AddGeneratedColumn'] = $properties['Schema\\Alter\\AddColumn'];
     $methods['Schema\\Alter\\AddColumn'] = $methods['Schema\\Alter\\AddGeneratedColumn'] = $methods['Select'];
     $properties['Schema\\Alter\\DropColumn'] = [
-        'schema' => ['Identifier'], 'table' => ['Identifier'], 'heading' => ['array'], 'slot' => ['int'],
+        'schema' => ['Identifier'], 'table' => ['Identifier'], 'slot' => ['int'],
+        'column' => ['Identifier'], 'generated' => ['bool'],
     ];
     $properties['Schema\\Alter\\DropMember'] = ['name' => ['Identifier'], 'generated' => ['bool'], 'protected' => ['bool']];
     $methods['Schema\\Alter\\DropColumn'] = $methods['Select'];
@@ -1959,9 +1960,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v74.json';
+    $storagePath = __DIR__ . '/value-storage-v75.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '6fa8d2715cff0c691b94726eddcf565d03458bf3d7ecf6bc5912b2f213daf2eb',
+        hash_file('sha256', $storagePath) === 'ace6616eac37de806ac4f9b83f9ff0735680e04e60cfe4ba48125d41b50b0a88',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v170.json"
-CONTRACT = "f204f9332ca735e8ac2f37b1519f4619f8cd571175ea28981c87b5a2da8ede33"
+CONTRACT_NAME = "release-layout-v171.json"
+CONTRACT = "67f62e29c3113d628d1f5728af6c1416f238bec63c1283d8578e1822b22b0b1c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -989,7 +989,7 @@ def verify_probe(raw, catalog):
             ], "installed-sqlite-carried-appended-check-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\DropColumn"):
             require(item.get("dropColumn") == [
-                "temp", "removable", 2, [["id", False, True], ["keep", False, True], ["old", False, False], ["total", True, False]],
+                "temp", "removable", 2, ["old", False], ["old", False],
                 True, 'ALTER TABLE "temp"."removable" DROP COLUMN "old"',
             ] and item["sql"] == item["dropColumn"][-1], "installed-sqlite-drop-column-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Connection\\Attach"):

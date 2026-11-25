@@ -17,11 +17,14 @@ final class DropColumnTest extends TestCase
 {
     public function testToStringUsesTheSelectedColumnAndAbsoluteTable(): void
     {
-        $member = new DropMember(new Identifier('old"slot'));
+        $member = new DropMember(new Identifier('old"slot'), generated: true);
         $heading = [new DropMember(new Identifier('id'), protected: true), &$member];
         $drop = new DropColumn(new Identifier('temp'), new Identifier('source'), $heading, 1);
         $member = new DropMember(new Identifier('different'));
 
+        self::assertSame(1, $drop->slot);
+        self::assertSame('old"slot', $drop->column->value);
+        self::assertTrue($drop->generated);
         self::assertSame('ALTER TABLE "temp"."source" DROP COLUMN "old""slot"', $drop->toString());
     }
 

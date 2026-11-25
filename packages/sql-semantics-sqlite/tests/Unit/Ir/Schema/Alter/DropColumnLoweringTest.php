@@ -26,7 +26,8 @@ final class DropColumnLoweringTest extends TestCase
 
         self::assertInstanceOf(DropColumn::class, $drop);
         self::assertSame(2, $drop->slot);
-        self::assertSame([true, true, false, false], array_column($drop->heading, 'protected'));
+        self::assertSame('OLD', $drop->column->value);
+        self::assertFalse($drop->generated);
         self::assertSame('ALTER TABLE "temp"."items" DROP COLUMN "OLD"', $drop->toString());
     }
 }
