@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v184.json"
-CONTRACT = "b341a8d5a834383b673c9854bd4f5348169b8bd7436c17a44d6a0a6d622ae438"
+CONTRACT_NAME = "release-layout-v185.json"
+CONTRACT = "8562f31886ebf0b0b44b8d8837ed551a541872a6fb115fab5dce8684f7644de6"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -810,6 +810,10 @@ def verify_probe(raw, catalog):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],
                     "installed-postgres-text-storage-mismatch", item)
+            require(item.get("postgresCollatedTable") == ["C", None, "C", "C", "codes",
+                'CREATE TABLE "public"."declared_c" ("code" pg_catalog.text COLLATE pg_catalog."C" NOT NULL, '
+                '"payload" pg_catalog.text NULL) USING heap'],
+                    "installed-postgres-collated-table-mismatch", item)
             wide = "SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral"
             require(item.get("postgresSignedDefault") == [
                 [["SMALLINT", wide, "-9223372036854775808"], ["BIGINT", wide, "7"], ["pg_catalog.text", wide, "9223372036854775807"]],

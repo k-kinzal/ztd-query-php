@@ -89,10 +89,7 @@ final class ColumnTyping
     {
         foreach ($qualifiers as $qualifier) {
             if ($qualifier instanceof ColumnCollation) {
-                $name = $qualifier->collation->qualified();
-
-                return $name !== null && $name->catalog === null && $name->schema?->value === 'pg_catalog' && $name->name->value === 'C'
-                    ? DeclaredTextCollation::StockC : null;
+                return DeclaredTextCollation::resolve($qualifier->collation->qualified());
             }
         }
 

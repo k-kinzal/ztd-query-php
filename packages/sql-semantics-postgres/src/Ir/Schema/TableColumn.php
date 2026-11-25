@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
@@ -26,14 +27,16 @@ final class TableColumn
     use Snapshot;
 
     /**
-     * Fixes the name, type, nullability and optional literal default.
+     * Fixes the name, type, nullability and the declared default and collation.
      */
     public function __construct(
         public readonly Identifier $name,
         public readonly IntegerStorage|CharacterStorage|BooleanStorage $storage,
         public readonly bool $nullable = true,
         public readonly IntegerLiteral|WideIntegerLiteral|TextLiteral|BooleanLiteral|NullLiteral|null $default = null,
+        public readonly ?TextCollation $collation = null,
     ) {
+        Check::input($collation === null || $storage === CharacterStorage::Text, 'A text collation requires native text storage.');
         $systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];
         Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');
         Check::input(!$default instanceof TextLiteral || $storage === CharacterStorage::Text, 'A text default requires native text storage.');
@@ -49,7 +52,9 @@ final class TableColumn
      */
     public function toString(): string
     {
-        $definition = $this->name->quoted() . ' ' . $this->storage->value . ($this->nullable ? ' NULL' : ' NOT NULL');
+        $definition = $this->name->quoted() . ' ' . $this->storage->value
+            . ($this->collation === null ? '' : ' COLLATE pg_catalog."' . $this->collation->value . '"')
+            . ($this->nullable ? ' NULL' : ' NOT NULL');
 
         return $definition . match (true) {
             $this->default instanceof IntegerLiteral => ' DEFAULT ' . $this->default->decimal,

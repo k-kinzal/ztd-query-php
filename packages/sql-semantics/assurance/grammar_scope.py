@@ -528,6 +528,10 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "postgres-btree-declared-collation-evidence-v1.json")
         if postgres:
+            for rule in ("CreateStmt", "ColumnDef", "ColQualList", "ColConstraintElem", "CreateSchemaStmt"):
+                for alternative in rules.get(rule, ()):
+                    related[alternative] = (*related.get(alternative, ()), "postgres-create-collated-text-evidence-v1.json")
+        if postgres:
             for rule in ("IndexStmt", "a_expr", "b_expr"):
                 for alternative in rules.get(rule, ()):
                     if rule == "IndexStmt" or any(alternative.endswith(suffix) for suffix in ("IS NULL_P", "IS NOT NULL_P", "ISNULL", "NOTNULL")):

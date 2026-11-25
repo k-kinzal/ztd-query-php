@@ -1026,6 +1026,7 @@ if ($dialect !== 'sqlite') {
         $enumCases['Schema\\CharacterStorage'] = ['Text' => 'pg_catalog.text'];
         $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
+        $properties['Schema\\TableColumn']['collation'] = ['?Expression\\TextCollation'];
         $properties['Schema\\TableColumn']['default'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
         $key = 'Schema\\Key\\';
         $properties['Schema\\CreateTable']['primaryKey'] = ['?' . $key . 'PrimaryKey'];
@@ -1929,7 +1930,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v24.json', 'cb4a4bcc499aee8c7017605300d6fa6028f608c4f40dd529bf1eeb5e6e336590', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v25.json', 'b444e5080a8f30bd087f66d5d2f2f7162f07238a1a7dae0f665faa3e93b77f29', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
             ['postgres-btree-heading-source-v3.json', '72148fef0bc32212ccecdee664e95de1f0d5c22d74a0c2cabaaa667551611a55', 'PostgreSQL B-tree heading binding'],

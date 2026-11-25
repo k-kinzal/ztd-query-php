@@ -606,7 +606,11 @@ function constructDeclarationColumns(string $namespace, string $dialect, array $
             $dialect === 'mysql' && is_array($kind) && $kind[0] === 'varchar' => new $characters($kind[1], $collation::from($kind[2])),
             default => $storage::from($kind),
         };
-        $columns[$index] = new $column(new $name($columnName), $type, $nullable, $default === null ? null : constructOperand($namespace, $default));
+        $columns[$index] = new $column(
+            new $name($columnName), $type, $nullable, $default === null ? null : constructOperand($namespace, $default),
+            ...($dialect === 'postgres' && isset($definition[4])
+                ? ['collation' => \SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation::from($definition[4])] : []),
+        );
     }
 
     return $columns;
@@ -2266,6 +2270,7 @@ function observePostgresCreateSchema(\SqlSemantics\Platform\PostgreSql\Ir\Schema
                 'columns' => array_map(static fn ($column): array => [
                     $column->name->value, $column->storage->value, $column->nullable,
                     $column->default === null ? null : observeOperand($namespace, $column->default),
+                    ...($column->collation === null ? [] : [$column->collation->value]),
                 ], $table->columns),
                 'ifNotExists' => $table->ifNotExists,
                 ...($table->primaryKey === null ? [] : ['primaryKey' => observePostgresPrimaryKey($table->primaryKey)]),
@@ -2777,6 +2782,7 @@ function observeStatement(array $input): array
             $observed['columns'][] = [
                 $column->name->value, $kind, $column->nullable,
                 $column->default === null ? null : observeOperand($namespace, $column->default),
+                ...($dialect === 'postgres' && $column->collation !== null ? [$column->collation->value] : []),
             ];
         }
 

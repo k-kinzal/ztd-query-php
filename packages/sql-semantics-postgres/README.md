@@ -44,6 +44,8 @@ An ordered `CREATE OR REPLACE VIEW` can replace an earlier ordinary view. Existi
 
 A named B-tree index in the schema binds to an ordinary table created by the table phase. Each key, covering column and predicate leaf binds to an exact name and type at its physical position in that table. A guarded index name can preserve a sequence, table, view or earlier index. A concurrent build requires a separate statement.
 
+An ordinary heap table can declare `TEXT COLLATE pg_catalog."C"`. The column keeps that collation along with its type, default and NULL policy. A B-tree in the same `CREATE SCHEMA` can inherit it from the resolved table column.
+
 A sequence grant can name earlier local sequences or declared external sequences. It can also select all sequences in named schemas. PostgreSQL applies the grants after creating the other members, using the schema owner as the effective role. Within a grant, `SESSION_USER` still selects the authenticated role.
 
 `ALTER SCHEMA ... RENAME TO` and `ALTER SCHEMA ... OWNER TO` publish separate namespace operations. Both resolve the existing namespace from the supplied catalog. Rename keeps the namespace identity while changing its name. An owner change selects a declared named role or one of the two session authorization roles. PostgreSQL updates the namespace owner and its grants while keeping the original owners of tables and other contained objects.

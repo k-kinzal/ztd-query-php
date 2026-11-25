@@ -1903,6 +1903,17 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresPrimaryKey'] = observePostgresPrimaryKey($semantics);
             $details['postgresUniqueKey'] = observePostgresUniqueKey($semantics);
             $details['postgresTableWidth'] = observePostgresTableWidth($semantics);
+            $complete = $semantics->context([]);
+            $table = $semantics->analyze('CREATE TABLE public.declared_c (code text COLLATE pg_catalog."C" NOT NULL, payload text)', $complete);
+            $schema = $semantics->analyze(
+                'CREATE SCHEMA test_collation CREATE INDEX local_index ON codes (key) '
+                . 'CREATE TABLE codes (key text COLLATE pg_catalog."C")', $complete,
+            );
+            $details['postgresCollatedTable'] = [
+                $table->columns[0]->collation->value, $table->columns[1]->collation,
+                $schema->tables[0]->columns[0]->collation->value, $schema->indexes[0]->keys[0]->collation->value,
+                $schema->indexes[0]->table->table->value, $table->toString(),
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);
