@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v155.json"
-CONTRACT = "f5dee81653a28b14f935a416ba9d2034f4784dcfc0bb500e359db0effd3a7c30"
+CONTRACT_NAME = "release-layout-v156.json"
+CONTRACT = "baefb80c4629ebaf900731a7c8825702426097a5db039fb1f67e31ad2e66a3b4"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -728,6 +728,12 @@ def verify_probe(raw, catalog):
                 "a", ["retains_a"], "DROP INDEX `PRIMARY` ON `app`.`keeps_value`",
                 "DROP INDEX must retain a backing key for the AUTO_INCREMENT field.",
             ], "installed-mysql-auto-increment-support-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\DropIndexes"):
+            drop_set = "ALTER TABLE `app`.`batch_index` DROP INDEX `PRIMARY`, DROP INDEX `by_a`"
+            require(item.get("mysqlAtomicIndexRemoval") == [
+                ["PRIMARY", "by_a"], ["primary", "ordinary"], ["by_a", "keeps_a"], drop_set,
+                "Atomic removal must retain a backing key for the AUTO_INCREMENT field.",
+            ] and item["sql"] == drop_set, "installed-mysql-atomic-index-removal-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
             require(item.get("mysqlQueryBackedInnoDbWidth") == [
                 203, False, False, 1, "tail_5", "The projected clustered InnoDB record must fit the native 8126-byte boundary.",

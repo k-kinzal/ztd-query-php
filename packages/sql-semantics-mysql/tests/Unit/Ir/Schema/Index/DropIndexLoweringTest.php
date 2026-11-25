@@ -64,7 +64,7 @@ final class DropIndexLoweringTest extends TestCase
         self::assertSame(IndexRole::Unique, $first->target->role);
     }
 
-    public function testResolveUsesTheLegacyQualifiedKeyOnTheSelectedTable(): void
+    public function testIdentityUsesTheLegacyQualifiedKeyOnTheSelectedTable(): void
     {
         $semantics = new Semantics('mysql-5.7.44');
         $catalog = $semantics->context(['CREATE TABLE app.events (n INT NOT NULL, INDEX by_n (n))']);

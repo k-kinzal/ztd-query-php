@@ -638,6 +638,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     $declarations = ["CREATE TABLE $table (id INTEGER)"];
     if ($platform === 'MySql') {
         $declarations[] = 'CREATE TABLE app.index_drop_probe (id INT, KEY ready (id))';
+        $declarations[] = 'CREATE TABLE app.batch_index (a INT AUTO_INCREMENT, b INT NOT NULL, c INT, PRIMARY KEY (a), KEY by_a (a,b), KEY keeps_a (a,c))';
     }
     if ($platform === 'Sqlite') {
         $declarations[] = "CREATE VIEW main.removable AS SELECT id FROM $table";
@@ -731,6 +732,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE app.accounts';
         $queries['Schema\\Index\\CreateIndex'] = 'CREATE INDEX lookup ON app.accounts (id DESC) INVISIBLE';
         $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX READY ON app.index_drop_probe';
+        $queries['Schema\\Index\\DropIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, DROP KEY by_a';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -2334,6 +2336,28 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlIndexAutoIncrement'] = [
                 $advance->field->value, array_map(static fn ($key): string => $key->value, $advance->alternates),
                 $preserved->toString(), $protected,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndexes') {
+            $keys = $result->targets;
+            $first = $keys[0];
+            $keys[0] = &$first;
+            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes($keys, $result->release, $result->policy);
+            $first = $keys[1];
+            $rejected = null;
+            try {
+                $semantics->analyze(
+                    'ALTER TABLE app.batch_index DROP PRIMARY KEY, DROP KEY by_a, DROP INDEX keeps_a',
+                    $activeContext,
+                );
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage();
+            }
+            $details['mysqlAtomicIndexRemoval'] = [
+                array_map(static fn ($key): string => $key->name->value, $rebuilt->targets),
+                array_map(static fn ($key): string => $key->role->value, $rebuilt->targets),
+                array_map(static fn ($key): string => $key->value, $rebuilt->targets[0]->autoIncrement->alternates),
+                $rebuilt->toString(), $rejected,
             ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {

@@ -822,6 +822,9 @@ def inventory(root):
             }
             for alternative in signatures & (index_removal | generated_keys):
                 related[alternative] = (*related.get(alternative, ()), "mysql-index-auto-increment-evidence-v1.json")
+            batch_index = {*alter_index, *rules.get("alter_list", []), *rules.get("alter_list_item_list", [])}
+            for alternative in signatures & batch_index:
+                related[alternative] = (*related.get(alternative, ()), "mysql-multiple-index-removal-evidence-v1.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):
                 for alternative in rules.get(rule, []):
                     if rule != "rename" or "table_to_table_list" in alternative:

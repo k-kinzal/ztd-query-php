@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Alter;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
@@ -36,13 +37,13 @@ final class RelationChangeLowering
     {
         return $statement instanceof ParsedDropIndex || $statement instanceof ParsedDropTable || $statement instanceof ParsedDropView
             || $statement instanceof ParsedRenameTable || $statement instanceof ParsedTruncateTable
-            || ($statement instanceof ParsedAlterTable && (new AlterIndexRemovalLowering())->removal($statement) !== null);
+            || ($statement instanceof ParsedAlterTable && (new AlterIndexRemovalLowering())->removals($statement) !== null);
     }
 
     /**
      * Publishes the specific operation after its relation has been bound.
      */
-    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): DropIndex|DropTable|DropView|RenameTable|TruncateTable
+    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): DropIndex|DropIndexes|DropTable|DropView|RenameTable|TruncateTable
     {
         return match (true) {
             $statement instanceof ParsedAlterTable => (new AlterIndexRemovalLowering())->lower($operation, $statement),

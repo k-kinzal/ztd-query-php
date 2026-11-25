@@ -143,7 +143,8 @@ def state(item, temporary, keys=None, rows=None):
     serial = "bigint(20) unsigned" if legacy else "bigint unsigned"
     generated = serial if item["declaration"] == "serial-type" else signed
     extra = "NULL" if temporary and not legacy else ""
-    columns = [["a", generated, False, None, "auto_increment", None],
+    identity = extra if item["declaration"] == "plain" else "auto_increment"
+    columns = [["a", generated, False, None, identity, None],
                ["b", signed, False, None, extra, None], ["c", signed, True, None, extra, None]]
     metadata = []
     for key in item["keys"] if keys is None else keys:

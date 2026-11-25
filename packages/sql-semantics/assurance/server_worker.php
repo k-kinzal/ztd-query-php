@@ -975,35 +975,63 @@ function constructMysqlIndexPolicy(array $options): SqlSemantics\Platform\MySql\
     );
 }
 
-function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex
+function constructMysqlIndexIdentity(array $spec): SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity
 {
-    $spec = $input['mysqlDropIndex'];
     $source = $spec['autoIncrement'];
     $increment = $source === null ? null : new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement(
         new SqlSemantics\Platform\MySql\Ir\Identifier($source['field']),
         array_map(static fn (string $name): SqlSemantics\Platform\MySql\Ir\Identifier => new SqlSemantics\Platform\MySql\Ir\Identifier($name), $source['alternates'])
     );
-    $target = new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity(
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity(
         mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']),
         new SqlSemantics\Platform\MySql\Ir\Identifier($spec['name']),
         SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::from($spec['role']), $increment
     );
+}
+
+function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex
+{
+    $spec = $input['mysqlDropIndex'];
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
-        $target, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexIdentity($spec), SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
         constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
     );
 }
 
+function constructMysqlDropIndexes(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes
+{
+    $spec = $input['mysqlDropIndexes'];
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes(
+        array_map(constructMysqlIndexIdentity(...), $spec['targets']),
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
+    );
+}
+
+function observeMysqlIndexIdentity(SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity $target): array
+{
+    $increment = $target->autoIncrement;
+
+    return ['owner' => observeMysqlTableIdentity($target->owner), 'name' => $target->name->value, 'role' => $target->role->value,
+        'autoIncrement' => $increment === null ? null : ['field' => $increment->field->value,
+            'alternates' => array_map(static fn (object $name): string => $name->value, $increment->alternates)]];
+}
+
 function observeMysqlDropIndex(SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex $value): array
 {
-    $increment = $value->target->autoIncrement;
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-        'mysqlDropIndex' => ['owner' => observeMysqlTableIdentity($value->target->owner),
-            'name' => $value->target->name->value, 'role' => $value->target->role->value,
-            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore,
-            'autoIncrement' => $increment === null ? null : ['field' => $increment->field->value,
-                'alternates' => array_map(static fn (object $name): string => $name->value, $increment->alternates)]]];
+        'mysqlDropIndex' => [...observeMysqlIndexIdentity($value->target),
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
+}
+
+function observeMysqlDropIndexes(SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlDropIndexes' => ['targets' => array_map(observeMysqlIndexIdentity(...), $value->targets),
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
 }
 
 function constructMysqlCreateIndex(string $platform, array $input): SemanticsIR
@@ -2171,6 +2199,7 @@ function observeStatement(array $input): array
             isset($input['mysqlCreateTableAs']) => constructMysqlCreateAs($platform, $input),
             isset($input['mysqlCreateIndex']) => constructMysqlCreateIndex($platform, $input),
             isset($input['mysqlDropIndex']) => constructMysqlDropIndex($input),
+            isset($input['mysqlDropIndexes']) => constructMysqlDropIndexes($input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
@@ -2272,6 +2301,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex) {
         return observeMysqlDropIndex($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes) {
+        return observeMysqlDropIndexes($value);
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex) {
         return observeMysqlCreateIndex($namespace, $value);

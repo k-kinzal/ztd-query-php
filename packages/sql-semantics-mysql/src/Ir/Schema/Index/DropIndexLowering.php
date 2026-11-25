@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
-use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
@@ -39,20 +38,22 @@ final class DropIndexLowering
      */
     public function lower(BoundStatement $operation, ParsedDropIndex $statement): DropIndex
     {
-        return $this->resolve($operation, $statement, $statement->index, (new IndexPolicyLowering())->lower($statement->options));
+        return new DropIndex(
+            $this->identity($operation, $statement, $statement->index),
+            $operation->context->profile->grammar,
+            (new IndexPolicyLowering())->lower($statement->options),
+        );
     }
 
     /**
      * Resolves a physical key through the selected statement's bound owner.
      */
-    public function resolve(
+    public function identity(
         BoundStatement $operation,
         ParsedDropIndex|ParsedAlterTable $statement,
         Name $key,
-        IndexChangePolicy $policy,
         ?QualifiedName $qualifier = null,
-        bool $ignore = false,
-    ): DropIndex {
+    ): IndexIdentity {
         $context = $operation->context;
         $profile = $context->profile;
         Check::input(
@@ -87,12 +88,7 @@ final class DropIndexLowering
 
         $increment = (new IndexAutoIncrementLowering())->resolve($index, $table->indexes ?? []);
 
-        return new DropIndex(
-            new IndexIdentity($owner, new Identifier($index->name->value), $role, $increment),
-            $profile->grammar,
-            $policy,
-            $ignore
-        );
+        return new IndexIdentity($owner, new Identifier($index->name->value), $role, $increment);
     }
 
     /**

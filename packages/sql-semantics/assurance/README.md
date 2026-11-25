@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v77.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v86.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -449,6 +449,8 @@ The [native MySQL index policy contract](mysql-native-index-policy-evidence-v2.j
 The [native MySQL ALTER TABLE index removal contract](mysql-alter-index-removal-evidence-v1.json) checks one physical key action with ordered algorithm and lock directives. It compares both written and emitted SQL for qualified legacy names, explicit or implicit clustered roles, ownership, native refusal before or after implicit commit, and the MySQL 5.6 deprecation warning. Run `run_server_mysql_alter_index_removal.py` and replay the collected profile indices with `combine_server_mysql_alter_index_removal_evidence.py`.
 
 The [native MySQL AUTO_INCREMENT backing key contract](mysql-index-auto-increment-evidence-v1.json) compares index removal and retained generation under three column declaration forms and the persistent, temporary and shadow namespaces. The independent observer compares the immediate catalog and the next generated identity after both admitted and refused native operations. Run `run_server_mysql_index_auto_increment.py` and replay the recorded indices with `combine_server_mysql_index_auto_increment_evidence.py`.
+
+The [native MySQL index removal set contract](mysql-multiple-index-removal-evidence-v1.json) compares atomic effects on the owning index catalog, implicit commit, and continued generation from a retained backing key. Run the release slice with `run_server_mysql_drop_indexes.py` and replay all release receipts with `combine_server_mysql_drop_indexes_evidence.py`.
 
 For the [MySQL identifier case audit](mysql-native-index-case-v1.json), run `verify_mysql_identifier_case.py prepare --out observation.sql`. Execute the generated script on each pinned disposable database with a UTF-8 client in tabular batch mode. Run `verify_mysql_identifier_case.py replay --candidate /path/to/checkout --commit COMMIT --out evidence.json --native RELEASE=PATH`, supplying one `--native` argument for each release. The checker requires the complete ordered native alphabet and compares each scalar with the PHP implementation recorded in the distribution. It also checks each fixed case table's source bytes.
 

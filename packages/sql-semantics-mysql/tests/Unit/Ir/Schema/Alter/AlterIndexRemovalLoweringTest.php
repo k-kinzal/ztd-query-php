@@ -20,21 +20,22 @@ use SqlSemantics\Testing\MySql\Inspection;
 #[Medium]
 final class AlterIndexRemovalLoweringTest extends TestCase
 {
-    public function testRemovalRecognizesOneKeyActionAmongPolicyDirectives(): void
+    public function testRemovalsRecognizesOneKeyActionAmongPolicyDirectives(): void
     {
         $inspected = (new Inspection())->inspect('ALTER TABLE app.t LOCK=NONE, DROP PRIMARY KEY, ALGORITHM=COPY');
         self::assertInstanceOf(AlterTable::class, $inspected->statement);
-        $selected = (new AlterIndexRemovalLowering())->removal($inspected->statement);
+        $selected = (new AlterIndexRemovalLowering())->removals($inspected->statement);
 
-        self::assertSame(ElementKind::PrimaryKey, $selected?->kind);
+        self::assertNotNull($selected);
+        self::assertSame(ElementKind::PrimaryKey, $selected[0]->kind);
     }
 
-    public function testRemovalKeepsOtherEffectsOutOfThisRole(): void
+    public function testRemovalsKeepsOtherEffectsOutOfThisRole(): void
     {
         $inspected = (new Inspection())->inspect('ALTER TABLE app.t DROP INDEX first_key, DROP COLUMN spare');
         self::assertInstanceOf(AlterTable::class, $inspected->statement);
 
-        self::assertNull((new AlterIndexRemovalLowering())->removal($inspected->statement));
+        self::assertNull((new AlterIndexRemovalLowering())->removals($inspected->statement));
     }
 
     public function testLowerRetainsOnlyTheFinalCheckedDirectives(): void
