@@ -595,6 +595,10 @@ function constructDeclarationColumns(string $namespace, string $dialect, array $
             $columns[$index] = $definition;
             continue;
         }
+        if ($dialect === 'postgres' && $definition === 'foreign-object') {
+            $columns[$index] = new stdClass();
+            continue;
+        }
         [$columnName, $kind, $nullable, $default] = $definition;
         $type = match (true) {
             $kind === 'pg_catalog.text' && $dialect === 'postgres' => $characters::from($kind),

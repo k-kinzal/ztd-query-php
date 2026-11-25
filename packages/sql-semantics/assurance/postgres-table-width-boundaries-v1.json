@@ -1,0 +1,47 @@
+{
+  "revision": "SemanticsIR/postgres-table-width-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-key-constraints-boundaries-v1.json",
+  "scope": "Retain detached native table fields and close references across the full physical declaration width.",
+  "rules": {
+    "Schema/CreateTable::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checked = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableColumn::class, 'CREATE TABLE columns must form an ordered list of checked columns.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($checked) <= 1600, 'A PostgreSQL heap table can declare at most 1600 columns.');",
+        "$seen = [];",
+        "foreach ($checked as $column) {",
+        "    $key = $column->name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "if ($primaryKey !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($primaryKey->name?->value !== $target->table->value, 'A primary key index cannot have its table name.');",
+        "    foreach ([...$primaryKey->keys, ...$primaryKey->included] as $column) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($seen[$column->value]), 'A primary key reference must select a declared column.');",
+        "    }",
+        "    $required = [];",
+        "    foreach ($primaryKey->keys as $column) {",
+        "        $required[$column->value] = true;",
+        "    }",
+        "    foreach ($checked as $position => $column) {",
+        "        if ($column->nullable && isset($required[$column->name->value])) {",
+        "            $checked[$position] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableColumn($column->name, $column->storage, false, $column->default);",
+        "        }",
+        "    }",
+        "}",
+        "$unique = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($uniqueKeys, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\UniqueKey::class, 'Table unique keys must form an ordered list.');",
+        "[$primary, $retained] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\TableKeySet::close($target->table, $seen, $primaryKey, $unique);",
+        "$this->columns = $checked;",
+        "$this->primaryKey = $primary;",
+        "$this->uniqueKeys = $retained;"
+      ]
+    }
+  }
+}

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v147.json"
-CONTRACT = "add06ae2bba742e0e1444baad7e3e7d4fb5bbaa880af1b058041c4813cc7f34a"
+CONTRACT_NAME = "release-layout-v148.json"
+CONTRACT = "f27204351cf4583a55136fe21e155c2d301178d1a6d9ffedd63f6491b2db1b59"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -758,6 +758,9 @@ def verify_probe(raw, catalog):
                                 [["a"], "deferred_unique", False, "DEFERRABLE INITIALLY DEFERRED"]],
                 unique, unique, True,
             ], "installed-postgres-unique-key-mismatch", item)
+            require(item.get("postgresTableWidth") == [
+                0, 'CREATE TABLE "public"."empty_decl" () USING heap', 1600, 1600, "field_1", "field_1600", True, True,
+            ], "installed-postgres-table-width-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],

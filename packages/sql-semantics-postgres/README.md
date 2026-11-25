@@ -147,6 +147,8 @@ An ordinary `CREATE TABLE` can also declare one primary key. `CreateTable::$prim
 
 Ordinary tables may also carry `UniqueKey` constraints. The declared columns retain their own nullability, and each unique key records whether NULLs compare as equal. The table's `uniqueKeys` are the constraints that survive PostgreSQL's native redundancy rule. A redundant unique constraint can supply the explicit name of a retained unnamed constraint, including the primary key.
 
+The PostgreSQL heap declaration supports zero through 1,600 fields. A zero-column table preserves its empty heading and can store empty tuples. The database applies the physical tuple-size limit when a row is stored.
+
 An ordinary BOOLEAN column holds a native TRUE, FALSE, or NULL default, or omits the default. A quoted input such as `' YE '` uses the builtin Boolean input rules during analysis. Use `BOOLEAN` or `pg_catalog.bool` to select the builtin type explicitly. An unqualified `bool` name requires a declaration context that resolves it.
 
 Concrete types are under `SqlSemantics\Platform\PostgreSql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

@@ -316,6 +316,33 @@ function observePostgresUniqueKey(SqlSemantics\Platform\PostgreSql\Semantics $se
     ], $direct->uniqueKeys), $value->toString(), $direct->toString(), $reject];
 }
 
+function observePostgresTableWidth(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $empty = $semantics->analyze('CREATE TABLE public.empty_decl ()');
+    $name = new SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName(
+        new SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'), new SqlSemantics\Platform\PostgreSql\Ir\Identifier('staged_width'),
+    );
+    $fields = [];
+    $declared = [];
+    foreach (range(1, 1600) as $position) {
+        $field = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('field_' . $position);
+        $fields[] = new SqlSemantics\Platform\PostgreSql\Ir\Schema\TableColumn($field, SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage::Standard);
+        $declared[] = $field->quoted() . ' INTEGER';
+    }
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable($name, $fields);
+    $analyzed = $semantics->analyze('CREATE TABLE public.staged_width (' . implode(', ', $declared) . ')');
+    $rejected = false;
+    $fields[] = $fields[0];
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable($name, $fields);
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage() === 'A PostgreSQL heap table can declare at most 1600 columns.';
+    }
+
+    return [count($empty->columns), $empty->toString(), count($direct->columns), count($analyzed->columns),
+        $analyzed->columns[0]->name->value, $analyzed->columns[1599]->name->value, $direct->toString() === $analyzed->toString(), $rejected];
+}
+
 function observePostgresBooleanFields(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled pg_catalog.bool)']);
@@ -1712,6 +1739,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresBooleanDefault'] = observePostgresBooleanDefault($semantics);
             $details['postgresPrimaryKey'] = observePostgresPrimaryKey($semantics);
             $details['postgresUniqueKey'] = observePostgresUniqueKey($semantics);
+            $details['postgresTableWidth'] = observePostgresTableWidth($semantics);
         }
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);

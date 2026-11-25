@@ -28,7 +28,7 @@ final class CreateTable implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<TableColumn> Definitions in physical output order
+     * @var list<TableColumn> Definitions in physical output order
      */
     public readonly array $columns;
 
@@ -57,8 +57,8 @@ final class CreateTable implements SemanticsIR
         ?PrimaryKey $primaryKey = null,
         array $uniqueKeys = [],
     ) {
-        $checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);
-        Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');
+        $checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE columns must form an ordered list of checked columns.');
+        Check::input(count($checked) <= 1600, 'A PostgreSQL heap table can declare at most 1600 columns.');
         $seen = [];
         foreach ($checked as $column) {
             $key = $column->name->value;

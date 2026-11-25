@@ -65,7 +65,12 @@ def analyzed(engine, tag):
 
 def negatives(engine, tag):
     good = ["c0", "INTEGER", True, None]
-    yield case(engine, tag, []), "nonempty ordered column list"
+    if engine == "postgres":
+        invalid = case(engine, tag, [])
+        invalid["create"]["columns"] = {"1": ["c1", "INTEGER", True, None]}
+        yield invalid, "CREATE TABLE columns must form an ordered list of checked columns."
+    else:
+        yield case(engine, tag, []), "nonempty ordered column list"
     yield case(engine, tag, [good, good]), "cannot repeat a column name"
     table = SCHEMAS[engine] + ".ir_create_target" if engine == "mysql" else "ir_create_target"
     invalid_schema = "CREATE TABLE ir_create_target (c0 INTEGER)" if engine == "mysql" else "CREATE TABLE pg_temp.ir_create_target (c0 INTEGER)"

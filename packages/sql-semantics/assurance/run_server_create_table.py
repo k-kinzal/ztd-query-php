@@ -16,6 +16,7 @@ LABEL = "create-table"
 OBSERVER = "server_create_table_observer.php"
 CONTRACT = "b1c5f91edac3d4be6e304600ba2b480ee45497fd51e84ee90597f13a8ec6911c"
 ADMISSION = "ef0719629dd2016da90130d2370c5bc8707c516b465639dec296fdca5fbac089"
+WIDTH_ADMISSION = "20f3d5e79fa35a767394e85538396ccf8c824648d526a4f8a4ca0dec5085a975"
 QUERY_ADMISSION = "a10a0af3b78e1307374fc41a20ace5c5639659e43197a7caa61b23d1a5d9bd95"
 
 
@@ -30,6 +31,12 @@ def specifications():
     same(json.loads(previous.read_text())["changedMySqlCase"]["replacementNegativeSql"], admission["previousSql"])
     same(admission["replacementNegativeSql"], request["sql"])
     same(admission["replacementNegativeSignal"], signal)
+    width = TOOL / "postgres-table-width-v1.json"
+    require(digest(width) == WIDTH_ADMISSION, "postgres-create-table-width-admission-mismatch")
+    postgres = json.loads(width.read_text())["predecessorAdmission"]
+    replacement, reason = next(negatives("postgres", "pg-17.2"))
+    same({**postgres["replacementDirectRefusal"], "release": "pg-17.2"}, replacement)
+    same(postgres["replacementMessage"], reason)
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 
 

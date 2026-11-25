@@ -145,6 +145,8 @@ CONTRACTS = {
     "postgres-schema-view-dependencies-v1.json": "1351a17f257e9339f7bedf812f521caf6b51e6fb340d47721b47f6fc9bc2d81f",
     "postgres-create-primary-key-v1.json": "9b70aef7ee573717530bdacda3698adbc57c65c50afebc03a4637f99f81106be",
     "postgres-primary-key-evidence-v1.json": "4ac3f9884cfadd7e008806bc779e34cdcef27c79dd0f7d07cc1e3fdc32caf959",
+    "postgres-table-width-v1.json": "20f3d5e79fa35a767394e85538396ccf8c824648d526a4f8a4ca0dec5085a975",
+    "postgres-table-width-evidence-v1.json": "95dee92f0f9a3743c816c7f79c44491706ead597c460f96d03fca7348fe8e408",
     "postgres-create-unique-keys-v1.json": "e7cd49f3bfd471204d7d67729a8e6aad1097e46e9b28a8ddb7cd01604a1c2195",
     "postgres-unique-key-evidence-v1.json": "e0e40fd22b94b2f7ffbdffda4f3819e7773bf14dfe63f6bb15c3a8b5cee2a516",
     "postgres-schema-view-replacement-v1.json": "e56e28f03abc55470b56e00f23eeac53c3aeea757720b7676df17d6f0a4f975a",
