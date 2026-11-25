@@ -65,7 +65,7 @@ final class DerivedTable implements Relation
             $derivation->report(new Misuse(MisuseRule::DerivedWithoutAlias));
         }
 
-        return new RelationFact((new DerivedShapes())->shape($derivation->query($this->query, $environment), $this->columns, $derivation));
+        return new RelationFact((new DerivedShapes())->shape($derivation->query($this->query, $environment), $this->columns, $derivation, $this->query));
     }
 
     /**

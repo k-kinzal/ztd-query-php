@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Ordering;
 
+use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead;
@@ -19,11 +22,29 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 final class LocalProjectionAliases
 {
     /**
-     * Checks that selecting local aliases preserves the child's native diagnostics.
+     * Checks inherited native names before publishing a positional remapping.
      */
     public function check(Select|LocalProjection|WithProjection|WithRead $child): void
     {
-        Check::input(!$this->requiresRequested($child), 'A locally remapped output cannot discard requested alias diagnostics.');
+        $output = $child instanceof WithProjection ? $child->body : $child;
+        if (!$output instanceof Select || !$this->requiresRequested($output)) {
+            return;
+        }
+        $seen = [];
+        foreach ($output->columns as $column) {
+            $name = $column->name;
+            $operand = $column->expression;
+            Check::input(
+                ($operand instanceof IntegerLiteral || $operand instanceof ProjectedIntegerLiteral)
+                && ($name instanceof Identifier || $name instanceof RequestedResultAlias),
+                'Inherited requested aliases need exact signed literal fields.'
+            );
+            $requested = $name instanceof RequestedResultAlias ? $name->requested : $name->value;
+            Check::input(preg_match('/\A[\x01-\x7f]*\z/', $requested) === 1, 'Inherited requested aliases require ASCII names.');
+            $key = $name->key();
+            Check::input(!isset($seen[$key]), 'Inherited requested aliases must resolve to distinct names.');
+            $seen[$key] = true;
+        }
     }
 
     /**

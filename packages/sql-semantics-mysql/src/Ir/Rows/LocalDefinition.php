@@ -72,7 +72,9 @@ final class LocalDefinition
                 'Each local result must read a resolved local slot.'
             );
             $slot = array_search($resolution->slot, $inputs, true);
-            $name = $fields->at($position)->name;
+            $name = $item->alias === null && $resolution->slot->origin?->origin !== null
+                ? $resolution->slot->name
+                : $fields->at($position)->name;
             Check::input($slot !== false && $name !== null, 'A local result needs a named, resolved slot.');
             $results[] = new LocalResultColumn($slot, new Identifier(ltrim($name->value, " \t\r\n\v\f")));
         }

@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/mysql-inherited-local-alias-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-inherited-local-alias-v2.json",
+  "rules": {
+    "Ordering/LocalProjectionAliases::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$output = $child instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $child->body : $child;",
+        "if (!$output instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || !$this->requiresRequested($output)) {",
+        "    return;",
+        "}",
+        "$seen = [];",
+        "foreach ($output->columns as $column) {",
+        "    $name = $column->name;",
+        "    $operand = $column->expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(($operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral) && ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier || $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias), 'Inherited requested aliases need exact signed literal fields.');",
+        "    $requested = $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias ? $name->requested : $name->value;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[\\x01-\\x7f]*\\z/', $requested) === 1, 'Inherited requested aliases require ASCII names.');",
+        "    $key = $name->key();",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'Inherited requested aliases must resolve to distinct names.');",
+        "    $seen[$key] = true;",
+        "}"
+      ]
+    },
+    "Rows/LocalDefinition::columns": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$inputs = $operation->facts->relation($source)->shape->slots;",
+        "$fields = $operation->facts->query($query)->fields();",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($fields !== null, 'The local projection must resolve all output positions.');",
+        "$results = [];",
+        "foreach ($query->items as $position => $item) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($item instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression, 'A local projection requires explicit output columns.');",
+        "    $resolution = $operation->facts->scalar($item->expression)->resolution;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Column\\ResolvedColumn && $resolution->relation === $source && $resolution->depth === 0, 'Each local result must read a resolved local slot.');",
+        "    $slot = array_search($resolution->slot, $inputs, true);",
+        "    $name = $item->alias === null && $resolution->slot->origin?->origin !== null ? $resolution->slot->name : $fields->at($position)->name;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($slot !== false && $name !== null, 'A local result needs a named, resolved slot.');",
+        "    $results[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalResultColumn($slot, new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier(ltrim($name->value, \" \\t\\r\\n\\v\\f\")));",
+        "}",
+        "return $results;"
+      ]
+    }
+  }
+}

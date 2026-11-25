@@ -70,7 +70,7 @@ final class CommonTables
                 }
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }
-            $bindings[] = new CommonBinding($table->name, $table, (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation));
+            $bindings[] = new CommonBinding($table->name, $table, (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation, $table->query));
         }
 
         return $this->extended($outer, $bindings);

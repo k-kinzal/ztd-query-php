@@ -941,6 +941,8 @@ def faults(engine):
                   "$aliases->check($definition);", ""),
             Fault("accept-derived-alias-column-list-in-legacy-mysql", "Ordering/LocalProjectionAliases::checkDerived",
                   "$child->release !== GrammarRelease::MySql5651 && $child->release !== GrammarRelease::MySql5744", "true"),
+            Fault("bypass-mysql-inherited-alias-binding", "InheritedAliases::names", "new Name($name)", "$item->alias",
+                  "src/Rules/Query/InheritedAliases.php", "MySQL inherited alias binding source differs in src/Rules/Query/InheritedAliases.php"),
             Fault("omit-authored-mysql-view-alias-bound", "Schema/View/CreateViewLowering::lower",
                   "$aliases->check($item->alias->value);", ""),
             Fault("omit-direct-mysql-view-alias-bound", "Schema/View/ViewQueryBounds::check",

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v198.json"
-CONTRACT = "d0691538ad3e0c1c7a1c7602849fa2938501f4a75c9dbabee677955e65a0cca5"
+CONTRACT_NAME = "release-layout-v199.json"
+CONTRACT = "ed5c69624c4f5ff7a58fc303879a86d8a799c0836e678da340e77e17f00b51ea"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -614,6 +614,14 @@ def verify_probe(raw, catalog):
                 '((SELECT 11 AS ` requested`, 22 AS ` requested`) AS `__ztd_source` (`__ztd_c0`, `__ztd_c1`) '
                 'CROSS JOIN (SELECT 33 AS ` second`) AS `__ztd_source_1` (`__ztd_c0`))',
             ], "installed-mysql-derived-projection-alias-mismatch", derived_probe)
+            inherited = item.get("mysqlInheritedLocalAliases")
+            require(inherited == [
+                True, True, True, True, [1, 0], "upper_name",
+                'SELECT `__ztd_local`.`__ztd_c1` AS `selected`, `__ztd_local`.`__ztd_c0` AS `original` FROM '
+                '(SELECT 41 AS ` First`, 53 AS ` second`) AS `__ztd_local` (`__ztd_c0`, `__ztd_c1`)',
+                'WITH `__ztd_cte_0` (`__ztd_c0`, `__ztd_c1`) AS (SELECT 41 AS ` First`, 53 AS ` second`) '
+                'SELECT `__ztd_cte_0`.`__ztd_c1` AS `selected`, `__ztd_cte_0`.`__ztd_c0` AS `original` FROM `__ztd_cte_0`',
+            ], "installed-mysql-inherited-local-alias-mismatch", inherited)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

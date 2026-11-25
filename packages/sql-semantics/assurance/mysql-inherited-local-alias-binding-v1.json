@@ -1,0 +1,20 @@
+{
+  "revision": "SemanticsIR/mysql-inherited-local-alias-binding-1",
+  "approval": "pending-human-review",
+  "related": "mysql-inherited-local-alias-v2.json",
+  "purpose": "Identify inherited ASCII labels from the owning lexical items before the relation verifies distinct headings and exposes positions to the consumer.",
+  "artifacts": {
+    "src/Rules/Query/CommonTables.php": {
+      "sha256": "009dc716ab2b698af3ba7c2a12b4768c163737af7fefd89497fdbd5458202dae"
+    },
+    "src/Rules/Query/DerivedShapes.php": {
+      "sha256": "e5525b11e31a973c556f1fe23fb8ed0d77c2dc1cde1cad7a6629f6312c05d443"
+    },
+    "src/Rules/Query/InheritedAliases.php": {
+      "sha256": "50869b3bcd7f51f9794faf3d614c8a664543d9406b1f38c21b3664a5d8d93a4a"
+    },
+    "src/Statement/Relation/DerivedTable.php": {
+      "sha256": "f4d3ca5ce600c173e9e813ca89fafea5256da8b755d93a4b9fe3ef865eb8e70b"
+    }
+  }
+}

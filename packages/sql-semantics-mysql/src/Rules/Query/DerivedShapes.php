@@ -6,7 +6,8 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
-use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
@@ -39,15 +40,20 @@ final class DerivedShapes
     /**
      * Answers the shape of the rows the query produces under the given column names.
      *
-     * @param list<Name> $columns The column list; empty when the query names the columns
+     * @param list<\SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name> $columns The column list; empty when the query names the columns
      */
-    public function shape(QueryFact $fact, array $columns, Derivation $derivation): RowShape
+    public function shape(QueryFact $fact, array $columns, Derivation $derivation, Query $query): RowShape
     {
         $shape = $fact->shape;
         if ($columns === []) {
+            $aliases = (new InheritedAliases())->names($query);
             $slots = [];
-            foreach ($shape->slots as $slot) {
-                $slots[] = new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed);
+            foreach ($fact->projection as $field) {
+                if ($field instanceof Field) {
+                    $slot = $field->slot;
+                    $name = $field->expression === null ? $slot->name : ($aliases[spl_object_id($field->expression)] ?? $slot->name);
+                    $slots[] = new OutputSlot($name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed);
+                }
             }
             $this->unique($slots, $derivation);
 

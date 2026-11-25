@@ -159,6 +159,35 @@ function observeMysqlDerivedProjectionAlias(SqlSemantics\Platform\MySql\Semantic
     return [$local == $batch, $local == $direct, $joined == $joinedDirect, $local->toString(), $joined->toString()];
 }
 
+function observeMysqlInheritedLocalAliases(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $body = 'SELECT 41 AS ` First`, 53 AS ` second`';
+    $projection = 'SELECT d.SECOND AS selected, d.FIRST AS original';
+    $localSql = $projection . ' FROM (' . $body . ') AS d';
+    $cteSql = 'WITH d AS (' . $body . ') ' . $projection . ' FROM d';
+    $local = $semantics->analyze($localSql);
+    $cte = $semantics->analyze($cteSql);
+    [$batchLocal, $batchCte] = $semantics->analyzeAll($localSql . '; ' . $cteSql);
+    $definition = $semantics->analyze($body);
+    $columns = [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('selected')),
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('original')),
+    ];
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($definition, $columns);
+    $directCte = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection(
+        [new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($definition)],
+        new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, $columns),
+        $semantics->profile()->grammar
+    );
+    $nested = $semantics->analyze(
+        'SELECT d.UPPER_NAME FROM (SELECT q.first AS upper_name FROM (' . $body . ') AS q) AS d'
+    );
+
+    return [$local == $batchLocal, $cte == $batchCte, $local == $direct, $cte == $directCte,
+        [$local->columns[0]->slot, $local->columns[1]->slot], $nested->columns[0]->name->value,
+        $local->toString(), $cte->toString()];
+}
+
 function observeMysqlCreateViewProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $sql = 'CREATE VIEW app.alias_effect (stored_heading) AS SELECT -2147483649 AS ` requested`';
@@ -2304,6 +2333,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedProjection'] = observeMysqlSignedProjection($semantics);
             $details['mysqlSignedProjectionAlias'] = observeMysqlSignedProjectionAlias($semantics);
             $details['mysqlDerivedProjectionAlias'] = observeMysqlDerivedProjectionAlias($semantics);
+            $details['mysqlInheritedLocalAliases'] = observeMysqlInheritedLocalAliases($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

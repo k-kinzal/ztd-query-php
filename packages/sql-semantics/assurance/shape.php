@@ -2020,6 +2020,7 @@ try {
             ['mysql-native-index-binding-v13.json', 'b7627313fe23c1fdde9d4b202d9206e60b08286d159a9de439177c36f2697913', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
+            ['mysql-inherited-local-alias-binding-v1.json', 'd097324aca116894b6b55e08dad4d3a7b64599baa3ed4063165b848afed50097', 'MySQL inherited alias binding'],
         ],
     };
     $providedBindings = [];
