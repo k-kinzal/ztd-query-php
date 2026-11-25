@@ -151,6 +151,8 @@ def sql(item):
     if role == "join":
         source += f" left_input LEFT JOIN {qualified(RIGHT)} right_input ON {predicate}"
     from_ = "" if item["source"] == "unit" else f" FROM {source}"
+    if item["source"] == "unit" and where and item["tag"] in ("mysql-5.6.51", "mysql-5.7.44"):
+        from_ = " FROM DUAL"
     selection = ", ".join(render(expr, role == "join") + " AS " + q(label) for expr, label in plain_fields(item))
     order = item["orderBy"]
     suffix = "" if not order else " ORDER BY " + ", ".join(f"{slot} {'DESC' if desc else 'ASC'}" for slot, desc in order)
