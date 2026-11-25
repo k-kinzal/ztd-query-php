@@ -2358,7 +2358,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             ]);
             $drop = $semantics->analyze('DROP INDEX `éLAN_2` ON app.drop_owner LOCK=NONE ALGORITHM=COPY', $catalog);
             $primary = $semantics->analyze('DROP INDEX `PRİMARY` ON app.primary_drop', $catalog);
-            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex($drop->target, [], $drop->release, $drop->policy);
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(new $binding($drop->target, null), [], $drop->release, $drop->policy);
             $rejected = null;
             try {
                 $semantics->analyze('DROP INDEX persistent_only ON app.drop_owner', $catalog);
@@ -2383,7 +2384,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $legacyCatalog,
             );
             $legacyDirect = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
-                $legacyDrop->target, [], $legacyDrop->release, $legacyDrop->policy, $legacyDrop->ignore,
+                new $binding($legacyDrop->target, null), [], $legacyDrop->release, $legacyDrop->policy, $legacyDrop->ignore,
             );
             $details['mysqlAlterIndexRemoval'] = [
                 $legacyDrop->target->owner->kind->value, $legacyDrop->ignore, $legacyDrop->target->name->value,
@@ -2400,10 +2401,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $protected = $error->getMessage();
             }
-            $advance = $preserved->target->autoIncrement;
+            $advance = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $id = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $alternate = new $advance(new $id('a'), [new $id('retains_a')]);
+            $directSequence = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
+                new $binding($preserved->target, $alternate), [], $preserved->release, $preserved->policy,
+            );
+            $changedNames = $semantics->context([
+                'CREATE TABLE app.keeps_value (a INT AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY (a), KEY other_support (a,b))',
+            ]);
+            $sameRemoval = $semantics->analyze('ALTER TABLE app.keeps_value DROP PRIMARY KEY', $changedNames);
             $details['mysqlIndexAutoIncrement'] = [
-                $advance->field->value, array_map(static fn ($key): string => $key->value, $advance->alternates),
-                $preserved->toString(), $protected,
+                $preserved->target->name->value, $preserved->target->role->value,
+                !property_exists($preserved->target, 'autoIncrement'), $preserved == $sameRemoval,
+                $preserved->toString(), $directSequence->toString(), $protected,
             ];
             $definitions = [
                 'CREATE TABLE app.fk_index_parent (a INT NOT NULL, b INT NOT NULL, z INT PRIMARY KEY, UNIQUE KEY first_key (a), KEY by_b (b), KEY loose_support (a))',
@@ -2421,10 +2432,10 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $alternate = new $identifier('loose_support');
             $requirement = new $factory($kept->target->owner, [$kept->target->name, &$alternate]);
             $alternate = new $identifier('wrong_key');
-            $rebuilt = new $dropType($kept->target, [$requirement], $kept->release);
+            $rebuilt = new $dropType(new $binding($kept->target, null), [$requirement], $kept->release);
             $failures = [];
             try {
-                new $dropType($kept->target, [new $factory($kept->target->owner, [$kept->target->name])], $kept->release);
+                new $dropType(new $binding($kept->target, null), [new $factory($kept->target->owner, [$kept->target->name])], $kept->release);
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $failures[] = $error->getMessage();
             }
@@ -2448,7 +2459,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE TABLE app.generated_copy LIKE app.generated_child',
             ]);
             $copy = $semantics->analyze('DROP INDEX actual_fk ON app.generated_copy', $declared);
-            $copyDirect = new $dropType($copy->target, [], $copy->release);
+            $copyDirect = new $dropType(new $binding($copy->target, null), [], $copy->release);
             $hide = $semantics->analyze('ALTER TABLE app.generated_child ALTER INDEX actual_fk INVISIBLE', $declared);
             $unavailable = [];
             foreach ([
@@ -2466,11 +2477,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndexes') {
-            $keys = $result->targets;
-            $first = $keys[0];
-            $keys[0] = &$first;
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $advance = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $id = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $first = new $binding($result->targets[0], new $advance(new $id('a'), [new $id('by_a'), new $id('keeps_a')]));
+            $second = new $binding($result->targets[1], new $advance(new $id('a'), [new $id('PRIMARY'), new $id('keeps_a')]));
+            $keys = [&$first, $second];
             $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes($keys, [], $result->release, $result->policy);
-            $first = $keys[1];
+            $first = $second;
             $rejected = null;
             try {
                 $semantics->analyze(
@@ -2483,7 +2497,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlAtomicIndexRemoval'] = [
                 array_map(static fn ($key): string => $key->name->value, $rebuilt->targets),
                 array_map(static fn ($key): string => $key->role->value, $rebuilt->targets),
-                array_map(static fn ($key): string => $key->value, $rebuilt->targets[0]->autoIncrement->alternates),
+                !property_exists($rebuilt->targets[0], 'autoIncrement'),
                 $rebuilt->toString(), $rejected,
             ];
         }
@@ -2529,8 +2543,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $first = $inputs[0];
             $inputs[0] = &$first;
             $class = SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes::class;
-            $unmoved = [new SqlSemantics\Platform\MySql\Ir\Identifier('keeps_a')];
-            $rebuilt = new $class($result->owner, $inputs, $unmoved, [], $result->release, $result->policy);
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $advance = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $id = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $unmoved = [new $id('keeps_a')];
+            $original = [new $binding($result->actions[0]->operation, new $advance(new $id('a'), [new $id('by_a'), $unmoved[0]]))];
+            $rebuilt = new $class($result->owner, $inputs, $original, $unmoved, [], $result->release, $result->policy);
             $first = $inputs[1];
             $removed = $rebuilt->actions[0]->operation;
             $renamed = $rebuilt->actions[1]->operation;
@@ -2541,13 +2559,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $overlap = $error->getMessage();
             }
             try {
-                new $class($result->owner, $result->actions, $unmoved, [], SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
+                new $class($result->owner, $result->actions, $original, $unmoved, [], SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $legacy = $error->getMessage();
             }
             $details['mysqlMixedIndexAlteration'] = [
                 $removed->name->value,
-                array_map(static fn ($index): string => $index->value, $removed->autoIncrement->alternates),
+                !property_exists($removed, 'autoIncrement'),
                 [$renamed->source->value, $renamed->destination->value],
                 $rebuilt->toString(), $overlap, $legacy,
             ];

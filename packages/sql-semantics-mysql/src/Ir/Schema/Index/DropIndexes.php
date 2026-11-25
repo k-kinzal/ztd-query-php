@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequir
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -32,7 +33,7 @@ final class DropIndexes implements SemanticsIR
 
     /**
      * Closes every ordered removal and their shared owner and policy.
-     * @param list<IndexIdentity> $targets Exact physical targets of the same owner
+     * @param list<IndexRemovalTarget> $targets Exact physical targets of the same owner
      * @param list<IndexForeignKeyRequirement> $requirements Complete native foreign-key sides owning supporting physical keys
      */
     public function __construct(
@@ -43,11 +44,11 @@ final class DropIndexes implements SemanticsIR
         public readonly bool $ignore = false,
     ) {
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
-        $checked = Check::listOf($targets, IndexIdentity::class, 'An atomic index removal requires an ordered list of at least two targets.', 2);
+        $checked = Check::listOf($targets, IndexRemovalTarget::class, 'An atomic index removal requires an ordered list of at least two targets.', 2);
         Check::input(count($checked) <= 64, 'An atomic index removal can contain at most 64 physical keys.');
-        (new IndexRemovalSet())->check($checked, $policy);
-        (new IndexDependencyClosure())->check($checked, $requirements);
-        $this->targets = $checked;
+        $identities = (new IndexRemovalSet())->check($checked, $policy);
+        (new IndexDependencyClosure())->check($identities, $requirements);
+        $this->targets = $identities;
     }
 
     /**

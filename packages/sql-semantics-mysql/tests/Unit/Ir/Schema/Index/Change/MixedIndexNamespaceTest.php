@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\MixedIndexNamespace;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(MixedIndexNamespace::class)]
@@ -28,7 +29,7 @@ final class MixedIndexNamespaceTest extends TestCase
         self::assertInstanceOf(IndexIdentity::class, $dropped);
         self::assertInstanceOf(IndexRename::class, $renamed);
 
-        (new MixedIndexNamespace())->check([$dropped], [$renamed], []);
+        (new MixedIndexNamespace())->check([new IndexRemovalTarget($dropped, null)], [$renamed], []);
 
         self::assertSame($dropped->name->value, $renamed->destination->value);
     }

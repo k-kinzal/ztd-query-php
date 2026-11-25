@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Index\Change;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
-use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRenameNamespace;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 
 /**
@@ -19,7 +19,7 @@ final class MixedIndexNamespace
 {
     /**
      * Closes all original names and the referenced generating support.
-     * @param non-empty-list<IndexIdentity> $drops Checked removals
+     * @param non-empty-list<IndexRemovalTarget> $drops Checked removals
      * @param non-empty-list<IndexRename> $moves Checked renames
      * @param list<Identifier> $unmoved Physical names preserved without a change
      */
@@ -36,7 +36,7 @@ final class MixedIndexNamespace
             $original[$case->fold($prior->value)] = true;
         }
         foreach ($drops as $drop) {
-            $name = $case->fold($drop->name->value);
+            $name = $case->fold($drop->index->name->value);
             Check::input(!isset($original[$name]), 'A removed index cannot also be renamed or unmoved.');
             $original[$name] = true;
         }

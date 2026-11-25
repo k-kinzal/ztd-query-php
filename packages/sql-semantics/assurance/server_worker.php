@@ -981,16 +981,23 @@ function constructMysqlIndexPolicy(array $options): SqlSemantics\Platform\MySql\
 
 function constructMysqlIndexIdentity(array $spec): SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity
 {
+    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity(
+        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']),
+        new SqlSemantics\Platform\MySql\Ir\Identifier($spec['name']),
+        SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::from($spec['role'])
+    );
+}
+
+function constructMysqlIndexRemovalTarget(array $spec): SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget
+{
     $source = $spec['autoIncrement'];
     $increment = $source === null ? null : new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement(
         new SqlSemantics\Platform\MySql\Ir\Identifier($source['field']),
         array_map(static fn (string $name): SqlSemantics\Platform\MySql\Ir\Identifier => new SqlSemantics\Platform\MySql\Ir\Identifier($name), $source['alternates'])
     );
 
-    return new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity(
-        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']),
-        new SqlSemantics\Platform\MySql\Ir\Identifier($spec['name']),
-        SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::from($spec['role']), $increment
+    return new SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget(
+        constructMysqlIndexIdentity($spec), $increment
     );
 }
 
@@ -1010,7 +1017,7 @@ function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\S
     $spec = $input['mysqlDropIndex'];
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
-        constructMysqlIndexIdentity($spec), constructMysqlForeignKeyRequirements($input), SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexRemovalTarget($spec), constructMysqlForeignKeyRequirements($input), SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
         constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
     );
 }
@@ -1020,7 +1027,7 @@ function constructMysqlDropIndexes(array $input): SqlSemantics\Platform\MySql\Ir
     $spec = $input['mysqlDropIndexes'];
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes(
-        array_map(constructMysqlIndexIdentity(...), $spec['targets']), constructMysqlForeignKeyRequirements($input),
+        array_map(constructMysqlIndexRemovalTarget(...), $spec['targets']), constructMysqlForeignKeyRequirements($input),
         SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
         constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
     );
@@ -1079,17 +1086,22 @@ function constructMysqlMixedIndexes(array $input): SqlSemantics\Platform\MySql\I
 {
     $spec = $input['mysqlMixedIndexes'];
     $name = SqlSemantics\Platform\MySql\Ir\Identifier::class;
-    $actions = [];
+    $actions = $bindings = [];
     foreach ($spec['actions'] as $action) {
-        $operation = isset($action['drop']) ? constructMysqlIndexIdentity($action['drop'])
-            : new SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename(
+        if (isset($action['drop'])) {
+            $bound = constructMysqlIndexRemovalTarget($action['drop']);
+            $bindings[] = $bound;
+            $operation = constructMysqlIndexIdentity($action['drop']);
+        } else {
+            $operation = new SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename(
                 new $name($action['rename'][0]), new $name($action['rename'][1])
             );
+        }
         $actions[] = new SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\IndexAlteration($operation);
     }
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes(
-        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']), $actions,
+        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']), $actions, $bindings,
         array_map(static fn (string $unmoved): SqlSemantics\Platform\MySql\Ir\Identifier => new $name($unmoved), $spec['unmoved']),
         constructMysqlForeignKeyRequirements($input),
         SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
@@ -1364,7 +1376,7 @@ function constructMysqlDropForeignKeys(array $input): SqlSemantics\Platform\MySq
     $actions = [];
     foreach ($spec['actions'] as $position => $action) {
         $actions[$position] = match (true) {
-            isset($action['index']) => constructMysqlIndexIdentity($action['index']),
+            isset($action['index']) => constructMysqlIndexRemovalTarget($action['index']),
             isset($action['foreign']) => new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval(
                 $action['foreign'][0] === null ? null : new SqlSemantics\Platform\MySql\Ir\Identifier($action['foreign'][0]),
                 SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalKind::from($action['foreign'][1])
@@ -1394,11 +1406,7 @@ function observeMysqlDropForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\Forei
 
 function observeMysqlIndexIdentity(SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity $target): array
 {
-    $increment = $target->autoIncrement;
-
-    return ['owner' => observeMysqlTableIdentity($target->owner), 'name' => $target->name->value, 'role' => $target->role->value,
-        'autoIncrement' => $increment === null ? null : ['field' => $increment->field->value,
-            'alternates' => array_map(static fn (object $name): string => $name->value, $increment->alternates)]];
+    return ['owner' => observeMysqlTableIdentity($target->owner), 'name' => $target->name->value, 'role' => $target->role->value];
 }
 
 function observeMysqlDropIndex(SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex $value): array

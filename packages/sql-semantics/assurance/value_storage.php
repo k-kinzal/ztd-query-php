@@ -224,6 +224,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'native-index-removal-target-copy') {
+            requireShape($short === 'Schema\\Index\\DropIndexes' && $property === 'targets'
+                && in_array('Schema/Index/DropIndexes::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'identities',
+                'Native batch index removals must contain the verified index identity projection.');
+
+            continue;
+        }
+
         if ($rule === 'native-fk-exchange-actions-copy') {
             requireShape($short === 'Schema\\ForeignKey\\Exchange\\AlterForeignKeys' && $property === 'actions'
                 && in_array('Schema/ForeignKey/Exchange/AlterForeignKeys::__construct', $checkedBoundaries, true)

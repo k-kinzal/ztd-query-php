@@ -12,14 +12,15 @@ from mysql_index_policy_cases import (
     native_prediction, policy_model, policy_points, policy_sql,
 )
 from mysql_innodb_declaration_width_cases import OLD
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-index-policy"
-NAME = "mysql-native-index-policy-evidence-v3.json"
-CONTRACT = "52afac02fb82147cb9cd26adb67f0500605c04d8692afdd9407c15f23e066ce3"
+NAME = "mysql-native-index-policy-evidence-v4.json"
+CONTRACT = "f1f7b67654b22d9b2a5219e1b60614e0c27b8fe29248950f42fb76d93a823c32"
 CORRECTION = "970335f647fb8025448d372bd4caec4af6cdf5670bec326fe3193ad2726ba730"
 BASE = "d7d21274000f3e881d4027516c2f1a9dd24474708a7632eaebb4068d6ef87ded"
 OBSERVER = "mysql_index_policy_observer.php"
@@ -31,6 +32,7 @@ def specifications():
     require(digest(path) == CONTRACT and digest(TOOL / "mysql-native-index-policy-v1.json") == BASE,
             "mysql-index-policy-contract")
     spec = json.loads(path.read_text())
+    check_removal_facts_contract(spec)
     creation.check_validation_contract(spec)
     baseline = json.loads((TOOL / "mysql-native-index-policy-v1.json").read_text())
     profiles = creation.specifications()[1]

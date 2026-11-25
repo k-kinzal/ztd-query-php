@@ -5,6 +5,8 @@ import json
 import sys
 
 import mysql_implicit_foreign_index_cases as laws
+from mysql_drop_index_cases import published_single_removal
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import TOOL, Failure, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -13,9 +15,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-implicit-foreign-indexes"
 OBSERVER = "mysql_implicit_foreign_index_observer.php"
-NAME = "mysql-implicit-foreign-index-evidence-v1.json"
+NAME = "mysql-implicit-foreign-index-evidence-v2.json"
 BASE = "00e718cae8ba4f042261fb13508dc501eab226f937d4faa74dbda4fe20fafade"
-CONTRACT = "2415d321aff6b3f886eb46ad353b5b80923e470c0d0784d2decd59817a341b84"
+CONTRACT = "61163af1b695b1ea0c81861c7459ac3ecd3f3661a0dcd6d71831f059b7dd8bae"
 COMPARATOR_FAULTS = {
     "Lose a physically present generated key in the copied catalog.": "ignore-native-generated-key",
     "Forget to observe the enforced native constraint.": "ignore-native-foreign-key",
@@ -26,6 +28,7 @@ def specifications():
     base, current = TOOL / "mysql-implicit-foreign-index-names-v1.json", TOOL / NAME
     require(digest(base) == BASE and digest(current) == CONTRACT, "mysql-implicit-foreign-index-contract")
     ref, plan = json.loads(base.read_text()), json.loads(current.read_text())
+    check_removal_facts_contract(plan)
     _, profiles = native_profiles()
     same(ref["finite"]["names"], plan["finite"]["names"])
     same(ref["finite"]["coverage"], plan["finite"]["coverage"])
@@ -112,7 +115,8 @@ def check_value(item, actual):
     field = laws.WIRES[model["operation"]]
     require(actual["status"] == "constructed", "mysql-implicit-foreign-index-construction", actual)
     same(model["release"] + laws.PROFILES[model["operation"]], actual["profile"])
-    same(laws.direct(model)[field], actual[field])
+    value = laws.direct(model)[field]
+    same(published_single_removal(value) if field == "mysqlDropIndex" else value, actual[field])
 
 
 def measured_action(actual):

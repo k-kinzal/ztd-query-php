@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexDeclaration;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\PhysicalIndexKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
@@ -39,11 +40,11 @@ final class DropIndexLowering
      */
     public function lower(BoundStatement $operation, ParsedDropIndex $statement): DropIndex
     {
-        $target = $this->identity($operation, $statement, $statement->index);
+        $target = $this->removal($operation, $statement, $statement->index);
 
         return new DropIndex(
             $target,
-            (new IndexDependencyLowering())->resolve($operation, $statement, [$target]),
+            (new IndexDependencyLowering())->resolve($operation, $statement, [$target->index]),
             $operation->context->profile->grammar,
             (new IndexPolicyLowering())->lower($statement->options),
         );
@@ -90,9 +91,25 @@ final class DropIndexLowering
         };
         Check::input($role !== null, 'DROP INDEX requires a primary or ordinary B-tree index.');
 
-        $increment = (new IndexAutoIncrementLowering())->resolve($index, $table->indexes ?? []);
+        return new IndexIdentity($owner, new Identifier($index->name->value), $role);
+    }
 
-        return new IndexIdentity($owner, new Identifier($index->name->value), $role, $increment);
+    /**
+     * Binds the selected index and its original generation-support facts for a removal.
+     */
+    public function removal(
+        BoundStatement $operation,
+        ParsedDropIndex|ParsedAlterTable $statement,
+        Name $name,
+        ?QualifiedName $qualifier = null,
+    ): IndexRemovalTarget {
+        $index = $this->identity($operation, $statement, $name, $qualifier);
+        $relation = $operation->facts->relation($statement)->table;
+        Check::invariant($relation instanceof DeclaredTable, 'A checked native index has a declared owning table.');
+        $definition = $this->index($relation->table, $name);
+        $increment = (new IndexAutoIncrementLowering())->resolve($definition, $relation->table->indexes ?? []);
+
+        return new IndexRemovalTarget($index, $increment);
     }
 
     /**

@@ -54,12 +54,14 @@ final class AlterIndexRemovalLowering
         $release = $operation->context->profile->grammar;
         $policy = (new IndexPolicyLowering())->alteration($statement);
         $identities = new DropIndexLowering();
-        $targets = [];
+        $targets = $removed = [];
         foreach ($actions as $action) {
-            $targets[] = $identities->identity($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
+            $removal = $identities->removal($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
+            $targets[] = $removal;
+            $removed[] = $removal->index;
         }
 
-        $requirements = (new IndexDependencyLowering())->resolve($operation, $statement, $targets);
+        $requirements = (new IndexDependencyLowering())->resolve($operation, $statement, $removed);
 
         return count($targets) === 1
             ? new DropIndex($targets[0], $requirements, $release, $policy, $statement->ignore)

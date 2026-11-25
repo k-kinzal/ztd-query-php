@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v15.json"
-CONTRACT_DIGEST = "977cfe1b6ad99e6ec2435cf07266747d044d82d4c43795f26e0156ae1f0a42f2"
+CONTRACT = "closed-value-graph-v16.json"
+CONTRACT_DIGEST = "956a327a8713624d273f2ad3a01b160ea9101ad6a6b5aaaa1a3a6b6ce634a9b1"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -87,6 +87,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("erase-ordered-trigger-action-boundary", "value-closure-unverified-list"),
         ("erase-sqlite-appended-bindings", "value-closure-unverified-list"),
         ("erase-sqlite-index-operand-bindings", "value-closure-unverified-list"),
+        ("erase-mysql-batch-index-identity-projection", "value-closure-unverified-list"),
         ("change-external-definition", "value-closure-external-definition"),
     )
     evidence = []
@@ -142,6 +143,10 @@ def controls(manifest, constructors, outcomes, specification):
         elif name == "erase-sqlite-index-operand-bindings":
             before = "Schema/Index/CreateIndex::__construct"
             mutated["sqlite"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-mysql-batch-index-identity-projection":
+            before = "Schema/Index/Batch/IndexRemovalSet::check"
+            mutated["mysql"]["checkedBoundaries"].remove(before)
             after = None
         else:
             path = specification["externalValues"]["sqlite"]["source"]

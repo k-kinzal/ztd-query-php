@@ -7,9 +7,12 @@ namespace Tests\Unit\Ir\Schema\Index\Change;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\MixedIndexChanges;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(MixedIndexChanges::class)]
@@ -25,8 +28,10 @@ final class MixedIndexChangesTest extends TestCase
         $target = $value->actions[1]->operation;
         self::assertInstanceOf(IndexIdentity::class, $target);
 
-        (new MixedIndexChanges())->check($value->owner, $value->actions, [], $value->policy, []);
+        $resolved = new IndexIdentity($target->owner, new Identifier('PRIMARY'), $target->role);
+        $proof = new IndexRemovalTarget($resolved, new IndexAutoIncrement(new Identifier('a'), [new Identifier('by_a')]));
+        (new MixedIndexChanges())->check($value->owner, $value->actions, [$proof], [], $value->policy, []);
 
-        self::assertSame('by_a', $target->autoIncrement?->alternates[0]->value);
+        self::assertSame('PRIMARY', $target->name->value);
     }
 }

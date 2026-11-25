@@ -15,6 +15,8 @@ use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\PhysicalIndexKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Semantics;
+use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex as ParsedDropIndex;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DropIndexLowering::class)]
 #[Medium]
@@ -33,6 +35,23 @@ final class DropIndexLoweringTest extends TestCase
         self::assertSame(ExternalRelationKind::TemporaryTable, $drop->target->owner->kind);
         self::assertSame(IndexRole::ClusteredUnique, $drop->target->role);
         self::assertSame('DROP INDEX `ÉLAN` ON `app`.`events`', $drop->toString());
+    }
+
+    public function testRemovalBindsOnlyCurrentGeneratingAlternatives(): void
+    {
+        $context = (new Semantics())->context([
+            'CREATE TABLE app.events (id INT AUTO_INCREMENT PRIMARY KEY, KEY alternate (id))',
+        ]);
+        $operation = (new Inspection())->inspect('DROP INDEX alternate ON app.events', $context)->binding();
+        $statement = $operation->statement;
+        self::assertInstanceOf(ParsedDropIndex::class, $statement);
+        $bound = (new DropIndexLowering())->removal($operation, $statement, $statement->index);
+
+        self::assertSame('alternate', $bound->index->name->value);
+        $increment = $bound->autoIncrement;
+        self::assertNotNull($increment);
+        self::assertSame('id', $increment->field->value);
+        self::assertSame('PRIMARY', $increment->alternates[0]->value);
     }
 
     public function testIndexKeepsAnImplicitClusteredKeyUnderItsDeclaredUniqueName(): void

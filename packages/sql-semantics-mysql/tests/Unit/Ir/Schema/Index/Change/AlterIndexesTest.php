@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(AlterIndexes::class)]
@@ -20,7 +22,9 @@ final class AlterIndexesTest extends TestCase
         $catalog = $semantics->context(['CREATE TABLE app.t (a INT, b INT, KEY a_key(a), KEY b_key(b))']);
         $value = $semantics->analyze('ALTER TABLE app.t RENAME KEY a_key TO b_key, DROP INDEX b_key', $catalog);
         self::assertInstanceOf(AlterIndexes::class, $value);
-        $rebuilt = new AlterIndexes($value->owner, $value->actions, [], [], $value->release, $value->policy);
+        $removed = $value->actions[1]->operation;
+        self::assertInstanceOf(IndexIdentity::class, $removed);
+        $rebuilt = new AlterIndexes($value->owner, $value->actions, [new IndexRemovalTarget($removed, null)], [], [], $value->release, $value->policy);
 
         self::assertSame('ALTER TABLE `app`.`t` RENAME INDEX `a_key` TO `b_key`, DROP INDEX `b_key`', $rebuilt->toString());
         self::assertSame($value->toString(), $rebuilt->toString());

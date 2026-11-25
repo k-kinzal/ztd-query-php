@@ -5,7 +5,9 @@ import json
 import sys
 
 import mysql_index_fk_cases as laws
+from mysql_drop_index_cases import published_mixed_actions, published_removal_set, published_single_removal
 from run_server_mysql_create_btree_index import check_validation_contract
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import TOOL, Failure, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -14,9 +16,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-index-foreign-keys"
 OBSERVER = "mysql_index_fk_observer.php"
-NAME = "mysql-index-foreign-keys-evidence-v2.json"
+NAME = "mysql-index-foreign-keys-evidence-v3.json"
 BASE = "9b17cccc8e5e73d603468857a7793cd6af4f03b0e44db20f55185ce2a182b8e0"
-CONTRACT = "f7759163f14432a7202b90891d5e8eeab2c1e75da50c0862f8499ee777bc0154"
+CONTRACT = "9aeeb15319a4045cbf41676925778d502474406b4e15b6c50854c487a709e2a5"
 PREFIX = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/"
 COMPARATOR_FAULTS = {
     "Remove one original ordered key term from the native observation.": "ignore-ordered-key",
@@ -29,6 +31,7 @@ def specifications():
     require(digest(source) == BASE and digest(fixed) == CONTRACT, "mysql-index-foreign-keys-contract")
     _, profiles = native_profiles()
     spec, base = json.loads(fixed.read_text()), json.loads(source.read_text())
+    check_removal_facts_contract(spec)
     check_validation_contract(spec)
     same(base["profiles"]["releases"], spec["releases"])
     same(spec["releases"], profiles["mysql"]["releases"])
@@ -118,10 +121,10 @@ def check_value(item, actual):
     field = laws.WIRE[model["plan"]]
     require(actual["status"] == "constructed", "mysql-index-foreign-keys-not-constructed", actual)
     same(profile, actual["profile"])
-    expected = {**laws.direct(model)[field]}
-    if field == "mysqlMixedIndexes":
-        expected.pop("unmoved")
-    same(expected, actual[field])
+    expected = laws.direct(model)[field]
+    project = {"mysqlDropIndex": published_single_removal, "mysqlDropIndexes": published_removal_set,
+               "mysqlMixedIndexes": published_mixed_actions}[field]
+    same(project(expected), actual[field])
 
 
 def coordinate_seen(actual, item):

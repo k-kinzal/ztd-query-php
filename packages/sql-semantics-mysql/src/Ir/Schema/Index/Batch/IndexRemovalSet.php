@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 
 /**
@@ -18,16 +19,19 @@ final class IndexRemovalSet
 {
     /**
      * Checks the whole native request, including any generating-field dependency.
-     * @param non-empty-list<IndexIdentity> $targets Physical keys in the chosen order
+     * @param non-empty-list<IndexRemovalTarget> $targets Physical keys and original support in the chosen order
+     * @return non-empty-list<IndexIdentity> The checked physical identities
      */
-    public function check(array $targets, IndexChangePolicy $policy): void
+    public function check(array $targets, IndexChangePolicy $policy): array
     {
-        $owner = $targets[0]->owner;
+        $owner = $targets[0]->index->owner;
         $expected = $this->coordinate($owner);
         $case = new NativeIdentifierCase();
-        $removed = [];
+        $removed = $checked = [];
         $clustered = 0;
-        foreach ($targets as $target) {
+        foreach ($targets as $bound) {
+            $target = $bound->index;
+            $checked[] = $target;
             Check::input($this->coordinate($target->owner) === $expected, 'An atomic index removal requires one owning table and lifetime.');
             $name = $case->fold($target->name->value);
             Check::input(!isset($removed[$name]), 'An atomic index removal cannot repeat a physical key.');
@@ -37,6 +41,8 @@ final class IndexRemovalSet
         Check::input($clustered <= 1, 'One table supplies at most one clustered index target.');
         Check::input($policy->supports($owner->kind, $clustered === 1), 'The algorithm and lock cannot remove these native InnoDB indexes.');
         (new AutoIncrementRemovalSet())->check($targets, $removed);
+
+        return $checked;
     }
 
     /**

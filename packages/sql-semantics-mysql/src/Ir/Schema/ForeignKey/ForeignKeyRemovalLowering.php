@@ -75,9 +75,9 @@ final class ForeignKeyRemovalLowering
                     $removed[] = $constraint->name;
                 }
             } else {
-                $target = $indexes->identity($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
+                $target = $indexes->removal($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
                 $actions[] = $target;
-                $physical[] = $target;
+                $physical[] = $target->index;
             }
         }
         $requirements = $physical === [] ? [] : (new IndexDependencyLowering())->resolve($operation, $statement, $physical, $removed);

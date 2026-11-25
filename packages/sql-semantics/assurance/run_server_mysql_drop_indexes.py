@@ -10,7 +10,8 @@ from mysql_drop_indexes_cases import (
     ROLE_CASES, STATUS, analyze, backing_case, coordinate, declarations, finite_points, generated,
     mutation_model, native_negatives, native_rows, policy_cases, prediction, sql,
 )
-from mysql_drop_index_cases import LIFETIMES
+from mysql_drop_index_cases import LIFETIMES, published_removal_set
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -18,9 +19,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-drop-indexes"
 OBSERVER = "mysql_drop_indexes_observer.php"
-NAME = "mysql-multiple-index-removal-evidence-v1.json"
+NAME = "mysql-multiple-index-removal-evidence-v2.json"
 BASE = "c7eac6a3f3fefd93b7e6a642786a0ad96c59ea14021c5e4ed07222874fa07445"
-CONTRACT = "1309c74f71d04c1926a6de8fcb3f7b2dbb9710a2ad6af5a7152c34d8510b83ec"
+CONTRACT = "9b6ccfbbdfbc887cad5a2aabb2256eb305780e9ec0aceb558d63612de2320daf"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/drop-index-set"
 COMPARATOR_FAULTS = {"Accept a partial native catalog effect.": "partial-native-removal"}
 
@@ -29,6 +30,7 @@ def specifications():
     base, record = TOOL / "mysql-multiple-index-removal-v1.json", TOOL / NAME
     require(digest(base) == BASE and digest(record) == CONTRACT, "mysql-index-removal-set-contract")
     spec, fixed = json.loads(record.read_text()), json.loads(base.read_text())
+    check_removal_facts_contract(spec)
     same(fixed["finite"], spec["finite"])
     same(fixed["finite"]["timeoutSecondsPerRelease"], spec["exploration"]["timeoutSecondsPerRelease"])
     same([], spec["exploration"]["allowedExclusions"])
@@ -112,7 +114,7 @@ def check_value(item, response):
     model = item["model"]
     require(response["status"] == "constructed", "mysql-index-removal-set-constructed", response)
     same(model["release"] + PROFILE, response["profile"])
-    same(model["mysqlDropIndexes"], response["mysqlDropIndexes"])
+    same(published_removal_set(model["mysqlDropIndexes"]), response["mysqlDropIndexes"])
 
 
 def coordinate_seen(response, item):

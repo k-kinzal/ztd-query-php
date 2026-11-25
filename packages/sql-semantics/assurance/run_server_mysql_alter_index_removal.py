@@ -10,6 +10,7 @@ from mysql_alter_index_cases import (
     coordinate, core_points, direct_points, expected, legacy_points, output_sql, qualified_points, seeded, written_sql,
 )
 from mysql_drop_index_cases import ABSENT, LIFETIMES, analyze
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -17,9 +18,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-alter-index-removal"
 OBSERVER = "mysql_alter_index_observer.php"
-NAME = "mysql-alter-index-removal-evidence-v1.json"
+NAME = "mysql-alter-index-removal-evidence-v2.json"
 BASE = "b0c41129a37d7d30becf318f31ea5f82f016be99a9664543195689d11311c401"
-CONTRACT = "a3d9f469bdf68a59640d35e9840c8a41c3c2a841b44e5592db85c4786ed7af3c"
+CONTRACT = "1523c3e78f1ab6495e234d2206d64de045a810e9f3509cb57266749c43970a85"
 COMPARATOR_FAULTS = {"Ignore absence of the legacy deprecation warning.": "lost-native-legacy-warning"}
 
 
@@ -27,6 +28,7 @@ def specifications():
     base, path = TOOL / "mysql-alter-index-removal-v1.json", TOOL / NAME
     require(digest(base) == BASE and digest(path) == CONTRACT, "mysql-alter-index-removal-contract")
     specification = json.loads(path.read_text())
+    check_removal_facts_contract(specification)
     fixed = json.loads(base.read_text())
     for field in ("forms", "ownership", "orderedDirectives", "qualifications"):
         same(fixed["finite"][field], specification["finite"][field])

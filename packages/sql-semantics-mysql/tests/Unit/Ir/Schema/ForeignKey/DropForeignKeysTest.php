@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 
 #[CoversClass(DropForeignKeys::class)]
 #[Small]
@@ -27,9 +28,9 @@ final class DropForeignKeysTest extends TestCase
         $owner = new TableIdentity(new TableName(new Identifier('app'), new Identifier('child')), ExternalRelationKind::BaseTable);
         $index = new IndexIdentity($owner, new Identifier('backing_key'), IndexRole::Ordinary);
         $constraint = new ForeignKeyRemoval(new Identifier('parent_ref'), ForeignKeyRemovalKind::Constraint);
-        $selected = $index;
+        $selected = new IndexRemovalTarget($index, null);
         $drop = new DropForeignKeys($owner, [&$selected, $constraint], []);
-        $selected = new IndexIdentity($owner, new Identifier('unrelated'), IndexRole::Ordinary);
+        $selected = new IndexRemovalTarget(new IndexIdentity($owner, new Identifier('unrelated'), IndexRole::Ordinary), null);
 
         self::assertSame('ALTER TABLE `app`.`child` DROP INDEX `backing_key`, DROP FOREIGN KEY `parent_ref`', $drop->toString());
     }

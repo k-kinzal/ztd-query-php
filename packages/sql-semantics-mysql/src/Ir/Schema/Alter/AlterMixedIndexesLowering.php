@@ -68,10 +68,12 @@ final class AlterMixedIndexesLowering
         $renames = new AlterIndexRenameLowering();
         $case = new NativeIdentifierCase();
         $owner = null;
-        $actions = $modified = $removed = [];
+        $actions = $modified = $removed = $bindings = [];
         foreach ($written as $action) {
             if ($action instanceof DropElement) {
-                $source = $selector->identity($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
+                $bound = $selector->removal($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
+                $bindings[] = $bound;
+                $source = $bound->index;
                 $selected = $source;
                 $removed[] = $source;
             } else {
@@ -89,6 +91,7 @@ final class AlterMixedIndexesLowering
         return new AlterIndexes(
             $owner,
             $actions,
+            $bindings,
             $this->unmoved($resolved->table->indexes, $modified),
             (new IndexDependencyLowering())->resolve($operation, $statement, $removed),
             $operation->context->profile->grammar,

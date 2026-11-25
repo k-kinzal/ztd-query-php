@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 
 #[CoversClass(IndexRemovalSet::class)]
 #[Small]
@@ -25,8 +26,8 @@ final class IndexRemovalSetTest extends TestCase
         $table = new TableName(new Identifier('app'), new Identifier('t'));
         $a = new TableIdentity($table, ExternalRelationKind::BaseTable);
         $b = new TableIdentity($table, ExternalRelationKind::BaseTable);
-        $targets = [new IndexIdentity($a, new Identifier('a'), IndexRole::Ordinary),
-                    new IndexIdentity($b, new Identifier('b'), IndexRole::Ordinary)];
+        $targets = [new IndexRemovalTarget(new IndexIdentity($a, new Identifier('a'), IndexRole::Ordinary), null),
+                    new IndexRemovalTarget(new IndexIdentity($b, new Identifier('b'), IndexRole::Ordinary), null)];
         $scope = new IndexRemovalSet();
         $scope->check($targets, new IndexChangePolicy());
 

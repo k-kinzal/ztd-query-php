@@ -7,8 +7,9 @@ import sys
 
 from mysql_drop_index_cases import (
     ABSENT, KINDS, LIFETIMES, QUALIFIERS, SPELLINGS, STATUS, SUFFIX_BYTES, analyze, cases, command,
-    coordinates, declarations, definition, field_rows, prediction, probe_last,
+    coordinates, declarations, definition, field_rows, prediction, probe_last, published_single_removal,
 )
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -17,8 +18,8 @@ from sqlite_domain import RenderFault
 
 
 LABEL = "mysql-drop-index"
-NAME = "mysql-drop-native-index-evidence-v3.json"
-CONTRACT = "78d4213562da75d0be5f161366dd851ff8e542db561d084ad7ceb4cea1ae8fda"
+NAME = "mysql-drop-native-index-evidence-v4.json"
+CONTRACT = "3d97452ae70caf96c47f57111ed99507304460f3260eb1a794665bc247219389"
 SUFFIX_CONTRACT = "cba633bc81924ce3a8e7eee3507b0af23294bce1dbb634c894b3f2d05e8e9902"
 BASE = "b913362b3246efb53355e3bbe9128134f7bb9d80b408d18c616f70579a73b309"
 CASE_CONTRACT = "a1c9a4243a939dc8d13a1971277bc84f5b91e5366ef1c5a96ab41c21eb34a307"
@@ -42,6 +43,7 @@ def specifications():
     require(digest(names) == SUFFIX_CONTRACT, "mysql-drop-index-suffix-contract")
     same(json.loads(names.read_text())["bytesByRelease"], {tag.removeprefix("mysql-"): width for tag, width in SUFFIX_BYTES.items()})
     spec = json.loads(path.read_text())
+    check_removal_facts_contract(spec)
     profiles = native_profiles()[1]
     same(spec["releases"], profiles["mysql"]["releases"])
     same([], spec["exploration"]["allowedExclusions"])
@@ -159,7 +161,7 @@ def check_value(item, response):
     model = item.get("model", item)
     require(response["status"] == "constructed", "mysql-drop-index-construction", response)
     same(model["release"] + PROFILE, response["profile"])
-    same(model["mysqlDropIndex"], response["mysqlDropIndex"])
+    same(published_single_removal(model["mysqlDropIndex"]), response["mysqlDropIndex"])
 
 
 def observer_request(item, sql):

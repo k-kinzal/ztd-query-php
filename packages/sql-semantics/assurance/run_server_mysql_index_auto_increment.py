@@ -10,6 +10,7 @@ from mysql_index_auto_increment_cases import (
 )
 from mysql_drop_index_cases import LIFETIMES
 from mysql_innodb_declaration_width_cases import OLD
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -17,9 +18,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-index-auto-increment"
 OBSERVER = "mysql_index_auto_increment_observer.php"
-NAME = "mysql-index-auto-increment-evidence-v1.json"
+NAME = "mysql-index-auto-increment-evidence-v2.json"
 BASE = "24552a62d52e5be756358f47ee5d3f2c24d1be923609e00ae265851fff89c201"
-CONTRACT = "5098698d21b21312f6adad59f5b2a912a620025c143561a4c0d74d833c334f56"
+CONTRACT = "fb03cbf71cb3d58f42fe391399d241b9845ff9a47ca22a15bd2e2346f76023c4"
 COMPARATOR_FAULTS = {
     "Ignore a changed generated identity.": "changed-generated-identity",
     "Ignore the disappearance of an alternate physical key.": "missing-retained-support",
@@ -31,6 +32,7 @@ def specifications():
     baseline = TOOL / "mysql-index-auto-increment-v1.json"
     require(digest(path) == CONTRACT and digest(baseline) == BASE, "mysql-index-auto-increment-contract")
     spec = json.loads(path.read_text())
+    check_removal_facts_contract(spec)
     fixed = json.loads(baseline.read_text())
     same(fixed["finite"], spec["finite"])
     same(spec["finite"]["timeoutSecondsPerRelease"], spec["exploration"]["timeoutSecondsPerRelease"])
@@ -110,7 +112,7 @@ def check_value(item, response):
 def observed_point(response, item):
     shape, model_ = response["mysqlDropIndex"], item["model"]
     same("table" if model_["life"] == "persistent" else "temporary-table", shape["owner"][2])
-    use = "unrelated" if shape["autoIncrement"] is None else "leading-with-distinct-alternate"
+    use = model_["use"]
     return model_["life"], shape["role"], use, model_["declaration"], item["route"]
 
 
@@ -143,11 +145,20 @@ def observation(raw):
     return raw
 
 
+def native_alternates(initial, target):
+    generator = next((column[0] for column in initial["columns"] if column[4] == "auto_increment"), None)
+    leading = [entry[0] for entry in initial["indexes"] if entry[2] == 1 and entry[3] == generator]
+    return len(leading) - 1 if target in leading else None
+
+
 def check_observation(item, actual, sql):
     predicted = prediction(item["model"], item["failed"])
     witness = {"expected": predicted, "observed": actual, "sql": sql}
     require(actual.get("status") == STATUS, "mysql-index-auto-increment-observer-scope", witness)
     require({key: actual[key] for key in predicted} == predicted, "meaning-mismatch", witness)
+    count = native_alternates(actual["initial"], item["model"]["mysqlDropIndex"]["name"])
+    measured = "unrelated" if count is None else "sole-leading" if count == 0 else "leading-with-distinct-alternate"
+    same(item["model"]["use"], measured)
     if item["failed"]:
         require(actual["affected"] is None and any(note[1] == 1075 for note in actual["diagnostics"]), "meaning-mismatch", witness)
     else:
@@ -161,10 +172,14 @@ def required_forms(_, _tag):
 
 def sample_forms(forms, response, _, item):
     model_, actual = item["model"], response["mysqlDropIndex"]
-    support = actual["autoIncrement"]
-    kind = "unrelated" if support is None else "one" if len(support["alternates"]) == 1 else "many"
-    forms.update((f"role/{actual['role']}", f"lifetime/{model_['life']}", f"dependence/{kind}",
+    forms.update((f"role/{actual['role']}", f"lifetime/{model_['life']}",
                   f"clone/{model_['clone']}", f"declaration/{model_['declaration']}"))
+
+
+def sample_native_forms(forms, actual, _, item):
+    count = native_alternates(actual["initial"], item["model"]["mysqlDropIndex"]["name"])
+    role = "unrelated" if count is None else "one" if count == 1 else "many"
+    forms[f"dependence/{role}"] += 1
 
 
 def witness(tag):

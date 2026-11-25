@@ -31,7 +31,6 @@ final class IndexIdentity
         public readonly TableIdentity $owner,
         public readonly Identifier $name,
         public readonly IndexRole $role,
-        public readonly ?IndexAutoIncrement $autoIncrement = null,
     ) {
         $case = new NativeIdentifierCase();
         Check::input(preg_match('/\A.{1,64}(?<! )\z/us', $name->value) === 1, 'An index name has 1 to 64 characters and no trailing space.');
@@ -39,9 +38,5 @@ final class IndexIdentity
             $role === IndexRole::Primary ? $name->value === 'PRIMARY' : $case->fold($name->value) !== 'primary',
             'Only the physical primary key has the canonical PRIMARY index identity.'
         );
-        $target = $case->fold($name->value);
-        foreach ($autoIncrement->alternates ?? [] as $alternate) {
-            Check::input($case->fold($alternate->value) !== $target, 'An AUTO_INCREMENT backing alternate must be a different physical key.');
-        }
     }
 }

@@ -1,7 +1,10 @@
 """Independent ownership, naming and catalog predictions for DROP INDEX."""
 
+import json
 from itertools import product
 from random import Random
+
+from run import TOOL, digest, require
 
 from mysql_innodb_declaration_width_cases import OLD, SCHEMA, quote
 
@@ -31,6 +34,35 @@ DUPLICATE = ["db-error", "23000", 1062]
 def coordinates():
     return {(life, kind, origin, spelling, qualifier) for life, spelling, qualifier in product(LIFETIMES, SPELLINGS, QUALIFIERS)
             for kind, origins in KINDS.items() for origin in origins}
+
+
+def check_removal_facts_contract(specification):
+    record = "mysql-index-removal-construction-facts-v1.json"
+    fingerprint = "0a0b00b9f59a18adc6776398770fb7d43ab3e742f5a39e7f0a581e5e30772308"
+    approved = specification["publicationContracts"]
+    require(approved.get(record) == fingerprint, "mysql-index-removal-construction-facts-pointer", record)
+    for name, expected in approved.items():
+        require(digest(TOOL / name) == expected, "mysql-index-removal-construction-facts-digest", name)
+    for name, expected in json.loads((TOOL / record).read_text())["references"].items():
+        require(digest(TOOL / name) == expected, "mysql-index-removal-original-evidence-digest", name)
+
+
+def published_index_target(spec):
+    return {field: spec[field] for field in ("owner", "name", "role")}
+
+
+def published_single_removal(spec):
+    return {**published_index_target(spec), "policy": spec["policy"], "ignore": spec["ignore"]}
+
+
+def published_removal_set(spec):
+    return {**spec, "targets": [published_index_target(target) for target in spec["targets"]]}
+
+
+def published_mixed_actions(spec):
+    return {"owner": spec["owner"], "policy": spec["policy"],
+            "actions": [{"drop": published_index_target(action["drop"])} if "drop" in action else action
+                        for action in spec["actions"]]}
 
 
 def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=0, option="", suffix=2, nullable=False, anchor=None):

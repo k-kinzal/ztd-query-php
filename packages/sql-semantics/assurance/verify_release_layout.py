@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v176.json"
-CONTRACT = "3ae6140e72755c48e008d3d025df2e6e84fada51c33722dac6f79299d1648ceb"
+CONTRACT_NAME = "release-layout-v177.json"
+CONTRACT = "76e895395d70aa3d94fdf60aed9430c4dbacce2e81814412cf5ca3f1dcdf4c40"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -724,8 +724,9 @@ def verify_probe(raw, catalog):
                       ", ALGORITHM=COPY, LOCK=NONE")
             require(item.get("mysqlAlterIndexRemoval") == ["temporary-table", True, "ordered_key", legacy, legacy],
                     "installed-mysql-alter-index-removal-mismatch", item)
+            generation_drop = "DROP INDEX `PRIMARY` ON `app`.`keeps_value`"
             require(item.get("mysqlIndexAutoIncrement") == [
-                "a", ["retains_a"], "DROP INDEX `PRIMARY` ON `app`.`keeps_value`",
+                "PRIMARY", "primary", True, True, generation_drop, generation_drop,
                 "DROP INDEX must retain a backing key for the AUTO_INCREMENT field.",
             ], "installed-mysql-auto-increment-support-mismatch", item)
             dropping_fk = "DROP INDEX `first_key` ON `app`.`fk_index_parent`"
@@ -742,7 +743,7 @@ def verify_probe(raw, catalog):
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\DropIndexes"):
             drop_set = "ALTER TABLE `app`.`batch_index` DROP INDEX `PRIMARY`, DROP INDEX `by_a`"
             require(item.get("mysqlAtomicIndexRemoval") == [
-                ["PRIMARY", "by_a"], ["primary", "ordinary"], ["by_a", "keeps_a"], drop_set,
+                ["PRIMARY", "by_a"], ["primary", "ordinary"], True, drop_set,
                 "Atomic removal must retain a backing key for the AUTO_INCREMENT field.",
             ] and item["sql"] == drop_set, "installed-mysql-atomic-index-removal-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\Rename\\RenameIndexes"):
@@ -756,7 +757,7 @@ def verify_probe(raw, catalog):
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\Change\\AlterIndexes"):
             mixed = "ALTER TABLE `app`.`batch_index` DROP INDEX `PRIMARY`, RENAME INDEX `by_a` TO `new_a`"
             require(item.get("mysqlMixedIndexAlteration") == [
-                "PRIMARY", ["by_a", "keeps_a"], ["by_a", "new_a"], mixed,
+                "PRIMARY", True, ["by_a", "new_a"], mixed,
                 "A removed index cannot also be renamed or unmoved.",
                 "Mixed native index removal and renaming requires MySQL 5.7 or later.",
             ] and item["sql"] == mixed, "installed-mysql-mixed-index-alteration-mismatch", item)

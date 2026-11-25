@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequir
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -26,26 +27,33 @@ final class DropIndex implements SemanticsIR
     use Snapshot;
 
     /**
+     * The resolved owner and physical key selected for removal.
+     */
+    public readonly IndexIdentity $target;
+
+    /**
      * Fixes the resolved removal target and the native release.
      * @param list<IndexForeignKeyRequirement> $requirements Complete native foreign-key sides owning supporting physical keys
      */
     public function __construct(
-        public readonly IndexIdentity $target,
+        IndexRemovalTarget $removal,
         array $requirements,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
         public readonly bool $ignore = false,
     ) {
         Check::input(
-            $target->autoIncrement === null || $target->autoIncrement->alternates !== [],
+            $removal->autoIncrement === null || $removal->autoIncrement->alternates !== [],
             'DROP INDEX must retain a backing key for the AUTO_INCREMENT field.'
         );
+        $target = $removal->index;
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
         Check::input(
             $policy->supports($target->owner->kind, $target->role->clustered()),
             'The algorithm and lock cannot remove this native InnoDB index.'
         );
         (new IndexDependencyClosure())->check([$target], $requirements);
+        $this->target = $target;
     }
 
     /**

@@ -24,7 +24,7 @@ final class AutoIncrementRemovalSetTest extends TestCase
         $value = $semantics->analyze('ALTER TABLE app.t DROP PRIMARY KEY, DROP INDEX removed', $catalog);
 
         self::assertInstanceOf(DropIndexes::class, $value);
-        self::assertSame('retained', $value->targets[0]->autoIncrement?->alternates[1]->value);
-        self::assertSame('retained', $value->targets[1]->autoIncrement?->alternates[1]->value);
+        self::assertSame('PRIMARY', $value->targets[0]->name->value);
+        self::assertSame('removed', $value->targets[1]->name->value);
     }
 }

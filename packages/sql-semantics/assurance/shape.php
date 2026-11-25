@@ -1593,8 +1593,7 @@ if ($dialect !== 'sqlite') {
         $methods[$indexAlteration] = ['__construct', 'toString'];
         $methods[$mixedAlter] = ['__construct', 'profileId', 'toString'];
         $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
-        $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole],
-            'autoIncrement' => ['?' . $indexAutoIncrement]];
+        $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole]];
         $properties[$indexRole] = [];
         $methods[$dropIndex] = ['__construct', 'profileId', 'toString'];
         $methods[$indexIdentity] = ['__construct'];
@@ -1932,7 +1931,7 @@ try {
             ['mysql-varchar-binding-v10.json', '4f223c9722dae50667ffeea8d9ddb6b7e279ba61891569ae1ee51ef01ae08007', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v7.json', '99c1136783f445921aab242f7d33d415c4f4352756d4c2eb1f4a83a7a5cbf05a', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v9.json', '6f50b02a129f3dbc38b518180c2c18c7dc7e6f1571aa9b252afefad25cce27ff', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v11.json', 'd8b19dde056bcf57f4aa2a9270c9a0a2f28fd90d3294faef68708114ed331d60', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v12.json', '5943498517254ce9d6e024f769c2fb8bac6cea66e9a5f33a6aa8424f749baca0', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1985,7 +1984,7 @@ try {
             ['mysql-index-auto-increment-storage-v1.json', '6b6a146f979bb53a4dce55a241f642a75e4fdb61d541c7ba254ae158aa3344c7'],
             ['mysql-index-foreign-key-storage-v1.json', '53ab347ce233a749cd3ec986c1005857615bf16e9f80e7b7d18f3c7aefebec7e'],
             ['mysql-index-visibility-storage-v1.json', '3b9a4fb0ba21938c1ba8af07b9e8a906c111c4b2117e2a42f6429c85e4e49727'],
-            ['mysql-index-removal-set-storage-v1.json', 'ed343981fe207cd80b7d6628cdd6685787c39f241bfc5bc27cee629e80e243a1'],
+            ['mysql-index-removal-set-storage-v2.json', 'a5fed765034126236c827a4ef5cff34ee03deb947b85eed3f44c2f6708375e75'],
             ['mysql-index-rename-storage-v2.json', '5f5a89195ed0333e80c8536781bf64ef28e4c7a362dbca38efc6186173cc4ae3'],
             ['mysql-mixed-index-storage-v2.json', '1cf5804f5b41033e809de4ec592ea89334b69bc2dc3a1c80db0c4c8ba50c59cb'],
             ['mysql-foreign-key-drop-storage-v1.json', 'c75c4457de69363e2d1cb77c933d45dad428b9ab423b0bc2f9c48118c3587c69'],
@@ -2542,7 +2541,7 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
-                    'Schema\\Index\\DropIndexLowering' => $dialect === 'mysql' ? ['lower', 'identity', 'index'] : ['lower'],
+                    'Schema\\Index\\DropIndexLowering' => $dialect === 'mysql' ? ['lower', 'identity', 'removal', 'index'] : ['lower'],
                     'Schema\\Truncate\\TruncateLowering' => $dialect === 'mysql' ? ['lower', 'referrers'] : ['lower'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
@@ -2592,6 +2591,12 @@ try {
                 || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'
                     && in_array($name->toString(), [$prefix . 'Schema\\Index\\Dependency\\IndexDependencyKeys',
                         $platform . '\\Model\\Diagnostic\\InvalidConstruction'], true))
+                || ($dialect === 'mysql' && in_array($short, [
+                    'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes', 'Schema\\Index\\Change\\AlterIndexes',
+                    'Schema\\Index\\Change\\MixedIndexChanges', 'Schema\\Index\\Change\\MixedIndexNamespace',
+                    'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
+                    'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\ForeignKey\\ForeignKeyRemovalSet',
+                ], true) && $name->toString() === $platform . '\\Model\\Statement\\Declaration\\IndexRemovalTarget')
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',
                     'Schema\\Sequence\\Authorization\\SequencePrincipal'], true)

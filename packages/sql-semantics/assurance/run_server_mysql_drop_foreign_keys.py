@@ -5,6 +5,8 @@ import json
 import sys
 
 import mysql_drop_foreign_keys_cases as laws
+from mysql_drop_index_cases import published_index_target
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import TOOL, Failure, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -13,9 +15,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-drop-foreign-keys"
 OBSERVER = "mysql_drop_foreign_keys_observer.php"
-NAME = "mysql-drop-foreign-keys-evidence-v1.json"
+NAME = "mysql-drop-foreign-keys-evidence-v2.json"
 BASE = "fbd8846ede8f693d6d052821b159e577b0aec91bec2cf036f959d4fd529688bb"
-CONTRACT = "85c7a4092c281ed0920a9b69a84c8f4c647758e4d1266142002e1f2ed7f08c39"
+CONTRACT = "ffc3d82b77cdb9b1f85941437743d720cbb4208946bf3602fd0240aca30996c3"
 COMPARATOR_FAULTS = {
     "Hide an enforced row difference.": "ignore-row-enforcement",
     "Treat a partial failed legacy copy as atomic.": "ignore-legacy-copy-partial-effect",
@@ -29,6 +31,7 @@ def specifications():
     base, current = TOOL / "mysql-drop-foreign-keys-v3.json", TOOL / NAME
     require(digest(base) == BASE and digest(current) == CONTRACT, "mysql-drop-foreign-keys-contract")
     ref, spec = json.loads(base.read_text()), json.loads(current.read_text())
+    check_removal_facts_contract(spec)
     require(digest(TOOL / ref["extends"]) == ref["priorSha256"], "mysql-drop-foreign-keys-prior-contract")
     _, profiles = native_profiles()
     for field in ("finite", "exploration", "observations", "releases", "nameBoundaries"):
@@ -183,7 +186,10 @@ def check_value(item, actual):
     model = item["model"]
     require(actual["status"] == "constructed", "mysql-drop-foreign-keys-not-constructed", actual)
     same(model["release"] + laws.PROFILE, actual["profile"])
-    same(laws.direct(model)["mysqlDropForeignKeys"], actual["mysqlDropForeignKeys"])
+    root = laws.direct(model)["mysqlDropForeignKeys"]
+    expected = [{**action, "index": published_index_target(action["index"])} if "index" in action else action
+                for action in root["actions"]]
+    same({**root, "actions": expected}, actual["mysqlDropForeignKeys"])
 
 
 def coordinate_seen(actual, model):

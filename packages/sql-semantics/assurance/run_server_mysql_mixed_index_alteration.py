@@ -7,7 +7,7 @@ import sys
 
 import run_server_mysql_index_rename as renames
 from mysql_alter_index_cases import INVALID
-from mysql_drop_index_cases import ABSENT, LIFETIMES
+from mysql_drop_index_cases import ABSENT, LIFETIMES, published_mixed_actions
 from mysql_index_auto_increment_cases import LAST_SUPPORT, native_key
 from mysql_index_policy_cases import refusal
 from mysql_mixed_index_cases import (
@@ -15,6 +15,7 @@ from mysql_mixed_index_cases import (
     native_rows, physical, prediction, sql,
 )
 from run_server_mysql_create_btree_index import check_validation_contract
+from mysql_drop_index_cases import check_removal_facts_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -22,9 +23,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-mixed-index-alteration"
 OBSERVER = "mysql_mixed_index_observer.php"
-NAME = "mysql-mixed-index-alteration-evidence-v3.json"
+NAME = "mysql-mixed-index-alteration-evidence-v4.json"
 BASE = "fcb33e154ba1f9da239a182f08dd70de8660f5e8cb4c382a0e8c92a66c30934c"
-CONTRACT = "b9c0633048a26a9a38a9ab8994c1346e52073c7510b23a06e646007b156630fd"
+CONTRACT = "92cdf62f9fe2187c9da5c247b9f103df9bd9951650d389196641af09d465700a"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/alter-indexes"
 FIXTURE_RESET = {"mysql.innodb_index_stats": 0, "mysql.innodb_table_stats": 0}
 POLICY = "The algorithm and lock cannot remove these native InnoDB indexes."
@@ -35,6 +36,7 @@ def specifications():
     base, rec = TOOL / "mysql-mixed-index-alteration-v1.json", TOOL / NAME
     require(digest(base) == BASE and digest(rec) == CONTRACT, "mysql-mixed-index-contract")
     spec, fixed = json.loads(rec.read_text()), json.loads(base.read_text())
+    check_removal_facts_contract(spec)
     check_validation_contract(spec)
     same(fixed["finite"], spec["finite"])
     same(fixed["exploration"], spec["exploration"])
@@ -150,7 +152,7 @@ def check_value(item, result):
     require(result["status"] == "constructed", "mysql-mixed-index-constructed", result)
     same(model["release"] + PROFILE, result["profile"])
     change = model["mysqlMixedIndexes"]
-    same({field: change[field] for field in ("owner", "actions", "policy")}, result["mysqlMixedIndexes"])
+    same(published_mixed_actions(change), result["mysqlMixedIndexes"])
 
 
 def seen(result, item):

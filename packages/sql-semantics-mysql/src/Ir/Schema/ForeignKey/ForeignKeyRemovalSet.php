@@ -9,10 +9,10 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Batch\IndexRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyClosure;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement;
-use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 
 /**
@@ -23,7 +23,7 @@ final class ForeignKeyRemovalSet
 {
     /**
      * Checks native placement, duplicates, and retained key support before publication.
-     * @param non-empty-list<ForeignKeyRemoval|IndexIdentity> $actions Written native key alterations
+     * @param non-empty-list<ForeignKeyRemoval|IndexRemovalTarget> $actions Written native key alterations
      * @param list<IndexForeignKeyRequirement> $requirements Physical support for every remaining foreign-key side
      */
     public function check(TableIdentity $owner, array $actions, array $requirements, GrammarRelease $release, IndexChangePolicy $policy): void
@@ -43,7 +43,7 @@ final class ForeignKeyRemovalSet
                 $keys[$name] = true;
             } else {
                 Check::input(
-                    $physical->coordinate($action->owner) === $coordinate,
+                    $physical->coordinate($action->index->owner) === $coordinate,
                     'A mixed foreign-key and index removal requires one owning table and lifetime.'
                 );
                 $indexes[] = $action;
@@ -54,8 +54,8 @@ final class ForeignKeyRemovalSet
             Check::input($requirements === [], 'A foreign-key-only removal does not consume index requirements.');
             Check::input($policy->supports($owner->kind), 'The algorithm and lock cannot remove native foreign keys on this table.');
         } else {
-            $physical->check($indexes, $policy);
-            (new IndexDependencyClosure())->check($indexes, $requirements);
+            $identities = $physical->check($indexes, $policy);
+            (new IndexDependencyClosure())->check($identities, $requirements);
         }
     }
 

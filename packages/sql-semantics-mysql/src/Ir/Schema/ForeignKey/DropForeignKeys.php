@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -45,12 +46,13 @@ final class DropForeignKeys implements SemanticsIR
     ) {
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
         Check::input(array_is_list($actions) && $actions !== [], 'Foreign-key removal requires an ordered nonempty action list.');
-        $checked = [];
+        $checked = $bound = [];
         foreach ($actions as $action) {
-            Check::input($action instanceof ForeignKeyRemoval || $action instanceof IndexIdentity, 'Foreign-key removal requires a checked native action.');
-            $checked[] = $action;
+            Check::input($action instanceof ForeignKeyRemoval || $action instanceof IndexRemovalTarget, 'Foreign-key removal requires a checked native action.');
+            $bound[] = $action;
+            $checked[] = $action instanceof IndexRemovalTarget ? $action->index : $action;
         }
-        (new ForeignKeyRemovalSet())->check($owner, $checked, $requirements, $release, $policy);
+        (new ForeignKeyRemovalSet())->check($owner, $bound, $requirements, $release, $policy);
         $this->actions = $checked;
     }
 

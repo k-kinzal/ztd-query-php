@@ -35,7 +35,7 @@ final class IndexAddition
         Check::input($identity->owner->kind === $heading->kind && $identity->owner->name->schema->value === $heading->schema->value
             && $identity->owner->name->table->value === $heading->table->value, 'An added index needs the exact declared owning table.');
         Check::input(
-            $key->full && $key->referenceKey && !$key->implicitForeignKey && $identity->autoIncrement === null
+            $key->full && $key->referenceKey && !$key->implicitForeignKey
             && ($identity->role === IndexRole::Ordinary || $identity->role === IndexRole::Unique),
             'An added index needs a full explicit ordinary or unique secondary key.'
         );
