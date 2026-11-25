@@ -904,6 +904,7 @@ function constructCreateView(string $platform, array $input): SemanticsIR
         ($view . 'ViewAlgorithm')::from($create['algorithm']),
         ($view . 'ViewSecurity')::from($create['security']),
         ($view . 'ViewCheckOption')::from($create['checkOption'] ?? 'NONE'),
+        isset($create['definer']) ? new ($view . 'ViewDefiner')(...$create['definer']) : null,
     );
 }
 
@@ -2898,6 +2899,7 @@ function observeStatement(array $input): array
                         : $column->name->value, $value->columns),
                 'policy' => $value->policy->value, 'algorithm' => $value->algorithm->value, 'security' => $value->security->value,
                 ...($value->checkOption->value === 'NONE' ? [] : ['checkOption' => $value->checkOption->value]),
+                ...($value->definer === null ? [] : ['definer' => [$value->definer->user, $value->definer->host]]),
             ],
         ];
     }

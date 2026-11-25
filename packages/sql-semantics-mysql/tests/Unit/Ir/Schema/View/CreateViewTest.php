@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewSecurity;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
 #[CoversClass(CreateView::class)]
 #[Small]
@@ -81,7 +82,7 @@ final class CreateViewTest extends TestCase
         $column = new Identifier('value');
         $name = new ViewName($schema, new Identifier('checked_view'));
         $source = new TableSource($schema, new Identifier('items'), [new Identifier('id')]);
-        $selection = new Select([new ResultColumn(new IntegerLiteral('42'), $column)], $source);
+        $selection = new Select([new ResultColumn(new IntegerLiteral('42'), $column)], $source, GrammarRelease::MySql5651);
         $view = new CreateView($name, $selection, [new ViewColumn($column)], checkOption: ViewCheckOption::Local);
 
         self::assertSame(ViewCheckOption::Local, $view->checkOption);

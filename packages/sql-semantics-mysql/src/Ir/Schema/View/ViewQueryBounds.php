@@ -55,4 +55,18 @@ final class ViewQueryBounds
             );
         }
     }
+
+    /**
+     * Reports whether the checked projection exposes an assignable base field.
+     */
+    public function hasWritableField(Select $query): bool
+    {
+        foreach ($query->columns as $column) {
+            if ($column->expression instanceof ColumnReference || $column->expression instanceof TextColumnReference) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

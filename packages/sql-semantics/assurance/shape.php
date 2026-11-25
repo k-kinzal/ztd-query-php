@@ -1745,16 +1745,19 @@ if ($dialect !== 'sqlite') {
         $viewSecurity = 'Schema\\View\\ViewSecurity';
         $viewPolicy = 'Schema\\View\\ViewCreationPolicy';
         $viewCheck = 'Schema\\View\\ViewCheckOption';
+        $viewDefiner = 'Schema\\View\\ViewDefiner';
         $roots[] = $viewCreate;
         array_push($internal, 'Schema\\CreateRelationLowering', 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds',
             'Schema\\View\\ViewProjectionAliases', 'Schema\\View\\ViewCatalogHeading', 'Schema\\View\\ViewHeadingLowering');
         array_push($pureCollaborators, 'Schema\\View\\ViewQueryBounds', 'Schema\\View\\ViewProjectionAliases', 'Schema\\View\\ViewCatalogHeading');
         $properties[$viewCreate] = ['name' => [$viewName], 'query' => ['Select'], 'columns' => ['array'],
             'policy' => [$viewPolicy], 'algorithm' => [$viewAlgorithm], 'security' => [$viewSecurity],
-            'installedAlgorithm' => [$viewAlgorithm], 'checkOption' => [$viewCheck]];
+            'installedAlgorithm' => [$viewAlgorithm], 'checkOption' => [$viewCheck], 'definer' => ['?' . $viewDefiner]];
         $properties[$viewColumn] = ['name' => ['Identifier', 'Ordering\\RequestedResultAlias']];
+        $properties[$viewDefiner] = ['user' => ['string'], 'host' => ['string']];
         $methods[$viewCreate] = ['__construct', 'profileId', 'toString'];
         $methods[$viewColumn] = ['__construct'];
+        $methods[$viewDefiner] = ['__construct', 'checkRelease', 'accountSql'];
         $properties[$viewAlgorithm] = $properties[$viewSecurity] = $properties[$viewPolicy] = $properties[$viewCheck] = [];
         $methods[$viewAlgorithm] = $methods[$viewSecurity] = $methods[$viewPolicy] = $methods[$viewCheck] = [];
         $enumCases[$viewAlgorithm] = ['Undefined' => 'UNDEFINED', 'Merge' => 'MERGE', 'TempTable' => 'TEMPTABLE'];
@@ -2745,6 +2748,7 @@ try {
         foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
+                    || ($dialect === 'mysql' && $short === 'Schema\\View\\ViewDefiner' && $call->name->toString() === 'trim')
                     || ($dialect === 'mysql' && $short === 'Ordering\\AliasHeading' && $call->name->toString() === 'substr')
                     || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyConstraintNamespace'
                         && in_array($call->name->toString(), ['in_array', 'max', 'str_starts_with', 'substr', 'strlen'], true))

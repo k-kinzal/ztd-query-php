@@ -1,10 +1,12 @@
 """Compare MySQL persistent view creation with an independent catalog and row model."""
 
+from copy import deepcopy
 from itertools import chain, product
 import json
 from random import Random
 import sys
 
+import mysql_view_definer_cases as definers
 from evidence_transcript import canonical
 from run import TOOL, Failure, digest, require
 from run_server import rejects, same
@@ -16,8 +18,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-view"
 OBSERVER = "mysql_create_view_observer.php"
-CONTRACT_NAME = "mysql-create-view-v6.json"
-CONTRACT = "8a0f7ec897c934550c0b307681a75dc46ba648d3515198ac65d9f0d4d2b3a2b7"
+CONTRACT_NAME = "mysql-create-view-v9.json"
+CONTRACT = "3b9969543b900df7384dcf5dc0b08b8c1497992c1d6b19dd42b8c48d6dd5fc74"
 BASE_CONTRACT = "7465a47332cd41088ffc7ed5bc997353a35a553e8aade2c51e8392b09e904d1c"
 COMPLETE_SEEDS = True
 AXES = ("algorithm", "security", "policy", "body", "fixture")
@@ -27,6 +29,7 @@ DISTINCT_LITERALS = {"unit-distinct": None, "unit-distinct-empty": ["boolean", F
 COMPARATOR_FAULTS = {
     "Ignore a missing native view fallback warning while still comparing the installed catalog": "missing-fallback",
     "Ignore an incorrect affected row count after a permitted write through an otherwise matching view": "incorrect-write-count",
+    "Compare native rows and security but ignore the installed definer identity": "wrong-definer-catalog",
 }
 SCHEMA, MAIN, DECOY, BASE = "ir_fixture", "ir_cv_main", "ir_cv_decoy", "ir_cv_source"
 TARGET = f"{SCHEMA}.{MAIN}"
@@ -41,6 +44,7 @@ MERGE_WARNING = ["Warning", 1354, "View merge algorithm can't be used here for n
 WRITE_ROWS = [(0, "low"), (None, "unknown"), (5, "high")]
 VISIBLE_ID, REPLACEMENT_ID = 2, 0
 UNUPDATABLE = "A view check option requires a mergeable base-table projection."
+UNWRITABLE = "A MySQL view check option requires a writable base-table field on this release."
 CHECK_REJECTION = ["db-error", "HY000", 1368]
 WRITE_REJECTION = ["db-error", "HY000", 1369]
 CATALOG_TERMS = {
@@ -132,6 +136,22 @@ def checked_catalog_grid(spec, analysis):
         yield (algorithm, settings["security"], settings["policy"], body, settings["fixture"], mode)
 
 
+def rejected_catalog_cases(spec, tag, analysis):
+    settings = spec["checkCatalogFinite"]["rejections"]
+    modern = tag not in {"mysql-5.6.51", "mysql-5.7.44"}
+    require(modern == (tag in settings["profiles"]), "mysql-create-view-constant-check-profile", tag)
+    if not modern:
+        return set()
+    modes = ("LOCAL", "CASCADED", "IMPLICIT") if analysis else ("LOCAL", "CASCADED")
+    expected = {(algorithm, "definer", "require-new", "base-constant", "absent", mode)
+                for mode in modes for algorithm in ("automatic", "merge")}
+    observed = {case_ for case_ in checked_catalog_grid(spec, analysis)
+                if case_[3] == settings["body"] and case_[-1] in settings["modes"]}
+    count = settings["identities"]["analysis" if analysis else "direct"]
+    require(observed == expected and len(expected) == count, "mysql-create-view-constant-check-count", tag)
+    return expected
+
+
 def identities(spec, tag, analysis):
     grid = list(finite_grid(spec, tag))
     policies = ("require-new", "replace", "preserve") if tag == "mysql-9.1.0" else ("require-new", "replace")
@@ -155,7 +175,8 @@ def identities(spec, tag, analysis):
     generated_catalog = list(checked_catalog_grid(spec, analysis))
     require(len(generated_catalog) == len(catalog) == spec["checkCatalogFinite"]["identities"][direction]
             and set(generated_catalog) == catalog, "mysql-create-view-check-catalog-size", direction)
-    return independent | expected | catalog
+    admitted_catalog = catalog - rejected_catalog_cases(spec, tag, analysis)
+    return independent | expected | admitted_catalog | {("definer", *coordinate) for coordinate in definers.coordinates(spec, analysis)}
 
 
 def finite_ids(_, spec, tag):
@@ -195,7 +216,7 @@ def finite_id(actual, item, implicit=False):
     return (*identity, mode)
 
 
-def finite_sql(item, implicit=False):
+def finite_sql(item, implicit=False, definer=""):
     view = item["createView"]
     query = view["query"]
     start = "CREATE OR REPLACE" if view["policy"] == "replace" else "CREATE"
@@ -216,16 +237,34 @@ def finite_sql(item, implicit=False):
             body += " FROM DUAL WHERE " + ("TRUE" if query["where"][1] else "FALSE")
     guard = " WITH CHECK OPTION" if implicit else (
         "" if "checkOption" not in view else f" WITH {view['checkOption']} CHECK OPTION")
-    return f"{start} ALGORITHM={view['algorithm']} SQL SECURITY {view['security']} VIEW {preserve}{TARGET} ({names}) AS {body}{guard}"
+    principal = f" DEFINER={definer}" if definer else ""
+    return f"{start} ALGORITHM={view['algorithm']}{principal} SQL SECURITY {view['security']} VIEW {preserve}{TARGET} ({names}) AS {body}{guard}"
+
+
+def definer_coordinate(actual, item, role):
+    view = actual["createView"]
+    _, principal = definers.identity(item["release"], role)
+    same(principal, view.get("definer"))
+    algorithm = next(key for key, value in ALGORITHMS.items() if value == view["algorithm"])
+    return ("definer", algorithm, view["security"].lower(), role)
 
 
 def analysis_finite_id(engine, actual, item, sql):
+    if "definerCoordinate" in item:
+        role = item["definerCoordinate"]
+        same(finite_sql(item, definer=definers.clause(item["release"], role)), sql)
+        return definer_coordinate(actual, item, role)
     implicit = sql.endswith(" WITH CHECK OPTION")
     same(finite_sql(item, implicit), sql)
     return finite_id(actual, item, implicit)
 
 
 def direct_finite_id(engine, actual, item, request):
+    if "definerCoordinate" in item:
+        role = item["definerCoordinate"]
+        raw, _ = definers.identity(item["release"], role)
+        same(raw, request["createView"].get("definer"))
+        return definer_coordinate(actual, item, role)
     same(item, request)
     return finite_id(actual, item)
 
@@ -264,8 +303,6 @@ def negatives(tag):
         (case(tag, query(None, [[["parameter", 1], "v"]]), ("v",)), "A checked view result must read a native field or a literal without parameters."),
         (case(tag, {**body, "source": source(MAIN)}), "A view cannot read its own target identity."),
         (case(tag, {**body, "source": source(relation="view")}), "A checked view reads one persistent base table or an independent literal projection."),
-        (request(tag, f"CREATE DEFINER=CURRENT_USER VIEW {TARGET} AS SELECT id,label FROM {ORIGIN}"),
-         "CREATE VIEW needs an implicit definer and one admitted creation policy."),
         (case(tag, {**body, "release": "mysql-9.0.1"}, policy="preserve"), "CREATE VIEW IF NOT EXISTS requires MySQL 9.1."),
     ):
         yield item, {"exception": INVALID, "message": message}
@@ -286,10 +323,32 @@ def check_negatives(tag):
 
 
 def rejection_sql(item, _):
+    if "definerNegative" in item:
+        return finite_sql(item, definer="@".join(map(definers.text, item["createView"]["definer"])))
     return finite_sql(item)
 
 
 def observe_rejection(spec, item, native, sql):
+    if "definerNegative" in item:
+        require(native["status"] == "view-definition" and native["result"] == ["db-error", "HY000", 1470],
+                "mysql-create-view-definer-native-rejection", {"sql": sql, "native": native})
+        same(native["initial"]["views"], native["after"]["views"])
+        same([["Error", 1470]], [[level, code] for level, code, _ in native["diagnostics"]])
+        return ("definer", item["definerNegative"])
+
+    if "constantCheck" in item:
+        route, requested = item["constantCheck"]
+        code = spec["checkCatalogFinite"]["rejections"]["nativeCode"]
+        require(native["status"] == "view-definition" and native["result"] == ["db-error", "HY000", code],
+                "mysql-create-view-constant-check-native-rejection", {"sql": sql, "native": native})
+        same([["Error", code, f"CHECK OPTION on non-updatable view '{TARGET}'"]], native["diagnostics"])
+        same(False, native["active"])
+        same(native["initial"]["views"], native["after"]["views"])
+        same(native["after"], native["afterRollback"])
+        same([0, 7], native["after"]["marker"])
+        algorithm = next(key for key, value in ALGORITHMS.items() if value == item["createView"]["algorithm"])
+        return ("constant-check", route, algorithm, requested)
+
     require(native["status"] == "view-definition" and native["result"] == CHECK_REJECTION,
             "mysql-create-view-guard-native-rejection", {"sql": sql, "native": native})
     before, after = native["initial"]["views"], native["after"]["views"]
@@ -305,8 +364,25 @@ def observe_rejection(spec, item, native, sql):
     return identity
 
 
-def rejected_finite_ids(spec, _):
-    return [tuple(item) for item in spec["nativeNegative"]]
+def rejected_finite_ids(spec, tag):
+    cases = [*(tuple(item) for item in spec["nativeNegative"]), ("definer", "user"), ("definer", "host")]
+    for route, analysis in (("analysis", True), ("direct", False)):
+        cases.extend(("constant-check", route, case_[0], case_[-1]) for case_ in rejected_catalog_cases(spec, tag, analysis))
+    return cases
+
+
+def definer_negatives(tag):
+    base = case(tag, scan())
+    user, host = definers.limits(tag)
+    bad_user = "A view definer user requires at most 32 BMP characters without NUL."
+    bad_host = "A view definer host requires at most 255 BMP characters without NUL."
+    yield definers.with_principal(base, ["a\0b", "%"]), None, {"exception": INVALID, "message": bad_user}
+    for coordinate, principal, detail in (
+        ("user", ["u" * (user + 1), "%"], "A MySQL 5.6 view definer user permits at most 16 characters." if user == 16 else bad_user),
+        ("host", ["actor", "h" * (host + 1)], "A MySQL 5.6 or 5.7 view definer host permits at most 60 characters." if host == 60 else bad_host),
+    ):
+        item = definers.with_principal({**base, "definerNegative": coordinate}, principal)
+        yield item, item, {"exception": INVALID, "message": detail}
 
 
 def seeded(tag, seed, count):
@@ -350,6 +426,7 @@ def seeded_check(tag, seed, count):
 
 
 def requests(_, tag, spec):
+    definers.known(spec, tag)
     offset = 0
     for index, dimensions in enumerate(finite_grid(spec, tag)):
         item = finite(tag, *dimensions)
@@ -358,12 +435,24 @@ def requests(_, tag, spec):
         offset = index + 1
     for route, analysis in (("finite", True), ("direct", False)):
         dimensions = chain(checked_grid(spec, tag, analysis), checked_catalog_grid(spec, analysis))
+        end = offset
+        nonupdatable = rejected_catalog_cases(spec, tag, analysis)
         for index, (*body, mode) in enumerate(dimensions, offset):
             item = check_case(finite(tag, *body), mode)
             if analysis and body[3] in {"base-constant", "base-duplicate"}:
                 # Only the resolved id field participates in these two parsed projections.
                 item["createView"]["query"]["source"] = {"schema": SCHEMA, "table": BASE, "columns": ["id"]}
             incoming = request(tag, finite_sql(item, mode == "IMPLICIT")) if analysis else item
+            rejection = None
+            if (*body, mode) in nonupdatable:
+                item = {**item, "constantCheck": ["analysis" if analysis else "direct", mode]}
+                rejection = {"exception": INVALID, "message": UNWRITABLE}
+            yield f"{route}/{index}", incoming, item, rejection
+            end = index + 1
+        for index, (algorithm, security, role) in enumerate(definers.grid(spec, analysis), end):
+            base = finite(tag, algorithm, security, "require-new", "base-all", "absent")
+            authored, item = definers.finite_cases(base, role)
+            incoming = request(tag, finite_sql(item, definer=definers.clause(tag, role))) if analysis else authored
             yield f"{route}/{index}", incoming, item, None
     inputs = list(analyzed(tag))
     require(len(inputs) == len(spec["analysis"]), "mysql-create-view-analysis-count")
@@ -376,14 +465,19 @@ def requests(_, tag, spec):
             yield f"seed/{seed}/{index}", item, item, None
         plain = spec["exploration"]["plainDirectCasesPerSeed"]
         checked = spec["exploration"]["checkCasesPerSeed"]
-        distinct = spec["exploration"]["directCasesPerSeed"] - plain - checked
+        named = spec["exploration"]["definerCasesPerSeed"]
+        distinct = spec["exploration"]["directCasesPerSeed"] - plain - checked - named
         for index, item in enumerate(seeded_literal(tag, seed + 1, plain)):
             yield f"direct-seed/{seed}/{index}", item, item, None
         for index, item in enumerate(seeded_distinct(tag, seed + 2, distinct), plain):
             yield f"direct-seed/{seed}/{index}", item, item, None
         for index, item in enumerate(seeded_check(tag, seed + 3, checked), plain + distinct):
             yield f"direct-seed/{seed}/{index}", item, item, None
-    rejected = chain(((item, None, reason) for item, reason in negatives(tag)), check_negatives(tag))
+        for index, (raw, canonical_, security, algorithm) in enumerate(definers.candidates(seed + 4, named)):
+            policy = "replace" if index % 2 else "require-new"
+            base = case(tag, scan(index % 2 == 0), policy=policy, algorithm=algorithm, security=security)
+            yield f"direct-seed/{seed}/{plain + distinct + checked + index}", definers.with_principal(base, raw), definers.with_principal(base, canonical_), None
+    rejected = chain(((item, None, reason) for item, reason in negatives(tag)), check_negatives(tag), definer_negatives(tag))
     for index, (incoming, item, reason) in enumerate(rejected):
         yield f"negative/{index}", incoming, item, reason
 
@@ -462,13 +556,32 @@ def prediction(item):
     writes = {}
     if "writeNames" in item:
         writes["writeEffects"] = "definition-not-installed" if collision else write_effects(view, stored)
+    initial = fixture(existing, DATA, [0])
+    if item.get("inspectDefiner", False):
+        principal = view.get("definer")
+        absent = principal is not None and principal != definers.GRANTED and principal not in definers.UNPRIVILEGED
+        if absent:
+            user, host = principal
+            diagnostics.append(["Note", 1449, f"The user specified as a definer ('{user}'@'{host}') does not exist"])
+        for state in (initial, after, later):
+            for record in state["views"].values():
+                record["definer"] = definers.ACCOUNT
+        if not collision and principal is not None:
+            for state in (after, later):
+                record = state["views"][MAIN]
+                record["definer"] = "@".join(principal)
+                if view["security"] == "DEFINER" and principal != definers.GRANTED:
+                    record["rows"] = None
+                    record["readError"] = ["HY000", 1449 if absent else 1356]
     return {"status": "view-definition", "result": ["db-error", "42S01", 1050] if failed else ["created"], "diagnostics": diagnostics,
-            "active": False, "initial": fixture(existing, DATA, [0]), "after": after, "afterRollback": after, "afterSourceChange": later,
+            "active": False, "initial": initial, "after": after, "afterRollback": after, "afterSourceChange": later,
             **writes}
 
 
 def observer_request(item, sql):
-    return {"sql": sql, "existing": item["existing"], **({"writeNames": item["writeNames"]} if "writeNames" in item else {})}
+    return {"sql": sql, "existing": item["existing"],
+            **({"writeNames": item["writeNames"]} if "writeNames" in item else {}),
+            **({"inspectDefiner": True} if item.get("inspectDefiner", False) else {})}
 
 
 def observation(raw):
@@ -477,8 +590,10 @@ def observation(raw):
     result = dict(raw)
     for phase in ("initial", "after", "afterRollback", "afterSourceChange"):
         state = raw[phase]
-        result[phase] = {**state, "views": {name: {**view, "rows": sorted(view["rows"], key=canonical)}
-                                           for name, view in state["views"].items()}}
+        result[phase] = {**state, "views": {
+            name: {**view, "rows": sorted(view["rows"], key=canonical) if view["rows"] is not None else None}
+            for name, view in state["views"].items()
+        }}
     if isinstance(raw.get("writeEffects"), list):
         result["writeEffects"] = [
             {**effect, "base": sorted(effect["base"], key=canonical), "view": sorted(effect["view"], key=canonical)}
@@ -488,12 +603,14 @@ def observation(raw):
 
 
 def prepare(_, db):
-    return {"initial": db.environment["initial"]}
+    return {"initial": db.environment["initial"], "currentAccount": db.environment["currentAccount"]}
 
 
 def check_preparation(_, environment, prepared):
     same(environment["initial"], prepared["initial"])
     same(fixture(True, DATA, [0]), prepared["initial"])
+    same(definers.ACCOUNT, environment["currentAccount"])
+    same(environment["currentAccount"], prepared["currentAccount"])
 
 
 def check_observation(item, actual, sql):
@@ -520,6 +637,8 @@ def sample_forms(forms, reply, _, item):
     if item.get("checkObservation", False):
         forms["check/" + value_.get("checkOption", "NONE")] += 1
         forms["check-id-label-position/" + str(item["writeNames"] == value_["columns"])] += 1
+    if "definer" in value_:
+        forms["named-view-definer/" + value_["security"]] += 1
 
 
 def sample_native_forms(forms, actual, *_):
@@ -528,6 +647,9 @@ def sample_native_forms(forms, actual, *_):
         for effect in writes:
             result = effect["result"]
             forms["write/" + result[0] + "/" + str(result[-1])] += 1
+    bound = actual["after"]["views"].get(MAIN)
+    if bound is not None and "definer" in bound:
+        forms["view-definer-native/" + ("denied" if bound["rows"] is None else "rows")] += 1
 
 
 def required_forms(*_):
@@ -537,6 +659,7 @@ def required_forms(*_):
             "distinct-source/literal", "distinct-source/physical",
             "check/NONE", "check/LOCAL", "check/CASCADED", "check-id-label-position/True", "check-id-label-position/False",
             "write/affected/1", "write/affected/2", "write/db-error/1369",
+            "named-view-definer/DEFINER", "named-view-definer/INVOKER", "view-definer-native/denied", "view-definer-native/rows",
             *("algorithm/" + role for role in ALGORITHMS.values()),
             *("literal-algorithm/" + role for role in ALGORITHMS.values())}
 
@@ -554,11 +677,17 @@ def controls():
     check_observation(checked, effects, "native view write control")
     wrong_count = list(effects["writeEffects"])
     wrong_count[2] = {**wrong_count[2], "result": ["affected", 0]}
+    named = definers.with_principal(case("mysql-9.1.0", scan(), security="INVOKER"), definers.GRANTED)
+    catalog = prediction(named)
+    check_observation(named, catalog, "named view privilege control")
+    wrong_principal = deepcopy(catalog)
+    wrong_principal["after"]["views"][MAIN]["definer"] = definers.ACCOUNT
     observed = {}
     for key, case_, mismatch in (
         ("wrong-security", item, wrong),
         ("missing-fallback", fallback, {**merged, "diagnostics": []}),
         ("incorrect-write-count", checked, {**effects, "writeEffects": wrong_count}),
+        ("wrong-definer-catalog", named, wrong_principal),
     ):
         try:
             check_observation(case_, mismatch, key)
@@ -610,6 +739,7 @@ def faults(_, tag):
     invalid, reason = list(negatives(tag))[1]
     invalid_guard, _, guard_reason = next(check_negatives(tag))
     checked = check_case(finite(tag, "merge", "invoker", "replace", "base-filtered", "existing-view"), "LOCAL")
+    named = definers.with_principal(case(tag, scan(), algorithm="MERGE"), definers.GRANTED)
     return [
         RenderFault("replace-another-view-definition", path, "$this->name->quoted()", "'`ir_fixture`.`ir_cv_decoy`'", model, "meaning-mismatch"),
         RenderFault("swap-view-heading-positions", path, "implode(', ', $names)", "implode(', ', array_reverse($names))", model, "meaning-mismatch"),
@@ -627,6 +757,10 @@ def faults(_, tag):
                     "true,", {"boundary": guard_reason}, "mysql-create-view-invalid-published", invalid_guard),
         RenderFault("drop-checked-view-guard", path, "$this->checkOption === ViewCheckOption::None ? '' : ' WITH ' . $this->checkOption->value . ' CHECK OPTION'",
                     "''", checked, "meaning-mismatch"),
+        RenderFault("drop-explicit-view-definer", path, "$this->definer === null ? '' : ' DEFINER=' . $this->definer->accountSql()",
+                    "''", named, "meaning-mismatch"),
+        RenderFault("misidentify-view-definer-host", "sql-semantics-mysql/src/Ir/Schema/View/ViewDefiner.php",
+                    "(new TextLiteral($this->host))->toString()", "(new TextLiteral('%'))->toString()", named, "meaning-mismatch"),
     ]
 
 

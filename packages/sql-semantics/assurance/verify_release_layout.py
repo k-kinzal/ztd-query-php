@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v208.json"
-CONTRACT = "fdb0004051e09942134d2a8b3ad4132210c9f7a53be175d7f276490a312bc5e2"
+CONTRACT_NAME = "release-layout-v209.json"
+CONTRACT = "1887f5c68a6c8e3199cab3da1cff354ef974a2a0875dda696398c50f73b511ee"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -567,6 +567,18 @@ def verify_probe(raw, catalog):
             require(checked == [True, True, "LOCAL", "CASCADED", 0,
                                 definition + ' WITH LOCAL CHECK OPTION', definition + ' WITH CASCADED CHECK OPTION'],
                     "installed-mysql-view-check-option-mismatch", checked)
+            principal = item.get("viewDefiner")
+            named_definition = definition.replace(" ALGORITHM=UNDEFINED ",
+                                                  " ALGORITHM=UNDEFINED DEFINER='Reader@West'@'éxample.test' ", 1)
+            require(principal == [True, True, None, "Reader@West", "éxample.test", named_definition, definition],
+                    "installed-mysql-view-definer-mismatch", principal)
+            constants = item.get("constantCheckAdmission")
+            unwritable = "A MySQL view check option requires a writable base-table field on this release."
+            require(constants == [
+                "LOCAL", 'CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `app`.`constant_guard` (`value`) '
+                         'AS SELECT 42 AS `__ztd_c0` FROM `app`.`guarded_input` AS `__ztd_source` WITH LOCAL CHECK OPTION',
+                [unwritable, unwritable],
+            ], "installed-mysql-constant-view-check-admission", constants)
             view_alias = item.get("createViewAlias")
             require(view_alias == [
                 True, True, "stored_heading", " requested", "-2147483649",

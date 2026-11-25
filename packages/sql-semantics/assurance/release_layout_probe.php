@@ -1559,6 +1559,39 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             );
             $details['checkedViewEffects'] = [$local == $direct, $cascaded == $implicit, $local->checkOption->value, $implicit->checkOption->value,
                 $local->query->where->left->slot, $local->toString(), $cascaded->toString()];
+            $named = $semantics->analyze(str_replace('CREATE VIEW ', "CREATE DEFINER=' Reader@West '@' ÉXAMPLE.TEST ' VIEW ", $statement), $context);
+            [$session] = $semantics->analyzeAll(str_replace('CREATE VIEW ', 'CREATE DEFINER=CURRENT_USER() VIEW ', $statement), $context);
+            $default = $semantics->analyze($statement, $context);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName($schema, new SqlSemantics\Platform\MySql\Ir\Identifier('guarded_view')),
+                $query,
+                [new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($id)],
+                definer: new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewDefiner('Reader@West', 'ÉXAMPLE.TEST'),
+            );
+            $details['viewDefiner'] = [$named == $direct, $session == $default, $session->definer,
+                $named->definer->user, $named->definer->host, $named->toString(), $session->toString()];
+            $constant = 'CREATE VIEW app.constant_guard AS SELECT 42 AS value FROM app.guarded_input WITH LOCAL CHECK OPTION';
+            $oldContext = $legacy->context(['CREATE TABLE app.guarded_input (id INT)']);
+            $legacyView = $legacy->analyze($constant, $oldContext);
+            $calls = [
+                static fn () => $semantics->analyze($constant, $context),
+                static fn () => new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                    $legacyView->name,
+                    new SqlSemantics\Platform\MySql\Ir\Select($legacyView->query->columns, $source, $semantics->profile()->grammar),
+                    $legacyView->columns,
+                    checkOption: $legacyView->checkOption,
+                ),
+            ];
+            $refusals = [];
+            foreach ($calls as $construct) {
+                try {
+                    $construct();
+                    $refusals[] = null;
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $refusals[] = $error->getMessage();
+                }
+            }
+            $details['constantCheckAdmission'] = [$legacyView->checkOption->value, $legacyView->toString(), $refusals];
         }
         if ($platform === 'PostgreSql' && $role === 'Rows\\With\\WithProjection') {
             $table = $semantics->analyze('WITH q AS MATERIALIZED (VALUES (5,TRUE), (NULL,FALSE)) SELECT column2 AS flag,column1 AS id FROM q');

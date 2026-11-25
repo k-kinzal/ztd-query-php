@@ -152,7 +152,7 @@ NATIVE = {
     "mysql_foreign_key_enumerations": "mysql-foreign-key-enumeration-evidence-v2.json",
     "mysql_index_visibility": "mysql-index-visibility-evidence-v2.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
-    "mysql_create_view": "mysql-create-view-v6.json",
+    "mysql_create_view": "mysql-create-view-v9.json",
     "mysql_create_view_projection_alias": "mysql-create-view-projection-alias-v1.json",
     "mysql_create_view_output_names": "mysql-create-view-output-names-v2.json",
     "mysql_generated_view_headings": "mysql-generated-view-headings-v2.json",

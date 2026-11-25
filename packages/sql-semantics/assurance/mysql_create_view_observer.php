@@ -23,10 +23,13 @@ function admitViewDefinition(string $sql): bool
     $scalar = '(?:-?[0-9]{1,2}|NULL|' . $slot . ')';
     $input = $scalar . '(?: AS ' . $word . ')?';
     $filter = '(?: WHERE \(?(?:FALSE|TRUE|' . $slot . ' > [0-9])\)?)?';
+    $quoted = "'(?:[^'\\\\\x00]|''|\\\\.)*'";
+    $principal = '(?:CURRENT_USER(?:\(\))?|' . $quoted . '(?:@' . $quoted . ')?)';
 
-    return preg_match('/\ACREATE(?: OR REPLACE)?(?: ALGORITHM=(?:UNDEFINED|MERGE|TEMPTABLE))?(?: SQL SECURITY (?:DEFINER|INVOKER))?'
+    return preg_match('/\ACREATE(?: OR REPLACE)?(?: ALGORITHM=(?:UNDEFINED|MERGE|TEMPTABLE))?(?: DEFINER=' . $principal
+        . ')?(?: SQL SECURITY (?:DEFINER|INVOKER))?'
         . ' VIEW (?:IF NOT EXISTS )?' . $target . $head . ' AS SELECT (?:DISTINCT )?' . $input . '(?:, ?' . $input . '){0,4}'
-        . '(?: FROM (?:DUAL|' . $origin . '))?' . $filter . '(?: WITH (?:CASCADED |LOCAL )?CHECK OPTION)?\z/D', $sql) === 1;
+        . '(?: FROM (?:DUAL|' . $origin . '))?' . $filter . '(?: WITH (?:CASCADED |LOCAL )?CHECK OPTION)?\z/Dus', $sql) === 1;
 }
 
 function resetViewDefinition(PDO $pdo, bool $existing): void
@@ -43,14 +46,39 @@ function resetViewDefinition(PDO $pdo, bool $existing): void
     }
 }
 
-function viewDefinitionState(PDO $pdo): array
+function provisionViewDefiners(PDO $pdo): void
+{
+    static $installed = false;
+    if (!$installed) {
+        $pdo->exec("CREATE USER 'ir_def_reader'@'localhost' IDENTIFIED BY 'ir_fixture'");
+        $pdo->exec("CREATE USER 'ir_def_reader'@'%' IDENTIFIED BY 'ir_fixture'");
+        $pdo->exec("CREATE USER 'Ir_Def_Reader'@'localhost' IDENTIFIED BY 'ir_fixture'");
+        $installed = true;
+    }
+    $pdo->exec("GRANT SELECT ON ir_fixture.ir_cv_source TO 'ir_def_reader'@'localhost'");
+}
+
+function viewDefinitionContents(PDO $pdo, string $name, bool $definer): array
+{
+    try {
+        return ['rows' => $pdo->query('SELECT * FROM ir_fixture.' . $name)->fetchAll(PDO::FETCH_NUM)];
+    } catch (PDOException $error) {
+        if (!$definer) {
+            throw $error;
+        }
+
+        return ['rows' => null, 'readError' => [$error->errorInfo[0], $error->errorInfo[1]]];
+    }
+}
+
+function viewDefinitionState(PDO $pdo, bool $definer = false): array
 {
     $rows = $pdo->query(
-        "SELECT TABLE_NAME, IS_UPDATABLE, SECURITY_TYPE, CHECK_OPTION FROM information_schema.VIEWS"
+        "SELECT TABLE_NAME, IS_UPDATABLE, SECURITY_TYPE, CHECK_OPTION, DEFINER FROM information_schema.VIEWS"
         . " WHERE TABLE_SCHEMA = 'ir_fixture' AND TABLE_NAME IN ('ir_cv_main','ir_cv_decoy') ORDER BY TABLE_NAME"
     )->fetchAll(PDO::FETCH_NUM);
     $views = [];
-    foreach ($rows as [$name, $updatable, $security, $check]) {
+    foreach ($rows as [$name, $updatable, $security, $check, $principal]) {
         if ($name !== 'ir_cv_main' && $name !== 'ir_cv_decoy') {
             throw new RuntimeException('Unexpected view identity in the isolated definition fixture.');
         }
@@ -62,8 +90,8 @@ function viewDefinitionState(PDO $pdo): array
             . " FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'ir_fixture' AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION");
         $cursor->execute([$name]);
         $views[$name] = ['algorithm' => $matched[1], 'security' => $security, 'updatable' => $updatable,
-            'check' => $check, 'columns' => $cursor->fetchAll(PDO::FETCH_NUM),
-            'rows' => $pdo->query('SELECT * FROM ir_fixture.' . $name)->fetchAll(PDO::FETCH_NUM)];
+            'check' => $check, 'columns' => $cursor->fetchAll(PDO::FETCH_NUM), ...viewDefinitionContents($pdo, $name, $definer),
+            ...($definer ? ['definer' => $principal] : [])];
     }
 
     return ['views' => $views, 'marker' => $pdo->query('SELECT value FROM ir_fixture.ir_cv_marker ORDER BY value')->fetchAll(PDO::FETCH_COLUMN)];
@@ -103,14 +131,18 @@ function viewDefinition(PDO $pdo, array $request): array
 {
     $sql = $request['sql'];
     $writeNames = $request['writeNames'] ?? null;
-    if (!admitViewDefinition($sql) || !is_bool($request['existing'] ?? null)
+    $definer = $request['inspectDefiner'] ?? false;
+    if (!admitViewDefinition($sql) || !is_bool($request['existing'] ?? null) || !is_bool($definer)
         || ($writeNames !== null && (!is_array($writeNames) || count($writeNames) !== 2
             || !array_is_list($writeNames) || array_filter($writeNames, static fn ($name): bool =>
                 !is_string($name) || preg_match('/\A[a-z_][a-z0-9_]*\z/D', $name) !== 1) !== []))) {
         return ['status' => 'outside-observer-scope'];
     }
     resetViewDefinition($pdo, $request['existing']);
-    $initial = viewDefinitionState($pdo);
+    if ($definer) {
+        provisionViewDefiners($pdo);
+    }
+    $initial = viewDefinitionState($pdo, $definer);
     $pdo->beginTransaction();
     $pdo->exec('INSERT INTO ir_fixture.ir_cv_marker VALUES (7)');
     try {
@@ -127,13 +159,13 @@ function viewDefinition(PDO $pdo, array $request): array
     }
     $pdo->query('SELECT 1')->fetchColumn();
     $active = $pdo->inTransaction();
-    $after = viewDefinitionState($pdo);
+    $after = viewDefinitionState($pdo, $definer);
     if ($active) {
         $pdo->rollBack();
     } else {
         $pdo->exec('ROLLBACK');
     }
-    $rollback = viewDefinitionState($pdo);
+    $rollback = viewDefinitionState($pdo, $definer);
     $writes = [];
     if ($writeNames !== null) {
         $installed = $result === ['created'] && !in_array(1050, array_column($diagnostics, 1), true);
@@ -142,11 +174,12 @@ function viewDefinition(PDO $pdo, array $request): array
     $pdo->exec("UPDATE ir_fixture.ir_cv_source SET label = 'changed' WHERE id = 2");
     $pdo->exec("INSERT INTO ir_fixture.ir_cv_source VALUES (4,'new')");
     return ['status' => 'view-definition', 'result' => $result, 'diagnostics' => $diagnostics, 'active' => $active,
-        'initial' => $initial, 'after' => $after, 'afterRollback' => $rollback, 'afterSourceChange' => viewDefinitionState($pdo), ...$writes];
+        'initial' => $initial, 'after' => $after, 'afterRollback' => $rollback, 'afterSourceChange' => viewDefinitionState($pdo, $definer), ...$writes];
 }
 
 resetViewDefinition($pdo, true);
-echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => viewDefinitionState($pdo)], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => viewDefinitionState($pdo),
+    'currentAccount' => $pdo->query('SELECT CURRENT_USER()')->fetchColumn()], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $request = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     $batch = array_is_list($request);
