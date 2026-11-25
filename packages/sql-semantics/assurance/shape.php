@@ -1483,12 +1483,13 @@ if ($dialect !== 'sqlite') {
         $exchangeBase = 'Schema\\ForeignKey\\Exchange\\';
         $foreignExchange = $exchangeBase . 'AlterForeignKeys';
         $exchangeRemovals = $exchangeBase . 'ForeignKeyExchangeRemovals';
-        array_push($internal, $exchangeBase . 'ForeignKeyExchangeLowering', $exchangeRemovals);
+        $exchangeSupport = $exchangeBase . 'ForeignKeyExchangeSupport';
+        array_push($internal, $exchangeBase . 'ForeignKeyExchangeLowering', $exchangeRemovals, $exchangeSupport);
         $mixedIndex = $exchangeBase . 'IndexAddition';
         $checks = $exchangeBase . 'ExplicitKeyChecks';
         $names = $exchangeBase . 'PhysicalKeyNames';
         array_push($internal, $checks, $names, $exchangeBase . 'IndexAdditionLowering');
-        array_push($pureCollaborators, $exchangeRemovals, $checks, $names);
+        array_push($pureCollaborators, $exchangeRemovals, $exchangeSupport, $checks, $names);
         $properties[$mixedIndex] = ['key' => [$foreignKeyFact], 'automatic' => ['bool']];
         $methods[$mixedIndex] = ['__construct', 'toString'];
         array_push($roots, $foreignAdd, $foreignExchange);
@@ -1931,7 +1932,7 @@ try {
             ['mysql-varchar-binding-v10.json', '4f223c9722dae50667ffeea8d9ddb6b7e279ba61891569ae1ee51ef01ae08007', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v7.json', '99c1136783f445921aab242f7d33d415c4f4352756d4c2eb1f4a83a7a5cbf05a', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v9.json', '6f50b02a129f3dbc38b518180c2c18c7dc7e6f1571aa9b252afefad25cce27ff', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v12.json', '5943498517254ce9d6e024f769c2fb8bac6cea66e9a5f33a6aa8424f749baca0', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v13.json', 'b7627313fe23c1fdde9d4b202d9206e60b08286d159a9de439177c36f2697913', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -2580,7 +2581,8 @@ try {
                     'Schema\\ForeignKey\\Add\\Catalog\\ForeignKeyNativeKey',
                     'Schema\\Index\\Visibility\\IndexVisibilityEdit',
                     'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
-                    'Schema\\Index\\Change\\MixedIndexNamespace', 'Schema\\ForeignKey\\Exchange\\PhysicalKeyNames'], true)
+                    'Schema\\Index\\Change\\MixedIndexNamespace', 'Schema\\ForeignKey\\Exchange\\PhysicalKeyNames',
+                    'Schema\\ForeignKey\\Exchange\\ForeignKeyExchangeSupport'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\ForeignKey\\Add\\AddForeignKeys',
                     'Schema\\ForeignKey\\Add\\ForeignKeyAdditionSet', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyKeyCapacity',
@@ -2596,7 +2598,10 @@ try {
                     'Schema\\Index\\Change\\MixedIndexChanges', 'Schema\\Index\\Change\\MixedIndexNamespace',
                     'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
                     'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\ForeignKey\\ForeignKeyRemovalSet',
+                    'Schema\\ForeignKey\\Exchange\\AlterForeignKeys',
                 ], true) && $name->toString() === $platform . '\\Model\\Statement\\Declaration\\IndexRemovalTarget')
+                || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Exchange\\AlterForeignKeys'
+                    && $name->toString() === $platform . '\\Model\\Statement\\Declaration\\ForeignKeyIndexSide')
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',
                     'Schema\\Sequence\\Authorization\\SequencePrincipal'], true)

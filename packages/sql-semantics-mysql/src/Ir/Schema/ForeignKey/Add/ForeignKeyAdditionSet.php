@@ -34,6 +34,7 @@ final class ForeignKeyAdditionSet
      * @param list<ForeignKeyConstraintIdentity> $constraints Complete prior native symbols
      * @param array<int, IndexAddition> $indexes Explicit additions by action position
      * @param list<int> $foreignSlots Written positions of the added foreign constraints
+     * @param list<ForeignKeyNativeKey>|null $retained Keys remaining after explicit removals, or null when no keys are explicitly removed
      * @return list<Identifier> The names of the replaced implicit child indexes
      */
     public function check(
@@ -47,6 +48,7 @@ final class ForeignKeyAdditionSet
         ?InnoDbKeyLimit $limit = null,
         array $indexes = [],
         array $foreignSlots = [],
+        ?array $retained = null,
     ): array {
         Check::input($owner->kind === ExternalRelationKind::BaseTable, 'A native foreign-key addition requires a persistent owning table.');
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
@@ -63,7 +65,7 @@ final class ForeignKeyAdditionSet
         }
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $selected);
         $explicit = (new ExplicitKeyChecks())->requests($owner, $keys, $indexes, $legacy);
-        [$created, $replaced, $newNames] = (new ForeignKeyChildIndexes())->allocate($owner, $keys, $fields, $labels, $release, $explicit, $foreignSlots);
+        [$created, $replaced, $newNames] = (new ForeignKeyChildIndexes())->allocate($owner, $retained ?? $keys, $fields, $labels, $release, $explicit, $foreignSlots);
         foreach ($indexes as $position => $index) {
             Check::input(
                 $newNames[$position]->value === $index->key->identity->name->value,
@@ -78,7 +80,13 @@ final class ForeignKeyAdditionSet
             $capacity->check($addition->pairs, $nativeLimit);
             Check::input($symbols[$position]->value === $addition->symbol->value, 'The foreign-key symbol differs from native allocation.');
             Check::input($created[$position]?->value === $addition->createdIndex?->value, 'The declared foreign-key index effect differs from native allocation.');
-            $layout->requireParent($addition->parent, $addition->pairs, $keys, $release);
+            $layout->requireParent(
+                $addition->parent,
+                $addition->pairs,
+                $keys,
+                $release,
+                $retained !== null && $addition->parent->quoted() === $owner->quoted()
+            );
         }
 
         return $replaced;

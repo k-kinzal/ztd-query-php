@@ -8,11 +8,14 @@ use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyCatalogLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\ForeignKeyExchangeSupport;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
@@ -76,6 +79,7 @@ final class ForeignKeyAdditionLowering
      * @param non-empty-list<ForeignKey> $definitions Parsed addition clauses in relative order
      * @param array<int, ExplicitIndexRequest> $indexes Requested secondary index fields and names by action slot
      * @param list<int> $positions Written positions of the added foreign constraints
+     * @param list<IndexRemovalTarget> $removals Original keys explicitly removed by the same operation
      * @return array{non-empty-list<ForeignKeyAddition>, list<ForeignKeyNativeKey>, list<ForeignKeyConstraintIdentity>, InnoDbKeyLimit, array<int, Identifier>}
      */
     public function resolve(
@@ -85,6 +89,8 @@ final class ForeignKeyAdditionLowering
         array $definitions,
         array $indexes = [],
         array $positions = [],
+        array $removals = [],
+        IndexChangePolicy $policy = new IndexChangePolicy(),
     ): array {
         $tables = new ForeignKeyTables();
         Check::input($child->keyLimit !== null, 'The native foreign-key profile requires a supported InnoDB row format.');
@@ -107,7 +113,8 @@ final class ForeignKeyAdditionLowering
         }
         $original = array_merge(...array_values($keys));
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $requested);
-        [$created, , $names] = (new ForeignKeyChildIndexes())->allocate($owner, $original, $pairs, $labels, $release, $indexes, $positions);
+        [$retained] = (new ForeignKeyExchangeSupport())->survivors($owner, $original, $removals, $policy);
+        [$created, , $names] = (new ForeignKeyChildIndexes())->allocate($owner, $retained, $pairs, $labels, $release, $indexes, $positions);
         return [
             $this->materialize($frames, $requested, $symbols, $pairs, $created),
             $original,

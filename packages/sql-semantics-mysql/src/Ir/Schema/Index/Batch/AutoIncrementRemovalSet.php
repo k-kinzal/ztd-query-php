@@ -18,8 +18,9 @@ final class AutoIncrementRemovalSet
      * Reconciles the shared support set and requires a distinct survivor.
      * @param non-empty-list<IndexRemovalTarget> $targets Physical keys in the chosen order
      * @param array<array-key, true> $removed Removed physical names after native case folding
+     * @param array<array-key, true> $introduced Leading full fields of newly allocated keys
      */
-    public function check(array $targets, array $removed): void
+    public function check(array $targets, array $removed, array $introduced = []): void
     {
         $case = new NativeIdentifierCase();
         $backing = null;
@@ -49,6 +50,10 @@ final class AutoIncrementRemovalSet
             $included = isset($backing[$case->fold($target->index->name->value)]);
             Check::input($included === ($target->autoIncrement !== null), 'Each removed backing key must identify the same AUTO_INCREMENT dependence.');
         }
-        Check::input(array_diff_key($backing, $removed) !== [], 'Atomic removal must retain a backing key for the AUTO_INCREMENT field.');
+        Check::invariant($field !== null, 'A generating backup set belongs to one resolved field.');
+        Check::input(
+            array_diff_key($backing, $removed) !== [] || isset($introduced[$field]),
+            'Atomic removal must retain a backing key for the AUTO_INCREMENT field.'
+        );
     }
 }

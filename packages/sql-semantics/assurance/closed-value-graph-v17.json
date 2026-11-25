@@ -1,0 +1,314 @@
+{
+  "revision": "SemanticsIR/closed-value-graph-17",
+  "approval": "pending-human-review",
+  "obligations": [
+    "P03",
+    "P05"
+  ],
+  "claim": "For every completed role in the audited inventory, every retained instance field is initialized at successful construction. Traversing any number of retained child edges reaches only immutable scalars, checked reference-free lists, the sealed native release enums, or another role with the same checked guarantee.",
+  "argument": "Readonly fields and enum singletons fix one node. A detached list retains only the elements admitted by its verified copy operation. Apply those facts along each finite path from the root. Type cycles only identify which checked rule applies along an edge. This argument applies to every constructible finite graph of these roles and uses no database observations as premises.",
+  "primitiveTypes": [
+    "bool",
+    "false",
+    "float",
+    "int",
+    "null",
+    "string",
+    "true"
+  ],
+  "externalValues": {
+    "mysql": {
+      "name": "SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease",
+      "source": "packages/sql-semantics-mysql/src/Model/Contract/GrammarRelease.php",
+      "sha256": "75eaec6d58f306bf1890ee56b000f36bade97e7a8e4a3c694311eb854b08e246"
+    },
+    "postgres": {
+      "name": "SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\GrammarRelease",
+      "source": "packages/sql-semantics-postgres/src/Model/Contract/GrammarRelease.php",
+      "sha256": "9a98bdfe3347444ba78707fcabe7cb3d4db4fc1d7c076c2a9bbbbe8a676f0655"
+    },
+    "sqlite": {
+      "name": "SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\GrammarRelease",
+      "source": "packages/sql-semantics-sqlite/src/Model/Contract/GrammarRelease.php",
+      "sha256": "67d40746092d7f6f4109343afb7dc8b20d0fb20c75530f9d86ff5bf7a902e22a"
+    }
+  },
+  "specialLists": {
+    "closed-scalar-copy": {
+      "owner": "Rows/ValueRow",
+      "field": "values",
+      "elements": [
+        "Arithmetic",
+        "Expression/CaseExpression",
+        "Expression/CastExpression",
+        "Expression/CollatedExpression",
+        "Expression/Concatenation",
+        "Expression/UnaryExpression",
+        "IntegerLiteral",
+        "Literal/BlobLiteral",
+        "Literal/HexIntegerLiteral",
+        "Literal/RealLiteral",
+        "Literal/TextLiteral",
+        "NullLiteral",
+        "Parameter",
+        "Predicate/BetweenTest",
+        "Predicate/Comparison",
+        "Predicate/FoldedMembership",
+        "Predicate/Logical",
+        "Predicate/MembershipTest",
+        "Predicate/Pattern/PatternTest",
+        "Predicate/TruthTest"
+      ],
+      "templates": [
+        "Rows/ValueRowOperand::checked"
+      ]
+    },
+    "ordered-table-key-copy": {
+      "owner": "Schema/CreateTable",
+      "field": "keys",
+      "elements": [
+        "Schema/Key/PrimaryKey",
+        "Schema/Key/UniqueKey"
+      ],
+      "templates": [
+        "Schema/Key/TableKeyLayout::check"
+      ]
+    },
+    "native-slot-copy": {
+      "owner": "TableSource",
+      "field": "columnTypes",
+      "elements": [
+        "From/ColumnKind",
+        "From/Varchar"
+      ],
+      "templates": [
+        "TableSource::__construct"
+      ]
+    },
+    "native-assignment-copy": {
+      "owner": "Mutation/Update",
+      "field": "assignments",
+      "elements": [
+        "Mutation/UpdateAssignment",
+        "Mutation/TextUpdateAssignment"
+      ],
+      "templates": [
+        "Mutation/Update::__construct"
+      ]
+    },
+    "native-drop-target-copy": {
+      "owner": "Schema/DropTable",
+      "field": "targets",
+      "elements": [
+        "Schema/Identity/TableIdentity",
+        "Schema/Identity/AbsentDropTarget"
+      ],
+      "templates": [
+        "Schema/DropTable::__construct"
+      ]
+    },
+    "sqlite-trigger-writable-copy": {
+      "owner": "Schema/Trigger/TriggerDestination",
+      "field": "writable",
+      "elements": [
+        "int"
+      ],
+      "templates": [
+        "Schema/Trigger/TriggerDestination::__construct"
+      ]
+    },
+    "sqlite-trigger-action-copy": {
+      "owner": "Schema/Trigger/CreateTrigger",
+      "field": "program",
+      "elements": [
+        "Schema/Trigger/TriggerInsert",
+        "Schema/Trigger/Mutation/TriggerUpdate",
+        "Schema/Trigger/Mutation/TriggerDelete",
+        "Schema/Trigger/Program/TriggerRaise"
+      ],
+      "templates": [
+        "Schema/Trigger/Mutation/TriggerActions::copy"
+      ]
+    },
+    "postgres-index-target-copy": {
+      "owner": "Schema/Index/DropIndex",
+      "field": "targets",
+      "elements": [
+        "Schema/Index/IndexReference",
+        "Schema/Index/MissingIndex"
+      ],
+      "templates": [
+        "Schema/Index/DropIndex::__construct"
+      ]
+    },
+    "postgres-primary-column-copy": {
+      "owner": "Schema/CreateTable",
+      "field": "columns",
+      "templates": [
+        "Schema/CreateTable::__construct"
+      ],
+      "elements": [
+        "Schema/TableColumn"
+      ]
+    },
+    "postgres-unique-list-copy": {
+      "owner": "Schema/CreateTable",
+      "field": "uniqueKeys",
+      "templates": [
+        "Schema/CreateTable::__construct",
+        "Schema/Key/TableKeySet::close"
+      ],
+      "elements": [
+        "Schema/Key/UniqueKey"
+      ]
+    },
+    "native-foreign-key-removal-copy": {
+      "owner": "Schema/ForeignKey/DropForeignKeys",
+      "field": "actions",
+      "elements": [
+        "Schema/ForeignKey/ForeignKeyRemoval",
+        "Schema/Index/IndexIdentity"
+      ],
+      "templates": [
+        "Schema/ForeignKey/DropForeignKeys::__construct"
+      ]
+    },
+    "sqlite-append-ordinary-slot-copy": {
+      "owner": "Schema/Alter/AddColumn",
+      "field": "bindings",
+      "elements": [
+        "Identifier"
+      ],
+      "templates": [
+        "Schema/Alter/AddColumn::__construct",
+        "Schema/Alter/AppendColumnBounds::check",
+        "Schema/Alter/AppendColumnBounds::bindings"
+      ]
+    },
+    "sqlite-append-generated-slot-copy": {
+      "owner": "Schema/Alter/AddGeneratedColumn",
+      "field": "bindings",
+      "elements": [
+        "Identifier"
+      ],
+      "templates": [
+        "Schema/Alter/AddGeneratedColumn::__construct",
+        "Schema/Alter/AppendColumnBounds::check",
+        "Schema/Alter/AppendColumnBounds::bindings"
+      ]
+    },
+    "sqlite-definition-slot-copy": {
+      "owner": "Schema/Predicate/DefinitionSource",
+      "field": "columns",
+      "elements": [
+        "Identifier"
+      ],
+      "templates": [
+        "Schema/Predicate/DefinitionSource::__construct"
+      ]
+    },
+    "native-fk-exchange-actions-copy": {
+      "owner": "Schema/ForeignKey/Exchange/AlterForeignKeys",
+      "field": "actions",
+      "elements": [
+        "Schema/ForeignKey/Add/ForeignKeyAddition",
+        "Schema/ForeignKey/ForeignKeyRemoval",
+        "Schema/ForeignKey/Exchange/IndexAddition",
+        "Schema/Index/IndexIdentity"
+      ],
+      "templates": [
+        "Schema/ForeignKey/Exchange/AlterForeignKeys::__construct",
+        "Schema/ForeignKey/Exchange/IndexAddition::__construct",
+        "Schema/ForeignKey/Exchange/ExplicitKeyChecks::requests",
+        "Schema/ForeignKey/Exchange/ForeignKeyExchangeSupport::survivors",
+        "Schema/ForeignKey/Exchange/ForeignKeyExchangeSupport::retains",
+        "Schema/ForeignKey/Exchange/ForeignKeyExchangeSupport::check"
+      ]
+    },
+    "native-fk-add-replaced-copy": {
+      "owner": "Schema/ForeignKey/Add/AddForeignKeys",
+      "field": "removedIndexes",
+      "elements": [
+        "Identifier"
+      ],
+      "templates": [
+        "Schema/ForeignKey/Add/AddForeignKeys::__construct",
+        "Schema/ForeignKey/Add/ForeignKeyAdditionSet::check",
+        "Schema/ForeignKey/Add/ForeignKeyChildIndexes::allocate",
+        "Schema/ForeignKey/Add/ForeignKeyChildIndexes::replaced"
+      ]
+    },
+    "native-fk-exchange-replaced-copy": {
+      "owner": "Schema/ForeignKey/Exchange/AlterForeignKeys",
+      "field": "removedIndexes",
+      "elements": [
+        "Identifier"
+      ],
+      "templates": [
+        "Schema/ForeignKey/Exchange/AlterForeignKeys::__construct",
+        "Schema/ForeignKey/Add/ForeignKeyAdditionSet::check",
+        "Schema/ForeignKey/Add/ForeignKeyChildIndexes::allocate",
+        "Schema/ForeignKey/Add/ForeignKeyChildIndexes::replaced",
+        "Schema/ForeignKey/Exchange/PhysicalKeyNames::allocate",
+        "Schema/ForeignKey/Add/ForeignKeyChildIndexes::requests",
+        "Schema/ForeignKey/Exchange/ForeignKeyExchangeSupport::survivors"
+      ]
+    },
+    "sqlite-index-slot-copy": {
+      "owner": "Schema/Index/CreateIndex",
+      "field": "bindings",
+      "elements": [
+        "Identifier"
+      ],
+      "templates": [
+        "Schema/Index/CreateIndex::__construct",
+        "Schema/Index/CreateIndex::toString"
+      ]
+    },
+    "native-index-removal-target-copy": {
+      "owner": "Schema/Index/DropIndexes",
+      "field": "targets",
+      "elements": [
+        "Schema/Index/IndexIdentity"
+      ],
+      "templates": [
+        "Schema/Index/DropIndexes::__construct",
+        "Schema/Index/Batch/IndexRemovalSet::check"
+      ]
+    }
+  },
+  "negativeControls": [
+    "Omit one role while retaining its production source and the independent inventory",
+    "Add a stored edge to a type outside the checked closed set",
+    "Erase the detached-copy rule while retaining the array property",
+    "Change the source digest of the external grammar release enum",
+    "Keep a nonpromoted readonly field uninitialized at the constructor boundary",
+    "Erase the verified constructor boundary for the native typed assignment union",
+    "Erase the verified constructor boundary for the MySQL table-removal target union",
+    "Erase the verified constructor boundary for the detached list of writable trigger slots",
+    "Erase the verified copy boundary for the detached list of trigger actions",
+    "Erase the verified constructor boundary for the detached PostgreSQL index target list",
+    "Erase the verified constructor boundary for PostgreSQL checked table column normalization.",
+    "Erase the verified PostgreSQL reduction of detached unique keys while retaining the constructor check.",
+    "Erase the verified SQLite appended column slot projection and require rejection.",
+    "Erase the verified SQLite index operand slot copy.",
+    "Erase the verified native batch index identity projection."
+  ],
+  "trust": [
+    "PHP 8.1+ readonly, enum, argument, reference and save/load semantics for normal public paths",
+    "Pinned Snapshot and Check primitives and the complete source shape checker",
+    "A candidate-independent verifier archive and actual candidate source digest"
+  ],
+  "open": [
+    "Semantic correctness of field contents, completeness of admissible SQL and behavior of runtime interpretation. PHP reflection and the ability to rewrite trusted code are outside normal construction paths."
+  ],
+  "internalValues": {
+    "mysql": [],
+    "postgres": [],
+    "sqlite": [
+      "Schema/Predicate/DefinitionSource"
+    ]
+  },
+  "extends": "closed-value-graph-v16.json",
+  "amendment": "Extend the mixed foreign-key exchange action list by its checked projection of original physical removal identities."
+}

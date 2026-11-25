@@ -215,10 +215,11 @@ function checkValueStorage(
         if ($rule === 'native-fk-add-replaced-copy' || $rule === 'native-fk-exchange-replaced-copy') {
             $role = str_replace('\\', '/', $short);
             $expected = $rule === 'native-fk-add-replaced-copy' ? 'Schema/ForeignKey/Add/AddForeignKeys' : 'Schema/ForeignKey/Exchange/AlterForeignKeys';
+            $projection = $rule === 'native-fk-add-replaced-copy'
+                ? $write->expr instanceof Expr\MethodCall && $write->expr->name instanceof Identifier && $write->expr->name->toString() === 'check'
+                : $write->expr instanceof Expr\Variable && $write->expr->name === 'replaced';
             requireShape($role === $expected && $property === 'removedIndexes'
-                && in_array($role . '::__construct', $checkedBoundaries, true)
-                && $write->expr instanceof Expr\MethodCall && $write->expr->name instanceof Identifier
-                && $write->expr->name->toString() === 'check',
+                && in_array($role . '::__construct', $checkedBoundaries, true) && $projection,
                 'Replaced native keys must come from the verified physical allocation.');
 
             continue;

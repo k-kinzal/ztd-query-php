@@ -2614,6 +2614,29 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $addedKey->automatic, array_map(static fn ($field): string => $field->field->value, $addedKey->key->fields),
                 $addedEdge->symbol->value, $addedEdge->createdIndex->value,
                 $mixed->toString(), $directMixed->toString()];
+            $sequenceContext = $semantics->context([
+                'CREATE TABLE app.sequence_parent (id INT PRIMARY KEY)',
+                'CREATE TABLE app.sequence_child (rid INT PRIMARY KEY, seq INT AUTO_INCREMENT, KEY old_seq(seq))',
+            ]);
+            $command = 'ALTER TABLE app.sequence_child DROP KEY old_seq, '
+                . 'ADD CONSTRAINT replacement_edge FOREIGN KEY(seq) REFERENCES sequence_parent(id)';
+            $exchange = $semantics->analyze($command, $sequenceContext);
+            [$explicit, $edge] = $exchange->actions;
+            $removal = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $generating = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $priorKeys = [
+                new $native(new $key($exchange->owner, new $identifier('PRIMARY'), $roleType::Primary), [new $term(new $identifier('rid'))], true),
+                new $native($explicit, [new $term(new $identifier('seq'))], true),
+                new $native(new $key($edge->parent, new $identifier('PRIMARY'), $roleType::Primary), [new $term(new $identifier('id'))], true),
+            ];
+            $target = new $removal($explicit, new $generating(new $identifier('seq'), []));
+            $directExchange = new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
+                $exchange->owner, [$target, $edge], $priorKeys, [], $exchange->release, remainingSides: [],
+            );
+            $details['mysqlMixedPhysicalExchange'] = [
+                $explicit->name->value, $explicit->role->value, !property_exists($explicit, 'autoIncrement'),
+                $edge->createdIndex->value, $exchange->removedIndexes, $exchange->toString(), $directExchange->toString(),
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
             $one = $result->additions[0];

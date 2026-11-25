@@ -12,10 +12,13 @@ use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAdditionSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\ForeignKeyIndexSide;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -32,7 +35,7 @@ final class AlterForeignKeys implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<ForeignKeyAddition|ForeignKeyRemoval|IndexAddition> Checked clauses in their native order
+     * @var non-empty-list<ForeignKeyAddition|ForeignKeyRemoval|IndexAddition|IndexIdentity> Checked clauses in their native order
      */
     public readonly array $actions;
 
@@ -47,6 +50,7 @@ final class AlterForeignKeys implements SemanticsIR
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $actions The ordered native key edits
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $keys The original physical key catalog
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $constraints The original constraint catalog
+     * @param list<ForeignKeyIndexSide>|null $remainingSides Complete retained foreign-key sides affected by explicit physical removals
      */
     public function __construct(
         public readonly TableIdentity $owner,
@@ -57,32 +61,40 @@ final class AlterForeignKeys implements SemanticsIR
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
         public readonly bool $ignore = false,
         ?InnoDbKeyLimit $keyLimit = null,
+        ?array $remainingSides = null,
     ) {
         Check::input(array_is_list($actions) && $actions !== [], 'A foreign-key exchange needs a nonempty ordered action list.');
-        $checked = $additions = $removals = $indexes = $foreignSlots = [];
+        $checked = $additions = $removals = $indexes = $foreignSlots = $physicalRemovals = [];
         foreach ($actions as $position => $action) {
             Check::input(
-                $action instanceof ForeignKeyAddition || $action instanceof ForeignKeyRemoval || $action instanceof IndexAddition,
-                'A mixed key alteration requires checked foreign-key additions, removals or secondary keys.'
+                $action instanceof ForeignKeyAddition || $action instanceof ForeignKeyRemoval
+                || $action instanceof IndexAddition || $action instanceof IndexRemovalTarget,
+                'A mixed key alteration requires checked foreign-key or physical index actions.'
             );
-            $checked[] = $action;
+            $checked[] = $action instanceof IndexRemovalTarget ? $action->index : $action;
             if ($action instanceof ForeignKeyAddition) {
                 $foreignSlots[] = $position;
                 $additions[] = $action;
             } elseif ($action instanceof ForeignKeyRemoval) {
                 $removals[] = $action;
-            } else {
+            } elseif ($action instanceof IndexAddition) {
                 $indexes[$position] = $action;
+            } else {
+                $physicalRemovals[] = $action;
             }
         }
-        Check::input($additions !== [] && ($removals !== [] || $indexes !== []), 'A mixed key alteration requires foreign-key additions and a distinct key edit.');
+        Check::input($additions !== [] && ($removals !== [] || $indexes !== [] || $physicalRemovals !== []), 'A mixed key alteration requires foreign-key additions and a distinct key edit.');
         $originalKeys = Check::listOf($keys, ForeignKeyNativeKey::class, 'Foreign-key exchange requires checked original physical keys.');
         $originalConstraints = Check::listOf($constraints, ForeignKeyConstraintIdentity::class, 'Foreign-key exchange requires checked original symbols.');
         if ($removals !== []) {
             (new ForeignKeyRemovalSet())->check($owner, $removals, [], $release, $policy);
             (new ForeignKeyExchangeRemovals())->check($owner, $removals, $originalConstraints);
         }
-        $this->removedIndexes = (new ForeignKeyAdditionSet())->check(
+        Check::input(($physicalRemovals === []) === ($remainingSides === null), 'An explicit physical removal requires a complete retained foreign-key layout.');
+        $retainedSides = $remainingSides === null ? [] : Check::listOf($remainingSides, ForeignKeyIndexSide::class, 'The retained layout must contain checked foreign-key sides.');
+        $support = new ForeignKeyExchangeSupport();
+        [$retainedKeys, $removedKeys] = $support->survivors($owner, $originalKeys, $physicalRemovals, $policy);
+        $replaced = (new ForeignKeyAdditionSet())->check(
             $owner,
             $additions,
             $originalKeys,
@@ -92,8 +104,14 @@ final class AlterForeignKeys implements SemanticsIR
             $ignore,
             $keyLimit,
             $indexes,
-            $foreignSlots
+            $foreignSlots,
+            $physicalRemovals === [] ? null : $retainedKeys
         );
+        if ($physicalRemovals !== []) {
+            $support->retains($owner, $retainedSides, $originalConstraints, $removals);
+            $support->check($owner, $retainedKeys, $replaced, $additions, $indexes, $physicalRemovals, $removedKeys, $retainedSides, $release);
+        }
+        $this->removedIndexes = $replaced;
         $this->actions = $checked;
     }
 
@@ -113,6 +131,11 @@ final class AlterForeignKeys implements SemanticsIR
         $verb = $this->ignore ? 'ALTER IGNORE TABLE ' : 'ALTER TABLE ';
         $actions = [];
         foreach ($this->actions as $action) {
+            if ($action instanceof IndexIdentity) {
+                $actions[] = 'DROP INDEX ' . $action->name->quoted();
+
+                continue;
+            }
             $actions[] = $action->toString();
         }
 

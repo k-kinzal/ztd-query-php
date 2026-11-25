@@ -1,0 +1,110 @@
+{
+  "revision": "SemanticsIR/mysql-native-mixed-physical-key-removals-2",
+  "approval": "pending-human-review",
+  "source": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/relnotes/mysql/8.4/en/news-8-4-0.html"
+  ],
+  "profile": "The nine fixed native InnoDB releases with the checked SQL mode, namespace, character set and foreign key checks enabled.",
+  "constructors": {
+    "Schema/ForeignKey/Exchange/AlterForeignKeys": "One ordered native operation adding a foreign key and removing one or more original physical keys, with optional physical additions or original foreign constraint removals.",
+    "Schema/Index/IndexIdentity": "The exact resolved owner, name and effective original physical role used by a removal action.",
+    "Model/Statement/Declaration/IndexRemovalTarget": "Original selected index and generating support. Construction consumes this relation before publishing its exact physical target."
+  },
+  "rules": [
+    "Written dropping and adding roles keep their ordered positions. An explicit drop selects an exact original key on the one altered table and may not select the same original key twice.",
+    "Exclude explicitly dropped keys from the surviving physical-name namespace and from child-side support when allocating the additions. A new physical key may reuse an explicitly removed name. Report automatic supersession separately from explicit removals.",
+    "Child index allocation considers ascending or descending whole directional prefixes according to release. Revalidation of intact existing child sides checks the leading column order of the resulting physical dictionary and ignores direction.",
+    "Independently check incoming existing sides and self-parent sides. Stock older releases allow ordinary leading support, including allowed clustered hidden fields. MySQL 8.4 and 9.1 require exact complete unique parent fields. Scope includes new replacement keys which match these rules.",
+    "A newly added self-reference first needs an original leading parent key. The original lookup allows a nonunique key on the table being rebuilt. The final layout must independently satisfy the native release's uniqueness and ordered-field requirements.",
+    "Each generating field involved in the explicit removal keeps a leading eligible whole field. A surviving original, explicitly introduced, or automatically introduced supporting index can satisfy this condition. Replacement and removal input facts do not survive in the completed action.",
+    "Construction treats the complete original externally identified declaration facts as immutable inputs. It publishes physical removal targets and checked addition operands, naming effects and options only after checking all participants."
+  ],
+  "observations": [
+    "Compare ordered action roles, resolved identifiers, native key origin and direction, original and final constraints, and exact physical key names including reuse of a removed name.",
+    "Measure original and final rows, attempted write outcomes, named native error phase, cascading effects and subsequent AUTO_INCREMENT allocation, retaining native error evidence for any typed refusal.",
+    "Keep each input, rendered SQL, physical dictionary comparison and date-independent fixture identity. Require complete consumption of each predeclared coordinate and separate direct and analyzed constructor receipts."
+  ],
+  "calibration": {
+    "physical-removal": {
+      "coordinateCount": 104,
+      "script": "ffeccfa0506d83057e35fa5b4a50700bf81c32734b90de8cf36cfa14147699bb",
+      "releases": {
+        "5.6.51": {
+          "stdout": "963ab9fc1b0b77e8f6ee614f7c4542359104549ad134315544845dab4baa94e3",
+          "stderr": "1311b67e797309aa2f39ba8a06af17e379e7fcbfc71fe2677ca8a83d1d0abc21"
+        },
+        "5.7.44": {
+          "stdout": "9ba3ba760ed0297f2d5c3d0a7b9e62a334c9012e8b57721b6457d85ea2368654",
+          "stderr": "1eb871067eddf3c570a0c11237d36b2f4e8f78970d4c8d623f91615268bf2689"
+        },
+        "8.0.44": {
+          "stdout": "f39516cfaaca15770e279872893ed9ae55560d10d0781ac6ff9c796c35771ce5",
+          "stderr": "2cbbb5257744b8b63292b0249f9afd2003080a9e39488d3984db2e82862fe655"
+        },
+        "8.4.7": {
+          "stdout": "d542204ae4b5a0452448216d096a3ea5f5d1a14558e72c25f208744e0b6b7c53",
+          "stderr": "43b46052a36d1a2ea5607b7861ad2911b8e15a0a1557ec71679167f3ed2e46c8"
+        },
+        "9.1.0": {
+          "stdout": "cabfffa4b49ac436044a91a50325a0fd51e19b1c0c7d1e7c3c1ea018e1c34e52",
+          "stderr": "83927eba976d18993ddd497e2f403b393d9d0739e2d2387093738ff887beea88"
+        }
+      }
+    },
+    "generation-and-self-parent": {
+      "coordinateCount": 116,
+      "script": "6ff8848171b603f81eb64f2362bce78f6dc09398d9eda059ce4f2ef540f822ef",
+      "releases": {
+        "5.6.51": {
+          "stdout": "792b55c867411981b984b629ecf6e5000ee450eefcfcad06018d4f34569c2767",
+          "stderr": "5a5abd853e4291382ef18258b42ff0577e121767b10d229838d95e4de2cd8a5e"
+        },
+        "5.7.44": {
+          "stdout": "cbd986da979aa31aa8b6a80e3d990b98138e423d66ac15590fbaba518905bc2a",
+          "stderr": "7b33cb6e030ffe54e92ce12cd049e5b58d6faa83f5c195f76b130c1e2faa2389"
+        },
+        "8.0.44": {
+          "stdout": "e3400386c86a9e5c957c60b16cd2ad0524c19da26d50d335b1ff0d1d60b104ab",
+          "stderr": "64ff19e82c64fe24dfdbaaeaa866033cb26f3c93d60010064c69a595c7dd9f1b"
+        },
+        "8.4.7": {
+          "stdout": "273271ff44c04779142df7c4418919bc75b6024af704aa6ef0aefc80b12f4b47",
+          "stderr": "8889141ce95ccc009c95aa1ca2e0958562d0a55b853e26b47414ec047904aea2"
+        },
+        "9.1.0": {
+          "stdout": "f6de962f5f0863844c82cb0a17ad1e27a7fa347e99749589c1ea780e9f50e98c",
+          "stderr": "81a6169ca76697fb8d6df1df9404d0757e120a1da7e4a74ced775bcf3cd35d2b"
+        }
+      }
+    }
+  },
+  "references": {
+    "mysql-index-removal-construction-facts-v1.json": "0a0b00b9f59a18adc6776398770fb7d43ab3e742f5a39e7f0a581e5e30772308",
+    "mysql-mixed-support-evidence-v2.json": "071dac466128b4396c2d3decf7a08bec47b7ffe3cacaf3839d7739e27917ceca",
+    "mysql-native-mixed-supporting-key-additions-v1.json": "170d89a01d89553b50b286b2eea099b80a859d8deb87cb8f537bfd572a33f1be",
+    "mysql-native-overlapping-cascade-observation-v1.json": "ca66718468587be6b290388397054659f0436144205af34fe3ec1007629f15cd"
+  },
+  "faults": [
+    "Allow an invented or differently owned original removal coordinate.",
+    "Ignore explicit removals when allocating the child-side physical namespace.",
+    "Check only the original or only the final self-parent layout.",
+    "Ignore an existing incoming side when replacing its exact unique key.",
+    "Permit removing the last eligible generation support or refuse an eligible newly created support.",
+    "Swap the existing physical drop and added action operands, omit a physical drop from rendering, or erase the new effect from observation."
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "extends": "mysql-native-mixed-physical-key-removals-v1.json"
+}

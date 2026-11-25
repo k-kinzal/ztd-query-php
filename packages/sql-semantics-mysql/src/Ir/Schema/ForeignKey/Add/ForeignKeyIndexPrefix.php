@@ -91,10 +91,26 @@ final class ForeignKeyIndexPrefix
      * @param list<ForeignKeyNativeKey> $catalog Original keys supplied at the construction boundary
      * @throws InvalidConstruction When the original parent has no supporting key
      */
-    public function requireParent(TableIdentity $parent, array $pairs, array $catalog, GrammarRelease $release): void
+    public function requireParent(TableIdentity $parent, array $pairs, array $catalog, GrammarRelease $release, bool $beforeSelfRebuild = false): void
     {
-        [$exact, $hidden] = (new IndexDependencyKeys())->policy(true, $release);
-        $keys = $this->keys($parent, $catalog);
+        $requested = [];
+        foreach ($pairs as $pair) {
+            $requested[] = $pair->parent;
+        }
+        if (!$this->supports($parent, $requested, $catalog, $release, true, $beforeSelfRebuild)) {
+            throw new InvalidConstruction('A native foreign key requires original physical support on the resolved parent.');
+        }
+    }
+
+    /**
+     * Checks settled native leading fields for one side of a foreign key.
+     * @param non-empty-list<\SqlSemantics\Platform\MySql\Ir\Identifier> $requested Ordered fields of the affected endpoint
+     * @param list<ForeignKeyNativeKey> $catalog The physical keys of the corresponding layout
+     */
+    public function supports(TableIdentity $owner, array $requested, array $catalog, GrammarRelease $release, bool $parent, bool $beforeSelfRebuild = false): bool
+    {
+        [$exact, $hidden] = (new IndexDependencyKeys())->policy($parent, $release);
+        $keys = $this->keys($owner, $catalog);
         $cluster = [];
         $case = new NativeIdentifierCase();
         if ($hidden) {
@@ -107,20 +123,20 @@ final class ForeignKeyIndexPrefix
                 }
             }
         }
-        $requested = [];
-        foreach ($pairs as $pair) {
-            $requested[] = $case->fold($pair->parent->value);
+        $required = [];
+        foreach ($requested as $field) {
+            $required[] = $case->fold($field->value);
         }
         foreach ($keys as $key) {
             $fields = [];
             foreach ($key->fields as $field) {
                 $fields[] = $case->fold($field->field->value);
             }
-            if ($this->parentMatch($requested, $key, $fields, $cluster, $exact)) {
-                return;
+            if ($this->parentMatch($required, $key, $fields, $cluster, $exact && !$beforeSelfRebuild)) {
+                return true;
             }
         }
-        throw new InvalidConstruction('A native foreign key requires original physical support on the resolved parent.');
+        return false;
     }
 
     /**

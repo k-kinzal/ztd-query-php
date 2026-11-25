@@ -43,7 +43,7 @@ final class ForeignKeyExchangeLoweringTest extends TestCase
         $actions = $lowering->actions($statement);
         self::assertNotNull($actions);
         [$child, $owner] = (new ForeignKeyTables())->child($operation, $statement);
-        [$additions, $positions, $removals, $indexes] = $lowering->bind($operation, $child, $owner, $actions, false);
+        [$additions, $positions, $removals, $indexes] = $lowering->bind($operation, $statement, $child, $owner, $actions, false);
 
         self::assertCount(1, $additions);
         self::assertSame([1], $positions);
@@ -66,5 +66,15 @@ final class ForeignKeyExchangeLoweringTest extends TestCase
         self::assertSame('child_ibfk_9', $root->actions[0]->name?->value);
         self::assertInstanceOf(ForeignKeyAddition::class, $root->actions[1]);
         self::assertSame('child_ibfk_10', $root->actions[1]->symbol->value);
+    }
+
+    public function testSidesKeepsTheIncomingExactParentFields(): void
+    {
+        $operation = NativeAdditionFixture::operation('ALTER TABLE app.child ADD KEY by_owner (x)');
+        $sides = (new ForeignKeyExchangeLowering())->sides($operation, NativeAdditionFixture::owner('parent'), []);
+
+        self::assertCount(1, $sides);
+        self::assertTrue($sides[0]->parent);
+        self::assertSame('a', $sides[0]->fields[0]->value);
     }
 }

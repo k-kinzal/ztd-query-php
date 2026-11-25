@@ -72,4 +72,16 @@ final class ForeignKeyIndexPrefixTest extends TestCase
         self::assertTrue($rules->parentMatch(['id'], $key, ['id'], [], false));
         self::assertFalse($rules->parentMatch(['id'], $key, ['id'], [], true));
     }
+
+    public function testSupportsSeparatesOriginalSelfLookupFromFinalExactUniqueness(): void
+    {
+        $owner = NativeAdditionFixture::owner('parent');
+        $key = NativeAdditionFixture::key($owner, 'Loose', IndexRole::Ordinary, 'id', true);
+        $prefix = new ForeignKeyIndexPrefix();
+        $fields = [new Identifier('id')];
+
+        self::assertTrue($prefix->supports($owner, $fields, [$key], GrammarRelease::MySql910, true, true));
+        self::assertFalse($prefix->supports($owner, $fields, [$key], GrammarRelease::MySql910, true));
+        self::assertTrue($prefix->supports($owner, $fields, [$key], GrammarRelease::MySql910, false));
+    }
 }

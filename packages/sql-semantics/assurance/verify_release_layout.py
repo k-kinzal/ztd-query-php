@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v177.json"
-CONTRACT = "76e895395d70aa3d94fdf60aed9430c4dbacce2e81814412cf5ca3f1dcdf4c40"
+CONTRACT_NAME = "release-layout-v178.json"
+CONTRACT = "0af23b18ffc2ed02ee4dacc12c9bdb451d2d5c36289e3e81016bfac5b8e0c08b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -934,6 +934,12 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlMixedSupportingKeys") == [
                 "pid", "ordinary", False, ["spare"], "indexed_exchange_ibfk_1", "pid_2", supporting, supporting,
             ], "installed-mysql-mixed-supporting-key-mismatch", item)
+            physical = ("ALTER TABLE `app`.`sequence_child` DROP INDEX `old_seq`, "
+                        "ADD CONSTRAINT `replacement_edge` FOREIGN KEY (`seq`) "
+                        "REFERENCES `app`.`sequence_parent` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION")
+            require(item.get("mysqlMixedPhysicalExchange") == [
+                "old_seq", "ordinary", True, "replacement_edge", [], physical, physical,
+            ], "installed-mysql-mixed-physical-exchange-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"

@@ -1335,6 +1335,7 @@ function constructMysqlAlterForeignKeys(array $input): SqlSemantics\Platform\MyS
         $edits[$position] = match (true) {
             isset($edit['add']) => constructMysqlForeignKeyAddition($edit['add'], $namespace),
             isset($edit['index']) => constructMysqlMixedIndexAddition($edit['index'], $namespace),
+            isset($edit['physicalDrop']) => constructMysqlIndexRemovalTarget($edit['physicalDrop']),
             isset($edit['drop']) => new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval(
                 $edit['drop'][0] === null ? null : new SqlSemantics\Platform\MySql\Ir\Identifier($edit['drop'][0]),
                 SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalKind::from($edit['drop'][1]),
@@ -1343,11 +1344,22 @@ function constructMysqlAlterForeignKeys(array $input): SqlSemantics\Platform\MyS
         };
     }
     [$keys, $constraints, $limit] = constructMysqlForeignKeyCatalog($input['mysqlForeignKeyCatalog'], $namespace);
+    $name = $namespace . 'Identifier';
+    $sides = isset($spec['remainingSides']) ? array_map(
+        static fn (array $side): SqlSemantics\Platform\MySql\Model\Statement\Declaration\ForeignKeyIndexSide =>
+            new SqlSemantics\Platform\MySql\Model\Statement\Declaration\ForeignKeyIndexSide(
+                new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity(
+                    mysqlTableIdentity($namespace, $side[2]), new $name($side[3])
+                ),
+                array_map(static fn (string $field): object => new $name($field), $side[1]), $side[0]
+            ),
+        $spec['remainingSides'],
+    ) : null;
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
         mysqlTableIdentity($namespace, $spec['owner']), $edits, $keys, $constraints,
         SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
-        constructMysqlIndexPolicy($spec['policy']), $spec['ignore'], $limit);
+        constructMysqlIndexPolicy($spec['policy']), $spec['ignore'], $limit, $sides);
 }
 
 function observeMysqlAlterForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys $value): array
@@ -1359,6 +1371,8 @@ function observeMysqlAlterForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\Fore
                 ['drop' => [$edit->name?->value, $edit->kind->value]],
             $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition =>
                 ['index' => observeMysqlMixedIndexAddition($edit)],
+            $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity =>
+                ['physicalDrop' => observeMysqlIndexIdentity($edit)],
             $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition =>
                 ['add' => observeMysqlForeignKeyAddition($edit)],
         };
