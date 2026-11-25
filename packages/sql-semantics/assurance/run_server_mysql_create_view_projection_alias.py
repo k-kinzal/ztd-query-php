@@ -74,7 +74,7 @@ def rejected_finite_ids(*_):
 def observe_rejection(_, item, actual, sql):
     name = item["invalidAlias"]
     requested = law.INVALID_ALIASES[name]
-    message = f"Incorrect column name '{requested}'"
+    message = law.refusal_text(item["tag"], requested)
     failure = {"status": "native-refusal", "sqlState": "42000", "code": 1166, "message": message,
                "warnings": [["Error", 1166, message]], "catalogExists": False}
     expected = {"native-prepared": {**failure, "phase": "prepare"}, "text": {**failure, "phase": "execute"}}

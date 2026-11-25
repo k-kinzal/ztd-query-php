@@ -70,6 +70,14 @@ def expected(item):
             "text": {**result, "prepareWarnings": [], "executeWarnings": warnings}}
 
 
+def refusal_text(tag, requested):
+    prefix = requested.encode()[:100]
+    displayed = prefix.decode("utf-8", errors="ignore")
+    if len(displayed.encode()) != len(prefix) and tag not in ("mysql-5.6.51", "mysql-5.7.44"):
+        displayed += "?"
+    return f"Incorrect column name '{displayed}'"
+
+
 def seeded(tag, seed, count):
     rng = Random(seed)
     options = tuple(LABELS.values())
