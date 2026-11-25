@@ -1,0 +1,31 @@
+{
+  "revision": "SemanticsIR/native-boundary-fault-replay-3",
+  "approval": "pending-human-review",
+  "scope": "Every registered static native boundary mutation for MySQL, PostgreSQL and SQLite.",
+  "preflight": "Read the exact candidate source before running the audits. Require one occurrence of every fixed mutation anchor, one unique case name per dialect, and a changed byte identity for each mutation.",
+  "replay": "Compare the declared plan with the checked candidate. Require every planned case exactly once, with the declared role, source and mutation digests, healthy shape control and exact rejection. Reconstruct the actual overlay and portable unified patch and verify the raw receipt.",
+  "controls": [
+    "A complete healthy plan replays with the expected raw evidence.",
+    "Omit the first declared static fault while leaving the aggregate report and candidate intact.",
+    "Replace a changed source digest with a different valid digest while leaving the raw files intact.",
+    "Change an injected replacement while preserving the original source and asserted detection.",
+    "Select a checked method in each dialect and compare the full and targeted audit failure on the same changed bytes.",
+    "Use the full audit for the specialized SQLite dispatch witness and preserve its original diagnostic."
+  ],
+  "trust": [
+    "The fixed mutation registry and checked shape templates in the independent verifier archive",
+    "Verified candidate bytes and custody of the raw execution records",
+    "The replay validates the applied changes and measured rejection receipts. Running the shape audit remains the operation that evaluates PHP source and mutation overlays."
+  ],
+  "extends": "native-boundary-fault-replay-v2.json",
+  "priorDigest": "ff6f0bb0bd9fc0bdadec03a780003f87bec97515f76a2ad908772877a96f8bd1",
+  "execution": {
+    "healthy": "Run the full closed source audit once for each dialect. Complete its registry and custody receipts before applying a mutation.",
+    "method": "Use the registered template evaluator for method faults whose fixed diagnostic is the boundary template mismatch.",
+    "bindingSource": "Verify the overlay with the full source audit, including its original shared binding records.",
+    "requiredControl": "Choose the first registered method mutation for each dialect. Run both audit routes on that exact overlay. Require matching precise failure and a healthy method-targeted control on the original file.",
+    "custody": "The protected runner creates all overlays from a verified distribution and checks the distribution identity again after execution. Report the audit route per fault. Reconstruct the original and mutated bytes in replay.",
+    "inventory": "Preserve all existing planned faults, rejection signals, candidate digests, source overlays and replay checks. A method-targeted status cannot serve as a healthy full audit receipt.",
+    "specializedShapeRule": "Run the full shape audit when the fixed diagnostic is from a distinct shape rule. The SQLite COALESCE omission must retain the exact scalar-dispatch failure."
+  }
+}
