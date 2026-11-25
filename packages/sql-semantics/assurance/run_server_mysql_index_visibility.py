@@ -36,7 +36,9 @@ def specifications():
     same(base["releases"], spec["releases"])
     same(laws.FUNCTIONAL_COLUMN_NAME, spec["functionalColumnName"])
     same(laws.FUNCTIONAL_COLUMN_NAME, base["functionalColumnName"]["perRelease"])
-    return spec, profiles
+    stock = profiles["mysql"]
+    require(set(spec["releases"]) <= set(stock["releases"]), "mysql-index-visibility-profile-scope")
+    return spec, {"mysql": {**stock, "releases": spec["releases"]}}
 
 
 def finite_ids(_, spec, tag):
