@@ -1156,6 +1156,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $dropPrior->toString(), $rebuildPrior->target->schema->value, $rebuildPrior->target->index->value,
                 $rebuildPrior->target->table->value, $newIndex->name->value,
             ];
+            $collatedOwner = $semantics->context([
+                'CREATE TABLE public.collated_index_owner (code text COLLATE pg_catalog."POSIX", payload text)',
+            ]);
+            $textKey = $semantics->analyze('CREATE INDEX codes ON public.collated_index_owner (code COLLATE pg_catalog."C") INCLUDE (payload)', $collatedOwner);
+            $type = SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::Text;
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget(new $name('public'), new $name('collated_index_owner'));
+            $input = new SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading($target, [new $name('code'), new $name('payload')], [$type, $type]);
+            $directText = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $input, new $name('codes'),
+                [new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexKey(0, collation: SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation::C)],
+                [new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IncludedColumn(1)], release: $textKey->release,
+            );
+            $details['postgresIndexTextKeys'] = [
+                $directText == $textKey, $textKey->keys[0]->collation->value, $textKey->bindings[1]->kind->value, $textKey->toString(),
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\RenameSchema') {
             $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');

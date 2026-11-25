@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding;
 
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
@@ -26,9 +25,5 @@ final class IndexField
      */
     public function __construct(public readonly Identifier $name, public readonly ColumnKind $kind)
     {
-        Check::input(
-            $kind === ColumnKind::Int4 || $kind === ColumnKind::Int8 || $kind === ColumnKind::Boolean,
-            'A B-tree in this profile requires integer or Boolean physical column types.'
-        );
     }
 }

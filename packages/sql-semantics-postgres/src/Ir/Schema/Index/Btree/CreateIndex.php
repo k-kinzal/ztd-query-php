@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexField;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget;
@@ -74,7 +75,12 @@ final class CreateIndex implements SemanticsIR
         $resolvedFields = [];
         foreach ($checkedKeys as $key) {
             Check::input(isset($heading->columns[$key->slot]), 'A B-tree key must refer to a column of the indexed table.');
-            $resolvedFields[$key->slot] = $heading->field($key->slot);
+            $field = $heading->field($key->slot);
+            Check::input(
+                ($field->kind === ColumnKind::Text) === ($key->collation !== null),
+                'A B-tree text key requires its resolved collation, and other keys cannot declare one.'
+            );
+            $resolvedFields[$key->slot] = $field;
         }
         foreach ($checkedIncluded as $column) {
             Check::input(isset($heading->columns[$column->slot]), 'An included position must refer to a column of the indexed table.');
@@ -105,7 +111,8 @@ final class CreateIndex implements SemanticsIR
     {
         $keys = [];
         foreach ($this->keys as $key) {
-            $keys[] = $this->bindings[$key->slot]->name->quoted() . ' ' . $key->order->value;
+            $collation = $key->collation === null ? '' : ' COLLATE pg_catalog."' . $key->collation->value . '" pg_catalog.text_ops';
+            $keys[] = $this->bindings[$key->slot]->name->quoted() . $collation . ' ' . $key->order->value;
         }
         $included = [];
         foreach ($this->included as $column) {

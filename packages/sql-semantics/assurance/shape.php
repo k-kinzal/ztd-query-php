@@ -1061,7 +1061,8 @@ if ($dialect !== 'sqlite') {
         $properties[$btree . 'Binding\\IndexTarget'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'only' => ['bool']];
         $properties[$btree . 'Binding\\IndexField'] = ['name' => ['Identifier'], 'kind' => ['From\\ColumnKind']];
         $methods[$btree . 'Binding\\IndexTarget'] = $methods[$btree . 'Binding\\IndexField'] = ['__construct'];
-        $properties[$btree . 'IndexKey'] = ['slot' => ['int'], 'order' => [$btree . 'IndexOrder']];
+        $properties[$btree . 'IndexKey'] = ['slot' => ['int'], 'order' => [$btree . 'IndexOrder'],
+            'collation' => ['?Expression\\TextCollation']];
         $properties[$btree . 'IncludedColumn'] = ['slot' => ['int']];
         $properties[$btree . 'NullIndexPredicate'] = ['slot' => ['int'], 'negated' => ['bool']];
         $properties[$btree . 'IndexBooleanColumn'] = ['slot' => ['int']];
@@ -1928,10 +1929,10 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
-            ['postgres-declaration-binding-sources-v22.json', '4e4216abb126cea18ea8b0beb51bd351fdf12eb381d8ffee6eb6e01280794c99', 'PostgreSQL declaration binding'],
+            ['postgres-declaration-binding-sources-v23.json', '582b7aba2a6d7b58228cf238d403f6d60f74dcc0fc52f095333fa01eeb61aeed', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
             ['postgres-output-order-binding-v1.json', 'e3bbcfd8480341a01b817401a6612bd642640ddc727dca066fdc12ce05e9d1e7', 'PostgreSQL output order binding'],
-            ['postgres-btree-heading-source-v1.json', 'a5f561bc58f3f01ff6c250fcf7e5f0e90e5551a21c16a3fe9b88a67734d88b30', 'PostgreSQL B-tree heading binding'],
+            ['postgres-btree-heading-source-v2.json', 'd805a32a130ed89849abc8b922b7a2465bf9e4bada7916f953def99023f8cf48', 'PostgreSQL B-tree heading binding'],
         ],
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],

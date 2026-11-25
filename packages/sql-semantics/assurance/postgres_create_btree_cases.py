@@ -290,7 +290,7 @@ def expected(item):
 def published(index):
     """Project the independent declared model to the exact completed value."""
     namespace, owner, names, kinds, only = index["table"]
-    used = set(index["included"]) | {slot for slot, _ in index["keys"]}
+    used = set(index["included"]) | {term[0] for term in index["keys"]}
     pending = [] if index["predicate"] is None else [index["predicate"]]
     while pending:
         current = pending.pop()

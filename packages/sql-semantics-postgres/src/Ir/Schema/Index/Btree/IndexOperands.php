@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
@@ -30,7 +31,17 @@ final class IndexOperands
             ? ($nullsFirst ? IndexOrder::DescendingNullsFirst : IndexOrder::DescendingNullsLast)
             : ($nullsFirst ? IndexOrder::AscendingNullsFirst : IndexOrder::AscendingNullsLast);
 
-        return new IndexKey($this->slot($table, $element), $order);
+        $slot = $this->slot($table, $element);
+        if ($element->collation === null && $element->operatorClass === null) {
+            return new IndexKey($slot, $order);
+        }
+        Check::input(
+            $element->collation !== null && array_column($element->collation->parts, 'value') === ['pg_catalog', 'C']
+            && ($element->operatorClass === null || array_column($element->operatorClass->parts, 'value') === ['pg_catalog', 'text_ops']),
+            'An explicitly collated PostgreSQL B-tree key requires stock pg_catalog.C and its default text operator class.'
+        );
+
+        return new IndexKey($slot, $order, TextCollation::C);
     }
 
     /**
@@ -39,6 +50,7 @@ final class IndexOperands
     public function covering(IndexHeading $table, IndexElement $element): IncludedColumn
     {
         Check::input($element->direction === null && $element->nulls === null, 'An included column cannot specify key order.');
+        Check::input($element->collation === null && $element->operatorClass === null, 'An included column cannot specify key comparison options.');
 
         return new IncludedColumn($this->slot($table, $element));
     }
@@ -50,8 +62,10 @@ final class IndexOperands
      */
     public function slot(IndexHeading $table, IndexElement $element): int
     {
-        Check::input($element->key instanceof ColumnKey && $element->collation === null
-            && $element->operatorClass === null && $element->classOptions === [], 'A B-tree operand needs a direct column and its default operator class.');
+        Check::input(
+            $element->key instanceof ColumnKey && $element->classOptions === [],
+            'A B-tree operand needs a direct column and its default operator class.'
+        );
         foreach ($table->columns as $position => $column) {
             if ($column->value === $element->key->column->value) {
                 return $position;

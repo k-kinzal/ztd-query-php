@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v182.json"
-CONTRACT = "8708b8f1a85d4e34805f0ff04b38cc2a702f7d97703991a954ec015e6e591b1f"
+CONTRACT_NAME = "release-layout-v183.json"
+CONTRACT = "1048458ebc4c3cff39cc2854d40efed22295f6a1a3da5d5eff4aeeb7682aa744"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -292,6 +292,10 @@ def verify_probe(raw, catalog):
             require(item.get("postgresAnonymousCatalog") == [
                 'DROP INDEX "named_prior"."t_id_idx1" RESTRICT', "named_prior", "t_id_idx2", "t", "t_id_idx3",
             ], "installed-postgres-anonymous-catalog", item)
+            require(item.get("postgresIndexTextKeys") == [
+                True, "C", "text", 'CREATE INDEX "codes" ON "public"."collated_index_owner" USING btree '
+                '("code" COLLATE pg_catalog."C" pg_catalog.text_ops ASC NULLS LAST) INCLUDE ("payload")',
+            ], "installed-postgres-text-index-keys", item)
             emitted = ('CREATE UNIQUE INDEX "new index" ON "public"."ledger" USING btree '
                        '("wide" DESC NULLS LAST, "value" ASC NULLS FIRST) INCLUDE ("ready", "ready") NULLS NOT DISTINCT')
             require(item.get("postgresCreateBtree") == ["public", ["int4", "int8", "bool"],

@@ -1637,9 +1637,11 @@ function constructPostgresBtree(array $input): \SqlSemantics\Platform\PostgreSql
         array_map(static fn (?string $kind) => $kind === null ? null : \SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::from($kind), $kinds),
     );
     $keys = [];
-    foreach ($value['keys'] as [$slot, $order]) {
+    foreach ($value['keys'] as $key) {
+        [$slot, $order] = $key;
         $keys[] = new \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexKey(
             $slot, \SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexOrder::from($order),
+            isset($key[2]) ? \SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation::from($key[2]) : null,
         );
     }
     $included = [];
@@ -1670,7 +1672,9 @@ function observePostgresBtree(\SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\
             'bindings' => $bindings,
             'name' => $index->name->value,
             'predicate' => observePostgresIndexPredicate($index->predicate),
-            'keys' => array_map(static fn ($key) => [$key->slot, $key->order->value], $index->keys),
+            'keys' => array_map(static fn ($key) => [
+                $key->slot, $key->order->value, ...($key->collation === null ? [] : [$key->collation->value]),
+            ], $index->keys),
             'included' => array_map(static fn ($column) => $column->slot, $index->included),
             'presence' => $index->presence->value, 'ifNotExists' => $index->ifNotExists,
             'unique' => $index->unique, 'nullsNotDistinct' => $index->nullsNotDistinct, 'concurrently' => $index->concurrently,

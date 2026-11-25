@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
@@ -19,10 +20,13 @@ final class IndexKey
     use Snapshot;
 
     /**
-     * Fixes the physical ordinal and effective ordering.
+     * Fixes the physical ordinal, effective ordering and key collation.
      */
-    public function __construct(public readonly int $slot, public readonly IndexOrder $order = IndexOrder::AscendingNullsLast)
-    {
+    public function __construct(
+        public readonly int $slot,
+        public readonly IndexOrder $order = IndexOrder::AscendingNullsLast,
+        public readonly ?TextCollation $collation = null,
+    ) {
         Check::input($slot >= 0, 'A B-tree key needs a nonnegative column slot.');
     }
 }

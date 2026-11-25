@@ -71,7 +71,7 @@ final class IndexHeading
         $kind = $this->columnKinds[$slot] ?? null;
         Check::input(
             isset($this->columns[$slot]) && $kind !== null,
-            'A B-tree in this profile requires integer or Boolean physical column types.'
+            'A B-tree in this profile requires integer, Boolean or text physical column types.'
         );
 
         return new IndexField($this->columns[$slot], $kind);

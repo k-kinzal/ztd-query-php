@@ -148,6 +148,7 @@ CONTRACTS = {
     "postgres-local-catalog-binding-v1.json": "855a3af17e33095b5a1603198d563d69a9b6ba373b879b716629f9a5b1ffc3ce",
     "postgres-create-btree-v2.json": "fb2bf03a058c6b1ae1e0c25f00bfacea7cbcce7cf1339767d9b63e0112d9860b",
     "postgres-automatic-btree-name-evidence-v2.json": "f29da633f4214af1bf8a0130c346926748c2f7cbe0ff4021eacf6eb6dc214603",
+    "postgres-btree-native-text-evidence-v1.json": "23cf24481618b03f5b3b5159b2ea7c507fab8337fa35d9fc906748548c21c06b",
     "postgres-anonymous-catalog-index-evidence-v1.json": "c63e68a988bc0e8909f9ea8d0979600b0e9471372c3004623dce92f49633e93d",
     "postgres-btree-projected-roles-v1.json": "d8f3c5c5ae9375c8e671ab7d4bd83f877a35af3781e762d121bd79d26c77bc26",
     "postgres-drop-index-v1.json": "d26bab1348dec92d608759e02d68f184ee28461aadbaf015e836f911dced5faa",

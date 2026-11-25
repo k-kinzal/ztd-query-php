@@ -1,0 +1,310 @@
+{
+  "revision": "SemanticsIR/postgres-schema-indexes-boundaries-5",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-schema-views-boundaries-v1.json",
+  "scope": "Close the new index phase under actual preceding occupants and exact ordered physical headings, with matching standalone and nested operand lowering.",
+  "rules": {
+    "Schema/Namespace/CreateSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!str_starts_with($owner->value, 'pg_') || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\StockRoles::contains($release, $owner->value), 'The stock schema owner must exist in this release.');",
+        "    $name ??= $owner;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name === null || !str_starts_with($name->value, 'pg_'), 'A declared schema name cannot start with pg_.');",
+        "$checkedSequences = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($sequences, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\CreateSequence::class, 'Schema sequences are an ordered list of checked sequence declarations.');",
+        "$checkedTables = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($tables, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable::class, 'Schema tables are an ordered list of checked table declarations.');",
+        "$checkedViews = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($views, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateView::class, 'Schema views are an ordered list of checked view declarations.');",
+        "$checkedIndexes = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($indexes, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndex::class, 'Schema indexes are an ordered list of checked index declarations.');",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::check($name, $ifNotExists, $release, $checkedSequences, $checkedTables);",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewOrder::check($name, $ifNotExists, $release, $occupied, $checkedViews);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Index\\SchemaIndexOrder::check($name, $ifNotExists, $release, $occupied, $checkedIndexes);",
+        "$this->name = $name;",
+        "$this->sequences = $checkedSequences;",
+        "$this->tables = $checkedTables;",
+        "$this->views = $checkedViews;",
+        "$this->indexes = $checkedIndexes;"
+      ]
+    },
+    "Schema/Namespace/CreateSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$name = $this->name === null ? '' : $this->name->quoted() . ' ';",
+        "$owner = $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;",
+        "$elements = '';",
+        "foreach ($this->sequences as $sequence) {",
+        "    $elements .= ' ' . $sequence->toString();",
+        "}",
+        "foreach ($this->tables as $table) {",
+        "    $elements .= ' ' . $table->toString();",
+        "}",
+        "foreach ($this->views as $view) {",
+        "    $elements .= ' ' . $view->toString();",
+        "}",
+        "foreach ($this->indexes as $index) {",
+        "    $elements .= ' ' . $index->toString();",
+        "}",
+        "return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner . $elements;"
+      ]
+    },
+    "Schema/Namespace/CreateSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
+        "$owner = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering())->lower($context, $statement->authorization);",
+        "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
+        "$resolved = $name ?? ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $owner : null);",
+        "$sequences = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSequenceLowering())->lower($context, $statement, $resolved);",
+        "$tables = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaTableLowering())->lower($context, $statement, $resolved);",
+        "$views = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewLowering())->lower($operation, $statement, $resolved);",
+        "$release = $context->profile->grammar;",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::check($resolved, $statement->ifNotExists, $release, $sequences, $tables);",
+        "$occupied = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewOrder::check($resolved, $statement->ifNotExists, $release, $occupied, $views);",
+        "$indexes = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\Index\\SchemaIndexLowering())->lower($operation, $statement, $resolved, $occupied);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $release, $tables, $sequences, $views, $indexes);"
+      ]
+    },
+    "Schema/Namespace/SchemaTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($schema->elements === []) {",
+        "    return [];",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema tables and sequences require an unguarded, statically named namespace.');",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($resolved->value);",
+        "$resolvedTables = [];",
+        "$provided = [];",
+        "$seen = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTableLowering();",
+        "$scope = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\SchemaMemberScope();",
+        "foreach ($schema->elements as $element) {",
+        "    if ($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\CreateSequence || $element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView || $element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateIndex) {",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable, 'CREATE SCHEMA elements require a checked namespace composition.');",
+        "    $binding = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\BoundStatement($scope->bind($context, $name, $provided), $element);",
+        "    $table = $lowering->lower($binding, $element);",
+        "    $resolvedTables[] = $table;",
+        "    $coordinate = $table->target->table->value;",
+        "    if (!isset($seen[$coordinate])) {",
+        "        $seen[$coordinate] = true;",
+        "        array_push($provided, ...$binding->facts->declarations);",
+        "    }",
+        "}",
+        "return $resolvedTables;"
+      ]
+    },
+    "Schema/Namespace/SchemaRelationOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequences === [] && $tables === [] || $name !== null && !$guard, 'Schema tables and sequences require an unguarded, statically named namespace.');",
+        "$seen = [];",
+        "foreach ($sequences as $sequence) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->owner === null, 'A schema sequence cannot depend on a relation created after its sequence phase.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->name->schema->value === $name?->value && $sequence->release === $release, 'A schema sequence must belong to its namespace and release.');",
+        "    $coordinate = $sequence->name->name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$coordinate]) || $sequence->ifNotExists, 'A repeated schema sequence requires its own IF NOT EXISTS guard.');",
+        "    $seen[$coordinate] = true;",
+        "}",
+        "foreach ($tables as $table) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->target->schema->value === $name?->value && $table->release === $release, 'A schema table must belong to its namespace and release.');",
+        "    $coordinate = $table->target->table->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$coordinate]) || $table->ifNotExists, 'A repeated schema table requires its own IF NOT EXISTS guard.');",
+        "    $seen[$coordinate] ??= $table;",
+        "}",
+        "return $seen;"
+      ]
+    },
+    "Schema/Namespace/SchemaRelationOrder::columnKind": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match ($column->storage) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CharacterStorage::Text => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Text,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\BooleanStorage::Boolean => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small => null,",
+        "};"
+      ]
+    },
+    "Schema/Namespace/View/SchemaViewOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($views === []) {",
+        "    return $occupied;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && !$guard, 'Schema views require an unguarded, statically named namespace.');",
+        "foreach ($views as $view) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($view->name->schema->value === $name->value && $view->query->release === $release, 'A schema view must belong to its namespace and release.');",
+        "    $coordinate = $view->name->view->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($occupied[$coordinate]), 'A schema view requires an unused relation name.');",
+        "    $source = $view->query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Select ? $view->query->source : null;",
+        "    if ($source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource && $source->schema->value === $name->value) {",
+        "        $local = $occupied[$source->table->value] ?? null;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($local instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable, 'A schema view must resolve its local input to a preceding base table.');",
+        "        $fields = [];",
+        "        foreach ($local->columns as $column) {",
+        "            $fields[$column->name->value] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::columnKind($column);",
+        "        }",
+        "        foreach ($source->columns as $slot => $column) {",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($fields[$column->value]) && $fields[$column->value] === $source->columnKind($slot), 'A schema view requires each local input field in the checked native kind.');",
+        "        }",
+        "    }",
+        "    $occupied[$coordinate] = true;",
+        "}",
+        "return $occupied;"
+      ]
+    },
+    "Schema/Namespace/Index/SchemaIndexOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($indexes === []) {",
+        "    return;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && !$guard, 'Schema indexes require an unguarded, statically named namespace.');",
+        "foreach ($indexes as $index) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($index->table->schema->value === $name->value && $index->release === $release, 'A schema index must belong to its namespace and release.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$index->concurrently, 'A schema index cannot be built concurrently.');",
+        "    $table = $occupied[$index->table->table->value] ?? null;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable, 'A schema index must resolve to a preceding base table.');",
+        "    foreach ($index->bindings as $slot => $field) {",
+        "        $column = $table->columns[$slot] ?? null;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($column !== null && $column->name->value === $field->name->value && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::columnKind($column) === $field->kind, 'A schema index needs the exact ordered operand bindings.');",
+        "    }",
+        "    $coordinate = $index->name->value;",
+        "    $presence = isset($occupied[$coordinate]) ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Occupied : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($presence === $index->presence, 'A schema index must retain the actual presence of its name.');",
+        "    $occupied[$coordinate] ??= true;",
+        "}"
+      ]
+    },
+    "Schema/Namespace/Index/SchemaIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$indexes = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndexLowering();",
+        "foreach ($schema->elements as $element) {",
+        "    if (!$element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateIndex) {",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema indexes require an unguarded, statically named namespace.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$element->concurrently, 'A schema index cannot be built concurrently.');",
+        "    $index = $lowering->lower($operation, $element, $resolved, $occupied);",
+        "    $indexes[] = $index;",
+        "    $occupied[$index->name->value] ??= true;",
+        "}",
+        "return $indexes;"
+      ]
+    },
+    "Schema/Index/Btree/CreateIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive && $context->columnNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE INDEX requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($statement->name !== null || !$statement->ifNotExists) && ($statement->method === null || $statement->method->value === 'btree') && $statement->options === [] && $statement->tablespace === null, 'CREATE INDEX needs an ordinary B-tree without additional index options.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($memberNamespace === null) === ($memberOccupants === null), 'A schema index requires its namespace and known occupants together.');",
+        "$target = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexTableLowering())->lower($operation, $statement, $memberNamespace);",
+        "$operands = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOperands();",
+        "$keys = [];",
+        "$included = [];",
+        "foreach ($statement->elements as $element) {",
+        "    $keys[] = $operands->key($target, $element);",
+        "}",
+        "foreach ($statement->included as $element) {",
+        "    $included[] = $operands->covering($target, $element);",
+        "}",
+        "[$name, $presence] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\Binding\\IndexNameLowering())->lower($context, $target, $statement->name, $keys, $included, $memberOccupants);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndex($target, $name, $keys, $included, $presence, $statement->ifNotExists, $statement->unique, $statement->nullsDistinct === false, $statement->concurrently, $context->profile->grammar, (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPredicateLowering())->lower($operation, $statement));"
+      ]
+    },
+    "Schema/Index/Btree/IndexTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolution->table->kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable && $resolution->table->complete, 'A B-tree needs a declared ordinary table with a complete heading.');",
+        "$table = $resolution->table;",
+        "$context = $operation->context;",
+        "$schema = $table->name->schema ?? $context->declarationSchema;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->name->catalog === null && !$context->indexNamespace->partitioned($schema, $table->name->name), 'A B-tree needs a local nonpartitioned table.');",
+        "if ($memberNamespace !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value === $memberNamespace->value, 'A schema index must target its own namespace.');",
+        "} elseif ($statement->table->name->schema === null) {",
+        "    (new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexCreationVisibility())->verifyPath($context, $context->indexNamespace->indexes, $table->name->name, $schema);",
+        "}",
+        "$columns = [];",
+        "$types = [];",
+        "foreach ($table->columns as $column) {",
+        "    $columns[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($column->name->value);",
+        "    $types[] = match ($column->type) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int4 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int8 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Bool => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Text => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Text,",
+        "        default => null,",
+        "    };",
+        "}",
+        "$target = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\Binding\\IndexTarget(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($table->name->name->value), $statement->table->only);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\IndexHeading($target, $columns, $types);"
+      ]
+    },
+    "Schema/Index/Btree/Binding/IndexNameLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$schema = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($heading->target->schema->value);",
+        "$visibility = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexCreationVisibility();",
+        "$closed = $memberOccupants !== null || $context->complete && !$context->indexNamespace->hasUnknownNames($schema);",
+        "$occupied = static fn(\\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name $name): bool => $memberOccupants === null ? $visibility->occupied($context, $context->indexNamespace->indexes, $name, $schema) : isset($memberOccupants[$name->value]);",
+        "if ($written !== null) {",
+        "    $taken = $occupied($written);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($taken || $closed, 'CREATE INDEX cannot infer name availability in an open index namespace.');",
+        "    return [new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($written->value), $taken ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Occupied : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant];",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($closed, 'CREATE INDEX cannot allocate an automatic name in an open index namespace.');",
+        "$attributes = [];",
+        "foreach ([...$keys, ...$included] as $occurrence) {",
+        "    $attributes[] = $heading->columns[$occurrence->slot]->value;",
+        "}",
+        "$namePart = implode('_', \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexNames::attributes($attributes));",
+        "$table = $heading->target->table->value;",
+        "$pass = 0;",
+        "do {",
+        "    $suffix = $pass === 0 ? 'idx' : 'idx' . $pass;",
+        "    $name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name(\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexNames::candidate($table, $namePart, $suffix));",
+        "    ++$pass;",
+        "} while ($occupied($name));",
+        "return [new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name->value), \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant];"
+      ]
+    }
+  },
+  "extends": "postgres-schema-indexes-boundaries-v4.json"
+}

@@ -49,6 +49,7 @@ final class IndexTableLowering
                 Builtin::Int4 => ColumnKind::Int4,
                 Builtin::Int8 => ColumnKind::Int8,
                 Builtin::Bool => ColumnKind::Boolean,
+                Builtin::Text => ColumnKind::Text,
                 default => null,
             };
         }

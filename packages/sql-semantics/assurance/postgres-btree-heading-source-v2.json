@@ -1,0 +1,11 @@
+{
+  "revision": "SemanticsIR/postgres-btree-heading-source-2",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/IndexHeading.php": {
+      "role": "Copy the complete input slots and expose only checked bound field identities.",
+      "sha256": "3fa3de12026e052bf44479e80b86f7bac719b5c2d45fb66496271d612a76cd81"
+    }
+  },
+  "extends": "postgres-btree-heading-source-v1.json"
+}
