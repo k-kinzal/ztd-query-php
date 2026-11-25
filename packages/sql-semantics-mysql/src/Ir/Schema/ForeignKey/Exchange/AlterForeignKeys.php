@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\ForeignKeyIndexSide;
-use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -45,6 +44,12 @@ final class AlterForeignKeys implements SemanticsIR
     public readonly array $removedIndexes;
 
     /**
+     * The resolved unique key promoted after an explicit clustered removal.
+     * A clustered removal with a null replacement selects the native synthetic row identity.
+     */
+    public readonly ?IndexIdentity $clusteredReplacement;
+
+    /**
      * Checks all ordered edit roles against the starting schema before publishing the atomic operation.
      *
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $actions The ordered native key edits
@@ -63,27 +68,7 @@ final class AlterForeignKeys implements SemanticsIR
         ?InnoDbKeyLimit $keyLimit = null,
         ?array $remainingSides = null,
     ) {
-        Check::input(array_is_list($actions) && $actions !== [], 'A foreign-key exchange needs a nonempty ordered action list.');
-        $checked = $additions = $removals = $indexes = $foreignSlots = $physicalRemovals = [];
-        foreach ($actions as $position => $action) {
-            Check::input(
-                $action instanceof ForeignKeyAddition || $action instanceof ForeignKeyRemoval
-                || $action instanceof IndexAddition || $action instanceof IndexRemovalTarget,
-                'A mixed key alteration requires checked foreign-key or physical index actions.'
-            );
-            $checked[] = $action instanceof IndexRemovalTarget ? $action->index : $action;
-            if ($action instanceof ForeignKeyAddition) {
-                $foreignSlots[] = $position;
-                $additions[] = $action;
-            } elseif ($action instanceof ForeignKeyRemoval) {
-                $removals[] = $action;
-            } elseif ($action instanceof IndexAddition) {
-                $indexes[$position] = $action;
-            } else {
-                $physicalRemovals[] = $action;
-            }
-        }
-        Check::input($additions !== [] && ($removals !== [] || $indexes !== [] || $physicalRemovals !== []), 'A mixed key alteration requires foreign-key additions and a distinct key edit.');
+        [$checked, $additions, $removals, $indexes, $foreignSlots, $physicalRemovals] = (new ForeignKeyExchangeActions())->check($actions);
         $originalKeys = Check::listOf($keys, ForeignKeyNativeKey::class, 'Foreign-key exchange requires checked original physical keys.');
         $originalConstraints = Check::listOf($constraints, ForeignKeyConstraintIdentity::class, 'Foreign-key exchange requires checked original symbols.');
         if ($removals !== []) {
@@ -107,10 +92,12 @@ final class AlterForeignKeys implements SemanticsIR
             $foreignSlots,
             $physicalRemovals === [] ? null : $retainedKeys
         );
+        $replacement = null;
         if ($physicalRemovals !== []) {
             $support->retains($owner, $retainedSides, $originalConstraints, $removals);
-            $support->check($owner, $retainedKeys, $replaced, $additions, $indexes, $physicalRemovals, $removedKeys, $retainedSides, $release);
+            $replacement = $support->check($owner, $retainedKeys, $replaced, $additions, $indexes, $physicalRemovals, $removedKeys, $retainedSides, $release);
         }
+        $this->clusteredReplacement = $replacement;
         $this->removedIndexes = $replaced;
         $this->actions = $checked;
     }

@@ -14,10 +14,10 @@ from run_server_mysql_drop_index import DIAGNOSTIC, specifications as native_pro
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-physical-exchange"
-NAME = "mysql-physical-exchange-evidence-v2.json"
-CONTRACT = "8fba2f47b7abb5e22c5765acd4126a20b75c5d1d62c1c6efcb127b8159c8aae3"
+NAME = "mysql-physical-exchange-evidence-v3.json"
+CONTRACT = "40ec46f7d0b9e6e1fe226b9cf33c6afd567d8e63f0374c290f0c0c23de399fa7"
 OBSERVER = "mysql_physical_exchange_observer.php"
-FINITE = "mysql-physical-exchange-finite-v1.json"
+FINITE = "mysql-physical-exchange-finite-v2.json"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/alter-foreign-keys"
 COMPARATOR_FAULTS = {
     "Ignore the identity of a retained native constraint.": "change-retained-constraint",
@@ -42,8 +42,13 @@ def specifications():
 def fixture(finite_digest):
     path = TOOL / FINITE
     require(digest(path) == finite_digest, "mysql-physical-exchange-finite-catalog")
-    cases = json.loads(path.read_text())["cases"]
+    domain = json.loads(path.read_text())
+    cases = domain["cases"]
     same(laws.coordinates(), [case["id"] for case in cases])
+    previous = TOOL / "mysql-physical-exchange-finite-v1.json"
+    same({"file": previous.name, "sha256": digest(previous)}, domain["previous"])
+    original = json.loads(previous.read_text())["cases"]
+    same(original, cases[:len(original)])
     return cases
 
 
@@ -87,7 +92,8 @@ def reason(case):
 
 def item(case, tag, identity=None):
     release = tag.removeprefix("mysql-")
-    return {"case": case, "tag": tag, "expected": laws.expected_value(laws.direct(case, release)), "identity": identity}
+    expected = laws.expected_value(laws.direct(case, release), laws.clustered_replacement(case))
+    return {"case": case, "tag": tag, "expected": expected, "identity": identity}
 
 
 def negatives(spec, tag):
@@ -178,7 +184,8 @@ def required_forms(_, tag):
 
 def observer_request(value, sql):
     case = value["case"]
-    return {"sql": sql, "referenceSql": case["sql"], **{k: case[k] for k in ("declarations", "rows", "probe")}}
+    return {"sql": sql, "referenceSql": case["sql"], "observeCluster": case["id"].startswith("reclustering/"),
+            **{k: case[k] for k in ("declarations", "rows", "probe")}}
 
 
 def observation(payload):
@@ -215,6 +222,12 @@ def check_observation(value, actual, sql):
     if value["case"]["id"].startswith("generating/"):
         counters = [reference[stage]["tables"]["affected"]["next"] for stage in ("before", "after", "result")]
         same([3, 3, 4], counters)
+    if "cluster" in expected:
+        same([expected["cluster"]], reference["after"]["cluster"])
+        same(expected["dependent"], reference["result"]["tables"]["dependant"]["rows"])
+        if expected["alter"] == "ok":
+            replacement = laws.clustered_replacement(value["case"]) or "GEN_CLUST_INDEX"
+            same(replacement, expected["cluster"][0])
     try:
         compare(actual["observed"], reference, sql)
     except Failure as failure:

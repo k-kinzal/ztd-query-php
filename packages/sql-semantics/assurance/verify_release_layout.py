@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v178.json"
-CONTRACT = "0af23b18ffc2ed02ee4dacc12c9bdb451d2d5c36289e3e81016bfac5b8e0c08b"
+CONTRACT_NAME = "release-layout-v179.json"
+CONTRACT = "cc0750c5c04190d0039113315cdd3f234f3667f218da3e607e0636f991af06bc"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -940,6 +940,12 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlMixedPhysicalExchange") == [
                 "old_seq", "ordinary", True, "replacement_edge", [], physical, physical,
             ], "installed-mysql-mixed-physical-exchange-mismatch", item)
+            recluster = ("ALTER TABLE `app`.`rebuilt` DROP INDEX `PRIMARY`, DROP INDEX `source`, "
+                         "ADD UNIQUE INDEX `substitute` (`cand`, `hid`), ADD CONSTRAINT `Outgoing` "
+                         "FOREIGN KEY (`probe`) REFERENCES `app`.`upstream` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION")
+            require(item.get("mysqlMixedClusteredReplacement") == [
+                "retained", "clustered-unique", True, recluster,
+            ], "installed-mysql-mixed-clustered-replacement-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"

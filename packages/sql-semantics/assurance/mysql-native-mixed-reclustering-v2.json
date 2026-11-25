@@ -1,0 +1,74 @@
+{
+  "revision": "SemanticsIR/mysql-native-mixed-reclustering-2",
+  "approval": "pending-human-review",
+  "extends": {
+    "file": "mysql-physical-exchange-evidence-v2.json",
+    "sha256": "8fba2f47b7abb5e22c5765acd4126a20b75c5d1d62c1c6efcb127b8159c8aae3"
+  },
+  "source": "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html",
+  "scope": "Native atomic InnoDB foreign-key additions which remove the original clustered index and change the physical key layout.",
+  "rules": [
+    "Identify the original clustered target from the checked index identity of each removal. When it remains, its original leading fields still supply the hidden physical suffix.",
+    "After removing the clustered key, select the first eligible whole unique key of remaining original declaration order, followed by the written order of new explicit keys. A qualifying key has no nullable or excluded key fields.",
+    "A retained or added key carries its exact resolved physical name and eligibility. A nullable unique declaration may enforce uniqueness without becoming clustered. A selected logical clustered key is recorded as the effective replacement. A group with a clustered removal and no replacement selects InnoDB's synthetic row identity.",
+    "The native pre-rebuild parent lookup uses the original physical keys. The final lookup uses the replacement's hidden clustered fields only where the fixed release permits them. Exact-unique parent checks never obtain a requirement from hidden fields.",
+    "The eligibility and ordered layout are checked against the actual typed native key facts. Completed values keep only the resolved edit effects and selected clustered identity."
+  ],
+  "calibration": {
+    "coordinateCount": 48,
+    "releases": {
+      "5.6.51": {
+        "command": "477501d108a8aac3f4a5cd9a71b0adef273e4c32154f95666e4be3bef339574e",
+        "stdout": "4b09f27a2eeff88306b0a77fe885585c01a49312199e3b1e3f6f592586bbf964",
+        "stderr": "c30df1becf638aa5bacd7ab4a352344ca362772c967df4b5ec9f8a30948906db"
+      },
+      "5.7.44": {
+        "command": "477501d108a8aac3f4a5cd9a71b0adef273e4c32154f95666e4be3bef339574e",
+        "stdout": "23754cb3a4cc9f730fb90e01becd74819b0c0538357ec35f228d59132950ac00",
+        "stderr": "f8aab3e3fa14a0db6a2ff1af018643410c853669fc7df2b594e650a997d10fe1"
+      },
+      "8.0.44": {
+        "command": "b8153bb2d45949390234f6be8b4dd3720f4cde056ee85235e7eb3a13fa94b2da",
+        "stdout": "501d95f8f5c5a5f4a98ee2910c28c05b547027aabc86bb4f5e5cadd9e5b01f49",
+        "stderr": "6ed8af6abfaab4bfc1757ea9b02f0318f41363d603a3cf7744887428f9015082"
+      },
+      "8.4.7": {
+        "command": "b8153bb2d45949390234f6be8b4dd3720f4cde056ee85235e7eb3a13fa94b2da",
+        "stdout": "76a7caab32cc139d77f8ecfda8688c3142f38cd2e0b3bd67afe7be0d2b3173df",
+        "stderr": "fd6b312b532de4fb483458d4f781a482b2793286dcc2bec17d9cad346ef01735"
+      },
+      "9.1.0": {
+        "command": "b8153bb2d45949390234f6be8b4dd3720f4cde056ee85235e7eb3a13fa94b2da",
+        "stdout": "cb53471d8e0ed9f17d02aea95a7d4382484dd0b76d98a87038c20b0bdbf730f0",
+        "stderr": "415422b09148b5ef8433b0cf9ecdabe1dc8cd3dbdf4ea2f39e66c9ce7fe25e27"
+      }
+    }
+  },
+  "observations": [
+    "Observe the clustered index physical identity and flag in the native InnoDB dictionary, ordered key fields and directions, admitted scope and exact foreign-key effect after a known update.",
+    "Generate absent, retained, introduced, nullable, descending, and two eligible key cases in both written orders. Observe the fallback synthetic cluster and ordinary versus unique exact final parent predicates."
+  ],
+  "faults": [
+    "Confuse an old or nullable unique key with an eligible surviving replacement.",
+    "Ignore the selected cluster's hidden field when the release requires a native leading prefix.",
+    "Use hidden clustered fields to satisfy a strict exact-unique parent key.",
+    "Reorder logically eligible replacement choices."
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "previous": {
+    "file": "mysql-native-mixed-reclustering-v1.json",
+    "sha256": "68817db837df8fb7864ce85f8b889b2815eae64184376db43dce2d05c2dd92a5"
+  }
+}

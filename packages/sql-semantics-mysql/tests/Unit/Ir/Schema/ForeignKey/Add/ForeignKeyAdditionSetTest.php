@@ -22,6 +22,16 @@ use SqlSemantics\Testing\MySql\NativeAdditionFixture;
 #[Small]
 final class ForeignKeyAdditionSetTest extends TestCase
 {
+    public function testParentUsesTheOriginalLookupForARebuiltSelfReference(): void
+    {
+        $owner = NativeAdditionFixture::owner('parent');
+        $key = NativeAdditionFixture::key($owner, 'old', IndexRole::Ordinary, 'id');
+        $addition = NativeAdditionFixture::addition('Self_reference');
+        (new ForeignKeyAdditionSet())->parent($owner, $addition, [$key], GrammarRelease::MySql910, true);
+
+        self::assertSame('id', $addition->pairs[0]->parent->value);
+    }
+
     public function testCheckAcceptsTheSettledPhysicalKey(): void
     {
         $parent = NativeAdditionFixture::owner('parent');

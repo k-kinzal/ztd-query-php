@@ -1260,7 +1260,7 @@ function constructMysqlForeignKeyCatalog(array $facts, string $namespace): array
     $limit = SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit::class;
     $keys = array_map(static fn (array $key): object => new $index(constructMysqlIndexIdentity($key),
         array_map(static fn (array $field): object => new $column(new $name($field[0]), $field[1]), $key['fields']), $key['full'],
-        $key['referenceKey'] ?? true, $key['implicitForeignKey'] ?? false), $facts['keys']);
+        $key['referenceKey'] ?? true, $key['implicitForeignKey'] ?? false, $key['clusterEligible'] ?? false), $facts['keys']);
     $constraints = array_map(static fn (array $stored): object =>
         new $constraint(mysqlTableIdentity($namespace, $stored[0]), new $name($stored[1])), $facts['constraints']);
 
@@ -1365,6 +1365,7 @@ function constructMysqlAlterForeignKeys(array $input): SqlSemantics\Platform\MyS
 function observeMysqlAlterForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys $value): array
 {
     $actions = [];
+    $physical = false;
     foreach ($value->actions as $edit) {
         $actions[] = match (true) {
             $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval =>
@@ -1376,12 +1377,15 @@ function observeMysqlAlterForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\Fore
             $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition =>
                 ['add' => observeMysqlForeignKeyAddition($edit)],
         };
+        $physical = $physical || $edit instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
     }
 
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlAlterForeignKeys' => ['owner' => observeMysqlTableIdentity($value->owner), 'actions' => $actions,
             'removedIndexes' => array_map(static fn ($name): string => $name->value, $value->removedIndexes),
-            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore,
+            ...($physical ? ['clusteredReplacement' => $value->clusteredReplacement === null
+                ? null : observeMysqlIndexIdentity($value->clusteredReplacement)] : [])]];
 }
 
 function constructMysqlDropForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys

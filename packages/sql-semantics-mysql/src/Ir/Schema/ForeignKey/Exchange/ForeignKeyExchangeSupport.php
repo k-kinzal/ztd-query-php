@@ -41,7 +41,7 @@ final class ForeignKeyExchangeSupport
         }
         $layout = new ForeignKeyIndexPrefix();
         $keys = $layout->keys($owner, $catalog);
-        Check::input(count($keys) <= 64, 'The original child catalog exceeds the native index limit.');
+        $this->original($keys);
         $case = new NativeIdentifierCase();
         $removed = [];
         $clustered = false;
@@ -59,21 +59,7 @@ final class ForeignKeyExchangeSupport
             Check::input(!$clustered || !$identity->role->clustered(), 'The altered table has at most one original clustered identity.');
             $clustered = $clustered || $identity->role->clustered();
             $removed[$name] = true;
-            if ($target->autoIncrement !== null) {
-                $increment = $target->autoIncrement;
-                Check::input(
-                    ($original->fields[0] ?? null)?->field->value === $increment->field->value,
-                    'A removed generating key must lead with the declared AUTO_INCREMENT field.'
-                );
-                foreach ($increment->alternates as $alternate) {
-                    $previous = $keys[$case->fold($alternate->value)] ?? null;
-                    Check::input(
-                        $previous !== null && $previous->referenceKey
-                        && ($previous->fields[0] ?? null)?->field->value === $increment->field->value,
-                        'An original generating backup must identify a leading native key.'
-                    );
-                }
-            }
+            $this->generating($target, $original, $keys, $case);
         }
         Check::input($policy->supports($owner->kind, $clustered), 'The algorithm and lock cannot remove the selected native key.');
         $retained = [];
@@ -84,6 +70,45 @@ final class ForeignKeyExchangeSupport
         }
 
         return [$retained, $removed];
+    }
+
+    /**
+     * Checks that the catalog identifies the original clustered layout.
+     * @param array<array-key, ForeignKeyNativeKey> $keys Original owner keys ordered by declaration
+     */
+    public function original(array $keys): void
+    {
+        Check::input(count($keys) <= 64, 'The original child catalog exceeds the native index limit.');
+        $clusteredKeys = 0;
+        $eligible = false;
+        foreach ($keys as $key) {
+            $clusteredKeys += (int) $key->identity->role->clustered();
+            $eligible = $eligible || $key->clusterEligible;
+        }
+        Check::input($clusteredKeys <= 1 && (!$eligible || $clusteredKeys === 1), 'The original physical layout needs one settled clustered identity.');
+    }
+
+    /**
+     * Checks the supplied generating field and its original alternate physical keys.
+     * @param array<array-key, ForeignKeyNativeKey> $keys Original owner keys by native folded name
+     */
+    public function generating(IndexRemovalTarget $target, ForeignKeyNativeKey $original, array $keys, NativeIdentifierCase $case): void
+    {
+        if ($target->autoIncrement !== null) {
+            $increment = $target->autoIncrement;
+            Check::input(
+                ($original->fields[0] ?? null)?->field->value === $increment->field->value,
+                'A removed generating key must lead with the declared AUTO_INCREMENT field.'
+            );
+            foreach ($increment->alternates as $alternate) {
+                $previous = $keys[$case->fold($alternate->value)] ?? null;
+                Check::input(
+                    $previous !== null && $previous->referenceKey
+                    && ($previous->fields[0] ?? null)?->field->value === $increment->field->value,
+                    'An original generating backup must identify a leading native key.'
+                );
+            }
+        }
     }
 
     /**
@@ -149,7 +174,7 @@ final class ForeignKeyExchangeSupport
         array $removed,
         array $sides,
         GrammarRelease $release,
-    ): void {
+    ): ?IndexIdentity {
         $case = new NativeIdentifierCase();
         $superseded = [];
         foreach ($replaced as $name) {
@@ -167,6 +192,7 @@ final class ForeignKeyExchangeSupport
             $final[] = $key;
             $leading[$case->fold($key->fields[0]->field->value)] = true;
         }
+        [$final, $replacement] = $this->cluster($final, $targets);
         (new AutoIncrementRemovalSet())->check($targets, $removed, $leading);
         $layout = new ForeignKeyIndexPrefix();
         foreach ($sides as $side) {
@@ -175,6 +201,19 @@ final class ForeignKeyExchangeSupport
                 'The resulting physical keys must support every retained native foreign-key side.'
             );
         }
+        $this->selfParents($owner, $additions, $final, $release);
+
+        return $replacement;
+    }
+
+    /**
+     * Ensures each newly added self-reference has support after rebuilding its own parent.
+     * @param non-empty-list<ForeignKeyAddition> $additions New foreign constraints
+     * @param list<ForeignKeyNativeKey> $final Settled owner keys
+     */
+    public function selfParents(TableIdentity $owner, array $additions, array $final, GrammarRelease $release): void
+    {
+        $layout = new ForeignKeyIndexPrefix();
         foreach ($additions as $addition) {
             if ($addition->parent->quoted() === $owner->quoted()) {
                 $fields = [];
@@ -187,6 +226,33 @@ final class ForeignKeyExchangeSupport
                 );
             }
         }
+    }
+
+    /**
+     * Selects the settled final clustered identity and projects it into key coverage.
+     * @param list<ForeignKeyNativeKey> $final Resulting owner keys, retained order followed by addition order
+     * @param non-empty-list<IndexRemovalTarget> $targets Exact physical removals
+     * @return array{list<ForeignKeyNativeKey>, IndexIdentity|null}
+     */
+    public function cluster(array $final, array $targets): array
+    {
+        $removedCluster = false;
+        foreach ($targets as $target) {
+            $removedCluster = $removedCluster || $target->index->role->clustered();
+        }
+        if (!$removedCluster) {
+            return [$final, null];
+        }
+        foreach ($final as $position => $key) {
+            if ($key->clusterEligible) {
+                $replacement = new IndexIdentity($key->identity->owner, $key->identity->name, IndexRole::ClusteredUnique);
+                $final[$position] = new ForeignKeyNativeKey($replacement, $key->fields, true);
+
+                return [$final, $replacement];
+            }
+        }
+
+        return [$final, null];
     }
 
     /**

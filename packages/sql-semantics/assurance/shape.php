@@ -1484,18 +1484,20 @@ if ($dialect !== 'sqlite') {
         $foreignExchange = $exchangeBase . 'AlterForeignKeys';
         $exchangeRemovals = $exchangeBase . 'ForeignKeyExchangeRemovals';
         $exchangeSupport = $exchangeBase . 'ForeignKeyExchangeSupport';
-        array_push($internal, $exchangeBase . 'ForeignKeyExchangeLowering', $exchangeRemovals, $exchangeSupport);
+        $exchangeActions = $exchangeBase . 'ForeignKeyExchangeActions';
+        array_push($internal, $exchangeBase . 'ForeignKeyExchangeLowering', $exchangeRemovals, $exchangeSupport, $exchangeActions);
         $mixedIndex = $exchangeBase . 'IndexAddition';
         $checks = $exchangeBase . 'ExplicitKeyChecks';
         $names = $exchangeBase . 'PhysicalKeyNames';
         array_push($internal, $checks, $names, $exchangeBase . 'IndexAdditionLowering');
-        array_push($pureCollaborators, $exchangeRemovals, $exchangeSupport, $checks, $names);
+        array_push($pureCollaborators, $exchangeRemovals, $exchangeSupport, $exchangeActions, $checks, $names);
         $properties[$mixedIndex] = ['key' => [$foreignKeyFact], 'automatic' => ['bool']];
         $methods[$mixedIndex] = ['__construct', 'toString'];
         array_push($roots, $foreignAdd, $foreignExchange);
         $properties[$foreignAdd] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'additions' => ['array'], 'removedIndexes' => ['array'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
         $properties[$foreignExchange] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'actions' => ['array'], 'removedIndexes' => ['array'],
+            'clusteredReplacement' => ['?Schema\\Index\\IndexIdentity'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
         $properties[$foreignDefinition] = ['parent' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier'], 'pairs' => ['array'],
             'effects' => [$foreignEffects], 'generated' => ['bool'], 'indexName' => ['?Identifier'], 'createdIndex' => ['?Identifier']];
@@ -1547,7 +1549,8 @@ if ($dialect !== 'sqlite') {
         $enumCases[$foreignCollation] = ['Binary' => 'utf8mb4_bin', 'General' => 'utf8mb4_general_ci', 'Unicode' => 'utf8mb4_unicode_ci'];
         $enumCases[$foreignScalarKind] = ['Decimal' => 'DECIMAL', 'Bit' => 'BIT', 'Single' => 'FLOAT', 'Double' => 'DOUBLE',
             'Date' => 'DATE', 'Year' => 'YEAR', 'Time' => 'TIME', 'DateTime' => 'DATETIME', 'Timestamp' => 'TIMESTAMP'];
-        $properties[$foreignKeyFact] = ['identity' => [$indexIdentity], 'fields' => ['array'], 'full' => ['bool'], 'referenceKey' => ['bool'], 'implicitForeignKey' => ['bool']];
+        $properties[$foreignKeyFact] = ['identity' => [$indexIdentity], 'fields' => ['array'], 'full' => ['bool'], 'referenceKey' => ['bool'],
+            'implicitForeignKey' => ['bool'], 'clusterEligible' => ['bool']];
         $properties[$foreignFieldFact] = ['field' => ['Identifier'], 'descending' => ['bool']];
         $properties[$foreignSymbolFact] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier']];
         $properties[$foreignEvent] = $properties[$foreignMatch] = $methods[$foreignEvent] = $methods[$foreignMatch] = [];
@@ -2598,7 +2601,8 @@ try {
                     'Schema\\Index\\Change\\MixedIndexChanges', 'Schema\\Index\\Change\\MixedIndexNamespace',
                     'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
                     'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\ForeignKey\\ForeignKeyRemovalSet',
-                    'Schema\\ForeignKey\\Exchange\\AlterForeignKeys',
+                    'Schema\\ForeignKey\\Exchange\\ForeignKeyExchangeActions',
+                    'Schema\\ForeignKey\\Exchange\\ForeignKeyExchangeSupport',
                 ], true) && $name->toString() === $platform . '\\Model\\Statement\\Declaration\\IndexRemovalTarget')
                 || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Exchange\\AlterForeignKeys'
                     && $name->toString() === $platform . '\\Model\\Statement\\Declaration\\ForeignKeyIndexSide')

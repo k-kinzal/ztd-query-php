@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\ForeignKeyExchangeSupport;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
@@ -16,6 +17,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\ForeignKeyIndexSide;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
 use SqlSemantics\Testing\MySql\NativeAdditionFixture;
 
 #[CoversClass(ForeignKeyExchangeSupport::class)]
@@ -81,5 +83,57 @@ final class ForeignKeyExchangeSupportTest extends TestCase
         (new ForeignKeyExchangeSupport())->retains($owner, [$side], [$identity], []);
 
         self::assertSame('approved', $side->constraint->symbol->value);
+    }
+
+    public function testClusterPromotesTheFirstEligibleUniqueKeyAfterRemovingPrimary(): void
+    {
+        $owner = NativeAdditionFixture::owner('child');
+        $primary = NativeAdditionFixture::key($owner, 'PRIMARY', IndexRole::Primary, 'id');
+        $nullable = NativeAdditionFixture::key($owner, 'nullable', IndexRole::Unique, 'optional');
+        $required = NativeAdditionFixture::key($owner, 'required', IndexRole::Unique, 'id');
+        $candidate = new ForeignKeyNativeKey($required->identity, $required->fields, true, clusterEligible: true);
+
+        [$layout, $selected] = (new ForeignKeyExchangeSupport())->cluster(
+            [$nullable, $candidate],
+            [new IndexRemovalTarget($primary->identity, null)]
+        );
+
+        self::assertSame($nullable, $layout[0]);
+        self::assertSame($selected, $layout[1]->identity);
+        self::assertSame(IndexRole::ClusteredUnique, $selected?->role);
+        self::assertSame('required', $selected->name->value);
+    }
+
+    public function testOriginalAcceptsOneClusteredIdentityAndEligibleSecondaryKeys(): void
+    {
+        $owner = NativeAdditionFixture::owner('child');
+        $primary = NativeAdditionFixture::key($owner, 'PRIMARY', IndexRole::Primary, 'id');
+        $unique = NativeAdditionFixture::key($owner, 'required', IndexRole::Unique, 'owner_id');
+        $candidate = new ForeignKeyNativeKey($unique->identity, $unique->fields, true, clusterEligible: true);
+        (new ForeignKeyExchangeSupport())->original([$primary, $candidate]);
+
+        self::assertTrue($candidate->clusterEligible);
+    }
+
+    public function testGeneratingRequiresTheAlternateToLeadWithTheSameField(): void
+    {
+        $owner = NativeAdditionFixture::owner('child');
+        $first = NativeAdditionFixture::key($owner, 'old', IndexRole::Ordinary, 'seq');
+        $retained = NativeAdditionFixture::key($owner, 'retained', IndexRole::Ordinary, 'seq', true);
+        $sequence = new IndexAutoIncrement(new Identifier('seq'), [new Identifier('retained')]);
+        $target = new IndexRemovalTarget($first->identity, $sequence);
+        (new ForeignKeyExchangeSupport())->generating($target, $first, ['retained' => $retained], new NativeIdentifierCase());
+
+        self::assertSame('seq', $sequence->field->value);
+    }
+
+    public function testSelfParentsAllowsOneExactUniqueReplacement(): void
+    {
+        $owner = NativeAdditionFixture::owner('parent');
+        $new = NativeAdditionFixture::key($owner, 'promoted', IndexRole::Unique, 'id', true);
+        $edge = NativeAdditionFixture::addition('self');
+        (new ForeignKeyExchangeSupport())->selfParents($owner, [$edge], [$new], GrammarRelease::MySql910);
+
+        self::assertSame('id', $edge->pairs[0]->parent->value);
     }
 }

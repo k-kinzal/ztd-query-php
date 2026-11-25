@@ -2637,6 +2637,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $explicit->name->value, $explicit->role->value, !property_exists($explicit, 'autoIncrement'),
                 $edge->createdIndex->value, $exchange->removedIndexes, $exchange->toString(), $directExchange->toString(),
             ];
+            $rebuiltContext = $semantics->context([
+                'CREATE TABLE app.upstream (id INT PRIMARY KEY)',
+                'CREATE TABLE app.rebuilt (id INT PRIMARY KEY, cand INT NOT NULL, hid INT NOT NULL, probe INT, '
+                    . 'UNIQUE KEY source(cand,hid), KEY fallback(cand), UNIQUE KEY retained(hid))',
+                'CREATE TABLE app.dependant (lc INT, lh INT, CONSTRAINT Incoming FOREIGN KEY(lc,lh) REFERENCES rebuilt(cand,hid))',
+            ]);
+            $recluster = $semantics->analyze('ALTER TABLE app.rebuilt DROP PRIMARY KEY, DROP KEY source, '
+                . 'ADD UNIQUE KEY substitute(cand,hid), ADD CONSTRAINT Outgoing FOREIGN KEY(probe) REFERENCES upstream(id)', $rebuiltContext);
+            $details['mysqlMixedClusteredReplacement'] = [
+                $recluster->clusteredReplacement->name->value, $recluster->clusteredReplacement->role->value,
+                $recluster->actions[2]->key->clusterEligible, $recluster->toString(),
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
             $one = $result->additions[0];

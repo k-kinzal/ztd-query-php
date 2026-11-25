@@ -24,10 +24,15 @@ final class IndexAddition
     use Snapshot;
 
     /**
+     * The resolved named whole key, including its possible clustered placement.
+     */
+    public readonly ForeignKeyNativeKey $key;
+
+    /**
      * Checks the exact table coordinates and the signed whole-field operands of this secondary key.
      */
     public function __construct(
-        public readonly ForeignKeyNativeKey $key,
+        ForeignKeyNativeKey $key,
         TableSource $heading,
         public readonly bool $automatic = false,
     ) {
@@ -43,13 +48,16 @@ final class IndexAddition
         foreach ($heading->columns as $slot => $column) {
             $declared[$column->value] = $heading->columnTypes[$slot];
         }
+        $required = $identity->role === IndexRole::Unique;
         foreach ($key->fields as $field) {
             $type = $declared[$field->field->value] ?? null;
             Check::input(
                 $type === ColumnKind::SignedInt || $type === ColumnKind::RequiredSignedInt,
                 'An added index requires exact whole signed fields of the declared owning table.'
             );
+            $required = $required && $type === ColumnKind::RequiredSignedInt;
         }
+        $this->key = new ForeignKeyNativeKey($identity, $key->fields, true, clusterEligible: $required);
     }
 
     /**

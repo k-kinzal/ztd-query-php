@@ -32,6 +32,11 @@ final class ForeignKeyNativeKey
     public readonly array $fields;
 
     /**
+     * Whether this whole unique key can become the native clustered identity.
+     */
+    public readonly bool $clusterEligible;
+
+    /**
      * Fixes the native key name, role, prefix fields and completeness of the prefix.
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $fields The leading full fields
      */
@@ -41,6 +46,7 @@ final class ForeignKeyNativeKey
         public readonly bool $full,
         public readonly bool $referenceKey = true,
         public readonly bool $implicitForeignKey = false,
+        bool $clusterEligible = false,
     ) {
         Check::input($identity->owner->kind === ExternalRelationKind::BaseTable, 'A native foreign-key key fact must belong to a persistent table.');
         $checked = Check::listOf($fields, ForeignKeyKeyColumn::class, 'A native key fact requires checked prefix fields.');
@@ -50,6 +56,11 @@ final class ForeignKeyNativeKey
             !$implicitForeignKey || ($referenceKey && $full && $identity->role === IndexRole::Ordinary),
             'An implicit foreign-key index requires a full ordinary native key.',
         );
+        $eligible = $clusterEligible || $identity->role === IndexRole::ClusteredUnique;
+        Check::input(
+            !$eligible || ($referenceKey && $full && ($identity->role === IndexRole::Unique || $identity->role === IndexRole::ClusteredUnique)),
+            'A clustered candidate must be a whole native unique key.'
+        );
         $case = new NativeIdentifierCase();
         $seen = [];
         foreach ($checked as $field) {
@@ -58,5 +69,6 @@ final class ForeignKeyNativeKey
             $seen[$name] = true;
         }
         $this->fields = $checked;
+        $this->clusterEligible = $eligible;
     }
 }

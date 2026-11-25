@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/mysql_index_observation.php';
 
-const PHYSICAL_EXCHANGE_TABLES = ['affected', 'reference_values', 'fk_test_child', 'fk_test_parent', 'fk_test_root'];
+const PHYSICAL_EXCHANGE_TABLES = ['affected', 'reference_values', 'fk_test_child', 'fk_test_parent', 'fk_test_root', 'dependant', 'upstream'];
 const PHYSICAL_EXCHANGE_MARKER = 'ir_fixture.ir_exchange_marker';
 
 function initializePhysicalExchange(PDO $catalog): void
@@ -71,7 +71,7 @@ function preparePhysicalExchange(PDO $catalog, array $request): array
 }
 
 /** Captures exact dictionary relationships, the generating counter and all affected rows. */
-function physicalExchangeState(PDO $catalog, array $tables): array
+function physicalExchangeState(PDO $catalog, array $tables, bool $observeCluster, ?int $statsExpiry): array
 {
     $owners = [];
     foreach ($tables as $table) {
@@ -99,15 +99,25 @@ function physicalExchangeState(PDO $catalog, array $tables): array
         . "FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA='ir_fixture' "
         . 'ORDER BY BINARY TABLE_NAME, BINARY CONSTRAINT_NAME')->fetchAll(PDO::FETCH_NUM);
 
-    return ['tables' => $owners, 'constraints' => $constraints, 'rules' => $rules];
+    $cluster = [];
+    if ($observeCluster) {
+        $dictionary = $statsExpiry === null ? 'INNODB_SYS_' : 'INNODB_';
+        $cluster = $catalog->query("SELECT i.NAME,i.TYPE FROM information_schema.{$dictionary}INDEXES i"
+            . " JOIN information_schema.{$dictionary}TABLES t ON i.TABLE_ID=t.TABLE_ID"
+            . " WHERE t.NAME='ir_fixture/affected' AND (i.TYPE & 1) <> 0 ORDER BY BINARY i.NAME")->fetchAll(PDO::FETCH_NUM);
+    }
+
+    return ['tables' => $owners, 'constraints' => $constraints, 'rules' => $rules, 'cluster' => $cluster];
 }
 
 function physicalExchangeStatement(PDO $catalog, PDO $owner, array $request, string $sql): array
 {
     $tables = preparePhysicalExchange($catalog, $request);
-    $before = physicalExchangeState($catalog, $tables);
+    $observeCluster = $request['observeCluster'];
+    $statsExpiry = physicalExchangeStatsExpiry($catalog);
+    $before = physicalExchangeState($catalog, $tables, $observeCluster, $statsExpiry);
     $effect = observeMysqlIndexEffect($catalog, $owner, PHYSICAL_EXCHANGE_MARKER, $sql);
-    $after = physicalExchangeState($catalog, $tables);
+    $after = physicalExchangeState($catalog, $tables, $observeCluster, $statsExpiry);
     $probe = $request['probe'];
     if (preg_match('/\A(?:UPDATE ([a-z_]+) SET [a-z_]+=[a-z_+0-9]+ WHERE [a-z_]+=[0-9]+|INSERT INTO affected\(id,pid\) VALUES \(33,3\))\z/D', $probe, $parts) !== 1
         || isset($parts[1]) && !in_array($parts[1], $tables, true)) {
@@ -117,7 +127,8 @@ function physicalExchangeStatement(PDO $catalog, PDO $owner, array $request, str
     $follow = mysqlFixtureDiagnostics($catalog)['diagnostics'];
 
     return ['before' => $before, ...$effect,
-        'after' => $after, 'probe' => $probed, 'probeDiagnostics' => $follow, 'result' => physicalExchangeState($catalog, $tables)];
+        'after' => $after, 'probe' => $probed, 'probeDiagnostics' => $follow,
+        'result' => physicalExchangeState($catalog, $tables, $observeCluster, $statsExpiry)];
 }
 
 function observePhysicalExchange(PDO $catalog, PDO $owner, array $request): array

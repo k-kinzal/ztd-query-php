@@ -13,6 +13,9 @@ AXES = {
     "self-parent": (("unique", "ordinary", "unindexed"),
                     ("none", "ordinary", "unique", "descending-unique", "wider-unique", "same-name-unique"),
                     ("drop-first", "add-first")),
+    "reclustering": (("no-unique", "retain-asc", "retain-null", "add-asc", "add-desc", "add-null"),
+                     ("only-short", "ordinary-exact", "unique-exact", "wrong-leading"),
+                     ("drop-first", "add-first")),
 }
 
 
@@ -25,7 +28,7 @@ def analysis(case, release):
             "currentDatabase": "ir_fixture", "sql": case["sql"]}
 
 
-def expected_value(packet):
+def expected_value(packet, cluster=None):
     expected = packet["mysqlAlterForeignKeys"]
     actions = []
     for item in expected["actions"]:
@@ -38,7 +41,19 @@ def expected_value(packet):
         else:
             actions.append(item)
     return {"owner": expected["owner"], "actions": actions, "removedIndexes": [],
-            "policy": ["DEFAULT", "DEFAULT"], "ignore": False}
+            "policy": ["DEFAULT", "DEFAULT"], "ignore": False,
+            "clusteredReplacement": None if cluster is None else {"owner": expected["owner"], "name": cluster, "role": "clustered-unique"}}
+
+
+def clustered_replacement(case):
+    family, choice, alternative, *_ = case["id"].split("/")
+    if family != "reclustering" or choice.endswith("-null"):
+        return None
+    if choice == "retain-asc":
+        return "retained"
+    if alternative == "unique-exact":
+        return "substitute"
+    return "promoted" if choice in ("add-asc", "add-desc") else None
 
 
 def explorations(cases, tag, seed, count, model_release=None):
@@ -47,9 +62,10 @@ def explorations(cases, tag, seed, count, model_release=None):
                     and case["outcomes"][model_release or tag]["alter"] == "ok"] for name in AXES}
     # These columns are outside every required child, parent and generating prefix
     # of the corresponding finite family.
-    neutral = {"outgoing": "id", "incoming": "p", "generating": "id", "self-parent": "extra"}
+    neutral = {"outgoing": "id", "incoming": "p", "generating": "id", "self-parent": "extra", "reclustering": "id"}
+    previous_families = ("outgoing", "incoming", "generating", "self-parent")
     for position in range(count):
-        family = tuple(AXES)[position % len(AXES)]
+        family = previous_families[position % len(previous_families)] if position < 24 else "reclustering"
         case = rng.choice(pools[family])
         field = neutral[family]
         # In the generation case, an original primary on id can coexist with
@@ -65,9 +81,50 @@ def key(owner, name, role, *fields, implicit=False):
             "fields": [[term, False] if isinstance(term, str) else term for term in fields]}
 
 
+def extras(case, owner, old):
+    return [{"index": key(owner, name, "ordinary", [field, descending and not old]) | {"automatic": False}}
+            for name, field, descending in case.get("extra", [])]
+
+
+def reclustering(case, release):
+    _, choice, alternative, order = case["id"].split("/")
+    old = release in ("5.6.51", "5.7.44")
+    owner, parent, child = [["ir_fixture", name, "table"] for name in ("affected", "upstream", "dependant")]
+    required = choice not in ("retain-null", "add-null")
+    primary = key(owner, "PRIMARY", "primary", "id")
+    source = key(owner, "source", "unique", "cand", "hid") | {"clusterEligible": required}
+    original = [primary, source, key(owner, "fallback", "ordinary", "cand")]
+    if choice.startswith("retain"):
+        original.append(key(owner, "retained", "unique", "hid") | {"clusterEligible": required})
+    original.append(key(parent, "PRIMARY", "primary", "id"))
+    whole = "int-not-null" if required else "int"
+    heading = [["cand", "int-not-null"], ["hid", whole]]
+    add = []
+    if alternative != "only-short":
+        kind = "unique" if alternative == "unique-exact" else "ordinary"
+        fields = ("hid", "cand") if alternative == "wrong-leading" else ("cand", "hid")
+        add.append({"index": key(owner, "substitute", kind, *fields) | {"heading": heading, "automatic": False}})
+    if choice.startswith("add"):
+        direction = choice == "add-desc" and not old
+        add.append({"index": key(owner, "promoted", "unique", ["hid", direction]) | {"heading": heading, "automatic": False}})
+    action = "RESTRICT" if old else "NO ACTION"
+    add.append({"add": {"parent": parent, "symbol": "outbound", "generated": False, "indexName": None, "created": "outbound",
+                        "pairs": [["probe", "id", "INTEGER", False, True, False]], "effects": [action, action, "NONE"]}})
+    remove = [{"physicalDrop": fact | {"autoIncrement": None}} for fact in (primary, source)]
+    actions = remove + add if order == "drop-first" else add + remove
+    actions.extend(extras(case, owner, old))
+    return {"dialect": "mysql", "release": "mysql-" + release,
+            "mysqlAlterForeignKeys": {"owner": owner, "actions": actions,
+                "remainingSides": [[True, ["cand", "hid"], child, "incoming"]],
+                "policy": ["DEFAULT", "DEFAULT"], "ignore": False},
+            "mysqlForeignKeyCatalog": {"keys": original, "constraints": [[child, "incoming"]]}}
+
+
 def direct(case, release):
     old = release in ("5.6.51", "5.7.44")
     family, *axis = case["id"].split("/")
+    if family == "reclustering":
+        return reclustering(case, release)
     owner_name = {"outgoing": "fk_test_child", "incoming": "fk_test_parent",
                   "generating": "affected", "self-parent": "affected"}[family]
     parent_name = {"outgoing": "fk_test_parent", "incoming": "fk_test_root",
@@ -165,9 +222,7 @@ def direct(case, release):
         lowered.append({"drop": [drop_fk, "constraint"]})
     added = ([] if declared is None else [{"index": declared | {"automatic": False}}]) + [{"add": addition}]
     actions = lowered + added if order == "drop-first" else added + lowered
-    extras = [{"index": key(owner, name, "ordinary", [term, descending and not old]) | {"automatic": False}}
-              for name, term, descending in case.get("extra", [])]
-    actions.extend(extras)
+    actions.extend(extras(case, owner, old))
     return {"dialect": "mysql", "release": "mysql-" + release,
             "mysqlAlterForeignKeys": {"owner": owner, "actions": actions, "remainingSides": sides,
                                      "policy": ["DEFAULT", "DEFAULT"], "ignore": False},

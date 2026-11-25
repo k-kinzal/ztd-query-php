@@ -131,7 +131,7 @@ NATIVE = {
     "mysql_add_foreign_keys": "mysql-add-foreign-keys-evidence-v3.json",
     "mysql_foreign_key_exchange": "mysql-foreign-key-exchange-evidence-v2.json",
     "mysql_mixed_support": "mysql-mixed-support-evidence-v2.json",
-    "mysql_physical_exchange": "mysql-physical-exchange-evidence-v2.json",
+    "mysql_physical_exchange": "mysql-physical-exchange-evidence-v3.json",
     "mysql_foreign_key_strings": "mysql-foreign-key-string-evidence-v1.json",
     "mysql_foreign_key_scalars": "mysql-foreign-key-scalar-evidence-v2.json",
     "mysql_foreign_key_enumerations": "mysql-foreign-key-enumeration-evidence-v2.json",

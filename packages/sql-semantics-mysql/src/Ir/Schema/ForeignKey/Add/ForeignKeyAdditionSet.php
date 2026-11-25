@@ -72,7 +72,6 @@ final class ForeignKeyAdditionSet
                 'The declared secondary index name differs from native allocation.'
             );
         }
-        $layout = new ForeignKeyIndexPrefix();
         $capacity = new ForeignKeyKeyCapacity();
         $nativeLimit = $capacity->effective($release, $limit);
         foreach ($additions as $position => $addition) {
@@ -80,16 +79,25 @@ final class ForeignKeyAdditionSet
             $capacity->check($addition->pairs, $nativeLimit);
             Check::input($symbols[$position]->value === $addition->symbol->value, 'The foreign-key symbol differs from native allocation.');
             Check::input($created[$position]?->value === $addition->createdIndex?->value, 'The declared foreign-key index effect differs from native allocation.');
-            $layout->requireParent(
-                $addition->parent,
-                $addition->pairs,
-                $keys,
-                $release,
-                $retained !== null && $addition->parent->quoted() === $owner->quoted()
-            );
+            $this->parent($owner, $addition, $keys, $release, $retained !== null);
         }
 
         return $replaced;
+    }
+
+    /**
+     * Checks original support under the parent lookup stage of the native operation.
+     * @param list<ForeignKeyNativeKey> $keys Keys in the original dictionary
+     */
+    public function parent(TableIdentity $owner, ForeignKeyAddition $addition, array $keys, GrammarRelease $release, bool $rebuild): void
+    {
+        (new ForeignKeyIndexPrefix())->requireParent(
+            $addition->parent,
+            $addition->pairs,
+            $keys,
+            $release,
+            $rebuild && $addition->parent->quoted() === $owner->quoted()
+        );
     }
 
     /**
