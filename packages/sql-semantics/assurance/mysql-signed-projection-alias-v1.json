@@ -1,0 +1,128 @@
+{
+  "revision": "SemanticsIR/mysql-signed-projection-alias-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-5.7.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.0.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.2.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.3.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.0.1/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native"
+  ],
+  "scope": "Explicit NUL-free BMP aliases of pure signed 64-bit integer projection atoms. Preserve the decoded requested alias, effective observable output label and phase-specific native warnings. Retain the previous signed projection contract and schedule as required evidence.",
+  "constructors": {
+    "Ordering/RequestedResultAlias": {
+      "role": "A decoded explicit result alias whose native output label differs from its requested spelling.",
+      "structure": "The exact checked UTF-8 requested alias and its derived effective label. Each belongs to the same ordered result slot as the numeric value.",
+      "conditions": "The requested alias is a string of complete BMP Unicode characters without NUL. Drop leading bytes in ASCII 0x00 through 0x20 and 0x7f, then keep the longest complete UTF-8 prefix within 256 bytes. A name unchanged by normalization uses the ordinary effective-label role. The owning root verifies that its renderer can retain the requested alias wherever it is visible.",
+      "meaning": "The effective label names the ordered result field. The requested bytes can change native diagnostics even when the result label, type and value are the same. Diagnostic sequence depends on the fixed MySQL release and observation phase.",
+      "externalInterpretation": "The pinned utf8mb4 client and result environment, MySQL alias itemization under the fixed SQL mode, and the recorded text and native prepared executions.",
+      "sql": "Emit the requested BMP alias using a delimited identifier with doubled backticks. Interpret its effective name as data for the owning result. Recognition of original single-quoted versus identifier spelling does not affect the resulting alias under this profile.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "Compare rows, exact ordered field names, native type, nullability and width as in signed literal projection.",
+    "Compare prepare and execute warning sequences separately under native prepared execution. Under text execution, alias diagnostics occur in execution. Both use the exact name, severity, code, message, order and multiplicity.",
+    "A requested name containing only leading nongraphic bytes has an empty effective label and produces warning 1474 when the requested label was nonempty. Other trimmed or clipped names produce warning 1466 in the measured domain. Preserve duplicate warning-producing operands and their order.",
+    "MySQL 5.6 retains the warning at execute for source-free constant projections after native prepare. Later pinned releases produce the warning at prepare and clear it at execute. The protocol observer fixes the diagnostics reset and reading steps."
+  ],
+  "finite": {
+    "aliasCases": [
+      "ordinary",
+      "only-controls",
+      "leading-space",
+      "leading-del",
+      "nonbreaking-space",
+      "ideographic-space",
+      "trailing-space",
+      "quoted-delimiters",
+      "ascii-255",
+      "ascii-256",
+      "ascii-257",
+      "two-byte-256",
+      "two-byte-over",
+      "three-byte-255",
+      "three-byte-over",
+      "mixed-prefix-255",
+      "mixed-prefix-256",
+      "mixed-prefix-over"
+    ],
+    "atoms": [
+      "1",
+      "-00001",
+      "2147483648",
+      "-9223372036854775808"
+    ],
+    "analysisSpellings": [
+      "quoted-identifier",
+      "single-quoted-string"
+    ],
+    "constructionRoutes": [
+      "direct",
+      "analyze"
+    ],
+    "protocols": [
+      "native-prepared",
+      "text"
+    ],
+    "analyzeCoordinates": 144,
+    "directCoordinates": 72,
+    "complete": "Enumerate the independent alias, atom and spelling products in fixed order. Recover exact request text and decoded alias data from their construction routes. Run both protocols for original and emitted SQL on analysis and both protocols for emitted SQL on the direct route.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      19681,
+      31691,
+      62273
+    ],
+    "casesPerSeed": 32,
+    "directCasesPerSeed": 32,
+    "timeoutSecondsPerRelease": 480,
+    "shape": "Vary one to four ordered result columns, requested alias character widths and prefixes, repeated normalized names and repeated diagnostics. Construct valid aliases from whole BMP characters without using the candidate guard.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Build an explicit requested alias containing NUL.",
+    "Build an explicit requested alias containing an invalid UTF-8 byte.",
+    "Build an explicit requested alias containing a non-BMP character.",
+    "Build a requested-alias role where the untouched alias is already its effective label.",
+    "Build an ordinary effective numeric result name beyond the measured output byte limit.",
+    "Build an ordinary effective numeric name starting with an ASCII nongraphic byte."
+  ],
+  "faults": [
+    "Render only the effective alias and erase its phase-specific diagnostic.",
+    "Truncate requested alias bytes without maintaining whole UTF-8 characters.",
+    "Measure only execution diagnostics in native prepared mode.",
+    "Deduplicate or reorder identical alias warnings."
+  ],
+  "trust": [
+    "Authoritative native profile and the qualified session command settings.",
+    "Source-boundary correspondence and native mode checks.",
+    "The documentation and tagged server source identify the alias syntax and normalization. Independent observed native semantics establish phase and prefix cases."
+  ],
+  "adjacentUnverified": [
+    "Supplementary Unicode and string aliases containing embedded NUL require their own lexical conversion and diagnostic rule.",
+    "Local, derived, view and grouped placements must preserve diagnostics when the renderer substitutes an internal label.",
+    "General output headings and alias resolution through other operators retain their separate full-scope requirements."
+  ]
+}
