@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v180.json"
-CONTRACT = "cf37b3a61478bb468f9d9fc80cc85bc4902be1c2b886990d59c46fc500cbce3c"
+CONTRACT_NAME = "release-layout-v181.json"
+CONTRACT = "4cddb200e80937b7e23d12678fe71b7892f121098d26040cdef8a31b7c75157c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -285,6 +285,10 @@ def verify_probe(raw, catalog):
             require(item.get("postgresIndexOperandBindings") == [
                 True, [[1, "amount", "int4"], [2, "flags", "bool"]], bound_only, bound_only,
             ], "installed-postgres-index-operand-bindings", item)
+            require(item.get("postgresAutomaticIndexNames") == [
+                "naming_id_enabled_idx1", True, 'CREATE INDEX "naming_id_enabled_idx1" ON "public"."naming" '
+                'USING btree ("id" ASC NULLS LAST) INCLUDE ("enabled")', "t_name_idx1", "t_name_idx2",
+            ], "installed-postgres-automatic-index-names", item)
             emitted = ('CREATE UNIQUE INDEX "new index" ON "public"."ledger" USING btree '
                        '("wide" DESC NULLS LAST, "value" ASC NULLS FIRST) INCLUDE ("ready", "ready") NULLS NOT DISTINCT')
             require(item.get("postgresCreateBtree") == ["public", ["int4", "int8", "bool"],

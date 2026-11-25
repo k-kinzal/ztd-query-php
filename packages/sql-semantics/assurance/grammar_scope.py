@@ -509,6 +509,11 @@ def inventory(root):
                          "index_including_params", "opt_unique_null_treatment", "opt_asc_desc", "opt_nulls_order"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "postgres-create-btree-v2.json")
+            for rule in ("IndexStmt", "schema_stmt", "opt_single_name"):
+                for alternative in rules.get(rule, ()):
+                    if ("opt_single_name ON" in alternative or alternative == "schema_stmt: IndexStmt"
+                            or alternative == "opt_single_name:"):
+                        related[alternative] = (*related.get(alternative, ()), "postgres-automatic-btree-name-evidence-v1.json")
             for alternative in rules.get("index_elem", ()):
                 if alternative == "index_elem: ColId index_elem_options":
                     related[alternative] = (*related.get(alternative, ()), "postgres-create-btree-v2.json")

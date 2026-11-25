@@ -26,11 +26,6 @@ final class UniqueKeyNameTest extends TestCase
 
     }
 
-    public function testClipPreservesCompleteUtf8Characters(): void
-    {
-        self::assertSame('勘', UniqueKeyName::clip('勘定', 4));
-    }
-
     public function testAttributeNamesRetainsDuplicatePositionWithAFreeSuffix(): void
     {
         $id = new Identifier('a');

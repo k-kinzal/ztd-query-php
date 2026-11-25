@@ -1044,13 +1044,13 @@ if ($dialect !== 'sqlite') {
             'timing' => [$key . 'KeyTiming'], 'nullsNotDistinct' => ['bool'],
         ];
         $methods[$key . 'UniqueKey'] = ['__construct', 'toString'];
-        array_push($internal, $key . 'KeyConstraintLowering', $key . 'PrimaryKeyName', $key . 'UniqueKeyName', $key . 'TableKeySet');
-        array_push($pureCollaborators, $key . 'PrimaryKeyName', $key . 'UniqueKeyName', $key . 'TableKeySet');
+        array_push($internal, $key . 'KeyConstraintLowering', $key . 'PrimaryKeyName', $key . 'UniqueKeyName', $key . 'IndexNames', $key . 'TableKeySet');
+        array_push($pureCollaborators, $key . 'PrimaryKeyName', $key . 'UniqueKeyName', $key . 'IndexNames', $key . 'TableKeySet');
         $btree = 'Schema\\Index\\Btree\\';
         $btreeCreate = $btree . 'CreateIndex';
         $roots[] = $btreeCreate;
         array_push($internal, $btree . 'CreateIndexLowering', $btree . 'IndexTableLowering', $btree . 'IndexOperands',
-            $btree . 'IndexPredicateLowering', $btree . 'IndexCondition');
+            $btree . 'IndexPredicateLowering', $btree . 'Binding\\IndexNameLowering', $btree . 'IndexCondition');
         $pureCollaborators[] = $btree . 'IndexCondition';
         $properties[$btreeCreate] = [
             'keys' => ['array'], 'included' => ['array'], 'table' => [$btree . 'Binding\\IndexTarget'], 'bindings' => ['array'], 'name' => ['Identifier'],
@@ -2367,6 +2367,11 @@ try {
                     && $lower->returnType?->toString() === $platform . '\\Model\\Statement\\Declaration\\IndexHeading',
                     'Unexpected PostgreSQL index heading publication');
             }
+            if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\Binding\\IndexNameLowering') {
+                $lower = $class->getMethod('lower');
+                requireShape(count($class->getMethods()) === 1 && $lower !== null && $lower->isPublic() && !$lower->isStatic()
+                    && $lower->returnType?->toString() === 'array', 'Unexpected PostgreSQL index name resolution route');
+            }
             if ($dialect === 'postgres' && $short === 'Schema\\Index\\Btree\\IndexOperands') {
                 $methodsByName = $class->getMethods();
                 $results = ['key' => 'Schema\\Index\\Btree\\IndexKey', 'covering' => 'Schema\\Index\\Btree\\IncludedColumn', 'slot' => 'int'];
@@ -2658,7 +2663,7 @@ try {
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerUpdate' && $call->name->toString() === 'in_array')
                     || ($dialect === 'sqlite' && $short === 'Schema\\Trigger\\Mutation\\TriggerMutationSql' && $call->name->toString() === 'strtoupper')
                     || ($dialect === 'postgres' && $short === 'Schema\\Key\\PrimaryKeyName' && in_array($call->name->toString(), ['min', 'ord', 'substr'], true))
-                    || ($dialect === 'postgres' && $short === 'Schema\\Key\\UniqueKeyName' && in_array($call->name->toString(), ['min', 'max', 'ord', 'substr'], true))
+                    || ($dialect === 'postgres' && $short === 'Schema\\Key\\IndexNames' && in_array($call->name->toString(), ['min', 'max', 'ord', 'substr'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Key\\TableKeySet' && $call->name->toString() === 'array_values')
                     || ($dialect === 'postgres' && $short === 'Schema\\Index\\DropIndex' && $call->name->toString() === 'array_intersect_key')
                     || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')

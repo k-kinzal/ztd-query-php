@@ -1131,6 +1131,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $detail[] = [$slot, $binding->name->value, $binding->kind->value];
             }
             $details['postgresIndexOperandBindings'] = [$left == $right, $detail, $left->toString(), $right->toString()];
+            $namingContext = $semantics->context([
+                'CREATE TABLE public.naming (id integer, enabled boolean)',
+                'CREATE SEQUENCE public.naming_id_enabled_idx',
+            ]);
+            $named = $semantics->analyze('CREATE INDEX ON public.naming (id) INCLUDE (enabled)', $namingContext);
+            $explicit = $semantics->analyze('CREATE INDEX naming_id_enabled_idx1 ON public.naming (id) INCLUDE (enabled)', $namingContext);
+            $batch = $semantics->analyze(
+                'CREATE SCHEMA naming_scope CREATE TABLE t (name integer) CREATE SEQUENCE t_name_idx'
+                . ' CREATE INDEX ON t (name) CREATE INDEX ON t (name DESC)'
+            );
+            $details['postgresAutomaticIndexNames'] = [
+                $named->name->value, $named == $explicit, $named->toString(),
+                $batch->indexes[0]->name->value, $batch->indexes[1]->name->value,
+            ];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\RenameSchema') {
             $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');

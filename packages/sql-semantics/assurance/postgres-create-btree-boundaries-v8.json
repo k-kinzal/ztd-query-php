@@ -1,0 +1,387 @@
+{
+  "revision": "SemanticsIR/postgres-create-btree-boundaries-8",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Constrain named B-tree ownership and exact slots, including native Boolean fields, logical composition and two-valued tests.",
+  "rules": {
+    "Schema/Index/Btree/CreateIndex::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant || $ifNotExists, 'An occupied index name requires IF NOT EXISTS.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($heading->target->table->value !== $name->value || $presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Occupied, 'An indexed table already occupies its own name.');",
+        "$checkedKeys = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($keys, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexKey::class, 'A B-tree needs a nonempty ordered list of key occurrences.', 1);",
+        "$checkedIncluded = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($included, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IncludedColumn::class, 'B-tree payload positions must be included column occurrences.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($checkedKeys) + count($checkedIncluded) <= 32, 'A B-tree supports at most 32 key and covering occurrences.');",
+        "$resolvedFields = [];",
+        "foreach ($checkedKeys as $key) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($heading->columns[$key->slot]), 'A B-tree key must refer to a column of the indexed table.');",
+        "    $resolvedFields[$key->slot] = $heading->field($key->slot);",
+        "}",
+        "foreach ($checkedIncluded as $column) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($heading->columns[$column->slot]), 'An included position must refer to a column of the indexed table.');",
+        "    $resolvedFields[$column->slot] = $heading->field($column->slot);",
+        "}",
+        "if ($predicate !== null) {",
+        "    $resolvedFields += \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexCondition::bindings($heading, $predicate);",
+        "}",
+        "ksort($resolvedFields, SORT_NUMERIC);",
+        "$this->table = $heading->target;",
+        "$this->bindings = $resolvedFields;",
+        "$this->keys = $checkedKeys;",
+        "$this->included = $checkedIncluded;"
+      ]
+    },
+    "Schema/Index/Btree/CreateIndex::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Index/Btree/CreateIndex::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$keys = [];",
+        "foreach ($this->keys as $key) {",
+        "    $keys[] = $this->bindings[$key->slot]->name->quoted() . ' ' . $key->order->value;",
+        "}",
+        "$included = [];",
+        "foreach ($this->included as $column) {",
+        "    $included[] = $this->bindings[$column->slot]->name->quoted();",
+        "}",
+        "return 'CREATE ' . ($this->unique ? 'UNIQUE ' : '') . 'INDEX ' . ($this->concurrently ? 'CONCURRENTLY ' : '') . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->name->quoted() . ' ON ' . ($this->table->only ? 'ONLY ' : '') . $this->table->schema->quoted() . '.' . $this->table->table->quoted() . ' USING btree (' . implode(', ', $keys) . ')' . ($included === [] ? '' : ' INCLUDE (' . implode(', ', $included) . ')') . ($this->nullsNotDistinct ? ' NULLS NOT DISTINCT' : '') . ($this->predicate === null ? '' : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexCondition::sql($this->bindings, $this->predicate));"
+      ]
+    },
+    "Schema/Index/Btree/IndexKey::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($slot >= 0, 'A B-tree key needs a nonnegative column slot.');"
+      ]
+    },
+    "Schema/Index/Btree/IncludedColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($slot >= 0, 'An included column needs a nonnegative column slot.');"
+      ]
+    },
+    "Schema/Index/Btree/CreateIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive && $context->columnNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE INDEX requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($statement->name !== null || !$statement->ifNotExists) && ($statement->method === null || $statement->method->value === 'btree') && $statement->options === [] && $statement->tablespace === null, 'CREATE INDEX needs an ordinary B-tree without additional index options.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($memberNamespace === null) === ($memberOccupants === null), 'A schema index requires its namespace and known occupants together.');",
+        "$target = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexTableLowering())->lower($operation, $statement, $memberNamespace);",
+        "$operands = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOperands();",
+        "$keys = [];",
+        "$included = [];",
+        "foreach ($statement->elements as $element) {",
+        "    $keys[] = $operands->key($target, $element);",
+        "}",
+        "foreach ($statement->included as $element) {",
+        "    $included[] = $operands->covering($target, $element);",
+        "}",
+        "[$name, $presence] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\Binding\\IndexNameLowering())->lower($context, $target, $statement->name, $keys, $included, $memberOccupants);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndex($target, $name, $keys, $included, $presence, $statement->ifNotExists, $statement->unique, $statement->nullsDistinct === false, $statement->concurrently, $context->profile->grammar, (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPredicateLowering())->lower($operation, $statement));"
+      ]
+    },
+    "Schema/Index/Btree/IndexTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolution->table->kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable && $resolution->table->complete, 'A B-tree needs a declared ordinary table with a complete heading.');",
+        "$table = $resolution->table;",
+        "$context = $operation->context;",
+        "$schema = $table->name->schema ?? $context->declarationSchema;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table->name->catalog === null && !$context->indexNamespace->partitioned($schema, $table->name->name), 'A B-tree needs a local nonpartitioned table.');",
+        "if ($memberNamespace !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value === $memberNamespace->value, 'A schema index must target its own namespace.');",
+        "} elseif ($statement->table->name->schema === null) {",
+        "    (new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexCreationVisibility())->verifyPath($context, $context->indexNamespace->indexes, $table->name->name, $schema);",
+        "}",
+        "$columns = [];",
+        "$types = [];",
+        "foreach ($table->columns as $column) {",
+        "    $columns[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($column->name->value);",
+        "    $types[] = match ($column->type) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int4 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int8 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Bool => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean,",
+        "        default => null,",
+        "    };",
+        "}",
+        "$target = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\Binding\\IndexTarget(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($table->name->name->value), $statement->table->only);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\IndexHeading($target, $columns, $types);"
+      ]
+    },
+    "Schema/Index/Btree/IndexOperands::key": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$descending = $element->direction === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SortDirection::Descending;",
+        "$nullsFirst = $element->nulls === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\NullsOrder::First || $element->nulls === null && $descending;",
+        "$order = $descending ? $nullsFirst ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::DescendingNullsFirst : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::DescendingNullsLast : ($nullsFirst ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::AscendingNullsFirst : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::AscendingNullsLast);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexKey($this->slot($table, $element), $order);"
+      ]
+    },
+    "Schema/Index/Btree/IndexOperands::covering": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element->direction === null && $element->nulls === null, 'An included column cannot specify key order.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IncludedColumn($this->slot($table, $element));"
+      ]
+    },
+    "Schema/Index/Btree/IndexOperands::slot": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element->key instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\ColumnKey && $element->collation === null && $element->operatorClass === null && $element->classOptions === [], 'A B-tree operand needs a direct column and its default operator class.');",
+        "foreach ($table->columns as $position => $column) {",
+        "    if ($column->value === $element->key->column->value) {",
+        "        return $position;",
+        "    }",
+        "}",
+        "throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The indexed column does not belong to the resolved table.');"
+      ]
+    },
+    "Schema/Index/Btree/NullIndexPredicate::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($slot >= 0, 'A partial index predicate needs a nonnegative column slot.');"
+      ]
+    },
+    "Schema/Index/Btree/IndexPredicateLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $statement->where === null ? null : $this->node($operation, $statement, $statement->where);"
+      ]
+    },
+    "Schema/Index/Btree/IndexBooleanPredicate::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($operator === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\LogicalOperator::Not) === ($right === null), 'A partial index NOT needs one operand and AND or OR needs two.');"
+      ]
+    },
+    "Schema/Index/Btree/IndexCondition::sql": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$pending = [$predicate];",
+        "$sql = ' WHERE ';",
+        "while ($pending !== []) {",
+        "    $node = array_pop($pending);",
+        "    if (is_string($node)) {",
+        "        $sql .= $node;",
+        "    } elseif ($node instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\NullIndexPredicate) {",
+        "        $sql .= '(' . $fields[$node->slot]->name->quoted() . ($node->negated ? ' IS NOT NULL)' : ' IS NULL)');",
+        "    } elseif ($node instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexTruthTest) {",
+        "        $sql .= '(' . $fields[$node->slot]->name->quoted() . ' ' . $node->operator->value . ')';",
+        "    } elseif ($node instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexBooleanColumn) {",
+        "        $sql .= '(' . $fields[$node->slot]->name->quoted() . ')';",
+        "    } elseif ($node->right === null) {",
+        "        $sql .= '(' . $node->operator->value . ' ';",
+        "        $pending[] = ')';",
+        "        $pending[] = $node->left;",
+        "    } else {",
+        "        $sql .= '(';",
+        "        $pending[] = ')';",
+        "        $pending[] = $node->right;",
+        "        $pending[] = ' ' . $node->operator->value . ' ';",
+        "        $pending[] = $node->left;",
+        "    }",
+        "}",
+        "return $sql;"
+      ]
+    },
+    "Schema/Index/Btree/IndexPredicateLowering::node": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($condition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Grouped) {",
+        "    $condition = $condition->operand;",
+        "}",
+        "if ($condition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\BooleanOperation) {",
+        "    $operator = match ($condition->operator) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\BooleanOperator::And => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\LogicalOperator::And,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\BooleanOperator::Or => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\LogicalOperator::Or,",
+        "    };",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexBooleanPredicate($operator, $this->node($operation, $statement, $condition->left), $this->node($operation, $statement, $condition->right));",
+        "}",
+        "if ($condition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\Negation) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexBooleanPredicate(\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\LogicalOperator::Not, $this->node($operation, $statement, $condition->operand));",
+        "}",
+        "if ($condition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\BooleanTest) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexTruthTest($this->slot($operation, $statement, $condition->operand), \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthOperator::from($condition->kind->value));",
+        "}",
+        "if ($condition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\ColumnReference) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexBooleanColumn($this->slot($operation, $statement, $condition));",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($condition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\NullTest, 'A partial B-tree needs a direct scalar column NULL test.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\NullIndexPredicate($this->slot($operation, $statement, $condition->operand), $condition->negated);"
+      ]
+    },
+    "Schema/Index/Btree/IndexTruthTest::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($slot >= 0, 'An index truth test needs a nonnegative column slot.');"
+      ]
+    },
+    "Schema/Index/Btree/IndexPredicateLowering::slot": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\ColumnReference, 'A partial B-tree needs a direct scalar column NULL test or Boolean truth test.');",
+        "$table = $operation->facts->relation($statement)->table;",
+        "$resolved = $operation->facts->scalar($operand)->resolution;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolved instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Column\\ResolvedColumn && $resolved->depth === 0 && $resolved->relation === $statement, 'The partial B-tree operand needs an exact local column.');",
+        "$column = $resolved->declaration();",
+        "foreach ($table->table->columns as $slot => $candidate) {",
+        "    if ($candidate === $column) {",
+        "        return $slot;",
+        "    }",
+        "}",
+        "throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The partial B-tree operand must be a declared physical column.');"
+      ]
+    },
+    "Schema/Index/Btree/IndexBooleanColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($slot >= 0, 'An index Boolean field needs a nonnegative column slot.');"
+      ]
+    },
+    "Schema/Index/Btree/IndexCondition::bindings": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$pending = [$predicate];",
+        "$fields = [];",
+        "while ($pending !== []) {",
+        "    $node = array_pop($pending);",
+        "    if ($node instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\NullIndexPredicate) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($heading->columns[$node->slot]), 'A partial B-tree predicate must refer to a column of the indexed table.');",
+        "        $fields[$node->slot] = $heading->field($node->slot);",
+        "    } elseif ($node instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexTruthTest || $node instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexBooleanColumn) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($heading->columnKinds[$node->slot] ?? null) === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean, 'A partial index Boolean operand needs a Boolean column of the indexed table.');",
+        "        $fields[$node->slot] = $heading->field($node->slot);",
+        "    } else {",
+        "        $pending[] = $node->left;",
+        "        if ($node->right !== null) {",
+        "            $pending[] = $node->right;",
+        "        }",
+        "    }",
+        "}",
+        "return $fields;"
+      ]
+    },
+    "Schema/Index/Btree/Binding/IndexField::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4 || $kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8 || $kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean, 'A B-tree in this profile requires integer or Boolean physical column types.');"
+      ]
+    },
+    "Schema/Index/Btree/Binding/IndexTarget::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::system($schema->value) && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A B-tree needs a resolved ordinary application or temporary table.');"
+      ]
+    },
+    "Schema/Namespace/Index/SchemaIndexOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($indexes === []) {",
+        "    return;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && !$guard, 'Schema indexes require an unguarded, statically named namespace.');",
+        "foreach ($indexes as $index) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($index->table->schema->value === $name->value && $index->release === $release, 'A schema index must belong to its namespace and release.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$index->concurrently, 'A schema index cannot be built concurrently.');",
+        "    $table = $occupied[$index->table->table->value] ?? null;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($table instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable, 'A schema index must resolve to a preceding base table.');",
+        "    foreach ($index->bindings as $slot => $field) {",
+        "        $column = $table->columns[$slot] ?? null;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($column !== null && $column->name->value === $field->name->value && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::columnKind($column) === $field->kind, 'A schema index needs the exact ordered operand bindings.');",
+        "    }",
+        "    $coordinate = $index->name->value;",
+        "    $presence = isset($occupied[$coordinate]) ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Occupied : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($presence === $index->presence, 'A schema index must retain the actual presence of its name.');",
+        "    $occupied[$coordinate] ??= true;",
+        "}"
+      ]
+    },
+    "Schema/Index/Btree/Binding/IndexNameLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$schema = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($heading->target->schema->value);",
+        "$visibility = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexCreationVisibility();",
+        "$closed = $memberOccupants !== null || $context->complete && !$context->indexNamespace->hasUnknownNames($schema);",
+        "$occupied = static fn(\\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name $name): bool => $memberOccupants === null ? $visibility->occupied($context, $context->indexNamespace->indexes, $name, $schema) : isset($memberOccupants[$name->value]);",
+        "if ($written !== null) {",
+        "    $taken = $occupied($written);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($taken || $closed, 'CREATE INDEX cannot infer name availability in an open index namespace.');",
+        "    return [new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($written->value), $taken ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Occupied : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant];",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($closed, 'CREATE INDEX cannot allocate an automatic name in an open index namespace.');",
+        "$attributes = [];",
+        "foreach ([...$keys, ...$included] as $occurrence) {",
+        "    $attributes[] = $heading->columns[$occurrence->slot];",
+        "}",
+        "$namePart = implode('_', \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\IndexNames::attributes($attributes));",
+        "$table = $heading->target->table->value;",
+        "$pass = 0;",
+        "do {",
+        "    $suffix = $pass === 0 ? 'idx' : 'idx' . $pass;",
+        "    $name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name(\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Key\\IndexNames::candidate($table, $namePart, $suffix));",
+        "    ++$pass;",
+        "} while ($occupied($name));",
+        "return [new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name->value), \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPresence::Vacant];"
+      ]
+    }
+  },
+  "revises": "postgres-create-btree-boundaries-v5.json",
+  "extends": "postgres-create-btree-boundaries-v7.json"
+}

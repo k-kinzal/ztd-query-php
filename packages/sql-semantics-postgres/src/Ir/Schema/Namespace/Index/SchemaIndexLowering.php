@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndexLowering;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexPresence;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -38,10 +37,9 @@ final class SchemaIndexLowering
             }
             Check::input($resolved !== null && !$schema->ifNotExists, 'Schema indexes require an unguarded, statically named namespace.');
             Check::input(!$element->concurrently, 'A schema index cannot be built concurrently.');
-            $coordinate = $element->name->value ?? '';
-            $presence = isset($occupied[$coordinate]) ? IndexPresence::Occupied : IndexPresence::Vacant;
-            $indexes[] = $lowering->lower($operation, $element, $resolved, $presence);
-            $occupied[$coordinate] ??= true;
+            $index = $lowering->lower($operation, $element, $resolved, $occupied);
+            $indexes[] = $index;
+            $occupied[$index->name->value] ??= true;
         }
 
         return $indexes;

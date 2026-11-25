@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexNameLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\PostgreSql\Model\Facade\Index\IndexCreationVisibility;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex as ParsedCreateIndex;
 
 /**
@@ -22,33 +23,24 @@ final class CreateIndexLowering
 {
     /**
      * Resolves owner, scope, presence and direct column operands.
+     * @param array<array-key, CreateTable|TableName|true>|null $memberOccupants
      */
     public function lower(
         BoundStatement $operation,
         ParsedCreateIndex $statement,
         ?Identifier $memberNamespace = null,
-        ?IndexPresence $memberPresence = null,
+        ?array $memberOccupants = null,
     ): CreateIndex {
         $context = $operation->context;
         Check::input($context->profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive
             && $context->columnNames === Comparison::Sensitive, 'CREATE INDEX requires the native PostgreSQL index profile.');
         Check::input(
-            $statement->name !== null && ($statement->method === null || $statement->method->value === 'btree')
+            ($statement->name !== null || !$statement->ifNotExists) && ($statement->method === null || $statement->method->value === 'btree')
             && $statement->options === [] && $statement->tablespace === null,
-            'CREATE INDEX needs a named ordinary B-tree without additional index options.'
+            'CREATE INDEX needs an ordinary B-tree without additional index options.'
         );
-        Check::input(($memberNamespace === null) === ($memberPresence === null), 'A schema index requires its namespace and name occupancy together.');
+        Check::input(($memberNamespace === null) === ($memberOccupants === null), 'A schema index requires its namespace and known occupants together.');
         $target = (new IndexTableLowering())->lower($operation, $statement, $memberNamespace);
-        $presence = $memberPresence;
-        if ($presence === null) {
-            $schema = new Name($target->target->schema->value);
-            $occupied = (new IndexCreationVisibility())->occupied($context, $context->indexNamespace->indexes, $statement->name, $schema);
-            Check::input(
-                $occupied || ($context->complete && !$context->indexNamespace->hasUnknownNames($schema)),
-                'CREATE INDEX cannot infer name availability in an open index namespace.'
-            );
-            $presence = $occupied ? IndexPresence::Occupied : IndexPresence::Vacant;
-        }
         $operands = new IndexOperands();
         $keys = [];
         $included = [];
@@ -59,9 +51,11 @@ final class CreateIndexLowering
             $included[] = $operands->covering($target, $element);
         }
 
+        [$name, $presence] = (new IndexNameLowering())->lower($context, $target, $statement->name, $keys, $included, $memberOccupants);
+
         return new CreateIndex(
             $target,
-            new Identifier($statement->name->value),
+            $name,
             $keys,
             $included,
             $presence,
