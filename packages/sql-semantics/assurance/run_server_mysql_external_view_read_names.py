@@ -218,9 +218,9 @@ def controls():
 def faults(_, tag):
     source = "sql-semantics-mysql/src/"
     inherited = law.finite(tag, "inherited-leading", "UNDEFINED", "canonical", "alias")
-    inherited["wrongRejection"] = "Column v.K does not exist."
+    inherited["wrongRejection"] = "Column v.K does not exist.\nColumn v.É does not exist."
     folded = law.finite(tag, "exact-utf8", "UNDEFINED", "folded", "bare")
-    folded["wrongRejection"] = "Column k does not exist."
+    folded["wrongRejection"] = "Column k does not exist.\nColumn é does not exist."
     materialized = law.finite(tag, "explicit-leading", "TEMPTABLE", "folded", "alias")
     consumed = law.finite(tag, "exact-utf8", "MERGE", "twice-mixed", "alias")
     return [
