@@ -282,8 +282,12 @@ function constructSelect(string $platform, array $input): SemanticsIR
     [$keys, $bound] = constructResultOptions($namespace, $input, $input['dialect']);
     $from = $input['source'] === null ? null : constructSource($platform, $input['source'], $input['dialect']);
     foreach ($input['columns'] as [$expr, $name]) {
-        if ($input['dialect'] === 'mysql' && is_array($name) && $name[0] === 'intrinsic-integer-name') {
-            $label = new SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName($name[1]);
+        if ($input['dialect'] === 'mysql' && is_array($name)) {
+            $label = match ($name[0]) {
+                'intrinsic-integer-name' => new SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName($name[1]),
+                'requested-result-alias' => new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias($name[1]),
+                'requested-result-alias-hex' => new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(hex2bin($name[1])),
+            };
         } else {
             $label = new $identifier($name);
         }
@@ -537,8 +541,13 @@ function observeSetQuery(string $namespace, object $value, string $dialect, bool
     return [
         'columns' => array_map(static fn ($column): array => [
             observeOperand($namespace, $column->expression),
-            $column->name instanceof SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName
-                ? ['intrinsic-integer-name', $column->name->value] : $column->name->value,
+            match (true) {
+                $column->name instanceof SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName =>
+                    ['intrinsic-integer-name', $column->name->value],
+                $column->name instanceof SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias =>
+                    ['requested-result-alias', $column->name->requested, $column->name->value],
+                default => $column->name->value,
+            },
         ], $value->columns),
         'source' => $source === null ? null : observeSource($source, $dialect, $namespace, $exactIntegral),
         'where' => observePredicate($namespace, $value->where),

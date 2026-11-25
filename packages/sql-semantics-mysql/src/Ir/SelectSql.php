@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName;
 use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
@@ -48,8 +49,10 @@ final class SelectSql
             $label = $column->name->value;
             if ($localNames) {
                 $alias = ' AS ' . $this->localColumn($slot);
-            } elseif ($column->name instanceof IntrinsicIntegerName || $label !== ltrim($label, " \t\r\n\v\f")) {
+            } elseif ($column->name instanceof IntrinsicIntegerName || $label !== ltrim($label, "\x00..\x20\x7f")) {
                 $alias = '';
+            } elseif ($column->name instanceof RequestedResultAlias) {
+                $alias = ' AS ' . $column->name->aliasSql();
             } else {
                 $alias = ' AS ' . $column->name->quoted();
             }

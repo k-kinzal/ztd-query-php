@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\From;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -28,6 +29,7 @@ final class DerivedSource
      */
     public function __construct(public readonly Select $definition)
     {
+        (new LocalProjectionAliases())->check($definition);
         Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');
         Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');
         foreach ($definition->columns as $column) {

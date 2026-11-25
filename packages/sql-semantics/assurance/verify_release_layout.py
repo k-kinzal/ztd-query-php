@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v194.json"
-CONTRACT = "87e052fbfda6f42851b8d1da67b43d02c63be729385bbdf8c04021dd4993a8dc"
+CONTRACT_NAME = "release-layout-v195.json"
+CONTRACT = "ae5c7ee588179e5b0f45accab17a19f5db343589915305a4c188b17acb2057f1"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -589,6 +589,11 @@ def verify_probe(raw, catalog):
                 "2147483648", digits, "SELECT " + digits,
                 True, "-2147483648", negative_heading, "SELECT -" + digits + " AS `" + negative_heading + "`",
             ], "installed-mysql-signed-projection-mismatch", signed_projection)
+            requested = " " + "漢" * 86 + "`X"
+            alias_probe = item.get("mysqlSignedProjectionAlias")
+            require(alias_probe == [True, True, mysql_ir + r"Ordering\RequestedResultAlias", requested,
+                                    "漢" * 85, "SELECT 1 AS `" + requested.replace("`", "``") + "`"],
+                    "installed-mysql-signed-projection-alias-mismatch", alias_probe)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

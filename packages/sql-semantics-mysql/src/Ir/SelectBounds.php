@@ -96,7 +96,7 @@ final class SelectBounds
     public function checkLabel(ResultColumn $result, array $inputs): void
     {
         $label = $result->name->value;
-        if ($label !== ltrim($label, " \t\r\n\v\f")) {
+        if ($label !== ltrim($label, "\x00..\x20\x7f")) {
             $reference = $result->expression;
             Check::invariant($reference instanceof ColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');
             $table = $inputs[$reference->occurrence] ?? null;

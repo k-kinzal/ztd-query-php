@@ -243,6 +243,9 @@ def inventory(root):
             for alternative in rules.get("simple_expr", ()):
                 if alternative in {"simple_expr: ( expr )", "simple_expr: + simple_expr", "simple_expr: - simple_expr"}:
                     related[alternative] = (*related.get(alternative, ()), "mysql-signed-literal-projection-v1.json")
+            for alternative in rules.get("select_alias", ()):
+                if alternative.startswith("select_alias: AS "):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-signed-projection-alias-v1.json")
             for alternative in rules.get("expr", ()):
                 if alternative.startswith("expr: bool_pri IS ") and alternative.endswith((" TRUE_SYM", " FALSE_SYM", " UNKNOWN_SYM")):
                     related[alternative] = (*related.get(alternative, ()), "mysql-native-truth-v1.json", "mysql-signed-comparison-widths-v2.json")

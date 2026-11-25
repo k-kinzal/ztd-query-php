@@ -808,15 +808,18 @@ if ($dialect === 'sqlite') {
 if ($dialect !== 'sqlite') {
     if ($dialect === 'mysql') {
         array_push($internal, 'Literal\\TextLiteralLowering', 'Ordering\\ProjectionLabel', 'Ordering\\ProjectionColumns',
-            'Ordering\\ProjectedIntegerLowering', 'Ordering\\SpecializedProjection');
+            'Ordering\\ProjectedIntegerLowering', 'Ordering\\SpecializedProjection', 'Ordering\\LocalProjectionAliases', 'Ordering\\AliasHeading');
+        array_push($pureCollaborators, 'Ordering\\LocalProjectionAliases', 'Ordering\\AliasHeading');
         $properties['Literal\\TextLiteral'] = ['value' => ['string']];
         $methods['Literal\\TextLiteral'] = ['__construct', 'toString'];
         $properties['Literal\\ProjectedIntegerLiteral'] = ['token' => ['string']];
         $methods['Literal\\ProjectedIntegerLiteral'] = ['__construct', 'decimal', 'toString'];
         $properties['Literal\\IntrinsicIntegerName'] = ['value' => ['string']];
         $methods['Literal\\IntrinsicIntegerName'] = ['__construct', 'key'];
+        $properties['Ordering\\RequestedResultAlias'] = ['requested' => ['string'], 'value' => ['string']];
+        $methods['Ordering\\RequestedResultAlias'] = ['__construct', 'key', 'aliasSql'];
         array_push($properties['ResultColumn']['expression'], 'Literal\\TextLiteral', 'Literal\\ProjectedIntegerLiteral');
-        $properties['ResultColumn']['name'][] = 'Literal\\IntrinsicIntegerName';
+        array_push($properties['ResultColumn']['name'], 'Literal\\IntrinsicIntegerName', 'Ordering\\RequestedResultAlias');
         sort($properties['ResultColumn']['expression']);
     }
     $internal[] = 'Binding\\ParameterLowering';
@@ -2722,6 +2725,7 @@ try {
         foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
+                    || ($dialect === 'mysql' && $short === 'Ordering\\AliasHeading' && $call->name->toString() === 'substr')
                     || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyConstraintNamespace'
                         && in_array($call->name->toString(), ['in_array', 'max', 'str_starts_with', 'substr', 'strlen'], true))
                     || ($dialect === 'mysql' && in_array($short, ['Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes',

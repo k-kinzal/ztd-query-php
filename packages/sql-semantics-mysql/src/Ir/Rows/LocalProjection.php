@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -36,6 +37,7 @@ final class LocalProjection implements SemanticsIR
      */
     public function __construct(public readonly Select|self|WithProjection $definition, array $columns)
     {
+        (new LocalProjectionAliases())->check($definition);
         Check::input(!$definition instanceof Select || ($definition->orderBy === [] && $definition->limit === null), 'The local definition requires an unbounded projection without ordering.');
         $layers = 1;
         for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {

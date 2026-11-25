@@ -1,0 +1,207 @@
+{
+  "revision": "SemanticsIR/mysql-signed-projection-alias-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-signed-projection-alias-v1.json",
+  "rules": {
+    "Ordering/AliasHeading::normalize": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[^\\x00\\x{10000}-\\x{10FFFF}]*\\z/u', $requested) === 1, 'A requested MySQL result alias needs BMP characters without NUL.');",
+        "$prefix = substr(ltrim($requested, \"\\x00.. \u007f\"), 0, 256);",
+        "while (preg_match('//u', $prefix) !== 1) {",
+        "    $prefix = substr($prefix, 0, -1);",
+        "}",
+        "return $prefix;"
+      ]
+    },
+    "Ordering/RequestedResultAlias::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$native = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\AliasHeading())->normalize($requested);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($requested !== $native, 'An unchanged result alias uses its effective identifier directly.');",
+        "$this->value = $native;"
+      ]
+    },
+    "Ordering/RequestedResultAlias::aliasSql": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return '`' . str_replace('`', '``', $this->requested) . '`';"
+      ]
+    },
+    "Ordering/RequestedResultAlias::key": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::AsciiInsensitive->fold($this->value);"
+      ]
+    },
+    "Ordering/LocalProjectionAliases::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$output = $child instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $child->body : $child;",
+        "if (!$output instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select) {",
+        "    return;",
+        "}",
+        "foreach ($output->columns as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias, 'A locally remapped output cannot discard requested alias diagnostics.');",
+        "}"
+      ]
+    },
+    "Ordering/ProjectedIntegerLowering::name": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ($statement->items as $item) {",
+        "    if (!$item instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression || $item->expression !== $field->expression) {",
+        "        continue;",
+        "    }",
+        "    if ($item->alias !== null) {",
+        "        $requested = $item->alias->value;",
+        "        return $requested === (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\AliasHeading())->normalize($requested) ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($requested) : new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias($requested);",
+        "    }",
+        "    if ($literal->token[0] === '-') {",
+        "        $naming = new \\SqlSemantics\\Platform\\MySql\\Rules\\Query\\ItemNaming($profile);",
+        "        $stored = $naming->stored($naming->text($item), 'utf8mb4');",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($stored instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Name, 'An integer projection needs a resolved native heading.');",
+        "        return new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($stored->value);",
+        "    }",
+        "    return strlen($literal->token) > 256 ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName($literal->token) : new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($literal->token);",
+        "}",
+        "throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('An integer projection needs an owned select item.');"
+      ]
+    },
+    "ResultColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || strlen($name->value) <= 256, 'A MySQL alias needs an effective heading of at most 256 bytes.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $name->value === ltrim($name->value, \"\\x00.. \u007f\"), 'A MySQL result name must begin with a native graphic character or be empty.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral && $expression->token === $name->value, 'An intrinsic integer name must match the exact projected integer token.');"
+      ]
+    },
+    "SelectSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $label = $column->name->value;",
+        "    if ($localNames) {",
+        "        $alias = ' AS ' . $this->localColumn($slot);",
+        "    } elseif ($column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || $label !== ltrim($label, \"\\x00.. \u007f\")) {",
+        "        $alias = '';",
+        "    } elseif ($column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        $alias = ' AS ' . $column->name->aliasSql();",
+        "    } else {",
+        "        $alias = ' AS ' . $column->name->quoted();",
+        "    }",
+        "    $items[] = $this->expression($column->expression, $source) . $alias;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "} elseif ($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $select->orderBy !== []) {",
+        "    $sql .= ' FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single`';",
+        "} elseif (($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744) && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {",
+        "    $sql .= ' FROM DUAL';",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "return $sql . (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultSql())->render($select);"
+      ]
+    },
+    "SelectBounds::checkLabel": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$label = $result->name->value;",
+        "if ($label !== ltrim($label, \"\\x00.. \u007f\")) {",
+        "    $reference = $result->expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($reference instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $reference instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference, 'An intrinsic label belongs to a column reference.');",
+        "    $table = $inputs[$reference->occurrence] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($table instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource && ($table->columns[$reference->slot]->value ?? null) === $label, 'An intrinsic MySQL result name must equal its physical input field.');",
+        "}"
+      ]
+    },
+    "From/DerivedSource::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->check($definition);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$definition->source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join, 'A derived join input must be independent of any joined input.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');",
+        "foreach ($definition->columns as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference, 'A derived join field requires a signed literal or a signed column, or a native VARCHAR column.');",
+        "}"
+      ]
+    },
+    "Rows/LocalProjection::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->check($definition);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$definition instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || $definition->orderBy === [] && $definition->limit === null, 'The local definition requires an unbounded projection without ordering.');",
+        "$layers = 1;",
+        "for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(++$layers <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "}",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');",
+        "$width = $definition instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $definition->width() : count($definition->columns);",
+        "foreach ($checked as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->slot < $width, 'The local slot must belong to the definition.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Rows/With/WithDefinition::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->check($body);"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->check($query);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$query->distinct && $query->orderBy === [] && $query->limit === null, 'A checked view requires an ordinary unbounded projection.');",
+        "$source = $query->source;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source === null || $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource && $source->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable, 'A checked view reads one persistent base table or an independent literal projection.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source !== null || $algorithm !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::Merge, 'A MERGE view requires a mergeable base-table projection.');",
+        "if ($source !== null) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source->schema->value !== $target->schema->value || $source->table->value !== $target->view->value, 'A view cannot read its own target identity.');",
+        "}",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral, 'A checked view result must read a native field or a literal without parameters.');",
+        "}"
+      ]
+    }
+  }
+}

@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName;
 use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
@@ -39,9 +40,10 @@ final class ResultColumn
      */
     public function __construct(
         public readonly Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|ProjectedIntegerLiteral|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast $expression,
-        public readonly Identifier|IntrinsicIntegerName $name,
+        public readonly Identifier|IntrinsicIntegerName|RequestedResultAlias $name,
     ) {
-        Check::input($expression instanceof ColumnReference || $expression instanceof TextColumnReference || $name->value === ltrim($name->value, " \t\r\n\v\f"), 'A MySQL result name cannot start with SQL whitespace.');
+        Check::input($name instanceof IntrinsicIntegerName || strlen($name->value) <= 256, 'A MySQL alias needs an effective heading of at most 256 bytes.');
+        Check::input($expression instanceof ColumnReference || $expression instanceof TextColumnReference || $name->value === ltrim($name->value, "\x00..\x20\x7f"), 'A MySQL result name must begin with a native graphic character or be empty.');
         Check::input(
             !$name instanceof IntrinsicIntegerName || ($expression instanceof ProjectedIntegerLiteral && $expression->token === $name->value),
             'An intrinsic integer name must match the exact projected integer token.'

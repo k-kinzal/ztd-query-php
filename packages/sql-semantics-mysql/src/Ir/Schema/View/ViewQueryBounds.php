@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -27,6 +28,7 @@ final class ViewQueryBounds
      */
     public function check(Select $query, ViewName $target, ViewAlgorithm $algorithm): void
     {
+        (new LocalProjectionAliases())->check($query);
         Check::input(!$query->distinct && $query->orderBy === [] && $query->limit === null, 'A checked view requires an ordinary unbounded projection.');
         $source = $query->source;
         Check::input(

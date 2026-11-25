@@ -366,6 +366,20 @@ function observeMysqlSignedProjection(SqlSemantics\Platform\MySql\Semantics $sem
         $wrappedDirect == $wrapped, $wrapped->columns[0]->expression->decimal(), $wrapped->columns[0]->name->value, $wrapped->toString()];
 }
 
+function observeMysqlSignedProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $requested = ' ' . str_repeat('漢', 86) . '`X';
+    $written = 'SELECT 1 AS `' . str_replace('`', '``', $requested) . '`';
+    $analyzed = $semantics->analyze($written);
+    [$batch] = $semantics->analyzeAll($written);
+    $label = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias($requested);
+    $column = new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('1'), $label);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$column], release: $semantics->profile()->grammar);
+    $actual = $analyzed->columns[0]->name;
+
+    return [$analyzed == $batch, $analyzed == $direct, $actual::class, $actual->requested, $actual->value, $analyzed->toString()];
+}
+
 function observeMysqlNativeTruth(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE app.truth_release (wide BIGINT, unused INTEGER)']);
@@ -2211,6 +2225,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlNativeTruth'] = observeMysqlNativeTruth($semantics);
             $details['mysqlSignedComparisonWidths'] = observeMysqlSignedComparisonWidths($semantics);
             $details['mysqlSignedProjection'] = observeMysqlSignedProjection($semantics);
+            $details['mysqlSignedProjectionAlias'] = observeMysqlSignedProjectionAlias($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

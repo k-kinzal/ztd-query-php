@@ -56,14 +56,16 @@ final class ProjectedIntegerLowering
      *
      * @throws InvalidConstruction If the input cannot supply its owned native heading
      */
-    public function name(Select $statement, Field $field, ProjectedIntegerLiteral $literal, LanguageProfile $profile): Identifier|IntrinsicIntegerName
+    public function name(Select $statement, Field $field, ProjectedIntegerLiteral $literal, LanguageProfile $profile): Identifier|IntrinsicIntegerName|RequestedResultAlias
     {
         foreach ($statement->items as $item) {
             if (!$item instanceof SelectExpression || $item->expression !== $field->expression) {
                 continue;
             }
             if ($item->alias !== null) {
-                return (new ProjectionLabel())->lower($statement, $field, $item->alias->value);
+                $requested = $item->alias->value;
+                return $requested === (new AliasHeading())->normalize($requested)
+                    ? new Identifier($requested) : new RequestedResultAlias($requested);
             }
             if ($literal->token[0] === '-') {
                 $naming = new ItemNaming($profile);
