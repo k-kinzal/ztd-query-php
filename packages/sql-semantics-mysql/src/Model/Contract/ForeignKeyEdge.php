@@ -35,6 +35,7 @@ final class ForeignKeyEdge
     public function __construct(
         public readonly QualifiedName $child,
         public readonly QualifiedName $parent,
+        public readonly Name $constraint,
         array $childFields,
         ?array $parentFields,
     ) {

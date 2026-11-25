@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v163.json"
-CONTRACT = "4fe35d7cec31274f710902c7cec210e1f42c6299fb19b74625cec818c0c24451"
+CONTRACT_NAME = "release-layout-v164.json"
+CONTRACT = "904cebb6412351b53824ce8cc09c89d6bc8b84de9b246da5bfb71460ab489b3a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -879,6 +879,15 @@ def verify_probe(raw, catalog):
                 "This MySQL release must drop a referencing child before its parent.",
                 "DROP TABLE must include every referencing persistent child.",
             ], "installed-mysql-drop-table-dependency-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
+            prefix = "ALTER TABLE `app`.`fk_drop_child` "
+            mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"
+            require(item.get("mysqlDropForeignKeys") == [
+                "table", "Owner_Link", "ordinary", "Owner_Link", "constraint", mixed, mixed,
+                [mixed, prefix + "DROP FOREIGN KEY `Owner_Link`"],
+                "temporary-table", None, "ignored-on-temporary", prefix + "DROP FOREIGN KEY ``",
+                ["This MySQL release cannot repeat a foreign-key removal."],
+            ] and item["sql"] == mixed, "installed-mysql-drop-foreign-keys-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\Visibility\\SetIndexVisibility"):
             changes = ("ALTER TABLE `app`.`visibility_probe` ALTER INDEX `first_key` INVISIBLE, ALTER INDEX `first_key` VISIBLE, "
                        "ALTER INDEX `second_key` INVISIBLE, ALGORITHM=COPY, LOCK=NONE")

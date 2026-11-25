@@ -36,12 +36,15 @@ final class ForeignKeyDeclarations
         $child = new QualifiedName($table->name->name, $schema);
         $inline = $this->inline($definition->context->profile->grammar);
         $foreignKeys = [];
+        $unnamed = 0;
         foreach ($table->elements as $element) {
             $reference = $this->reference($element, $inline);
             if ($reference !== null && ($element instanceof ForeignKey || $element instanceof ColumnDefinition)) {
                 $fields = $this->childFields($element);
                 $parent = new QualifiedName($reference->table->name, $reference->table->schema ?? $schema);
-                $foreignKeys[] = new ForeignKeyEdge($child, $parent, $fields, $reference->columns);
+                $constraint = $element instanceof ForeignKey ? ($element->constraint->name->column ?? null) : null;
+                $constraint ??= new Name($child->name->value . '_ibfk_' . ++$unnamed);
+                $foreignKeys[] = new ForeignKeyEdge($child, $parent, $constraint, $fields, $reference->columns);
             }
         }
 

@@ -1448,6 +1448,20 @@ if ($dialect !== 'sqlite') {
         $properties[$dropIndexes] = ['targets' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
             'policy' => [$policy], 'ignore' => ['bool']];
         $methods[$dropIndexes] = ['__construct', 'profileId', 'toString'];
+        $foreignRemoval = 'Schema\\ForeignKey\\DropForeignKeys';
+        $foreignAction = 'Schema\\ForeignKey\\ForeignKeyRemoval';
+        $foreignKind = 'Schema\\ForeignKey\\ForeignKeyRemovalKind';
+        $foreignSet = 'Schema\\ForeignKey\\ForeignKeyRemovalSet';
+        $roots[] = $foreignRemoval;
+        array_push($internal, $foreignSet, 'Schema\\ForeignKey\\ForeignKeyRemovalLowering');
+        $pureCollaborators[] = $foreignSet;
+        $properties[$foreignRemoval] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'actions' => ['array'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
+        $properties[$foreignAction] = ['name' => ['?Identifier'], 'kind' => [$foreignKind]];
+        $properties[$foreignKind] = $methods[$foreignKind] = [];
+        $enumCases[$foreignKind] = ['Constraint' => 'constraint', 'IgnoredOnTemporary' => 'ignored-on-temporary'];
+        $methods[$foreignRemoval] = ['__construct', 'profileId', 'toString'];
+        $methods[$foreignAction] = ['__construct', 'toString'];
         $indexRename = 'Schema\\Index\\Rename\\IndexRename';
         $renameIndexes = 'Schema\\Index\\Rename\\RenameIndexes';
         $renameNamespace = 'Schema\\Index\\Rename\\IndexRenameNamespace';
@@ -1822,7 +1836,7 @@ try {
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v7.json', 'd017b6d49d5c1ddd47a7b26c226b8bc052460a903c162bcffd5d9a8aefae30f8', 'MySQL session table binding'],
+            ['mysql-session-table-binding-v8.json', '1ddeed039ec1ee1fbe8843c722d4ea78005b72f6bac3c8e8b461398cc2a0dd16', 'MySQL session table binding'],
             ['mysql-native-index-binding-v7.json', '38e230f70d2b36a9888464b671cfd8e5182ef9c598ca09f31c2ee9dba5c0b61f', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
@@ -1879,6 +1893,7 @@ try {
             ['mysql-index-removal-set-storage-v1.json', 'ed343981fe207cd80b7d6628cdd6685787c39f241bfc5bc27cee629e80e243a1'],
             ['mysql-index-rename-storage-v1.json', 'ffc8cd41e898f15ecae3343c9dfdcfbe1a72678249e21fb2edbe8d02c1d73831'],
             ['mysql-mixed-index-storage-v1.json', '281216083a6a07e02dc27a5730a9b347b9f512f77e4507b1037a39557a28490f'],
+            ['mysql-foreign-key-drop-storage-v1.json', 'c75c4457de69363e2d1cb77c933d45dad428b9ab423b0bc2f9c48118c3587c69'],
         ] as [$catalogue, $digest]) {
             $indexStorage = __DIR__ . '/' . $catalogue;
             requireShape(hash_file('sha256', $indexStorage) === $digest, 'MySQL native index list storage differs from its recorded revision');
@@ -2346,7 +2361,7 @@ try {
                     && $members[1]->isPublic() && !$members[1]->isStatic()
                     && $members[1]->name->toString() === 'lower' && $members[1]->returnType !== null
                     && types($members[1]->returnType, $prefix, $short) === [
-                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Index\\Change\\AlterIndexes',
+                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\ForeignKey\\DropForeignKeys', 'Schema\\Index\\Change\\AlterIndexes',
                         'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes', 'Schema\\Index\\Rename\\RenameIndexes',
                         'Schema\\Index\\Visibility\\SetIndexVisibility', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
@@ -2459,6 +2474,7 @@ try {
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace', 'Schema\\Index\\IndexAutoIncrement',
                     'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
                     'Schema\\Index\\Dependency\\IndexDependencyClosure', 'Schema\\Index\\Dependency\\IndexForeignKeyRequirement',
+                    'Schema\\ForeignKey\\ForeignKeyRemovalSet',
                     'Schema\\Index\\Visibility\\IndexVisibilityEdit',
                     'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
                     'Schema\\Index\\Change\\MixedIndexNamespace'], true)

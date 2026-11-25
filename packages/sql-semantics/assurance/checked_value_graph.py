@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v10.json"
-CONTRACT_DIGEST = "fcbf651f962e9e6bbaeef2462c117dbe7d84c3822c80562d31f5004c4bbe69bf"
+CONTRACT = "closed-value-graph-v11.json"
+CONTRACT_DIGEST = "5333753e083a66d04037583d394607783c715af48e4e0f557517fba4505aede9"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -79,6 +79,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("erase-list-copy", "value-closure-unspecified-array"),
         ("erase-native-assignment-boundary", "value-closure-unverified-list"),
         ("erase-mysql-drop-target-boundary", "value-closure-unverified-list"),
+        ("erase-mysql-foreign-key-action-boundary", "value-closure-unverified-list"),
         ("erase-postgres-index-target-boundary", "value-closure-unverified-list"),
         ("erase-postgres-table-column-normalization", "value-closure-unverified-list"),
         ("erase-postgres-unique-key-normalization", "value-closure-unverified-list"),
@@ -106,6 +107,10 @@ def controls(manifest, constructors, outcomes, specification):
             after = None
         elif name == "erase-mysql-drop-target-boundary":
             before = "Schema/DropTable::__construct"
+            mutated["mysql"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-mysql-foreign-key-action-boundary":
+            before = "Schema/ForeignKey/DropForeignKeys::__construct"
             mutated["mysql"]["checkedBoundaries"].remove(before)
             after = None
         elif name == "erase-postgres-index-target-boundary":

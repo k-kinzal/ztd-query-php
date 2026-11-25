@@ -127,6 +127,7 @@ NATIVE = {
     "mysql_mixed_index_alteration": "mysql-mixed-index-alteration-evidence-v2.json",
     "mysql_index_foreign_keys": "mysql-index-foreign-keys-evidence-v1.json",
     "mysql_implicit_foreign_indexes": "mysql-implicit-foreign-index-evidence-v1.json",
+    "mysql_drop_foreign_keys": "mysql-drop-foreign-keys-evidence-v1.json",
     "mysql_index_visibility": "mysql-index-visibility-evidence-v2.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
@@ -296,6 +297,7 @@ SINGLE_ENGINE = {
     "mysql_mixed_index_alteration": "mysql",
     "mysql_index_foreign_keys": "mysql",
     "mysql_implicit_foreign_indexes": "mysql",
+    "mysql_drop_foreign_keys": "mysql",
     "mysql_index_visibility": "mysql",
     "mysql_session_table_sources": "mysql",
     "mysql_create_view": "mysql",
@@ -331,6 +333,7 @@ def release_subset(domain):
         "mysql_mixed_index_alteration": "releases",
         "mysql_index_foreign_keys": "releases",
         "mysql_implicit_foreign_indexes": "releases",
+        "mysql_drop_foreign_keys": "releases",
         "mysql_index_visibility": "releases",
     }.get(domain)
     if field is None:

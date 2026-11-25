@@ -820,6 +820,12 @@ def inventory(root):
             }
             for rule in ("alter_table_stmt", "key_or_index", "opt_ignore", "alter_algorithm_option", "alter_lock_option"):
                 alter_index.update(rules.get(rule, []))
+            foreign_removal = {
+                "alter_list_item: DROP FOREIGN KEY_SYM field_ident",
+                "alter_list_item: DROP FOREIGN KEY_SYM ident",
+            }
+            for alternative in signatures & (foreign_removal | alter_index | implicit):
+                related[alternative] = (*related.get(alternative, ()), "mysql-drop-foreign-keys-evidence-v1.json")
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
             generated_keys = {

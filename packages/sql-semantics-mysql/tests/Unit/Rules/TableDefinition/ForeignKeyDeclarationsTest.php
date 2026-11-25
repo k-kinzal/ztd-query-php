@@ -33,6 +33,20 @@ final class ForeignKeyDeclarationsTest extends TestCase
         self::assertSame('b', $catalog->foreignKeys[0]->parent->schema?->value);
     }
 
+    public function testCollectAssignsGeneratedConstraintNamesIndependentlyOfTheBackingKey(): void
+    {
+        $catalog = (new Semantics())->context([
+            'CREATE TABLE app.p (a INT PRIMARY KEY, b INT NOT NULL UNIQUE)',
+            'CREATE TABLE app.c (x INT, y INT, z INT, CONSTRAINT c_ibfk_9 FOREIGN KEY (x) REFERENCES p(a), '
+                . 'FOREIGN KEY index_hint (y) REFERENCES p(b), FOREIGN KEY (z) REFERENCES p(a))',
+        ]);
+        self::assertInstanceOf(AnalysisContext::class, $catalog);
+        self::assertSame(
+            ['c_ibfk_9', 'c_ibfk_1', 'c_ibfk_2'],
+            array_map(static fn ($edge): string => $edge->constraint->value, $catalog->foreignKeys),
+        );
+    }
+
     public function testInlineChangesAtMySql9(): void
     {
         $references = new ForeignKeyDeclarations();

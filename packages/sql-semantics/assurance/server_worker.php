@@ -1113,6 +1113,40 @@ function observeMysqlMixedIndexes(SqlSemantics\Platform\MySql\Ir\Schema\Index\Ch
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
 }
 
+function constructMysqlDropForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys
+{
+    $spec = $input['mysqlDropForeignKeys'];
+    $actions = [];
+    foreach ($spec['actions'] as $position => $action) {
+        $actions[$position] = match (true) {
+            isset($action['index']) => constructMysqlIndexIdentity($action['index']),
+            isset($action['foreign']) => new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval(
+                $action['foreign'][0] === null ? null : new SqlSemantics\Platform\MySql\Ir\Identifier($action['foreign'][0]),
+                SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalKind::from($action['foreign'][1])
+            ),
+            default => $action,
+        };
+    }
+
+    return new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys(
+        mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']), $actions, constructMysqlForeignKeyRequirements($input),
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']), constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
+    );
+}
+
+function observeMysqlDropForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys $value): array
+{
+    $actions = [];
+    foreach ($value->actions as $action) {
+        $actions[] = $action instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemoval
+            ? ['foreign' => [$action->name?->value, $action->kind->value]] : ['index' => observeMysqlIndexIdentity($action)];
+    }
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlDropForeignKeys' => ['owner' => observeMysqlTableIdentity($value->owner), 'actions' => $actions,
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
+}
+
 function observeMysqlIndexIdentity(SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity $target): array
 {
     $increment = $target->autoIncrement;
@@ -2305,6 +2339,7 @@ function observeStatement(array $input): array
             isset($input['mysqlCreateIndex']) => constructMysqlCreateIndex($platform, $input),
             isset($input['mysqlDropIndex']) => constructMysqlDropIndex($input),
             isset($input['mysqlDropIndexes']) => constructMysqlDropIndexes($input),
+            isset($input['mysqlDropForeignKeys']) => constructMysqlDropForeignKeys($input),
             isset($input['mysqlIndexRenames']) => constructMysqlIndexRenames($input),
             isset($input['mysqlMixedIndexes']) => constructMysqlMixedIndexes($input),
             isset($input['mysqlIndexVisibility']) => constructMysqlIndexVisibility($input),
@@ -2409,6 +2444,9 @@ function observeStatement(array $input): array
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex) {
         return observeMysqlDropIndex($value);
+    }
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys) {
+        return observeMysqlDropForeignKeys($value);
     }
     if ($value instanceof SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes) {
         return observeMysqlDropIndexes($value);

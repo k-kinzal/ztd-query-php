@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency;
 
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
+use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -26,10 +27,15 @@ final class IndexDependencyLowering
     /**
      * Produces only the physical alternatives applicable to the checked removal.
      * @param non-empty-list<IndexIdentity> $targets Ordered removals of one owner
+     * @param list<Identifier> $removedConstraints Resolved outgoing foreign constraints removed by the same statement
      * @return list<IndexForeignKeyRequirement>
      */
-    public function resolve(BoundStatement $operation, AlterTable|DropIndex $statement, array $targets): array
-    {
+    public function resolve(
+        BoundStatement $operation,
+        AlterTable|DropIndex $statement,
+        array $targets,
+        array $removedConstraints = [],
+    ): array {
         $owner = $targets[0]->owner;
         if ($owner->kind === ExternalRelationKind::TemporaryTable) {
             return [];
@@ -41,8 +47,14 @@ final class IndexDependencyLowering
         $remaining = $this->remaining($targets, $table->table->indexes);
         $requirements = [];
         $release = $operation->context->profile->grammar;
+        $case = new NativeIdentifierCase();
+        $removed = array_fill_keys(array_map(static fn (Identifier $name): string => $case->fold($name->value), $removedConstraints), true);
         foreach ($operation->context->foreignKeys as $edge) {
-            if ($this->matches($edge->child, $owner)) {
+            $child = $this->matches($edge->child, $owner);
+            if ($child && isset($removed[$case->fold($edge->constraint->value)])) {
+                continue;
+            }
+            if ($child) {
                 $keys = $coverage->support($edge->childFields, false, $release, $table->table->indexes, $remaining);
                 $requirements[] = new IndexForeignKeyRequirement($owner, $keys);
             }

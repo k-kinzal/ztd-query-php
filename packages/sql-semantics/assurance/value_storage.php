@@ -184,6 +184,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'native-foreign-key-removal-copy') {
+            requireShape($short === 'Schema\\ForeignKey\\DropForeignKeys' && $property === 'actions'
+                && in_array('Schema/ForeignKey/DropForeignKeys::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'checked',
+                'Native foreign-key actions must come from the verified detached copy.');
+
+            continue;
+        }
+
         if ($rule === 'native-drop-target-copy') {
             requireShape($short === 'Schema\\DropTable' && $property === 'targets'
                 && in_array('Schema/DropTable::__construct', $checkedBoundaries, true)

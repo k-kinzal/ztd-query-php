@@ -19,7 +19,7 @@ final class ForeignKeyEdgeTest extends TestCase
     {
         $child = new QualifiedName(new Name('child'), new Name('secondary'));
         $parent = new QualifiedName(new Name('parent'), new Name('primary'));
-        $edge = new ForeignKeyEdge($child, $parent, [new Name('parent_id')], [new Name('id')]);
+        $edge = new ForeignKeyEdge($child, $parent, new Name('reference_parent'), [new Name('parent_id')], [new Name('id')]);
 
         self::assertSame($child, $edge->child);
         self::assertSame($parent, $edge->parent);
