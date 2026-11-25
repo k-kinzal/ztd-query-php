@@ -108,7 +108,7 @@ def seeded(tag, seed, count):
             name = random.choice(("", " ", "\x7f", " \t")) + base
             if slot == 0 and index % 3 == 0:
                 name = " \t\x7f"
-            if slot == 1 and source == "explicit" and tag in LEGACY and index % 4 == 1:
+            if slot == 1 and source == "explicit" and tag in LEGACY and index % 4 == 2:
                 name = random.choice([heading[0] for heading in LEGACY_EDGES.values()])
             body = random.choice(("", " ", "\x7f")) + f"body_{slot}"
             cells.append([random.choice(ATOMS), name, body, random.choice(aliases.STYLES)])
