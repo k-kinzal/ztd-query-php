@@ -6,7 +6,7 @@ from pathlib import Path
 
 from index_evidence import Evidence, replay_installed_mutation, replay_profile_mutation, replay_staged
 from run import Failure, TOOL, candidate_distribution, digest, require, verify_distribution, write_json
-from verify_release_layout import CONTRACT, CONTRACT_NAME, runtime_catalog, verify_probe
+from verify_release_layout import CONTRACT, CONTRACT_NAME, checked_publication_scope, runtime_catalog, verify_probe
 
 
 def expect_failure(call, expected):
@@ -45,6 +45,9 @@ def replay(checkout, directory):
     inventory, _ = evidence.checked("inventory.json", index["inventory"])
     catalog_path, _ = evidence.checked("runtime-catalog.json", index["runtimeCatalog"])
     inventory = json.loads(inventory.read_text())
+    publication, _ = evidence.checked("publication-scope.json", index["publicationScope"])
+    require(json.loads(publication.read_text()) == checked_publication_scope(inventory),
+            "release-diagnostic-publication-scope-mismatch")
     catalog = runtime_catalog(specification, manifest, inventory)
     require(json.loads(catalog_path.read_text()) == catalog, "release-diagnostic-catalog-mismatch")
     require(index["profiles"].keys() == specification["profiles"].keys(), "release-diagnostic-profile-mismatch")

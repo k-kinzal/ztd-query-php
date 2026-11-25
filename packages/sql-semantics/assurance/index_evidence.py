@@ -31,7 +31,7 @@ from run_server import projection_publication
 from run_sqlite_matrix import RUNNER_SECONDS as SQLITE_RUNNER_SECONDS, job_schedule as sqlite_jobs
 from scope import CONTRACTS
 from run import IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
-from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, runtime_catalog, verify_probe
+from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, checked_publication_scope, runtime_catalog, verify_probe
 
 
 def verify_fixture_recovery(result, key):
@@ -433,6 +433,9 @@ def replay_staged(evidence, artifact, manifest, inventory, checkout):
     specification = json.loads((evidence.tool_root / RELEASE_LAYOUT_NAME).read_text())
     recorded, inventory_link = evidence.checked(path.parent / "inventory.json", report["inventory"])
     require(json.loads(recorded.read_text()) == inventory, "bundle-installed-inventory-mismatch", inventory_link)
+    publication, publication_link = evidence.checked(path.parent / "publication-scope.json", report["publicationScope"])
+    require(json.loads(publication.read_text()) == checked_publication_scope(inventory),
+            "bundle-installed-publication-scope-mismatch", publication_link)
     expected = runtime_catalog(specification, manifest, inventory)
     catalog, catalog_link = evidence.checked(path.parent / "runtime-catalog.json", report["runtimeCatalog"])
     require(json.loads(catalog.read_text()) == expected, "bundle-installed-role-catalog-mismatch", catalog_link)

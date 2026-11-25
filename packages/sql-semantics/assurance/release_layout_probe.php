@@ -2621,6 +2621,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 . 'ADD CONSTRAINT Date_Link FOREIGN KEY (y) REFERENCES scalar_parent(q), '
                 . 'ADD CONSTRAINT Time_Link FOREIGN KEY (z) REFERENCES scalar_parent(r)', $scalars);
             [$packed, $date, $clock] = array_map(static fn ($addition) => $addition->pairs[0]->domain, $value->additions);
+            $scalarKind = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarKind::class;
+            $details['mysqlForeignKeyScalarDimensions'] = array_map(
+                static fn ($kind): array => [$kind->value, $kind->dimensions()],
+                $scalarKind::cases(),
+            );
             $details['mysqlForeignKeyScalarDomains'] = [
                 [$packed->child->kind->value, $packed->child->length, $packed->parent->kind->value, $packed->parent->precision,
                     $packed->parent->scale, $packed->childKeyBytes()],

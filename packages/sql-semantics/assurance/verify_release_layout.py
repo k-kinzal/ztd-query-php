@@ -10,10 +10,10 @@ import subprocess
 from tempfile import TemporaryDirectory
 
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
-from scope import declared_constructors, publication_definition
+from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v171.json"
-CONTRACT = "67f62e29c3113d628d1f5728af6c1416f238bec63c1283d8578e1822b22b0b1c"
+CONTRACT_NAME = "release-layout-v172.json"
+CONTRACT = "7bccc4a6734a7b3064ee11c7a39d4f8ecedc1601fc8a606277cd07f3f665cf33"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -903,6 +903,13 @@ def verify_probe(raw, catalog):
                           "ADD CONSTRAINT `Packed_Link` FOREIGN KEY (`x`) REFERENCES `app`.`scalar_parent` (`p`) ON UPDATE NO ACTION ON DELETE NO ACTION, "
                           "ADD CONSTRAINT `Date_Link` FOREIGN KEY (`y`) REFERENCES `app`.`scalar_parent` (`q`) ON UPDATE NO ACTION ON DELETE NO ACTION, "
                           "ADD CONSTRAINT `Time_Link` FOREIGN KEY (`z`) REFERENCES `app`.`scalar_parent` (`r`) ON UPDATE NO ACTION ON DELETE NO ACTION")
+            require(item.get("mysqlForeignKeyScalarDimensions") == [
+                ["DECIMAL", [1, 65, True, False]], ["BIT", [1, 64, False, False]],
+                ["FLOAT", [1, 255, True, True]], ["DOUBLE", [1, 255, True, True]],
+                ["DATE", [None, None, False, False]], ["YEAR", [None, None, False, False]],
+                ["TIME", [0, 6, False, False]], ["DATETIME", [0, 6, False, False]],
+                ["TIMESTAMP", [0, 6, False, False]],
+            ], "installed-mysql-foreign-key-scalar-dimensions-mismatch", item)
             require(item.get("mysqlForeignKeyScalarDomains") == [
                 ["VARBINARY", 4, "DECIMAL", 9, 0, 4], ["DATE", "MEDIUMINT", False, 3], ["TIME", 1, "TIME", 2, 4], scalar_sql,
             ], "installed-mysql-foreign-key-scalar-domain-mismatch", item)
@@ -1158,6 +1165,14 @@ def digest_fault(installed, expected, directory):
     raise Failure("release-layout-fault-missed", role)
 
 
+def checked_publication_scope(inventory):
+    scope = constructor_scope({name: value for package in inventory.values() for name, value in package["classes"].items()})
+    mismatches = {field: scope[field] for field in ("unregisteredConstructors", "missingConstructors",
+                                                  "unexpectedPublicationRoutes", "unexpectedUnconstrainedRoutes") if scope[field]}
+    require(not mismatches, "installed-constructor-ledger-mismatch", mismatches)
+    return scope
+
+
 def verify(candidate, tool_autoload, out, local=False):
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "release-layout-contract-mismatch")
@@ -1168,6 +1183,8 @@ def verify(candidate, tool_autoload, out, local=False):
     inventory_path = out / "inventory.json"
     inventory = json.loads(command(["php", str(TOOL / "inventory.php"), str(candidate), str(tool_autoload)],
                                    out, inventory_path, XDEBUG_MODE="off"))
+    publication = out / "publication-scope.json"
+    write_json(publication, checked_publication_scope(inventory))
     catalog = runtime_catalog(specification, manifest, inventory)
     catalog_path = out / "runtime-catalog.json"
     write_json(catalog_path, catalog)
@@ -1207,6 +1224,7 @@ def verify(candidate, tool_autoload, out, local=False):
                                    "recipe": specification["recipe"], "workerImage": None if local else IMAGE,
                                    **({"localPhp": command(["php", "--version"], out, XDEBUG_MODE="off").strip()} if local else {}),
                                    "runtimeCatalog": digest(catalog_path), "inventory": digest(inventory_path),
+                                   "publicationScope": digest(publication),
                                    "tools": {name: digest(TOOL / name) for name in ("verify_release_layout.py", "release_layout_probe.php", "inventory.php", "scope.py")},
                                    "composer": command(["composer", "--version"], out).strip(), "profiles": report})
 
