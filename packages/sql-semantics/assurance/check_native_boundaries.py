@@ -1340,7 +1340,7 @@ def faults(engine):
                   "$left instanceof TextColumnReference || $left instanceof CollatedText || $right instanceof TextColumnReference || $right instanceof CollatedText", "true"),
             Fault("skip-mysql-explicit-collation-scope", "From/OccurrenceScope::checkTree",
                   "$operand instanceof CollatedText => [$operand->operand],", "$operand instanceof CollatedText => [],"),
-            Fault("skip-mysql-collated-projection-scope", "SelectBounds::check",
+            Fault("skip-mysql-collated-projection-scope", "SelectBounds::checkResult",
                   "$expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],",
                   "$expression instanceof CollatedText => null,"),
             Fault("skip-mysql-text-comparison-right-slot", "From/OccurrenceScope::checkTree",
@@ -1364,7 +1364,7 @@ def faults(engine):
             Fault("change-mysql-release-collation", "GrammarRelease::textCollation", "=> 'utf8mb4_general_ci',", "=> 'utf8mb4_0900_ai_ci',",
                   "src/Model/Contract/GrammarRelease.php", "MySQL text binding source differs in src/Model/Contract/GrammarRelease.php"),
         ])
-        shared.append(Fault("ignore-signed-cast-slot", "SelectBounds::check",
+        shared.append(Fault("ignore-signed-cast-slot", "SelectBounds::checkResult",
                             "$expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],",
                             "$expression instanceof SignedCast, $expression instanceof UnsignedCast => null,"))
         shared.append(Fault("admit-unchecked-integer-cast-role", "Expression/IntegralCastLowering::lower",
@@ -1380,7 +1380,7 @@ def faults(engine):
                             "$table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,", "true,"))
         shared.append(Fault("ignore-intrinsic-group-label", "Aggregation/GroupedSelect::__construct",
                             "$source->columns[$value->slot]->value === $name,", "true,"))
-        shared.append(Fault("ignore-mysql-parameter-order", "SelectBounds::check", "$expression->position === ++$position,", "true,"))
+        shared.append(Fault("ignore-mysql-parameter-order", "SelectBounds::checkResult", "$expression->position === ++$position,", "true,"))
         shared.append(Fault("ignore-recursive-release-capability", "Rows/RecursiveSeries::__construct",
                             "Check::input($available,", "Check::input(true,"))
         shared.append(Fault("allow-negative-integer-padding", "IntegerLiteral::__construct",
