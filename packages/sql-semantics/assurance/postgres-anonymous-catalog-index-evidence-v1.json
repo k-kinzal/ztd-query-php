@@ -1,0 +1,85 @@
+{
+  "revision": "SemanticsIR/postgres-anonymous-catalog-index-evidence-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "reference": {
+    "file": "postgres-anonymous-catalog-index-v1.json",
+    "sha256": "d1e1ec0db09fe15d1a66769a93c7c3213d0238d95b5b8bf09aa0599985fbdf17"
+  },
+  "constructors": {},
+  "existingRoles": [
+    "Schema/Index/DropIndex",
+    "Schema/Index/ReindexIndex",
+    "Schema/Index/Btree/CreateIndex"
+  ],
+  "finite": {
+    "coordinates": 54,
+    "axes": {
+      "layout": [
+        "single",
+        "key-order",
+        "includes",
+        "label-collisions",
+        "asymmetric-utf8",
+        "equal-utf8-bytes"
+      ],
+      "placement": [
+        "permanent",
+        "temporary",
+        "schema-member"
+      ],
+      "occupiedPrefixLength": [
+        0,
+        1,
+        3
+      ]
+    },
+    "initialUnnamedIndexesPerCase": 2,
+    "subsequentOperations": [
+      "REINDEX INDEX",
+      "DROP INDEX",
+      "CREATE INDEX"
+    ],
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      37177,
+      88001,
+      153241
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "allowedExclusions": [],
+    "timeoutSecondsPerRelease": 420
+  },
+  "negative": [
+    "An open catalog cannot allocate the next anonymous name",
+    "An omitted expression-key index leaves its namespace opaque",
+    "The same opaque declaration prevents proving an ordinary guarded DROP references absence",
+    "A direct unguarded DROP cannot publish a missing selector"
+  ],
+  "faults": [
+    "Forget prior anonymous names during catalog collection",
+    "Reuse a relation's occupied allocation",
+    "Render the same index label in another namespace",
+    "Ignore a replacement of the wrong physical index in the comparator"
+  ],
+  "observations": [
+    "Compare constructed coordinates, absolute owner, sparse key and INCLUDE positions and policy to pure rules.",
+    "In the fixed native profile, compare command and status, both owners and all their observed index relations, exact key and INCLUDE position and index attribute names, validity, preserved ordered rows including NULL and duplicates, and the exact set of replaced files.",
+    "Original SQL and SQL from both construction routes are compared against the same fixed expectation. Read candidate output only over the bounded SQL wire protocol of the disposable observer."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-createschema.html",
+    "https://github.com/postgres/postgres/blob/REL_16_6/src/backend/parser/parse_utilcmd.c",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_utilcmd.c"
+  ],
+  "trust": [
+    "Protected source selection is pending human review and installation.",
+    "Pure allocation expectations and identity census, libpq observer, pinned database and PHP fixture runtimes."
+  ]
+}
