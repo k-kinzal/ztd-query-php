@@ -186,7 +186,9 @@ def sample_forms(forms, response, _, item):
 
 def witness(tag):
     point = ("edge", "drop-key", "persistent", "clustered-unique", "no-options", "unqualified", tag == LEGACY_IGNORE)
-    return coordinate(point, tag)
+    item = coordinate(point, tag)
+    item["syntax"] = list(item["syntax"])
+    return item
 
 
 def outsiders():
