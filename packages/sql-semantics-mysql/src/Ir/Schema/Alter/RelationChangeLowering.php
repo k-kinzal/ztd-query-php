@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\DropViewLowering;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable as ParsedAlterTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex as ParsedDropIndex;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable as ParsedDropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable as ParsedRenameTable;
@@ -29,20 +30,22 @@ final class RelationChangeLowering
 {
     /**
      * Identifies the parsed operations routed through the relation change boundary.
-     * @phpstan-assert-if-true ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement
+     * @phpstan-assert-if-true ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement
      */
     public function applies(Statement $statement): bool
     {
         return $statement instanceof ParsedDropIndex || $statement instanceof ParsedDropTable || $statement instanceof ParsedDropView
-            || $statement instanceof ParsedRenameTable || $statement instanceof ParsedTruncateTable;
+            || $statement instanceof ParsedRenameTable || $statement instanceof ParsedTruncateTable
+            || ($statement instanceof ParsedAlterTable && (new AlterIndexRemovalLowering())->removal($statement) !== null);
     }
 
     /**
      * Publishes the specific operation after its relation has been bound.
      */
-    public function lower(BoundStatement $operation, ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): DropIndex|DropTable|DropView|RenameTable|TruncateTable
+    public function lower(BoundStatement $operation, ParsedAlterTable|ParsedDropIndex|ParsedDropTable|ParsedDropView|ParsedRenameTable|ParsedTruncateTable $statement): DropIndex|DropTable|DropView|RenameTable|TruncateTable
     {
         return match (true) {
+            $statement instanceof ParsedAlterTable => (new AlterIndexRemovalLowering())->lower($operation, $statement),
             $statement instanceof ParsedDropIndex => (new DropIndexLowering())->lower($operation, $statement),
             $statement instanceof ParsedDropTable => (new DropTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedDropView => (new DropViewLowering())->lower($operation, $statement),

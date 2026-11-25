@@ -30,7 +30,9 @@ final class DropIndex implements SemanticsIR
         public readonly IndexIdentity $target,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
+        public readonly bool $ignore = false,
     ) {
+        Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
         Check::input(
             $policy->supports($target->owner->kind, $target->role->clustered()),
             'The algorithm and lock cannot remove this native InnoDB index.'
@@ -50,6 +52,12 @@ final class DropIndex implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'DROP INDEX ' . $this->target->name->quoted() . ' ON ' . $this->target->owner->quoted() . $this->policy->sql();
+        $name = $this->target->name->quoted();
+        $owner = $this->target->owner->quoted();
+        $policy = $this->policy->sql($this->ignore);
+
+        return $this->ignore
+            ? 'ALTER IGNORE TABLE ' . $owner . ' DROP INDEX ' . $name . $policy
+            : 'DROP INDEX ' . $name . ' ON ' . $owner . $policy;
     }
 }

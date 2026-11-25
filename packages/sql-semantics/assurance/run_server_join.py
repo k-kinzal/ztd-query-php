@@ -143,6 +143,8 @@ def direct_identities(domain, engine, specification, tag):
 def negative_count(specification, engine, tag):
     if "negativeCount" in specification:
         count = specification["negativeCount"]
+        if isinstance(count, dict):
+            count = count.get(tag, count.get("default"))
         require(type(count) is int and count > 0, "invalid-fixed-rejection-count")
         return count
     specific = specification.get("negativeByRelease", {})

@@ -2306,6 +2306,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $unsupported = $error->getMessage();
             }
             $details['mysqlIndexRemovalPolicy'] = [$drop->policy->algorithm->value, $drop->policy->lock->value, $unsupported];
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+            $legacyCatalog = $legacy->context(['CREATE TEMPORARY TABLE app.legacy_drop (n INT NOT NULL, INDEX ordered_key (n))']);
+            $legacyDrop = $legacy->analyze(
+                'ALTER IGNORE TABLE app.legacy_drop LOCK=SHARED, DROP KEY app.legacy_drop.ordered_key, LOCK=NONE, ALGORITHM=COPY',
+                $legacyCatalog,
+            );
+            $legacyDirect = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
+                $legacyDrop->target, $legacyDrop->release, $legacyDrop->policy, $legacyDrop->ignore,
+            );
+            $details['mysqlAlterIndexRemoval'] = [
+                $legacyDrop->target->owner->kind->value, $legacyDrop->ignore, $legacyDrop->target->name->value,
+                $legacyDrop->toString(), $legacyDirect->toString(),
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);

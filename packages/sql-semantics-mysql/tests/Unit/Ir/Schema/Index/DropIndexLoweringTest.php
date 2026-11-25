@@ -63,4 +63,14 @@ final class DropIndexLoweringTest extends TestCase
         self::assertInstanceOf(DropIndex::class, $first);
         self::assertSame(IndexRole::Unique, $first->target->role);
     }
+
+    public function testResolveUsesTheLegacyQualifiedKeyOnTheSelectedTable(): void
+    {
+        $semantics = new Semantics('mysql-5.7.44');
+        $catalog = $semantics->context(['CREATE TABLE app.events (n INT NOT NULL, INDEX by_n (n))']);
+        $result = $semantics->analyze('ALTER TABLE app.events DROP KEY app.events.by_n', $catalog);
+
+        self::assertInstanceOf(DropIndex::class, $result);
+        self::assertSame('DROP INDEX `by_n` ON `app`.`events`', $result->toString());
+    }
 }

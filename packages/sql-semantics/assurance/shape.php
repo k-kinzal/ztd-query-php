@@ -1427,8 +1427,8 @@ if ($dialect !== 'sqlite') {
         $indexIdentity = 'Schema\\Index\\IndexIdentity';
         $indexRole = 'Schema\\Index\\IndexRole';
         $roots[] = $dropIndex;
-        $internal[] = 'Schema\\Index\\DropIndexLowering';
-        $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
+        array_push($internal, 'Schema\\Index\\DropIndexLowering', 'Schema\\Alter\\AlterIndexRemovalLowering');
+        $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
         $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole]];
         $properties[$indexRole] = [];
         $methods[$dropIndex] = ['__construct', 'profileId', 'toString'];
@@ -1966,6 +1966,7 @@ try {
                 'Schema\\Index\\Btree\\CreateIndexLowering' => 'Schema\\Index\\Btree\\CreateIndex',
                 'Schema\\Index\\Btree\\IndexTableLowering' => 'TableSource',
                 'Schema\\Index\\DropIndexLowering' => 'Schema\\Index\\DropIndex',
+                'Schema\\Alter\\AlterIndexRemovalLowering' => 'Schema\\Index\\DropIndex',
                 'Schema\\Trigger\\Binding\\DropTriggerLowering' => 'Schema\\Trigger\\DropTrigger',
                 'Schema\\Trigger\\Binding\\TriggerRaiseLowering' => 'Schema\\Trigger\\Program\\TriggerRaise',
                 'Maintenance\\ReindexLowering' => 'Maintenance\\Reindex',
@@ -2318,7 +2319,8 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
-                    'Schema\\Index\\DropIndexLowering' => $dialect === 'mysql' ? ['lower', 'index'] : ['lower'],
+                    'Schema\\Index\\DropIndexLowering' => $dialect === 'mysql' ? ['lower', 'resolve', 'index'] : ['lower'],
+                    'Schema\\Alter\\AlterIndexRemovalLowering' => ['removal', 'lower'],
                     'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };

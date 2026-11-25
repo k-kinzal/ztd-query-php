@@ -986,7 +986,7 @@ function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\S
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
         $target, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
-        constructMysqlIndexPolicy($spec['policy'])
+        constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
     );
 }
 
@@ -995,7 +995,7 @@ function observeMysqlDropIndex(SqlSemantics\Platform\MySql\Ir\Schema\Index\DropI
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlDropIndex' => ['owner' => observeMysqlTableIdentity($value->target->owner),
             'name' => $value->target->name->value, 'role' => $value->target->role->value,
-            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
 }
 
 function constructMysqlCreateIndex(string $platform, array $input): SemanticsIR

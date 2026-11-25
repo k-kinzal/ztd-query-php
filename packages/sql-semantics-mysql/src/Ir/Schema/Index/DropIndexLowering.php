@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
@@ -20,8 +21,10 @@ use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable as ParsedAlterTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex as ParsedDropIndex;
 
 /**
@@ -36,6 +39,20 @@ final class DropIndexLowering
      */
     public function lower(BoundStatement $operation, ParsedDropIndex $statement): DropIndex
     {
+        return $this->resolve($operation, $statement, $statement->index, (new IndexPolicyLowering())->lower($statement->options));
+    }
+
+    /**
+     * Resolves a physical key through the selected statement's bound owner.
+     */
+    public function resolve(
+        BoundStatement $operation,
+        ParsedDropIndex|ParsedAlterTable $statement,
+        Name $key,
+        IndexChangePolicy $policy,
+        ?QualifiedName $qualifier = null,
+        bool $ignore = false,
+    ): DropIndex {
         $context = $operation->context;
         $profile = $context->profile;
         Check::input(
@@ -53,7 +70,11 @@ final class DropIndexLowering
         $table = $resolution->table;
         $schema = ($table->name->schema ?? $context->declarationSchema)->value;
         Check::input($schema !== SessionDatabase::UNNAMED, 'DROP INDEX requires an absolute owning table.');
-        $index = $this->index($table, $statement->index);
+        if ($qualifier !== null) {
+            Check::input($qualifier->schema === null || $qualifier->schema->value === $schema, 'DROP INDEX names a different owning database.');
+            Check::input($qualifier->name->value === $table->name->name->value, 'DROP INDEX names a different owning table.');
+        }
+        $index = $this->index($table, $key);
         $name = new TableName(new Identifier($schema), new Identifier($table->name->name->value));
         $owner = new TableIdentity($name, $table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable);
         $role = match ($index->kind) {
@@ -67,7 +88,8 @@ final class DropIndexLowering
         return new DropIndex(
             new IndexIdentity($owner, new Identifier($index->name->value), $role),
             $profile->grammar,
-            (new IndexPolicyLowering())->lower($statement->options)
+            $policy,
+            $ignore
         );
     }
 

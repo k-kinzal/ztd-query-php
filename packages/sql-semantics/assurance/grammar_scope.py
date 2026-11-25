@@ -807,6 +807,15 @@ def inventory(root):
             for rule in ("alter_algorithm_option", "alter_lock_option", "opt_index_lock_and_algorithm", "opt_index_lock_algorithm"):
                 for alternative in rules.get(rule, []):
                     related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v2.json")
+            alter_index = {
+                "alter_list_item: DROP PRIMARY_SYM KEY_SYM", "alter_list_item: DROP key_or_index field_ident",
+                "alter_list_item: DROP key_or_index ident", "alter_list_item: alter_algorithm_option",
+                "alter_list_item: alter_lock_option",
+            }
+            for rule in ("alter_table_stmt", "key_or_index", "opt_ignore", "alter_algorithm_option", "alter_lock_option"):
+                alter_index.update(rules.get(rule, []))
+            for alternative in signatures & alter_index:
+                related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):
                 for alternative in rules.get(rule, []):
                     if rule != "rename" or "table_to_table_list" in alternative:

@@ -48,6 +48,7 @@ CONTRACTS = {
     "mysql-create-btree-index-evidence-v3.json": "f52e95fb78702ed2f66c761db4990fd7feb9f59d21fc299c7a10a1e0b7df0d05",
     "mysql-drop-native-index-evidence-v3.json": "78d4213562da75d0be5f161366dd851ff8e542db561d084ad7ceb4cea1ae8fda",
     "mysql-native-index-policy-evidence-v2.json": "1186f86f785635f4708135df8bbb83486c41b2cda22e05d856558f2936740a37",
+    "mysql-alter-index-removal-evidence-v1.json": "3d307af06a3b7e3376bca6c12820d8485b8cf4e67a85ee16b784df441354b6ad",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",

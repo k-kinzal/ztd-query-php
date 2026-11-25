@@ -75,10 +75,11 @@ function dropIndexEffect(array $effect): array
     return $effect[0] === 'executed' ? ['executed'] : $effect;
 }
 
-function observeDropIndex(PDO $catalog, PDO $owner, array $request): array
+function observeDropIndex(PDO $catalog, PDO $owner, array $request, ?Closure $admit = null): array
 {
     $life = $request['lifetime'];
-    if (!admitDropIndex($request['sql']) || !in_array($life, ['persistent', 'temporary', 'temporary-shadow'], true)
+    $admit ??= admitDropIndex(...);
+    if (!$admit($request['sql']) || !in_array($life, ['persistent', 'temporary', 'temporary-shadow'], true)
         || !is_bool($request['probe']) || !is_int($request['probeLast']) || preg_match('/\A' . DROP_INDEX_NAME . '\z/Du', dropIndexQuote($request['field'])) !== 1) {
         return ['status' => 'outside-observer-scope'];
     }

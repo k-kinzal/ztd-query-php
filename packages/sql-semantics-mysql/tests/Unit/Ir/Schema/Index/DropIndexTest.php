@@ -13,6 +13,9 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexAlgorithm;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexLock;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
@@ -39,5 +42,16 @@ final class DropIndexTest extends TestCase
 
         $drop = new DropIndex($target, GrammarRelease::MySql5651);
         self::assertSame('mysql-5.6.51/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/drop-index', $drop->profileId());
+    }
+
+    public function testToStringRetainsLegacyIgnoreAndCommaSeparatedOptions(): void
+    {
+        $name = new TableName(new Identifier('app'), new Identifier('orders'));
+        $owner = new TableIdentity($name, ExternalRelationKind::TemporaryTable);
+        $target = new IndexIdentity($owner, new Identifier('first_key'), IndexRole::ClusteredUnique);
+        $policy = new IndexChangePolicy(IndexAlgorithm::Copy, IndexLock::None);
+        $drop = new DropIndex($target, GrammarRelease::MySql5651, $policy, true);
+
+        self::assertSame('ALTER IGNORE TABLE `app`.`orders` DROP INDEX `first_key`, ALGORITHM=COPY, LOCK=NONE', $drop->toString());
     }
 }

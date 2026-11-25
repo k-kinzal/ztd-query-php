@@ -47,10 +47,11 @@ final class IndexChangePolicy
     /**
      * Emits the effective native requests in a fixed order.
      */
-    public function sql(): string
+    public function sql(bool $commaSeparated = false): string
     {
-        $algorithm = $this->algorithm === IndexAlgorithm::Default ? '' : ' ALGORITHM=' . $this->algorithm->value;
-        $lock = $this->lock === IndexLock::Default ? '' : ' LOCK=' . $this->lock->value;
+        $separator = $commaSeparated ? ', ' : ' ';
+        $algorithm = $this->algorithm === IndexAlgorithm::Default ? '' : $separator . 'ALGORITHM=' . $this->algorithm->value;
+        $lock = $this->lock === IndexLock::Default ? '' : $separator . 'LOCK=' . $this->lock->value;
 
         return $algorithm . $lock;
     }
