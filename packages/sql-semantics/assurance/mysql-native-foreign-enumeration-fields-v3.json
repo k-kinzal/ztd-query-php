@@ -1,0 +1,189 @@
+{
+  "revision": "SemanticsIR/mysql-native-foreign-enumeration-fields-3",
+  "approval": "pending-human-review",
+  "extends": {
+    "mysql-native-foreign-scalar-fields-v3.json": "ae27a6035d83b9f41606e208340253e3fb2d657006c5c337d23f0983801c2745",
+    "mysql-native-foreign-string-fields-v3.json": "f8e763f689a851c3cca878963d3a41e60b8921bfae5b676af0fda42e43b07e9d"
+  },
+  "language": {
+    "dialect": "MySql",
+    "mode": "Stock InnoDB storage, utf8mb4, empty sql_mode, foreign_key_checks=1, native markers, 16 KiB pages.",
+    "releases": [
+      "5.6.51",
+      "5.7.44",
+      "8.0.44",
+      "8.1.0",
+      "8.2.0",
+      "8.3.0",
+      "8.4.7",
+      "9.0.1",
+      "9.1.0"
+    ]
+  },
+  "sources": {
+    "enum": "https://dev.mysql.com/doc/refman/8.4/en/enum.html",
+    "set": "https://dev.mysql.com/doc/refman/8.4/en/set.html",
+    "physicalWidth": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.h#L270",
+    "compatibility": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/storage/innobase/handler/ha_innodb.cc#L7691",
+    "declaredSetLimit": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_table.cc#L3798"
+  },
+  "rules": {
+    "members": "Hold the ordered settled member labels. Strip trailing U+0020 at declaration lowering. Keep a distinct role for a declared empty member, its position, the implicit ENUM ordinal zero, and SQL NULL. Keep ordinal slots of repeated labels in the fixed non-strict mode. Commas are rejected in a SET member but can belong to an ENUM member.",
+    "encoding": "An ENUM stores a one-based ordinal using one byte for up to 255 declared labels and two from 256. Allow at most 65535 declaration positions. A SET stores a bitmask in declared label order. The first 8, 16, 24 and 32 positions require 1, 2, 3 and 4 bytes respectively. Larger admitted lists require 8 bytes.",
+    "setDistinct": "Native SET admits up to 64 distinct labels under the native collation. Repeated slots still count for calculating the physical layout. The initial verified construction includes all lists of at most 64 slots and larger lists whose exact byte-distinct count is at most 64. Collation-only reduction of a larger list beyond this check is a tracked proof and input-domain gap.",
+    "collation": "Retain the known utf8mb4 input collation for both independently ordered label domains. Different collations and labels are compatible by InnoDB ordinal/mask comparison when physical widths agree. Same-width unsigned integral and YEAR fields share native compatibility. YEAR is one byte. Signed integral fields, packed bytes and DATE do not match the unsigned family.",
+    "runtime": "Compare the stored ordinal or mask, not the rendered member label. A physical cascade copies the native value, including an ENUM ordinal above its declared labels and a SET mask with additional bits. A projected ENUM label can be empty while the retained ordinal is nonzero. A projected SET label lists defined bits only while numeric access retains the whole mask. Observe both projections and NULL.",
+    "scope": "The external tables have the same actual native declarations and the accepted previously settled local key facts. Complete CREATE TABLE validation, legacy table-file size budgets and collation-dependent label equivalence are independent obligations.",
+    "labelDictionary": "Modern dictionaries retain zero bytes and later bytes. Releases 5.6 and 5.7 discard bytes from the first zero byte while persisting the settled interval. Ordinary trailing U+0020 is trimmed before that boundary, so a space immediately before an embedded zero remains in the settled legacy dictionary. Enforce these distinct settled value roles at root construction. SET syntax rejects a comma before any legacy dictionary truncation.",
+    "projection": "Observe actual member bytes and numeric ordinal or bitmask. information_schema.COLUMN_TYPE can use a restricted result charset and replace a four-byte member even when stored bytes are exact. Retain separate dictionary-rendering and actual row observations.",
+    "exactUnsignedObservation": "Read the unsigned native ordinal or mask with CAST(field AS UNSIGNED), transported as decimal text after the exact integer cast. Retain separate HEX(field) for label bytes. Ordinary arithmetic x + 0 can convert to a signed approximate value, conflate adjacent masks and in some modern lanes fail with error 1690 at the signed maximum. The original failed input and both raw calibration projections are retained. Observe the exact signed maximum, high bit, adjacent high bit with a low bit, and maximum uint64."
+  },
+  "observations": [
+    "Relative member positions and effective collation on each physical field",
+    "Ordered native foreign-key coordinates, physical backing key, exact outcomes and diagnostic codes",
+    "Stored value and byte projection alongside numeric ordinal or mask before and after native updates and deletes",
+    "ENUM one-byte/two-byte transition; SET one-, two-, three-, four- and eight-byte width boundaries"
+  ],
+  "authorCalibration": {
+    "recipeSha256": "3ebf555bbb0efe0d1f0f6ac377aaeb0d3d2030d9edd4bad368f0ae660f2606bc",
+    "casesPerRelease": 473,
+    "releases": {
+      "5.6.51": {
+        "stdout": "0e05908588742e65c6fecae562c03a4fe40ca2851d346488ea0082cb7b6c420e",
+        "stderr": "b33c6ba29eaaf53041e1502b11b6b076757cbed6c907776d8aa4400dedfffbdd"
+      },
+      "5.7.44": {
+        "stdout": "394262b8515e534c15b728612894f6d6f56969490237f4a275497f36546be6b9",
+        "stderr": "b33c6ba29eaaf53041e1502b11b6b076757cbed6c907776d8aa4400dedfffbdd"
+      },
+      "8.0.44": {
+        "stdout": "233acd3972cdf9eee15f32a5b0c7e0c94bab64492ace75af8389e2637d47cb74",
+        "stderr": "0cd902521c8a681da6b5c8a3fb421f5faee4579dab4eff6dc58e6415e29d7740"
+      },
+      "8.4.7": {
+        "stdout": "5d7069dc720b7e781bbbe419b91f61f4f5b1f2165de872b81223f35c1a4647a7",
+        "stderr": "0cd902521c8a681da6b5c8a3fb421f5faee4579dab4eff6dc58e6415e29d7740"
+      },
+      "9.1.0": {
+        "stdout": "37482bb33b373746172239d89a2a5f0893e9c6d9c27c36814c66a26e9afcb9bb",
+        "stderr": "e45ea753b362b92aed957ccfdab93bcc953b93933a58a8947ad1a414d96ca0ad"
+      }
+    }
+  },
+  "limitCalibration": {
+    "recipeSha256": "2893771aeb3a5178ebb95334e71d282f7f0d7259f9db17851b8c8e08d1667b6b",
+    "casesPerRelease": 32,
+    "releases": {
+      "5.6.51": {
+        "stdout": "6f14b93aee8319f7d2a7bc89b561e7d4415b4708aefc9b07bf7a0d3dfac05369",
+        "stderr": "0ed757d1d3b0f0781c80358631747a84aa71fefd0893b469e1e145ed9e2df60d"
+      },
+      "5.7.44": {
+        "stdout": "a3f91943bca9a5e7da102f2d14674d1abae4af76dc5f70b62f6edea455718af0",
+        "stderr": "0ed757d1d3b0f0781c80358631747a84aa71fefd0893b469e1e145ed9e2df60d"
+      },
+      "8.0.44": {
+        "stdout": "89575a40d84aa47b98d319aee36e1c1e72b9aa7cf4fcd35ec7c3ff3cac1a1570",
+        "stderr": "eba77d8458a4727f8c2185ac6d319b8fa75268b59a3c4df0e6c66d851526540b"
+      },
+      "8.4.7": {
+        "stdout": "35841d5672fc6bf0f50332c479a24e0756ddba3408acf0e81b0bb4112a6c8ca4",
+        "stderr": "eba77d8458a4727f8c2185ac6d319b8fa75268b59a3c4df0e6c66d851526540b"
+      },
+      "9.1.0": {
+        "stdout": "d04e25db6723345656a885dc0e312f27d12e3f1a907f3ba1df179c12e6c12410",
+        "stderr": "2b9984257896ea6bed23e5cf3910337039e3cc1b1ec329be9bef3930e64da6a2"
+      }
+    }
+  },
+  "remaining": [
+    "Collation-only folding of large SET duplicates, other inferred collations and legacy native table-file interval capacity.",
+    "Full compatibility and preparation in other charset profiles and complete schema-declaration validation remain separately tracked."
+  ],
+  "revises": {
+    "mysql-native-foreign-enumeration-fields-v1.json": "d752c788f4d5fe821b2f3d9b4b51a6d32c2d9516d160b6eb091ca1f45de57286",
+    "mysql-native-foreign-enumeration-fields-v2.json": "6c43f497177c97986e32f0648f3fe6367aaceea03e8b9b544887e40a39d36a24"
+  },
+  "storedLabels": {
+    "recipeSha256": "68dafd0ee675c7a1793b9e8078704de53d8bec12423df3bf1c92008d131bacd2",
+    "casesPerRelease": 14,
+    "releases": {
+      "5.6.51": {
+        "stdout": "4233e27ee96e4b8eb5ab170daa79363d5ccb4286c19488cfd173881b41d466fe",
+        "stderr": "db479cfbd9e0cc07d27cd310d7a951b4a62a0022cbc94f164ef0efc5455c97be"
+      },
+      "5.7.44": {
+        "stdout": "4da517759bf1a869e05f7493e4802794c37adad2257c1e129b88357c7896b334",
+        "stderr": "db479cfbd9e0cc07d27cd310d7a951b4a62a0022cbc94f164ef0efc5455c97be"
+      },
+      "8.0.44": {
+        "stdout": "db70176d0694b8ea77182bd71abd484d9a48d69a7e501cd1a8362eb3f7530df8",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "8.4.7": {
+        "stdout": "7b8123181e252fc021e1b88b146bc5806851dfb4731e5cb566dd3d7f4205bf4e",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "9.1.0": {
+        "stdout": "1f069d263ba72b0a3d377cc0ee8f2f8864a4ec71af81d648bb76943c0fec2b4c",
+        "stderr": "db479cfbd9e0cc07d27cd310d7a951b4a62a0022cbc94f164ef0efc5455c97be"
+      }
+    }
+  },
+  "legacyNulBoundary": {
+    "recipeSha256": "6539bad3be5fa6b0da5c497da97eb24e5138af14aab73a3bf698bebbd66b9006",
+    "casesPerRelease": 12,
+    "releases": {
+      "5.6.51": {
+        "stdout": "c65a85b8a5f3a28f329d24c71dff49b5bf5f19874bb821ab0c4dc02e91d1762c",
+        "stderr": "823e267ff1ac9062122568807d1e4feff1c051bc56c74b8f268d72e757f5cdeb"
+      },
+      "5.7.44": {
+        "stdout": "3c395114dbfd0383ac83ce498811276b0ecd606f13d9a2de0f36222384868a1f",
+        "stderr": "823e267ff1ac9062122568807d1e4feff1c051bc56c74b8f268d72e757f5cdeb"
+      },
+      "8.0.44": {
+        "stdout": "05c4c2f8c106ca7149b7f069648da162a9404dda96c6663a046699666ec9d8e7",
+        "stderr": "e18ae9729fd9fa1238bc1c4220a87989e843141aba37ea41d5ab090d3bc09f18"
+      },
+      "8.4.7": {
+        "stdout": "493e320f8b0e776d11f2d3808c320163d144e402e371dead1a5c320edd45dbaa",
+        "stderr": "e18ae9729fd9fa1238bc1c4220a87989e843141aba37ea41d5ab090d3bc09f18"
+      },
+      "9.1.0": {
+        "stdout": "79d915632a7edd34a9d9fd11882348b6f06bfef3002b33946686eb0fd7543042",
+        "stderr": "823e267ff1ac9062122568807d1e4feff1c051bc56c74b8f268d72e757f5cdeb"
+      }
+    }
+  },
+  "unsignedCalibration": {
+    "recipeSha256": "e6242699bd152e217ef07e1896ca690b52f8f1094f76cfe9c3afa70d99b45384",
+    "casesPerRelease": 6,
+    "releases": {
+      "5.6.51": {
+        "stdout": "d3de156d82c7d39e1a1dc8fc9bd0bd3be65b6cab7513eb796193313976cc5e54",
+        "stderr": "db479cfbd9e0cc07d27cd310d7a951b4a62a0022cbc94f164ef0efc5455c97be"
+      },
+      "5.7.44": {
+        "stdout": "eaa2ec2024e9ef0b62531c6f563cdc22b7dc11126a0b98c1c565ab268deecabd",
+        "stderr": "db479cfbd9e0cc07d27cd310d7a951b4a62a0022cbc94f164ef0efc5455c97be"
+      },
+      "8.0.44": {
+        "stdout": "66d34814d60d2f0d66a30438ae066a88e029c708124540daf759e3ce7831bc88",
+        "stderr": "c60144e4080ca0d79c38ac6c0074c0f58797e0a1a0551a9827d1b6ebd759eb07"
+      },
+      "8.4.7": {
+        "stdout": "2f8f210d13984b18badd10761de5a65baafdf7100e62fe6daa2745ddbd272faa",
+        "stderr": "c60144e4080ca0d79c38ac6c0074c0f58797e0a1a0551a9827d1b6ebd759eb07"
+      },
+      "9.1.0": {
+        "stdout": "8d0abe5b4aa19ce1757d08404d359bbf5cbf095e027544091544580fc5ab24b6",
+        "stderr": "360df3a7b5119fb0636ba8d381c1b59d410185a218d0f35a89fd255e200605fe"
+      }
+    }
+  },
+  "preliminaryProjectionCounterexamples": {
+    "5.6.51": "a764d3e61f53c4b24e94573410fe6e1315bdfbf1769ed254ce093c471b6516ed",
+    "5.7.44": "37fca5f037562dc58dae7b55e92f3acfe1c6b3a712acd514e0ff43625b2e503c"
+  }
+}
