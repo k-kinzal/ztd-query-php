@@ -2253,6 +2253,42 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                     $drop->toString()],
                 [$result, $mixed, $local]
             );
+            $declarations = [
+                'CREATE TABLE app.drop_parent (id INT PRIMARY KEY)',
+                'CREATE TABLE app.drop_child (pid INT, FOREIGN KEY (pid) REFERENCES drop_parent(id))',
+            ];
+            $modern = new SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44');
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44');
+            $modernCatalog = $modern->context($declarations);
+            $legacyCatalog = $legacy->context($declarations);
+            $shadowed = $modern->context([...$declarations, 'CREATE TEMPORARY TABLE app.drop_child (id INT)']);
+            $parentsFirst = 'DROP TABLE app.drop_parent, app.drop_child';
+            $childrenFirst = 'DROP TABLE app.drop_child, app.drop_parent';
+            $group = $modern->analyze($parentsFirst, $modernCatalog);
+            $parent = $group->targets[0];
+            $child = $group->targets[1];
+            $edge = new SqlSemantics\Platform\MySql\Ir\Schema\DropDependency\TableDropReference($child, $parent);
+            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\DropTable($group->targets, [$edge], release: $group->release);
+            $refusals = [];
+            try {
+                new SqlSemantics\Platform\MySql\Ir\Schema\DropTable([$parent], [$edge], release: $group->release);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            foreach ([
+                [$modern, $modernCatalog, 'DROP TABLE app.drop_parent'],
+                [$legacy, $legacyCatalog, $parentsFirst],
+                [$modern, $shadowed, $childrenFirst],
+            ] as [$dialect, $catalog, $dropSql]) {
+                try {
+                    $dialect->analyze($dropSql, $catalog);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $refusals[] = $error->getMessage();
+                }
+            }
+            $details['mysqlDropTableDependencies'] = [
+                $group->toString(), $rebuilt->toString(), $legacy->analyze($childrenFirst, $legacyCatalog)->toString(), ...$refusals,
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Index\\CreateIndex') {
             $indexContext = $semantics->context([

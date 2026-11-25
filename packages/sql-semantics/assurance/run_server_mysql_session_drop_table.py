@@ -13,8 +13,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-session-drop-table"
 OBSERVER = "mysql_session_drop_observer.php"
-CONTRACT_NAME = "mysql-session-drop-table-v1.json"
-CONTRACT = "f74032510b22e940d5902b43156e39d1752e5bd51974561ee1ec127d13954da9"
+CONTRACT_NAME = "mysql-session-drop-table-v2.json"
+CONTRACT = "4fc18dcf31bb099cbb0b61b86f52c874a49f62acffe554e802ea6a41ea604efe"
 COMPLETE_SEEDS = True
 SCHEMA, DECOY, NAME = "ir_fixture", "ir_sdrop_decoy", "ir_sdrop_data"
 SESSION = "temporary-table"
@@ -205,7 +205,7 @@ def observer_request(item, sql):
 
 def check_value(item, response):
     require(response["status"] == "constructed"
-            and response["profile"] == item["release"] + "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+            and response["profile"] == item["release"] + "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/foreign-key-checks=1",
             "mysql-session-drop-positive-rejected", response)
     require(item["drop"] == response["mysqlDrop"], ROLE_MISMATCH,
             {"sql": response["sql"], "expected": item["drop"], "observed": response["mysqlDrop"]})

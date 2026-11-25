@@ -424,7 +424,9 @@ The [MySQL native truncation dependency contract](mysql-truncate-foreign-depende
 
 The [MySQL session table contract](mysql-session-table-sources-v1.json) checks both relational namespaces on two independent connections. It compares source roles, typed query results, mutation counts, retained permanent rows, rollback and persistent rename through an overlay. Run `run_server_mysql_session_table_sources.py` and `combine_server_mysql_session_table_sources_evidence.py` on all nine pinned releases.
 
-The [MySQL session table removal contract](mysql-session-drop-table-v1.json) compares persistent and session-local identities, explicit TEMPORARY lookup, ordered mixed targets, missing-name notes and rollback. Run `run_server_mysql_session_drop_table.py` and `combine_server_mysql_session_drop_table_evidence.py` on all nine pinned releases.
+The [MySQL session table removal contract](mysql-session-drop-table-v2.json) compares persistent and session-local identities, explicit TEMPORARY lookup, ordered mixed targets, missing-name notes and rollback. Run `run_server_mysql_session_drop_table.py` and `combine_server_mysql_session_drop_table_evidence.py` on all nine pinned releases.
+
+The [MySQL table-removal foreign-key contract](mysql-drop-table-foreign-keys-evidence-v1.json) compares both legacy dependency order and the modern completed removal group. With held temporary names and an explicit cross-database dependency, the independent observer measures the original physical catalog and every resulting effect. Run `run_server_mysql_drop_table_foreign_keys.py` and replay with `combine_server_mysql_drop_table_foreign_keys_evidence.py`.
 
 The [MySQL table declaration namespace contract](mysql-session-create-table-v1.json) compares temporary and persistent InnoDB declarations. The observer checks ordered columns and primary keys, namespace-specific collision, default insertion, transaction effects and the view of a fresh session after the owner disconnects. Run `run_server_mysql_session_create_table.py` and `combine_server_mysql_session_create_table_evidence.py` on all nine pinned releases.
 

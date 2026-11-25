@@ -1475,6 +1475,12 @@ if ($dialect !== 'sqlite') {
         $identity = 'Schema\\Identity\\TableIdentity';
         $properties[$identity] = ['name' => [$tableName], 'kind' => ['From\\ExternalRelationKind']];
         $methods[$identity] = ['__construct', 'quoted'];
+        $dropReference = 'Schema\\DropDependency\\TableDropReference';
+        $dropDependencies = 'Schema\\DropDependency\\DropTableDependencies';
+        $properties[$dropReference] = ['child' => [$identity], 'parent' => [$identity]];
+        $methods[$dropReference] = ['__construct'];
+        array_push($internal, $dropDependencies, 'Schema\\DropDependency\\DropReferenceLowering');
+        $pureCollaborators[] = $dropDependencies;
         $copy = 'Schema\\Like\\CreateTableLike';
         $roots[] = $copy;
         $internal[] = 'Schema\\Like\\CreateTableLikeLowering';

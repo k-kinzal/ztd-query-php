@@ -1,0 +1,112 @@
+{
+  "revision": "SemanticsIR/mysql-drop-table-foreign-keys-evidence-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-drop-table-foreign-dependencies-v1.json",
+    "mysql-session-drop-table-v2.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Native parameters, SQL mode empty, lower_case_table_names=0, utf8mb4, ordinary InnoDB and foreign_key_checks=1.",
+  "constructors": {
+    "TableDropReference": {
+      "type": "Schema/DropDependency/TableDropReference",
+      "role": "A native immutable persistent child and the persistent parent selected by the enclosing DROP TABLE statement.",
+      "structure": "Two absolute TableIdentity operands with independent referring child and referenced parent roles.",
+      "conditions": "Both identities select persistent base tables. The owning removal requires a checked original edge to a selected parent.",
+      "meaning": "The parent can be removed while it is the same table as the child or while the same statement removes the child as required by the native release.",
+      "sql": "The edge constrains the checked DROP group. Each quoted child or parent is emitted as its selected table operand."
+    }
+  },
+  "existingRoles": [
+    "Schema/DropTable",
+    "Schema/Identity/TableIdentity"
+  ],
+  "finite": {
+    "graph": [
+      "single-edge",
+      "self-edge",
+      "chain",
+      "cycle",
+      "cross-database"
+    ],
+    "scope": [
+      "persistent",
+      "child-shadow",
+      "parent-shadow"
+    ],
+    "ordering": [
+      "child-first",
+      "parent-first",
+      "parent-only",
+      "child-only"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteIdentities": 60,
+  "legacyAdmitted": 32,
+  "modernAdmitted": 38,
+  "negativeCount": {
+    "mysql-5.6.51": 111,
+    "mysql-5.7.44": 111,
+    "default": 89
+  },
+  "negative": [
+    "Keep the full blocked coordinate plan through analysis and direct routes and compare the actual partial or atomic native result.",
+    "Refuse a known persistent target with an open inbound catalog, a temporary reference operand and a reference to an unselected parent."
+  ],
+  "exploration": {
+    "seeds": [
+      337,
+      5737,
+      15569
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Measure the resolved ordered persistent and temporary targets, stable decoys, exact before and after native catalogs, owned data and transaction boundary.",
+    "Keep native blocked evidence with actual legacy 1217 versus modern 3730 and observe both partial effects and untouched targets.",
+    "Measure both target orders, an all-selected dependency cycle, a multilevel chain, cross-database and self references, empty child and shadowed child and parent.",
+    "Compare emitted and independently specified source SQL at direct and analyzed construction under the same complete initial graph."
+  ],
+  "evidence": {
+    "P01": "Hold selected target identities and their absolute session scope, checked operation, flags and release.",
+    "P02": "Enforce initial edge ownership, release-specific dependency placement, and complete catalog analysis.",
+    "P03": "Use resolved immutable target roles. Retain no lookup graph or behavioral SQL snippets after construction.",
+    "P04": "Close the full persistent group from the native reference graph and release order.",
+    "P05": "Keep detached target list and closed immutable child values across every public route.",
+    "P06": "Emit the full ordered checked native DROP operation, preserving explicitly temporary and guarded behaviors."
+  },
+  "obligations": {
+    "Q01": "Audit the actual root constructor and transient binding together, including wrong-role and partial graph mutants.",
+    "Q02": "Keep all valid known catalog cases and exact typed and witnessed refusals.",
+    "Q03": "Validate group membership and required predecessor relation without executing or reparsing SQL.",
+    "Q04": "Compare the native operations and intentional mismatch probes with strong visible distinguishers.",
+    "Q05": "Connect exact runtime and staged offline Composer installs to independent native replay."
+  },
+  "faults": [
+    "Hide partial native catalog effects after a refused legacy DROP.",
+    "Omit an independently observed table operand from the emitted removal group."
+  ],
+  "trust": "Exact native foreign-key and session interpretation, complete declared external facts, fixed observer and composer publication.",
+  "trackedBeyondThisSlice": [
+    "Other storage engines and explicit foreign_key_checks changes remain separately required native domains.",
+    "Native missing, duplicated and invalid target behaviors retain their existing constructor obligations and separately tracked grammar cases."
+  ]
+}

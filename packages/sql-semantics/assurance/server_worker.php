@@ -747,7 +747,11 @@ function constructDropTable(string $platform, array $input): SemanticsIR
         $targets[] = $role === 'absent' ? new $absent($coordinate) : new $identity($coordinate, $kind::from($role));
     }
 
-    return new $statement($targets, $drop['ifExists'], $release::from($input['release']), $drop['temporaryOnly'] ?? false);
+    $references = array_map(static fn (array $edge) => new SqlSemantics\Platform\MySql\Ir\Schema\DropDependency\TableDropReference(
+        mysqlTableIdentity($namespace, $edge[0]), mysqlTableIdentity($namespace, $edge[1])
+    ), $drop['references'] ?? []);
+
+    return new $statement($targets, $references, $drop['ifExists'], $release::from($input['release']), $drop['temporaryOnly'] ?? false);
 }
 
 function observeDropTable(string $namespace, object $value, string $dialect): array

@@ -1,0 +1,149 @@
+{
+  "revision": "SemanticsIR/mysql-session-drop-table-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native InnoDB, utf8mb4, exact relation cases, empty sql_mode and a persistent observer connection separate from the owner of session-temporary tables. The stock foreign_key_checks=1 mode is part of the checked profile.",
+  "extends": [
+    "server-drop-table-v2.json",
+    "mysql-session-table-sources-v1.json",
+    "mysql-truncate-v2.json",
+    "mysql-session-drop-table-v1.json",
+    "mysql-drop-table-foreign-dependencies-v1.json"
+  ],
+  "additionalPublicRoots": [],
+  "constructors": {
+    "AbsentDropTarget": {
+      "type": "Schema/Identity/AbsentDropTarget",
+      "role": "An absolute coordinate with an established absence in the namespace selected by the enclosing DROP operation.",
+      "structure": "One checked absolute TableName.",
+      "conditions": "An enclosing DROP with this role requires IF EXISTS. A completed analysis establishes qualified absence in the selected namespace.",
+      "meaning": "Address the native missing-name condition. For DROP TEMPORARY TABLE a same-named permanent object does not satisfy presence.",
+      "sql": "Emit the exact absolute coordinate in the checked target order."
+    },
+    "DropTable": {
+      "type": "Schema/DropTable",
+      "role": "A native ordered removal of checked table identities in the appropriate MySQL namespaces.",
+      "structure": "An owned nonempty ordered list of TableIdentity or AbsentDropTarget, explicit IF EXISTS and TEMPORARY policies, and native release.",
+      "conditions": "Each absolute coordinate is distinct. TEMPORARY admits only session-local identities and known permitted absence. IF EXISTS permits the absence role. Analysis resolves all required names in the native statement namespace before publication. The complete native persistent dependencies are explicit construction inputs and satisfy the selected release's group rule.",
+      "meaning": "Remove resolved tables, retain unrelated tables and their rows, and preserve native presence diagnostics. Unmodified DROP TABLE commits earlier work even when a resolved target is temporary. DROP TEMPORARY TABLE leaves the transaction open and its temporary removal survives rollback.",
+      "sql": "Emit DROP, the explicit TEMPORARY qualifier if specified, TABLE, optional IF EXISTS and every qualified name. Native RESTRICT and CASCADE have no effect."
+    }
+  },
+  "existingRoles": [
+    "Schema/Identity/TableIdentity",
+    "Schema/TableName",
+    "From/ExternalRelationKind"
+  ],
+  "structure": "Ordered closed target roles, their absolute names, the written operation namespace and missing-object policy.",
+  "conditions": "For ordinary DROP TABLE use native session-visible name precedence. For the explicit TEMPORARY form allow only temporary resolution, even when a persistent table has the same coordinates. Direct construction checks every target role and relation between the flags and target list.",
+  "meaning": "Native affected relations and catalog state, durable temporary removal and exact surrounding transaction boundaries. Optional absent names produce notes.",
+  "sql": "Use the native DDL spelling corresponding to the explicit operation namespace and checked identity list.",
+  "observations": [
+    "Exact persistent and temporary rows, complete relation presence and same-name decoys before, after and after rollback",
+    "Temporary deletion persists through rollback while its transaction marker can be rolled back",
+    "Ordinary removal has an implicit commit even when all resolved targets are temporary",
+    "An explicitly absent temporary table produces the native missing-object note while preserving a same-named permanent table",
+    "Mixed table removal affects exactly the declared persistent and temporary operands"
+  ],
+  "finite": {
+    "fixture": [
+      "shadow-primary",
+      "shadow-decoy",
+      "shadow-both",
+      "temporary-only-primary"
+    ],
+    "targets": [
+      "primary",
+      "decoy",
+      "primary-first",
+      "decoy-first"
+    ],
+    "policy": [
+      "ordinary-required",
+      "ordinary-optional",
+      "temporary-required",
+      "temporary-optional"
+    ],
+    "identities": 55,
+    "membership": "Use every tuple except temporary-required whose list contains an identity with no session-temporary table in that fixture. Those inadmissible combinations have independent negative witnesses.",
+    "completeness": "Recover the actual ordered list, presence and namespace roles and both policies from the loaded value. Match the selected native permanent and session fixture independently."
+  },
+  "analysis": [
+    "Temporarily shadowed name under ordinary DROP TABLE",
+    "Temporary-only name under explicit DROP TEMPORARY TABLE",
+    "Explicit temporary request with a same-named permanent table",
+    "Explicit optional temporary absence while the permanent table exists",
+    "Mixed temporary and persistent operands using absolute names",
+    "Multiple temporary tables removed in one statement",
+    "Known absence in the named current database",
+    "Native RESTRICT and CASCADE on table removal preserve the same effects"
+  ],
+  "negative": [
+    "Empty direct list",
+    "Repeated absolute coordinates",
+    "Known absence without IF EXISTS",
+    "Persistent identity under the explicit TEMPORARY modifier",
+    "A string in place of one typed target",
+    "Unknown temporary-only table under a complete catalog",
+    "Unresolved required temporary table under an incomplete catalog",
+    "Optional absence without an absolute identity"
+  ],
+  "exploration": {
+    "seeds": [
+      653,
+      6379,
+      9173
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary both native namespaces, mixed and homogeneous lists, relative write order, missing-name policy and fixture row values."
+  },
+  "faults": [
+    "Erase the explicit TEMPORARY qualifier",
+    "Resolve a shadowed temporary declaration as the permanent identity",
+    "Redirect an absolute target to a same-named table in another schema",
+    "Remove the second target from a mixed removal",
+    "Admit a permanent target with the TEMPORARY modifier",
+    "Admit a known absent target without IF EXISTS"
+  ],
+  "evidence": {
+    "P01": "Retain absolute names, target identities and explicit namespace and presence policies.",
+    "P02": "Require the exact table or absence role, nonempty distinct targets and coherent flags.",
+    "P03": "The statement retains no analysis declaration, source SQL or native connection.",
+    "P04": "The native operation and checked ordered targets determine effects under the same interpreted namespaces.",
+    "P05": "Own the ordered target list and retain only immutable closed child values.",
+    "P06": "Emit precisely the native removal with its effective qualifier, absence and transaction policy.",
+    "Q01": "Check the actual PHP shape and independent invalid fixture and direct construction cases.",
+    "Q02": "Exhaust the fixed domain and authored and seeded positives with separate rejections.",
+    "Q03": "Predict remaining tables, rows, warnings and transaction state without using the SQL renderer.",
+    "Q04": "Compare both namespaces and exact transaction and diagnostic effects against real servers.",
+    "Q05": "Link the same checked roles to isolated installation and native replay."
+  },
+  "open": [
+    "Engine-specific constraints on DROP, lock and privilege effects, native crash recovery and group replication.",
+    "Separate proof remains required for complete temporary table creation and all supported storage engines."
+  ],
+  "trust": [
+    "Same external catalog, interpreting connection and complete persistent dependency input",
+    "Native grammar and engine for each pinned release",
+    "Exact fixed observer and replay"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/drop-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html"
+  ]
+}

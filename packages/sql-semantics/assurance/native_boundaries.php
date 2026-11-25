@@ -97,7 +97,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-ordered-table-rename-boundaries-v2.json', '47429c60cbcf1cad80643c5d3d48c59c30029ff2b049e9d994a535ac9bb492d3'],
             ['mysql-truncate-boundaries-v1.json', 'fc59f04c29a91fb5423d92e050c2018bd2636e6e53e45760a8fad2c4b4f52cee'],
             ['mysql-truncate-boundaries-v3.json', '80433ddbbd087315e5ea04ab0f08e589034e046e5009654956a4a8c147220636'],
-            ['mysql-session-drop-boundaries-v1.json', '8148c415133267210c259420c5433491ff0a6037da169743fdf31d595bc6b9ca'],
+            ['mysql-session-drop-boundaries-v2.json', '4b9c35cf442d0b74a444987e83719bacab728265fc6c5c437ff5270578311b0c'],
             ['mysql-session-table-sources-boundaries-v1.json', 'f7d52901e9c0e384623182b33b5d21290c977dd83af0ad469b87d058293e8e57'],
             ['mysql-innodb-declaration-width-boundaries-v1.json', 'e7c171a1be33301f6f958c16c03c7cec3dcaf2c5e2255c0037bda886be137894'],
             ['mysql-create-table-as-width-boundaries-v1.json', '12a13739e29e7129ad7e8d4beac9686040cc82b4b4598a7fc7002810ff4d2eb9'],

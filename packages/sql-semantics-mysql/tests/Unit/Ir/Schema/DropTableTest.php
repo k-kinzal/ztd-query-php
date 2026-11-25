@@ -21,7 +21,7 @@ final class DropTableTest extends TestCase
     public function testProfileIdIdentifiesTheNativeRelease(): void
     {
         $name = new TableName(new Identifier('app'), new Identifier('a'));
-        $drop = new DropTable([new TableIdentity($name, ExternalRelationKind::BaseTable)]);
+        $drop = new DropTable([new TableIdentity($name, ExternalRelationKind::BaseTable)], []);
 
         self::assertStringStartsWith('mysql-9.1.0/', $drop->profileId());
     }
@@ -31,7 +31,7 @@ final class DropTableTest extends TestCase
         $schema = new Identifier('app');
         $first = new TableIdentity(new TableName($schema, new Identifier('b')), ExternalRelationKind::TemporaryTable);
         $second = new AbsentDropTarget(new TableName($schema, new Identifier('a')));
-        $drop = new DropTable([$first, $second], true, temporaryOnly: true);
+        $drop = new DropTable([$first, $second], [], true, temporaryOnly: true);
 
         self::assertSame('DROP TEMPORARY TABLE IF EXISTS `app`.`b`, `app`.`a`', $drop->toString());
     }

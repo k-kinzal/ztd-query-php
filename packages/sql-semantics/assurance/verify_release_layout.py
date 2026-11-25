@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v159.json"
-CONTRACT = "fbea6c081a5eb3576ddef40c60610708ea494a95826ad7094fa01c4345b01d56"
+CONTRACT_NAME = "release-layout-v160.json"
+CONTRACT = "b3d17fa91ffe81193a42c286e5b398e03036d2722dd182b4796aba37dd1ede57"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -859,6 +859,15 @@ def verify_probe(raw, catalog):
                 [False, False, ["temporary-table", "table"], "DROP TABLE `app`.`accounts`, `app`.`retained`"],
                 [True, True, ["temporary-table", "absent"], "DROP TEMPORARY TABLE IF EXISTS `app`.`accounts`, `app`.`retained`"],
             ], "installed-mysql-session-drop-mismatch", item)
+            require(item.get("mysqlDropTableDependencies") == [
+                "DROP TABLE `app`.`drop_parent`, `app`.`drop_child`",
+                "DROP TABLE `app`.`drop_parent`, `app`.`drop_child`",
+                "DROP TABLE `app`.`drop_child`, `app`.`drop_parent`",
+                "DROP TABLE must include every referencing persistent child.",
+                "DROP TABLE must include every referencing persistent child.",
+                "This MySQL release must drop a referencing child before its parent.",
+                "DROP TABLE must include every referencing persistent child.",
+            ], "installed-mysql-drop-table-dependency-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Truncate\\TruncateTable"):
             require(item.get("mysqlTruncate") == ["app", "accounts", "table", "temporary-table"]
                     and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",

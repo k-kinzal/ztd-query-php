@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\DropDependency\DropReferenceLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\AbsentDropTarget;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
@@ -63,6 +64,8 @@ final class DropTableLowering
             $targets[] = $kind === null ? new AbsentDropTarget($coordinate) : new TableIdentity($coordinate, $kind);
         }
 
-        return new DropTable($targets, $statement->ifExists, $profile->grammar, $statement->temporary);
+        $references = (new DropReferenceLowering())->resolve($context, $targets);
+
+        return new DropTable($targets, $references, $statement->ifExists, $profile->grammar, $statement->temporary);
     }
 }

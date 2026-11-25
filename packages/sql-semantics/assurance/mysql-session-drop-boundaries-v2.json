@@ -1,0 +1,175 @@
+{
+  "revision": "SemanticsIR/mysql-session-drop-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check table and absence roles, detached ordered targets, explicit modifier and matching native binding in the deployed classes. Exact persistent foreign-key placement and legacy order before publishing an admitted table removal.",
+  "rules": {
+    "Schema/Identity/AbsentDropTarget::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Identity/AbsentDropTarget::quoted": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->name->quoted();"
+      ]
+    },
+    "Schema/DropTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(array_is_list($targets) && $targets !== [], 'DROP TABLE needs a nonempty target list.');",
+        "$seen = [];",
+        "$checked = [];",
+        "foreach ($targets as $target) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity || $target instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\AbsentDropTarget, 'DROP TABLE requires checked target identities.');",
+        "    if ($target instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\AbsentDropTarget) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($ifExists, 'An absent DROP TABLE target requires IF EXISTS.');",
+        "    } elseif ($temporaryOnly) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable, 'DROP TEMPORARY TABLE requires session-local targets.');",
+        "    }",
+        "    $key = $target->quoted();",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'DROP TABLE cannot repeat a target.');",
+        "    $seen[$key] = true;",
+        "    $checked[] = $target;",
+        "}",
+        "$dependencies = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($references, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropDependency\\TableDropReference::class, 'DROP TABLE requires a checked native dependency list.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropDependency\\DropTableDependencies())->check($checked, $dependencies, $release);",
+        "$this->targets = $checked;"
+      ]
+    },
+    "Schema/DropTable::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/foreign-key-checks=1';"
+      ]
+    },
+    "Schema/DropTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->targets as $target) {",
+        "    $names[] = $target->quoted();",
+        "}",
+        "return 'DROP ' . ($this->temporaryOnly ? 'TEMPORARY ' : '') . 'TABLE ' . ($this->ifExists ? 'IF EXISTS ' : '') . implode(', ', $names);"
+      ]
+    },
+    "Schema/DropTableLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native && $profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) && $context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'DROP TABLE requires the default native profile.');",
+        "$schemas = [$context->declarationSchema->value => true];",
+        "foreach ($context->tables as $table) {",
+        "    $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;",
+        "}",
+        "$targets = [];",
+        "foreach ($statement->tables as $target) {",
+        "    $resolution = $operation->facts->relation($target)->table;",
+        "    if ($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolution->table->kind === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\RelationKind::BaseTable) {",
+        "        $name = $resolution->table->name;",
+        "        $schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "        $kind = $resolution->table->temporary ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable;",
+        "    } elseif ($statement->ifExists && $resolution instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AbsentTable) {",
+        "        $name = $resolution->name;",
+        "        $schema = ($name->schema ?? (new \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase())->named($context))?->value;",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== null && isset($schemas[$schema]), 'Optional DROP TABLE needs a known explicit schema.');",
+        "        $kind = null;",
+        "    } else {",
+        "        throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('DROP TABLE requires an ordinary table or a known schema-qualified absence.');",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name->catalog === null && $schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'DROP TABLE needs an absolute table identity.');",
+        "    $coordinate = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($name->name->value));",
+        "    $targets[] = $kind === null ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\AbsentDropTarget($coordinate) : new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity($coordinate, $kind);",
+        "}",
+        "$references = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropDependency\\DropReferenceLowering())->resolve($context, $targets);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropTable($targets, $references, $statement->ifExists, $profile->grammar, $statement->temporary);"
+      ]
+    },
+    "Schema/DropDependency/TableDropReference::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($child->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable && $parent->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable, 'A native foreign key relates two persistent tables.');"
+      ]
+    },
+    "Schema/DropDependency/DropTableDependencies::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$legacy = match ($release) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 => true,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql8044, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql810, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql820, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql830, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql847, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql901, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910 => false,",
+        "};",
+        "$positions = [];",
+        "foreach ($targets as $index => $target) {",
+        "    if ($target instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity && $target->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable) {",
+        "        $positions[$target->name->schema->value][$target->name->table->value] = $index;",
+        "    }",
+        "}",
+        "foreach ($references as $reference) {",
+        "    $parent = $positions[$reference->parent->name->schema->value][$reference->parent->name->table->value] ?? null;",
+        "    $child = $positions[$reference->child->name->schema->value][$reference->child->name->table->value] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($parent !== null, 'A DROP TABLE dependency must name a selected persistent parent.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($child !== null, 'DROP TABLE must include every referencing persistent child.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$legacy || $child <= $parent, 'This MySQL release must drop a referencing child before its parent.');",
+        "}"
+      ]
+    },
+    "Schema/DropDependency/DropReferenceLowering::resolve": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$references = [];",
+        "foreach ($targets as $target) {",
+        "    if (!$target instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity || $target->kind !== \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable) {",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($context->complete, 'Persistent DROP TABLE needs a complete catalog of referencing tables.');",
+        "    array_push($references, ...$this->incoming($context, $target));",
+        "}",
+        "return $references;"
+      ]
+    },
+    "Schema/DropDependency/DropReferenceLowering::incoming": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$references = [];",
+        "foreach ($context->foreignKeys as $edge) {",
+        "    $schema = $edge->parent->schema?->value;",
+        "    if ($edge->parent->name->value !== $target->name->table->value || $schema !== $target->name->schema->value && $schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED) {",
+        "        continue;",
+        "    }",
+        "    $childSchema = $edge->child->schema?->value;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED && $childSchema !== null && $childSchema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'The foreign-key dependency needs an absolute child and parent namespace.');",
+        "    $name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($childSchema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($edge->child->name->value));",
+        "    $references[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropDependency\\TableDropReference(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity($name, \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable), $target);",
+        "}",
+        "return $references;"
+      ]
+    }
+  },
+  "extends": "mysql-session-drop-boundaries-v1.json"
+}
