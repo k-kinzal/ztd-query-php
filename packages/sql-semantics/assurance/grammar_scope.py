@@ -833,6 +833,7 @@ def inventory(root):
             for alternative in signatures & (foreign_addition | alter_index):
                 related[alternative] = (*related.get(alternative, ()), "mysql-add-foreign-keys-evidence-v1.json")
                 related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-string-evidence-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-scalar-evidence-v2.json")
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
             generated_keys = {

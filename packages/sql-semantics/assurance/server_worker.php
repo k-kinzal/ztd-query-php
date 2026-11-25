@@ -1134,11 +1134,32 @@ function constructMysqlForeignKeyPair(array $field, string $namespace): object
 
         return new $pair(new $name($field[0]), new $name($field[1]), $domain, $field[5], $field[6]);
     }
+    if ($field[2] === 'scalar') {
+        $comparison = $types . 'ForeignKeyScalarDomain';
+        $domain = new $comparison(constructMysqlForeignKeySide($field[3], $namespace), constructMysqlForeignKeySide($field[4], $namespace));
+
+        return new $pair(new $name($field[0]), new $name($field[1]), $domain, $field[5], $field[6]);
+    }
     $storage = $namespace . 'Schema\\IntegerStorage';
     $comparison = $types . 'ForeignKeyIntegerDomain';
     $domain = new $comparison($storage::from($field[2]), $field[3]);
 
     return new $pair(new $name($field[0]), new $name($field[1]), $domain, $field[4], $field[5]);
+}
+
+function constructMysqlForeignKeySide(array $value, string $namespace): object
+{
+    $types = $namespace . 'Schema\\ForeignKey\\Add\\Domain\\';
+    $integer = $types . 'ForeignKeyIntegerDomain';
+    $integerWidth = $namespace . 'Schema\\IntegerStorage';
+    $scalar = $types . 'ForeignKeyScalarStorage';
+    $scalarKind = $types . 'ForeignKeyScalarKind';
+
+    return match ($value[0]) {
+        'integer' => new $integer($integerWidth::from($value[1]), $value[2]),
+        'string' => constructMysqlForeignKeyString(array_slice($value, 1), $types),
+        'scalar' => new $scalar($scalarKind::from($value[1]), $value[2], $value[3], $value[4], $value[5]),
+    };
 }
 
 function observeMysqlForeignKeyPair(
@@ -1152,8 +1173,27 @@ function observeMysqlForeignKeyPair(
 
         return [...$sides, 'string', $child, $parent, $field->nullable, $field->descending];
     }
+    if ($domain instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarDomain) {
+        return [...$sides, 'scalar', observeMysqlForeignKeySide($domain->child), observeMysqlForeignKeySide($domain->parent),
+            $field->nullable, $field->descending];
+    }
 
     return [...$sides, $domain->storage->value, $domain->unsigned, $field->nullable, $field->descending];
+}
+
+function observeMysqlForeignKeySide(
+    SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyIntegerDomain
+        |SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringStorage
+        |SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarStorage $side
+): array {
+    return match (true) {
+        $side instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyIntegerDomain =>
+            ['integer', $side->storage->value, $side->unsigned],
+        $side instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringStorage =>
+            ['string', $side->kind->value, $side->length, $side->collation?->value],
+        $side instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarStorage =>
+            ['scalar', $side->kind->value, $side->precision, $side->scale, $side->unsigned, $side->zerofill],
+    };
 }
 
 function constructMysqlAddForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys

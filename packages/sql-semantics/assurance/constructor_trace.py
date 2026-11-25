@@ -6,8 +6,8 @@ from run import digest, require
 from scope import CONTRACTS, public_scope
 
 
-DECLARATIONS = "constructor-declarations-v29.json"
-DECLARATION_DIGEST = "edf52db81f9fde79d90a311b63cac57f9b9e2d4ec127281249b84f4c0d9503c6"
+DECLARATIONS = "constructor-declarations-v30.json"
+DECLARATION_DIGEST = "79a26f3c6a07c850aa8224f9a4fb3b4900489a8687955ac60d7b347080ecaab6"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 FIELDS = {
     "role": ("role", "roles"),
@@ -74,9 +74,10 @@ def role_declaration(record, name, role, supplement):
     for key in declarations.get("obligations", ()):
         require(key in OBLIGATIONS, "trace-unknown-obligation", [name, role, key])
         planned[key].append({"contract": name, "pointer": f"{prefix}/obligations"})
-    if isinstance(record.get("evidence"), dict):
-        for key in OBLIGATIONS.keys() & record["evidence"].keys():
-            planned[key].append({"contract": name, "pointer": f"/evidence/{key}"})
+    for section in ("evidence", "obligationEvidence"):
+        if isinstance(record.get(section), dict):
+            for key in OBLIGATIONS.keys() & record[section].keys():
+                planned[key].append({"contract": name, "pointer": f"/{section}/{key}"})
     return {"contract": name, "role": role, "declaredFields": found, "declaredObligations": planned}
 
 

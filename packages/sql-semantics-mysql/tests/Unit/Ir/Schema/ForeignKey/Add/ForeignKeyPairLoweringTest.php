@@ -7,6 +7,9 @@ namespace Tests\Unit\Ir\Schema\ForeignKey\Add;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarKind;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarStorage;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyPairLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
@@ -46,7 +49,7 @@ final class ForeignKeyPairLoweringTest extends TestCase
         $operation = NativeAdditionFixture::operation('ALTER TABLE app.child ADD FOREIGN KEY(x) REFERENCES parent(a)');
         $tables = $operation->context->tables;
         $part = new ColumnPart(new Name('Y'), direction: Direction::Descending);
-        $pair = (new ForeignKeyPairLowering())->pair($part, new Name('A'), $tables[1], $tables[0], false);
+        $pair = (new ForeignKeyPairLowering())->pair($part, new Name('A'), $tables[1], $tables[0], GrammarRelease::MySql910);
 
         self::assertSame('y', $pair->child->value);
         self::assertTrue($pair->descending);
@@ -71,10 +74,28 @@ final class ForeignKeyPairLoweringTest extends TestCase
     {
         $ddl = 'CREATE TABLE app.strings (x VARBINARY(8), a BINARY(4))';
         $table = (new Inspection())->inspect($ddl)->declarations()[0];
-        $domain = (new ForeignKeyPairLowering())->domain($table->columns[0], $table->columns[1]);
+        $domain = (new ForeignKeyPairLowering())->domain($table->columns[0], $table->columns[1], GrammarRelease::MySql910);
 
         self::assertInstanceOf(ForeignKeyStringDomain::class, $domain);
         self::assertSame(8, $domain->child->length);
         self::assertSame(4, $domain->parent->length);
+    }
+
+    public function testFieldRetainsTheExactNativeScalarType(): void
+    {
+        $table = (new Inspection())->inspect('CREATE TABLE app.fields (x TIME(3))')->declarations()[0];
+        $field = (new ForeignKeyPairLowering())->field($table->columns[0], GrammarRelease::MySql910);
+
+        self::assertEquals(new ForeignKeyScalarStorage(ForeignKeyScalarKind::Time, 3), $field);
+    }
+
+    public function testDomainPreservesTheTwoDifferentPackedFieldTypes(): void
+    {
+        $table = (new Inspection())->inspect('CREATE TABLE app.fields (x BIT(9), y DECIMAL(10,2))')->declarations()[0];
+        $domain = (new ForeignKeyPairLowering())->domain($table->columns[0], $table->columns[1], GrammarRelease::MySql910);
+
+        self::assertInstanceOf(ForeignKeyScalarDomain::class, $domain);
+        self::assertEquals(new ForeignKeyScalarStorage(ForeignKeyScalarKind::Bit, 9), $domain->child);
+        self::assertEquals(new ForeignKeyScalarStorage(ForeignKeyScalarKind::Decimal, 10, 2), $domain->parent);
     }
 }

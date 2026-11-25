@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v166.json"
-CONTRACT = "c8bc3430e777e927ae5e56421310237f16c97d08c3f96210202c522d1f9b992c"
+CONTRACT_NAME = "release-layout-v167.json"
+CONTRACT = "5ad578252822ac52e2592dae6fde531a1e31fca6792183dc50f15e2a3d0e1954"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -899,6 +899,13 @@ def verify_probe(raw, catalog):
                  ["VARBINARY", 8, None, "BINARY", 4, None, 8]], string_sql,
                 ["The full foreign-key field exceeds the native InnoDB index field limit."],
             ], "installed-mysql-foreign-key-string-domain-mismatch", item)
+            scalar_sql = ("ALTER TABLE `app`.`scalar_child` "
+                          "ADD CONSTRAINT `Packed_Link` FOREIGN KEY (`x`) REFERENCES `app`.`scalar_parent` (`p`) ON UPDATE NO ACTION ON DELETE NO ACTION, "
+                          "ADD CONSTRAINT `Date_Link` FOREIGN KEY (`y`) REFERENCES `app`.`scalar_parent` (`q`) ON UPDATE NO ACTION ON DELETE NO ACTION, "
+                          "ADD CONSTRAINT `Time_Link` FOREIGN KEY (`z`) REFERENCES `app`.`scalar_parent` (`r`) ON UPDATE NO ACTION ON DELETE NO ACTION")
+            require(item.get("mysqlForeignKeyScalarDomains") == [
+                ["VARBINARY", 4, "DECIMAL", 9, 0, 4], ["DATE", "MEDIUMINT", False, 3], ["TIME", 1, "TIME", 2, 4], scalar_sql,
+            ], "installed-mysql-foreign-key-scalar-domain-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"

@@ -2601,6 +2601,25 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['mysqlForeignKeyStringDomains'] = [$types, $capacity->toString(), $compactRefusal];
         }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
+            $scalars = $semantics->context([
+                'CREATE TABLE app.scalar_parent (p DECIMAL(9,0) NOT NULL PRIMARY KEY, q MEDIUMINT NOT NULL UNIQUE, r TIME(2) NOT NULL UNIQUE)',
+                'CREATE TABLE app.scalar_child (x VARBINARY(4), y DATE, z TIME(1))',
+            ]);
+            $value = $semantics->analyze('ALTER TABLE app.scalar_child '
+                . 'ADD CONSTRAINT Packed_Link FOREIGN KEY (x) REFERENCES scalar_parent(p), '
+                . 'ADD CONSTRAINT Date_Link FOREIGN KEY (y) REFERENCES scalar_parent(q), '
+                . 'ADD CONSTRAINT Time_Link FOREIGN KEY (z) REFERENCES scalar_parent(r)', $scalars);
+            [$packed, $date, $clock] = array_map(static fn ($addition) => $addition->pairs[0]->domain, $value->additions);
+            $details['mysqlForeignKeyScalarDomains'] = [
+                [$packed->child->kind->value, $packed->child->length, $packed->parent->kind->value, $packed->parent->precision,
+                    $packed->parent->scale, $packed->childKeyBytes()],
+                [$date->child->kind->value, $date->parent->storage->value, $date->parent->unsigned, $date->childKeyBytes()],
+                [$clock->child->kind->value, $clock->child->precision, $clock->parent->kind->value,
+                    $clock->parent->precision, $clock->childKeyBytes()],
+                $value->toString(),
+            ];
+        }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\DropForeignKeys') {
             $runtimeType = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys::class;
             $first = $result->actions[0];

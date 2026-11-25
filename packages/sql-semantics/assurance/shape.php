@@ -1491,21 +1491,32 @@ if ($dialect !== 'sqlite') {
         $foreignStringKind = $foreignDomains . 'ForeignKeyStringKind';
         $foreignStringStorage = $foreignDomains . 'ForeignKeyStringStorage';
         $foreignCollation = $foreignDomains . 'ForeignKeyTextCollation';
+        $foreignScalar = $foreignDomains . 'ForeignKeyScalarDomain';
+        $foreignScalarStorage = $foreignDomains . 'ForeignKeyScalarStorage';
+        $foreignScalarKind = $foreignDomains . 'ForeignKeyScalarKind';
         $foreignCapacity = $foreignDomains . 'ForeignKeyKeyCapacity';
-        array_push($internal, $foreignCapacity, $foreignDomains . 'ForeignKeyStringLowering');
+        array_push($internal, $foreignCapacity, $foreignDomains . 'ForeignKeyStringLowering', $foreignDomains . 'ForeignKeyScalarLowering');
         $pureCollaborators[] = $foreignCapacity;
-        $properties[$foreignPair] = ['child' => ['Identifier'], 'parent' => ['Identifier'], 'domain' => [$foreignInteger, $foreignString],
+        $properties[$foreignPair] = ['child' => ['Identifier'], 'parent' => ['Identifier'], 'domain' => [$foreignInteger, $foreignScalar, $foreignString],
             'nullable' => ['bool'], 'descending' => ['bool']];
         $properties[$foreignInteger] = ['storage' => ['Schema\\IntegerStorage'], 'unsigned' => ['bool']];
         $properties[$foreignString] = ['child' => [$foreignStringStorage], 'parent' => [$foreignStringStorage]];
         $properties[$foreignStringStorage] = ['kind' => [$foreignStringKind], 'length' => ['int'], 'collation' => ['?' . $foreignCollation]];
+        $physical = [$foreignInteger, $foreignScalarStorage, $foreignStringStorage];
+        $properties[$foreignScalar] = ['child' => $physical, 'parent' => $physical];
+        $properties[$foreignScalarStorage] = ['kind' => [$foreignScalarKind], 'precision' => ['?int'], 'scale' => ['?int'],
+            'unsigned' => ['bool'], 'zerofill' => ['bool']];
+        $properties[$foreignScalarKind] = [];
         $properties[$foreignStringKind] = $properties[$foreignCollation] = [];
-        $methods[$foreignInteger] = $methods[$foreignString] = ['__construct', 'childKeyBytes'];
-        $methods[$foreignStringStorage] = ['__construct', 'keyBytes'];
+        $methods[$foreignInteger] = $methods[$foreignString] = $methods[$foreignScalar] = ['__construct', 'childKeyBytes'];
+        $methods[$foreignStringStorage] = $methods[$foreignScalarStorage] = ['__construct', 'keyBytes'];
+        $methods[$foreignScalarKind] = ['packed', 'dimensions', 'accepts'];
         $methods[$foreignStringKind] = ['text', 'fixed'];
         $methods[$foreignCollation] = [];
         $enumCases[$foreignStringKind] = ['Char' => 'CHAR', 'Varchar' => 'VARCHAR', 'Binary' => 'BINARY', 'Varbinary' => 'VARBINARY'];
         $enumCases[$foreignCollation] = ['Binary' => 'utf8mb4_bin', 'General' => 'utf8mb4_general_ci', 'Unicode' => 'utf8mb4_unicode_ci'];
+        $enumCases[$foreignScalarKind] = ['Decimal' => 'DECIMAL', 'Bit' => 'BIT', 'Single' => 'FLOAT', 'Double' => 'DOUBLE',
+            'Date' => 'DATE', 'Year' => 'YEAR', 'Time' => 'TIME', 'DateTime' => 'DATETIME', 'Timestamp' => 'TIMESTAMP'];
         $properties[$foreignKeyFact] = ['identity' => [$indexIdentity], 'fields' => ['array'], 'full' => ['bool'], 'referenceKey' => ['bool']];
         $properties[$foreignFieldFact] = ['field' => ['Identifier'], 'descending' => ['bool']];
         $properties[$foreignSymbolFact] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier']];
@@ -2594,6 +2605,8 @@ try {
                     || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')
                     || ($dialect === 'mysql' && $short === 'Schema\\Query\\CreateAsRecord' && in_array($call->name->toString(), ['intdiv', 'strlen'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\Storage\\InnoDbRecord' && in_array($call->name->toString(), ['min', 'intdiv'], true))
+                    || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyScalarStorage'
+                        && in_array($call->name->toString(), ['min', 'intdiv'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\Alter\\RenameTable' && $call->name->toString() === 'array_key_exists')
                     || ($dialect === 'mysql' && $short === 'Schema\\Index\\Batch\\AutoIncrementRemovalSet'
                         && in_array($call->name->toString(), ['ksort', 'array_diff_key'], true))
@@ -2658,7 +2671,7 @@ try {
             $operators = [];
             foreach ($class->stmts as $case) {
                 if ($case instanceof Stmt\ClassMethod && (
-                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'Schema\\Index\\IndexRole', 'From\\ExternalRelationKind', 'From\\ColumnKind', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyStringKind'], true))
+                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'Schema\\Index\\IndexRole', 'From\\ExternalRelationKind', 'From\\ColumnKind', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyStringKind', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyScalarKind'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Sequence\\SequencePersistence')
                 )) {
                     continue;

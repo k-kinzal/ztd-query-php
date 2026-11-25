@@ -6,8 +6,12 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyIntegerDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarStorage;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringStorage;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -43,10 +47,9 @@ final class ForeignKeyPairLowering
             $references !== null && count($references) === count($definition->columns),
             'A native foreign key requires an explicit parent field list of the same width.'
         );
-        $legacy = (new ForeignKeyRemovalSet())->legacy($release);
         $pairs = [];
         foreach ($definition->columns as $position => $column) {
-            $pairs[] = $this->pair($column, $references[$position], $child, $parent, $legacy);
+            $pairs[] = $this->pair($column, $references[$position], $child, $parent, $release);
         }
 
         return $pairs;
@@ -55,8 +58,9 @@ final class ForeignKeyPairLowering
     /**
      * Binds both field coordinates and compares their native storage domains.
      */
-    public function pair(ColumnPart $part, Name $referenced, Table $child, Table $parent, bool $legacy): ForeignKeyPair
+    public function pair(ColumnPart $part, Name $referenced, Table $child, Table $parent, GrammarRelease $release): ForeignKeyPair
     {
+        $legacy = (new ForeignKeyRemovalSet())->legacy($release);
         Check::input(
             $part->length === null && (!$legacy || $part->direction === null),
             'A native foreign key requires full fields and release-appropriate ordering.'
@@ -67,28 +71,46 @@ final class ForeignKeyPairLowering
         return new ForeignKeyPair(
             new Identifier($left->name->value),
             new Identifier($right->name->value),
-            $this->domain($left, $right),
+            $this->domain($left, $right, $release),
             $left->nullability === Nullability::Nullable,
             $part->direction === Direction::Descending,
         );
     }
 
     /**
-     * Settles a compatible native integer or string comparison.
+     * Settles the checked native comparison between the effective field encodings.
      */
-    public function domain(Column $child, Column $parent): ForeignKeyIntegerDomain|ForeignKeyStringDomain
+    public function domain(Column $child, Column $parent, GrammarRelease $release): ForeignKeyIntegerDomain|ForeignKeyScalarDomain|ForeignKeyStringDomain
     {
-        $left = $this->integer($child->type);
-        $right = $this->integer($parent->type);
-        if ($left !== null && $left === $right) {
-            return new ForeignKeyIntegerDomain($left[0], $left[1]);
+        $left = $this->field($child, $release);
+        $right = $this->field($parent, $release);
+        if ($left instanceof ForeignKeyIntegerDomain && $right instanceof ForeignKeyIntegerDomain
+            && $left->storage === $right->storage && $left->unsigned === $right->unsigned) {
+            return $left;
         }
-        $strings = new ForeignKeyStringLowering();
-        $childType = $strings->storage($child);
-        $parentType = $strings->storage($parent);
-        Check::input($childType !== null && $parentType !== null, 'A native foreign-key pair needs compatible checked field domains.');
+        if ($left instanceof ForeignKeyStringStorage && $right instanceof ForeignKeyStringStorage) {
+            return new ForeignKeyStringDomain($left, $right);
+        }
+        Check::input(
+            $left !== null && $right !== null
+            && ($left instanceof ForeignKeyScalarStorage || $right instanceof ForeignKeyScalarStorage),
+            'A native foreign-key pair needs compatible checked field domains.'
+        );
 
-        return new ForeignKeyStringDomain($childType, $parentType);
+        return new ForeignKeyScalarDomain($left, $right);
+    }
+
+    /**
+     * Reads the physical field role without retaining the source declaration.
+     */
+    public function field(Column $column, GrammarRelease $release): ForeignKeyIntegerDomain|ForeignKeyScalarStorage|ForeignKeyStringStorage|null
+    {
+        $integer = $this->integer($column->type);
+        if ($integer !== null) {
+            return new ForeignKeyIntegerDomain($integer[0], $integer[1]);
+        }
+
+        return (new ForeignKeyStringLowering())->storage($column) ?? (new ForeignKeyScalarLowering())->storage($column->type, $release);
     }
 
     /**
