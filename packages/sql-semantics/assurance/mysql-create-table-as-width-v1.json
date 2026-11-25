@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-width-1",
+  "approval": "pending-human-review",
+  "extends": ["mysql-innodb-declaration-width-v1.json", "mysql-create-table-as-v1.json", "mysql-create-table-as-integer-width-v1.json", "mysql-create-table-as-source-v1.json", "mysql-create-table-as-varchar-v1.json", "mysql-create-table-as-declarations-v1.json"],
+  "dialects": ["MySql"],
+  "releases": ["5.6.51", "5.7.44", "8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+  "mode": "Stock InnoDB with 16 KiB pages, exact table names, utf8mb4 and empty SQL mode. MySQL 5.6 uses the stock non-strict dictionary profile. Every other release uses the strict dictionary profile.",
+  "scope": "Extend the width acceptance of checked query-backed InnoDB tables to the native boundaries. Keep both declaration namespaces, source-free and supported external table projections, the accepted explicit column forms and resolved typed inherited fields.",
+  "constructors": {
+    "CreateTableAs": {
+      "type": "Schema/Query/CreateTableAs",
+      "role": "A complete query-backed native table definition and materialization.",
+      "structure": "Absolute native table identity and lifetime, ordered typed projection, ordered explicit signed fields and existence policy. The projection contributes inferred native definitions unless an explicit field with the same decoded name overrides its storage.",
+      "conditions": "The effective ordered heading must fit the native 1017-column and 65535-byte logical row limits. In the stock strict profile the full maximum clustered record, including nullable bits and the hidden native row identity, must be below 8126 bytes. Count each projected occurrence separately. Resolve each inherited input field, including its native nullability. Preserve the analyzed source-free filter and checked table source restrictions.",
+      "meaning": "A declaration-only column precedes the SELECT contribution. A matching explicit column occupies the SELECT column's position and supplies its native storage, default and nullability. Source-free integer and NULL storage follows the frozen release-specific inference, including the difference between the legacy and modern result of CAST AS SIGNED. Each inherited native column takes its resolved external field role. Empty input and remaining input rows have the same definition effect, with distinct materialization effects. A non-strict MySQL 5.6 execution can still fail to store an actual oversized row.",
+      "sql": "Render explicit declarations followed by the completed typed SELECT, preserving both field orders and resolved input names. Preserve source-free predicate meaning on a legacy profile using the native one-row operand where needed."
+    },
+    "ColumnKind": {
+      "type": "From/ColumnKind",
+      "role": "A native signed 32-bit external input field's nullability case.",
+      "structure": "An immutable closed case paired with its absolute source column slot.",
+      "conditions": "When lowering from an external declaration, choose the known required or nullable role. For CTAS every referenced inherited field uses one exact declared role.",
+      "meaning": "Both roles retain native signed 32-bit arithmetic; the required role omits the nullable storage flag when deriving the inherited field layout.",
+      "sql": "Render the resolved input slot name. A native reference inherits its nullability from the same external table definition."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "coordinateOrder": "Use the registered heading families in order, ascending widths within each family, persistent then temporary, populated then empty; construct through each direct and analyzed route.",
+    "widthsByFamily": {
+      "small-int": [128, 129, 1017, 1018],
+      "long-int": [997, 998, 1012, 1013, 1017],
+      "signed-cast": [129, 1012, 1013, 1017],
+      "signed-null": [997, 998, 1017],
+      "untyped-null": [129, 1017, 1018],
+      "explicit-same-name": [129, 1012, 1013, 1017, 1018],
+      "explicit-extra-name": [128, 129, 1016, 1017],
+      "inherited-signed": [129, 1017, 1018],
+      "inherited-varchar-nullable": [196, 197],
+      "inherited-varchar-required": [197, 198]
+    },
+    "edges": [
+      "An explicit TINYINT wins over a projected wide term at its own ordered slot.",
+      "Required and nullable inherited signed fields change the clustered record just below and exactly at 8126 when combined with VARCHAR occurrences.",
+      "A declared shape above the strict physical boundary is declined before publication even with an empty query result.",
+      "Exercise the 65535-byte logical limit and every byte of the two native VARCHAR length prefix cases.",
+      "A guarded wide definition retains the prior namespace object and row values.",
+      "The non-strict stock MySQL 5.6 effect distinguishes a wide definition with an empty source from failure to insert an oversized row."
+    ]
+  },
+  "exploration": {
+    "seeds": [7247, 13043, 18617],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": [],
+    "structure": "Vary source positions, repeated field occurrences, nullability, release-specific inferred integer types, literal values, explicit-name overlap, order, lifetime and the resulting native definition and rows."
+  },
+  "observations": [
+    "Exact release, language profile and stock InnoDB storage properties.",
+    "Exact table identity, lifetime, field order and name, stored type, nullability and inherited or explicit default metadata.",
+    "Value types, duplicate and NULL rows and no fabricated populated rows for an empty input.",
+    "Guarded occupancy, typed strict 1117 and 1118 failures at the appropriate construction boundary, and separately observed 5.6 insertion-time failure effects.",
+    "Count effective heading columns and native physical storage based on the observed declarations and both semantic construction paths."
+  ],
+  "faults": [
+    "Reinstate the arbitrary 128-column projection or combined width limit.",
+    "Count both an explicit definition and its matching selected slot.",
+    "Ignore an explicit override of projected storage.",
+    "Erase a required or nullable inherited signed input role at a native boundary.",
+    "Drop a projected occurrence or substitute another valid field at the final wide position.",
+    "Treat every release's CAST AS SIGNED as wide.",
+    "Omit a mandatory native row-width refusal from the observed finite grid."
+  ],
+  "trust": ["The fixed InnoDB storage profiles, the independently observed native expression inference, the declaration resolver and the separate comparison of every admitted native field and materialized row."],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-select.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-limits.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/column-count-limit.html"
+  ]
+}
