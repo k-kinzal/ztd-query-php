@@ -2,6 +2,8 @@
 
 import argparse
 import difflib
+import json
+import subprocess
 from hashlib import sha256
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -14,8 +16,8 @@ from run import TOOL, Failure, candidate_distribution, digest, require, shape, v
 
 
 ENGINES = ("mysql", "postgres", "sqlite")
-FAULT_REPLAY_NAME = "native-boundary-fault-replay-v1.json"
-FAULT_REPLAY = "24245e8ebb14fe057a5e6e7b0545f936b2176ee2c179ac4fc2d99659befe3d51"
+FAULT_REPLAY_NAME = "native-boundary-fault-replay-v2.json"
+FAULT_REPLAY = "ff6f0bb0bd9fc0bdadec03a780003f87bec97515f76a2ad908772877a96f8bd1"
 
 
 def native_boundary_procedures(tools):
@@ -1406,6 +1408,47 @@ def expected_rejection(engine, fault):
     return {"status": "shape-mismatch", "message": fault.message or message}
 
 
+def mechanism(fault):
+    return "full-binding-source-audit" if fault.artifact else "registered-method-template"
+
+
+def method_target(args, engine, fault, source):
+    command = ["php", str(TOOL / "check_native_method_mutation.php"), str(args.tool_autoload),
+               str(source), engine, fault.role]
+    result = subprocess.run(command, check=False, capture_output=True, text=True, timeout=60)
+    require(result.returncode in (0, 1) and not result.stderr, "native-method-audit-process",
+            {"boundary": fault.role, "exitCode": result.returncode, "stderr": result.stderr})
+    response = json.loads(result.stdout)
+    if result.returncode == 1:
+        require(response["status"] == "shape-mismatch", "native-method-audit-invalid-response", response)
+        raise Failure(response["status"], response)
+    require(response == {"status": "method-target-verified", "boundary": fault.role},
+            "native-method-audit-invalid-response", response)
+    return response
+
+
+def checked_rejection(call, engine, fault):
+    try:
+        call()
+    except Failure as failure:
+        expected = expected_rejection(engine, fault)
+        require(failure.signal == "shape-mismatch" and failure.detail == expected, "wrong-native-boundary-fault-signal",
+                {"fault": fault.name, "response": failure.detail})
+        return failure.detail
+    raise Failure("native-boundary-fault-not-detected", fault.name)
+
+
+def method_equivalence(args, engine, fault, receipt):
+    relative = receipt["path"]
+    original = args.candidate / "packages" / relative
+    overlay = args.out / engine / fault.name
+    healthy = method_target(args, engine, fault, original)
+    complete = checked_rejection(lambda: shape(args, overlay, engine), engine, fault)
+    require(complete == receipt["observed"], "native-method-audit-disagreement", fault.name)
+    return {"case": fault.name, "role": fault.role, "source": receipt["source"], "mutation": receipt["mutation"],
+            "healthyTarget": healthy, "targetedRejection": receipt["observed"], "fullRejection": complete}
+
+
 def fault_plan(candidate, distribution):
     require(digest(TOOL / FAULT_REPLAY_NAME) == FAULT_REPLAY, "native-boundary-fault-replay-contract")
     planned = {}
@@ -1421,7 +1464,8 @@ def fault_plan(candidate, distribution):
             after = sha256(mutated).hexdigest()
             require(before == digest(source) and after != before, "native-boundary-fault-source", fault.name)
             entries.append({"name": fault.name, "role": fault.role, "path": relative, "source": before,
-                            "mutation": after, "expected": expected_rejection(engine, fault)})
+                            "mutation": after, "mechanism": mechanism(fault),
+                            "expected": expected_rejection(engine, fault)})
         require(entries and len({entry["name"] for entry in entries}) == len(entries), "native-boundary-fault-plan", engine)
         planned[engine] = entries
     return planned
@@ -1444,17 +1488,15 @@ def check_fault(args, engine, fault, distribution):
                                 f"a/{relative}", f"b/{relative}")
     (overlay / "injected.diff").write_text("".join(diff))
 
-    try:
-        shape(args, overlay, engine)
-    except Failure as failure:
-        expected = expected_rejection(engine, fault)
-        require(failure.signal == "shape-mismatch" and failure.detail == expected, "wrong-native-boundary-fault-signal",
-                {"fault": fault.name, "response": failure.detail})
-        record = {"name": fault.name, "role": fault.role, "healthy": "verified", "path": relative,
-                  "source": before, "mutation": after, "expected": expected, "observed": failure.detail}
-        write_json(overlay / "result.json", record)
-        return record
-    raise Failure("native-boundary-fault-not-detected", fault.name)
+    if fault.artifact:
+        observed = checked_rejection(lambda: shape(args, overlay, engine), engine, fault)
+    else:
+        observed = checked_rejection(lambda: method_target(args, engine, fault, altered), engine, fault)
+    record = {"name": fault.name, "role": fault.role, "healthy": "verified", "path": relative,
+              "source": before, "mutation": after, "mechanism": mechanism(fault),
+              "expected": expected_rejection(engine, fault), "observed": observed}
+    write_json(overlay / "result.json", record)
+    return record
 
 
 def main():
@@ -1486,7 +1528,16 @@ def main():
         require({fault.role for fault in cases if not fault.artifact} <= set(healthy["checkedBoundaries"])
                 and {fault.artifact for fault in cases if fault.artifact} <= healthy["checkedBindingSources"].keys(),
                 "native-boundary-audit-incomplete", engine)
-        results[engine] = {"healthy": healthy, "faults": [check_fault(args, engine, fault, manifest) for fault in cases]}
+        first = next(fault for fault in cases if not fault.artifact)
+        records = []
+        control = None
+        for fault in cases:
+            receipt = check_fault(args, engine, fault, manifest)
+            records.append(receipt)
+            if fault == first:
+                control = method_equivalence(args, engine, fault, receipt)
+        require(control is not None, "native-method-audit-missing-control", engine)
+        results[engine] = {"healthy": healthy, "methodControl": control, "faults": records}
     verify_candidate(args.candidate, identity, manifest)
     write_json(args.out / "index.json", {
         "status": "provisional-native-construction-shape",

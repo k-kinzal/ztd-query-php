@@ -79,6 +79,11 @@ def replay(checkout, directory, index, distribution):
         observed = shape["faults"]
         require(shape["healthy"]["status"] == "verified", "native-fault-replay-healthy-control", engine)
         checked_receipts(engine, planned[engine], observed)
+        first = next(entry for entry in planned[engine] if entry["mechanism"] == "registered-method-template")
+        expected_control = {"case": first["name"], "role": first["role"], "source": first["source"], "mutation": first["mutation"],
+                            "healthyTarget": {"status": "method-target-verified", "boundary": first["role"]},
+                            "targetedRejection": first["expected"], "fullRejection": first["expected"]}
+        require(shape.get("methodControl") == expected_control, "native-fault-replay-method-equivalence", engine)
         witnesses = {}
         for receipt, fault in zip(observed, faults(engine)):
             relative = receipt["path"]
@@ -89,11 +94,12 @@ def replay(checkout, directory, index, distribution):
             patched = exact_patch(source, fault.before, fault.after, fault.name)
             files = verify_artifacts(folder, relative, source, receipt["source"], receipt["mutation"],
                                      patched=patched, prefixes=True)
-            witnesses[fault.name] = {"role": fault.role, "signal": receipt["observed"],
+            witnesses[fault.name] = {"role": fault.role, "signal": receipt["observed"], "mechanism": receipt["mechanism"],
                                      "artifacts": links(folder, directory, relative, {**files, "receipt": digest(path)})}
         results[engine] = witnesses
     return {"status": "provisional-native-fault-replay", "candidate": index["candidate"], "contract": FAULT_REPLAY,
             "plan": descriptor, "dialects": results, "mysqlSignedStorage": signed,
+            "methodEquivalence": {engine: index["results"][engine]["methodControl"] for engine in ENGINES},
             "controls": comparator_controls(checkout, planned["sqlite"], index["results"]["sqlite"]["faults"])}
 
 
