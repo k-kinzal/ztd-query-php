@@ -22,7 +22,7 @@ jobs:
       checks: read
       statuses: read
     steps:
-      - uses: upsidr/merge-gatekeeper@v1
+      - uses: upsidr/merge-gatekeeper@bcae4dd95601d7f4dec78eac18d17f372efbd7dd # v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # Mutation jobs may run for 60 minutes; allow their startup and queue time as well.
