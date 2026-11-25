@@ -351,10 +351,19 @@ function observeMysqlSignedProjection(SqlSemantics\Platform\MySql\Semantics $sem
     $literal = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral($digits);
     $label = new SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName($digits);
     $result = new SqlSemantics\Platform\MySql\Ir\ResultColumn($literal, $label);
-    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$result], release: $semantics->profile()->grammar);
+    $release = $semantics->profile()->grammar;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$result], release: $release);
+    $wrapper = '+ (((+ (-' . $digits . '))))';
+    $wrapped = $semantics->analyze('SELECT ' . $wrapper);
+    $negative = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral('-' . $digits);
+    $negativeLabel = new SqlSemantics\Platform\MySql\Ir\Identifier(substr($wrapper, 0, 255));
+    $wrappedDirect = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn($negative, $negativeLabel),
+    ], release: $release);
 
     return [$direct == $analyzed, $analyzed == $batch, $analyzed->columns[0]->expression::class,
-        $analyzed->columns[0]->name::class, $literal->decimal(), $analyzed->columns[0]->name->value, $analyzed->toString()];
+        $analyzed->columns[0]->name::class, $literal->decimal(), $analyzed->columns[0]->name->value, $analyzed->toString(),
+        $wrappedDirect == $wrapped, $wrapped->columns[0]->expression->decimal(), $wrapped->columns[0]->name->value, $wrapped->toString()];
 }
 
 function observeMysqlNativeTruth(SqlSemantics\Platform\MySql\Semantics $semantics): array

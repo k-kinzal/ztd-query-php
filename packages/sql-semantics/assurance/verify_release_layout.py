@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v193.json"
-CONTRACT = "2e8597b90316217e63ca20ae21d3076435dedd6faf144d3fad4014f22d302eb7"
+CONTRACT_NAME = "release-layout-v194.json"
+CONTRACT = "87e052fbfda6f42851b8d1da67b43d02c63be729385bbdf8c04021dd4993a8dc"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -582,10 +582,12 @@ def verify_probe(raw, catalog):
             ], "installed-mysql-external-view-mismatch", item)
             mysql_ir = r"SqlSemantics\Platform\MySql\Ir" + chr(92)
             digits = "0" * 256 + "2147483648"
+            negative_heading = ("+ (((+ (-" + digits + "))))")[:255]
             signed_projection = item.get("mysqlSignedProjection")
             require(signed_projection == [
                 True, True, mysql_ir + r"Literal\ProjectedIntegerLiteral", mysql_ir + r"Literal\IntrinsicIntegerName",
                 "2147483648", digits, "SELECT " + digits,
+                True, "-2147483648", negative_heading, "SELECT -" + digits + " AS `" + negative_heading + "`",
             ], "installed-mysql-signed-projection-mismatch", signed_projection)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",

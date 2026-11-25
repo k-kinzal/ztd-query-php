@@ -7,6 +7,17 @@ VALUES = ("-9223372036854775808", "-9223372036854775807", "-2147483649", "-21474
           "-1", "-0", "0", "1", "2147483647", "2147483648", "9223372036854775807")
 PADDING = (0, 1, 31, 32, 33, 68, 255, 256, 512, 4096)
 HEADINGS = ("literal_value", "intrinsic")
+WRAPPED_VALUES = ("-9223372036854775808", "-2147483649", "-1", "-0", "0", "1", "2147483648", "9223372036854775807")
+WRAPPED_PADDING = (0, 33, 256, 4096)
+WRAPPERS = {
+    "group": "({signed})",
+    "trivia": "(  {signed} /* tail */ )",
+    "outer-plus": "+ ({signed})",
+    "inner-plus": "(+ {signed})",
+    "magnitude": "{sign} ({digits})",
+    "sign-comment": "{sign}/* middle */{digits}",
+    "nested-plus": "+ (((+ ({signed}))))",
+}
 
 
 def grid(contract):
@@ -18,8 +29,18 @@ def independent_ids():
     return {(value, padding, label) for value in VALUES for padding in PADDING for label in HEADINGS}
 
 
-def term(value, padding, heading, sign_spaced=False, explicit_plus=False):
-    return [value, padding, heading, sign_spaced, explicit_plus]
+def wrapped_grid(contract):
+    bounds = contract["finite"]
+    yield from product(bounds["wrappedStyles"], bounds["wrappedValues"], bounds["wrappedPadding"], bounds["headings"])
+
+
+def independent_wrapped_ids():
+    return {(wrapper, value, padding, label) for label in HEADINGS for value in WRAPPED_VALUES
+            for wrapper in WRAPPERS for padding in WRAPPED_PADDING}
+
+
+def term(value, padding, heading, sign_spaced=False, explicit_plus=False, wrapper="plain"):
+    return [value, padding, heading, sign_spaced, explicit_plus, wrapper]
 
 
 def case(tag, *columns):
@@ -31,16 +52,21 @@ def token(value, padding):
     return sign + "0" * padding + value.lstrip("-")
 
 
-def sql_atom(column):
-    value, padding, label, sign_spaced, explicit_plus = column
+def sql_expression(column):
+    value, padding, _, sign_spaced, explicit_plus, wrapper = column
     lexeme = token(value, padding)
+    if wrapper != "plain":
+        sign = "-" if lexeme.startswith("-") else "+"
+        return WRAPPERS[wrapper].format(signed=lexeme, sign=sign, digits=lexeme.lstrip("-"))
     if lexeme.startswith("-") and sign_spaced:
-        lexeme = "- " + lexeme[1:]
-    elif explicit_plus:
-        lexeme = "+ " + lexeme
-    if label != "intrinsic":
-        lexeme += " AS `" + label.replace("`", "``") + "`"
-    return lexeme
+        return "- " + lexeme[1:]
+    return ("+ " if explicit_plus else "") + lexeme
+
+
+def sql_atom(column):
+    expression = sql_expression(column)
+    label = column[2]
+    return expression if label == "intrinsic" else expression + " AS `" + label.replace("`", "``") + "`"
 
 
 def command(item):
@@ -48,12 +74,12 @@ def command(item):
 
 
 def label_text(column):
-    value, padding, label, sign_spaced, _ = column
+    value, padding, label, *_ = column
     if label != "intrinsic":
         return label
     signed = token(value, padding)
     if signed.startswith("-"):
-        return (("- " + signed[1:]) if sign_spaced else signed)[:255]
+        return sql_expression(column)[:255]
     return signed
 
 
@@ -107,7 +133,7 @@ def expected(item):
     return {"status": "rows", "fields": fields, "rows": [values], "warnings": []}
 
 
-def seeded(tag, seed, count):
+def seeded(tag, seed, count, wrapped=False):
     rng = Random(seed)
     sizes = (*PADDING, 127, 234, 235, 257, 1024, 2048)
     for index in range(count):
@@ -116,6 +142,8 @@ def seeded(tag, seed, count):
             value = rng.choice(VALUES) if index % 3 else str(rng.randint(-(2**63), 2**63 - 1))
             padding = sizes[(index + position) % len(sizes)]
             label = rng.choice(("intrinsic", "same", f"out_{position}"))
+            styles = ("plain", *WRAPPERS)
+            wrapper = styles[(index + position) % len(styles)] if wrapped else "plain"
             fields.append(term(value, padding, label, value.startswith("-") and bool(index % 2),
-                               not value.startswith("-") and bool(index % 2)))
+                               not value.startswith("-") and bool(index % 2), wrapper))
         yield case(tag, *fields)

@@ -37,7 +37,7 @@ final class ProjectedIntegerLowering
         if ($expression === null) {
             return null;
         }
-        $token = (new IntegerTokenLowering())->spelling($expression);
+        $token = (new IntegerTokenLowering())->groupedSpelling($expression);
         if ($token === null) {
             return null;
         }

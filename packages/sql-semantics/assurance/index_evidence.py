@@ -8,7 +8,7 @@ from pathlib import Path
 from os.path import relpath
 import re
 
-from compare_assurance_revisions import review
+from compare_assurance_revisions import EVIDENCE_CONTRACTS, review
 from check_native_boundaries import native_boundary_procedures
 from check_fixture_launch_recovery import CONTROL_CASES as NATIVE_FIXTURE_CONTROLS, verify_storage_control
 from check_native_workflow import audit as audit_workflow
@@ -307,12 +307,15 @@ class Evidence:
 
     def native(self, profiles):
         domains = {}
+        contracts = CONTRACTS | EVIDENCE_CONTRACTS
+        require(set(NATIVE.values()) <= contracts.keys(), "bundle-unregistered-native-schedules",
+                sorted(set(NATIVE.values()) - contracts.keys()))
         for domain, contract in NATIVE.items():
             item = self.optional(f"native-replay/{domain}.json")
             if item is None:
                 continue
             path, origin, report = item
-            require(report["contract"] == CONTRACTS[contract], "bundle-unregistered-native-contract", origin)
+            require(report["contract"] == contracts[contract] == self.tools[contract], "bundle-unregistered-native-contract", origin)
             if domain == "projection":
                 require(report["admissionContract"] == CONTRACTS["server-projection-admission-v1.json"],
                         "bundle-projection-admission-mismatch", origin)

@@ -15,8 +15,10 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-signed-projection"
 OBSERVER = "mysql_signed_projection_observer.php"
-CONTRACT_NAME = "mysql-signed-literal-projection-v1.json"
-CONTRACT = "a0294a1e33ddc757efd780fae5e99196109bc420663263676ddfeff3536471ee"
+CONTRACT_NAME = "mysql-signed-literal-projection-v2.json"
+CONTRACT = "09611c7b3e9d8469a80543aa0b8e931db6f68c257772dc21289b872e69b9009e"
+BASE_NAME = "mysql-signed-literal-projection-v1.json"
+BASE = "a0294a1e33ddc757efd780fae5e99196109bc420663263676ddfeff3536471ee"
 COMPARATOR_FAULTS = {"Ignore a changed visible width with an unchanged integer value": "wireExtent"}
 MEANING = "meaning-mismatch"
 
@@ -25,6 +27,8 @@ def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "mysql-signed-projection-contract")
     contract = json.loads(path.read_text())
+    require(contract["reference"] == {"file": BASE_NAME, "sha256": BASE} and digest(TOOL / BASE_NAME) == BASE,
+            "mysql-signed-projection-base")
     require(contract["finite"]["allowedExclusions"] == contract["exploration"]["allowedExclusions"] == [],
             "mysql-signed-projection-no-exclusions")
     return contract, source_profiles()[1]
@@ -39,12 +43,23 @@ def check_preparation(_, environment, response):
     same({"status": "fixture"}, response)
 
 
-def finite_ids(_, contract, _tag):
+def direct_finite_ids(_, contract, _tag):
     ordered = list(law.grid(contract))
     independent = law.independent_ids()
-    require(set(ordered) == independent and len(ordered) == len(independent) == contract["finite"]["coordinatesPerRoute"],
+    require(set(ordered) == independent and len(ordered) == len(independent) == contract["finite"]["coordinatesPerRoute"]
+            == contract["finite"]["directCoordinates"],
             "mysql-signed-projection-finite-definition")
     return independent
+
+
+def finite_ids(engine, contract, tag):
+    original = {("plain", *coordinate) for coordinate in direct_finite_ids(engine, contract, tag)}
+    ordered = list(law.wrapped_grid(contract))
+    wrapped = law.independent_wrapped_ids()
+    require(set(ordered) == wrapped and len(ordered) == len(wrapped) == contract["finite"]["wrappedAnalyzeCoordinates"]
+            and len(original) + len(wrapped) == contract["finite"]["analyzeCoordinates"],
+            "mysql-signed-projection-wrapped-finite-definition")
+    return original | wrapped
 
 
 def finite_id(_, response, item):
@@ -54,7 +69,7 @@ def finite_id(_, response, item):
 
 def analysis_finite_id(engine, response, item, sql):
     same(law.command(item), sql)
-    return finite_id(engine, response, item)
+    return (item["columns"][0][5], *finite_id(engine, response, item))
 
 
 def direct_finite_id(engine, response, item, request):
@@ -83,11 +98,18 @@ def requests(_, tag, contract):
         item = law.case(tag, law.term(*coordinate))
         yield f"finite/{index}", law.analyze(item), item, None
         yield f"direct/{index}", law.direct(item), item, None
+    for index, (wrapper, value, padding, label) in enumerate(law.wrapped_grid(contract), contract["finite"]["coordinatesPerRoute"]):
+        item = law.case(tag, law.term(value, padding, label, wrapper=wrapper))
+        yield f"finite/{index}", law.analyze(item), item, None
     for index, (request, reason) in enumerate(negatives(tag)):
         yield f"negative/{index}", request, None, reason
     budget = contract["exploration"]
     for seed in budget["seeds"]:
-        for index, item in enumerate(law.seeded(tag, seed, budget["casesPerSeed"])):
+        original = budget["predecessorCasesPerSeed"]
+        for index, item in enumerate(law.seeded(tag, seed, original)):
+            yield f"seed/{seed}/{index}", law.analyze(item), item, None
+        extra = budget["casesPerSeed"] - original
+        for index, item in enumerate(law.seeded(tag, seed, extra, wrapped=True), original):
             yield f"seed/{seed}/{index}", law.analyze(item), item, None
         for index, item in enumerate(law.seeded(tag, seed + 1, budget["directCasesPerSeed"])):
             yield f"direct-seed/{seed}/{index}", law.direct(item), item, None
@@ -117,20 +139,22 @@ def check_observation(item, value, sql):
     require(canonical(value) == canonical(expected), MEANING, detail)
 
 
-def sample_forms(forms: Counter, response, *_):
+def sample_forms(forms: Counter, response, _, item):
     forms[f"projection/{len(response['columns'])}"] += 1
-    for value, heading in response["columns"]:
+    for (value, heading), column in zip(response["columns"], item["columns"]):
         signed, padding, _ = law.physical((value, heading))
         forms[f"value/{value[0]}"] += 1
         forms[f"width/{padding > 32}"] += 1
         forms[f"heading/{type(heading).__name__}"] += 1
+        forms[f"source-wrapper/{column[5]}"] += 1
         if signed == "-0":
             forms["value/negative-zero"] += 1
 
 
 def required_forms(*_):
     return {"projection/1", "projection/2", "projection/3", "projection/4", "value/integer",
-            "value/projected-integer", "width/False", "width/True", "heading/str", "heading/list", "value/negative-zero"}
+            "value/projected-integer", "width/False", "width/True", "heading/str", "heading/list", "value/negative-zero",
+            *(f"source-wrapper/{wrapper}" for wrapper in law.WRAPPERS)}
 
 
 def control_pad(tag):

@@ -669,7 +669,10 @@ def assurance_revision_case(args, name, filename, registry_name, field):
     require(text.count(digest(source)) == 1, "revision-control-registry-anchor")
     registry.write_text(text.replace(digest(source), digest(target)))
     measured = review(before, after)
-    expected = [{"family": filename.rsplit("-v", 1)[0], "field": field,
+    family = filename.rsplit("-v", 1)[0]
+    if registry_name == "compare_assurance_revisions.py":
+        family = "native-schedule/" + family
+    expected = [{"family": family, "field": field,
                  "before": previous, "after": previous - 1}]
     require(measured["status"] == "review-required" and measured["observedPotentialReductions"] == expected,
             "revision-control-reduction-not-flagged", measured["observedPotentialReductions"])

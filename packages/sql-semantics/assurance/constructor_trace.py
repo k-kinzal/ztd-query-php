@@ -2,6 +2,7 @@
 
 import json
 
+from compare_assurance_revisions import EVIDENCE_CONTRACTS, evidence_reference
 from run import digest, require
 from scope import CONTRACTS, public_scope
 
@@ -170,12 +171,20 @@ def installed_roles(staged, constructors):
 def trace(scope, manifest, tools, sqlite, native, guards, staged):
     declaration_index, records, declarations = active_declarations(tools)
     native_links = {item["contract"]: item for item in native.values()}
+    schedules = {}
+    for name in sorted(native_links.keys() & EVIDENCE_CONTRACTS.keys()):
+        path = tools / name
+        require(digest(path) == EVIDENCE_CONTRACTS[name], "trace-evidence-contract-digest-mismatch", name)
+        owner = evidence_reference(json.loads(path.read_text()), CONTRACTS, name)
+        schedules.setdefault(owner, {})[name] = native_links[name]
     sqlite_links = {} if sqlite is None else sqlite["domains"]
     contracts = {}
     for name, record in records.items():
         receipts = {}
         if name in native_links:
             receipts["native"] = native_links[name]
+        if name in schedules:
+            receipts["nativeSchedules"] = schedules[name]
         if name in sqlite_links:
             receipts["sqlite"] = sqlite_links[name]
         if name == "server-projection-admission-v1.json":

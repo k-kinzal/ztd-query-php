@@ -929,6 +929,8 @@ def faults(engine):
                   "$this->keys = $grouping;", "$this->keys = $keys;"),
             Fault("allow-mismatched-mysql-intrinsic-integer-heading", "ResultColumn::__construct",
                   "$expression->token === $name->value", "true"),
+            Fault("discard-mysql-projected-signed-wrapper-polarity", "Literal/IntegerTokenLowering::groupedSpelling",
+                  "$negative = true;", "$negative = false;"),
             Fault("allow-repeated-mysql-view-removal-target", "Schema/View/DropView::__construct",
                   "!isset($seen[$key]),", "true,"),
             Fault("consult-mysql-session-overlay-for-view-removal", "Schema/View/DropViewLowering::lower",

@@ -14,6 +14,7 @@ EVIDENCE_CONTRACTS = {
     "mysql-native-truth-evidence-v1.json": "04ef1d090ad68a3d9cf44ee4a4ec521bb5b3a9073c31368c2938811fbe49b576",
     "mysql-signed-case-evidence-v1.json": "db3e34e6cbab5a3225d9cf31e5dcd359486a1f621bbc9647404c1ef55eb4e702",
     "mysql-signed-comparison-widths-evidence-v2.json": "c20091712f5939bbd445b4eca72a7070e03dcc758489c8657c5b6896803b4ba7",
+    "mysql-signed-literal-projection-v2.json": "09611c7b3e9d8469a80543aa0b8e931db6f68c257772dc21289b872e69b9009e",
     "mysql-signed-membership-evidence-v1.json": "7690a15d3d4d3520375e08b4275a04693011c92a10b2cb82baeca7e4cd896bd4",
     "postgres-signed-membership-evidence-v1.json": "afacf1e6c7706ceede0c99a6cdedf537085715d2a1358d2095b17f3425ddf36a",
 }
@@ -31,7 +32,7 @@ SCOPE_FIELDS = ("scope", "approval", "profile", "profiles", "release", "mode", "
                 "arrayRoutes", "unconstrainedReturns", "backedEnums", "single", "batch", "context", "surface", "forbidden",
                 "runtimeRoles", "enumRoutes", "recipe", "acceptance", "reference", "negativeCount", "legacyFaults",
                 "legacyReleases", "sourceFaults", "boundaryInputs", "boundaryWitnesses", "seedPlacements",
-                "seedCompositions", "calibration")
+                "seedCompositions", "calibration", "binding")
 
 
 def literal_value(path, variable):
@@ -49,6 +50,15 @@ def literal_registry(path, variable):
     require(type(value) is dict and value and all(type(key) is str and type(entry) is str for key, entry in value.items()),
             "revision-registry-shape", variable)
     return value
+
+
+def evidence_reference(record, registry, name):
+    reference = record.get("reference")
+    require(type(reference) is dict and reference.keys() == {"file", "sha256"}
+            and type(reference["file"]) is str and reference["file"] in registry
+            and registry[reference["file"]] == reference["sha256"] and "constructors" not in record,
+            "revision-evidence-contract-reference", name)
+    return reference["file"]
 
 
 def declared_contracts(tools):
@@ -73,15 +83,12 @@ def declared_contracts(tools):
         record = json.loads(path.read_text())
         require(type(record) is dict and type(record.get("revision")) is str,
                 "revision-contract-shape", name)
-        if name in evidence:
-            reference = record.get("reference")
-            require(type(reference) is dict and reference.keys() == {"file", "sha256"}
-                    and type(reference["file"]) is str and reference["file"] in registry
-                    and registry[reference["file"]] == reference["sha256"] and "constructors" not in record,
-                    "revision-evidence-contract-reference", name)
         family = CONTRACT_FAMILY.fullmatch(name)
         require(family is not None, "revision-contract-name", name)
-        records.setdefault(family[1], {})[name] = {"sha256": fingerprint, "data": record}
+        if name in evidence:
+            evidence_reference(record, registry, name)
+        group = ("native-schedule/" if name in evidence else "") + family[1]
+        records.setdefault(group, {})[name] = {"sha256": fingerprint, "data": record}
     return records
 
 
