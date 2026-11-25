@@ -1,0 +1,46 @@
+{
+  "revision": "SemanticsIR/mysql-alter-index-removal-1",
+  "approval": "pending-human-review",
+  "extends": ["mysql-drop-native-index-evidence-v3.json", "mysql-native-index-policy-evidence-v2.json"],
+  "language": "The nine pinned native MySQL profiles and their fixed stock InnoDB settings.",
+  "scope": "An ALTER TABLE statement with one DROP INDEX, DROP KEY or DROP PRIMARY KEY action and native ALGORITHM and LOCK modifiers. Include persistent, session-temporary and shadowed ownership. Include ALTER IGNORE TABLE in the 5.6.51 grammar and table or database qualification of the dropped key in 5.6.51 and 5.7.44.",
+  "constructedRole": {
+    "type": "Schema/Index/DropIndex",
+    "structure": "The absolute native table and its exact physical index identity, the effective bounded DDL algorithm and lock, the grammar release, and the legacy IGNORE choice.",
+    "conditions": "One physical key action names exactly one index on its resolved target. Unqualified and correctly qualified references select the same key. The native explicit PRIMARY role is required for DROP PRIMARY KEY. Implicit cluster identity remains a named unique key. Qualifiers on key names are supported by the two legacy grammars. The native 5.6.51 release alone admits IGNORE. Validate every written spelling in the grammar profile, then apply the final known algorithm and lock independently. Check that the final requested policy is compatible with the resolved target and removal operation.",
+    "meaning": "Remove the selected physical key and its enforcement policy. Preserve the matched table ownership, other indexes and rows, and the implicit commit. Repeated supported option directives update the same native request. Keep the legacy IGNORE behavior and its deprecation warning.",
+    "sql": "Normal removal uses the existing absolute standalone DROP INDEX form. Legacy IGNORE renders ALTER IGNORE TABLE with the absolute name, exact physical index and comma-separated options."
+  },
+  "finite": {
+    "forms": ["drop-index", "drop-key", "drop-primary-key"],
+    "ownership": ["persistent", "temporary", "temporary-shadow"],
+    "orderedDirectives": ["no-options", "action-before-options", "action-after-options", "action-between-options",
+                          "last-algorithm-wins", "last-lock-wins", "recognized-overridden-instant"],
+    "qualifications": ["unqualified", "actual-table", "actual-database-and-table", "foreign-table", "foreign-database"],
+    "legacyIgnore": ["enabled-in-5.6.51", "syntax-refused-in-each-later-release"],
+    "budgets": {"timeoutSecondsPerRelease": 480, "seeds": [1721, 7499, 14021], "casesPerSeed": 12, "directCasesPerSeed": 12},
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare parsed SQL and emitted SQL against independent ordered key, row, type, enforcement, and transaction effects.",
+    "Compare analyzed and direct immutable shapes, including the effective option directives and the legacy IGNORE role.",
+    "Observe native 1103 and 1102 before implicit commit for incorrect legacy table and database qualifiers, native syntax refusal for qualifiers in modern grammars, native 1091 for an absent physical PRIMARY, and native 1681 for the emitted legacy IGNORE.",
+    "Keep the accepted ALGORITHM and LOCK cases when modifiers change positions. Observe legacy unknown INSTANT, modern recognized INSTANT overridden by a supported final choice, and an unknown spelling in a position that a later choice would otherwise override."
+  ],
+  "faults": [
+    "Confuse an explicit PRIMARY with a named clustered unique key.",
+    "Ignore an incorrect qualifier or select the persistent sibling of a temporary shadow.",
+    "Keep the first algorithm or lock instead of the last.",
+    "Accept an arbitrary second table action and omit it when rendering.",
+    "Erase the legacy IGNORE effect or apply it to another release."
+  ],
+  "trackedBeyondThisSlice": [
+    "General ordered multi-action ALTER TABLE, foreign and check constraint removal, ALGORITHM and LOCK outside this index profile, VALIDATION modifiers, and dependency-aware effects remain separate required grammar and semantic domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/sql_yacc.yy",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/sql_yacc.yy",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.4.7/sql/sql_yacc.yy"
+  ]
+}
