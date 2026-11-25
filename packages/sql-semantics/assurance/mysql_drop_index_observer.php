@@ -34,9 +34,17 @@ function admitIndexFixture(string $sql): bool
     $columnList = '\(' . $name . '(?:, ' . $name . ')?\)';
     $constraint = '(?:PRIMARY KEY|(?:UNIQUE )?INDEX(?: ' . $name . ')?|CONSTRAINT ' . $name . ' UNIQUE) ' . $columnList;
 
-    return strlen($sql) <= 1400 && preg_match('/\ACREATE (?:TEMPORARY )?TABLE `ir_fixture`.`ir_index_removal` \('
+    if (strlen($sql) > 1400) {
+        return false;
+    }
+    $matches = preg_match('/\ACREATE (?:TEMPORARY )?TABLE `ir_fixture`.`ir_index_removal` \('
         . $name . ' INT NOT NULL(?: PRIMARY KEY| UNIQUE)?, `b` INT NULL, `c` INT NOT NULL'
-        . '(?:, ' . $constraint . '){2,5}\) ENGINE=InnoDB\z/Du', $sql) === 1;
+        . '(?:, (?&key)){2,5}\) ENGINE=InnoDB\z(?(DEFINE)(?<key>' . $constraint . '))/Du', $sql);
+    if ($matches === false) {
+        throw new RuntimeException('Index fixture admission failed: ' . preg_last_error_msg());
+    }
+
+    return $matches === 1;
 }
 
 function dropIndexQuote(string $name): string
