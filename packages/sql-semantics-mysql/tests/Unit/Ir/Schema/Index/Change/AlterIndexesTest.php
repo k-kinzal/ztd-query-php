@@ -20,7 +20,7 @@ final class AlterIndexesTest extends TestCase
         $catalog = $semantics->context(['CREATE TABLE app.t (a INT, b INT, KEY a_key(a), KEY b_key(b))']);
         $value = $semantics->analyze('ALTER TABLE app.t RENAME KEY a_key TO b_key, DROP INDEX b_key', $catalog);
         self::assertInstanceOf(AlterIndexes::class, $value);
-        $rebuilt = new AlterIndexes($value->owner, $value->actions, $value->unmoved, [], $value->release, $value->policy);
+        $rebuilt = new AlterIndexes($value->owner, $value->actions, [], [], $value->release, $value->policy);
 
         self::assertSame('ALTER TABLE `app`.`t` RENAME INDEX `a_key` TO `b_key`, DROP INDEX `b_key`', $rebuilt->toString());
         self::assertSame($value->toString(), $rebuilt->toString());

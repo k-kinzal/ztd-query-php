@@ -28,7 +28,7 @@ final class MixedIndexNamespaceTest extends TestCase
         self::assertInstanceOf(IndexIdentity::class, $dropped);
         self::assertInstanceOf(IndexRename::class, $renamed);
 
-        (new MixedIndexNamespace())->check([$dropped], [$renamed], $value->unmoved);
+        (new MixedIndexNamespace())->check([$dropped], [$renamed], []);
 
         self::assertSame($dropped->name->value, $renamed->destination->value);
     }

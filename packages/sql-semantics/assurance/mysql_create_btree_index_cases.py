@@ -23,6 +23,19 @@ def field_type(name):
     return TYPES[FIELD_NAMES.index(name)]
 
 
+def role(index):
+    if not index["unique"]:
+        return "ordinary"
+    types = index["target"]["columnTypes"]
+    required = all(types[slot] == "int-not-null" or
+                   (isinstance(types[slot], list) and len(types[slot]) == 4 and types[slot][3] is False)
+                   for slot, _ in index["columns"])
+    return "clustered-unique" if required and not index["ownerHasIdentityKey"] else "unique"
+
+
+def published_index(definition):
+    return {key: definition[key] for key in ("target", "name", "visible", "policy", "columns")} | {"role": role(definition)}
+
 def definition(tag, lifetime, fields, descends, unique, visible, name, identity="explicit", data="ordinary"):
     heading = sorted(fields)
     target = {"schema": SCHEMA, "table": NAME, "columns": [FIELD_NAMES[field] for field in heading],
@@ -70,6 +83,8 @@ def native_edges(tag):
     yield "accent-distinct-name", definition(tag, "persistent", [0], [False], False, True, "occupiÉd_ix", data="accent-distinct")
     yield "duplicate-populated-rows", definition(tag, "persistent", [0], [False], True, True, "duplicate_ix", data="duplicate")
     yield "temporary-qualified", definition(tag, "temporary-shadow", [17, 2], [True, False], True, True, "shadow_ix")
+    yield "first-clustered-required", definition(tag, "persistent", [0], [False], True, True, "heap_to_cluster", identity="none")
+    yield "first-clustered-after-nullable", definition(tag, "persistent", [0], [False], True, True, "cluster_after_nullable", identity="nullable")
     if tag not in OLD:
         for identity, fields, role in (("none", [1], "nullable-first"),
                                        ("required", [0], "after-required"),
@@ -160,6 +175,21 @@ def table_state(temporary, item, after=False, runtime_error=None, rows=None):
     return {"rows": rows, "indexes": sorted(meta, key=lambda part: (part[0], part[2]))}
 
 
+def physical_roles(item, failure):
+    initial = {"explicit": [["PRIMARY", 3]], "required": [["prior_identity", 3]],
+               "nullable": [["GEN_CLUST_INDEX", 1], ["prior_nullable", 2]], "none": [["GEN_CLUST_INDEX", 1]]}[item["identity"]]
+    if item["data"] in ("occupied", "known-occupied", "accent-distinct"):
+        initial.append(["occupied_ix", 0])
+    result = list(initial)
+    if failure is None:
+        definition = item["mysqlCreateIndex"]
+        kind = role(definition)
+        if kind == "clustered-unique":
+            result.remove(["GEN_CLUST_INDEX", 1])
+        result.append([definition["name"], {"ordinary": 0, "unique": 2, "clustered-unique": 3}[kind]])
+    return {"before": sorted(initial), "after": sorted(result)}
+
+
 def prediction(item, construction_failure=None):
     temporary = item["lifetime"] != "persistent"
     prior = table_state(temporary, item)
@@ -188,4 +218,4 @@ def prediction(item, construction_failure=None):
             indexed = {**indexed, "rows": [*indexed["rows"], added]}
     return {"status": STATUS, "initial": prior, "effect": result, "after": indexed,
             "catalog": permanent if temporary else indexed, "write": prior_write,
-            "marker": 7, "active": False}
+            "marker": 7, "active": False, "physicalRoles": None if temporary else physical_roles(item, runtime_failure)}

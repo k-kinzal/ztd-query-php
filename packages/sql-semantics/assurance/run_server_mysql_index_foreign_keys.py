@@ -5,6 +5,7 @@ import json
 import sys
 
 import mysql_index_fk_cases as laws
+from run_server_mysql_create_btree_index import check_validation_contract
 from run import TOOL, Failure, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -13,9 +14,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-index-foreign-keys"
 OBSERVER = "mysql_index_fk_observer.php"
-NAME = "mysql-index-foreign-keys-evidence-v1.json"
+NAME = "mysql-index-foreign-keys-evidence-v2.json"
 BASE = "9b17cccc8e5e73d603468857a7793cd6af4f03b0e44db20f55185ce2a182b8e0"
-CONTRACT = "a561cae8497665c4ec88ff6701d3d6412acb994000e22844d0729765d611b0da"
+CONTRACT = "f7759163f14432a7202b90891d5e8eeab2c1e75da50c0862f8499ee777bc0154"
 PREFIX = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/"
 COMPARATOR_FAULTS = {
     "Remove one original ordered key term from the native observation.": "ignore-ordered-key",
@@ -28,6 +29,7 @@ def specifications():
     require(digest(source) == BASE and digest(fixed) == CONTRACT, "mysql-index-foreign-keys-contract")
     _, profiles = native_profiles()
     spec, base = json.loads(fixed.read_text()), json.loads(source.read_text())
+    check_validation_contract(spec)
     same(base["profiles"]["releases"], spec["releases"])
     same(spec["releases"], profiles["mysql"]["releases"])
     return spec, profiles
@@ -116,7 +118,10 @@ def check_value(item, actual):
     field = laws.WIRE[model["plan"]]
     require(actual["status"] == "constructed", "mysql-index-foreign-keys-not-constructed", actual)
     same(profile, actual["profile"])
-    same(laws.direct(model)[field], actual[field])
+    expected = {**laws.direct(model)[field]}
+    if field == "mysqlMixedIndexes":
+        expected.pop("unmoved")
+    same(expected, actual[field])
 
 
 def coordinate_seen(actual, item):

@@ -1,0 +1,18 @@
+{
+  "revision": "SemanticsIR/mysql-index-rename-storage-2",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/Rename/RenameIndexes",
+  "storage": {
+    "moves": [
+      "Schema/Index/Rename/IndexRename",
+      1
+    ]
+  },
+  "revises": "mysql-index-rename-storage-v1.json",
+  "validationOnly": {
+    "unmoved": [
+      "Identifier",
+      0
+    ]
+  }
+}

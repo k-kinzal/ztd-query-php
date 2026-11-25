@@ -33,14 +33,14 @@ final class AlterMixedIndexesLoweringTest extends TestCase
         self::assertInstanceOf(DropElement::class, $actions[1]);
     }
 
-    public function testLowerRetainsUnchangedPhysicalNames(): void
+    public function testLowerPublishesOnlyTheOrderedPhysicalChanges(): void
     {
         $semantics = new Semantics();
         $catalog = $semantics->context(['CREATE TABLE app.t (a INT, b INT, KEY a_key(a), KEY b_key(b), KEY stays(a,b))']);
         $value = $semantics->analyze('ALTER TABLE app.t DROP KEY B_KEY, RENAME INDEX A_KEY TO renamed', $catalog);
         self::assertInstanceOf(AlterIndexes::class, $value);
 
-        self::assertSame('stays', $value->unmoved[0]->value);
+        self::assertSame('ALTER TABLE `app`.`t` DROP INDEX `b_key`, RENAME INDEX `a_key` TO `renamed`', $value->toString());
     }
 
     public function testUnmovedAppliesTheNativeCaseTable(): void

@@ -1,0 +1,18 @@
+{
+  "revision": "SemanticsIR/mysql-mixed-index-storage-2",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/Change/AlterIndexes",
+  "storage": {
+    "actions": [
+      "Schema/Index/Change/IndexAlteration",
+      2
+    ]
+  },
+  "revises": "mysql-mixed-index-storage-v1.json",
+  "validationOnly": {
+    "unmoved": [
+      "Identifier",
+      0
+    ]
+  }
+}

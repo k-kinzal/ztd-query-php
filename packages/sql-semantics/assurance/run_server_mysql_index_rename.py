@@ -14,6 +14,7 @@ from mysql_index_rename_cases import (
     prediction, sql, topology_seen,
 )
 from mysql_index_auto_increment_cases import native_key
+from run_server_mysql_create_btree_index import check_validation_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -21,9 +22,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-index-rename"
 OBSERVER = "mysql_index_rename_observer.php"
-NAME = "mysql-index-renames-evidence-v1.json"
+NAME = "mysql-index-renames-evidence-v2.json"
 BASE = "6942384ad796566a7e0100365126c4d60091b0e4647d08a8e10f0d165c55f554"
-CONTRACT = "a0447f8248759f8627ee3cf4bba74c0396678d9de97e5f471554e6a652eb0074"
+CONTRACT = "c0f6530d90d23d9fbdbac1ce380006c21d06d034994d9dce10c4648c1f5881c7"
 STATISTICS = "a00330675b2d716b960e4d440ecb59a72a2110dd6edf4ad2474d317e91ff3d4f"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/rename-indexes"
 LEGACY = "mysql-5.7.44"
@@ -47,6 +48,7 @@ def specifications():
     require(digest(base) == BASE and digest(record) == CONTRACT
             and digest(TOOL / "mysql-index-rename-statistics-v1.json") == STATISTICS, "mysql-index-rename-contract")
     spec, fixed = json.loads(record.read_text()), json.loads(base.read_text())
+    check_validation_contract(spec)
     same(fixed["finite"], spec["finite"])
     same(fixed["exploration"], spec["exploration"])
     profiles = baseline.specifications()[1]
@@ -197,7 +199,8 @@ def check_value(item, response):
     model = item["model"]
     require(response["status"] == "constructed", "mysql-index-rename-constructed", response)
     same(model["release"] + PROFILE, response["profile"])
-    same(model["mysqlIndexRenames"], response["mysqlIndexRenames"])
+    change = model["mysqlIndexRenames"]
+    same({field: change[field] for field in ("owner", "moves", "policy")}, response["mysqlIndexRenames"])
 
 
 def seen(response, item):

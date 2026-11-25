@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIdentityKeys;
 use SqlSemantics\Platform\MySql\Semantics;
 
@@ -24,7 +25,7 @@ final class TableIdentityKeysTest extends TestCase
         $index = $semantics->analyze('CREATE UNIQUE INDEX hidden ON app.events (a) INVISIBLE', $context);
 
         self::assertInstanceOf(CreateIndex::class, $index);
-        self::assertTrue($index->ownerHasIdentityKey);
+        self::assertSame(IndexRole::Unique, $index->role);
         self::assertFalse($index->visible);
     }
 }

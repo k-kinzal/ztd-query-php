@@ -20,7 +20,7 @@ final class RenameIndexesTest extends TestCase
         $context = $semantics->context(['CREATE TABLE app.t (a INT, b INT, KEY left_key(a), KEY right_key(b))']);
         $value = $semantics->analyze('ALTER TABLE app.t RENAME KEY left_key TO right_key, RENAME INDEX right_key TO left_key', $context);
         self::assertInstanceOf(RenameIndexes::class, $value);
-        $rebuilt = new RenameIndexes($value->owner, $value->moves, $value->unmoved, $value->release, $value->policy);
+        $rebuilt = new RenameIndexes($value->owner, $value->moves, [], $value->release, $value->policy);
 
         self::assertSame('ALTER TABLE `app`.`t` RENAME INDEX `left_key` TO `right_key`, RENAME INDEX `right_key` TO `left_key`', $rebuilt->toString());
         self::assertSame($value->toString(), $rebuilt->toString());

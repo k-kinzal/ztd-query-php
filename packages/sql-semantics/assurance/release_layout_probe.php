@@ -2308,19 +2308,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 'CREATE TEMPORARY TABLE app.session_index (a INT NOT NULL, b INT NOT NULL, UNIQUE INDEX prior_identity (b)) ENGINE=InnoDB',
             ]);
             $indexed = $semantics->analyze('CREATE UNIQUE INDEX test_ix ON app.session_index (a DESC) INVISIBLE LOCK=NONE ALGORITHM=COPY', $indexContext);
+            $priorName = new SqlSemantics\Platform\MySql\Ir\Identifier('prior_identity');
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
-                $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, true, $indexed->priorKeys, $indexed->policy,
+                $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, true, [$priorName], $indexed->policy,
             );
             $rejected = null;
             try {
                 new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
-                    $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, false, $indexed->priorKeys, $indexed->policy,
+                    $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, false, [], $indexed->policy,
                 );
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $rejected = $error->getMessage();
             }
             $details['mysqlBtreeIndex'] = [$indexed->target->kind->value, $indexed->target->columnTypes[0]->value,
-                $indexed->ownerHasIdentityKey, $indexed->columns[0]->descending, $indexed->visible,
+                $indexed->role->value, $direct->role->value, $indexed->columns[0]->descending, $indexed->visible,
                 $indexed->toString(), $direct->toString(), $rejected];
             $occupied = null;
             try {
@@ -2329,7 +2330,6 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $occupied = $error->getMessage();
             }
             $details['mysqlIndexNamespace'] = [
-                array_map(static fn ($name): string => $name->value, $indexed->priorKeys),
                 $indexed->policy->algorithm->value, $indexed->policy->lock->value, $occupied,
             ];
         }
@@ -2472,7 +2472,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'MySql' && $role === 'Schema\\Index\\Rename\\RenameIndexes') {
             $moves = $result->moves;
-            $unmoved = $result->unmoved;
+            $unmoved = [new SqlSemantics\Platform\MySql\Ir\Identifier('by_c')];
             $first = $moves[0];
             $moves[0] = &$first;
             $untouched = $unmoved[0];
@@ -2489,7 +2489,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $unavailable = SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651;
             try {
-                new $roleType($result->owner, $result->moves, $result->unmoved, $unavailable);
+                new $roleType($result->owner, $result->moves, [new SqlSemantics\Platform\MySql\Ir\Identifier('by_c')], $unavailable);
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $legacyDirect = $error->getMessage();
             }
@@ -2504,7 +2504,6 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['mysqlIndexRename'] = [
                 array_map(static fn ($move): array => [$move->source->value, $move->destination->value], $rebuilt->moves),
-                array_map(static fn ($name): string => $name->value, $rebuilt->unmoved),
                 $rebuilt->toString(), $occupied, $legacyDirect, $legacyAnalysis,
             ];
         }
@@ -2513,7 +2512,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $first = $inputs[0];
             $inputs[0] = &$first;
             $class = SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes::class;
-            $rebuilt = new $class($result->owner, $inputs, $result->unmoved, [], $result->release, $result->policy);
+            $unmoved = [new SqlSemantics\Platform\MySql\Ir\Identifier('keeps_a')];
+            $rebuilt = new $class($result->owner, $inputs, $unmoved, [], $result->release, $result->policy);
             $first = $inputs[1];
             $removed = $rebuilt->actions[0]->operation;
             $renamed = $rebuilt->actions[1]->operation;
@@ -2524,7 +2524,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $overlap = $error->getMessage();
             }
             try {
-                new $class($result->owner, $result->actions, $result->unmoved, [], SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
+                new $class($result->owner, $result->actions, $unmoved, [], SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $legacy = $error->getMessage();
             }
@@ -2532,7 +2532,6 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $removed->name->value,
                 array_map(static fn ($index): string => $index->value, $removed->autoIncrement->alternates),
                 [$renamed->source->value, $renamed->destination->value],
-                array_map(static fn ($name): string => $name->value, $rebuilt->unmoved),
                 $rebuilt->toString(), $overlap, $legacy,
             ];
         }

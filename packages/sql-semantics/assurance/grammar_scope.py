@@ -796,23 +796,23 @@ def inventory(root):
                          "ordering_direction", "opt_unique", "visibility", "opt_index_type_clause"):
                 btree_forms.update(rules.get(rule, []))
             for alternative in signatures & btree_forms:
-                related[alternative] = (*related.get(alternative, ()), "mysql-create-btree-index-evidence-v3.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-btree-index-evidence-v4.json")
             index_removal = {
                 "drop: DROP INDEX_SYM ident ON table_ident opt_index_lock_algorithm",
                 "drop_index_stmt: DROP INDEX_SYM ident ON_SYM table_ident opt_index_lock_and_algorithm",
             }
             for alternative in signatures & index_removal:
                 related[alternative] = (*related.get(alternative, ()), "mysql-drop-native-index-evidence-v3.json")
-                related[alternative] = (*related.get(alternative, ()), "mysql-index-foreign-keys-evidence-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-index-foreign-keys-evidence-v2.json")
             implicit = {entry for entry in rules.get("table_constraint_def", ()) if "FOREIGN" in entry}
             implicit |= {entry for entry in rules.get("opt_references", ()) if entry.endswith(": references")}
             for alternative in signatures & (implicit | index_removal):
                 related[alternative] = (*related.get(alternative, ()), "mysql-implicit-foreign-index-evidence-v1.json")
             for alternative in signatures & (btree_forms | index_removal):
-                related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v2.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v3.json")
             for rule in ("alter_algorithm_option", "alter_lock_option", "opt_index_lock_and_algorithm", "opt_index_lock_algorithm"):
                 for alternative in rules.get(rule, []):
-                    related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v2.json")
+                    related[alternative] = (*related.get(alternative, ()), "mysql-native-index-policy-evidence-v3.json")
             alter_index = {
                 "alter_list_item: DROP PRIMARY_SYM KEY_SYM", "alter_list_item: DROP key_or_index field_ident",
                 "alter_list_item: DROP key_or_index ident", "alter_list_item: alter_algorithm_option",
@@ -851,12 +851,12 @@ def inventory(root):
                 "alter_list_item: RENAME key_or_index ident TO_SYM ident",
             }
             for alternative in signatures & native_index_rename:
-                related[alternative] = (*related.get(alternative, ()), "mysql-index-renames-evidence-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-index-renames-evidence-v2.json")
             visibility = {"alter_list_item: ALTER INDEX_SYM ident visibility"}
             for alternative in signatures & visibility:
                 related[alternative] = (*related.get(alternative, ()), "mysql-index-visibility-evidence-v2.json")
             for alternative in signatures & (batch_index | native_index_rename):
-                related[alternative] = (*related.get(alternative, ()), "mysql-mixed-index-alteration-evidence-v2.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-mixed-index-alteration-evidence-v3.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):
                 for alternative in rules.get(rule, []):
                     if rule != "rename" or "table_to_table_list" in alternative:

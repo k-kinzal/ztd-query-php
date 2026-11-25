@@ -14,6 +14,7 @@ from mysql_mixed_index_cases import (
     COMPOSITIONS, STATUS, analysis, coordinate, declarations, explored, finite_points, generating, kind, make,
     native_rows, physical, prediction, sql,
 )
+from run_server_mysql_create_btree_index import check_validation_contract
 from run import Failure, TOOL, digest, require
 from run_server import same
 from run_server_join import main, negative_count
@@ -21,9 +22,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-mixed-index-alteration"
 OBSERVER = "mysql_mixed_index_observer.php"
-NAME = "mysql-mixed-index-alteration-evidence-v2.json"
+NAME = "mysql-mixed-index-alteration-evidence-v3.json"
 BASE = "fcb33e154ba1f9da239a182f08dd70de8660f5e8cb4c382a0e8c92a66c30934c"
-CONTRACT = "cf8dab798394497cf06f819a0d1f363cc4bf85dd9766e3a67945bc49f9421904"
+CONTRACT = "b9c0633048a26a9a38a9ab8994c1346e52073c7510b23a06e646007b156630fd"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/alter-indexes"
 FIXTURE_RESET = {"mysql.innodb_index_stats": 0, "mysql.innodb_table_stats": 0}
 POLICY = "The algorithm and lock cannot remove these native InnoDB indexes."
@@ -34,6 +35,7 @@ def specifications():
     base, rec = TOOL / "mysql-mixed-index-alteration-v1.json", TOOL / NAME
     require(digest(base) == BASE and digest(rec) == CONTRACT, "mysql-mixed-index-contract")
     spec, fixed = json.loads(rec.read_text()), json.loads(base.read_text())
+    check_validation_contract(spec)
     same(fixed["finite"], spec["finite"])
     same(fixed["exploration"], spec["exploration"])
     same(fixed["supportedReleases"], spec["releases"])
@@ -147,7 +149,8 @@ def check_value(item, result):
     model = item["model"]
     require(result["status"] == "constructed", "mysql-mixed-index-constructed", result)
     same(model["release"] + PROFILE, result["profile"])
-    same(model["mysqlMixedIndexes"], result["mysqlMixedIndexes"])
+    change = model["mysqlMixedIndexes"]
+    same({field: change[field] for field in ("owner", "actions", "policy")}, result["mysqlMixedIndexes"])
 
 
 def seen(result, item):

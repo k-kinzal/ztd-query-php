@@ -18,8 +18,8 @@ from run_server_join import main, negative_count
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-index-policy"
-NAME = "mysql-native-index-policy-evidence-v2.json"
-CONTRACT = "1186f86f785635f4708135df8bbb83486c41b2cda22e05d856558f2936740a37"
+NAME = "mysql-native-index-policy-evidence-v3.json"
+CONTRACT = "52afac02fb82147cb9cd26adb67f0500605c04d8692afdd9407c15f23e066ce3"
 CORRECTION = "970335f647fb8025448d372bd4caec4af6cdf5670bec326fe3193ad2726ba730"
 BASE = "d7d21274000f3e881d4027516c2f1a9dd24474708a7632eaebb4068d6ef87ded"
 OBSERVER = "mysql_index_policy_observer.php"
@@ -31,6 +31,7 @@ def specifications():
     require(digest(path) == CONTRACT and digest(TOOL / "mysql-native-index-policy-v1.json") == BASE,
             "mysql-index-policy-contract")
     spec = json.loads(path.read_text())
+    creation.check_validation_contract(spec)
     baseline = json.loads((TOOL / "mysql-native-index-policy-v1.json").read_text())
     profiles = creation.specifications()[1]
     same(removal.specifications()[1], profiles)

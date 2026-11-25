@@ -28,7 +28,7 @@ final class AlterIndexRenameLoweringTest extends TestCase
         self::assertSame('c', $moves[1]->to->column->value);
     }
 
-    public function testLowerKeepsTheOtherNativeKeys(): void
+    public function testLowerUsesTheOwnerNamespaceToPublishTheSelectedMove(): void
     {
         $semantics = new Semantics();
         $context = $semantics->context(['CREATE TABLE app.t (a INT, b INT, KEY original(a), KEY untouched(b))']);
@@ -36,7 +36,7 @@ final class AlterIndexRenameLoweringTest extends TestCase
         self::assertInstanceOf(RenameIndexes::class, $renamed);
 
         self::assertSame('original', $renamed->moves[0]->source->value);
-        self::assertSame('untouched', $renamed->unmoved[0]->value);
+        self::assertSame('changed', $renamed->moves[0]->destination->value);
         self::assertSame('NONE', $renamed->policy->lock->value);
     }
 

@@ -7,9 +7,11 @@ namespace Tests\Unit\Ir\Schema\Index;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexColumn;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
@@ -23,6 +25,21 @@ final class CreateIndexTest extends TestCase
         $index = new CreateIndex($table, new Identifier('exact ` index'), [new IndexColumn(1, true), new IndexColumn(0)], true, false);
 
         self::assertSame('CREATE UNIQUE INDEX `exact `` index` ON `accounts`.`balances` (`amount` DESC, `entry`) INVISIBLE', $index->toString());
+        self::assertSame(IndexRole::Unique, $index->role);
+    }
+
+    public function testToStringKeepsUniqueSyntaxForTheResolvedClusteredRole(): void
+    {
+        $table = new TableSource(
+            new Identifier('accounts'),
+            new Identifier('balances'),
+            [new Identifier('id')],
+            columnTypes: [ColumnKind::RequiredSignedInt]
+        );
+        $index = new CreateIndex($table, new Identifier('by_id'), [new IndexColumn(0)], unique: true);
+
+        self::assertSame(IndexRole::ClusteredUnique, $index->role);
+        self::assertSame('CREATE UNIQUE INDEX `by_id` ON `accounts`.`balances` (`id`)', $index->toString());
     }
 
     public function testProfileIdIncludesTheSelectedStorageRelease(): void
@@ -31,5 +48,6 @@ final class CreateIndexTest extends TestCase
         $index = new CreateIndex($table, new Identifier('entry lookup'), [new IndexColumn(0)], release: GrammarRelease::MySql5651);
 
         self::assertSame('mysql-5.6.51/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/btree-index', $index->profileId());
+        self::assertSame(IndexRole::Ordinary, $index->role);
     }
 }

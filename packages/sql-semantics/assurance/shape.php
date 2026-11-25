@@ -1420,8 +1420,8 @@ if ($dialect !== 'sqlite') {
         array_push($internal, 'Schema\\Index\\CreateIndexLowering', 'Schema\\Index\\IndexOptionsLowering',
             'Schema\\Index\\IndexTableLowering', 'Schema\\Index\\IndexPartsLowering');
         $properties[$index] = ['target' => ['TableSource'], 'name' => ['Identifier'], 'columns' => ['array'],
-            'unique' => ['bool'], 'visible' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
-            'ownerHasIdentityKey' => ['bool'], 'priorKeys' => ['array'], 'policy' => [$policy]];
+            'role' => ['Schema\\Index\\IndexRole'], 'visible' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+            'policy' => [$policy]];
         $properties[$part] = ['slot' => ['int'], 'descending' => ['bool']];
         $methods[$index] = ['__construct', 'profileId', 'toString'];
         $methods[$part] = ['__construct'];
@@ -1550,7 +1550,7 @@ if ($dialect !== 'sqlite') {
         array_push($internal, 'Schema\\Alter\\AlterIndexRenameLowering', $renameNamespace);
         $pureCollaborators[] = $renameNamespace;
         $properties[$indexRename] = ['source' => ['Identifier'], 'destination' => ['Identifier']];
-        $properties[$renameIndexes] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'moves' => ['array'], 'unmoved' => ['array'],
+        $properties[$renameIndexes] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'moves' => ['array'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
         $methods[$indexRename] = ['__construct', 'toString'];
         $methods[$renameIndexes] = ['__construct', 'profileId', 'toString'];
@@ -1574,7 +1574,7 @@ if ($dialect !== 'sqlite') {
         array_push($internal, 'Schema\\Alter\\AlterMixedIndexesLowering', $mixedChanges, $mixedNamespace);
         array_push($pureCollaborators, $mixedChanges, $mixedNamespace);
         $properties[$indexAlteration] = ['operation' => [$indexIdentity, $indexRename]];
-        $properties[$mixedAlter] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'actions' => ['array'], 'unmoved' => ['array'],
+        $properties[$mixedAlter] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'actions' => ['array'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy]];
         $methods[$indexAlteration] = ['__construct', 'toString'];
         $methods[$mixedAlter] = ['__construct', 'profileId', 'toString'];
@@ -1967,13 +1967,13 @@ try {
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
     if ($dialect === 'mysql') {
         foreach ([
-            ['mysql-index-namespace-storage-v1.json', '90a0725227d5c8931a4b9cb2ea92567cb4a93798161a81590874659da33c412d'],
+            ['mysql-index-namespace-storage-v2.json', '668a22b88217a91a0439178e0758c18e7bb78791eb1169c3f99b5ba05e8010de'],
             ['mysql-index-auto-increment-storage-v1.json', '6b6a146f979bb53a4dce55a241f642a75e4fdb61d541c7ba254ae158aa3344c7'],
             ['mysql-index-foreign-key-storage-v1.json', '53ab347ce233a749cd3ec986c1005857615bf16e9f80e7b7d18f3c7aefebec7e'],
             ['mysql-index-visibility-storage-v1.json', '3b9a4fb0ba21938c1ba8af07b9e8a906c111c4b2117e2a42f6429c85e4e49727'],
             ['mysql-index-removal-set-storage-v1.json', 'ed343981fe207cd80b7d6628cdd6685787c39f241bfc5bc27cee629e80e243a1'],
-            ['mysql-index-rename-storage-v1.json', 'ffc8cd41e898f15ecae3343c9dfdcfbe1a72678249e21fb2edbe8d02c1d73831'],
-            ['mysql-mixed-index-storage-v1.json', '281216083a6a07e02dc27a5730a9b347b9f512f77e4507b1037a39557a28490f'],
+            ['mysql-index-rename-storage-v2.json', '5f5a89195ed0333e80c8536781bf64ef28e4c7a362dbca38efc6186173cc4ae3'],
+            ['mysql-mixed-index-storage-v2.json', '1cf5804f5b41033e809de4ec592ea89334b69bc2dc3a1c80db0c4c8ba50c59cb'],
             ['mysql-foreign-key-drop-storage-v1.json', 'c75c4457de69363e2d1cb77c933d45dad428b9ab423b0bc2f9c48118c3587c69'],
         ] as [$catalogue, $digest]) {
             $indexStorage = __DIR__ . '/' . $catalogue;

@@ -1,0 +1,13 @@
+{
+  "revision": "SemanticsIR/mysql-index-namespace-storage-2",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/CreateIndex",
+  "storage": {},
+  "revises": "mysql-index-namespace-storage-v1.json",
+  "validationOnly": {
+    "priorKeys": [
+      "Identifier",
+      0
+    ]
+  }
+}

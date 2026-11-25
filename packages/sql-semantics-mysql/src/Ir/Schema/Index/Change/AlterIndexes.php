@@ -31,11 +31,6 @@ final class AlterIndexes implements SemanticsIR
     public readonly array $actions;
 
     /**
-     * @var list<Identifier> Original keys retaining their names and definitions
-     */
-    public readonly array $unmoved;
-
-    /**
      * Closes the initial and final native namespaces of the mixed statement.
      * @param list<IndexAlteration> $actions Exact native index operations
      * @param list<Identifier> $unmoved Original keys not named by the actions
@@ -54,7 +49,6 @@ final class AlterIndexes implements SemanticsIR
         $stable = Check::listOf($unmoved, Identifier::class, 'A mixed index alteration requires an ordered list of unmoved names.');
         (new MixedIndexChanges())->check($owner, $owned, $stable, $policy, $requirements);
         $this->actions = $owned;
-        $this->unmoved = $stable;
     }
 
     /**

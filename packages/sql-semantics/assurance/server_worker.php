@@ -1072,7 +1072,6 @@ function observeMysqlIndexRenames(SqlSemantics\Platform\MySql\Ir\Schema\Index\Re
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlIndexRenames' => ['owner' => observeMysqlTableIdentity($value->owner),
             'moves' => array_map(static fn (object $move): array => [$move->source->value, $move->destination->value], $value->moves),
-            'unmoved' => array_map(static fn (object $key): string => $key->value, $value->unmoved),
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
 }
 
@@ -1109,7 +1108,6 @@ function observeMysqlMixedIndexes(SqlSemantics\Platform\MySql\Ir\Schema\Index\Ch
 
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlMixedIndexes' => ['owner' => observeMysqlTableIdentity($value->owner), 'actions' => $actions,
-            'unmoved' => array_map(static fn (object $key): string => $key->value, $value->unmoved),
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
 }
 
@@ -1364,9 +1362,7 @@ function observeMysqlCreateIndex(string $namespace, SqlSemantics\Platform\MySql\
 
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlCreateIndex' => [
-            'target' => $target, 'name' => $value->name->value, 'unique' => $value->unique, 'visible' => $value->visible,
-            'ownerHasIdentityKey' => $value->ownerHasIdentityKey, 'priorKeyCount' => count($value->priorKeys),
-            'priorKeys' => array_map(static fn (object $name): string => $name->value, $value->priorKeys),
+            'target' => $target, 'name' => $value->name->value, 'role' => $value->role->value, 'visible' => $value->visible,
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value],
             'columns' => array_map(static fn ($column): array => [$column->slot, $column->descending], $value->columns),
         ],

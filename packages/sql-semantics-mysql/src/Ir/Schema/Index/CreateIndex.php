@@ -32,9 +32,9 @@ final class CreateIndex implements SemanticsIR
     public readonly array $columns;
 
     /**
-     * @var list<Identifier> The occupied physical names in the resolved owner namespace
+     * The effective physical role of the index created by the native statement.
      */
-    public readonly array $priorKeys;
+    public readonly IndexRole $role;
 
     /**
      * Closes the native index definition against its resolved table.
@@ -46,10 +46,10 @@ final class CreateIndex implements SemanticsIR
         public readonly TableSource $target,
         public readonly Identifier $name,
         array $columns,
-        public readonly bool $unique = false,
+        bool $unique = false,
         public readonly bool $visible = true,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
-        public readonly bool $ownerHasIdentityKey = false,
+        bool $ownerHasIdentityKey = false,
         array $priorKeys = [],
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
     ) {
@@ -61,12 +61,12 @@ final class CreateIndex implements SemanticsIR
             preg_match('/\A.{1,64}(?<! )\z/us', $name->value) === 1 && $case->fold($name->value) !== 'primary',
             'CREATE INDEX requires an index name of 1 to 64 characters other than PRIMARY and without a trailing space.'
         );
-        $this->priorKeys = Check::listOf(
+        $occupied = Check::listOf(
             $priorKeys,
             Identifier::class,
             'A native index namespace contains an ordered list of physical names.'
         );
-        (new IndexNamespace())->check($name, $this->priorKeys, $ownerHasIdentityKey);
+        (new IndexNamespace())->check($name, $occupied, $ownerHasIdentityKey);
         $parts = Check::listOf($columns, IndexColumn::class, 'CREATE INDEX needs a nonempty ordered list of index parts.', 1);
         Check::input(count($parts) <= 16, 'An InnoDB secondary index can have at most 16 key parts.');
         $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
@@ -85,7 +85,9 @@ final class CreateIndex implements SemanticsIR
             $seen[$field] = true;
             $allowsNull = $allowsNull || $type->nullable();
         }
-        Check::input($visible || !$unique || $ownerHasIdentityKey || $allowsNull, 'An implicit primary index must be visible.');
+        $clustered = $unique && !$ownerHasIdentityKey && !$allowsNull;
+        Check::input($visible || !$clustered, 'An implicit primary index must be visible.');
+        $this->role = !$unique ? IndexRole::Ordinary : ($clustered ? IndexRole::ClusteredUnique : IndexRole::Unique);
         $this->columns = $parts;
     }
 
@@ -107,7 +109,7 @@ final class CreateIndex implements SemanticsIR
             $parts[] = $this->target->columns[$column->slot]->quoted() . ($column->descending ? ' DESC' : '');
         }
 
-        return 'CREATE ' . ($this->unique ? 'UNIQUE ' : '') . 'INDEX ' . $this->name->quoted()
+        return 'CREATE ' . ($this->role === IndexRole::Ordinary ? '' : 'UNIQUE ') . 'INDEX ' . $this->name->quoted()
             . ' ON ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted()
             . ' (' . implode(', ', $parts) . ')' . ($this->visible ? '' : ' INVISIBLE') . $this->policy->sql();
     }

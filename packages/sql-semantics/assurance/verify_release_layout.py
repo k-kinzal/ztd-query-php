@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v168.json"
-CONTRACT = "d59a875d5d4f25ae08a797f2317cca67dc61689b06ab7e983ad2bcfe7411b60b"
+CONTRACT_NAME = "release-layout-v169.json"
+CONTRACT = "27dbed83726afcd4e10258568e19fd908e537f67058bdf144960d0a8e3e0ba2b"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -707,9 +707,9 @@ def verify_probe(raw, catalog):
             ], "installed-mysql-innodb-width-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\CreateIndex"):
             index_sql = "CREATE UNIQUE INDEX `test_ix` ON `app`.`session_index` (`a` DESC) INVISIBLE ALGORITHM=COPY LOCK=NONE"
-            require(item.get("mysqlBtreeIndex") == ["temporary-table", "int-not-null", True, True, False,
+            require(item.get("mysqlBtreeIndex") == ["temporary-table", "int-not-null", "unique", "unique", True, False,
                     index_sql, index_sql, "An implicit primary index must be visible."], "installed-mysql-btree-index-mismatch", item)
-            require(item.get("mysqlIndexNamespace") == [["prior_identity"], "COPY", "NONE",
+            require(item.get("mysqlIndexNamespace") == ["COPY", "NONE",
                     "CREATE INDEX requires an unoccupied native index name."], "installed-mysql-index-namespace-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\DropIndex"):
             drop = "DROP INDEX `Élan_2` ON `app`.`drop_owner` ALGORITHM=COPY LOCK=NONE"
@@ -749,14 +749,14 @@ def verify_probe(raw, catalog):
             rename = ("ALTER TABLE `app`.`index_rename_probe` RENAME INDEX `by_a` TO `by_b`, "
                       "RENAME INDEX `by_b` TO `by_a`")
             require(item.get("mysqlIndexRename") == [
-                [["by_a", "by_b"], ["by_b", "by_a"]], ["by_c"], rename,
+                [["by_a", "by_b"], ["by_b", "by_a"]], rename,
                 "The resulting native index names must be distinct.",
                 "Native index renaming requires MySQL 5.7 or later.", True,
             ] and item["sql"] == rename, "installed-mysql-index-rename-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\Change\\AlterIndexes"):
             mixed = "ALTER TABLE `app`.`batch_index` DROP INDEX `PRIMARY`, RENAME INDEX `by_a` TO `new_a`"
             require(item.get("mysqlMixedIndexAlteration") == [
-                "PRIMARY", ["by_a", "keeps_a"], ["by_a", "new_a"], ["keeps_a"], mixed,
+                "PRIMARY", ["by_a", "keeps_a"], ["by_a", "new_a"], mixed,
                 "A removed index cannot also be renamed or unmoved.",
                 "Mixed native index removal and renaming requires MySQL 5.7 or later.",
             ] and item["sql"] == mixed, "installed-mysql-mixed-index-alteration-mismatch", item)

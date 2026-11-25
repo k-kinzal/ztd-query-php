@@ -81,6 +81,16 @@ function btreeResult(array $effect): array
     return $effect[0] === 'executed' ? ['executed'] : $effect;
 }
 
+function physicalBtreeIndexRoles(PDO $catalog): array
+{
+    [$indexes, $tables] = str_starts_with($catalog->getAttribute(PDO::ATTR_SERVER_VERSION), '5.')
+        ? ['INNODB_SYS_INDEXES', 'INNODB_SYS_TABLES']
+        : ['INNODB_INDEXES', 'INNODB_TABLES'];
+    return $catalog->query('SELECT i.NAME,i.TYPE FROM information_schema.' . $indexes . ' i JOIN information_schema.' . $tables
+        . " t ON i.TABLE_ID=t.TABLE_ID WHERE t.NAME='ir_fixture/ir_btree_subject' ORDER BY BINARY i.NAME")
+        ->fetchAll(PDO::FETCH_NUM);
+}
+
 function observeBtree(PDO $catalog, PDO $owner, array $request): array
 {
     if (!admitBtreeIndex($request['sql']) || !in_array($request['lifetime'], ['persistent', 'temporary', 'temporary-shadow'], true)
@@ -97,6 +107,7 @@ function observeBtree(PDO $catalog, PDO $owner, array $request): array
     }
     populateIndexOwner($temporary ? $owner : $catalog, $temporary, $request['identity'], $request['data']);
     $before = btreeState($owner);
+    $physicalBefore = $temporary ? null : physicalBtreeIndexRoles($catalog);
     $effect = observeMysqlIndexEffect($catalog, $owner, BTREE_MARKER, $request['sql']);
     $write = null;
     if ($request['probe']) {
@@ -110,7 +121,8 @@ function observeBtree(PDO $catalog, PDO $owner, array $request): array
     }
 
     return ['status' => 'mysql-create-btree', 'initial' => $before, ...$effect,
-        'after' => btreeState($owner), 'catalog' => btreeState($catalog), 'write' => $write];
+        'after' => btreeState($owner), 'catalog' => btreeState($catalog), 'write' => $write,
+        'physicalRoles' => $temporary ? null : ['before' => $physicalBefore, 'after' => physicalBtreeIndexRoles($catalog)]];
 }
 
 if (realpath($argv[0] ?? '') === __FILE__) {

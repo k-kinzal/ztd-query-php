@@ -30,11 +30,6 @@ final class RenameIndexes implements SemanticsIR
     public readonly array $moves;
 
     /**
-     * @var list<Identifier> Physical names with stable identity
-     */
-    public readonly array $unmoved;
-
-    /**
      * Checks the initial and resulting native namespaces and the checked policy.
      * @param list<IndexRename> $moves Relative names in the selected owner's namespace
      * @param list<Identifier> $unmoved Other physical names in the complete namespace
@@ -52,7 +47,6 @@ final class RenameIndexes implements SemanticsIR
         $stable = Check::listOf($unmoved, Identifier::class, 'An atomic index rename requires an ordered list of unmoved names.');
         (new IndexRenameNamespace())->check($checked, $stable);
         $this->moves = $checked;
-        $this->unmoved = $stable;
     }
 
     /**

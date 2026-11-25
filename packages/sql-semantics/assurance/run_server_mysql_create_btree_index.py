@@ -7,7 +7,7 @@ import sys
 
 from mysql_create_btree_index_cases import (
     FIELD_NAMES, IDENTITY, LAYOUTS, LIFETIMES, OLD, STATUS,
-    analyze, command, coordinate, coordinates, definition, generated, native_edges, prediction,
+    analyze, command, coordinate, coordinates, definition, generated, native_edges, prediction, published_index,
 )
 from run import Failure, TOOL, digest, require
 from run_server import same
@@ -16,8 +16,8 @@ from run_server_mysql_create_varchar import DIAGNOSTIC, specifications as native
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-btree-index"
-NAME = "mysql-create-btree-index-evidence-v3.json"
-CONTRACT = "f52e95fb78702ed2f66c761db4990fd7feb9f59d21fc299c7a10a1e0b7df0d05"
+NAME = "mysql-create-btree-index-evidence-v4.json"
+CONTRACT = "8261b443afbf8b4c779042da2f865832d8ea9b34796ad8f74ce49eeeb4d5bd31"
 BASE = "022cb79259ca6314c358643120765737c90f1baa96d8dc7a926b77e6463df830"
 CASE_CONTRACT = "a1c9a4243a939dc8d13a1971277bc84f5b91e5366ef1c5a96ab41c21eb34a307"
 PREVIOUS = "1ce5c77c55d8a79bebcee8b6a80c20d2b7522822a97d99a6f7bc9cc25811dcf7"
@@ -25,7 +25,18 @@ IDENTITY_CONTRACT = "2d274610477ef7ac302bd4006949f4f9df2d4259379740a29f0e5c215fa
 OBSERVER = "mysql_btree_index_observer.php"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/btree-index"
 SEMANTIC = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\SemanticException"
-COMPARATOR_FAULTS = {"Ignore a table of contents with a wrong ordered part.": "wrong-index-part"}
+COMPARATOR_FAULTS = {
+    "Ignore a table of contents with a wrong ordered part.": "wrong-index-part",
+    "Ignore the native clustered dictionary role.": "wrong-clustered-role",
+}
+
+
+def check_validation_contract(specification):
+    files = specification["publicationContracts"]
+    require(files["mysql-index-transient-validation-v1.json"] == "fa9dfe525c4c3f0909d1f56c0656ea7f31e603a4ee970ee3f19c2e51f3f54c70",
+            "mysql-index-validation-facts-contract")
+    for name, expected in files.items():
+        require(digest(TOOL / name) == expected, "mysql-index-validation-facts-prior", name)
 
 
 def specifications():
@@ -36,6 +47,7 @@ def specifications():
             and digest(TOOL / "mysql-create-btree-index-evidence-v1.json") == PREVIOUS,
             "mysql-create-btree-index-contract")
     spec = json.loads(path.read_text())
+    check_validation_contract(spec)
     profiles = native_profiles()[1]
     same(spec["releases"], profiles["mysql"]["releases"])
     same([], spec["exploration"]["allowedExclusions"])
@@ -66,7 +78,7 @@ def expected_point(response, item):
     orientation = {"ix_a": "ascending", "ix_d": "descending"}[checked["name"]]
     same([orientation == "descending" and item["model"]["release"] not in OLD] * len(layout),
          [direction for _, direction in checked["columns"]])
-    return item["model"]["lifetime"], role, orientation, checked["unique"], "visible" if checked["visible"] else "invisible"
+    return item["model"]["lifetime"], role, orientation, checked["role"] != "ordinary", "visible" if checked["visible"] else "invisible"
 
 
 def analysis_finite_id(_, response, item, sql):
@@ -144,7 +156,9 @@ def requests(engine, tag, spec):
     for point in grid(spec, tag):
         id_ = "/".join(map(str, point))
         yield from case_pair("finite", id_, coordinate(tag, point))
-    for name, item in native_edges(tag):
+    edges = list(native_edges(tag))
+    require(set(spec["physicalRoleCases"]) <= {name for name, _ in edges}, "mysql-btree-index-missing-role-cases")
+    for name, item in edges:
         yield from case_pair("edge", name, item)
     example = definition(tag, "temporary-shadow", [17, 2], [True, False], False, True, "qualified_ix")
     yield from case_pair("edge", "unqualified-shadow", example, command(example, original=True, qualified=False, algorithm="before"))
@@ -171,7 +185,7 @@ def check_value(item, response):
     shape = item.get("model", item)
     require(response["status"] == "constructed", "mysql-btree-index-construction", response)
     same(shape["release"] + PROFILE, response["profile"])
-    same(shape["mysqlCreateIndex"], response["mysqlCreateIndex"])
+    same(published_index(shape["mysqlCreateIndex"]), response["mysqlCreateIndex"])
 
 
 def observer_request(item, sql):
@@ -207,7 +221,8 @@ def observe_rejection(_, item, actual, sql):
 def sample_forms(forms, response, _, item):
     index, shape = response["mysqlCreateIndex"], item["model"]
     forms[f"scope/{shape['lifetime']}"] += 1
-    forms[f"unique/{index['unique']}"] += 1
+    forms[f"unique/{index['role'] != 'ordinary'}"] += 1
+    forms[f"role/{index['role']}"] += 1
     forms[f"visible/{index['visible']}"] += 1
     forms[f"wide/{len(index['columns']) > 8}"] += 1
     for _, direction in index["columns"]:
@@ -218,6 +233,7 @@ def sample_forms(forms, response, _, item):
 
 def required_forms(_, tag):
     return {*(f"scope/{kind}" for kind in LIFETIMES), "type/int", "type/int-not-null", "visible/True", "descending/False",
+            *(f"role/{role}" for role in ("ordinary", "unique", "clustered-unique")),
             *(f"{axis}/{flag}" for axis in ("unique","wide") for flag in (True,False)),
             *([] if tag in OLD else ["visible/False","descending/True"])}
 
@@ -247,12 +263,21 @@ def controls():
     changed = deepcopy(good)
     key = next(part for part in changed["after"]["indexes"] if part[0] == "ix_fault")
     key[3] = "f17"
-    try:
-        check_observation(model, changed, command(model))
-    except Failure as failure:
-        same("meaning-mismatch", failure.signal)
-        return {"wrong-index-part": failure.detail}
-    raise Failure("mysql-btree-index-ignored-wrong-key")
+    first = definition("mysql-9.1.0", "persistent", [0], [False], True, True, "first_key", identity="none")
+    exact = {**prediction(first), "affected": 0, "diagnostics": []}
+    check_observation(first, exact, command(first))
+    mistaken = deepcopy(exact)
+    mistaken["physicalRoles"]["after"][0][1] = 2
+    result = {}
+    for label, case, observed in (("wrong-index-part", model, changed), ("wrong-clustered-role", first, mistaken)):
+        try:
+            check_observation(case, observed, command(case))
+        except Failure as failure:
+            same("meaning-mismatch", failure.signal)
+            result[label] = failure.detail
+        else:
+            raise Failure("mysql-btree-index-ignored-wrong-key", label)
+    return result
 
 
 def check_fault_witness(item, cause):
@@ -268,7 +293,8 @@ def faults(_, tag):
         RenderFault("substitute-mysql-index-field",path,
                     "$this->target->columns[$column->slot]->quoted()", "($column->slot === 0 ? '`f17`' : $this->target->columns[$column->slot]->quoted())",
                     item,"meaning-mismatch",item),
-        RenderFault("erase-mysql-index-unique",path,"$this->unique ? 'UNIQUE ' : ''","false ? 'UNIQUE ' : ''",item,"meaning-mismatch",item),
+        RenderFault("erase-mysql-index-unique", path, "$this->role === IndexRole::Ordinary ? '' : 'UNIQUE '", "''",
+                    item, "meaning-mismatch", item),
     ]
 
 
