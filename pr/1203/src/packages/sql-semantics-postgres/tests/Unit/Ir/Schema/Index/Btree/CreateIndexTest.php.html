@@ -109,8 +109,24 @@
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE INDEX &quot;indexed&quot; ON &quot;public&quot;.&quot;items&quot; USING btree &#039;</span></span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>            . <span class="tok-str">&#039;(&quot;code&quot; COLLATE pg_catalog.&quot;C&quot; pg_catalog.text_ops DESC NULLS LAST) INCLUDE (&quot;payload&quot;)&#039;</span>, <span class="tok-var">$direct</span>-&gt;<span class="tok-id">toString</span>());</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    }</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>}</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testToStringPreservesADeclaredCollationFromALikeCopy</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    {</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-var">$context</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">context</span>([</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            <span class="tok-str">&#039;CREATE TABLE public.source (code text COLLATE pg_catalog.&quot;C&quot;, payload text COLLATE pg_catalog.&quot;POSIX&quot;)&#039;</span>,</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>            <span class="tok-str">&#039;CREATE TABLE public.copy (LIKE public.source)&#039;</span>,</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        ]);</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-var">$inherited</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE INDEX copied ON public.copy (code pg_catalog.text_ops)&#039;</span>, <span class="tok-var">$context</span>);</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        <span class="tok-var">$explicit</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE INDEX copied ON public.copy (code COLLATE pg_catalog.&quot;C&quot;)&#039;</span>, <span class="tok-var">$context</span>);</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">CreateIndex</span>::<span class="tok-kw">class</span>, <span class="tok-var">$inherited</span>);</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-id">self</span>::<span class="tok-id">assertEquals</span>(<span class="tok-var">$explicit</span>, <span class="tok-var">$inherited</span>);</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">TextCollation</span>::<span class="tok-id">C</span>, <span class="tok-var">$inherited</span>-&gt;<span class="tok-id">keys</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">collation</span>);</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE INDEX &quot;copied&quot; ON &quot;public&quot;.&quot;copy&quot; USING btree &#039;</span></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>            . <span class="tok-str">&#039;(&quot;code&quot; COLLATE pg_catalog.&quot;C&quot; pg_catalog.text_ops ASC NULLS LAST)&#039;</span>, <span class="tok-var">$inherited</span>-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    }</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>}</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
