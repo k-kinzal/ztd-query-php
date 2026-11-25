@@ -646,8 +646,8 @@ def native_boundary_inventory_control(args, commit):
             "omittedProcedure": "value_storage.php"}
 
 
-def assurance_revision_control(args):
-    folder = args.out / "reduced-assurance-revision"
+def assurance_revision_case(args, name, filename, registry_name, field):
+    folder = args.out / name
     before = folder / "previous" / "packages/sql-semantics/assurance"
     after = folder / "current" / "packages/sql-semantics/assurance"
     shutil.copytree(TOOL, before, copy_function=shutil.copyfile)
@@ -655,20 +655,22 @@ def assurance_revision_control(args):
     healthy = review(before, after)
     require(healthy["status"] == "identical-measured-inputs" and not healthy["observedPotentialReductions"],
             "revision-control-healthy-mismatch")
-    source = before / "postgres-int4-case-v1.json"
+    source = before / filename
     target = after / source.name
-    minimum = json.loads(source.read_text())
-    previous_budget = minimum["exploration"]["casesPerSeed"]
-    minimum["exploration"]["casesPerSeed"] -= 1
-    write_json(target, minimum)
+    altered = json.loads(source.read_text())
+    keys = field.split("/")
+    parent = altered if len(keys) == 1 else altered[keys[0]]
+    previous = parent[keys[-1]]
+    parent[keys[-1]] -= 1
+    write_json(target, altered)
     tampered = observe_rejection(lambda: review(before, after), "revision-contract-digest")
-    registry = after / "scope.py"
+    registry = after / registry_name
     text = registry.read_text()
     require(text.count(digest(source)) == 1, "revision-control-registry-anchor")
     registry.write_text(text.replace(digest(source), digest(target)))
     measured = review(before, after)
-    expected = [{"family": "postgres-int4-case", "field": "exploration/casesPerSeed",
-                 "before": previous_budget, "after": previous_budget - 1}]
+    expected = [{"family": filename.rsplit("-v", 1)[0], "field": field,
+                 "before": previous, "after": previous - 1}]
     require(measured["status"] == "review-required" and measured["observedPotentialReductions"] == expected,
             "revision-control-reduction-not-flagged", measured["observedPotentialReductions"])
     write_json(folder / "healthy.json", healthy)
@@ -677,7 +679,7 @@ def assurance_revision_control(args):
         source.read_text().splitlines(keepends=True), target.read_text().splitlines(keepends=True),
         "previous/" + source.name, "current/" + target.name,
     )) + "".join(difflib.unified_diff(text.splitlines(keepends=True), registry.read_text().splitlines(keepends=True),
-                                     "previous/scope.py", "current/scope.py")))
+                                     "previous/" + registry_name, "current/" + registry_name)))
     return {"case": folder.name, "control": "passed", "original": digest(source), "mutated": digest(target),
             "digestMismatch": tampered.signal, "expected": expected, "observed": measured["observedPotentialReductions"]}
 
@@ -798,7 +800,11 @@ def main():
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
-              + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
+              + [declaration_control(args), grammar_control(args), native_schedule_control(args)]
+              + [assurance_revision_case(args, "reduced-assurance-revision", "postgres-int4-case-v1.json",
+                                         "scope.py", "exploration/casesPerSeed"),
+                 assurance_revision_case(args, "reduced-evidence-revision", "mysql-signed-comparison-widths-evidence-v2.json",
+                                         "compare_assurance_revisions.py", "negativeCount")]
               + native_workflow_controls(args) + native_fixture_controls() + [native_boundary_inventory_control(args, commit)]
               + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution)
               + [renderer_fault_transport_control(args)] + reduction_controls(args) + native_reduction_controls(args))

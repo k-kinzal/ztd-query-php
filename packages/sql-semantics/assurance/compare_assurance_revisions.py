@@ -10,6 +10,13 @@ from pathlib import Path
 from run import digest, require, write_json
 
 CONTRACT_FAMILY = re.compile(r"^(.+)-v[0-9]+\.json$")
+EVIDENCE_CONTRACTS = {
+    "mysql-native-truth-evidence-v1.json": "04ef1d090ad68a3d9cf44ee4a4ec521bb5b3a9073c31368c2938811fbe49b576",
+    "mysql-signed-case-evidence-v1.json": "db3e34e6cbab5a3225d9cf31e5dcd359486a1f621bbc9647404c1ef55eb4e702",
+    "mysql-signed-comparison-widths-evidence-v2.json": "c20091712f5939bbd445b4eca72a7070e03dcc758489c8657c5b6896803b4ba7",
+    "mysql-signed-membership-evidence-v1.json": "7690a15d3d4d3520375e08b4275a04693011c92a10b2cb82baeca7e4cd896bd4",
+    "postgres-signed-membership-evidence-v1.json": "afacf1e6c7706ceede0c99a6cdedf537085715d2a1358d2095b17f3425ddf36a",
+}
 TOOL_FORMATS = {".php", ".py", ".json", ".md", ".c"}
 SUPPORT_FILES = (
     ".github/workflows/semantics-ir-assurance.yml",
@@ -22,7 +29,9 @@ SCOPE_FIELDS = ("scope", "approval", "profile", "profiles", "release", "mode", "
                 "exploration", "negative", "faults", "dialectFaults", "allowedExclusions", "obligations", "formalProof",
                 "composition", "rules", "predecessorCheck", "changeFromV1", "initialExecutableDomain",
                 "arrayRoutes", "unconstrainedReturns", "backedEnums", "single", "batch", "context", "surface", "forbidden",
-                "runtimeRoles", "enumRoutes", "recipe", "acceptance")
+                "runtimeRoles", "enumRoutes", "recipe", "acceptance", "reference", "negativeCount", "legacyFaults",
+                "legacyReleases", "sourceFaults", "boundaryInputs", "boundaryWitnesses", "seedPlacements",
+                "seedCompositions", "calibration")
 
 
 def literal_value(path, variable):
@@ -44,6 +53,8 @@ def literal_registry(path, variable):
 
 def declared_contracts(tools):
     registry = literal_registry(tools / "scope.py", "CONTRACTS")
+    evidence = literal_registry(tools / "compare_assurance_revisions.py", "EVIDENCE_CONTRACTS")
+    require(not (registry.keys() & evidence.keys()), "revision-duplicate-contract-roles")
     records = {}
     for family, script, symbol in (
         ("publication", "scope.py", "PUBLICATION"),
@@ -54,7 +65,7 @@ def declared_contracts(tools):
                    if path.is_file() and not path.is_symlink() and digest(path) == fingerprint]
         require(len(matches) == 1, "revision-audit-contract-selection", {"family": family, "sha256": fingerprint})
         registry[matches[0].name] = fingerprint
-    for name, claimed in sorted(registry.items()):
+    for name, claimed in sorted((registry | evidence).items()):
         path = tools / name
         require(Path(name).name == name and path.is_file() and not path.is_symlink(), "revision-missing-contract", name)
         fingerprint = digest(path)
@@ -62,6 +73,12 @@ def declared_contracts(tools):
         record = json.loads(path.read_text())
         require(type(record) is dict and type(record.get("revision")) is str,
                 "revision-contract-shape", name)
+        if name in evidence:
+            reference = record.get("reference")
+            require(type(reference) is dict and reference.keys() == {"file", "sha256"}
+                    and type(reference["file"]) is str and reference["file"] in registry
+                    and registry[reference["file"]] == reference["sha256"] and "constructors" not in record,
+                    "revision-evidence-contract-reference", name)
         family = CONTRACT_FAMILY.fullmatch(name)
         require(family is not None, "revision-contract-name", name)
         records.setdefault(family[1], {})[name] = {"sha256": fingerprint, "data": record}
@@ -118,10 +135,14 @@ def notable_changes(family, before, after):
         last = new_exploration.get("allowedExclusions")
         if isinstance(first, list) and isinstance(last, list) and any(entry not in first for entry in last):
             weakened.append({"family": family, "field": "exploration/allowedExclusions", "before": first, "after": last})
-    for field in ("faults", "negative"):
+    for field in ("faults", "negative", "legacyFaults", "sourceFaults", "boundaryInputs", "boundaryWitnesses",
+                  "seedPlacements", "seedCompositions", "observations"):
         old, new = before.get(field), after.get(field)
         if isinstance(old, list) and (not isinstance(new, list) or any(item not in new for item in old)):
             weakened.append({"family": family, "field": field, "before": old, "after": new})
+    old, new = before.get("negativeCount"), after.get("negativeCount")
+    if type(old) is int and (type(new) is not int or old > new):
+        weakened.append({"family": family, "field": "negativeCount", "before": old, "after": new})
     return weakened
 
 
