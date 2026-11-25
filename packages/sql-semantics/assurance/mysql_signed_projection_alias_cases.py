@@ -71,7 +71,7 @@ def direct(item):
 
 
 def case(tag, *columns):
-    return {"tag": tag, "columns": list(columns)}
+    return {"tag": tag, "columns": [list(column) for column in columns]}
 
 
 def grid(contract, analyze):
