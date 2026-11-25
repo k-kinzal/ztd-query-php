@@ -49,8 +49,9 @@ final class CreateViewLowering
                 $columns[] = new ViewColumn(new Identifier($column->name->value));
             }
         } else {
+            $names = new ViewCatalogHeading();
             foreach ($definition->columns as $column) {
-                $columns[] = new ViewColumn(new Identifier($column->value));
+                $columns[] = $names->explicit($column->value, $query->release);
             }
         }
         $policy = match (true) {

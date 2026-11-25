@@ -257,8 +257,9 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if alternative != rule + ":":
                         related[alternative] = (*related.get(alternative, ()), "mysql-create-view-v2.json")
-                        if rule in ("view_tail", "view_query_block"):
-                            related[alternative] = (*related[alternative], "mysql-create-view-projection-alias-v1.json")
+                        if rule in ("create_view", "view_tail", "view_query_block"):
+                            related[alternative] = (*related[alternative], "mysql-create-view-projection-alias-v1.json",
+                                                    "mysql-create-view-output-names-v2.json")
             for rule in ("drop", "drop_view", "drop_view_stmt"):
                 for alternative in rules.get(rule, ()):
                     if " VIEW_SYM " in alternative or (rule != "drop" and alternative != rule + ":"):

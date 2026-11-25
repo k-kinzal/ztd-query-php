@@ -893,7 +893,9 @@ function constructCreateView(string $platform, array $input): SemanticsIR
     return new $statement(
         new $target(new $name($schema), new $name($relation)),
         constructSelect($platform, $create['query'] + ['dialect' => 'mysql', 'release' => $input['release']]),
-        array_map(static fn (string $value): object => new $column(new $name($value)), $create['columns']),
+        array_map(static fn (string|array $value): object => new $column(is_string($value) ? new $name($value) : match ($value[0]) {
+            'requested-result-alias' => new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias($value[1]),
+        }), $create['columns']),
         ($view . 'ViewCreationPolicy')::from($create['policy']),
         ($view . 'ViewAlgorithm')::from($create['algorithm']),
         ($view . 'ViewSecurity')::from($create['security']),
@@ -2885,7 +2887,10 @@ function observeStatement(array $input): array
             'createView' => [
                 'target' => [$value->name->schema->value, $value->name->view->value],
                 'query' => observeSetQuery($namespace, $value->query, $input['dialect']),
-                'columns' => array_map(static fn ($column): string => $column->name->value, $value->columns),
+                'columns' => array_map(static fn ($column): string|array =>
+                    $column->name instanceof SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias
+                        ? ['requested-result-alias', $column->name->requested, $column->name->value]
+                        : $column->name->value, $value->columns),
                 'policy' => $value->policy->value, 'algorithm' => $value->algorithm->value, 'security' => $value->security->value,
             ],
         ];

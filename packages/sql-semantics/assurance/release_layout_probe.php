@@ -250,6 +250,38 @@ function observeMysqlCreateViewProjectionAlias(SqlSemantics\Platform\MySql\Seman
         $analyzed->query->columns[0]->name->requested, $analyzed->query->columns[0]->expression->decimal(), $analyzed->toString()];
 }
 
+function observeMysqlPersistentOutputNames(SqlSemantics\Platform\MySql\Semantics $modern): array
+{
+    $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('named')
+    );
+    $atom = new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('17');
+    $bodyAlias = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' body');
+    $emptyAlias = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(" \x7f");
+    $declared = 'CREATE VIEW app.named (` K`) AS SELECT 17 AS ` body`';
+    $inherited = "CREATE VIEW app.named AS SELECT 17 AS ` \x7f`";
+    $result = [];
+    foreach ([[$legacy, $declared, $bodyAlias, new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' K')],
+              [$modern, $declared, $bodyAlias, new SqlSemantics\Platform\MySql\Ir\Identifier(' K')],
+              [$modern, $inherited, $emptyAlias, new SqlSemantics\Platform\MySql\Ir\Identifier('')]] as [$semantics, $sql, $output, $field]) {
+        $analyzed = $semantics->analyze($sql);
+        [$batch] = $semantics->analyzeAll($sql);
+        $body = new SqlSemantics\Platform\MySql\Ir\Select([
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($atom, $output),
+        ], release: $semantics->profile()->grammar);
+        $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView($target, $body, [
+            new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($field),
+        ]);
+        $name = $analyzed->columns[0]->name;
+        $result[] = [$analyzed == $batch, $analyzed == $direct, $name->value,
+            $name instanceof SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias ? $name->requested : null,
+            $analyzed->toString()];
+    }
+
+    return $result;
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -1331,6 +1363,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $details = [];
         if ($platform === 'MySql' && $role === 'Schema\\View\\CreateView') {
             $details['createViewAlias'] = observeMysqlCreateViewProjectionAlias($semantics);
+            $details['persistentOutputNames'] = observeMysqlPersistentOutputNames($semantics);
             $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
             $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
             $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,

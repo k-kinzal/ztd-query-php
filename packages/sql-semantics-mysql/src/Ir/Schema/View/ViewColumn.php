@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\View;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -22,8 +24,18 @@ final class ViewColumn
     /**
      * Checks the stored identifier in its catalog role.
      */
-    public function __construct(public readonly Identifier $name)
+    public function __construct(public readonly Identifier|RequestedResultAlias $name)
     {
-        Check::input(preg_match('/\A[\x01-\x7f]{1,64}(?<! )\z/D', $name->value) === 1, 'A checked MySQL view field needs 1 to 64 ASCII characters without a trailing space.');
+        Check::input(strlen($name->value) <= 256, 'A checked MySQL view field needs at most 256 bytes.');
+        $native = new NativeLocalNames();
+        Check::input(
+            !$name instanceof RequestedResultAlias || $native->readable($name->requested),
+            'A checked MySQL view heading must persist valid UTF-8.'
+        );
+        Check::input(
+            $name instanceof RequestedResultAlias || $native->prefix($name->value) === $name->value
+                || (new ViewProjectionAliases())->valid($name->value),
+            'A checked MySQL view field needs an admitted legacy or modern heading.'
+        );
     }
 }

@@ -20,7 +20,7 @@ function viewAliasWarnings(PDO $pdo): array
     }
 }
 
-function readAliasView(PDO $pdo): array
+function readAliasView(PDO $pdo, bool $observeColumns): array
 {
     $catalog = $pdo->query(
         "SELECT TABLE_SCHEMA, TABLE_NAME, CHECK_OPTION, IS_UPDATABLE, DEFINER, SECURITY_TYPE, CHARACTER_SET_CLIENT "
@@ -39,11 +39,20 @@ function readAliasView(PDO $pdo): array
     $rows = $data->fetchAll(PDO::FETCH_NUM);
     $data->closeCursor();
 
-    return ['catalog' => $catalog, 'algorithm' => $algorithm[1], 'definitionSql' => $definition[1],
-        'fields' => $fields, 'rows' => $rows, 'readWarnings' => viewAliasWarnings($pdo)];
+    $readWarnings = viewAliasWarnings($pdo);
+    $result = ['catalog' => $catalog, 'algorithm' => $algorithm[1], 'definitionSql' => $definition[1],
+        'fields' => $fields, 'rows' => $rows, 'readWarnings' => $readWarnings];
+    if ($observeColumns) {
+        $result['catalogColumns'] = $pdo->query(
+            "SELECT HEX(COLUMN_NAME), ORDINAL_POSITION, DATA_TYPE, IS_NULLABLE FROM information_schema.COLUMNS "
+            . "WHERE TABLE_SCHEMA = 'ir_fixture' AND TABLE_NAME = 'ir_cv_main' ORDER BY ORDINAL_POSITION"
+        )->fetchAll(PDO::FETCH_NUM);
+    }
+
+    return $result;
 }
 
-function observeViewAliasProtocol(PDO $pdo, string $sql, bool $text): array
+function observeViewAliasProtocol(PDO $pdo, string $sql, bool $text, bool $observeColumns): array
 {
     $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
     $pdo->exec('DROP VIEW IF EXISTS ir_fixture.ir_cv_main');
@@ -59,7 +68,7 @@ function observeViewAliasProtocol(PDO $pdo, string $sql, bool $text): array
         $phase = 'read';
         $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
 
-        return ['status' => 'created', 'prepareWarnings' => $prepare, 'executeWarnings' => $execute, ...readAliasView($pdo)];
+        return ['status' => 'created', 'prepareWarnings' => $prepare, 'executeWarnings' => $execute, ...readAliasView($pdo, $observeColumns)];
     } catch (PDOException $error) {
         $warnings = viewAliasWarnings($pdo);
         $exists = $pdo->query(
@@ -82,8 +91,10 @@ function observeViewAliases(PDO $pdo, array $input): array
         return ['status' => 'outside-view-alias-observer-scope'];
     }
 
-    return ['native-prepared' => observeViewAliasProtocol($pdo, $sql, false),
-        'text' => observeViewAliasProtocol($pdo, $sql, true)];
+    $observeColumns = ($input['catalogColumns'] ?? false) === true;
+
+    return ['native-prepared' => observeViewAliasProtocol($pdo, $sql, false, $observeColumns),
+        'text' => observeViewAliasProtocol($pdo, $sql, true, $observeColumns)];
 }
 
 while (($line = fgets(STDIN)) !== false) {

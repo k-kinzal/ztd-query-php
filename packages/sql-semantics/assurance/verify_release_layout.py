@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v201.json"
-CONTRACT = "67817a8ce46fc6624f08865d752c7d13b6ef16f5d289bc303a0507ceb6902184"
+CONTRACT_NAME = "release-layout-v202.json"
+CONTRACT = "e41ca459901355da9a4940b48b1333e925d42a7c0ef768454e26987db035f1d8"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -557,6 +557,14 @@ def verify_probe(raw, catalog):
                 'CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `app`.`alias_effect` (`stored_heading`) '
                 'AS SELECT -2147483649 AS ` requested`',
             ], "installed-mysql-create-view-alias-mismatch", view_alias)
+            supplied = item.get("persistentOutputNames")
+            header = 'CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `app`.`named`'
+            explicit = header + " (` K`) AS SELECT 17 AS ` body`"
+            require(supplied == [
+                [True, True, "K", " K", explicit],
+                [True, True, " K", None, explicit],
+                [True, True, "", None, header + " AS SELECT 17 AS ` \x7f`"],
+            ], "installed-mysql-persistent-output-names-mismatch", supplied)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("mysqlSignedComparisonWidths") == [True, True, True, ["val", "lo", "hi"],
                 [["BIGINT", True], ["SMALLINT", False], ["MEDIUMINT", True]],

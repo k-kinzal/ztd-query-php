@@ -19,6 +19,7 @@ final class ColumnNameRuleTest extends TestCase
 
         self::assertTrue($rule->valid('1+1'));
         self::assertTrue($rule->valid(str_repeat('é', 64)));
+        self::assertTrue($rule->valid("ends\u{00a0}"));
         self::assertFalse($rule->valid(''));
         self::assertFalse($rule->valid("a\t"));
         self::assertFalse($rule->valid(str_repeat('a', 65)));

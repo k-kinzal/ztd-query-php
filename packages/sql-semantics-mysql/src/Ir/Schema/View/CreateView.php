@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\View;
 
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -48,9 +50,11 @@ final class CreateView implements SemanticsIR
         (new ViewQueryBounds())->check($query, $name, $algorithm);
         $heading = Check::listOf($columns, ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);
         Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');
+        (new ViewCatalogHeading())->check($heading, $query);
         $seen = [];
+        $names = new NativeLocalNames();
         foreach ($heading as $column) {
-            $key = $column->name->key();
+            $key = $names->key($column->name->value);
             Check::input(!isset($seen[$key]), 'The view heading cannot repeat a column name.');
             $seen[$key] = true;
         }
@@ -72,12 +76,18 @@ final class CreateView implements SemanticsIR
     {
         $start = $this->policy === ViewCreationPolicy::Replace ? 'CREATE OR REPLACE' : 'CREATE';
         $preserve = $this->policy === ViewCreationPolicy::Preserve ? 'IF NOT EXISTS ' : '';
+        $target = $start . ' ALGORITHM=' . $this->algorithm->value . ' SQL SECURITY ' . $this->security->value . ' VIEW '
+            . $preserve . $this->name->quoted();
+        $renderer = new SelectSql();
+        if ((new ViewCatalogHeading())->usesImplicit($this->columns, $this->query->release)) {
+            return $target . ' AS ' . $renderer->render($this->query);
+        }
         $names = [];
         foreach ($this->columns as $column) {
-            $names[] = $column->name->quoted();
+            $name = $column->name;
+            $names[] = $name instanceof RequestedResultAlias ? $name->aliasSql() : $name->quoted();
         }
 
-        return $start . ' ALGORITHM=' . $this->algorithm->value . ' SQL SECURITY ' . $this->security->value . ' VIEW '
-            . $preserve . $this->name->quoted() . ' (' . implode(', ', $names) . ') AS ' . (new SelectSql())->render($this->query, true, true);
+        return $target . ' (' . implode(', ', $names) . ') AS ' . $renderer->render($this->query, true, true);
     }
 }

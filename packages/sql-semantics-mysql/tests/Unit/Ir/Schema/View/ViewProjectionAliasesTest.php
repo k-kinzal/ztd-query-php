@@ -25,4 +25,11 @@ final class ViewProjectionAliasesTest extends TestCase
         self::assertSame('visible', $view->columns[0]->name->value);
         self::assertStringEndsWith('SELECT 1 AS `' . $alias . '`', $view->toString());
     }
+    public function testValidUsesNativeAsciiWhitespace(): void
+    {
+        $rule = new ViewProjectionAliases();
+
+        self::assertFalse($rule->valid("name\t"));
+        self::assertTrue($rule->valid("ends\u{00a0}"));
+    }
 }
