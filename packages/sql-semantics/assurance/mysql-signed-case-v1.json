@@ -1,0 +1,254 @@
+{
+  "revision": "SemanticsIR/mysql-signed-case-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/sql-mode-empty/utf8mb4/native",
+    "mysql-5.7.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.0.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.1.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.2.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.3.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.4.7/sql-mode-empty/utf8mb4/native",
+    "mysql-9.0.1/sql-mode-empty/utf8mb4/native",
+    "mysql-9.1.0/sql-mode-empty/utf8mb4/native"
+  ],
+  "scope": "Scalar native searched and simple signed CASE in a plain SELECT result. Includes nested result CASE, native signed literals with padding and negative zero, exact signed physical field declarations, Boolean literals, and NULL. Search conditions also admit the checked signed membership role. The SELECT has an explicit output label and may have ordinary external input occurrences.",
+  "constructors": {
+    "Expression/Choice/SignedCase": {
+      "role": "One ordered native CASE operation, with a simple subject or searched alternatives and explicit or omitted fallback.",
+      "structure": "Optional exact signed subject, one to 32 immutable ordered alternatives, and optional signed result or nested CASE fallback. Keep repeated alternatives and distinguish omitted ELSE from an explicit NULL.",
+      "conditions": "With a subject, every branch must be a simple branch. Without a subject, every branch must be searched. Check visible use of every subject, test, result and fallback, including each repeated or unselected branch, at the containing SELECT. Apply the existing expanded SELECT depth and term limits.",
+      "meaning": "For a simple CASE, select the first native signed equality that is true. NULL equality is unknown. For a searched CASE, zero and NULL are not true, other signed nonnull values are true. Use the first true result, then the supplied ELSE, then NULL. The server determines the native result layout from the ordered THEN and explicit ELSE results.",
+      "externalInterpretation": "Use the same physical table or visible derived occurrence and named fields with the fixed signed type and NULL policy.",
+      "sql": "Emit a parenthesized CASE. Preserve the native form and concatenation of all WHEN, THEN and ELSE parts in order; use the stored pure operand tokens and the bound field positions.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Expression/Choice/SimpleCaseArm": {
+      "role": "An exact signed equality candidate and its corresponding result.",
+      "structure": "A pure signed literal, Boolean literal, NULL or resolved signed field for the candidate. The result admits the same roles and a nested signed CASE.",
+      "conditions": "A simple branch occurs only within a simple case. The containing SELECT closes every referenced slot.",
+      "meaning": "The candidate matches the one separately recorded subject when both are nonnull and their integer values are equal. The resulting value is conditionally evaluated.",
+      "externalInterpretation": "Use the same physical table or visible derived occurrence and named fields with the fixed signed type and NULL policy.",
+      "sql": "Use WHEN, the pure signed comparison value, THEN and the checked result.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Expression/Choice/SearchedCaseArm": {
+      "role": "A native signed truth test and its corresponding result.",
+      "structure": "A signed literal, Boolean literal, NULL, resolved signed field or signed membership for the decision. The result is a signed literal, Boolean literal, NULL, resolved signed field or nested signed CASE.",
+      "conditions": "A searched branch occurs only within a searched CASE. Any membership has its own independent operand contract. The containing SELECT closes every referenced slot.",
+      "meaning": "Interpret a nonnull nonzero signed value as true. A membership may also yield NULL. Only true elects the result.",
+      "externalInterpretation": "Use the same physical table or visible derived occurrence and named fields with the fixed signed type and NULL policy.",
+      "sql": "Use WHEN, the checked truth expression, THEN and the checked result.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "typeRules": {
+    "basis": "Each signed physical field has its exact native width. Pure integer and Boolean literals have LONGLONG type, with native NULL carrying its own type. Evaluate the recursive ordered result layout separately from branch choice.",
+    "modern": "Starting with supported MySQL 8 releases, discard NULL for aggregation and select the greatest present signed width. All-NULL returns NULL.",
+    "legacy": "For MySQL 5.6.51 and 5.7.44, begin with the first THEN result and merge left to right with each remaining result and explicit ELSE. Use the greater width except NULL followed by INT24 produces LONGLONG and LONGLONG followed by INT24 produces LONG.",
+    "nullability": "A missing fallback or any nullable result makes the heading nullable. MySQL 5.6.51 also propagates nullability from its selector or decision expressions. A left or right outer join can make a nonnull physical field nullable at the occurrence.",
+    "protocol": "Through a simple native prepared SELECT, old releases can transmit the low 32 bits as signed LONG when the chosen expression has a wider value and the native aggregate layout is LONG. Keep native evaluation and exposure as separate observations."
+  },
+  "finite": {
+    "source": "One closed external table with all five signed storage widths and a mix of nullable and required fields.",
+    "resultRepresentatives": [
+      "tiny_value",
+      "small_value",
+      "medium_value",
+      "int_value",
+      "wide_value",
+      "NULL",
+      "0",
+      "2"
+    ],
+    "searchedSingle": {
+      "conditions": [
+        "0",
+        "2",
+        "NULL"
+      ],
+      "results": "all result representatives",
+      "else": "absent or all result representatives"
+    },
+    "searchedPair": {
+      "conditions": [
+        "0",
+        "2",
+        "NULL"
+      ],
+      "results": [
+        "tiny_value",
+        "medium_value",
+        "wide_value",
+        "NULL",
+        "2"
+      ],
+      "else": "absent or each paired result representative"
+    },
+    "simpleSingle": {
+      "subjects": [
+        "NULL",
+        "2",
+        "tiny_value",
+        "wide_value"
+      ],
+      "candidates": [
+        "NULL",
+        "2",
+        "tiny_value",
+        "wide_value"
+      ],
+      "results": "all result representatives",
+      "else": "absent or all result representatives"
+    },
+    "simplePair": {
+      "subjects": [
+        "NULL",
+        "2",
+        "tiny_value",
+        "wide_value"
+      ],
+      "candidates": [
+        "NULL",
+        "tiny_value"
+      ],
+      "results": [
+        "medium_value",
+        "wide_value",
+        "NULL"
+      ],
+      "else": "absent or each paired result representative"
+    },
+    "coordinatesPerRoute": 3294,
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "completion": "Observe every coordinate exactly once per route and release. Independently compute rank coverage from mixed-radix dimensions and reconstruct each coordinate from the observed local binding and typed operand graph.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      31013,
+      40829,
+      56333
+    ],
+    "casesPerSeed": 48,
+    "directCasesPerSeed": 48,
+    "timeoutSecondsPerRelease": 900,
+    "shape": "Both forms, fallback absent and explicit NULL, ordered overlapping choices, true and unknown earlier conditions, every signed width, min and max int64, padded tokens, nested results, runtime NULL and duplicate rows. Include unit sources and joined occurrences. Exercise 32 arms and reject 33 arms on both routes.",
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare the resolved local binding, branch type and order, projection label, exact native protocol type and signedness, nullability metadata, and typed result row multiset.",
+    "Launch candidate rendering and original SQL independently against the declared engine, with all five physical field widths, distinguishing stored values, duplicate rows and NULL. Require expected release and SQL modes.",
+    "Test the native legacy INT24 merge as an ordered fold with multiple branches and a wide value that differs under binary protocol narrowing. Verify at least one actual nullability difference between MySQL 5.6.51 and later.",
+    "Reconcile exact tried and compared budgets, negative construction reasons and applied mutation outcomes. Reject altered registries, lost native types and missing coordinates."
+  ],
+  "faults": [
+    "Remove the nonempty arm guard",
+    "Swap two effective WHEN branches",
+    "Drop the explicit ELSE",
+    "Substitute the wrong signed field occurrence",
+    "Apply the modern result merge to a legacy release",
+    "Ignore an independently known native nullability mismatch",
+    "Keep a mutable caller array reference"
+  ],
+  "unmetAdjacentAreas": [
+    "Publish mixed signed with unsigned, character, decimal or temporal CASE outcomes under their own type and conversion contracts.",
+    "Preserve native implicit CASE headings with their required presentation.",
+    "Compose CASE in WHERE, assignment, set materialization and schema declaration positions with those parents’ native observation contracts."
+  ],
+  "references": [
+    {
+      "source": "https://dev.mysql.com/doc/refman/8.4/en/flow-control-functions.html#operator_case",
+      "role": "Native branch choice and modern result aggregation"
+    },
+    {
+      "source": "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/item_cmpfunc.cc",
+      "sha256": "28821ed05f21450e1f740b32c237a32ccda46bcfcad9a96e41443c097f5b8b38",
+      "role": "Native CASE aggregation or field merge"
+    },
+    {
+      "source": "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/field.cc",
+      "sha256": "678b2ea50e5760f06474059a8c714a160806fbae94c30abe947ef11ac5812da8",
+      "role": "Native CASE aggregation or field merge"
+    },
+    {
+      "source": "https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/item_cmpfunc.cc",
+      "sha256": "e6f38e63d356f4459c4a6912d2162e717204a42724cab25b55aa9d6b36951334",
+      "role": "Native CASE aggregation or field merge"
+    },
+    {
+      "source": "https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/field.cc",
+      "sha256": "5deb30ad473c8d540f503f4ce8f48fbd8aa3f72a3ba9a304f51e5815770ca421",
+      "role": "Native CASE aggregation or field merge"
+    },
+    {
+      "source": "https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/item_cmpfunc.cc",
+      "sha256": "dde8963ad3498ff773d8ab9f00517b030a84a0575dde2733f85b6f416463dffe",
+      "role": "Native CASE aggregation or field merge"
+    },
+    {
+      "source": "https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/field.cc",
+      "sha256": "34e0f8014c6d77db5ec126130516772b60f8f9fe9812f328d9fa69ae7f11233e",
+      "role": "Native CASE aggregation or field merge"
+    }
+  ],
+  "calibration": {
+    "5.6.51": "648880f6112edd14d4325f2e77e1fbc1ed774dfa1f05806dee4d6de3ecfca955",
+    "5.7.44": "84b153a44c23cf3d60de35b42153202352ecb0e12e2df5442562c3b5d2251173",
+    "8.0.44": "98e0c34dca9a0169c4e96ff99d63a1e1a8b71c79fa30c0fb43ba9142d78d681f",
+    "8.1.0": "af5beafd7c6c954e2267c65a54a30ad947d6d8ca8516724b0311377e42f5d324",
+    "8.2.0": "4c2e525de6b6c522a9ad50c9fb078361795ffb1d6ce7beaf76cf80dca423fd52",
+    "8.3.0": "9a2a6d9c5369e3af4176c60048cb80bda9b588b3f8957c6cc49cc6e597096e06",
+    "8.4.7": "aab1c7eff49f55a8a594aea622c3b061838d0a49ec20d3268c782d74c7fe7ca4",
+    "9.0.1": "1711a18a7b8b51398cc98c45e50884db94e92250fda161f65f79a7442ae35654",
+    "9.1.0": "841e4cd61368748b23f5885be4832129485a861267f5fee91c724d016cdb1b77"
+  },
+  "trust": [
+    "Pinned PHP value constructors and exact source-form checker",
+    "Independent ordered signed choice and type oracle",
+    "Pinned native MySQL images and binary protocol client",
+    "Author-run verification pending independently maintained acceptance"
+  ]
+}
