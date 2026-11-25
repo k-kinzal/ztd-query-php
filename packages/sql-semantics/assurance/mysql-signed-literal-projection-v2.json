@@ -98,11 +98,13 @@
       39821,
       62597
     ],
-    "casesPerSeed": 32,
+    "casesPerSeed": 64,
     "directCasesPerSeed": 32,
     "timeoutSecondsPerRelease": 480,
     "shape": "Compose one to four ordered independently signed atoms in each projection, with wide values, repeated values, wide extent and distinguishable or repeated labels. Use size boundaries from the finite grid and intervening lengths. Vary transparent wrapper composition in seeded source requests, including source-free explicit and intrinsic result names.",
-    "allowedExclusions": []
+    "allowedExclusions": [],
+    "predecessorCasesPerSeed": 32,
+    "predecessorCheck": "Run all 32 original analysis cases before 32 additional wrapped cases for each seed. Keep the direct budget unchanged."
   },
   "negative": [
     "Construct an exact integer token with a decimal separator",
