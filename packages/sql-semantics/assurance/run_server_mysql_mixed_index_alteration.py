@@ -21,10 +21,11 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-mixed-index-alteration"
 OBSERVER = "mysql_mixed_index_observer.php"
-NAME = "mysql-mixed-index-alteration-evidence-v1.json"
+NAME = "mysql-mixed-index-alteration-evidence-v2.json"
 BASE = "fcb33e154ba1f9da239a182f08dd70de8660f5e8cb4c382a0e8c92a66c30934c"
-CONTRACT = "53307788ec9f2a473c135ec3dbf3d87ead07b2872e95501515110cb385860f44"
+CONTRACT = "cf8dab798394497cf06f819a0d1f363cc4bf85dd9766e3a67945bc49f9421904"
 PROFILE = "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/alter-indexes"
+FIXTURE_RESET = {"mysql.innodb_index_stats": 0, "mysql.innodb_table_stats": 0}
 POLICY = "The algorithm and lock cannot remove these native InnoDB indexes."
 COMPARATOR_FAULTS = {"Ignore a surviving key that should have been removed.": "retained-removed-key"}
 
@@ -198,6 +199,7 @@ def check_observation(item, actual, sql):
     expected = prediction(model, error)
     detail = {"expected": expected, "observed": actual, "sql": sql}
     require(actual.get("status") == STATUS, "mysql-mixed-index-observer-scope", detail)
+    same(FIXTURE_RESET, actual.get("fixtureStats"))
     require({field: actual[field] for field in expected} == expected, "meaning-mismatch", detail)
     if error:
         require(any(note[1] == error[2] for note in actual["diagnostics"]), "meaning-mismatch", detail)
@@ -239,7 +241,7 @@ def check_preparation(_, _environment, receipt):
 def controls():
     model = case("mysql-8.0.44")
     item = planned(model)
-    result = {**prediction(model, None), "diagnostics": warnings(model)}
+    result = {**prediction(model, None), "diagnostics": warnings(model), "fixtureStats": FIXTURE_RESET}
     check_observation(item, result, sql(model))
     changed = deepcopy(result)
     retained = [key for key in result["initial"]["indexes"] if key[0] == "remove_c"]

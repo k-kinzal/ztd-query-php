@@ -25,7 +25,25 @@ function admitMixedNativeIndexes(string $sql): bool
 
 function observeMixedNativeIndexes(PDO $catalog, PDO $owner, array $request): array
 {
-    return observeNativeIndexChange($catalog, $owner, $request, admitMixedNativeIndexes(...), 'mysql-mixed-index-alteration');
+    return observeNativeIndexChange(
+        $catalog, $owner, $request, admitMixedNativeIndexes(...), 'mysql-mixed-index-alteration', resetMixedIndexStatistics(...)
+    );
+}
+
+function resetMixedIndexStatistics(PDO $catalog): array
+{
+    $scope = " WHERE database_name = 'ir_fixture' AND table_name = 'ir_index_set'";
+    $measured = [];
+    foreach (['mysql.innodb_index_stats', 'mysql.innodb_table_stats'] as $statistics) {
+        $catalog->exec('DELETE FROM ' . $statistics . $scope);
+        $remaining = (int) $catalog->query('SELECT COUNT(*) FROM ' . $statistics . $scope)->fetchColumn();
+        if ($remaining !== 0) {
+            throw new RuntimeException('The disposable fixture retained orphaned InnoDB statistics.');
+        }
+        $measured[$statistics] = $remaining;
+    }
+
+    return $measured;
 }
 
 runMysqlIndexObserver($argv, initIndexRemovalSet(...), observeMixedNativeIndexes(...));

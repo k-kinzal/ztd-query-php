@@ -48,10 +48,11 @@ function batchIndexFixture(string $sql): bool
     return $match === 1;
 }
 
-function prepareBatchIndexFixture(PDO $catalog, PDO $owner, array $request): void
+function prepareBatchIndexFixture(PDO $catalog, PDO $owner, array $request, ?Closure $reset = null): ?array
 {
     $owner->exec('DROP TEMPORARY TABLE IF EXISTS ' . BATCH_INDEX_TABLE);
     $catalog->exec('DROP TABLE IF EXISTS ' . BATCH_INDEX_TABLE);
+    $resetEvidence = $reset?->__invoke($catalog);
     $catalog->exec('UPDATE ' . BATCH_INDEX_MARKER . ' SET n = 0');
 
     foreach ($request['declarations'] as $statement) {
@@ -63,9 +64,11 @@ function prepareBatchIndexFixture(PDO $catalog, PDO $owner, array $request): voi
             $insert->execute($row);
         }
     }
+
+    return $resetEvidence;
 }
 
-function observeNativeIndexChange(PDO $catalog, PDO $owner, array $request, Closure $admits, string $status): array
+function observeNativeIndexChange(PDO $catalog, PDO $owner, array $request, Closure $admits, string $status, ?Closure $reset = null): array
 {
     $fixtures = $request['declarations'];
     if (!$admits($request['sql']) || !is_bool($request['generated']) || count($fixtures) < 1 || count($fixtures) > 2
@@ -73,7 +76,7 @@ function observeNativeIndexChange(PDO $catalog, PDO $owner, array $request, Clos
         return ['status' => 'outside-observer-scope'];
     }
 
-    prepareBatchIndexFixture($catalog, $owner, $request);
+    $resetEvidence = prepareBatchIndexFixture($catalog, $owner, $request, $reset);
     $before = dropIndexState($owner, 'a', BATCH_INDEX_TABLE);
     $effect = observeMysqlIndexEffect($catalog, $owner, BATCH_INDEX_MARKER, $request['sql']);
     $after = dropIndexState($owner, 'a', BATCH_INDEX_TABLE);
@@ -85,7 +88,8 @@ function observeNativeIndexChange(PDO $catalog, PDO $owner, array $request, Clos
     }
 
     return ['status' => $status, 'initial' => $before, ...$effect, 'after' => $after,
-        'afterGenerated' => $advanced, 'catalog' => dropIndexState($catalog, 'a', BATCH_INDEX_TABLE), 'generated' => $generated];
+        'afterGenerated' => $advanced, 'catalog' => dropIndexState($catalog, 'a', BATCH_INDEX_TABLE), 'generated' => $generated,
+        ...($resetEvidence === null ? [] : ['fixtureStats' => $resetEvidence])];
 }
 
 function observeIndexRemovalSet(PDO $catalog, PDO $owner, array $request): array
