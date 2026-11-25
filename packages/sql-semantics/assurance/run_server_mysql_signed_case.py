@@ -129,7 +129,9 @@ def check_value(trial, response):
     expected = cases.graph(trial)
     heading = expected.pop("signedCaseLayouts")
     require(expected == {field:response.get(field) for field in expected},"mysql-signed-case-graph",{"expected":expected,"observed":response})
-    require(heading == response["signedCaseLayouts"],LAYOUT,{"expected":heading,"observed":response["signedCaseLayouts"]})
+    require(heading == response["signedCaseLayouts"],LAYOUT,{
+        "expected":heading,"observed":response["signedCaseLayouts"],"sql":response["sql"],
+    })
 
 def check_preparation(_, environment, fixture):
     require(environment["database"][2:] == ["","utf8mb4","utf8mb4"],"mysql-signed-case-profile")
