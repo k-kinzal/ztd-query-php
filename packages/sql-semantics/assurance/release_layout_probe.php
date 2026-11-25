@@ -3312,7 +3312,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 new SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument(new SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral('0')),
             ], true);
             $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex(
-                $named->schema, $named->index, $named->table, $named->heading,
+                $named->schema, $named->index, $named->table,
+                [$heading[0], new SqlSemantics\Platform\Sqlite\Ir\Identifier('code'), $heading[2]],
                 [new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm($direct)],
             );
             $mismatched = false;
