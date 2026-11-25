@@ -351,7 +351,7 @@ function observeMysqlSignedProjection(SqlSemantics\Platform\MySql\Semantics $sem
     $literal = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral($digits);
     $label = new SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName($digits);
     $result = new SqlSemantics\Platform\MySql\Ir\ResultColumn($literal, $label);
-    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$result]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$result], release: $semantics->profile()->grammar);
 
     return [$direct == $analyzed, $analyzed == $batch, $analyzed->columns[0]->expression::class,
         $analyzed->columns[0]->name::class, $literal->decimal(), $analyzed->columns[0]->name->value, $analyzed->toString()];

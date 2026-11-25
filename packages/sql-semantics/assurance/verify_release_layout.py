@@ -582,10 +582,11 @@ def verify_probe(raw, catalog):
             ], "installed-mysql-external-view-mismatch", item)
             mysql_ir = r"SqlSemantics\Platform\MySql\Ir" + chr(92)
             digits = "0" * 256 + "2147483648"
-            require(item.get("mysqlSignedProjection") == [
+            signed_projection = item.get("mysqlSignedProjection")
+            require(signed_projection == [
                 True, True, mysql_ir + r"Literal\ProjectedIntegerLiteral", mysql_ir + r"Literal\IntrinsicIntegerName",
                 "2147483648", digits, "SELECT " + digits,
-            ], "installed-mysql-signed-projection-mismatch", item)
+            ], "installed-mysql-signed-projection-mismatch", signed_projection)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,
