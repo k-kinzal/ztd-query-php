@@ -299,6 +299,26 @@ function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics
     ];
 }
 
+function observeMysqlNativeTruth(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.truth_release (wide BIGINT, unused INTEGER)']);
+    $written = 'SELECT ((wide IS NOT UNKNOWN) IS TRUE) AS visible FROM app.truth_release';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $reference = new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(0);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest(
+        SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthOperator::True,
+        new SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest(
+            SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthOperator::NotUnknown,
+            $reference,
+        ),
+    );
+
+    return [$analyzed == $batch, $direct == $analyzed->columns[0]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        $analyzed->source->columnTypes[0]->storage->value, $analyzed->toString()];
+}
+
 function observeMysqlSignedCase(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $legacy = new SqlSemantics\Platform\MySql\Semantics(grammarVersion: 'mysql-5.6.51');
@@ -2120,6 +2140,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlHaving'] = observeMysqlHaving($semantics);
             $details['mysqlSignedMembership'] = observeMysqlSignedMembership($semantics);
             $details['mysqlSignedCase'] = observeMysqlSignedCase($semantics);
+            $details['mysqlNativeTruth'] = observeMysqlNativeTruth($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

@@ -193,7 +193,7 @@ if ($dialect === 'mysql') {
     }
     $methods[$simpleCaseArm] = $methods[$searchedCaseArm] = ['__construct'];
     $methods[$signedCase] = ['__construct', 'children'];
-    array_push($properties['ResultColumn']['expression'], $range, $membership, $signedCase);
+    array_push($properties['ResultColumn']['expression'], $range, $membership, $signedCase, 'Predicate\\Truth\\TruthTest');
     sort($properties['ResultColumn']['expression']);
 }
 $selectBounds = $dialect === 'sqlite' ? 'From\\SelectBounds' : 'SelectBounds';
@@ -834,7 +834,7 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         array_push($truthValues, 'From\\BooleanColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
-        array_push($truthValues, 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison');
+        array_push($truthValues, 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\Truth\\TruthTest');
     }
     sort($truthValues);
     if ($dialect === 'postgres') {
@@ -844,6 +844,20 @@ if ($dialect !== 'sqlite') {
             'IsFalse' => 'IS FALSE', 'IsNotFalse' => 'IS NOT FALSE',
             'IsUnknown' => 'IS UNKNOWN', 'IsNotUnknown' => 'IS NOT UNKNOWN',
         ];
+    }
+    if ($dialect === 'mysql') {
+        $truth = 'Predicate\\Truth\\TruthTest';
+        $truthOperator = 'Predicate\\Truth\\TruthOperator';
+        $truthOperands = [...$truthValues, 'ColumnReference', 'From\\IntegralColumnReference', 'Predicate\\RangeIntegerLiteral'];
+        sort($truthOperands);
+        $properties[$truth] = ['operator' => [$truthOperator], 'operand' => $truthOperands];
+        $methods[$truth] = ['__construct'];
+        $properties[$truthOperator] = $methods[$truthOperator] = [];
+        $enumCases[$truthOperator] = [
+            'True' => 'TRUE', 'False' => 'FALSE', 'Unknown' => 'UNKNOWN',
+            'NotTrue' => 'NOT TRUE', 'NotFalse' => 'NOT FALSE', 'NotUnknown' => 'NOT UNKNOWN',
+        ];
+        $internal[] = 'Predicate\\Truth\\TruthLowering';
     }
     $conditions = [...$truthValues, 'null'];
     $properties['Aggregation\\GroupedSelect']['where'] = $conditions;
@@ -922,7 +936,7 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         array_push($properties['Predicate\\NullTest']['operand'], 'From\\BooleanColumnReference', 'From\\WideIntegerColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
-        array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison');
+        array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerMembership', 'Predicate\\Text\\TextComparison', 'Predicate\\Truth\\TruthTest');
     }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];

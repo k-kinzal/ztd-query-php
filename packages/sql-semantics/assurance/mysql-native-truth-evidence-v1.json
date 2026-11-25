@@ -1,0 +1,19 @@
+{
+  "revision": "SemanticsIR/mysql-native-truth-evidence-1",
+  "approval": "pending-human-review",
+  "reference": {
+    "file": "mysql-native-truth-v1.json",
+    "sha256": "65b6c145cf17fa9860262f977904254cab230d5265fa59699f4d86f8eb1a07cb"
+  },
+  "negativeCount": 5,
+  "faults": [
+    "Render a different truth operation",
+    "Erase nested operands",
+    "Swap the physical occurrence of a signed truth atom",
+    "Compare only the first observed row",
+    "Ignore a known native integer or nullability difference"
+  ],
+  "sourceFaults": [
+    "mysql-truth-skip-operand-traversal"
+  ]
+}

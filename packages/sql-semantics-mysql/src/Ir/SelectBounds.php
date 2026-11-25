@@ -21,6 +21,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
 /**
@@ -39,7 +40,7 @@ final class SelectBounds
     public function check(
         array $results,
         TableSource|Join|null $source,
-        BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|TruthTest|null $where = null,
     ): void {
         Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
@@ -48,31 +49,43 @@ final class SelectBounds
         $nodes = 0;
         $position = 0;
         foreach ($results as $result) {
-            $this->checkLabel($result, $inputs);
-            $pending = [[$result->expression, 0]];
-            while ($pending !== []) {
-                [$expression, $height] = array_pop($pending);
-                if ($expression instanceof SignedCase || $expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TextComparison) {
-                    $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
-                        : 'A predicate slot must belong to the SELECT source.';
-                    $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);
-                    continue;
-                }
-                Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
-                match (true) {
-                    $expression instanceof ColumnReference => Check::input(
-                        $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),
-                        'Column slot must belong to the SELECT source.',
-                    ),
-                    $expression instanceof TextColumnReference => $scope->textColumn($expression, $inputs),
-                    $expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],
-                    $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],
-                    $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
-                    $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),
-                    $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,
-                };
-            }
+            [$nodes, $position] = $this->checkResult($result, $inputs, $scope, $nodes, $position);
         }
+    }
+
+    /**
+     * Checks one result and returns the updated expanded bounds and marker position.
+     * @param list<TableSource|DerivedSource> $inputs
+     * @return array{int,int}
+     */
+    public function checkResult(ResultColumn $result, array $inputs, OccurrenceScope $scope, int $nodes, int $position): array
+    {
+        $this->checkLabel($result, $inputs);
+        $pending = [[$result->expression, 0]];
+        while ($pending !== []) {
+            [$expression, $height] = array_pop($pending);
+            if ($expression instanceof SignedCase || $expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {
+                $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
+                    : 'A predicate slot must belong to the SELECT source.';
+                $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);
+                continue;
+            }
+            Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
+            match (true) {
+                $expression instanceof ColumnReference => Check::input(
+                    $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),
+                    'Column slot must belong to the SELECT source.',
+                ),
+                $expression instanceof TextColumnReference => $scope->textColumn($expression, $inputs),
+                $expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],
+                $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],
+                $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
+                $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),
+                $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,
+            };
+        }
+
+        return [$nodes, $position];
     }
 
     /**

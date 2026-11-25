@@ -8,7 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\SelectBounds;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
@@ -35,5 +37,13 @@ final class SelectBoundsTest extends TestCase
         $this->expectExceptionMessage('An intrinsic MySQL result name must equal its physical input field.');
 
         (new SelectBounds())->checkLabel($result, [$source]);
+    }
+
+    public function testCheckResultKeepsTheCountsForFollowingResults(): void
+    {
+        $field = new ResultColumn(new IntegerLiteral('2'), new Identifier('n'));
+        $bounds = new SelectBounds();
+
+        self::assertSame([4, 2], $bounds->checkResult($field, [], new OccurrenceScope(), 3, 2));
     }
 }

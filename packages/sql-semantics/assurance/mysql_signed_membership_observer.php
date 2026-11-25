@@ -25,14 +25,18 @@ function membershipWarningCount(PDO $pdo): int
     }
 }
 
-function membershipRows(PDO $pdo, string $sql): array
+function membershipRows(PDO $pdo, string $sql, bool $includeNullability = false): array
 {
     $statement = $pdo->prepare($sql);
     $statement->execute();
     $fields = [];
     for ($position = 0; $position < $statement->columnCount(); ++$position) {
         $native = $statement->getColumnMeta($position);
-        $fields[] = [$native['name'], $native['native_type']];
+        $heading = [$native['name'], $native['native_type']];
+        if ($includeNullability) {
+            $heading[] = !in_array('not_null', $native['flags'], true);
+        }
+        $fields[] = $heading;
     }
     $rows = $statement->fetchAll(PDO::FETCH_NUM);
     $statement->closeCursor();
@@ -98,7 +102,9 @@ function observeMembership(PDO $pdo, array $request): array
     // A table read clears warning state retained by earlier constant statements.
     $pdo->query('SELECT 1 FROM ' . MEMBERSHIP_TABLE . ' LIMIT 1')->closeCursor();
     try {
-        return $role === 'update' || $role === 'delete' ? membershipEffect($pdo, $sql, $role) : membershipRows($pdo, $sql);
+        return $role === 'update' || $role === 'delete'
+            ? membershipEffect($pdo, $sql, $role)
+            : membershipRows($pdo, $sql, ($request['includeNullability'] ?? false) === true);
     } catch (PDOException $error) {
         return ['status' => 'mysql-membership-native-error', 'sqlState' => $error->errorInfo[0], 'diagnostic' => $error->getMessage()];
     }

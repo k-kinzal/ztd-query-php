@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
@@ -35,7 +36,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs
      */
     public function predicate(
-        BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $condition,
+        BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|TruthTest|null $condition,
         array $inputs,
         string $invalidSlot = 'A predicate slot must belong to a visible input occurrence.',
     ): void {
@@ -50,7 +51,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanLiteral|CollatedText|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral|SignedCase|IntegralColumnReference|TextColumnReference|TextLiteral $operand,
+        BooleanLiteral|CollatedText|ColumnReference|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral|TruthTest|SignedCase|IntegralColumnReference|TextColumnReference|TextLiteral $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
@@ -76,7 +77,7 @@ final class OccurrenceScope
             $operand instanceof SignedCase => $operand->children(),
             $operand instanceof IntegerMembership => [$operand->subject, ...$operand->alternatives],
             $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
-            $operand instanceof NullTest => [$operand->operand],
+            $operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand],
             $operand instanceof CollatedText => [$operand->operand],
             $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegralColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof RangeIntegerLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral => [],
         };

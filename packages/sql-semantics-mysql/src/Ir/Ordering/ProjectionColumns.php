@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparisonLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthLowering;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -23,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Comparison as ParsedCompari
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
+use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest as ParsedTruthTest;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
@@ -64,11 +66,9 @@ final class ProjectionColumns
             while ($operand instanceof Grouped) {
                 $operand = $operand->operand;
             }
-            if ($operand instanceof ParsedNullTest) {
-                $results[] = new ResultColumn((new PredicateLowering())->nullTest($operand, $binding), $label);
-                continue;
-            }
             $typed = match (true) {
+                $operand instanceof ParsedTruthTest => (new TruthLowering())->lower($operand, $binding),
+                $operand instanceof ParsedNullTest => (new PredicateLowering())->nullTest($operand, $binding),
                 $operand instanceof CaseExpression => (new SignedCaseLowering())->lower($operand, $binding),
                 $operand instanceof ParsedComparison => $comparisons->lower($operand, $binding),
                 $operand instanceof Collated => (new CollatedTextLowering())->lower($operand, $binding),

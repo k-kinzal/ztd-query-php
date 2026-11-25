@@ -13,6 +13,8 @@ use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparisonLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
@@ -21,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical as ParsedLogical;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not as ParsedNot;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
+use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest as ParsedTruthTest;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 
 /**
@@ -33,7 +36,7 @@ final class PredicateLowering
     /**
      * Resolves native signed integer operands or a constant truth value.
      */
-    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null
+    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
     {
         return $condition === null ? null : $this->lowerValue($condition, $binding);
     }
@@ -41,7 +44,7 @@ final class PredicateLowering
     /**
      * Resolves a checked predicate or truth constant.
      */
-    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest
+    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerMembership|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|TruthTest
     {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
@@ -53,6 +56,9 @@ final class PredicateLowering
         }
         if ($condition instanceof ParsedNot) {
             return new LogicalPredicate(LogicalOperator::Not, $this->lowerValue($condition->operand, $binding));
+        }
+        if ($condition instanceof ParsedTruthTest) {
+            return (new TruthLowering())->lower($condition, $binding);
         }
         if ($condition instanceof ParsedNullTest) {
             return $this->nullTest($condition, $binding);
@@ -90,7 +96,7 @@ final class PredicateLowering
         if ($operand instanceof ColumnUse) {
             return new NullTest($binding->field($operand), $condition->negated);
         }
-        $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
+        $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedTruthTest || $operand instanceof ParsedComparison
             ? $this->lowerValue($operand, $binding)
             : (new ExpressionLowering())->lower($operand, $binding);
         Check::input(!$tested instanceof Arithmetic, 'A null test needs a supported scalar value.');

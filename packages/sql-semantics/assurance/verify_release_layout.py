@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v189.json"
-CONTRACT = "203195a048fcf9c5a2b131b501dea000ef78bacd32ab7e81367cd83327db9822"
+CONTRACT_NAME = "release-layout-v190.json"
+CONTRACT = "561a1f9e53645f6b674f1ee3bf654888742ca399f3d867eb8895c8f8075cc00d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -547,6 +547,9 @@ def verify_probe(raw, catalog):
                     and item["sql"] == 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `app`.`answer` (`value`) AS SELECT 42 AS `__ztd_c0`',
                     "installed-mysql-create-view-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
+            require(item.get("mysqlNativeTruth") == [True, True, ["wide"], "BIGINT",
+                "SELECT ((`__ztd_source`.`wide` IS NOT UNKNOWN) IS TRUE) AS `visible` FROM `app`.`truth_release` AS `__ztd_source`"],
+                "installed-mysql-native-truth-mismatch", item)
             choice = (
                 "SELECT (CASE WHEN NULL THEN 2147483648 WHEN 1 THEN `__ztd_source`.`b` ELSE `__ztd_source`.`a` END) "
                 "AS `choice` FROM `app`.`case_release` AS `__ztd_source`"

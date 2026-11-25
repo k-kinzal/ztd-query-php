@@ -140,9 +140,9 @@ def render(term, joined):
     raise ValueError(term)
 
 
-def sql(item):
+def sql(item, *, renderer=render):
     role, term = item["placement"], item["term"]
-    source, predicate = qualified(LEFT), render(term, role == "join")
+    source, predicate = qualified(LEFT), renderer(term, role == "join")
     where = f" WHERE {predicate}" if role in ("filter", "update", "delete") else ""
     if role == "update":
         return f"UPDATE {source} SET {q(NAMES[INT])} = {UPDATED}{where}"
@@ -153,7 +153,7 @@ def sql(item):
     from_ = "" if item["source"] == "unit" else f" FROM {source}"
     if item["source"] == "unit" and where and item["tag"] in ("mysql-5.6.51", "mysql-5.7.44"):
         from_ = " FROM DUAL"
-    selection = ", ".join(render(expr, role == "join") + " AS " + q(label) for expr, label in plain_fields(item))
+    selection = ", ".join(renderer(expr, role == "join") + " AS " + q(label) for expr, label in plain_fields(item))
     order = item["orderBy"]
     suffix = "" if not order else " ORDER BY " + ", ".join(f"{slot} {'DESC' if desc else 'ASC'}" for slot, desc in order)
     return "SELECT " + selection + from_ + where + suffix
@@ -194,19 +194,19 @@ def heading(name, ordinals):
     return source
 
 
-def direct(item):
+def direct(item, *, allocator=allocated):
     term, role = item["term"], item["placement"]
     slots = [[], []]
-    where = allocated(term, slots) if role in ("filter", "update", "delete") else None
+    where = allocator(term, slots) if role in ("filter", "update", "delete") else None
     common = {"dialect": "mysql", "release": item["tag"], "observeExactIntegralSlots": True}
     if role == "update":
-        assignment = [[allocated(reference(INT), slots), ["integer", str(UPDATED)]]]
+        assignment = [[allocator(reference(INT), slots), ["integer", str(UPDATED)]]]
         return {**common, "kind": role, "target": heading(LEFT, slots[0]), "assignments": assignment, "where": where}
     if role == "delete":
         return {**common, "kind": role, "target": heading(LEFT, slots[0]), "where": where}
-    fields = [[allocated(expr, slots), name] for expr, name in plain_fields(item)]
+    fields = [[allocator(expr, slots), name] for expr, name in plain_fields(item)]
     if role == "join":
-        on = allocated(term, slots)
+        on = allocator(term, slots)
         source = {"kind": "LEFT", "left": heading(LEFT, slots[0]), "right": heading(RIGHT, slots[1]), "on": on}
     else:
         source = None if item["source"] == "unit" else heading(LEFT, slots[0])
@@ -260,13 +260,13 @@ def fixture_prediction(name):
                          list(map(list, RECORDS[name])), [], None)
 
 
-def expected(item):
+def expected(item, *, evaluator=evaluate):
     role, term = item["placement"], item["term"]
     rows = [()] if item["source"] == "unit" else [(row,) for row in RECORDS[LEFT]]
     if role in ("update", "delete"):
         affected, after = 0, []
         for (row,) in rows:
-            if evaluate(term, (row,)) == 1:
+            if evaluator(term, (row,)) == 1:
                 affected += 1
                 if role == "update":
                     after.append([*row[:INT], UPDATED, *row[INT+1:]])
@@ -277,14 +277,14 @@ def expected(item):
     if role == "join":
         joined = []
         for left, in rows:
-            matches = [(left, right) for right in RECORDS[RIGHT] if evaluate(term, (left, right)) == 1]
+            matches = [(left, right) for right in RECORDS[RIGHT] if evaluator(term, (left, right)) == 1]
             joined.extend(matches if matches else [(left, (None,) * len(NAMES))])
         rows = joined
     if role == "filter":
-        rows = [row for row in rows if evaluate(term, row) == 1]
+        rows = [row for row in rows if evaluator(term, row) == 1]
     output = plain_fields(item)
     fields = [[label, "LONG" if expr[0] == "slot" else "LONGLONG"] for expr, label in output]
-    values = [[evaluate(expr, row) for expr, _ in output] for row in rows]
+    values = [[evaluator(expr, row) for expr, _ in output] for row in rows]
     ordered = [[position, desc, not desc] for position, desc in item["orderBy"]]
     return result_window(fields, values, ordered, None)
 

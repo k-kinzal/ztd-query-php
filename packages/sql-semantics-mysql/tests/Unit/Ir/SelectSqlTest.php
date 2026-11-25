@@ -23,6 +23,8 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextOperator;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthOperator;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
@@ -143,5 +145,12 @@ final class SelectSqlTest extends TestCase
     public function testCaseOperandEmitsAnExplicitBoolean(): void
     {
         self::assertSame('TRUE', (new SelectSql())->caseOperand(new BooleanLiteral(true), null, 0, true));
+    }
+
+    public function testTruthTestEmitsTheResolvedNativeOperation(): void
+    {
+        $value = new TruthTest(TruthOperator::NotUnknown, new RangeIntegerLiteral('0', 2, true));
+
+        self::assertSame('(-000 IS NOT UNKNOWN)', (new SelectSql())->truthTest($value, null, 0, true));
     }
 }
