@@ -1,0 +1,111 @@
+{
+  "revision": "SemanticsIR/postgres-btree-declared-collation-evidence-1",
+  "approval": "pending-human-review",
+  "profiles": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createindex.html",
+    "https://www.postgresql.org/docs/17/sql-createindex.html",
+    "https://www.postgresql.org/docs/16/sql-createtable.html",
+    "https://www.postgresql.org/docs/17/sql-createtable.html"
+  ],
+  "scope": "Resolve an omitted PostgreSQL B-tree key collation from an ordinary text column declared with absolute stock C, including a session temporary table and an ordinary unmodified LIKE copy.",
+  "rules": [
+    "Keep the exact declared stock C collation on its physical text slot while preparing a complete table declaration. Keep it on an unmodified copy of that slot.",
+    "A text key without a COLLATE clause selects its declared collation. When the declared collation is stock C, omission and an explicit absolute C yield the identical completed key and operator class.",
+    "The indexed column's actual declaration controls collation inheritance. Another column, schema, table copy, search-path shadow, or earlier catalog phase cannot supply a substitute.",
+    "An explicit stock C on the index key overrides any declared collation. Unresolved or separately named collation choices belong to the wider obligation ledger.",
+    "Copy and phase facts are used during construction. Keep only the selected key collation and bound field in completed IR. Text INCLUDE positions and text NULL tests do not acquire a key collation."
+  ],
+  "finite": {
+    "placements": [
+      "persistent",
+      "temporary",
+      "like-copy"
+    ],
+    "layouts": [
+      "one-text-key",
+      "two-text-keys",
+      "mixed-integer-text"
+    ],
+    "keyDirections": [
+      "ASC NULLS LAST",
+      "DESC NULLS FIRST"
+    ],
+    "classSpelling": [
+      "omitted",
+      "qualified-text-ops"
+    ],
+    "coordinates": 36,
+    "routes": [
+      "explicit-construction",
+      "analyze-inherited",
+      "analyze-explicit"
+    ],
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "The desired text column has a database default, POSIX, or an unresolved unqualified declaration",
+    "A neighboring field declares C while the indexed text field's collation is unknown",
+    "Another ordinary table at the same name on the search path declares C",
+    "A collated text key does not admit an unrelated operator class"
+  ],
+  "observations": [
+    "Exact owner and operand coordinates, ordered comparison roles, qualified collation and operator class, and identical graph on direct and analyzed construction",
+    "Native index metadata and result order and values for the original and generated SQL, including NULL and case-distinct values",
+    "Distinct registration and typed refusal when no supported inherited collation can be determined"
+  ],
+  "faults": [
+    "Forget the earlier column collation when copying the table",
+    "Bind a different physical slot's collation",
+    "Treat an unresolved inherited collation as stock C"
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "dialects": [
+    "PostgreSql"
+  ],
+  "constructors": {},
+  "existingRoles": [
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Index/Btree/IndexKey"
+  ],
+  "reference": {
+    "file": "postgres-btree-declared-collation-v1.json",
+    "sha256": "c8e2a7113326a95f4924345d363ddb5778c655b3ed6ba78f65673ab95c9c024b"
+  },
+  "exploration": {
+    "seeds": [
+      39631,
+      50459,
+      189139
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": []
+  },
+  "negativeCount": 6,
+  "calibration": {
+    "generate.py": "d34a6d80bccb16724c507c8c01a86f72b90b32359530ec5821a4f505f8bdc401",
+    "inputs.jsonl": "4615952cc0898a10f7fa5ecae2d11264d781e2ac08f1d173f4116cad9583682b",
+    "16.6-original.stdout": "b5a961a92235cc31cac1113135e165a95d0bb6b0148eb720acfade7a4f1680ba",
+    "16.6-explicit.stdout": "b5a961a92235cc31cac1113135e165a95d0bb6b0148eb720acfade7a4f1680ba",
+    "17.2-original.stdout": "52a60eb925784cb0b990fef9fd5eb01643d5bea9639c32a15e87ed2a2d65c0cd",
+    "17.2-explicit.stdout": "52a60eb925784cb0b990fef9fd5eb01643d5bea9639c32a15e87ed2a2d65c0cd"
+  }
+}
