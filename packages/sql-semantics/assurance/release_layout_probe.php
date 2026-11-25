@@ -2319,6 +2319,22 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $legacyDrop->target->owner->kind->value, $legacyDrop->ignore, $legacyDrop->target->name->value,
                 $legacyDrop->toString(), $legacyDirect->toString(),
             ];
+            $sequenceCatalog = $semantics->context([
+                'CREATE TABLE app.keeps_value (a INT AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY (a), KEY retains_a (a,b))',
+                'CREATE TABLE app.last_support (a INT AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY (a), KEY wrong_order (b,a))',
+            ]);
+            $preserved = $semantics->analyze('ALTER TABLE app.keeps_value DROP PRIMARY KEY', $sequenceCatalog);
+            $protected = null;
+            try {
+                $semantics->analyze('ALTER TABLE app.last_support DROP PRIMARY KEY', $sequenceCatalog);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $protected = $error->getMessage();
+            }
+            $advance = $preserved->target->autoIncrement;
+            $details['mysqlIndexAutoIncrement'] = [
+                $advance->field->value, array_map(static fn ($key): string => $key->value, $advance->alternates),
+                $preserved->toString(), $protected,
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);

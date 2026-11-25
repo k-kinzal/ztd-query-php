@@ -47,7 +47,7 @@ final class TableIndexDeclarations
             if ($items === null) {
                 return null;
             }
-            foreach ($items as [$kind, $name, $first, $ordinary, $clusterCandidate]) {
+            foreach ($items as [$kind, $name, $first, $ordinary, $clusterCandidate, $support]) {
                 $resolved = $name ?? ($first === null ? null : (new IndexNameAllocation())->generated($first, $used, $release));
                 if ($resolved === null || preg_match('/\A[^\x00\x{10000}-\x{10FFFF}]{1,64}(?<! )\z/u', $resolved->value) !== 1) {
                     return null;
@@ -56,18 +56,22 @@ final class TableIndexDeclarations
                 if (isset($used[$key]) || ($key === 'primary') !== ($kind === IndexKind::Primary)) {
                     return null;
                 }
-                $used[$key] = new IndexDeclaration($resolved, PhysicalIndexKind::from($kind->value), $ordinary);
+                $backing = in_array($kind, [IndexKind::Primary, IndexKind::Unique, IndexKind::Index], true) ? $support : null;
+                $used[$key] = new IndexDeclaration($resolved, PhysicalIndexKind::from($kind->value), $ordinary, autoIncrementField: $backing);
                 if ($clusterCandidate) {
                     $firstCandidate ??= $key;
                 }
             }
         }
-        if (count($used) > 64) {
+        $generated = count(array_filter(array_column($columnNames, 2)));
+        $backing = array_filter($used, static fn (IndexDeclaration $index): bool => $index->autoIncrementField !== null);
+        $maximumGeneratingFields = min(1, count($backing));
+        if (count($used) > 64 || $generated > $maximumGeneratingFields) {
             return null;
         }
         if ($firstCandidate !== null && !isset($used['primary'])) {
             $unique = $used[$firstCandidate];
-            $used[$firstCandidate] = new IndexDeclaration($unique->name, PhysicalIndexKind::Unique, true, true);
+            $used[$firstCandidate] = new IndexDeclaration($unique->name, PhysicalIndexKind::Unique, true, true, $unique->autoIncrementField);
         }
 
         return array_values($used);

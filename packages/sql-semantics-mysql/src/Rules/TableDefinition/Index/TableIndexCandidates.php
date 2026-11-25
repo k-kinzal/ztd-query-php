@@ -25,18 +25,18 @@ final class TableIndexCandidates
 {
     /**
      * Returns key policy, optional names, ordinary-part status and clustered eligibility.
-     * @param array<array-key, array{Name, bool}> $columns Physical names and full required storage flags by native case key
-     * @return list<array{IndexKind, ?Name, ?Name, bool, bool}>|null
+     * @param array<array-key, array{Name, bool, bool}> $columns Physical names, required fields and generation flags by native case key
+     * @return list<array{IndexKind, ?Name, ?Name, bool, bool, ?Name}>|null
      */
     public function keys(TableElement $element, array $columns): ?array
     {
         $case = new NativeIdentifierCase();
         if ($element instanceof ColumnDefinition) {
-            [$field, $required] = $columns[$case->fold($element->name->column->value)] ?? [null, false];
+            [$field, $required, $incremented] = $columns[$case->fold($element->name->column->value)] ?? [null, false, false];
 
             return array_map(
                 static fn (IndexKind $kind): array => [$kind, $kind === IndexKind::Primary ? new Name('PRIMARY') : null,
-                    $field, true, $kind === IndexKind::Unique && $required],
+                    $field, true, $kind === IndexKind::Unique && $required, $incremented ? $field : null],
                 (new InlineIdentityKey())->kinds($element)
             );
         }
@@ -48,7 +48,9 @@ final class TableIndexCandidates
             ? new Name('PRIMARY')
             : ($element->name ?? $element->constraint?->name)?->column;
         $first = $element->parts[0];
-        $field = $first instanceof ColumnPart ? ($columns[$case->fold($first->column->value)][0] ?? null) : null;
+        $leading = $first instanceof ColumnPart ? ($columns[$case->fold($first->column->value)] ?? null) : null;
+        [$field, , $incremented] = $leading ?? [null, false, false];
+        $support = $incremented && $first instanceof ColumnPart && $first->length === null ? $field : null;
         $ordinary = true;
         $required = true;
         foreach ($element->parts as $part) {
@@ -64,13 +66,13 @@ final class TableIndexCandidates
             $required = $required && $facts[1];
         }
 
-        return [[$element->kind, $name, $field, $ordinary, $element->kind === IndexKind::Unique && $ordinary && $required]];
+        return [[$element->kind, $name, $field, $ordinary, $element->kind === IndexKind::Unique && $ordinary && $required, $support]];
     }
 
     /**
      * Resolves the names and the eligibility of full required, nonvirtual key fields.
      * @param list<array{ColumnDefinition|null, Column}> $columns Effective ordered column definitions
-     * @return array<array-key, array{Name, bool}>|null
+     * @return array<array-key, array{Name, bool, bool}>|null
      */
     public function fields(array $columns): ?array
     {
@@ -84,7 +86,8 @@ final class TableIndexCandidates
             $specification = $origin?->specification;
             $required = $column->nullability === Nullability::NotNull
                 && (!$specification instanceof GeneratedColumn || $specification->storage === GeneratedStorage::Stored);
-            $byName[$key] = [$column->name, $required];
+            $incremented = $specification !== null && (new AutoIncrementColumn())->matches($specification);
+            $byName[$key] = [$column->name, $required, $incremented];
         }
 
         return $byName;

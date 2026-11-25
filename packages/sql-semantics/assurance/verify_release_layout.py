@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v154.json"
-CONTRACT = "2d398f34a0efe5a48720b3a69f3c6447dd35de1891528bd83f05963b0e67aaac"
+CONTRACT_NAME = "release-layout-v155.json"
+CONTRACT = "f5dee81653a28b14f935a416ba9d2034f4784dcfc0bb500e359db0effd3a7c30"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -724,6 +724,10 @@ def verify_probe(raw, catalog):
                       ", ALGORITHM=COPY, LOCK=NONE")
             require(item.get("mysqlAlterIndexRemoval") == ["temporary-table", True, "ordered_key", legacy, legacy],
                     "installed-mysql-alter-index-removal-mismatch", item)
+            require(item.get("mysqlIndexAutoIncrement") == [
+                "a", ["retains_a"], "DROP INDEX `PRIMARY` ON `app`.`keeps_value`",
+                "DROP INDEX must retain a backing key for the AUTO_INCREMENT field.",
+            ], "installed-mysql-auto-increment-support-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Query\\CreateTableAs"):
             require(item.get("mysqlQueryBackedInnoDbWidth") == [
                 203, False, False, 1, "tail_5", "The projected clustered InnoDB record must fit the native 8126-byte boundary.",

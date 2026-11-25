@@ -49,6 +49,7 @@ CONTRACTS = {
     "mysql-drop-native-index-evidence-v3.json": "78d4213562da75d0be5f161366dd851ff8e542db561d084ad7ceb4cea1ae8fda",
     "mysql-native-index-policy-evidence-v2.json": "1186f86f785635f4708135df8bbb83486c41b2cda22e05d856558f2936740a37",
     "mysql-alter-index-removal-evidence-v1.json": "a3d9f469bdf68a59640d35e9840c8a41c3c2a841b44e5592db85c4786ed7af3c",
+    "mysql-index-auto-increment-evidence-v1.json": "5098698d21b21312f6adad59f5b2a912a620025c143561a4c0d74d833c334f56",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",

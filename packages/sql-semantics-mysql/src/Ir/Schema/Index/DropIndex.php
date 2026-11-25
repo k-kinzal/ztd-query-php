@@ -32,6 +32,10 @@ final class DropIndex implements SemanticsIR
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
         public readonly bool $ignore = false,
     ) {
+        Check::input(
+            $target->autoIncrement === null || $target->autoIncrement->alternates !== [],
+            'DROP INDEX must retain a backing key for the AUTO_INCREMENT field.'
+        );
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
         Check::input(
             $policy->supports($target->owner->kind, $target->role->clustered()),

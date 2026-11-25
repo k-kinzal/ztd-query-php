@@ -23,7 +23,7 @@ final class TableIndexCandidatesTest extends TestCase
         $result = (new Inspection())->inspect('CREATE TABLE app.t (a INT, CONSTRAINT label UNIQUE INDEX exact_name (a))');
         self::assertInstanceOf(CreateTable::class, $result->statement);
 
-        $keys = (new TableIndexCandidates())->keys($result->statement->elements[1], ['a' => [new Name('a'), false]]);
+        $keys = (new TableIndexCandidates())->keys($result->statement->elements[1], ['a' => [new Name('a'), false, false]]);
         self::assertNotNull($keys);
         self::assertSame(IndexKind::Unique, $keys[0][0]);
         self::assertSame('exact_name', $keys[0][1]?->value);
@@ -36,7 +36,7 @@ final class TableIndexCandidatesTest extends TestCase
         [$required, $nullable] = $result->tables[0]->columns;
 
         $fields = $candidates->fields([[null, $required], [null, $nullable]]);
-        self::assertSame(['n' => [$required->name, true], 'm' => [$nullable->name, false]], $fields);
+        self::assertSame(['n' => [$required->name, true, false], 'm' => [$nullable->name, false, false]], $fields);
         self::assertNull($candidates->fields([[null, $required], [null, $required]]));
     }
 }

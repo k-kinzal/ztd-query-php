@@ -1426,10 +1426,15 @@ if ($dialect !== 'sqlite') {
         $dropIndex = 'Schema\\Index\\DropIndex';
         $indexIdentity = 'Schema\\Index\\IndexIdentity';
         $indexRole = 'Schema\\Index\\IndexRole';
+        $indexAutoIncrement = 'Schema\\Index\\IndexAutoIncrement';
+        $internal[] = 'Schema\\Index\\IndexAutoIncrementLowering';
+        $properties[$indexAutoIncrement] = ['field' => ['Identifier'], 'alternates' => ['array']];
+        $methods[$indexAutoIncrement] = ['__construct'];
         $roots[] = $dropIndex;
         array_push($internal, 'Schema\\Index\\DropIndexLowering', 'Schema\\Alter\\AlterIndexRemovalLowering');
         $properties[$dropIndex] = ['target' => [$indexIdentity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'], 'policy' => [$policy], 'ignore' => ['bool']];
-        $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole]];
+        $properties[$indexIdentity] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'name' => ['Identifier'], 'role' => [$indexRole],
+            'autoIncrement' => ['?' . $indexAutoIncrement]];
         $properties[$indexRole] = [];
         $methods[$dropIndex] = ['__construct', 'profileId', 'toString'];
         $methods[$indexIdentity] = ['__construct'];
@@ -1761,7 +1766,7 @@ try {
             ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v5.json', '7a1814a0d53a728f4cb57edcda6688a5390763adb35af826625b42f1dc707e24', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v4.json', '72af04c3dbcbf4208f7de344aa503556e00b2d2f43575d4513f437db09e1c627', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v5.json', '630a06f3b4142755ada05052b0aa05652067565ce6f718708efee31ea3c04c40', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1809,11 +1814,18 @@ try {
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
     if ($dialect === 'mysql') {
-        $indexStorage = __DIR__ . '/mysql-index-namespace-storage-v1.json';
-        requireShape(hash_file('sha256', $indexStorage) === '90a0725227d5c8931a4b9cb2ea92567cb4a93798161a81590874659da33c412d',
-            'MySQL native index list storage differs from its recorded revision');
-        $indexRecord = json_decode(file_get_contents($indexStorage), true, 512, JSON_THROW_ON_ERROR);
-        $storage[$indexRecord['owner']] += $indexRecord['storage'];
+        foreach ([
+            ['mysql-index-namespace-storage-v1.json', '90a0725227d5c8931a4b9cb2ea92567cb4a93798161a81590874659da33c412d'],
+            ['mysql-index-auto-increment-storage-v1.json', '6b6a146f979bb53a4dce55a241f642a75e4fdb61d541c7ba254ae158aa3344c7'],
+        ] as [$catalogue, $digest]) {
+            $indexStorage = __DIR__ . '/' . $catalogue;
+            requireShape(hash_file('sha256', $indexStorage) === $digest, 'MySQL native index list storage differs from its recorded revision');
+            $indexRecord = json_decode(file_get_contents($indexStorage), true, 512, JSON_THROW_ON_ERROR);
+            $current = $storage[$indexRecord['owner']] ?? [];
+            requireShape(array_intersect_key($current, $indexRecord['storage']) === [], 'Duplicate MySQL native index list storage rule');
+            $storage[$indexRecord['owner']] = $current + $indexRecord['storage'];
+        }
+        ksort($storage);
     }
     $listFields = [];
     $checkedValues = [];
@@ -2349,7 +2361,7 @@ try {
         }
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
             requireShape(in_array($name->toString(), $allowed, true)
-                || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace'], true)
+                || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace', 'Schema\\Index\\IndexAutoIncrement'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
                 || ($dialect === 'sqlite' && $short === 'Expression\\CastTypeName' && $name->toString() === $platform . '\\Model\\Contract\\TypeNameAffinity')
                 || ($dialect === 'postgres' && in_array($short, ['Schema\\Namespace\\CreateSchema', 'Schema\\Namespace\\ChangeSchemaOwner',

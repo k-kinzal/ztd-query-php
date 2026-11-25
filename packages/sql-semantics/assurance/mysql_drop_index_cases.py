@@ -50,7 +50,7 @@ def definition(tag, point, *, field="a", label="LiStÉ", composite=True, offset=
     fields = [field, "c"] if origin != "inline" and composite else [field]
     role = "clustered-unique" if kind == "unique" and not (nullable and "c" in fields) and anchor not in ("primary", "prior") else kind
     target = [SCHEMA, TABLE, "table" if life == "persistent" else "temporary-table"]
-    return {"dialect": "mysql", "release": tag, "mysqlDropIndex": {"owner": target, "role": role, "name": name, "policy": ["DEFAULT", "DEFAULT"], "ignore": False},
+    return {"dialect": "mysql", "release": tag, "mysqlDropIndex": {"owner": target, "role": role, "name": name, "policy": ["DEFAULT", "DEFAULT"], "ignore": False, "autoIncrement": None},
             "point": list(point), "written": written, "fields": fields, "field": field, "label": label,
             "offset": offset, "option": option, "occupied": occupied, "nullable": nullable, "anchor": anchor}
 

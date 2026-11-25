@@ -53,18 +53,18 @@ function dropIndexRows(PDO $target, array $rows): void
     }
 }
 
-function dropIndexState(PDO $target, string $layout): ?array
+function dropIndexState(PDO $target, string $layout, string $table = DROP_INDEX_OWNER): ?array
 {
-    if (mysqlFixtureTableDefinition($target, DROP_INDEX_OWNER) === null) {
+    if (mysqlFixtureTableDefinition($target, $table) === null) {
         return null;
     }
-    $fields = $target->query('SHOW FULL COLUMNS FROM ' . DROP_INDEX_OWNER)->fetchAll(PDO::FETCH_ASSOC);
+    $fields = $target->query('SHOW FULL COLUMNS FROM ' . $table)->fetchAll(PDO::FETCH_ASSOC);
     $columns = array_map(static fn (array $field): array => [$field['Field'], $field['Type'], $field['Null'] === 'YES',
         $field['Default'], $field['Extra'], $field['Collation']], $fields);
-    $rows = $target->query('SELECT * FROM ' . DROP_INDEX_OWNER . ' ORDER BY ' . dropIndexQuote($layout) . ', b')->fetchAll(PDO::FETCH_NUM);
+    $rows = $target->query('SELECT * FROM ' . $table . ' ORDER BY ' . dropIndexQuote($layout) . ', b')->fetchAll(PDO::FETCH_NUM);
     $indexes = array_map(static fn (array $part): array => [$part['Key_name'], $part['Non_unique'], $part['Seq_in_index'],
         $part['Column_name'], $part['Collation'], $part['Null'] === 'YES', $part['Index_type'],
-        ($part['Visible'] ?? 'YES') === 'YES', $part['Sub_part']], $target->query('SHOW INDEX FROM ' . DROP_INDEX_OWNER)->fetchAll(PDO::FETCH_ASSOC));
+        ($part['Visible'] ?? 'YES') === 'YES', $part['Sub_part']], $target->query('SHOW INDEX FROM ' . $table)->fetchAll(PDO::FETCH_ASSOC));
     usort($indexes, static fn (array $left, array $right): int => [$left[0], $left[2]] <=> [$right[0], $right[2]]);
 
     return ['rows' => $rows, 'columns' => $columns, 'indexes' => $indexes];

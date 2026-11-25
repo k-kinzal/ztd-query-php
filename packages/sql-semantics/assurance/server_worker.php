@@ -978,10 +978,15 @@ function constructMysqlIndexPolicy(array $options): SqlSemantics\Platform\MySql\
 function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex
 {
     $spec = $input['mysqlDropIndex'];
+    $source = $spec['autoIncrement'];
+    $increment = $source === null ? null : new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement(
+        new SqlSemantics\Platform\MySql\Ir\Identifier($source['field']),
+        array_map(static fn (string $name): SqlSemantics\Platform\MySql\Ir\Identifier => new SqlSemantics\Platform\MySql\Ir\Identifier($name), $source['alternates'])
+    );
     $target = new SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity(
         mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']),
         new SqlSemantics\Platform\MySql\Ir\Identifier($spec['name']),
-        SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::from($spec['role'])
+        SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::from($spec['role']), $increment
     );
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
@@ -992,10 +997,13 @@ function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\S
 
 function observeMysqlDropIndex(SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex $value): array
 {
+    $increment = $value->target->autoIncrement;
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
         'mysqlDropIndex' => ['owner' => observeMysqlTableIdentity($value->target->owner),
             'name' => $value->target->name->value, 'role' => $value->target->role->value,
-            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore]];
+            'policy' => [$value->policy->algorithm->value, $value->policy->lock->value], 'ignore' => $value->ignore,
+            'autoIncrement' => $increment === null ? null : ['field' => $increment->field->value,
+                'alternates' => array_map(static fn (object $name): string => $name->value, $increment->alternates)]]];
 }
 
 function constructMysqlCreateIndex(string $platform, array $input): SemanticsIR

@@ -24,6 +24,7 @@ final class IndexDeclaration
         public readonly PhysicalIndexKind $kind,
         public readonly bool $wholeFields,
         public readonly bool $clusteredUnique = false,
+        public readonly ?Name $autoIncrementField = null,
     ) {
     }
 }

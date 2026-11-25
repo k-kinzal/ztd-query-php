@@ -85,8 +85,10 @@ final class DropIndexLowering
         };
         Check::input($role !== null, 'DROP INDEX requires a primary or ordinary B-tree index.');
 
+        $increment = (new IndexAutoIncrementLowering())->resolve($index, $table->indexes ?? []);
+
         return new DropIndex(
-            new IndexIdentity($owner, new Identifier($index->name->value), $role),
+            new IndexIdentity($owner, new Identifier($index->name->value), $role, $increment),
             $profile->grammar,
             $policy,
             $ignore

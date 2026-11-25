@@ -1,0 +1,11 @@
+{
+  "revision": "SemanticsIR/mysql-index-auto-increment-storage-1",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/IndexAutoIncrement",
+  "storage": {
+    "alternates": [
+      "Identifier",
+      0
+    ]
+  }
+}

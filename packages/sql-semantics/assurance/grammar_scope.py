@@ -816,6 +816,12 @@ def inventory(root):
                 alter_index.update(rules.get(rule, []))
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
+            generated_keys = {
+                "attribute: AUTO_INC", "column_attribute: AUTO_INC", "attribute: SERIAL_SYM DEFAULT VALUE_SYM",
+                "column_attribute: SERIAL_SYM DEFAULT_SYM VALUE_SYM", "create_table_option: AUTO_INC opt_equal ulonglong_num",
+            }
+            for alternative in signatures & (index_removal | generated_keys):
+                related[alternative] = (*related.get(alternative, ()), "mysql-index-auto-increment-evidence-v1.json")
             for rule in ("rename", "table_to_table", "table_to_table_list"):
                 for alternative in rules.get(rule, []):
                     if rule != "rename" or "table_to_table_list" in alternative:
