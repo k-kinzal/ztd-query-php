@@ -326,6 +326,7 @@ def main(domain):
                                      for method in ("replay_fault", "check_fault_witness")),
                 "native-fault-replay-unregistered", domain.LABEL)
         comparator_controls = domain.controls()
+        check_fault_obligations(specification, args.engine, domain, comparator_controls, mutations)
         structure = shape(args, dialect=args.engine)
         if container is not None:
             require(args.engine == "postgres" and not args.local, "postgres-fixture-isolated-runner-required")

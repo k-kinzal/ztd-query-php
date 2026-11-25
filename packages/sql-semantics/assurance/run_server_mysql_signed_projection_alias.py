@@ -19,8 +19,8 @@ CONTRACT_NAME = "mysql-signed-projection-alias-v1.json"
 CONTRACT = "f3a86eb38cad5c432e3b7f6d08fe851b05e86935cd8c9cfc76201f5c94c9dc8a"
 MEANING = "meaning-mismatch"
 COMPARATOR_FAULTS = {
-    "Truncate requested alias bytes without maintaining whole UTF-8 characters": "brokenUtf8",
-    "Measure only execution diagnostics in native prepared mode": "missingPrepare",
+    "Truncate requested alias bytes without maintaining whole UTF-8 characters.": "brokenUtf8",
+    "Measure only execution diagnostics in native prepared mode.": "missingPrepare",
     "Deduplicate or reorder identical alias warnings.": "deduplicatedWarnings",
 }
 
