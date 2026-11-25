@@ -402,6 +402,35 @@ function observePostgresTableWidth(SqlSemantics\Platform\PostgreSql\Semantics $s
         $analyzed->columns[0]->name->value, $analyzed->columns[1599]->name->value, $direct->toString() === $analyzed->toString(), $rejected];
 }
 
+function observePostgresStockLookup(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $release = $semantics->profile()->grammar->value;
+    $earlier = new SqlSemantics\Platform\PostgreSql\Model\Contract\SearchPath('pg_temp', 'app', 'pg_catalog', 'public');
+    $later = new SqlSemantics\Platform\PostgreSql\Model\Contract\SearchPath('pg_temp', 'pg_catalog', 'app', 'public');
+    $shadowed = new SqlSemantics\Platform\PostgreSql\Semantics($release, searchPath: $earlier);
+    $stock = new SqlSemantics\Platform\PostgreSql\Semantics($release, searchPath: $later);
+    $table = 'CREATE TABLE public.codes (label pg_catalog.text COLLATE "C")';
+    $index = 'CREATE INDEX choice ON public.codes (label text_ops)';
+    $written = 'CREATE SCHEMA lookup_owner CREATE INDEX choice ON codes (label text_ops) '
+        . 'CREATE TABLE codes (label pg_catalog.text COLLATE "C")';
+    $absolute = str_replace(['label text_ops', 'COLLATE "C"'], ['label pg_catalog.text_ops', 'COLLATE pg_catalog."C"'], $written);
+    $value = $stock->analyze($written, $stock->context([]));
+    [$batch] = $stock->analyzeAll($written, $stock->context([]));
+    $explicit = $shadowed->analyze($absolute, $shadowed->context([]));
+    $declared = $shadowed->context([str_replace('COLLATE "C"', 'COLLATE pg_catalog."C"', $table)]);
+    $denied = [];
+    foreach ([$table, $index] as $statement) {
+        try {
+            $shadowed->analyze($statement, $declared);
+        } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+            $denied[] = $error->getMessage();
+        }
+    }
+
+    return [$value->tables[0]->columns[0]->collation->value, $value->indexes[0]->keys[0]->collation->value,
+        $value == $explicit, $value == $batch, $value->toString(), $denied];
+}
+
 function observePostgresBooleanFields(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled pg_catalog.bool)']);
@@ -1903,6 +1932,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['postgresPrimaryKey'] = observePostgresPrimaryKey($semantics);
             $details['postgresUniqueKey'] = observePostgresUniqueKey($semantics);
             $details['postgresTableWidth'] = observePostgresTableWidth($semantics);
+            $details['postgresStockLookup'] = observePostgresStockLookup($semantics);
             $complete = $semantics->context([]);
             $table = $semantics->analyze('CREATE TABLE public.declared_c (code text COLLATE pg_catalog."C" NOT NULL, payload text)', $complete);
             $schema = $semantics->analyze(

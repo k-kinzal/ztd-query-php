@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexNameLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Lookup\StockLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -42,10 +43,11 @@ final class CreateIndexLowering
         Check::input(($memberNamespace === null) === ($memberOccupants === null), 'A schema index requires its namespace and known occupants together.');
         $target = (new IndexTableLowering())->lower($operation, $statement, $memberNamespace);
         $operands = new IndexOperands();
+        $stockFirst = StockLookup::firstCatalog($context->searchPath);
         $keys = [];
         $included = [];
         foreach ($statement->elements as $element) {
-            $keys[] = $operands->key($target, $element);
+            $keys[] = $operands->key($target, $element, $stockFirst);
         }
         foreach ($statement->included as $element) {
             $included[] = $operands->covering($target, $element);

@@ -847,6 +847,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-collated-table-evidence"
+      - name: Compare PostgreSQL stock collation and operator-class lookup
+        if: ${{ !cancelled() && matrix.engine == 'postgres' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_postgres_stock_lookup.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-postgres-stock-lookup-evidence"
       - name: Compare PostgreSQL B-tree collations inherited from columns
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -3151,6 +3166,12 @@ jobs:
         with:
           name: native-postgres-collated-table-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-collated-table-evidence/
+      - name: Preserve PostgreSQL stock collation and operator-class lookup and any failure
+        if: ${{ always() && matrix.engine == 'postgres' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-postgres-stock-lookup-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-postgres-stock-lookup-evidence/
       - name: Preserve PostgreSQL B-tree collations inherited from columns and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

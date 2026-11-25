@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v185.json"
-CONTRACT = "8562f31886ebf0b0b44b8d8837ed551a541872a6fb115fab5dce8684f7644de6"
+CONTRACT_NAME = "release-layout-v186.json"
+CONTRACT = "b90b40f2a3e11550b8f896ec1844526c3185f323676eb92fadb8220e665ad730"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -814,6 +814,13 @@ def verify_probe(raw, catalog):
                 'CREATE TABLE "public"."declared_c" ("code" pg_catalog.text COLLATE pg_catalog."C" NOT NULL, '
                 '"payload" pg_catalog.text NULL) USING heap'],
                     "installed-postgres-collated-table-mismatch", item)
+            require(item.get("postgresStockLookup") == ["C", "C", True, True,
+                    'CREATE SCHEMA "lookup_owner" AUTHORIZATION CURRENT_USER CREATE TABLE "lookup_owner"."codes" '
+                    '("label" pg_catalog.text COLLATE pg_catalog."C" NULL) USING heap CREATE INDEX "choice" '
+                    'ON "lookup_owner"."codes" USING btree ("label" COLLATE pg_catalog."C" pg_catalog.text_ops ASC NULLS LAST)',
+                    ["The column requires a resolved stock PostgreSQL collation.",
+                     "An explicitly collated PostgreSQL B-tree key requires stock pg_catalog.C and its default text operator class."]],
+                    "installed-postgres-stock-lookup-mismatch", item)
             wide = "SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral"
             require(item.get("postgresSignedDefault") == [
                 [["SMALLINT", wide, "-9223372036854775808"], ["BIGINT", wide, "7"], ["pg_catalog.text", wide, "9223372036854775807"]],

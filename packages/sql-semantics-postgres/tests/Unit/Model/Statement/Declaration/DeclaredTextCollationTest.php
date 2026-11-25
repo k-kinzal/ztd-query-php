@@ -15,14 +15,15 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 #[Small]
 final class DeclaredTextCollationTest extends TestCase
 {
-    public function testResolveRequiresTheAbsoluteStockCoordinate(): void
+    public function testResolve(): void
     {
         self::assertSame(
             DeclaredTextCollation::StockC,
-            DeclaredTextCollation::resolve(new QualifiedName(new Name('C'), new Name('pg_catalog')))
+            DeclaredTextCollation::resolve(new QualifiedName(new Name('C'), new Name('pg_catalog')), false)
         );
-        self::assertNull(DeclaredTextCollation::resolve(new QualifiedName(new Name('C'))));
-        self::assertNull(DeclaredTextCollation::resolve(new QualifiedName(new Name('C'), new Name('decoy'))));
-        self::assertNull(DeclaredTextCollation::resolve(new QualifiedName(new Name('POSIX'), new Name('pg_catalog'))));
+        self::assertNull(DeclaredTextCollation::resolve(new QualifiedName(new Name('C')), false));
+        self::assertSame(DeclaredTextCollation::StockC, DeclaredTextCollation::resolve(new QualifiedName(new Name('C')), true));
+        self::assertNull(DeclaredTextCollation::resolve(new QualifiedName(new Name('C'), new Name('decoy')), true));
+        self::assertNull(DeclaredTextCollation::resolve(new QualifiedName(new Name('POSIX'), new Name('pg_catalog')), true));
     }
 }

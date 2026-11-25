@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Lookup\StockLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\DeclaredTextCollation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
@@ -85,11 +86,11 @@ final class ColumnTyping
      * Resolves a known absolute stock collation on a listed column.
      * @param list<Clause> $qualifiers Preserved column qualifier order
      */
-    public function collation(array $qualifiers): ?DeclaredTextCollation
+    public function collation(array $qualifiers, AnalysisContext $context): ?DeclaredTextCollation
     {
         foreach ($qualifiers as $qualifier) {
             if ($qualifier instanceof ColumnCollation) {
-                return DeclaredTextCollation::resolve($qualifier->collation->qualified());
+                return DeclaredTextCollation::resolve($qualifier->collation->qualified(), StockLookup::firstCatalog($context->searchPath));
             }
         }
 

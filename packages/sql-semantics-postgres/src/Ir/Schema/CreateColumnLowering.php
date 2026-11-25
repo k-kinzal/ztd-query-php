@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Lookup\StockLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -49,6 +50,7 @@ final class CreateColumnLowering
         $nullable = null;
         $default = null;
         $collation = null;
+        $stockFirst = StockLookup::firstCatalog($operation->context->searchPath);
         $literals = new LiteralDefaultLowering();
         foreach ($column->qualifiers as $qualifier) {
             if ($qualifier instanceof DefaultExpression && $qualifier->name === null && $default === null) {
@@ -57,7 +59,7 @@ final class CreateColumnLowering
                 $nullable = $qualifier instanceof NullAllowed;
             } elseif ($qualifier instanceof ColumnCollation && $collation === null) {
                 Check::input(
-                    DeclaredTextCollation::resolve($qualifier->collation->qualified()) === DeclaredTextCollation::StockC,
+                    DeclaredTextCollation::resolve($qualifier->collation->qualified(), $stockFirst) === DeclaredTextCollation::StockC,
                     'The column requires a resolved stock PostgreSQL collation.'
                 );
                 $collation = TextCollation::C;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration;
 
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Lookup\StockLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 
 /**
@@ -18,9 +19,8 @@ enum DeclaredTextCollation: string
     /**
      * Resolves a supported absolute native collation.
      */
-    public static function resolve(?QualifiedName $name): ?self
+    public static function resolve(?QualifiedName $name, bool $stockFirst): ?self
     {
-        return $name !== null && $name->catalog === null && $name->schema?->value === 'pg_catalog' && $name->name->value === 'C'
-            ? self::StockC : null;
+        return StockLookup::matches($name, 'C', $stockFirst) ? self::StockC : null;
     }
 }

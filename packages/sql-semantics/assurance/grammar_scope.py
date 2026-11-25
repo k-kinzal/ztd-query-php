@@ -531,6 +531,9 @@ def inventory(root):
             for rule in ("CreateStmt", "ColumnDef", "ColQualList", "ColConstraintElem", "CreateSchemaStmt"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "postgres-create-collated-text-evidence-v1.json")
+            for rule in ("CreateStmt", "ColumnDef", "ColConstraintElem", "CreateSchemaStmt", "IndexStmt", "index_elem", "opt_collate", "opt_class"):
+                for alternative in rules.get(rule, ()):
+                    related[alternative] = (*related.get(alternative, ()), "postgres-stock-collation-lookup-evidence-v1.json")
         if postgres:
             for rule in ("IndexStmt", "a_expr", "b_expr"):
                 for alternative in rules.get(rule, ()):

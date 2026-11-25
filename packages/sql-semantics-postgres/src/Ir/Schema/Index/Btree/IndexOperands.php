@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Lookup\StockLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading;
@@ -23,7 +24,7 @@ final class IndexOperands
     /**
      * Binds and orders one written key.
      */
-    public function key(IndexHeading $table, IndexElement $element): IndexKey
+    public function key(IndexHeading $table, IndexElement $element, bool $stockFirst): IndexKey
     {
         $descending = $element->direction === SortDirection::Descending;
         $nullsFirst = $element->nulls === NullsOrder::First || ($element->nulls === null && $descending);
@@ -35,11 +36,11 @@ final class IndexOperands
         $collation = $table->columnCollations[$slot] ?? null;
         $unsupported = 'An explicitly collated PostgreSQL B-tree key requires stock pg_catalog.C and its default text operator class.';
         if ($element->collation !== null) {
-            Check::input(array_column($element->collation->parts, 'value') === ['pg_catalog', 'C'], $unsupported);
+            Check::input(StockLookup::matches($element->collation->qualified(), 'C', $stockFirst), $unsupported);
             $collation = TextCollation::C;
         }
         Check::input($element->operatorClass === null
-            || ($collation !== null && array_column($element->operatorClass->parts, 'value') === ['pg_catalog', 'text_ops']), $unsupported);
+            || ($collation !== null && StockLookup::matches($element->operatorClass->qualified(), 'text_ops', $stockFirst)), $unsupported);
 
         return new IndexKey($slot, $order, $collation);
     }

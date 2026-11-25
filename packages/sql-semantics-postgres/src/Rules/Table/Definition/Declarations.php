@@ -97,7 +97,7 @@ final class Declarations
                 $notNull = $types->serial($element->type) !== null || $this->notNull($element->qualifiers);
                 $identity = $this->identity($element->qualifiers);
                 $collation = $type === \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text
-                    ? $types->collation($element->qualifiers) : null;
+                    ? $types->collation($element->qualifiers, $derivation->context) : null;
                 if ($type !== null && !$set->add($element->name, $type, $notNull, $this->generated($element->qualifiers), $identity, $collation)) {
                     if ($notNull) {
                         $set->require($element->name);

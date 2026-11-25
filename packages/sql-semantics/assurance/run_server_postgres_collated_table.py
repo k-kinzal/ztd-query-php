@@ -191,7 +191,7 @@ def faults(_, tag):
                     """($this->collation === null ? '' : ' COLLATE pg_catalog."' . $this->collation->value . '"')""",
                     "''", good, MEANING, laws.direct(good)),
         RenderFault("assume-column-collation-is-c", root + "CreateColumnLowering.php",
-                    "DeclaredTextCollation::resolve($qualifier->collation->qualified()) === DeclaredTextCollation::StockC",
+                    "DeclaredTextCollation::resolve($qualifier->collation->qualified(), $stockFirst) === DeclaredTextCollation::StockC",
                     "true", unresolved, RESOLUTION, laws.analyzed(unresolved)),
         RenderFault("accept-numeric-column-with-text-collation", root + "TableColumn.php",
                     "$collation === null || $storage === CharacterStorage::Text", "true", integer, ADMITTED, laws.direct(integer)),
