@@ -1,0 +1,187 @@
+{
+  "revision": "SemanticsIR/mysql-foreign-key-scalar-evidence-1",
+  "approval": "pending-human-review",
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "law": {
+    "mysql-native-foreign-scalar-fields-v3.json": "ae27a6035d83b9f41606e208340253e3fb2d657006c5c337d23f0983801c2745"
+  },
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "finite": {
+    "fields": [
+      [
+        "scalar",
+        "DECIMAL",
+        9,
+        0,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DECIMAL",
+        10,
+        2,
+        true,
+        false
+      ],
+      [
+        "scalar",
+        "BIT",
+        8,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "BIT",
+        9,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "TIME",
+        2,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DATETIME",
+        0,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "TIMESTAMP",
+        0,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "FLOAT",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DOUBLE",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DATE",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "YEAR",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "integer",
+        "TINYINT",
+        true
+      ],
+      [
+        "integer",
+        "MEDIUMINT",
+        false
+      ],
+      [
+        "string",
+        "VARBINARY",
+        4,
+        null
+      ]
+    ],
+    "domain": "All ordered pairs of effective fields with at least one scalar role.",
+    "order": "Lexicographic pair of source indices.",
+    "coordinates": 187,
+    "admitted": 71,
+    "positiveRoutes": [
+      "analysis",
+      "direct"
+    ],
+    "rejectedRoutes": [
+      "analysis",
+      "direct"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      163,
+      3961,
+      51409
+    ],
+    "casesPerSeed": 12,
+    "maxWidth": 3
+  },
+  "authoredPositive": 13,
+  "directInvalidBoundaryCases": 6,
+  "limits": {
+    "secondsPerRelease": 480,
+    "preparationExceptions": [],
+    "excludedCases": []
+  },
+  "requiredRows": [
+    "admitted",
+    "refused",
+    "null",
+    "physical-match-across-kinds",
+    "physically-unequal-decimals"
+  ],
+  "observe": [
+    "Physical field roles and normalization",
+    "Exact ordered constraint and native support index",
+    "Native diagnostics and transaction outcome",
+    "Typed projected values, NULL and update/delete rows"
+  ],
+  "sourceFaults": [
+    "F01-incompatible-physical-encoding",
+    "F03-operand-effects",
+    "F07-drop-on-update",
+    "F09-always-match",
+    "F09-drop-time-precision"
+  ]
+}
