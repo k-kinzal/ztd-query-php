@@ -1,0 +1,345 @@
+{
+  "revision": "SemanticsIR/mysql-signed-literal-projection-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-signed-literal-projection-v1.json",
+  "rules": {
+    "Literal/ProjectedIntegerLiteral::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A-?[0-9]+\\z/', $token) === 1, 'A projected integer token needs decimal digits and an optional minus sign.');",
+        "new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral($this->decimal());"
+      ]
+    },
+    "Literal/ProjectedIntegerLiteral::decimal": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$magnitude = ltrim($this->token, '-0');",
+        "if ($magnitude === '') {",
+        "    return '0';",
+        "}",
+        "return ($this->token[0] === '-' ? '-' : '') . $magnitude;"
+      ]
+    },
+    "Literal/ProjectedIntegerLiteral::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->token;"
+      ]
+    },
+    "Literal/IntrinsicIntegerName::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(strlen($value) > 256 && preg_match('/\\A[0-9]+\\z/', $value) === 1, 'An intrinsic long integer name must consist of more than 256 digits.');"
+      ]
+    },
+    "Literal/IntrinsicIntegerName::key": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->value;"
+      ]
+    },
+    "Literal/IntegerTokenLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$spelling = $this->spelling($expression);",
+        "if ($spelling === null) {",
+        "    return null;",
+        "}",
+        "$negative = $spelling[0] === '-';",
+        "$text = ltrim($spelling, '-');",
+        "$digits = ltrim($text, '0');",
+        "$zeroes = min(strlen($text) - max(1, strlen($digits)), \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral::MAX_LEADING_ZEROES);",
+        "return [$digits === '' ? '0' : ($negative ? '-' : '') . $digits, $zeroes, $negative && $digits === ''];"
+      ]
+    },
+    "Literal/IntegerTokenLowering::spelling": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$negative = false;",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Unary && $expression->operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral && ($expression->operator === \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator::Minus || $expression->operator === \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator::Plus)) {",
+        "    $negative = $expression->operator === \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator::Minus;",
+        "    $expression = $expression->operand;",
+        "} elseif ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\SignedLiteral) {",
+        "    $negative = $expression->negative;",
+        "    $expression = $expression->number;",
+        "}",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($expression->form === \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberForm::Integer, 'The numeric literal must have the signed integer role.');",
+        "    return ($negative ? '-' : '') . $expression->text;",
+        "}",
+        "return null;"
+      ]
+    },
+    "Ordering/ProjectedIntegerLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expression = $field->expression;",
+        "if ($expression === null) {",
+        "    return null;",
+        "}",
+        "$token = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntegerTokenLowering())->spelling($expression);",
+        "if ($token === null) {",
+        "    return null;",
+        "}",
+        "$literal = new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral($token);",
+        "$decimal = $literal->decimal();",
+        "$zeroes = strlen(ltrim($token, '-')) - strlen(ltrim($decimal, '-'));",
+        "$value = $zeroes <= \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral::MAX_LEADING_ZEROES && \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Standard->accepts(new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral($decimal)) ? new \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral($decimal, $zeroes, $token[0] === '-' && $decimal === '0') : $literal;",
+        "$name = $this->name($statement, $field, $literal, $profile);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn($value, $name);"
+      ]
+    },
+    "Ordering/ProjectedIntegerLowering::name": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ($statement->items as $item) {",
+        "    if (!$item instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression || $item->expression !== $field->expression) {",
+        "        continue;",
+        "    }",
+        "    if ($item->alias !== null) {",
+        "        return (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ProjectionLabel())->lower($statement, $field, $item->alias->value);",
+        "    }",
+        "    if ($literal->token[0] === '-') {",
+        "        $naming = new \\SqlSemantics\\Platform\\MySql\\Rules\\Query\\ItemNaming($profile);",
+        "        $stored = $naming->stored($naming->text($item), 'utf8mb4');",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($stored instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Name, 'An integer projection needs a resolved native heading.');",
+        "        return new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($stored->value);",
+        "    }",
+        "    return strlen($literal->token) > 256 ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName($literal->token) : new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($literal->token);",
+        "}",
+        "throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('An integer projection needs an owned select item.');"
+      ]
+    },
+    "Ordering/ProjectionColumns::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expressions = new \\SqlSemantics\\Platform\\MySql\\Ir\\ExpressionLowering();",
+        "$casts = new \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\IntegralCastLowering();",
+        "$strings = new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteralLowering();",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ParameterLowering();",
+        "$parameterPosition = 0;",
+        "$labels = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ProjectionLabel();",
+        "$integers = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ProjectedIntegerLowering();",
+        "$specialized = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\SpecializedProjection();",
+        "foreach ($fields as $field) {",
+        "    if (($literal = $integers->lower($statement, $field, $operation->context->profile)) !== null) {",
+        "        $results[] = $literal;",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($field->name !== null, 'The result must have a resolved name.');",
+        "    $label = $labels->lower($statement, $field, $field->name->value);",
+        "    $expression = $field->expression;",
+        "    if ($expression === null || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse) {",
+        "        $resolution = $field->resolution;",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Column\\ResolvedColumn, 'A projected field must resolve to one visible input slot.');",
+        "        $results[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn($binding->projected($resolution), $label);",
+        "        continue;",
+        "    }",
+        "    $typed = $specialized->lower($expression, $binding);",
+        "    $parameter = $parameters->lower($expression, $parameterPosition + 1);",
+        "    if ($parameter !== null) {",
+        "        ++$parameterPosition;",
+        "    }",
+        "    $results[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn($typed ?? $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding), $label);",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "return $results;"
+      ]
+    },
+    "Ordering/SpecializedProjection::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "return match (true) {",
+        "    $operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\TruthTest => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Truth\\TruthLowering())->lower($operand, $binding),",
+        "    $operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\NullTest => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\PredicateLowering())->nullTest($operand, $binding),",
+        "    $operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Branching\\CaseExpression => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\Choice\\SignedCaseLowering())->lower($operand, $binding),",
+        "    $operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Comparison => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\ComparisonLowering())->lower($operand, $binding),",
+        "    $operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Collated => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedTextLowering())->lower($operand, $binding),",
+        "    default => null,",
+        "};"
+      ]
+    },
+    "ResultColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $name->value === ltrim($name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral && $expression->token === $name->value, 'An intrinsic integer name must match the exact projected integer token.');"
+      ]
+    },
+    "SelectSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $label = $column->name->value;",
+        "    if ($localNames) {",
+        "        $alias = ' AS ' . $this->localColumn($slot);",
+        "    } elseif ($column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || $label !== ltrim($label, \" \\t\\r\\n\\v\\f\")) {",
+        "        $alias = '';",
+        "    } else {",
+        "        $alias = ' AS ' . $column->name->quoted();",
+        "    }",
+        "    $items[] = $this->expression($column->expression, $source) . $alias;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "} elseif ($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $select->orderBy !== []) {",
+        "    $sql .= ' FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single`';",
+        "} elseif (($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744) && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {",
+        "    $sql .= ' FROM DUAL';",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "return $sql . (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultSql())->render($select);"
+      ]
+    },
+    "SelectSql::expression": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Truth\\TruthTest => $this->truthTest($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\Choice\\SignedCase => $this->signedCase($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerComparison => $this->integerComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerMembership => $this->integerMembership($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\NullTest => $this->predicate($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Text\\TextComparison => $this->textComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedText => '(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' COLLATE ' . $expression->collation->value . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral => 'NULL',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "SelectBounds::checkResult": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$this->checkLabel($result, $inputs);",
+        "$pending = [[$result->expression, 0]];",
+        "while ($pending !== []) {",
+        "    [$expression, $height] = array_pop($pending);",
+        "    if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\Choice\\SignedCase || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerComparison || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerMembership || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerRange || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\NullTest || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Truth\\TruthTest || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Text\\TextComparison) {",
+        "        $invalid = $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerRange ? 'A range slot must belong to the SELECT source.' : 'A predicate slot must belong to the SELECT source.';",
+        "        $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "    match (true) {",
+        "        $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference => \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot), 'Column slot must belong to the SELECT source.'),",
+        "        $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference => $scope->textColumn($expression, $inputs),",
+        "        $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\UnsignedCast => $pending[] = [$expression->operand, $height + 1],",
+        "        $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedText => $pending[] = [$expression->operand, $height + 1],",
+        "        $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "        $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter => \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),",
+        "        $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral => null,",
+        "    };",
+        "}",
+        "return [$nodes, $position];"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($query instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position), self::legacy($query));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "return match (true) {",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Text,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedText => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Text,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\UnsignedCast => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::UnsignedInteger,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Unknown,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\Choice\\SignedCase => match ($query->signedCaseLayout($position)['storage'] ?? null) {",
+        "        null => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Unknown,",
+        "        \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Wide => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::WideInteger,",
+        "        \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Tiny, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Small, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Medium, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Standard => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Integer,",
+        "    },",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Integer,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Arithmetic, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerComparison, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerMembership, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerRange, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\NullTest, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Truth\\TruthTest, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Text\\TextComparison, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::WideInteger,",
+        "};"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definition = $statement->definition;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->definer === null && $definition->check === null && !($statement->orReplace && $definition->ifNotExists), 'CREATE VIEW needs an implicit definer and one admitted creation policy without a check option.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'A checked view requires one ordinary SELECT block.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($operation->context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE VIEW requires the native case-sensitive relation profile.');",
+        "$schema = ($definition->name->schema ?? $operation->context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED && $definition->name->catalog === null, 'CREATE VIEW requires an absolute view identity.');",
+        "$name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($definition->name->name->value));",
+        "$query = (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->lower($operation, $definition->query);",
+        "$columns = [];",
+        "if ($definition->columns === null) {",
+        "    foreach ($query->columns as $column) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier, 'A view requires an explicit name for a long intrinsic integer heading.');",
+        "        $columns[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn($column->name);",
+        "    }",
+        "} else {",
+        "    foreach ($definition->columns as $column) {",
+        "        $columns[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($column->value));",
+        "    }",
+        "}",
+        "$policy = match (true) {",
+        "    $statement->orReplace => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Replace,",
+        "    $definition->ifNotExists => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve,",
+        "    default => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::RequireNew,",
+        "};",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\CreateView($name, $query, $columns, $policy, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::from($definition->algorithm->value ?? 'UNDEFINED'), \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewSecurity::from($definition->security->value ?? 'DEFINER'));"
+      ]
+    }
+  }
+}

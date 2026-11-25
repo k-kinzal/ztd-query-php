@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v192.json"
-CONTRACT = "c7ecf6cc3f4ad2229958cb5fdc19fcf59cc890d4a67f5470437a02f4abd24d55"
+CONTRACT_NAME = "release-layout-v193.json"
+CONTRACT = "2e8597b90316217e63ca20ae21d3076435dedd6faf144d3fad4014f22d302eb7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -581,6 +581,11 @@ def verify_probe(raw, catalog):
                 "A DELETE target must be a base table.",
             ], "installed-mysql-external-view-mismatch", item)
             mysql_ir = r"SqlSemantics\Platform\MySql\Ir" + chr(92)
+            digits = "0" * 256 + "2147483648"
+            require(item.get("mysqlSignedProjection") == [
+                True, True, mysql_ir + r"Literal\ProjectedIntegerLiteral", mysql_ir + r"Literal\IntrinsicIntegerName",
+                "2147483648", digits, "SELECT " + digits,
+            ], "installed-mysql-signed-projection-mismatch", item)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

@@ -37,6 +37,7 @@ final class CreateViewLowering
         $columns = [];
         if ($definition->columns === null) {
             foreach ($query->columns as $column) {
+                Check::input($column->name instanceof Identifier, 'A view requires an explicit name for a long intrinsic integer heading.');
                 $columns[] = new ViewColumn($column->name);
             }
         } else {

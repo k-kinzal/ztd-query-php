@@ -342,6 +342,21 @@ function observeMysqlSignedComparisonWidths(SqlSemantics\Platform\MySql\Semantic
         array_map(static fn ($type) => [$type->storage->value, $type->nullable], $analyzed->source->columnTypes), $analyzed->toString()];
 }
 
+function observeMysqlSignedProjection(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $digits = str_repeat('0', 256) . '2147483648';
+    $written = 'SELECT ' . $digits;
+    $analyzed = $semantics->analyze($written);
+    [$batch] = $semantics->analyzeAll($written);
+    $literal = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral($digits);
+    $label = new SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName($digits);
+    $result = new SqlSemantics\Platform\MySql\Ir\ResultColumn($literal, $label);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$result]);
+
+    return [$direct == $analyzed, $analyzed == $batch, $analyzed->columns[0]->expression::class,
+        $analyzed->columns[0]->name::class, $literal->decimal(), $analyzed->columns[0]->name->value, $analyzed->toString()];
+}
+
 function observeMysqlNativeTruth(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE app.truth_release (wide BIGINT, unused INTEGER)']);
@@ -2186,6 +2201,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedCase'] = observeMysqlSignedCase($semantics);
             $details['mysqlNativeTruth'] = observeMysqlNativeTruth($semantics);
             $details['mysqlSignedComparisonWidths'] = observeMysqlSignedComparisonWidths($semantics);
+            $details['mysqlSignedProjection'] = observeMysqlSignedProjection($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

@@ -10,6 +10,8 @@ use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName;
+use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership;
@@ -36,9 +38,13 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast $expression,
-        public readonly Identifier $name,
+        public readonly Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|ProjectedIntegerLiteral|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast $expression,
+        public readonly Identifier|IntrinsicIntegerName $name,
     ) {
         Check::input($expression instanceof ColumnReference || $expression instanceof TextColumnReference || $name->value === ltrim($name->value, " \t\r\n\v\f"), 'A MySQL result name cannot start with SQL whitespace.');
+        Check::input(
+            !$name instanceof IntrinsicIntegerName || ($expression instanceof ProjectedIntegerLiteral && $expression->token === $name->value),
+            'An intrinsic integer name must match the exact projected integer token.'
+        );
     }
 }

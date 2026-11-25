@@ -20,4 +20,11 @@ final class IntegerTokenLoweringTest extends TestCase
 
         self::assertSame(['9223372036854775807', 2, false], $value);
     }
+
+    public function testSpellingRetainsEveryLeadingDigit(): void
+    {
+        $text = str_repeat('0', 68) . '1';
+
+        self::assertSame($text, (new IntegerTokenLowering())->spelling(new NumberLiteral($text)));
+    }
 }

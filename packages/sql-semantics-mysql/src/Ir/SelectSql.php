@@ -13,6 +13,8 @@ use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName;
+use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -43,9 +45,14 @@ final class SelectSql
         $source = $select->source;
         $items = [];
         foreach ($select->columns as $slot => $column) {
-            $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();
             $label = $column->name->value;
-            $alias = $localNames || $label === ltrim($label, " \t\r\n\v\f") ? ' AS ' . $name : '';
+            if ($localNames) {
+                $alias = ' AS ' . $this->localColumn($slot);
+            } elseif ($column->name instanceof IntrinsicIntegerName || $label !== ltrim($label, " \t\r\n\v\f")) {
+                $alias = '';
+            } else {
+                $alias = ' AS ' . $column->name->quoted();
+            }
             $items[] = $this->expression($column->expression, $source) . $alias;
         }
         $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
@@ -75,7 +82,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|ProjectedIntegerLiteral|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -91,7 +98,7 @@ final class SelectSql
             $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),
             $expression instanceof CollatedText => '(' . $this->expression($expression->operand, $source, $offset, $qualify)
                 . ' COLLATE ' . $expression->collation->value . ')',
-            $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),
+            $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof ProjectedIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',

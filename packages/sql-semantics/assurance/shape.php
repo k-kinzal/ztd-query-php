@@ -807,10 +807,16 @@ if ($dialect === 'sqlite') {
 }
 if ($dialect !== 'sqlite') {
     if ($dialect === 'mysql') {
-        array_push($internal, 'Literal\\TextLiteralLowering', 'Ordering\\ProjectionLabel', 'Ordering\\ProjectionColumns');
+        array_push($internal, 'Literal\\TextLiteralLowering', 'Ordering\\ProjectionLabel', 'Ordering\\ProjectionColumns',
+            'Ordering\\ProjectedIntegerLowering', 'Ordering\\SpecializedProjection');
         $properties['Literal\\TextLiteral'] = ['value' => ['string']];
         $methods['Literal\\TextLiteral'] = ['__construct', 'toString'];
-        $properties['ResultColumn']['expression'][] = 'Literal\\TextLiteral';
+        $properties['Literal\\ProjectedIntegerLiteral'] = ['token' => ['string']];
+        $methods['Literal\\ProjectedIntegerLiteral'] = ['__construct', 'decimal', 'toString'];
+        $properties['Literal\\IntrinsicIntegerName'] = ['value' => ['string']];
+        $methods['Literal\\IntrinsicIntegerName'] = ['__construct', 'key'];
+        array_push($properties['ResultColumn']['expression'], 'Literal\\TextLiteral', 'Literal\\ProjectedIntegerLiteral');
+        $properties['ResultColumn']['name'][] = 'Literal\\IntrinsicIntegerName';
         sort($properties['ResultColumn']['expression']);
     }
     $internal[] = 'Binding\\ParameterLowering';

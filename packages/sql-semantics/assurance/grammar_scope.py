@@ -235,6 +235,11 @@ def inventory(root):
                     related[alternative] = (*related.get(alternative, ()), "mysql-signed-comparison-widths-v2.json")
             for alternative in rules.get("comp_op", ()):
                 related[alternative] = (*related.get(alternative, ()), "mysql-signed-comparison-widths-v2.json")
+            for rule in ("literal", "signed_literal", "NUM_literal"):
+                for alternative in rules.get(rule, ()):
+                    if alternative in {"literal: NUM_literal", "signed_literal: + NUM_literal", "signed_literal: - NUM_literal",
+                                       "NUM_literal: NUM", "NUM_literal: LONG_NUM", "NUM_literal: ULONGLONG_NUM"}:
+                        related[alternative] = (*related.get(alternative, ()), "mysql-signed-literal-projection-v1.json")
             for alternative in rules.get("expr", ()):
                 if alternative.startswith("expr: bool_pri IS ") and alternative.endswith((" TRUE_SYM", " FALSE_SYM", " UNKNOWN_SYM")):
                     related[alternative] = (*related.get(alternative, ()), "mysql-native-truth-v1.json", "mysql-signed-comparison-widths-v2.json")

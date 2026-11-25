@@ -26,6 +26,23 @@ final class IntegerTokenLowering
      */
     public function lower(Scalar $expression): ?array
     {
+        $spelling = $this->spelling($expression);
+        if ($spelling === null) {
+            return null;
+        }
+        $negative = $spelling[0] === '-';
+        $text = ltrim($spelling, '-');
+        $digits = ltrim($text, '0');
+        $zeroes = min(strlen($text) - max(1, strlen($digits)), IntegerLiteral::MAX_LEADING_ZEROES);
+
+        return [$digits === '' ? '0' : (($negative ? '-' : '') . $digits), $zeroes, $negative && $digits === ''];
+    }
+
+    /**
+     * Returns the exact digits and significant polarity of an integral token.
+     */
+    public function spelling(Scalar $expression): ?string
+    {
         $negative = false;
         if ($expression instanceof Unary && $expression->operand instanceof NumberLiteral
             && ($expression->operator === UnaryOperator::Minus || $expression->operator === UnaryOperator::Plus)) {
@@ -36,12 +53,9 @@ final class IntegerTokenLowering
             $expression = $expression->number;
         }
         if ($expression instanceof NumberLiteral) {
-            $number = $expression;
-            Check::input($number->form === NumberForm::Integer, 'The numeric literal must have the signed integer role.');
-            $digits = ltrim($number->text, '0');
-            $zeroes = min(strlen($number->text) - max(1, strlen($digits)), IntegerLiteral::MAX_LEADING_ZEROES);
+            Check::input($expression->form === NumberForm::Integer, 'The numeric literal must have the signed integer role.');
 
-            return [$digits === '' ? '0' : (($negative ? '-' : '') . $digits), $zeroes, $negative && $digits === ''];
+            return ($negative ? '-' : '') . $expression->text;
         }
 
         return null;

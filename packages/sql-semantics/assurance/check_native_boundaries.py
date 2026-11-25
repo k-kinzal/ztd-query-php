@@ -927,6 +927,8 @@ def faults(engine):
                   "return $value->name->quoted();", "return $renderer->expression($value->column, $source);"),
             Fault("retain-mysql-group-key-array-reference", "Aggregation/GroupedSelect::__construct",
                   "$this->keys = $grouping;", "$this->keys = $keys;"),
+            Fault("allow-mismatched-mysql-intrinsic-integer-heading", "ResultColumn::__construct",
+                  "$expression->token === $name->value", "true"),
             Fault("allow-repeated-mysql-view-removal-target", "Schema/View/DropView::__construct",
                   "!isset($seen[$key]),", "true,"),
             Fault("consult-mysql-session-overlay-for-view-removal", "Schema/View/DropViewLowering::lower",

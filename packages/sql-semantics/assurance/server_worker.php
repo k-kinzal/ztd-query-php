@@ -28,6 +28,7 @@ function constructOperand(string $namespace, array $data): object
 {
     $type = $namespace . match ($data[0]) {
         'integer' => 'IntegerLiteral',
+        'projected-integer' => 'Literal\\ProjectedIntegerLiteral',
         'wide-integer' => 'Expression\\WideIntegerLiteral',
         'text', 'text-bytes' => str_contains($namespace, '\\MySql\\') ? 'Literal\\TextLiteral' : 'Expression\\TextLiteral',
         'collated-text' => 'Expression\\CollatedText',
@@ -64,7 +65,7 @@ function constructOperand(string $namespace, array $data): object
     $truth = $namespace . 'Predicate\\TruthOperator';
 
     return match ($data[0]) {
-        'integer', 'range-integer', 'wide-integer' => new $type(...array_slice($data, 1)),
+        'integer', 'projected-integer', 'range-integer', 'wide-integer' => new $type(...array_slice($data, 1)),
         'comparison' => new $type($comparison::from($data[1]), constructOperand($namespace, $data[2]), constructOperand($namespace, $data[3])),
         'text' => new $type($data[1]),
         'text-bytes' => new $type(hex2bin($data[1])),
@@ -142,6 +143,7 @@ function observeOperand(string $namespace, object $value): array
     }
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
+        $namespace . 'Literal\\ProjectedIntegerLiteral' => ['projected-integer', $value->token],
         $namespace . 'Expression\\WideIntegerLiteral' => ['wide-integer', $value->decimal],
         $namespace . 'Expression\\TextLiteral', $namespace . 'Literal\\TextLiteral' => ['text', $value->value],
         $namespace . 'Expression\\CollatedText' => ['collated-text', $value->collation->value, observeOperand($namespace, $value->operand)],
@@ -280,7 +282,12 @@ function constructSelect(string $platform, array $input): SemanticsIR
     [$keys, $bound] = constructResultOptions($namespace, $input, $input['dialect']);
     $from = $input['source'] === null ? null : constructSource($platform, $input['source'], $input['dialect']);
     foreach ($input['columns'] as [$expr, $name]) {
-        $columns[] = new $column(constructOperand($namespace, $expr), new $identifier($name));
+        if ($input['dialect'] === 'mysql' && is_array($name) && $name[0] === 'intrinsic-integer-name') {
+            $label = new SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName($name[1]);
+        } else {
+            $label = new $identifier($name);
+        }
+        $columns[] = new $column(constructOperand($namespace, $expr), $label);
     }
 
     return new $select(
@@ -528,7 +535,11 @@ function observeSetQuery(string $namespace, object $value, string $dialect, bool
     }
     $source = $value->source;
     return [
-        'columns' => array_map(static fn ($column): array => [observeOperand($namespace, $column->expression), $column->name->value], $value->columns),
+        'columns' => array_map(static fn ($column): array => [
+            observeOperand($namespace, $column->expression),
+            $column->name instanceof SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName
+                ? ['intrinsic-integer-name', $column->name->value] : $column->name->value,
+        ], $value->columns),
         'source' => $source === null ? null : observeSource($source, $dialect, $namespace, $exactIntegral),
         'where' => observePredicate($namespace, $value->where),
         'distinct' => $value->distinct,

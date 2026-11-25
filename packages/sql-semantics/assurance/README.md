@@ -173,6 +173,7 @@ python3 "$verifier/compare_assurance_revisions.py" \
 
 The report verifies the declared contract digests and records changed observations, limits, fault lists, native schedules, verifier files and available workflow and dependency lock files. It flags mechanically recognizable reductions, including a reduced exploration budget or a removed native domain. The report records the archive fingerprints and any unavailable supporting files. A reviewer assesses the effect of each change and records the independent decision.
 
+Native schedules with separate evidence contracts have their own digest-pinned registry. Each evidence contract points to an exact registered constructor contract. A control reduces a native evidence contract's required rejection count and checks both rejection of an undeclared digest and detection of the reduction after a digest update.
 
 The [signed membership proof](formal/postgres_signed_membership/contract-v1.json) checks the nullable signed membership and negation laws in four kernels. Its receipt links the ordered PHP value, reference traversal and emitter to the fixed model. The [native contract](postgres-signed-membership-v1.json) tests PostgreSQL's signed equality, widening and NULL behavior on both pinned releases. The [native schedule](postgres-signed-membership-evidence-v1.json) includes both construction routes, joins and reversible write effects.
 
@@ -192,6 +193,8 @@ The [MySQL signed CASE contract](mysql-signed-case-v1.json) fixes native branch 
 The [MySQL native truth contract](mysql-native-truth-v1.json) fixes the six native truth tests and the typed operand and result roles. Use `run_server_mysql_native_truth.py` to compare the original and emitted statements against each native release. The [fixed schedule](mysql-native-truth-evidence-v1.json) covers both construction routes, distinct record values, nested tests, order, join occurrence binding and reversible write effects. Use `combine_server_mysql_native_truth_evidence.py` to replay those comparisons and fault receipts.
 
 The [MySQL comparison and range contract](mysql-signed-comparison-widths-v2.json) fixes nullable integer comparisons in the five native signed field widths and exact signed 64-bit literals. The [fixed schedule](mysql-signed-comparison-widths-evidence-v2.json) checks operand order, typed NULL and result metadata, join-bound occurrence identities and reversible effects. Run `run_server_mysql_signed_comparison_widths.py` on each pinned release and replay the complete records with `combine_server_mysql_signed_comparison_widths_evidence.py`.
+
+The [MySQL signed projection contract](mysql-signed-literal-projection-v1.json) compares exact signed values, ordered headings, native types, nullability and wire widths. Its finite grid includes signed64 endpoints, negative zero and 4,096 leading zeroes. Seeded projections vary operand count and order, aliases and digit extent. The native comparison detects a lost width even when the mathematical value stays the same. The construction audit rejects a result column with an intrinsic name that supplies different digits. Run `run_server_mysql_signed_projection.py` on each pinned release and replay the ledgers with `combine_server_mysql_signed_projection_evidence.py`.
 
 ## Establish independent acceptance
 
