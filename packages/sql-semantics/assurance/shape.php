@@ -159,7 +159,7 @@ if ($dialect === 'mysql') {
     $properties[$textComparison] = ['operator' => [$textOperator], 'left' => $textOperands,
         'right' => $textOperands, 'collation' => ['From\\TextCollation']];
     $methods[$textComparison] = ['__construct'];
-    array_push($properties['ResultColumn']['expression'], 'From\\TextColumnReference', 'Predicate\\NullTest', $textComparison, $collatedText);
+    array_push($properties['ResultColumn']['expression'], 'From\\IntegralColumnReference', 'From\\TextColumnReference', 'Predicate\\NullTest', $textComparison, $collatedText);
     $properties['IntegerLiteral']['leadingZeroes'] = ['int'];
     $properties['IntegerLiteral']['negativeZero'] = ['bool'];
     $methods['IntegerLiteral'][] = 'toString';
@@ -2024,15 +2024,16 @@ try {
         'mysql' => [
             ['mysql-from-binding-v4.json', 'fd447b230609974fe86e5186477333fc99d878201f0492af5bad603ccc099179', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v11.json', '00fa059aae0289eb571e6f25a053c3803818da208c40744a2766778d2d6bc684', 'MySQL VARCHAR binding'],
+            ['mysql-varchar-binding-v12.json', '476d7c462200be8970fab0d6ecab4ef360634cc02a77fe08adf37ba967d73d4b', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v8.json', '0d625501589c80bbea2c8ccd7c713c6660e7c01114afbe29cf2b1f4df2d57083', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v10.json', 'ce94adc2f6c417b28b5d769573cba6390309040d0ef90b9c38362f425ba6ddd2', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v14.json', '6424893e648ce402a2d8064cd681bf539fd707ff2738462e392aa9d7bb19e1d2', 'MySQL native index binding'],
+            ['mysql-native-index-binding-v15.json', 'b21c29787c9617c6b92a0edac54e00dc9b5ddd8a563d763a71674db574438ca8', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
             ['mysql-inherited-local-alias-binding-v3.json', 'fc990ebf9544903fe3f058f71c402592fff06b51f283a19328d51769dd25f263', 'MySQL inherited alias binding'],
-            ['mysql-generated-view-binding-v2.json', '4fa94c08138512996d86d533f67b951fdec11fee7821ab5f3daa4c044f687710', 'MySQL generated view binding'],
-            ['mysql-external-view-read-binding-v1.json', 'be5f935267ca57334d938a69646086b04db41229d313da3c04f0903ee642d394', 'MySQL external view read binding'],
+            ['mysql-generated-view-binding-v3.json', 'da8f9ed47955c804089380dcd8a678fe64eb37b34a7f4f521be93ed6a0a08ef2', 'MySQL generated view binding'],
+            ['mysql-external-view-read-binding-v2.json', 'd022673e74fb1a43a4a6d9960e30d1b7c44fbe288467e708edb3d44cade003e1', 'MySQL external view read binding'],
+            ['mysql-reopened-integral-view-binding-v1.json', '4b055dd329710ca723a74f18010033fd72229e4d784da11297a64c7537ca3cc1', 'MySQL reopened integral view binding'],
         ],
     };
     $providedBindings = [];
@@ -2703,6 +2704,8 @@ try {
                 || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'
                     && in_array($name->toString(), [$prefix . 'Schema\\Index\\Dependency\\IndexDependencyKeys',
                         $platform . '\\Model\\Diagnostic\\InvalidConstruction'], true))
+                || ($dialect === 'mysql' && $short === 'Rows\\CompoundShape'
+                    && $name->toString() === $platform . '\\Model\\Diagnostic\\InvalidConstruction')
                 || ($dialect === 'mysql' && in_array($short, [
                     'Schema\\Index\\DropIndex', 'Schema\\Index\\DropIndexes', 'Schema\\Index\\Change\\AlterIndexes',
                     'Schema\\Index\\Change\\MixedIndexChanges', 'Schema\\Index\\Change\\MixedIndexNamespace',

@@ -188,6 +188,17 @@ final class SourceBinding
     }
 
     /**
+     * Resolves a standalone result field without coercing its signed width.
+     */
+    public function result(ResolvedColumn $resolution): ColumnReference|IntegralColumnReference|TextColumnReference
+    {
+        $column = $this->declared($resolution);
+
+        return $column->type instanceof Integral && !$column->type->unsigned()
+            ? $this->membershipSlot($resolution) : $this->projected($resolution);
+    }
+
+    /**
      * Obtains the actual declaration belonging to this source occurrence.
      */
     public function declared(ResolvedColumn $resolution): Column
@@ -198,6 +209,7 @@ final class SourceBinding
         );
         $column = $resolution->declaration();
         Check::input($column !== null, 'The column must be an explicit member of the projection source.');
+        Check::input($column->readTypeResolved, 'An external view field must have a resolved native read type.');
 
         return $column;
     }

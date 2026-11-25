@@ -27,6 +27,7 @@ final class Column
      * @param bool $generated Whether the column is computed from other columns of its row and cannot be written
      * @param Name|null $collation The resolved column collation when available
      * @param bool $usesViewHeading Whether an unaliased read uses the stored view field name
+     * @param bool $readTypeResolved Whether the declaration establishes the field type exposed on read
      */
     public function __construct(
         public readonly Name $name,
@@ -35,6 +36,7 @@ final class Column
         public readonly bool $generated = false,
         public readonly ?Name $collation = null,
         public readonly bool $usesViewHeading = false,
+        public readonly bool $readTypeResolved = true,
     ) {
     }
 }

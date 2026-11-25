@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
@@ -75,10 +76,8 @@ final class SelectBounds
         $pending = [[$result->expression, 0]];
         while ($pending !== []) {
             [$expression, $height] = array_pop($pending);
-            if ($expression instanceof SignedCase || $expression instanceof IntegerComparison || $expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {
-                $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
-                    : 'A predicate slot must belong to the SELECT source.';
-                $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);
+            if ($expression instanceof SignedCase || $expression instanceof IntegerComparison || $expression instanceof IntegerMembership || $expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison || $expression instanceof IntegralColumnReference) {
+                $nodes = $scope->result($expression, $inputs, $height, $nodes);
                 continue;
             }
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
@@ -108,7 +107,7 @@ final class SelectBounds
         $label = $result->name->value;
         if ($label !== ltrim($label, "\x00..\x20\x7f")) {
             $reference = $result->expression;
-            Check::invariant($reference instanceof ColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');
+            Check::invariant($reference instanceof ColumnReference || $reference instanceof IntegralColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');
             $table = $inputs[$reference->occurrence] ?? null;
             Check::input($table instanceof TableSource, 'An intrinsic MySQL result name must equal its physical input field.');
             $name = $table->columns[$reference->slot]->value ?? null;

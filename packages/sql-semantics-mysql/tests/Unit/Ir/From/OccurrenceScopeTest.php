@@ -11,6 +11,8 @@ use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralSlot;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
@@ -22,6 +24,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
+use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 
@@ -44,6 +47,21 @@ final class OccurrenceScopeTest extends TestCase
         $condition = new LogicalPredicate(LogicalOperator::And, $operand, $operand);
 
         self::assertSame(3, (new OccurrenceScope())->checkTree($condition, [], 'invalid slot', 0, 0));
+    }
+
+    public function testResultRejectsAnOrdinarySlotForAnExtendedIntegralField(): void
+    {
+        $table = new TableSource(
+            new Identifier('app'),
+            new Identifier('fields'),
+            [new Identifier('small'), new Identifier('wide')],
+            [ColumnKind::SignedInt, new IntegralSlot(IntegerStorage::Wide, true)],
+        );
+        $scope = new OccurrenceScope();
+        self::assertSame(1, $scope->result(new IntegralColumnReference(1), [$table], 0, 0));
+        $this->expectExceptionMessage('An integral slot must belong to the SELECT source.');
+
+        $scope->result(new IntegralColumnReference(0), [$table], 0, 0);
     }
 
     public function testHasSlotUsesTheDerivedOutputLayout(): void

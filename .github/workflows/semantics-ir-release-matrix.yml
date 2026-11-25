@@ -495,6 +495,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-mysql-external-view-read-names-evidence"
+      - name: Compare reopened MySQL integral fields
+        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_reopened_integral_view_fields.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-mysql-reopened-integral-view-fields-evidence"
       - name: Compare PostgreSQL ordinary and materialized view removal effects
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -3274,6 +3289,12 @@ jobs:
         with:
           name: native-mysql-external-view-read-names-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-mysql-external-view-read-names-evidence/
+      - name: Preserve MySQL integral view read evidence
+        if: ${{ always() && matrix.engine == 'mysql' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-mysql-reopened-integral-view-fields-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-mysql-reopened-integral-view-fields-evidence/
       - name: Preserve PostgreSQL view removal observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

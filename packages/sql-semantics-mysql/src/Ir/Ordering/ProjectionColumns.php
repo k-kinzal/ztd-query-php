@@ -53,7 +53,8 @@ final class ProjectionColumns
             if ($expression === null || $expression instanceof ColumnUse) {
                 $resolution = $field->resolution;
                 Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');
-                $results[] = new ResultColumn($binding->projected($resolution), $label);
+                $fieldReference = $binding instanceof SourceBinding ? $binding->result($resolution) : $binding->projected($resolution);
+                $results[] = new ResultColumn($fieldReference, $label);
                 continue;
             }
             $typed = $specialized->lower($expression, $binding);

@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName;
 use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
@@ -39,11 +40,11 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|ProjectedIntegerLiteral|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast $expression,
+        public readonly Arithmetic|CollatedText|ColumnReference|IntegralColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|ProjectedIntegerLiteral|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast $expression,
         public readonly Identifier|IntrinsicIntegerName|RequestedResultAlias $name,
     ) {
         Check::input($name instanceof IntrinsicIntegerName || strlen($name->value) <= 256, 'A MySQL alias needs an effective heading of at most 256 bytes.');
-        Check::input($expression instanceof ColumnReference || $expression instanceof TextColumnReference || $name->value === ltrim($name->value, "\x00..\x20\x7f"), 'A MySQL result name must begin with a native graphic character or be empty.');
+        Check::input($expression instanceof ColumnReference || $expression instanceof IntegralColumnReference || $expression instanceof TextColumnReference || $name->value === ltrim($name->value, "\x00..\x20\x7f"), 'A MySQL result name must begin with a native graphic character or be empty.');
         Check::input(
             !$name instanceof IntrinsicIntegerName || ($expression instanceof ProjectedIntegerLiteral && $expression->token === $name->value),
             'An intrinsic integer name must match the exact projected integer token.'

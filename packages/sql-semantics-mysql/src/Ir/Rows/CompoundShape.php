@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
@@ -26,6 +27,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 
 /**
  * Derives the checked native type and grouping of a compound.
@@ -66,6 +68,7 @@ final class CompoundShape
 
     /**
      * Derives the native type for a checked output position.
+     * @throws InvalidConstruction When a standalone field has no checked set role
      */
     public static function type(Select|Compound $query, int $position): ResultKind
     {
@@ -85,6 +88,7 @@ final class CompoundShape
                 IntegerStorage::Tiny, IntegerStorage::Small, IntegerStorage::Medium, IntegerStorage::Standard => ResultKind::Integer,
             },
             $column instanceof ColumnReference => ResultKind::Integer,
+            $column instanceof IntegralColumnReference => throw new InvalidConstruction('An extended integral field has no checked set column role.'),
             $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerComparison, $column instanceof IntegerMembership, $column instanceof IntegerRange, $column instanceof NullTest, $column instanceof ProjectedIntegerLiteral, $column instanceof TruthTest, $column instanceof TextComparison, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,
         };
     }

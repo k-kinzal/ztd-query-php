@@ -92,7 +92,7 @@ final class SelectSql
         Identifier|IntrinsicIntegerName|RequestedResultAlias $name,
     ): string {
         $operand = $column->expression;
-        if ($name instanceof Identifier && ($operand instanceof ColumnReference || $operand instanceof TextColumnReference)) {
+        if ($name instanceof Identifier && ($operand instanceof ColumnReference || $operand instanceof IntegralColumnReference || $operand instanceof TextColumnReference)) {
             return $this->column($operand, $source, 0, true, $name);
         }
 
@@ -127,10 +127,10 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|ProjectedIntegerLiteral|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|CollatedText|ColumnReference|IntegralColumnReference|IntegerLiteral|IntegerComparison|IntegerMembership|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|ProjectedIntegerLiteral|SignedCase|SignedCast|TextColumnReference|TextComparison|TextLiteral|TruthTest|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
-            $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
+            $expression instanceof ColumnReference, $expression instanceof IntegralColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof TruthTest => $this->truthTest($expression, $source, $offset, $qualify),
             $expression instanceof SignedCase => $this->signedCase($expression, $source, $offset, $qualify),

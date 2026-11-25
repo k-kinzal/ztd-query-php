@@ -162,6 +162,26 @@ final class SourceBindingTest extends TestCase
         self::assertSame('id', (new SourceBinding($binding, $operation->statement->from))->declared($resolution)->name->value);
     }
 
+    public function testResultRetainsTheDeclaredSignedWidthAndIdentity(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (id BIGINT NOT NULL)');
+        $operation = $inspection->inspect('SELECT id, t.id FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = $operation->binding();
+        $fields = $binding->facts->query($operation->statement)->fields();
+        self::assertNotNull($fields);
+        $first = $fields->at(0)->resolution;
+        $second = $fields->at(1)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $first);
+        self::assertInstanceOf(ResolvedColumn::class, $second);
+        $source = new SourceBinding($binding, $operation->statement->from);
+
+        self::assertEquals(new IntegralColumnReference(0), $source->result($first));
+        self::assertEquals($source->result($first), $source->result($second));
+        self::assertEquals([new IntegralSlot(IntegerStorage::Wide, false)], $source->source()?->columnTypes);
+    }
+
     public function testAllocateRecordsOneSignedTypeAtTheChosenPosition(): void
     {
         $inspection = new Inspection();

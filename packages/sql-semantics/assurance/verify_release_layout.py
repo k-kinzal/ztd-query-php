@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v204.json"
-CONTRACT = "0ad042993ca84772a88874a73c0d68930a43d7ed7e8f68ea224cfa2757bb29bc"
+CONTRACT_NAME = "release-layout-v205.json"
+CONTRACT = "0c0232f0f89e31888fa9ee7c9a131c54a8cdb7d54f0b8a1132bb817f689fcce9"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -667,6 +667,11 @@ def verify_probe(raw, catalog):
                 [True, True, False, " K", 0, " K", 'SELECT `__ztd_source`.` K`' + tail],
                 [True, True, True, " K", 0, " k", 'SELECT `__ztd_source`.` k`' + tail],
             ], "installed-mysql-external-view-read-names-mismatch", external_names)
+            reopened = item.get("mysqlReopenedIntegralViewFields")
+            require(reopened == [True, True,
+                'SELECT `__ztd_source`.`p` AS `P`, `__ztd_source`.`q` AS `q`, `__ztd_source`.`p` AS `copied` '
+                'FROM `app`.`signed_view` AS `__ztd_source`',
+            ], "installed-mysql-reopened-integral-view-fields-mismatch", reopened)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

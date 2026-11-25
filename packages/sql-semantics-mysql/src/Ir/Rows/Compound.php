@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
+use SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -38,6 +39,11 @@ final class Compound implements SemanticsIR
         foreach ([$left, $right] as $operand) {
             Check::input(!$operand instanceof Select || ($operand->orderBy === [] && $operand->limit === null), 'A compound arm requires an unbounded projection without ordering.');
             Check::input(CompoundShape::depth($operand) < 16, 'A compound has at most 16 nested operations.');
+            if ($operand instanceof Select) {
+                foreach ($operand->columns as $column) {
+                    Check::input(!$column->expression instanceof IntegralColumnReference, 'A compound arm requires a supported native set column type.');
+                }
+            }
         }
         if (CompoundShape::legacy($left)) {
             Check::input($operator === CompoundOperator::Union && $right instanceof Select, 'MySQL 5.x compounds require a left-associated UNION.');

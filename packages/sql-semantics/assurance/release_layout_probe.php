@@ -388,6 +388,37 @@ function observeMysqlExternalViewReadNames(SqlSemantics\Platform\MySql\Semantics
     return $observed;
 }
 
+function observeMysqlReopenedIntegralViewFields(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE VIEW app.signed_view AS SELECT 100000000 AS p, 00000000000029 AS q',
+    ]);
+    $sql = 'SELECT v.P, v.q, v.p AS copied FROM app.signed_view AS v';
+    $analyzed = $semantics->analyze($sql, $context);
+    [$batch] = $semantics->analyzeAll($sql, $context);
+    $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+    $wide = new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(0);
+    $slot = new SqlSemantics\Platform\MySql\Ir\ColumnReference(1);
+    $source = new SqlSemantics\Platform\MySql\Ir\TableSource(
+        new $identifier('app'),
+        new $identifier('signed_view'),
+        [new $identifier('p'), new $identifier('q')],
+        [new SqlSemantics\Platform\MySql\Ir\From\IntegralSlot(
+            SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Wide, false
+        ), SqlSemantics\Platform\MySql\Ir\From\ColumnKind::RequiredSignedInt],
+        SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::View,
+        true
+    );
+    $column = SqlSemantics\Platform\MySql\Ir\ResultColumn::class;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([
+        new $column($wide, new $identifier('P')),
+        new $column($slot, new $identifier('q')),
+        new $column($wide, new $identifier('copied')),
+    ], $source, $semantics->profile()->grammar);
+
+    return [$analyzed == $batch, $analyzed == $direct, $analyzed->toString()];
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -2518,6 +2549,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlLegacyInheritedAliases'] = observeLegacyMysqlInheritedAliases();
             $details['mysqlNativeLocalColumnNames'] = observeMysqlNativeLocalColumnNames($semantics);
             $details['mysqlExternalViewReadNames'] = observeMysqlExternalViewReadNames($semantics);
+            $details['mysqlReopenedIntegralViewFields'] = observeMysqlReopenedIntegralViewFields($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

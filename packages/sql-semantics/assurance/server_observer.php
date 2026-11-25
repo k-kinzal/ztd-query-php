@@ -16,12 +16,35 @@ require __DIR__ . '/mysql_varchar_insert_query.php';
 
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION], JSON_THROW_ON_ERROR) . "\n";
 
+function installViewReadFixture(PDO $pdo, array $commands, array $viewNames): array
+{
+    $previous = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+    try {
+        $definitions = [];
+        foreach ($commands as $position => $sql) {
+            $pdo->exec($sql);
+            $warnings = $pdo->query('SHOW WARNINGS')->fetchAll(PDO::FETCH_NUM);
+            $view = str_replace('`', '``', $viewNames[$position]);
+            $definition = $pdo->query("SHOW CREATE VIEW ir_fixture.`$view`")->fetch(PDO::FETCH_NUM);
+            $definitions[] = ['warnings' => $warnings, 'definition' => $definition[1]];
+        }
+
+        return ['status' => 'fixture', 'views' => $definitions];
+    } finally {
+        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $previous);
+    }
+}
+
 function measure(PDO $pdo, array $input, bool &$readOnly): array
 {
     if (isset($input['fixture'])) {
         if ($readOnly) {
             $pdo->exec('ROLLBACK');
             $readOnly = false;
+        }
+        if (isset($input['observeViewFixtureWarnings'])) {
+            return installViewReadFixture($pdo, $input['fixture'], $input['observeViewFixtureWarnings']);
         }
         foreach ($input['fixture'] as $sql) {
             $pdo->exec($sql);
@@ -97,6 +120,10 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
             $fields[] = ($input['observePostgresTypeIds'] ?? false) === true
                 ? [$meta['name'], $meta['native_type'], $meta['pgsql:oid']]
                 : [$meta['name'], $meta['native_type']];
+            if (($input['observeMysqlIntegerMetadata'] ?? false) === true) {
+                $fields[$index][] = $meta['len'];
+                $fields[$index][] = in_array('not_null', $meta['flags'], true);
+            }
         }
         $rows = $statement->fetchAll(PDO::FETCH_NUM);
         $statement->closeCursor();

@@ -1,0 +1,24 @@
+{
+  "revision": "SemanticsIR/mysql-external-view-read-binding-2",
+  "approval": "pending-human-review",
+  "related": "mysql-external-view-read-names-v2.json",
+  "purpose": "Bind the native case table to external view lookup and record the materialized view naming dependency.",
+  "artifacts": {
+    "src/Rules/Query/TableShapes.php": {
+      "sha256": "7ea92d3df41adcdf86c70aff3962c2a76a6c10894cc81127e36dc484b580d1ae"
+    },
+    "src/Rules/TableDefinition/ViewFieldNames.php": {
+      "sha256": "85aced26f8cd936d7696c772f2c491b25fb4a0dc514737a16cd0daab6b85d2d5"
+    }
+  },
+  "sharedBindings": {
+    "src/Rules/TableDefinition/ViewFacts.php": {
+      "contract": "mysql-generated-view-binding-v3.json",
+      "sha256": "c5835c581d9d0f73e9a41058c07c0a3c9bb75321c4411333f0fc8b3b7de7c401"
+    }
+  },
+  "versionedFrom": {
+    "path": "mysql-external-view-read-binding-v1.json",
+    "sha256": "be5f935267ca57334d938a69646086b04db41229d313da3c04f0903ee642d394"
+  }
+}

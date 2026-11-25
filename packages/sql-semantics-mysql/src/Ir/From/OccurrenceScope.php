@@ -46,6 +46,27 @@ final class OccurrenceScope
     }
 
     /**
+     * Checks a result operand whose type depends on its visible input layout.
+     * @param list<TableSource|DerivedSource> $inputs
+     */
+    public function result(
+        IntegralColumnReference|IntegerComparison|IntegerMembership|IntegerRange|NullTest|SignedCase|TextComparison|TruthTest $operand,
+        array $inputs,
+        int $depth,
+        int $count,
+    ): int {
+        $message = match (true) {
+            $operand instanceof IntegerRange => 'A range slot must belong to the SELECT source.',
+            $operand instanceof IntegralColumnReference => 'An integral slot must belong to the SELECT source.',
+            $operand instanceof IntegerComparison, $operand instanceof IntegerMembership, $operand instanceof NullTest,
+            $operand instanceof SignedCase, $operand instanceof TextComparison, $operand instanceof TruthTest
+                => 'A predicate slot must belong to the SELECT source.',
+        };
+
+        return $this->checkTree($operand, $inputs, $message, $depth, $count);
+    }
+
+    /**
      * Validates one subtree and returns the number of visited occurrences.
      *
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
