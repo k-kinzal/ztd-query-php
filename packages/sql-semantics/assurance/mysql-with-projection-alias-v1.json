@@ -1,0 +1,109 @@
+{
+  "revision": "SemanticsIR/mysql-with-projection-alias-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "rejectedReleases": [
+    "mysql-5.6.51",
+    "mysql-5.7.44"
+  ],
+  "scope": "Nonrecursive MySQL WITH with explicit output column lists and signed numeric projections that require exact requested aliases. Allow a nested ordinary WITH definition under the same rule. Preserve the original operand order, exposed positional names and alias diagnostics.",
+  "constructors": {
+    "Rows/With/WithDefinition": {
+      "role": "A positional CTE declaration that can retain requested source aliases with native effects.",
+      "structure": "A checked query fragment, its ordered output positions, and the surrounding lexical declaration order.",
+      "conditions": "The owning scope checks admission, matching release, width and all reference positions. Analysis requires an explicit CTE column list for a definition whose native aliases normalize.",
+      "meaning": "Native aliases in the child define its warnings. The explicit CTE column list determines names visible to the enclosing scope without changing the child result values, types or diagnostics.",
+      "externalInterpretation": "The fixed MySQL release and utf8mb4 session with derived merge enabled. No external relation is required for the finite literal domain.",
+      "sql": "When the definition ends in a SELECT with a requested name, retain that SELECT heading and put generated ordinal names on the CTE column list. Otherwise use the ordinary local label rendering.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "Compare ordered names, SQL wire widths and native integer types of consumed CTE columns, including reads that repeat or reorder positions.",
+    "Compare separate prepare and execute warning sequences in both native prepared and text protocols, with their exact severity, code, message, order and multiplicity.",
+    "A materialized field converted from a narrow native literal has INT wire metadata at the observed CTE read, while the same top-level projected literal has LONGLONG metadata. Preserve the checked value and extent."
+  ],
+  "finite": {
+    "aliasShapes": [
+      "wide",
+      "trim",
+      "empty",
+      "duplicate",
+      "unmodified"
+    ],
+    "placement": [
+      "definition",
+      "nested",
+      "body"
+    ],
+    "layout": [
+      "in-order",
+      "reverse",
+      "repeat"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "coordinatesPerRoute": 45,
+    "complete": "Enumerate all declared alias, placement and ordered read layouts and recover their positions from the checked graph. Match both protocols for original and emitted statements on analysis and both protocols for emitted statements on direct construction.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      10093,
+      34963,
+      71881
+    ],
+    "casesPerSeed": 24,
+    "directCasesPerSeed": 24,
+    "timeoutSecondsPerRelease": 480,
+    "shape": "Vary two to four independently signed sources, requested alias normalization, duplicate diagnostics, scope depth, definition widths and repeated result coordinates.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Reject a local read that names a nonexistent ordinal.",
+    "Reject a selected CTE with an explicit column list of the wrong arity.",
+    "Reject a named CTE role under versions where WITH is absent."
+  ],
+  "faults": [
+    "Discard the original alias spelling at the definition boundary while keeping the exported names.",
+    "Reverse the ordinal column list for a CTE with two different numeric values.",
+    "Accept an observed candidate with the same values and missing prepare diagnostics."
+  ],
+  "trust": [
+    "Native MySQL CTE column-list rules for the pinned versions and the stock SQL mode.",
+    "Exact SQL observer and closed local constructor/source shape.",
+    "The native calibration fixes the metadata distinction between top-level and consumed CTE results."
+  ],
+  "open": [
+    "Names inherited without an explicit CTE column list after alias normalization are a separate binding domain.",
+    "Derived tables, groups, views, and additional release modes retain separate obligations."
+  ],
+  "referenceSources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/with.html"
+  ]
+}
