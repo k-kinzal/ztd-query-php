@@ -166,7 +166,7 @@ CONTRACTS = {
     "postgres-sequence-default-access-v2.json": "ae7303a8273cc207a42bede9f1d71fd9020ab5fc26c54b4b990e91733b01dc7f",
     "postgres-rename-sequence-v1.json": "cbc29f97151b369e1572a4aecf2585b5fc970cf3ff41569920f5c9d3f22ef2b4",
     "postgres-schema-sequences-v3.json": "fc5e99d2e791b630c01135ac7c8344a2418df57e9a13a2be37d6f1af276eca5c",
-    "postgres-schema-indexes-v1.json": "c4008fd5e064005908b46fd3d40170f1de7afd6cd1b932452d8897deaadd0205",
+    "postgres-schema-indexes-v2.json": "60aba853804ce6d7ec72131075382de14aa0bee42cdcf6eba170d7d8ab18ce7a",
     "postgres-schema-sequence-grants-v2.json": "f3302a9cceca6d81a18c57e687cbeb04889b9b78ca272f5abc817a049d9da3d8",
     "postgres-schema-view-dependencies-v1.json": "1351a17f257e9339f7bedf812f521caf6b51e6fb340d47721b47f6fc9bc2d81f",
     "postgres-create-primary-key-v1.json": "9b70aef7ee573717530bdacda3698adbc57c65c50afebc03a4637f99f81106be",

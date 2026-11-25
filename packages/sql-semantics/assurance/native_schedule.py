@@ -49,7 +49,7 @@ NATIVE = {
     "postgres_primary_key": "postgres-primary-key-evidence-v1.json",
     "postgres_unique_key": "postgres-unique-key-evidence-v1.json",
     "postgres_table_width": "postgres-table-width-evidence-v1.json",
-    "postgres_schema_indexes": "postgres-schema-indexes-v1.json",
+    "postgres_schema_indexes": "postgres-schema-indexes-v2.json",
     "postgres_alter_schema": "postgres-alter-schema-v1.json",
     "postgres_create_sequence": "postgres-create-sequence-v3.json",
     "postgres_sequence_owner": "postgres-sequence-ownership-v3.json",

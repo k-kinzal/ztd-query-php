@@ -646,7 +646,7 @@ def inventory(root):
                     if rule in ("CreateSchemaStmt", "IndexStmt") or alternative in {
                         "schema_stmt: IndexStmt", "OptSchemaEltList: OptSchemaEltList schema_stmt",
                     }:
-                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-indexes-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-schema-indexes-v2.json")
             for rule in ("CreateSchemaStmt", "OptSchemaEltList", "schema_stmt", "GrantStmt"):
                 for alternative in rules.get(rule, ()):
                     if rule in ("CreateSchemaStmt", "GrantStmt") or alternative in {

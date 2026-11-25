@@ -22,8 +22,8 @@ from run_server_postgres_create_view import graph
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-schema-indexes"
-CONTRACT_NAME = "postgres-schema-indexes-v1.json"
-CONTRACT = "c4008fd5e064005908b46fd3d40170f1de7afd6cd1b932452d8897deaadd0205"
+CONTRACT_NAME = "postgres-schema-indexes-v2.json"
+CONTRACT = "60aba853804ce6d7ec72131075382de14aa0bee42cdcf6eba170d7d8ab18ce7a"
 OBSERVER = "postgres_schema_indexes_observer.py"
 AXES = ("owners", "layouts", "writtenOrders", "transactional")
 
@@ -280,11 +280,12 @@ def faults(_, tag):
     item = trial(tag, "effective", "vacant", "index-first", True, depths=[{
         "keys": [[0, "DESC NULLS LAST"]], "included": [], "unique": True, "nulls": True, "predicate": [2, "column"], "only": False,
     }])
+    key_item = {**item, "depths": [{**item["depths"][0], "included": [1]}]}
     return [
         RenderFault("schema-indexes-omit-phase", schema, "foreach ($this->indexes as $index)",
                     "foreach ([] as $index)", item, "meaning-mismatch", direct(item)),
         RenderFault("schema-indexes-move-key", index, "$this->bindings[$key->slot]->name->quoted()",
-                    "$this->bindings[2]->name->quoted()", item, "meaning-mismatch", direct(item)),
+                    "$this->bindings[1]->name->quoted()", key_item, "meaning-mismatch", direct(key_item)),
         RenderFault("schema-indexes-omit-null-policy", index, "($this->nullsNotDistinct ? ' NULLS NOT DISTINCT' : '')",
                     "''", item, "meaning-mismatch", direct(item)),
         RenderFault("schema-indexes-omit-predicate", index, "($this->predicate === null ? '' : IndexCondition::sql($this->bindings, $this->predicate))",

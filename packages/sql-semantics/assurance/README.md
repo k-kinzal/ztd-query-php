@@ -410,7 +410,7 @@ The [PostgreSQL unique-key contract](postgres-create-unique-keys-v1.json) adds o
 
 The [PostgreSQL table-width contract](postgres-table-width-v1.json) verifies zero-field and 1600-field declarations in the native heap profile. The observer compares the full physical heading, zero-column tuple count, guarded relation identity, physical width errors and rollback. The earlier empty-list refusal is retained as a required positive witness.
 
-The [PostgreSQL namespace index contract](postgres-schema-indexes-v1.json) checks composed named B-tree indexes, guarded collisions and key positions against native catalog identities and writes. Run `run_server_postgres_schema_indexes.py` on both pinned releases and replay with `combine_server_postgres_schema_indexes_evidence.py`.
+The [PostgreSQL namespace index contract](postgres-schema-indexes-v2.json) checks composed named B-tree indexes, guarded collisions and key positions against native catalog identities and writes. Run `run_server_postgres_schema_indexes.py` on both pinned releases and replay with `combine_server_postgres_schema_indexes_evidence.py`.
 
 The [PostgreSQL namespace sequence grant contract](postgres-schema-sequence-grants-v2.json) checks grants inside the namespace owner scope and distinguishes the effective role, session authorization, universal PUBLIC, and the quoted role of the same name. The native observer reads grant option bits and depends on exact local and declared external sequence identities. Run `run_server_postgres_schema_sequence_grants.py` on both pinned releases and replay with `combine_server_postgres_schema_sequence_grants_evidence.py`.
 
