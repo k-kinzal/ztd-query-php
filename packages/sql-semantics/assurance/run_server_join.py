@@ -273,6 +273,20 @@ def faults(engine, tag):
     ]
 
 
+def checked_fault_plan(domain, engine, tag):
+    """Require the exact planned fault inputs to survive their evidence encoding."""
+    mutations = tuple(domain.faults(engine, tag))
+    for fault in mutations:
+        payload = {"input": fault.item, "request": fault.request}
+        detail = {"domain": domain.LABEL, "case": fault.name, "profile": tag}
+        try:
+            recorded = json.loads(json.dumps(payload, allow_nan=False))
+        except (TypeError, ValueError) as error:
+            raise Failure("native-fault-input-not-json", detail) from error
+        require(recorded == payload, "native-fault-input-changes-in-json", detail)
+    return mutations
+
+
 def check_fault_obligations(specification, engine, domain, controls, applied):
     """Reconcile applied mutations and explicitly registered comparator witnesses."""
     registrations = specification["faults"] + specification.get("dialectFaults", {}).get(engine, [])
@@ -304,10 +318,10 @@ def main(domain):
     commit, manifest = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", manifest)
     tag = version_tag(args.engine, args.release)
-    mutations = domain.faults(args.engine, tag)
     container = os.environ.get(FIXTURE_CONTAINER)
     fixture = None
     try:
+        mutations = checked_fault_plan(domain, args.engine, tag)
         comparator_controls = domain.controls()
         structure = shape(args, dialect=args.engine)
         if container is not None:

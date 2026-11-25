@@ -133,6 +133,8 @@ For example, `--diagnostic sqlite-not-null-conflict-v2.json` runs one named cont
 
 The native join runner also saves the original request and failure before a reduction. The [native reduction contract](native-counterexample-reduction-v1.json) covers direct projections on the same fixture when dropping an output position leaves the other premises intact. A reduced case must reproduce the same comparison failure family and exact witness twice. The separate receipt includes every attempted probe and links back to the unchanged original.
 
+Native mutation inputs and requests must survive their JSON recording exactly. The runner checks the entire plan before database execution. The collector applies the same rule before comparing injected source, request and result bytes.
+
 The initial and relational SQLite schedules retain the full input and measured failure before trying a smaller request. Their [reduction contract](counterexample-reduction-v1.json) bounds probes and requires the smaller direct case to reproduce its failure twice through the same construction and comparison. Reproduced witnesses and failed reductions have separate digest-linked records.
 
 To run the complete native release matrix locally, keep the trusted archive's workflow file next to its `packages/` directory. Install PDO MySQL and PDO PostgreSQL for the observer. The launcher starts a disposable pinned database per release, binds the server to loopback and runs the candidate through the isolated PHP worker. It records per-domain exit outcomes and retains the raw runs for independent replay.
