@@ -210,7 +210,7 @@ function observeLegacyMysqlInheritedAliases(): array
 function observeMysqlNativeLocalColumnNames(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $selection = 'SELECT 41 AS ` K`, 53 AS ` É`';
-    $sql = 'SELECT d.k AS first_value, d.é AS second_value FROM (' . $selection . ') AS d';
+    $sql = 'SELECT d.k AS `first_value`, d.é AS `second_value` FROM (' . $selection . ') AS d';
     $analyzed = $semantics->analyze($sql);
     [$batch] = $semantics->analyzeAll($sql);
     $definition = $semantics->analyze($selection);
