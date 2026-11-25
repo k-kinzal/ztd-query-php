@@ -43,4 +43,14 @@ final class ForeignKeyAdditionLoweringTest extends TestCase
         self::assertSame('', $lowering->identifier(new Name(''))?->value);
         self::assertNull($lowering->identifier(null));
     }
+
+    public function testMaterializeRecordsTheLaterSharedPhysicalKey(): void
+    {
+        $operation = NativeAdditionFixture::operation('ALTER TABLE app.child ADD CONSTRAINT First FOREIGN KEY (x) REFERENCES parent (a), ADD CONSTRAINT Second FOREIGN KEY (x) REFERENCES parent (a)');
+        self::assertInstanceOf(AlterTable::class, $operation->statement);
+        $root = (new ForeignKeyAdditionLowering())->lower($operation, $operation->statement);
+
+        self::assertNull($root->additions[0]->createdIndex);
+        self::assertSame('Second', $root->additions[1]->createdIndex?->value);
+    }
 }

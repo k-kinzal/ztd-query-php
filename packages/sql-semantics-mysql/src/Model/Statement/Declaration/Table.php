@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Model\Statement\Declaration;
 
+use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
@@ -49,6 +50,7 @@ final class Table
      * @param string|null $storageEngine The decoded engine of a known table declaration
      * @param bool $hasIdentityKey A prior declared primary or eligible visible unique key
      * @param list<IndexDeclaration>|null $indexes The resolved declared indexes, or an open index namespace
+     * @param InnoDbKeyLimit|null $keyLimit The settled native field index limit, when known
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -61,6 +63,7 @@ final class Table
         public readonly ?string $storageEngine = null,
         public readonly bool $hasIdentityKey = false,
         ?array $indexes = null,
+        public readonly ?InnoDbKeyLimit $keyLimit = null,
     ) {
         Check::input(!$temporary || $kind === RelationKind::BaseTable, 'Only a base table can be a temporary declaration.');
         $this->columns = Check::listOf($columns, Column::class, 'Table columns are an ordered list of column declarations.');

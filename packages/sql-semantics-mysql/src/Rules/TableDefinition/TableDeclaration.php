@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\ImplicitColumn;
@@ -30,6 +31,8 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 
 /**
@@ -197,13 +200,54 @@ final class TableDeclaration
             }
         }
 
-        $columns = [...$all, ...$selected];
+        return $this->physical($definition, [...$all, ...$selected], $profile, $complete);
+    }
 
+    /**
+     * Completes the declared native physical layout after resolving all columns.
+     * @param list<array{ColumnDefinition|null, Column}> $columns The settled table fields in order
+     */
+    public function physical(CreateTable $definition, array $columns, LanguageProfile $profile, bool $complete): Table
+    {
         $storage = (new DeclaredTableStorage())->resolve($definition);
         $hasIdentity = (new TableIdentityKeys())->hasIdentity($definition, $columns);
         $indexes = (new TableIndexDeclarations())->collect($definition, $columns, $profile->grammar);
 
-        return $this->split($definition->name, $columns, $profile, $complete, $definition->temporary(), $storage, $hasIdentity, $indexes);
+        return $this->split(
+            $definition->name,
+            $columns,
+            $profile,
+            $complete,
+            $definition->temporary(),
+            $storage,
+            $hasIdentity,
+            $indexes,
+            $this->keyLimit($definition, $profile->grammar)
+        );
+    }
+
+    /**
+     * Resolves the native field limit of the final declared row layout.
+     */
+    public function keyLimit(CreateTable $definition, GrammarRelease $release): ?InnoDbKeyLimit
+    {
+        $rowFormat = null;
+        foreach ($definition->options as $option) {
+            if ($option instanceof RowFormatOption) {
+                $rowFormat = $option->format;
+            }
+        }
+
+        if ($release === GrammarRelease::MySql5651) {
+            return InnoDbKeyLimit::Compact;
+        }
+
+        return match ($rowFormat) {
+            RowFormat::Compact, RowFormat::Redundant => InnoDbKeyLimit::Compact,
+            RowFormat::Dynamic, RowFormat::Compressed => InnoDbKeyLimit::LargePrefix,
+            RowFormat::Fixed => null,
+            RowFormat::Default, null => InnoDbKeyLimit::stock($release),
+        };
     }
 
     /**
@@ -212,7 +256,7 @@ final class TableDeclaration
      * @param list<array{ColumnDefinition|null, Column}> $columns Each column with the definition it comes from, if any
      * @param list<IndexDeclaration>|null $indexes The settled physical index layout
      */
-    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false, ?string $storageEngine = null, bool $identityKey = false, ?array $indexes = null): Table
+    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false, ?string $storageEngine = null, bool $identityKey = false, ?array $indexes = null, ?InnoDbKeyLimit $keyLimit = null): Table
     {
         $visible = [];
         $implicit = [];
@@ -225,7 +269,18 @@ final class TableDeclaration
             }
         }
 
-        return new Table($name, $profile, $visible, $implicit, $complete, temporary: $temporary, storageEngine: $storageEngine, hasIdentityKey: $identityKey, indexes: $indexes);
+        return new Table(
+            $name,
+            $profile,
+            $visible,
+            $implicit,
+            $complete,
+            temporary: $temporary,
+            storageEngine: $storageEngine,
+            hasIdentityKey: $identityKey,
+            indexes: $indexes,
+            keyLimit: $keyLimit
+        );
     }
 
     /**
@@ -277,7 +332,8 @@ final class TableDeclaration
             temporary: $temporary,
             storageEngine: $source->storageEngine,
             hasIdentityKey: $source->hasIdentityKey,
-            indexes: $source->indexes
+            indexes: $source->indexes,
+            keyLimit: $source->keyLimit
         );
     }
 

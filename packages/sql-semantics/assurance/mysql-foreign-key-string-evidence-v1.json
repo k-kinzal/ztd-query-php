@@ -1,0 +1,178 @@
+{
+  "revision": "SemanticsIR/mysql-foreign-key-string-evidence-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-native-foreign-string-fields-v3.json",
+    "mysql-native-foreign-string-fields-v2.json",
+    "mysql-native-foreign-string-fields-v1.json",
+    "mysql-add-foreign-keys-evidence-v1.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Stock InnoDB storage, utf8mb4, empty sql_mode, foreign_key_checks=1, native markers, 16 KiB pages.",
+  "constructors": {
+    "Schema/ForeignKey/Add/Domain/ForeignKeyIntegerDomain": {
+      "role": "Exact shared native integer comparison for both ordered sides of a reference.",
+      "structure": "One native integer storage width and an unsigned flag.",
+      "conditions": "The two original fields have equal native storage width and signedness.",
+      "meaning": "Compare integer values in the external source domain and contribute the native integer width to the physical key.",
+      "sql": "The ordered column references carry this domain without a type annotation in SQL."
+    },
+    "Schema/ForeignKey/Add/Domain/ForeignKeyStringDomain": {
+      "role": "The native string comparison between the ordered child and parent fields.",
+      "structure": "Two closed typed native storage values, independently sized.",
+      "conditions": "Both sides use the same explicit native character collation or both are binary string storage.",
+      "meaning": "Use exact native collation, padding and byte equality of the declared storage. Keep both layouts for checked field roles.",
+      "sql": "The emitted foreign-key lists name the corresponding external fields that carry these types."
+    },
+    "Schema/ForeignKey/Add/Domain/ForeignKeyStringStorage": {
+      "role": "One physical byte or character value participating in a resolved reference.",
+      "structure": "A closed storage kind, declared length, and utf8mb4 collation when applicable.",
+      "conditions": "A nonzero field length fits its chosen family. Only character values require a collation. The parent group checks full index capacity.",
+      "meaning": "Supply exact comparable storage, bytes or characters, declared size and fixed-width behavior.",
+      "sql": "Supply the native type facts of an external column. A reference emits its checked qualified column coordinate."
+    },
+    "Schema/ForeignKey/Add/Domain/ForeignKeyStringKind": {
+      "role": "The native physical string family.",
+      "structure": "Closed fixed and varying character and byte-string families.",
+      "conditions": "The selected kind determines fixed-width and length units. A character family requires a checked collation.",
+      "meaning": "Distinguish the native per-field width, character behavior and fixed-width storage effects.",
+      "sql": "The external declaration fixes this type. Emit its referenced physical field name."
+    },
+    "Schema/ForeignKey/Add/Domain/ForeignKeyTextCollation": {
+      "role": "A fixed native utf8mb4 comparison collation.",
+      "structure": "Closed utf8mb4_bin, utf8mb4_general_ci and utf8mb4_unicode_ci cases.",
+      "conditions": "Both text roles must have the same resolved collation. The native release and column types establish the external interpretation.",
+      "meaning": "Compare native text values and preserve their exact stored bytes in observed results.",
+      "sql": "The reference preserves both native typed fields and their resolved external comparison."
+    },
+    "Schema/ForeignKey/Add/ForeignKeyPair": {
+      "role": "One ordered pair of resolved native string or integer fields.",
+      "structure": "Child and referenced physical names and a closed comparison domain, with child nullability and physical key direction.",
+      "conditions": "Column names satisfy their ordinary native field role. The selected domain fixes compatible native value types for both columns.",
+      "meaning": "Compare the two external values according to the exact selected domain. Compute full native key width in bytes.",
+      "sql": "The enclosing addition emits the checked ordered child and parent field names and the selected child direction."
+    }
+  },
+  "existingRoles": [
+    "Schema/ForeignKey/Add/AddForeignKeys",
+    "Schema/ForeignKey/Add/ForeignKeyAddition"
+  ],
+  "finite": {
+    "characterKinds": [
+      "CHAR",
+      "VARCHAR"
+    ],
+    "binaryKinds": [
+      "BINARY",
+      "VARBINARY"
+    ],
+    "collations": [
+      "utf8mb4_bin",
+      "utf8mb4_general_ci",
+      "utf8mb4_unicode_ci"
+    ],
+    "widthPairs": [
+      [
+        4,
+        4
+      ],
+      [
+        8,
+        4
+      ],
+      [
+        4,
+        8
+      ]
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteIdentities": 48,
+  "exploration": {
+    "seeds": [
+      669,
+      1217,
+      1918
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Mixed binary and character roles, different collation, zero width, unknown collation and open catalog",
+    "Per-field and total native key boundaries under compact and dynamic storage"
+  ],
+  "observations": [
+    "Absolute parent/child identities, exact native data types and per-field selected collation",
+    "Original and resulting field and total physical key sizes and observed row formats",
+    "Declared primary/secondary index shape, true foreign constraints and event effects",
+    "Exact stored values, whitespace, byte padding, native text equality and reference rejections",
+    "Independent parent update and delete probes record physical CHAR padding, exact propagated bytes and native child-width refusals."
+  ],
+  "evidence": {
+    "P01": "Retain the exact physical string types, lengths, collation or byte policy, and ordered reference sides.",
+    "P02": "Validate exact comparison compatibility, fixed capacities, original external key support and physical namespace before publication.",
+    "P03": "Keep only typed immutable comparison and physical coordinates. The originating schema and storage declaration facts remain transient.",
+    "P04": "Compute the individual full term capacity and combined physical key bound, and compose ordered field compatibility.",
+    "P05": "Verify sealed string and integer roles and actual source/installed constructor certificates.",
+    "P06": "Observe original and emitted SQL, exact stored bytes and NULL, native constraint metadata, physical key and diagnostic effects."
+  },
+  "obligations": {
+    "Q01": "Validate closed comparison values and observed exact boundary refusals.",
+    "Q02": "Reconcile every fixed character/byte coordinate across both construction paths and exact native admissions.",
+    "Q03": "Check ordered multi-field terms, exact typed compatibility and separate field width and total key capacity.",
+    "Q04": "Verify native row comparison and preserved stored bytes plus dictionary metadata, effects, diagnostics and unsupported probe controls.",
+    "Q05": "Link pinned executable, explicit PHP storage rules, installed constructor trace and native rerun ledgers."
+  },
+  "faults": [
+    "Erase the declared string update cascade.",
+    "Erase the declared string delete-null effect.",
+    "Erase retained zero bytes after a successful native text comparison.",
+    "Treat a binary-collated case difference as equal."
+  ],
+  "trackedBeyondThisSlice": [
+    "Storage with nondefault page sizes, nonstock legacy global mode, compression block size, other text collations and default charset inference.",
+    "Decimal, floating, temporal, enumeration and generated field types and other SQL family proof obligations."
+  ],
+  "trust": [
+    "Correctly interpreted same external schema and native profile.",
+    "Fixed finite output bytes and native equality witnesses, PHP diagnostics, installed distribution and actual release engine."
+  ],
+  "admitted": {
+    "mysql-5.6.51": 24,
+    "mysql-5.7.44": 24,
+    "mysql-8.0.44": 24,
+    "mysql-8.1.0": 24,
+    "mysql-8.2.0": 24,
+    "mysql-8.3.0": 24,
+    "mysql-8.4.7": 24,
+    "mysql-9.0.1": 24,
+    "mysql-9.1.0": 24
+  },
+  "negativeCount": {
+    "mysql-5.6.51": 66,
+    "mysql-5.7.44": 62,
+    "mysql-8.0.44": 62,
+    "mysql-8.1.0": 62,
+    "mysql-8.2.0": 62,
+    "mysql-8.3.0": 62,
+    "mysql-8.4.7": 62,
+    "mysql-9.0.1": 62,
+    "mysql-9.1.0": 62
+  }
+}

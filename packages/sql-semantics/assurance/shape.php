@@ -1485,8 +1485,27 @@ if ($dialect !== 'sqlite') {
         $properties[$foreignDefinition] = ['parent' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier'], 'pairs' => ['array'],
             'effects' => [$foreignEffects], 'generated' => ['bool'], 'indexName' => ['?Identifier'], 'createdIndex' => ['?Identifier']];
         $properties[$foreignEffects] = ['update' => [$foreignEvent], 'delete' => [$foreignEvent], 'match' => [$foreignMatch]];
-        $properties[$foreignPair] = ['child' => ['Identifier'], 'parent' => ['Identifier'], 'storage' => ['Schema\\IntegerStorage'],
-            'unsigned' => ['bool'], 'nullable' => ['bool'], 'descending' => ['bool']];
+        $foreignDomains = $foreignAddBase . 'Domain\\';
+        $foreignInteger = $foreignDomains . 'ForeignKeyIntegerDomain';
+        $foreignString = $foreignDomains . 'ForeignKeyStringDomain';
+        $foreignStringKind = $foreignDomains . 'ForeignKeyStringKind';
+        $foreignStringStorage = $foreignDomains . 'ForeignKeyStringStorage';
+        $foreignCollation = $foreignDomains . 'ForeignKeyTextCollation';
+        $foreignCapacity = $foreignDomains . 'ForeignKeyKeyCapacity';
+        array_push($internal, $foreignCapacity, $foreignDomains . 'ForeignKeyStringLowering');
+        $pureCollaborators[] = $foreignCapacity;
+        $properties[$foreignPair] = ['child' => ['Identifier'], 'parent' => ['Identifier'], 'domain' => [$foreignInteger, $foreignString],
+            'nullable' => ['bool'], 'descending' => ['bool']];
+        $properties[$foreignInteger] = ['storage' => ['Schema\\IntegerStorage'], 'unsigned' => ['bool']];
+        $properties[$foreignString] = ['child' => [$foreignStringStorage], 'parent' => [$foreignStringStorage]];
+        $properties[$foreignStringStorage] = ['kind' => [$foreignStringKind], 'length' => ['int'], 'collation' => ['?' . $foreignCollation]];
+        $properties[$foreignStringKind] = $properties[$foreignCollation] = [];
+        $methods[$foreignInteger] = $methods[$foreignString] = ['__construct', 'childKeyBytes'];
+        $methods[$foreignStringStorage] = ['__construct', 'keyBytes'];
+        $methods[$foreignStringKind] = ['text', 'fixed'];
+        $methods[$foreignCollation] = [];
+        $enumCases[$foreignStringKind] = ['Char' => 'CHAR', 'Varchar' => 'VARCHAR', 'Binary' => 'BINARY', 'Varbinary' => 'VARBINARY'];
+        $enumCases[$foreignCollation] = ['Binary' => 'utf8mb4_bin', 'General' => 'utf8mb4_general_ci', 'Unicode' => 'utf8mb4_unicode_ci'];
         $properties[$foreignKeyFact] = ['identity' => [$indexIdentity], 'fields' => ['array'], 'full' => ['bool'], 'referenceKey' => ['bool']];
         $properties[$foreignFieldFact] = ['field' => ['Identifier'], 'descending' => ['bool']];
         $properties[$foreignSymbolFact] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'symbol' => ['Identifier']];
@@ -1870,10 +1889,10 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
-            ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v8.json', '1ddeed039ec1ee1fbe8843c722d4ea78005b72f6bac3c8e8b461398cc2a0dd16', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v8.json', '0760c189c97be98bad4e41dfa56bf4054f75c6b89ddf7defd882c58dc6cd2b20', 'MySQL native index binding'],
+            ['mysql-varchar-binding-v8.json', '6795d76b3fee333e32c4c390802b3874a7803592ea0aa1576fa0816fca633f60', 'MySQL VARCHAR binding'],
+            ['mysql-ordered-table-rename-binding-v7.json', '99c1136783f445921aab242f7d33d415c4f4352756d4c2eb1f4a83a7a5cbf05a', 'MySQL ordered rename binding'],
+            ['mysql-session-table-binding-v9.json', '6f50b02a129f3dbc38b518180c2c18c7dc7e6f1571aa9b252afefad25cce27ff', 'MySQL session table binding'],
+            ['mysql-native-index-binding-v9.json', '76d398c3bc88a94f659ec56c70341cb56fbc1a70bc6bb76f7bf7e93488bc0514', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -2524,6 +2543,9 @@ try {
                     'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
                     'Schema\\Index\\Change\\MixedIndexNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')
+                || ($dialect === 'mysql' && in_array($short, ['Schema\\ForeignKey\\Add\\AddForeignKeys',
+                    'Schema\\ForeignKey\\Add\\ForeignKeyAdditionSet', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyKeyCapacity'], true)
+                    && $name->toString() === $platform . '\\Model\\Contract\\InnoDbKeyLimit')
                 || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyChildIndexes'
                     && $name->toString() === $platform . '\\Rules\\TableDefinition\\Index\\IndexNameAllocation')
                 || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyIndexPrefix'
@@ -2636,7 +2658,7 @@ try {
             $operators = [];
             foreach ($class->stmts as $case) {
                 if ($case instanceof Stmt\ClassMethod && (
-                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'Schema\\Index\\IndexRole', 'From\\ExternalRelationKind', 'From\\ColumnKind'], true))
+                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'Schema\\Index\\IndexRole', 'From\\ExternalRelationKind', 'From\\ColumnKind', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyStringKind'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Sequence\\SequencePersistence')
                 )) {
                     continue;

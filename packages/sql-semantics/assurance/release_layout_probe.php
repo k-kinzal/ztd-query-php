@@ -2566,12 +2566,40 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $refusals[] = $error->getMessage();
             }
             $details['mysqlAddForeignKeys'] = [
-                $one->parent->quoted(), $two->parent->quoted(), $one->pairs[0]->storage->value, $two->pairs[0]->descending,
+                $one->parent->quoted(), $two->parent->quoted(), $one->pairs[0]->domain->storage->value, $two->pairs[0]->descending,
                 $one->effects->match->value, $two->effects->match->value, $one->symbol->value, $two->symbol->value,
                 $one->createdIndex?->value, $two->createdIndex?->value, $two->indexName?->value,
                 $result->toString(), $rebuilt->toString(), array_map(static fn ($part): string => $part->toString(), $batch),
                 $refusals,
             ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
+            $strings = $semantics->context([
+                'CREATE TABLE app.storage_parent (p CHAR(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY, q BINARY(4) NOT NULL UNIQUE)',
+                'CREATE TABLE app.storage_child (x VARCHAR(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci, y VARBINARY(8)) ROW_FORMAT=COMPACT',
+                'CREATE TABLE app.capacity_parent (p VARBINARY(8) PRIMARY KEY)',
+                'CREATE TABLE app.original_capacity (x VARBINARY(768)) ROW_FORMAT=COMPACT',
+                'CREATE TABLE app.copied_capacity LIKE app.original_capacity',
+            ]);
+            $capacity = $semantics->analyze('ALTER TABLE app.storage_child '
+                . 'ADD CONSTRAINT Text_Link FOREIGN KEY (x) REFERENCES storage_parent(p), '
+                . 'ADD CONSTRAINT Byte_Link FOREIGN KEY (y) REFERENCES storage_parent(q)', $strings);
+            $types = [];
+            foreach ($capacity->additions as $addition) {
+                $domain = $addition->pairs[0]->domain;
+                $types[] = [
+                    $domain->child->kind->value, $domain->child->length, $domain->child->collation?->value,
+                    $domain->parent->kind->value, $domain->parent->length, $domain->parent->collation?->value,
+                    $domain->childKeyBytes(),
+                ];
+            }
+            $compactRefusal = [];
+            try {
+                $semantics->analyze('ALTER TABLE app.copied_capacity ADD FOREIGN KEY (x) REFERENCES capacity_parent(p)', $strings);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $compactRefusal[] = $error->getMessage();
+            }
+            $details['mysqlForeignKeyStringDomains'] = [$types, $capacity->toString(), $compactRefusal];
         }
         if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\DropForeignKeys') {
             $runtimeType = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys::class;

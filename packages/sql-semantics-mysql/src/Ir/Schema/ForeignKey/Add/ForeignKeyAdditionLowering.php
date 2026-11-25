@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyCatalogLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
@@ -51,6 +52,7 @@ final class ForeignKeyAdditionLowering
         Check::input($definitions !== null, 'ALTER TABLE requires a group of native foreign-key additions.');
         $tables = new ForeignKeyTables();
         [$child, $owner] = $tables->child($operation, $statement);
+        Check::input($child->keyLimit !== null, 'The native foreign-key profile requires a supported InnoDB row format.');
         $release = $operation->context->profile->grammar;
         $native = new ForeignKeyCatalogLowering();
         $keys = [$owner->quoted() => $native->keys($child, $owner)];
@@ -71,6 +73,29 @@ final class ForeignKeyAdditionLowering
         $original = array_merge(...array_values($keys));
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $requested);
         $created = (new ForeignKeyChildIndexes())->allocate($owner, $original, $pairs, $labels, $release);
+        return new AddForeignKeys(
+            $owner,
+            $this->materialize($frames, $requested, $symbols, $pairs, $created),
+            $original,
+            $constraints,
+            $release,
+            (new IndexPolicyLowering())->alteration($statement),
+            $statement->ignore,
+            $child->keyLimit
+        );
+    }
+
+    /**
+     * Combines resolved declarations with their measured native name and key effects.
+     * @param non-empty-list<array{TableIdentity, ForeignKeyEffects, Identifier|null}> $frames Resolved action roles in native order
+     * @param non-empty-list<Identifier|null> $requested Original symbol choices, with null for native allocation
+     * @param non-empty-list<Identifier> $symbols Allocated symbols in action order
+     * @param non-empty-list<non-empty-list<ForeignKeyPair>> $pairs Corresponding checked full fields
+     * @param non-empty-list<Identifier|null> $created Native created key effects in action order
+     * @return non-empty-list<ForeignKeyAddition>
+     */
+    public function materialize(array $frames, array $requested, array $symbols, array $pairs, array $created): array
+    {
         $additions = [];
         foreach ($frames as $position => [$target, $effects, $written]) {
             $generated = $requested[$position] === null;
@@ -85,15 +110,8 @@ final class ForeignKeyAdditionLowering
                 $index
             );
         }
-        return new AddForeignKeys(
-            $owner,
-            $additions,
-            $original,
-            $constraints,
-            $release,
-            (new IndexPolicyLowering())->alteration($statement),
-            $statement->ignore
-        );
+
+        return $additions;
     }
 
     /**

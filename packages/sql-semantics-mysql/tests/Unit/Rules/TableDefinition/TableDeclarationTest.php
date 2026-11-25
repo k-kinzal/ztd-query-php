@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
@@ -188,5 +189,24 @@ final class TableDeclarationTest extends TestCase
         self::assertNull($rule->tableCollation($table->statement, GrammarRelease::MySql5651));
         self::assertNull($rule->tableCollation($table->statement, GrammarRelease::MySql5744));
         self::assertSame('utf8mb4_bin', $rule->tableCollation($table->statement, GrammarRelease::MySql8044)?->value);
+    }
+
+    public function testKeyLimitRetainsTheSourceLayoutThroughCreateLike(): void
+    {
+        $inspection = new Inspection();
+        $source = $inspection->inspect('CREATE TABLE app.physical (n INT) ROW_FORMAT=COMPACT');
+        $copied = $inspection->inspect('CREATE TABLE app.copied LIKE app.physical', [$source]);
+
+        self::assertSame(InnoDbKeyLimit::Compact, $source->declarations()[0]->keyLimit);
+        self::assertSame(InnoDbKeyLimit::Compact, $copied->declarations()[0]->keyLimit);
+    }
+
+    public function testPhysicalExposesTheDeclaredRowFormatAndNativeKey(): void
+    {
+        $operation = (new Inspection())->inspect('CREATE TABLE app.physical (n INT PRIMARY KEY) ROW_FORMAT=COMPACT');
+        $table = $operation->declarations()[0];
+
+        self::assertSame(InnoDbKeyLimit::Compact, $table->keyLimit);
+        self::assertSame('PRIMARY', $table->indexes[0]->name->value ?? null);
     }
 }

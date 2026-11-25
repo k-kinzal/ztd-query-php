@@ -470,6 +470,8 @@ The [MySQL foreign-key removal contract](mysql-drop-foreign-keys-evidence-v1.jso
 
 The [MySQL foreign-key addition contract](mysql-add-foreign-keys-evidence-v1.json) checks persistent reference scope, exact key allocation, referential runtime effects, and the declared MATCH and action metadata. Execute `run_server_mysql_add_foreign_keys.py` and independently replay the ledgers with `combine_server_mysql_add_foreign_keys_evidence.py`.
 
+The [MySQL string foreign-key contract](mysql-foreign-key-string-evidence-v1.json) checks full native character and byte fields with explicit collation, exact stored byte values, and the separate term and combined key capacities. Execute `run_server_mysql_foreign_key_strings.py` and replay with `combine_server_mysql_foreign_key_strings_evidence.py`.
+
 The [MySQL index visibility contract](mysql-index-visibility-evidence-v2.json) checks ordered optimizer flag updates, unchanged physical keys and unique enforcement, temporary shadowing and native algorithm and lock boundaries. Run `run_server_mysql_index_visibility.py` and replay with `combine_server_mysql_index_visibility_evidence.py`.
 
 For the [MySQL identifier case audit](mysql-native-index-case-v1.json), run `verify_mysql_identifier_case.py prepare --out observation.sql`. Execute the generated script on each pinned disposable database with a UTF-8 client in tabular batch mode. Run `verify_mysql_identifier_case.py replay --candidate /path/to/checkout --commit COMMIT --out evidence.json --native RELEASE=PATH`, supplying one `--native` argument for each release. The checker requires the complete ordered native alphabet and compares each scalar with the PHP implementation recorded in the distribution. It also checks each fixed case table's source bytes.

@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyIntegerDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringDomain;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -60,20 +63,32 @@ final class ForeignKeyPairLowering
         );
         $left = $this->column($child, $part->column);
         $right = $this->column($parent, $referenced);
-        $storage = $this->integer($left->type);
-        Check::input(
-            $storage !== null && $storage === $this->integer($right->type),
-            'A native foreign-key pair needs compatible checked field domains.'
-        );
 
         return new ForeignKeyPair(
             new Identifier($left->name->value),
             new Identifier($right->name->value),
-            $storage[0],
-            $storage[1],
+            $this->domain($left, $right),
             $left->nullability === Nullability::Nullable,
             $part->direction === Direction::Descending,
         );
+    }
+
+    /**
+     * Settles a compatible native integer or string comparison.
+     */
+    public function domain(Column $child, Column $parent): ForeignKeyIntegerDomain|ForeignKeyStringDomain
+    {
+        $left = $this->integer($child->type);
+        $right = $this->integer($parent->type);
+        if ($left !== null && $left === $right) {
+            return new ForeignKeyIntegerDomain($left[0], $left[1]);
+        }
+        $strings = new ForeignKeyStringLowering();
+        $childType = $strings->storage($child);
+        $parentType = $strings->storage($parent);
+        Check::input($childType !== null && $parentType !== null, 'A native foreign-key pair needs compatible checked field domains.');
+
+        return new ForeignKeyStringDomain($childType, $parentType);
     }
 
     /**

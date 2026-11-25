@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyKeyColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyIntegerDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAction;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyEffects;
@@ -39,7 +40,7 @@ final class NativeAdditionFixture
      */
     public static function pair(string $child, string $parent, bool $descending = false): ForeignKeyPair
     {
-        return new ForeignKeyPair(new Identifier($child), new Identifier($parent), IntegerStorage::Standard, false, true, $descending);
+        return new ForeignKeyPair(new Identifier($child), new Identifier($parent), new ForeignKeyIntegerDomain(IntegerStorage::Standard, false), true, $descending);
     }
 
     /**

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v165.json"
-CONTRACT = "2e80292032d544f4b3ffa61865fb3b97590d357b5529db6d1127034f7b4d054b"
+CONTRACT_NAME = "release-layout-v166.json"
+CONTRACT = "c8bc3430e777e927ae5e56421310237f16c97d08c3f96210202c522d1f9b992c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -891,6 +891,14 @@ def verify_probe(raw, catalog):
                 expected_sql, expected_sql, [expected_sql],
                 ["The checked InnoDB profile needs copying and a compatible lock to add a native foreign key."],
             ] and item["sql"] == expected_sql, "installed-mysql-add-foreign-keys-mismatch", item)
+            string_sql = ("ALTER TABLE `app`.`storage_child` "
+                          "ADD CONSTRAINT `Text_Link` FOREIGN KEY (`x`) REFERENCES `app`.`storage_parent` (`p`) ON UPDATE NO ACTION ON DELETE NO ACTION, "
+                          "ADD CONSTRAINT `Byte_Link` FOREIGN KEY (`y`) REFERENCES `app`.`storage_parent` (`q`) ON UPDATE NO ACTION ON DELETE NO ACTION")
+            require(item.get("mysqlForeignKeyStringDomains") == [
+                [["VARCHAR", 8, "utf8mb4_unicode_ci", "CHAR", 4, "utf8mb4_unicode_ci", 32],
+                 ["VARBINARY", 8, None, "BINARY", 4, None, 8]], string_sql,
+                ["The full foreign-key field exceeds the native InnoDB index field limit."],
+            ], "installed-mysql-foreign-key-string-domain-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\ForeignKey\\DropForeignKeys"):
             prefix = "ALTER TABLE `app`.`fk_drop_child` "
             mixed = prefix + "DROP INDEX `Owner_Link`, DROP FOREIGN KEY `Owner_Link`"

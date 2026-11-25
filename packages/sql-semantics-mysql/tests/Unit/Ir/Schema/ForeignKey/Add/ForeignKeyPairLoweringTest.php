@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Schema\ForeignKey\Add;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringDomain;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyPairLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -19,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Testing\MySql\Inspection;
 use SqlSemantics\Testing\MySql\NativeAdditionFixture;
 
 #[CoversClass(ForeignKeyPairLowering::class)]
@@ -63,5 +65,16 @@ final class ForeignKeyPairLoweringTest extends TestCase
         $type = new Integral(IntegralKind::MediumInt, '5', [NumericModifier::Unsigned]);
 
         self::assertSame([IntegerStorage::Medium, true], (new ForeignKeyPairLowering())->integer($type));
+    }
+
+    public function testDomainPreservesBothNativeStringStorageRoles(): void
+    {
+        $ddl = 'CREATE TABLE app.strings (x VARBINARY(8), a BINARY(4))';
+        $table = (new Inspection())->inspect($ddl)->declarations()[0];
+        $domain = (new ForeignKeyPairLowering())->domain($table->columns[0], $table->columns[1]);
+
+        self::assertInstanceOf(ForeignKeyStringDomain::class, $domain);
+        self::assertSame(8, $domain->child->length);
+        self::assertSame(4, $domain->parent->length);
     }
 }

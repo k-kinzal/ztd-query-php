@@ -1113,28 +1113,68 @@ function observeMysqlMixedIndexes(SqlSemantics\Platform\MySql\Ir\Schema\Index\Ch
             'policy' => [$value->policy->algorithm->value, $value->policy->lock->value]]];
 }
 
+function constructMysqlForeignKeyString(array $value, string $types): object
+{
+    $storage = $types . 'ForeignKeyStringStorage';
+    $kind = $types . 'ForeignKeyStringKind';
+    $collation = $types . 'ForeignKeyTextCollation';
+
+    return new $storage($kind::from($value[0]), $value[1], $value[2] === null ? null : $collation::from($value[2]));
+}
+
+function constructMysqlForeignKeyPair(array $field, string $namespace): object
+{
+    $addition = $namespace . 'Schema\\ForeignKey\\Add\\';
+    $types = $addition . 'Domain\\';
+    $pair = $addition . 'ForeignKeyPair';
+    $name = $namespace . 'Identifier';
+    if ($field[2] === 'string') {
+        $comparison = $types . 'ForeignKeyStringDomain';
+        $domain = new $comparison(constructMysqlForeignKeyString($field[3], $types), constructMysqlForeignKeyString($field[4], $types));
+
+        return new $pair(new $name($field[0]), new $name($field[1]), $domain, $field[5], $field[6]);
+    }
+    $storage = $namespace . 'Schema\\IntegerStorage';
+    $comparison = $types . 'ForeignKeyIntegerDomain';
+    $domain = new $comparison($storage::from($field[2]), $field[3]);
+
+    return new $pair(new $name($field[0]), new $name($field[1]), $domain, $field[4], $field[5]);
+}
+
+function observeMysqlForeignKeyPair(
+    SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyPair $field
+): array {
+    $domain = $field->domain;
+    $sides = [$field->child->value, $field->parent->value];
+    if ($domain instanceof SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyStringDomain) {
+        $child = [$domain->child->kind->value, $domain->child->length, $domain->child->collation?->value];
+        $parent = [$domain->parent->kind->value, $domain->parent->length, $domain->parent->collation?->value];
+
+        return [...$sides, 'string', $child, $parent, $field->nullable, $field->descending];
+    }
+
+    return [...$sides, $domain->storage->value, $domain->unsigned, $field->nullable, $field->descending];
+}
+
 function constructMysqlAddForeignKeys(array $input): SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys
 {
     $namespace = 'SqlSemantics\\Platform\\MySql\\Ir\\';
     $additionNamespace = $namespace . 'Schema\\ForeignKey\\Add\\';
     $root = $additionNamespace . 'AddForeignKeys';
     $change = $additionNamespace . 'ForeignKeyAddition';
-    $pair = $additionNamespace . 'ForeignKeyPair';
     $effects = $additionNamespace . 'ForeignKeyEffects';
     $action = $additionNamespace . 'ForeignKeyAction';
     $match = $additionNamespace . 'ForeignKeyMatch';
     $index = $additionNamespace . 'Catalog\\ForeignKeyNativeKey';
     $column = $additionNamespace . 'Catalog\\ForeignKeyKeyColumn';
     $constraint = $additionNamespace . 'Catalog\\ForeignKeyConstraintIdentity';
-    $storage = $namespace . 'Schema\\IntegerStorage';
+    $limit = SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit::class;
     $name = $namespace . 'Identifier';
     $spec = $input['mysqlAddForeignKeys'];
     $facts = $input['mysqlForeignKeyCatalog'];
     $additions = [];
     foreach ($spec['additions'] as $position => $given) {
-        $fields = array_map(static function (array $field) use ($name, $pair, $storage): object {
-            return new $pair(new $name($field[0]), new $name($field[1]), $storage::from($field[2]), $field[3], $field[4], $field[5]);
-        }, $given['pairs']);
+        $fields = array_map(static fn (array $field): object => constructMysqlForeignKeyPair($field, $namespace), $given['pairs']);
         [$update, $delete, $mode] = $given['effects'];
         $additions[$position] = new $change(
             mysqlTableIdentity($namespace, $given['parent']), new $name($given['symbol']), $fields,
@@ -1151,7 +1191,7 @@ function constructMysqlAddForeignKeys(array $input): SqlSemantics\Platform\MySql
 
     return new $root(mysqlTableIdentity($namespace, $spec['owner']), $additions, $keys, $constraints,
         SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
-        constructMysqlIndexPolicy($spec['policy']), $spec['ignore']);
+        constructMysqlIndexPolicy($spec['policy']), $spec['ignore'], isset($facts['keyLimit']) ? $limit::from($facts['keyLimit']) : null);
 }
 
 function observeMysqlAddForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys $value): array
@@ -1160,8 +1200,7 @@ function observeMysqlAddForeignKeys(SqlSemantics\Platform\MySql\Ir\Schema\Foreig
     foreach ($value->additions as $addition) {
         $additions[] = ['parent' => observeMysqlTableIdentity($addition->parent),
             'symbol' => $addition->symbol->value, 'generated' => $addition->generated,
-            'pairs' => array_map(static fn ($field): array => [$field->child->value, $field->parent->value,
-                $field->storage->value, $field->unsigned, $field->nullable, $field->descending], $addition->pairs),
+            'pairs' => array_map(observeMysqlForeignKeyPair(...), $addition->pairs),
             'effects' => [$addition->effects->update->value, $addition->effects->delete->value, $addition->effects->match->value],
             'created' => $addition->createdIndex?->value, 'indexName' => $addition->indexName?->value];
     }

@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativ
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -44,11 +45,12 @@ final class AddForeignKeys implements SemanticsIR
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
         public readonly bool $ignore = false,
+        ?InnoDbKeyLimit $keyLimit = null,
     ) {
         $checked = Check::listOf($additions, ForeignKeyAddition::class, 'At least one checked native foreign-key addition is required.', 1);
         $originalKeys = Check::listOf($keys, ForeignKeyNativeKey::class, 'Foreign-key addition requires checked original physical keys.');
         $originalConstraints = Check::listOf($constraints, ForeignKeyConstraintIdentity::class, 'Foreign-key addition requires checked original symbols.');
-        (new ForeignKeyAdditionSet())->check($owner, $checked, $originalKeys, $originalConstraints, $release, $policy, $ignore);
+        (new ForeignKeyAdditionSet())->check($owner, $checked, $originalKeys, $originalConstraints, $release, $policy, $ignore, $keyLimit);
         $this->additions = $checked;
     }
 

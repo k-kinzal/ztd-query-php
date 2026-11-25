@@ -7,12 +7,14 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyKeyCapacity;
 use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\ForeignKeyRemovalSet;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexLock;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
 /**
@@ -35,6 +37,7 @@ final class ForeignKeyAdditionSet
         GrammarRelease $release,
         IndexChangePolicy $policy,
         bool $ignore,
+        ?InnoDbKeyLimit $limit = null,
     ): void {
         Check::input($owner->kind === ExternalRelationKind::BaseTable, 'A native foreign-key addition requires a persistent owning table.');
         Check::input(!$ignore || $release === GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');
@@ -52,8 +55,11 @@ final class ForeignKeyAdditionSet
         $symbols = (new ForeignKeyConstraintNamespace())->allocate($owner, $constraints, $selected);
         $created = (new ForeignKeyChildIndexes())->allocate($owner, $keys, $fields, $labels, $release);
         $layout = new ForeignKeyIndexPrefix();
+        $capacity = new ForeignKeyKeyCapacity();
+        $nativeLimit = $capacity->effective($release, $limit);
         foreach ($additions as $position => $addition) {
             $this->release($addition, $legacy);
+            $capacity->check($addition->pairs, $nativeLimit);
             Check::input($symbols[$position]->value === $addition->symbol->value, 'The foreign-key symbol differs from native allocation.');
             Check::input($created[$position]?->value === $addition->createdIndex?->value, 'The declared foreign-key index effect differs from native allocation.');
             $layout->requireParent($addition->parent, $addition->pairs, $keys, $release);

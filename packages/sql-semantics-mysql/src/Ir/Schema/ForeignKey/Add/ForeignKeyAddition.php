@@ -20,7 +20,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *     $table = $root . 'Schema\\TableName';
  *     $identity = $root . 'Schema\\Identity\\TableIdentity';
  *     $parent = new $identity(new $table(new $name('app'), new $name('parent')), \SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable);
- *     $pairs = [new \SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyPair(new $name('x'), new $name('id'), \SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Standard, false, true)];
+ *     $domain = new \SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyIntegerDomain(\SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Standard, false);
+ *     $pairs = [new \SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyPair(new $name('x'), new $name('id'), $domain, true)];
  *     $effects = new \SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyEffects(\SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAction::Cascade, \SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAction::NoAction);
  *     (new \SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\ForeignKeyAddition($parent, new $name('owner_ref'), $pairs, $effects))->toString() // => 'ADD CONSTRAINT `owner_ref` FOREIGN KEY (`x`) REFERENCES `app`.`parent` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION'
  */
