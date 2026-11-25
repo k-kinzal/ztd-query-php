@@ -293,13 +293,14 @@ final class TableDeclaration
      * @param list<Name|null> $names The name of each column: the column list when one is written, else the names the query gives
      * @param bool $listed Whether the names are a written column list, whose length must match the query
      */
-    public function view(QualifiedName $name, QueryFact $output, array $names, bool $listed, LanguageProfile $profile): Table
+    public function view(QualifiedName $name, QueryFact $output, array $names, bool $listed, LanguageProfile $profile, bool $materialized): Table
     {
         $fields = $this->settled($output);
         $complete = $output->shape->complete() && (!$listed || count($names) === count($fields));
         $columns = [];
         foreach ($fields as $position => $field) {
-            $column = $this->fieldColumn($field, $names[$position] ?? null, $field->column()?->collation);
+            $usesViewHeading = !$materialized && $field->column() !== null;
+            $column = $this->fieldColumn($field, $names[$position] ?? null, $field->column()?->collation, $usesViewHeading);
             if ($column === null) {
                 $complete = false;
                 break;
@@ -307,7 +308,7 @@ final class TableDeclaration
             $columns[] = $column;
         }
 
-        return new Table($name, $profile, $columns, [], $complete, RelationKind::View);
+        return new Table($name, $profile, $columns, [], $complete, RelationKind::View, materializedView: $materialized);
     }
 
     /**
@@ -370,11 +371,11 @@ final class TableDeclaration
     /**
      * Answers the column an output field makes under a name, or null when its name or type is not determined.
      */
-    public function fieldColumn(Field $field, ?Name $name, ?Name $collation = null): ?Column
+    public function fieldColumn(Field $field, ?Name $name, ?Name $collation = null, bool $usesViewHeading = false): ?Column
     {
         return $name === null || !$field->type instanceof Known
             ? null
-            : new Column($name, $field->type->descriptor, $field->nullability, collation: $collation);
+            : new Column($name, $field->type->descriptor, $field->nullability, collation: $collation, usesViewHeading: $usesViewHeading);
     }
 
     /**

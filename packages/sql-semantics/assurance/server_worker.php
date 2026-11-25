@@ -225,6 +225,7 @@ function constructSource(string $platform, array $source, string $dialect): obje
     ] : [
         array_map(constructMySqlColumnType(...), $source['columnTypes'] ?? []),
         ($namespace . 'From\\ExternalRelationKind')::from($source['relationKind'] ?? 'table'),
+        $source['materializedView'] ?? false,
     ];
 
     return new $table(
@@ -360,6 +361,9 @@ function observeSource(object $source, string $dialect, string $namespace, bool 
             $columns['columnKinds'] = $kinds;
         }
     } else {
+        if ($source->materializedView) {
+            $columns['materializedView'] = true;
+        }
         $types = array_map(
             static fn ($type): array|string => match ($type::class) {
                 SqlSemantics\Platform\MySql\Ir\From\Varchar::class =>

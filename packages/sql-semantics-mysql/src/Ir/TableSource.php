@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\IntegralSlot;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -41,6 +42,7 @@ final class TableSource
      *
      * @param list<Identifier> $columns The names at those slots
      * @param array<array-key, mixed> $columnTypes The types in slot order, or empty for signed INT slots
+     * @param bool $materializedView Whether unaliased view fields use the written references as result headings
      */
     public function __construct(
         public readonly Identifier $schema,
@@ -48,20 +50,25 @@ final class TableSource
         array $columns,
         array $columnTypes = [],
         public readonly ExternalRelationKind $kind = ExternalRelationKind::BaseTable,
+        public readonly bool $materializedView = false,
     ) {
         $names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');
         foreach ([$schema, $table] as $object) {
             Check::input(strpbrk($object->value, '/\\.') === false, 'A database or table name excludes path and dot separators.');
         }
-        foreach ([$schema, $table, ...$names] as $object) {
+        $view = $kind === ExternalRelationKind::View;
+        Check::input(!$materializedView || $view, 'Only a view uses the native materialized view heading.');
+        foreach ([$schema, $table, ...($view ? [] : $names)] as $object) {
             Check::input(
                 preg_match('/\A.{1,64}(?<! )\z/us', $object->value) === 1,
                 'A schema object name has 1 to 64 characters and no trailing space.',
             );
         }
         $seen = [];
+        $native = new NativeLocalNames();
         foreach ($names as $name) {
-            $key = $name->key();
+            Check::input(!$view || strlen($name->value) <= 256, 'An external view field needs at most 256 native bytes.');
+            $key = $view ? $native->key($name->value) : $name->key();
             Check::input(!isset($seen[$key]), 'A table source cannot repeat a column name.');
             $seen[$key] = true;
         }

@@ -36,6 +36,8 @@ An ordinary single-table UPDATE can assign a resolved VARCHAR field, a plain tex
 
 A SELECT can read an external view declared in the catalog. Supply its defining statement and the declarations for its inputs. The IR records the resolved database, name and view kind, and directly projected fields retain supported native types and collations. The server evaluates the view when running the emitted SQL. Mutation targets require a base table.
 
+External view fields use the native UTF-8 identifier comparison. An unaliased read from a simple merged view returns the stored field name. An explicit `TEMPTABLE` view can return the written reference as its result name. The checked source's `materializedView` flag supplies that rule when constructing the same IR directly.
+
 Create or replace a persistent view over a checked ordinary SELECT. The IR exposes the effective ordered catalog heading, view algorithm and SQL security policy. A definition can read a single declared base table or return independent literals. MySQL 9.1 also supports `CREATE VIEW IF NOT EXISTS`.
 
 Issue `DROP VIEW` against absolute persistent view identities. Supply the referenced declarations for required targets. `IF EXISTS` also admits a known absence in a named database. The emitted statement retains MySQL's release-specific removal and transaction effects.

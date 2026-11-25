@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
 use SqlSemantics\Platform\MySql\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
@@ -58,7 +59,7 @@ final class TableShapes
                 $slots[] = new OutputSlot($column->name, new Known($column->type), $column->nullability, $column);
             }
 
-            return new RelationFact(new RowShape($slots), $resolution);
+            return new RelationFact(new RowShape($slots, nativeColumnNames: $resolution->table->kind === RelationKind::View), $resolution);
         }
         if ($resolution instanceof CommonTable) {
             $binding = $environment->commonTable($name->name);

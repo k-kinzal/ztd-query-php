@@ -265,6 +265,7 @@ final class SourceBinding
             $this->names,
             $this->columnTypes,
             $this->kind,
+            $this->table->materializedView,
         );
     }
 

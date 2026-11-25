@@ -949,6 +949,9 @@ def faults(engine):
                   "src/Model/Statement/Identifier/NativeLocalNames.php", "MySQL inherited alias binding source differs in src/Model/Statement/Identifier/NativeLocalNames.php"),
             Fault("bypass-mysql-inherited-alias-binding", "InheritedAliases::names", "new Name($name)", "$item->alias",
                   "src/Rules/Query/InheritedAliases.php", "MySQL inherited alias binding source differs in src/Rules/Query/InheritedAliases.php"),
+            Fault("apply-ascii-column-lookup-to-external-mysql-views", "TableShapes::named",
+                  "$resolution->table->kind === RelationKind::View", "false",
+                  "src/Rules/Query/TableShapes.php", "MySQL external view read binding source differs in src/Rules/Query/TableShapes.php"),
             Fault("allow-overwide-mysql-view", "Schema/View/CreateView::__construct",
                   "count($columns) <= 4096", "count($columns) <= 4097"),
             Fault("forget-mysql-view-original-generated-name", "ViewColumns::allocate",
@@ -1417,7 +1420,8 @@ def faults(engine):
         shared.append(Fault("admit-an-unsigned-bound", "Predicate/RangeIntegerLiteral::__construct",
                             "'9223372036854775807'", "'9223372036854775808'"))
         shared.append(Fault("ignore-intrinsic-result-label", "SelectBounds::checkLabel",
-                            "$table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,", "true,"))
+                            "$name === $label || ($name !== null && $table->materializedView && $native->key($name) === $native->key($label)),",
+                            "true,"))
         shared.append(Fault("ignore-intrinsic-group-label", "Aggregation/GroupedSelect::__construct",
                             "$source->columns[$value->slot]->value === $name,", "true,"))
         shared.append(Fault("ignore-mysql-parameter-order", "SelectBounds::checkResult", "$expression->position === ++$position,", "true,"))

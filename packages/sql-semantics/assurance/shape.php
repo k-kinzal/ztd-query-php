@@ -146,6 +146,7 @@ if ($dialect === 'mysql') {
     $methods['From\\ColumnKind'] = ['nullable'];
     $properties['From\\TextCollation'] = $methods['From\\TextCollation'] = [];
     $properties['TableSource']['columnTypes'] = ['array'];
+    $properties['TableSource']['materializedView'] = ['bool'];
     $properties['TableSource']['kind'] = ['From\\ExternalRelationKind'];
     $properties['From\\ExternalRelationKind'] = $methods['From\\ExternalRelationKind'] = [];
     $textOperator = 'Predicate\\Text\\TextOperator';
@@ -2021,16 +2022,17 @@ try {
             ['postgres-btree-heading-source-v3.json', '72148fef0bc32212ccecdee664e95de1f0d5c22d74a0c2cabaaa667551611a55', 'PostgreSQL B-tree heading binding'],
         ],
         'mysql' => [
-            ['mysql-from-binding-v3.json', '60836859d7d580e8a4476f77ee9e3c526f6fc4bb4593506deeffc1c235789246', 'MySQL FROM binding'],
+            ['mysql-from-binding-v4.json', 'fd447b230609974fe86e5186477333fc99d878201f0492af5bad603ccc099179', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v10.json', '4f223c9722dae50667ffeea8d9ddb6b7e279ba61891569ae1ee51ef01ae08007', 'MySQL VARCHAR binding'],
-            ['mysql-ordered-table-rename-binding-v7.json', '99c1136783f445921aab242f7d33d415c4f4352756d4c2eb1f4a83a7a5cbf05a', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v9.json', '6f50b02a129f3dbc38b518180c2c18c7dc7e6f1571aa9b252afefad25cce27ff', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v13.json', 'b7627313fe23c1fdde9d4b202d9206e60b08286d159a9de439177c36f2697913', 'MySQL native index binding'],
+            ['mysql-varchar-binding-v11.json', '00fa059aae0289eb571e6f25a053c3803818da208c40744a2766778d2d6bc684', 'MySQL VARCHAR binding'],
+            ['mysql-ordered-table-rename-binding-v8.json', '0d625501589c80bbea2c8ccd7c713c6660e7c01114afbe29cf2b1f4df2d57083', 'MySQL ordered rename binding'],
+            ['mysql-session-table-binding-v10.json', 'ce94adc2f6c417b28b5d769573cba6390309040d0ef90b9c38362f425ba6ddd2', 'MySQL session table binding'],
+            ['mysql-native-index-binding-v14.json', '6424893e648ce402a2d8064cd681bf539fd707ff2738462e392aa9d7bb19e1d2', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
-            ['mysql-inherited-local-alias-binding-v2.json', '461369c922f4d7948d0e75c32497fb97203df5e61d27c46cf0c02af891692919', 'MySQL inherited alias binding'],
-            ['mysql-generated-view-binding-v1.json', '35d4c74d690a17924ca138e56ba9a67b286063195cb0e80294b0b51ac2693d7e', 'MySQL generated view binding'],
+            ['mysql-inherited-local-alias-binding-v3.json', 'fc990ebf9544903fe3f058f71c402592fff06b51f283a19328d51769dd25f263', 'MySQL inherited alias binding'],
+            ['mysql-generated-view-binding-v2.json', '4fa94c08138512996d86d533f67b951fdec11fee7821ab5f3daa4c044f687710', 'MySQL generated view binding'],
+            ['mysql-external-view-read-binding-v1.json', 'be5f935267ca57334d938a69646086b04db41229d313da3c04f0903ee642d394', 'MySQL external view read binding'],
         ],
     };
     $providedBindings = [];

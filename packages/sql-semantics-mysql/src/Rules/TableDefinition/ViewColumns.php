@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
@@ -49,11 +48,14 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
  */
 final class ViewColumns
 {
+    private readonly bool $legacy;
+
     /**
      * @param LanguageProfile $profile The profile whose release the names follow
      */
     public function __construct(private readonly LanguageProfile $profile)
     {
+        $this->legacy = $profile->grammar === GrammarRelease::MySql5651 || $profile->grammar === GrammarRelease::MySql5744;
     }
 
     /**
@@ -65,7 +67,13 @@ final class ViewColumns
     public function names(Query $query, array $fields): array
     {
         $generated = $this->generated($query, $fields);
-        $names = array_map(static fn (Field $field): ?string => $field->name?->value, $fields);
+        $inputs = new ViewFieldNames();
+        $items = $inputs->items($this->block($query));
+        $names = [];
+        foreach ($fields as $field) {
+            $item = $field->expression === null ? null : $items[spl_object_id($field->expression)] ?? null;
+            $names[] = $item?->alias === null ? $field->name?->value : $inputs->assignedAlias($item->alias->value);
+        }
 
         return array_map(static fn (?string $name): ?Name => $name === null ? null : new Name($name), $this->allocate($names, $generated));
     }
@@ -120,12 +128,7 @@ final class ViewColumns
      */
     public function generated(Query $query, array $fields): array
     {
-        $items = [];
-        foreach ($this->block($query)->items ?? [] as $item) {
-            if ($item instanceof SelectExpression) {
-                $items[spl_object_id($item->expression)] = $item;
-            }
-        }
+        $items = (new ViewFieldNames())->items($this->block($query));
         $naming = new ItemNaming($this->profile);
         $generated = [];
         foreach ($fields as $field) {
@@ -134,6 +137,24 @@ final class ViewColumns
         }
 
         return $generated;
+    }
+
+    /**
+     * Gives the native installed names of a written view column list.
+     * @param list<Name> $written Exact decoded names before native assignment
+     * @return list<Name|null>
+     */
+    public function declared(array $written): array
+    {
+        $rule = new ColumnNameRule();
+        $inputs = new ViewFieldNames();
+        $names = [];
+        foreach ($written as $name) {
+            $value = $this->legacy ? $inputs->assignedAlias($name->value) : ($rule->valid($name->value) ? $name->value : null);
+            $names[] = $value === null ? null : new Name($value);
+        }
+
+        return $names;
     }
 
     /**
@@ -165,7 +186,7 @@ final class ViewColumns
      */
     public function unique(array $names, int $renamed, int $current, string $original): string
     {
-        $legacy = $this->profile->grammar === GrammarRelease::MySql5651 || $this->profile->grammar === GrammarRelease::MySql5744;
+        $legacy = $this->legacy;
         $prefix = $legacy ? 'My_exp_' : 'Name_exp_';
         $comparison = new NativeLocalNames();
         for ($attempt = 0; ; $attempt++) {

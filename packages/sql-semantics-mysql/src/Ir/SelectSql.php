@@ -51,14 +51,19 @@ final class SelectSql
             $name = $viewNames[$slot] ?? $column->name;
             $label = $name->value;
             $retain = $retainRequested && $name instanceof RequestedResultAlias;
+            $intrinsic = $label !== ltrim($label, "\x00..\x20\x7f");
             if ($localNames && !$retain) {
                 $alias = ' AS ' . $this->localColumn($slot);
-            } elseif ($name instanceof IntrinsicIntegerName || $label !== ltrim($label, "\x00..\x20\x7f")) {
+            } elseif ($name instanceof IntrinsicIntegerName || $intrinsic) {
                 $alias = '';
             } elseif ($name instanceof RequestedResultAlias) {
                 $alias = ' AS ' . $name->aliasSql();
             } else {
                 $alias = ' AS ' . $name->quoted();
+            }
+            if ($intrinsic) {
+                $items[] = $this->projectionOperand($column, $source, $name) . $alias;
+                continue;
             }
             $items[] = $this->expression($column->expression, $source) . $alias;
         }
@@ -76,6 +81,22 @@ final class SelectSql
         }
 
         return $sql . (new ResultSql())->render($select);
+    }
+
+    /**
+     * Renders a result operand with the checked spelling of an intrinsic field name.
+     */
+    public function projectionOperand(
+        ResultColumn $column,
+        TableSource|Join|null $source,
+        Identifier|IntrinsicIntegerName|RequestedResultAlias $name,
+    ): string {
+        $operand = $column->expression;
+        if ($name instanceof Identifier && ($operand instanceof ColumnReference || $operand instanceof TextColumnReference)) {
+            return $this->column($operand, $source, 0, true, $name);
+        }
+
+        return $this->expression($operand, $source);
     }
 
     /**
@@ -143,7 +164,7 @@ final class SelectSql
     /**
      * Emits the exact field name and its owning physical or derived occurrence.
      */
-    public function column(ColumnReference|IntegralColumnReference|TextColumnReference $expression, TableSource|Join|null $source, int $offset, bool $qualify): string
+    public function column(ColumnReference|IntegralColumnReference|TextColumnReference $expression, TableSource|Join|null $source, int $offset, bool $qualify, ?Identifier $spelling = null): string
     {
         $inputs = $source instanceof Join ? $source->inputs() : [$source];
         $input = $inputs[$expression->occurrence] ?? null;
@@ -153,6 +174,9 @@ final class SelectSql
         } else {
             Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
             $name = $input->columns[$expression->slot]->quoted();
+            if ($spelling !== null) {
+                $name = $spelling->quoted();
+            }
         }
 
         return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;

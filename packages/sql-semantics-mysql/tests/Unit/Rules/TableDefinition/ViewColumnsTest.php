@@ -80,4 +80,12 @@ final class ViewColumnsTest extends TestCase
 
         self::assertSame(['Name_exp_K', 'k'], $assign->allocate(['K', 'k'], [true, false]));
     }
+    public function testDeclaredUsesTheAssignedLegacyNameAndExactModernName(): void
+    {
+        $legacy = (new Inspection('mysql-5.6.51'))->inspect('SELECT 1');
+        $modern = (new Inspection('mysql-8.0.44'))->inspect('SELECT 1');
+
+        self::assertSame('K', (new ViewColumns($legacy->context->profile))->declared([new Name(' K')])[0]->value ?? null);
+        self::assertSame(' K', (new ViewColumns($modern->context->profile))->declared([new Name(' K')])[0]->value ?? null);
+    }
 }

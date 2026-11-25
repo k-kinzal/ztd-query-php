@@ -8,8 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SimpleCaseArm;
+use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
@@ -114,6 +116,21 @@ final class SelectSqlTest extends TestCase
     {
         self::assertSame('NULL', (new SelectSql())->predicate(new NullLiteral(), null));
     }
+    public function testProjectionOperandKeepsAnIntrinsicMaterializedViewSpelling(): void
+    {
+        $name = new Identifier(' k');
+        $source = new TableSource(
+            new Identifier('app'),
+            new Identifier('items'),
+            [new Identifier(' K')],
+            kind: ExternalRelationKind::View,
+            materializedView: true
+        );
+        $result = new ResultColumn(new ColumnReference(0), $name);
+
+        self::assertSame('`__ztd_source`.` k`', (new SelectSql())->projectionOperand($result, $source, $name));
+    }
+
     public function testLocalColumnNamesTheResultOrdinal(): void
     {
         self::assertSame('`__ztd_c3`', (new SelectSql())->localColumn(3));

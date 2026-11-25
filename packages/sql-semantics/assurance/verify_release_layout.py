@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v203.json"
-CONTRACT = "08bda540b5bcd7e1c3cbbb0ceb59c255fd0d7786d343e06615ec9dba6da88920"
+CONTRACT_NAME = "release-layout-v204.json"
+CONTRACT = "0ad042993ca84772a88874a73c0d68930a43d7ed7e8f68ea224cfa2757bb29bc"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -661,6 +661,12 @@ def verify_probe(raw, catalog):
                 'SELECT `__ztd_local`.`__ztd_c0` AS `first_value`, `__ztd_local`.`__ztd_c1` AS `second_value` FROM '
                 '(SELECT 41 AS ` K`, 53 AS ` É`) AS `__ztd_local` (`__ztd_c0`, `__ztd_c1`)',
             ], "installed-mysql-native-column-name-mismatch", native_names)
+            external_names = item.get("mysqlExternalViewReadNames")
+            tail = ' FROM `app`.`numbered_view` AS `__ztd_source`'
+            require(external_names == [
+                [True, True, False, " K", 0, " K", 'SELECT `__ztd_source`.` K`' + tail],
+                [True, True, True, " K", 0, " k", 'SELECT `__ztd_source`.` k`' + tail],
+            ], "installed-mysql-external-view-read-names-mismatch", external_names)
             require(item.get("mysqlHaving") == [
                 mysql_ir + r"Aggregation\GroupedComparison", True, "sum",
                 mysql_ir + r"Predicate\RangeIntegerLiteral", "4294967292", mysql_ir + r"Aggregation\GroupNameReference", 0,

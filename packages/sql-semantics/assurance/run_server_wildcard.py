@@ -101,7 +101,9 @@ def faults(engine, tag):
     ]
     if engine == "mysql":
         intrinsic = named_slot(tag, [" lead"], [[slot(0), " lead"]])
-        mutants.append(RenderFault("force-intrinsic-field-alias", renderer, " . $alias;", " . ' AS ' . $name;",
+        operand = "$this->projectionOperand($column, $source, $name) . $alias"
+        forced_alias = "$this->projectionOperand($column, $source, $name) . ' AS ' . $name->quoted()"
+        mutants.append(RenderFault("force-intrinsic-field-alias", renderer, operand, forced_alias,
                                   intrinsic, "meaning-mismatch"))
     return mutants
 

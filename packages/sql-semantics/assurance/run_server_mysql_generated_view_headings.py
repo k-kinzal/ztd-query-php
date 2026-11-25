@@ -243,9 +243,19 @@ def faults(_, tag):
 
 def validate_fault_response(item, answer):
     message = item.get("wrongRejection")
-    if message and rejects(answer, refusal(message)):
-        raise Failure(GRAPH, {"expected": law.structure(item, observed=True)["createView"], "actual": answer})
-    check_value(item, answer)
+    sql = law.command(item)
+    if answer["status"] == "constructed":
+        try:
+            check_value(item, answer)
+        except Failure as error:
+            same(GRAPH, error.signal)
+            raise Failure(GRAPH, {**error.detail, "sql": sql}) from error
+        return
+    require(message is not None and rejects(answer, refusal(message)),
+            "mysql-generated-view-unrelated-fault-rejection", answer)
+    raise Failure(GRAPH, {
+        "expected": law.structure(item, observed=True)["createView"], "actual": answer, "sql": sql,
+    })
 
 
 def check_width(item, response, original):

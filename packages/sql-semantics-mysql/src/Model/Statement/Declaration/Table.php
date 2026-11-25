@@ -51,6 +51,7 @@ final class Table
      * @param bool $hasIdentityKey A prior declared primary or eligible visible unique key
      * @param list<IndexDeclaration>|null $indexes The resolved declared indexes, or an open index namespace
      * @param InnoDbKeyLimit|null $keyLimit The settled native field index limit, when known
+     * @param bool $materializedView Whether the view requires native materialization
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -64,8 +65,10 @@ final class Table
         public readonly bool $hasIdentityKey = false,
         ?array $indexes = null,
         public readonly ?InnoDbKeyLimit $keyLimit = null,
+        public readonly bool $materializedView = false,
     ) {
         Check::input(!$temporary || $kind === RelationKind::BaseTable, 'Only a base table can be a temporary declaration.');
+        Check::input(!$materializedView || $kind === RelationKind::View, 'The view materialization rule requires a view.');
         $this->columns = Check::listOf($columns, Column::class, 'Table columns are an ordered list of column declarations.');
         $this->indexes = $indexes === null ? null : Check::listOf($indexes, IndexDeclaration::class, 'Native indexes are an ordered list of physical declarations.');
         $this->implicit = Check::listOf($implicit, ImplicitColumn::class, 'Implicit table columns are a list of implicit column declarations.');

@@ -26,6 +26,7 @@ final class Column
      * @param Nullability $nullability Whether the column can hold NULL
      * @param bool $generated Whether the column is computed from other columns of its row and cannot be written
      * @param Name|null $collation The resolved column collation when available
+     * @param bool $usesViewHeading Whether an unaliased read uses the stored view field name
      */
     public function __construct(
         public readonly Name $name,
@@ -33,6 +34,7 @@ final class Column
         public readonly Nullability $nullability = Nullability::Nullable,
         public readonly bool $generated = false,
         public readonly ?Name $collation = null,
+        public readonly bool $usesViewHeading = false,
     ) {
     }
 }

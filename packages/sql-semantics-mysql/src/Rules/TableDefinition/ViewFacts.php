@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount;
+use SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\View\ViewDefinition;
 
 /**
@@ -39,8 +40,15 @@ final class ViewFacts
         $declaration = new TableDeclaration();
         $fields = $declaration->settled($output);
         $heading = new ViewColumns($derivation->context->profile);
-        $names = $definition->columns ?? $heading->names($definition->query, $fields);
-        $table = $declaration->view($definition->name, $output, $names, $definition->columns !== null, $derivation->context->profile);
+        $names = $definition->columns === null ? $heading->names($definition->query, $fields) : $heading->declared($definition->columns);
+        $table = $declaration->view(
+            $definition->name,
+            $output,
+            $names,
+            $definition->columns !== null,
+            $derivation->context->profile,
+            $definition->algorithm === ViewAlgorithm::TempTable
+        );
         if ($definition->columns === null) {
             $generated = $heading->generated($definition->query, $fields);
             foreach ($fields as $position => $field) {

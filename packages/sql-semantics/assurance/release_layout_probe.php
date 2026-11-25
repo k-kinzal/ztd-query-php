@@ -357,6 +357,37 @@ function observeMysqlWideProjectionConsumers(SqlSemantics\Platform\MySql\Semanti
     return $observed;
 }
 
+function observeMysqlExternalViewReadNames(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $schema = new SqlSemantics\Platform\MySql\Ir\Identifier('app');
+    $view = new SqlSemantics\Platform\MySql\Ir\Identifier('numbered_view');
+    $stored = new SqlSemantics\Platform\MySql\Ir\Identifier(' K');
+    $position = new SqlSemantics\Platform\MySql\Ir\ColumnReference(0);
+    $sql = 'SELECT v.` k` FROM app.numbered_view AS v';
+    $observed = [];
+    foreach (['MERGE' => false, 'TEMPTABLE' => true] as $algorithm => $materialized) {
+        $context = $semantics->context([
+            'CREATE TABLE app.accounts (id INT NOT NULL)',
+            'CREATE ALGORITHM=' . $algorithm . ' VIEW app.numbered_view (` K`) AS SELECT id FROM app.accounts',
+        ]);
+        $analyzed = $semantics->analyze($sql, $context);
+        [$batch] = $semantics->analyzeAll($sql, $context);
+        $source = new SqlSemantics\Platform\MySql\Ir\TableSource(
+            $schema, $view, [$stored], [SqlSemantics\Platform\MySql\Ir\From\ColumnKind::RequiredSignedInt],
+            SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::View, $materialized,
+        );
+        $label = $materialized ? new SqlSemantics\Platform\MySql\Ir\Identifier(' k') : $stored;
+        $direct = new SqlSemantics\Platform\MySql\Ir\Select([
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($position, $label),
+        ], $source, $semantics->profile()->grammar);
+        $observed[] = [$analyzed == $batch, $analyzed == $direct, $analyzed->source->materializedView,
+            $analyzed->source->columns[0]->value, $analyzed->columns[0]->expression->slot,
+            $analyzed->columns[0]->name->value, $analyzed->toString()];
+    }
+
+    return $observed;
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -2486,6 +2517,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlInheritedLocalAliases'] = observeMysqlInheritedLocalAliases($semantics);
             $details['mysqlLegacyInheritedAliases'] = observeLegacyMysqlInheritedAliases();
             $details['mysqlNativeLocalColumnNames'] = observeMysqlNativeLocalColumnNames($semantics);
+            $details['mysqlExternalViewReadNames'] = observeMysqlExternalViewReadNames($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);

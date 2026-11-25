@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 
 /**
  * Checks scope membership and expanded expression limits at the SELECT boundary.
@@ -109,8 +110,11 @@ final class SelectBounds
             $reference = $result->expression;
             Check::invariant($reference instanceof ColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');
             $table = $inputs[$reference->occurrence] ?? null;
+            Check::input($table instanceof TableSource, 'An intrinsic MySQL result name must equal its physical input field.');
+            $name = $table->columns[$reference->slot]->value ?? null;
+            $native = new NativeLocalNames();
             Check::input(
-                $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,
+                $name === $label || ($name !== null && $table->materializedView && $native->key($name) === $native->key($label)),
                 'An intrinsic MySQL result name must equal its physical input field.'
             );
         }
