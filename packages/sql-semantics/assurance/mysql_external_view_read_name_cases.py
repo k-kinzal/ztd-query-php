@@ -84,12 +84,12 @@ def alternate(name):
 def finite(tag, shape, algorithm, pattern, qualifier):
     names = headings(tag, shape)
     if pattern == "canonical":
-        positions = [(0, names[0], None), (1, names[1], None)]
+        positions = [[0, names[0], None], [1, names[1], None]]
     elif pattern == "folded":
-        positions = [(0, alternate(names[0]), None), (1, alternate(names[1]), "typed")]
+        positions = [[0, alternate(names[0]), None], [1, alternate(names[1]), "typed"]]
     elif pattern == "twice-mixed":
-        positions = [(2, alternate(names[2]), "third"), (0, names[0], None),
-                     (0, alternate(names[0]), None), (1, names[1], None)]
+        positions = [[2, alternate(names[2]), "third"], [0, names[0], None],
+                     [0, alternate(names[0]), None], [1, names[1], None]]
     else:
         raise ValueError(pattern)
     return {"tag": tag, "shape": shape, "algorithm": algorithm, "qualified": qualifier == "alias", "projection": positions}
@@ -157,5 +157,5 @@ def seeded(tag, seed, count):
             index = rng.randrange(len(names))
             written = rng.choice((names[index], alternate(names[index])))
             label = rng.choice((None, None, f"label_{step}_{output}"))
-            fields.append((index, written, label))
+            fields.append([index, written, label])
         yield {"tag": tag, "shape": shape, "algorithm": algorithm, "qualified": bool(rng.getrandbits(1)), "projection": fields}

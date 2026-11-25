@@ -251,7 +251,7 @@ def validate_fault_response(item, answer):
             same(GRAPH, error.signal)
             raise Failure(GRAPH, {**error.detail, "sql": sql}) from error
         return
-    require(message is not None and rejects(answer, refusal(message)),
+    require(message is not None and answer == {"status": "rejected", **refusal(message)},
             "mysql-generated-view-unrelated-fault-rejection", answer)
     raise Failure(GRAPH, {
         "expected": law.structure(item, observed=True)["createView"], "actual": answer, "sql": sql,

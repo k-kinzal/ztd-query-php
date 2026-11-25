@@ -148,7 +148,7 @@ def negatives(engine, tag):
            "sql": f"SELECT * FROM {schema}.wrong_shape"}, boundary
 
     if engine == "mysql":
-        yield named_slot(tag, LABEL_SOURCE, [[literal(1), " invalid"]]), "result name cannot start with SQL whitespace"
+        yield named_slot(tag, LABEL_SOURCE, [[literal(1), " invalid"]]), "result name must begin with a native graphic character"
         yield named_slot(tag, LABEL_SOURCE, [[slot(0), " invalid"]]), "must equal its physical input field"
 
 

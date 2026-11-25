@@ -7,7 +7,7 @@ import sys
 from evidence_transcript import canonical
 import mysql_external_view_read_name_cases as law
 from run import Failure, TOOL, digest, require
-from run_server import rejects, same
+from run_server import same
 from run_server_join import OBSERVER, main
 from run_server_mysql_external_views import DIAGNOSTICS, specifications as previous_specification
 from run_server_mysql_signed_membership import refusal
@@ -247,7 +247,7 @@ def verify_response(item, reply):
             same(GRAPH, error.signal)
             raise Failure(GRAPH, {**error.detail, "sql": law.sql(item)}) from error
         return
-    require("wrongRejection" in item and rejects(reply, semantic(item["wrongRejection"])),
+    require("wrongRejection" in item and reply == {"status": "rejected", **semantic(item["wrongRejection"])},
             "mysql-view-read-unrelated-fault-rejection", reply)
     raise Failure(GRAPH, {"expected": law.graph(item), "observed": reply, "sql": law.sql(item)})
 

@@ -22,6 +22,7 @@ from native_schedule import NATIVE, SINGLE_ENGINE, release_subset
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION, check_profile
 from run_server_delete import version_tag
+from run_server_join import checked_fault_plan
 from scope import CONTRACTS
 
 PORT_RECOVERY = "b26ae212606640f07c92c9ad48774964a96116a3adb07a05958b09813a3e4ee9"
@@ -306,9 +307,13 @@ def renderer_fault_sources(candidate, profiles, plan):
         for domain, runner, _ in jobs:
             if domain in {"projection", "recursive_unavailable"}:
                 continue
-            factory = import_module(Path(runner).stem).faults
             cases = inspected[key][domain] = []
-            for fault in factory(engine, tag):
+            try:
+                faults = checked_fault_plan(import_module(Path(runner).stem), engine, tag)
+            except Failure as error:
+                invalid.append({"release": key, "domain": domain, "failure": error.signal, "detail": error.detail})
+                continue
+            for fault in faults:
                 path = candidate / "packages" / fault.path
                 source = path.read_text() if path.is_file() else ""
                 count = source.count(fault.before) if source else 0
