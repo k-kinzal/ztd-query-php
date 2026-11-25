@@ -2250,11 +2250,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             );
         }
         if ($platform === 'MySql' && $role === 'Schema\\Index\\CreateIndex') {
-            $context = $semantics->context([
+            $indexContext = $semantics->context([
                 'CREATE TABLE app.session_index (permanent_field INT NOT NULL)',
                 'CREATE TEMPORARY TABLE app.session_index (a INT NOT NULL, b INT NOT NULL, UNIQUE INDEX prior_identity (b)) ENGINE=InnoDB',
             ]);
-            $indexed = $semantics->analyze('CREATE UNIQUE INDEX test_ix ON app.session_index (a DESC) INVISIBLE', $context);
+            $indexed = $semantics->analyze('CREATE UNIQUE INDEX test_ix ON app.session_index (a DESC) INVISIBLE', $indexContext);
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
                 $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, true,
             );
