@@ -1744,21 +1744,23 @@ if ($dialect !== 'sqlite') {
         $viewAlgorithm = 'Schema\\View\\ViewAlgorithm';
         $viewSecurity = 'Schema\\View\\ViewSecurity';
         $viewPolicy = 'Schema\\View\\ViewCreationPolicy';
+        $viewCheck = 'Schema\\View\\ViewCheckOption';
         $roots[] = $viewCreate;
         array_push($internal, 'Schema\\CreateRelationLowering', 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds',
             'Schema\\View\\ViewProjectionAliases', 'Schema\\View\\ViewCatalogHeading');
         array_push($pureCollaborators, 'Schema\\View\\ViewQueryBounds', 'Schema\\View\\ViewProjectionAliases', 'Schema\\View\\ViewCatalogHeading');
         $properties[$viewCreate] = ['name' => [$viewName], 'query' => ['Select'], 'columns' => ['array'],
             'policy' => [$viewPolicy], 'algorithm' => [$viewAlgorithm], 'security' => [$viewSecurity],
-            'installedAlgorithm' => [$viewAlgorithm]];
+            'installedAlgorithm' => [$viewAlgorithm], 'checkOption' => [$viewCheck]];
         $properties[$viewColumn] = ['name' => ['Identifier', 'Ordering\\RequestedResultAlias']];
         $methods[$viewCreate] = ['__construct', 'profileId', 'toString'];
         $methods[$viewColumn] = ['__construct'];
-        $properties[$viewAlgorithm] = $properties[$viewSecurity] = $properties[$viewPolicy] = [];
-        $methods[$viewAlgorithm] = $methods[$viewSecurity] = $methods[$viewPolicy] = [];
+        $properties[$viewAlgorithm] = $properties[$viewSecurity] = $properties[$viewPolicy] = $properties[$viewCheck] = [];
+        $methods[$viewAlgorithm] = $methods[$viewSecurity] = $methods[$viewPolicy] = $methods[$viewCheck] = [];
         $enumCases[$viewAlgorithm] = ['Undefined' => 'UNDEFINED', 'Merge' => 'MERGE', 'TempTable' => 'TEMPTABLE'];
         $enumCases[$viewSecurity] = ['Definer' => 'DEFINER', 'Invoker' => 'INVOKER'];
         $enumCases[$viewPolicy] = ['RequireNew' => 'require-new', 'Replace' => 'replace', 'Preserve' => 'preserve'];
+        $enumCases[$viewCheck] = ['None' => 'NONE', 'Local' => 'LOCAL', 'Cascaded' => 'CASCADED'];
     }
     array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [

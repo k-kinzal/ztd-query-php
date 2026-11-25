@@ -48,12 +48,17 @@ final class CreateView implements SemanticsIR
         public readonly ViewCreationPolicy $policy = ViewCreationPolicy::RequireNew,
         public readonly ViewAlgorithm $algorithm = ViewAlgorithm::Undefined,
         public readonly ViewSecurity $security = ViewSecurity::Definer,
+        public readonly ViewCheckOption $checkOption = ViewCheckOption::None,
     ) {
         Check::input(
             $policy !== ViewCreationPolicy::Preserve || $query->release === GrammarRelease::MySql910,
             'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.'
         );
         (new ViewQueryBounds())->check($query, $name);
+        Check::input(
+            $checkOption === ViewCheckOption::None || ($query->source !== null && !$query->distinct && $algorithm !== ViewAlgorithm::TempTable),
+            'A view check option requires a mergeable base-table projection.'
+        );
         Check::input(count($columns) <= 4096, 'A MySQL view permits at most 4096 result columns.');
         $heading = Check::listOf($columns, ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);
         Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');
@@ -88,6 +93,7 @@ final class CreateView implements SemanticsIR
         $target = $start . ' ALGORITHM=' . $this->algorithm->value . ' SQL SECURITY ' . $this->security->value . ' VIEW '
             . $preserve . $this->name->quoted();
         $renderer = new SelectSql();
+        $guard = $this->checkOption === ViewCheckOption::None ? '' : ' WITH ' . $this->checkOption->value . ' CHECK OPTION';
         if ((new ViewCatalogHeading())->usesImplicit($this->columns, $this->query->release)) {
             $names = [];
             foreach ($this->columns as $position => $column) {
@@ -95,7 +101,7 @@ final class CreateView implements SemanticsIR
                 $names[] = $name instanceof RequestedResultAlias ? $name : $column->name;
             }
 
-            return $target . ' AS ' . $renderer->render($this->query, viewNames: $names);
+            return $target . ' AS ' . $renderer->render($this->query, viewNames: $names) . $guard;
         }
         $names = [];
         foreach ($this->columns as $column) {
@@ -103,6 +109,6 @@ final class CreateView implements SemanticsIR
             $names[] = $name instanceof RequestedResultAlias ? $name->aliasSql() : $name->quoted();
         }
 
-        return $target . ' (' . implode(', ', $names) . ') AS ' . $renderer->render($this->query, true, true);
+        return $target . ' (' . implode(', ', $names) . ') AS ' . $renderer->render($this->query, true, true) . $guard;
     }
 }

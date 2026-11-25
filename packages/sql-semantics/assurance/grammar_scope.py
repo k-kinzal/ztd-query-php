@@ -253,10 +253,10 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if rule != "simple_expr" or " CASE_SYM " in alternative:
                         related[alternative] = (*related.get(alternative, ()), "mysql-signed-case-v1.json")
-            for rule in ("create_view", "view_tail", "view_query_block", "view_algorithm", "view_suid"):
+            for rule in ("create_view", "view_tail", "view_query_block", "view_algorithm", "view_suid", "view_check_option"):
                 for alternative in rules.get(rule, ()):
                     if alternative != rule + ":":
-                        related[alternative] = (*related.get(alternative, ()), "mysql-create-view-v4.json")
+                        related[alternative] = (*related.get(alternative, ()), "mysql-create-view-v6.json")
                         if rule in ("create_view", "view_tail", "view_query_block"):
                             related[alternative] = (*related[alternative], "mysql-create-view-projection-alias-v1.json",
                                                     "mysql-create-view-output-names-v2.json", "mysql-generated-view-headings-v2.json")

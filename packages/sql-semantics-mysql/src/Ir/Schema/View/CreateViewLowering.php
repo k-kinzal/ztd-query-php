@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView as ParsedCreateView;
+use SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption as ParsedViewCheckOption;
 
 /**
  * Resolves a persistent declaration into its checked native heading and body.
@@ -30,8 +31,10 @@ final class CreateViewLowering
     public function lower(BoundStatement $operation, ParsedCreateView $statement): CreateView
     {
         $definition = $statement->definition;
-        Check::input($definition->definer === null && $definition->check === null
-            && !($statement->orReplace && $definition->ifNotExists), 'CREATE VIEW needs an implicit definer and one admitted creation policy without a check option.');
+        Check::input(
+            $definition->definer === null && !($statement->orReplace && $definition->ifNotExists),
+            'CREATE VIEW needs an implicit definer and one admitted creation policy.'
+        );
         Check::input($definition->query instanceof ParsedSelect, 'A checked view requires one ordinary SELECT block.');
         Check::input($operation->context->relationNames === Comparison::Sensitive, 'CREATE VIEW requires the native case-sensitive relation profile.');
         $schema = ($definition->name->schema ?? $operation->context->declarationSchema)->value;
@@ -68,13 +71,20 @@ final class CreateViewLowering
             default => ViewCreationPolicy::RequireNew,
         };
 
+        $check = match ($definition->check) {
+            null => ViewCheckOption::None,
+            ParsedViewCheckOption::Local => ViewCheckOption::Local,
+            ParsedViewCheckOption::Unqualified, ParsedViewCheckOption::Cascaded => ViewCheckOption::Cascaded,
+        };
+
         return new CreateView(
             $name,
             $query,
             $columns,
             $policy,
             ViewAlgorithm::from($definition->algorithm->value ?? 'UNDEFINED'),
-            ViewSecurity::from($definition->security->value ?? 'DEFINER')
+            ViewSecurity::from($definition->security->value ?? 'DEFINER'),
+            $check
         );
     }
 }

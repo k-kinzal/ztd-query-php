@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v207.json"
-CONTRACT = "04cabcaed85bf8f300d5dc0321872af25ea55608438d9a5b0eb3cb005956c0ec"
+CONTRACT_NAME = "release-layout-v208.json"
+CONTRACT = "fdb0004051e09942134d2a8b3ad4132210c9f7a53be175d7f276490a312bc5e2"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -560,6 +560,13 @@ def verify_probe(raw, catalog):
             require(distinct == [True, "MERGE", "UNDEFINED", True, "K", "k", 0,
                 'SELECT `__ztd_source`.`K` AS `k` FROM `app`.`unique_v` AS `__ztd_source`',
             ], "installed-mysql-distinct-view-effect-mismatch", distinct)
+            checked = item.get("checkedViewEffects")
+            definition = ('CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `app`.`guarded_view` (`id`) '
+                          'AS SELECT `__ztd_source`.`id` AS `__ztd_c0` FROM `app`.`guarded_input` AS `__ztd_source` '
+                          'WHERE (`__ztd_source`.`id` > 1)')
+            require(checked == [True, True, "LOCAL", "CASCADED", 0,
+                                definition + ' WITH LOCAL CHECK OPTION', definition + ' WITH CASCADED CHECK OPTION'],
+                    "installed-mysql-view-check-option-mismatch", checked)
             view_alias = item.get("createViewAlias")
             require(view_alias == [
                 True, True, "stored_heading", " requested", "-2147483649",

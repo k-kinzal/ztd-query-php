@@ -13,12 +13,14 @@ use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewAlgorithm;
+use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewCheckOption;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewCreationPolicy;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewSecurity;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 
 #[CoversClass(CreateView::class)]
 #[Small]
@@ -72,5 +74,30 @@ final class CreateViewTest extends TestCase
 
         self::assertSame(ViewAlgorithm::Undefined, $view->installedAlgorithm);
         self::assertStringContainsString(' AS SELECT DISTINCT ', $view->toString());
+    }
+
+    public function testCheckPolicyCanBeSetOnAMergeableConstantProjection(): void
+    {
+        $schema = new Identifier('app');
+        $column = new Identifier('value');
+        $name = new ViewName($schema, new Identifier('checked_view'));
+        $source = new TableSource($schema, new Identifier('items'), [new Identifier('id')]);
+        $selection = new Select([new ResultColumn(new IntegerLiteral('42'), $column)], $source);
+        $view = new CreateView($name, $selection, [new ViewColumn($column)], checkOption: ViewCheckOption::Local);
+
+        self::assertSame(ViewCheckOption::Local, $view->checkOption);
+        self::assertStringEndsWith(' WITH LOCAL CHECK OPTION', $view->toString());
+    }
+
+    public function testCheckPolicyRejectsAnIndependentProjection(): void
+    {
+        $column = new Identifier('value');
+        $name = new ViewName(new Identifier('app'), new Identifier('checked_view'));
+        $selection = new Select([new ResultColumn(new IntegerLiteral('42'), $column)]);
+
+        $this->expectException(InvalidConstruction::class);
+        $this->expectExceptionMessage('A view check option requires a mergeable base-table projection.');
+
+        new CreateView($name, $selection, [new ViewColumn($column)], checkOption: ViewCheckOption::Cascaded);
     }
 }

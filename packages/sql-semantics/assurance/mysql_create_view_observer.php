@@ -26,7 +26,7 @@ function admitViewDefinition(string $sql): bool
 
     return preg_match('/\ACREATE(?: OR REPLACE)?(?: ALGORITHM=(?:UNDEFINED|MERGE|TEMPTABLE))?(?: SQL SECURITY (?:DEFINER|INVOKER))?'
         . ' VIEW (?:IF NOT EXISTS )?' . $target . $head . ' AS SELECT (?:DISTINCT )?' . $input . '(?:, ?' . $input . '){0,4}'
-        . '(?: FROM (?:DUAL|' . $origin . '))?' . $filter . '\z/D', $sql) === 1;
+        . '(?: FROM (?:DUAL|' . $origin . '))?' . $filter . '(?: WITH (?:CASCADED |LOCAL )?CHECK OPTION)?\z/D', $sql) === 1;
 }
 
 function resetViewDefinition(PDO $pdo, bool $existing): void
@@ -69,10 +69,44 @@ function viewDefinitionState(PDO $pdo): array
     return ['views' => $views, 'marker' => $pdo->query('SELECT value FROM ir_fixture.ir_cv_marker ORDER BY value')->fetchAll(PDO::FETCH_COLUMN)];
 }
 
+function viewDefinitionWriteEffects(PDO $pdo, array $names): array
+{
+    [$id, $label] = array_map(static fn (string $name): string => '`' . $name . '`', $names);
+    $target = 'ir_fixture.ir_cv_main';
+    $statements = [
+        "INSERT INTO $target ($id,$label) VALUES (0,'low')",
+        "INSERT INTO $target ($id,$label) VALUES (NULL,'unknown')",
+        "INSERT INTO $target ($id,$label) VALUES (5,'high')",
+        "UPDATE $target SET $id = 0 WHERE $id = 2",
+    ];
+    $pdo->beginTransaction();
+    try {
+        $effects = [];
+        foreach ($statements as $statement) {
+            try {
+                $result = ['affected', $pdo->exec($statement)];
+            } catch (PDOException $error) {
+                $result = ['db-error', $error->errorInfo[0], $error->errorInfo[1]];
+            }
+            $base = $pdo->query('SELECT id, label FROM ir_fixture.ir_cv_source')->fetchAll(PDO::FETCH_NUM);
+            $view = $pdo->query("SELECT * FROM $target")->fetchAll(PDO::FETCH_NUM);
+            $effects[] = ['result' => $result, 'base' => $base, 'view' => $view];
+        }
+
+        return $effects;
+    } finally {
+        $pdo->rollBack();
+    }
+}
+
 function viewDefinition(PDO $pdo, array $request): array
 {
     $sql = $request['sql'];
-    if (!admitViewDefinition($sql) || !is_bool($request['existing'] ?? null)) {
+    $writeNames = $request['writeNames'] ?? null;
+    if (!admitViewDefinition($sql) || !is_bool($request['existing'] ?? null)
+        || ($writeNames !== null && (!is_array($writeNames) || count($writeNames) !== 2
+            || !array_is_list($writeNames) || array_filter($writeNames, static fn ($name): bool =>
+                !is_string($name) || preg_match('/\A[a-z_][a-z0-9_]*\z/D', $name) !== 1) !== []))) {
         return ['status' => 'outside-observer-scope'];
     }
     resetViewDefinition($pdo, $request['existing']);
@@ -100,10 +134,15 @@ function viewDefinition(PDO $pdo, array $request): array
         $pdo->exec('ROLLBACK');
     }
     $rollback = viewDefinitionState($pdo);
+    $writes = [];
+    if ($writeNames !== null) {
+        $installed = $result === ['created'] && !in_array(1050, array_column($diagnostics, 1), true);
+        $writes = ['writeEffects' => $installed ? viewDefinitionWriteEffects($pdo, $writeNames) : 'definition-not-installed'];
+    }
     $pdo->exec("UPDATE ir_fixture.ir_cv_source SET label = 'changed' WHERE id = 2");
     $pdo->exec("INSERT INTO ir_fixture.ir_cv_source VALUES (4,'new')");
     return ['status' => 'view-definition', 'result' => $result, 'diagnostics' => $diagnostics, 'active' => $active,
-        'initial' => $initial, 'after' => $after, 'afterRollback' => $rollback, 'afterSourceChange' => viewDefinitionState($pdo)];
+        'initial' => $initial, 'after' => $after, 'afterRollback' => $rollback, 'afterSourceChange' => viewDefinitionState($pdo), ...$writes];
 }
 
 resetViewDefinition($pdo, true);

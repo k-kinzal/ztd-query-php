@@ -90,7 +90,7 @@ CONTRACTS = {
     "mysql-foreign-key-enumeration-evidence-v2.json": "cd01a0d2fb9a7d5327aa98b63dd4e537d6e1353f42c772284413ff702732d2b9",
     "mysql-index-visibility-evidence-v2.json": "3df7302bfb4250558f066791f67b25f47196896ccd7c362b53feb8c08b1d28d7",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
-    "mysql-create-view-v4.json": "dbd93b8348cdd08f7d839eb409451ad2b9d7196debb0ba97fc351a8ee8ea2db2",
+    "mysql-create-view-v6.json": "8a0f7ec897c934550c0b307681a75dc46ba648d3515198ac65d9f0d4d2b3a2b7",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
     "mysql-grouped-having-v2.json": "85cdba2d69bb1e59b56b4c734197cabd6dfc8434bf7b38bd88b877e35dd812a1",
     "mysql-grouped-having-v3.json": "9869fea2af06cafc1c0cc04246324eafcf77c47be01c1d25bd12bff5fbc45895",

@@ -1534,6 +1534,31 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $read->source->materializedView, $read->source->columns[0]->value, $read->columns[0]->name->value,
                 $read->columns[0]->expression->slot, $read->toString(),
             ];
+            $schema = new SqlSemantics\Platform\MySql\Ir\Identifier('app');
+            $id = new SqlSemantics\Platform\MySql\Ir\Identifier('id');
+            $context = $semantics->context(['CREATE TABLE app.guarded_input (id INT)']);
+            $statement = 'CREATE VIEW app.guarded_view AS SELECT id FROM app.guarded_input WHERE id > 1';
+            $local = $semantics->analyze($statement . ' WITH LOCAL CHECK OPTION', $context);
+            $cascaded = $semantics->analyze($statement . ' WITH CASCADED CHECK OPTION', $context);
+            [$implicit] = $semantics->analyzeAll($statement . ' WITH CHECK OPTION', $context);
+            $source = new SqlSemantics\Platform\MySql\Ir\TableSource($schema, new SqlSemantics\Platform\MySql\Ir\Identifier('guarded_input'), [$id]);
+            $field = new SqlSemantics\Platform\MySql\Ir\ColumnReference(0);
+            $guard = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison(
+                SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator::Greater,
+                $field,
+                new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('1'),
+            );
+            $query = new SqlSemantics\Platform\MySql\Ir\Select([
+                new SqlSemantics\Platform\MySql\Ir\ResultColumn($field, $id),
+            ], $source, $semantics->profile()->grammar, $guard);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName($schema, new SqlSemantics\Platform\MySql\Ir\Identifier('guarded_view')),
+                $query,
+                [new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($id)],
+                checkOption: SqlSemantics\Platform\MySql\Ir\Schema\View\ViewCheckOption::Local,
+            );
+            $details['checkedViewEffects'] = [$local == $direct, $cascaded == $implicit, $local->checkOption->value, $implicit->checkOption->value,
+                $local->query->where->left->slot, $local->toString(), $cascaded->toString()];
         }
         if ($platform === 'PostgreSql' && $role === 'Rows\\With\\WithProjection') {
             $table = $semantics->analyze('WITH q AS MATERIALIZED (VALUES (5,TRUE), (NULL,FALSE)) SELECT column2 AS flag,column1 AS id FROM q');

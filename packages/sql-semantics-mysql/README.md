@@ -44,6 +44,8 @@ Create or replace a persistent view over a checked ordinary SELECT. The IR expos
 
 For a source-free view or a view with `SELECT DISTINCT` requested with `ALGORITHM=MERGE`, `installedAlgorithm` holds `UNDEFINED`. The emitted SQL keeps the requested `MERGE` directive so the server reports warning 1354 when it applies the fallback. A DISTINCT view materializes its input and preserves the results of native duplicate elimination.
 
+A mergeable base-table view can declare `WITH LOCAL CHECK OPTION` or `WITH CASCADED CHECK OPTION`. The IR stores the resolved `checkOption` and emits its native clause. An unqualified `WITH CHECK OPTION` resolves to `CASCADED`. On writes through an updatable view, the check requires the proposed row to satisfy the stored predicate. A base-table projection that contains only constants can carry the check option and remains read-only. [MySQL view checks](https://dev.mysql.com/doc/refman/8.4/en/view-check-option.html)
+
 Issue `DROP VIEW` against absolute persistent view identities. Supply the referenced declarations for required targets. `IF EXISTS` also admits a known absence in a named database. The emitted statement retains MySQL's release-specific removal and transaction effects.
 
 An ordinary INSERT VALUES can write text, signed integer and NULL literals to an explicit list of resolved native destinations. Each row follows the destination order. With empty SQL mode, NULL in a required VARCHAR causes a single-row INSERT to fail. A multi-row INSERT stores the implicit empty value and emits a warning.
