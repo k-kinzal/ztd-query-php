@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows\With;
 
+use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalDefinition;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjectionLowering;
@@ -36,8 +37,13 @@ final class WithLowering
         Check::input($with instanceof With && !$with->recursive && $statement->orderBy === [] && $statement->limit === null, 'WITH requires ordinary definitions and a checked SELECT body.');
         $positions = [];
         $definitions = [];
+        $aliases = new LocalProjectionAliases();
         foreach ($with->tables as $position => $table) {
-            $definitions[] = new WithDefinition($this->query($operation, $table->query, $positions));
+            $definition = $this->query($operation, $table->query, $positions);
+            if ($table->columns === []) {
+                $aliases->check($definition);
+            }
+            $definitions[] = new WithDefinition($definition);
             $positions[spl_object_id($table)] = $position;
         }
         $body = $this->query($operation, $statement->body, $positions);

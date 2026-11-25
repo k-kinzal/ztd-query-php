@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition;
@@ -47,5 +48,18 @@ final class WithSqlTest extends TestCase
         $query = new WithProjection([new WithDefinition($body)], $read);
 
         self::assertStringStartsWith('WITH `__ztd_cte_0` AS (', (new WithSql())->render($query));
+    }
+
+    public function testRenderKeepsTheRequestedAliasUnderAnExplicitLocalName(): void
+    {
+        $body = new Select([new ResultColumn(new IntegerLiteral('1'), new RequestedResultAlias(' value'))]);
+        $read = new WithRead(0, [new LocalResultColumn(0, new Identifier('result'))]);
+        $query = new WithProjection([new WithDefinition($body)], $read);
+
+        self::assertSame(
+            'WITH `__ztd_cte_0` (`__ztd_c0`) AS (SELECT 1 AS ` value`) '
+            . 'SELECT `__ztd_cte_0`.`__ztd_c0` AS `result` FROM `__ztd_cte_0`',
+            (new WithSql())->render($query)
+        );
     }
 }

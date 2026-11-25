@@ -22,15 +22,24 @@ final class LocalProjectionAliases
      */
     public function check(Select|LocalProjection|WithProjection|WithRead $child): void
     {
+        Check::input(!$this->requiresRequested($child), 'A locally remapped output cannot discard requested alias diagnostics.');
+    }
+
+    /**
+     * Identifies a result whose native alias must survive local positional naming.
+     */
+    public function requiresRequested(Select|LocalProjection|WithProjection|WithRead $child): bool
+    {
         $output = $child instanceof WithProjection ? $child->body : $child;
         if (!$output instanceof Select) {
-            return;
+            return false;
         }
         foreach ($output->columns as $column) {
-            Check::input(
-                !$column->name instanceof RequestedResultAlias,
-                'A locally remapped output cannot discard requested alias diagnostics.'
-            );
+            if ($column->name instanceof RequestedResultAlias) {
+                return true;
+            }
         }
+
+        return false;
     }
 }

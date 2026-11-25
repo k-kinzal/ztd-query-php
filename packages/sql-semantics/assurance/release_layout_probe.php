@@ -106,6 +106,27 @@ function observeMysqlWithAvailability(string $sql, object $definition, object $b
     return $rejections;
 }
 
+function observeMysqlWithProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $sql = 'WITH names(a, b) AS (SELECT 11 AS ` requested`, 22 AS ` requested`) SELECT b AS second, a AS first FROM names';
+    $analyzed = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $alias = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' requested');
+    $first = new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('11'), $alias);
+    $second = new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('22'), $alias);
+    $release = $semantics->profile()->grammar;
+    $definition = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition(
+        new SqlSemantics\Platform\MySql\Ir\Select([$first, $second], release: $release)
+    );
+    $read = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('second')),
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('first')),
+    ]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$definition], $read, $release);
+
+    return [$analyzed == $batch, $analyzed == $direct, $analyzed->body->columns[0]->slot, $analyzed->toString()];
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -2085,6 +2106,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['withCoordinates'] = [$predecessor->definition, $predecessor->columns[0]->slot,
                 $body->definition, $body->columns[0]->slot, $result->width()];
             $details['withAvailability'] = observeMysqlWithAvailability($sql, $result->definitions[0], $predecessor);
+            $details['withAliases'] = observeMysqlWithProjectionAlias($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Mutation\\Delete') {
             $details['booleanReturning'] = observePostgresBooleanReturning($semantics);

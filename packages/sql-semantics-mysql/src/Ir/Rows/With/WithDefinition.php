@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows\With;
 
-use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -27,6 +26,5 @@ final class WithDefinition
      */
     public function __construct(public readonly Select|LocalProjection|WithProjection|WithRead $body)
     {
-        (new LocalProjectionAliases())->check($body);
     }
 }

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v195.json"
-CONTRACT = "ae5c7ee588179e5b0f45accab17a19f5db343589915305a4c188b17acb2057f1"
+CONTRACT_NAME = "release-layout-v196.json"
+CONTRACT = "5578a4f15cc37c5a3d7cf4434be936d4d475a2ded56f1c5aa0ded81cbfd6a3e7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -242,6 +242,11 @@ def verify_probe(raw, catalog):
                 [release, "WITH requires MySQL 8.0 or later.", "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"]
                 for release in ("mysql-5.6.51", "mysql-5.7.44")
             ], "installed-mysql-with-availability-mismatch", item)
+            alias_cte = (
+                'WITH `__ztd_cte_0` (`__ztd_c0`, `__ztd_c1`) AS (SELECT 11 AS ` requested`, 22 AS ` requested`) '
+                'SELECT `__ztd_cte_0`.`__ztd_c1` AS `second`, `__ztd_cte_0`.`__ztd_c0` AS `first` FROM `__ztd_cte_0`'
+            )
+            require(item.get("withAliases") == [True, True, 1, alias_cte], "installed-mysql-with-aliases-mismatch", item.get("withAliases"))
         if (item["platform"], item["role"]) == ("PostgreSql", "Rows\\With\\WithProjection"):
             local_values = ('WITH "__ztd_cte_0" AS MATERIALIZED (SELECT "__ztd_c0", "__ztd_c1" FROM '
                             '(VALUES (CAST(5 AS pg_catalog.int4), TRUE), (NULL, FALSE)) AS "__ztd_values" '

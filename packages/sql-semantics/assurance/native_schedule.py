@@ -153,6 +153,7 @@ NATIVE = {
     "mysql_create_view": "mysql-create-view-v2.json",
     "mysql_grouped_having": "mysql-grouped-having-v4.json",
     "mysql_with_projection": "mysql-with-projection-v1.json",
+    "mysql_with_projection_alias": "mysql-with-projection-alias-v1.json",
     "mysql_varchar_presence": "mysql-varchar-presence-v1.json",
     "mysql_varchar_effects": "mysql-varchar-effects-v1.json",
     "mysql_varchar_comparison": "mysql-varchar-comparison-v1.json",
@@ -343,6 +344,7 @@ SINGLE_ENGINE = {
     "mysql_create_view": "mysql",
     "mysql_grouped_having": "mysql",
     "mysql_with_projection": "mysql",
+    "mysql_with_projection_alias": "mysql",
     "mysql_varchar_presence": "mysql",
     "mysql_varchar_effects": "mysql",
     "mysql_varchar_comparison": "mysql",
@@ -369,6 +371,7 @@ SINGLE_ENGINE = {
 def release_subset(domain):
     field = {
         "mysql_with_projection": "profiles",
+        "mysql_with_projection_alias": "profiles",
         "mysql_index_rename": "releases",
         "mysql_mixed_index_alteration": "releases",
         "mysql_index_foreign_keys": "releases",

@@ -51,7 +51,7 @@ function observeAliases(PDO $pdo, array $input): array
         $pdo->exec('CREATE TEMPORARY TABLE ir_fixture.sem_ir_alias_warning_reset (n INT)');
         return ['status' => 'fixture'];
     }
-    if (!str_starts_with($input['sql'], 'SELECT ')) {
+    if (!str_starts_with($input['sql'], 'SELECT ') && !str_starts_with($input['sql'], 'WITH ')) {
         return ['status' => 'outside-alias-observer-scope'];
     }
 

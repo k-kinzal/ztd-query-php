@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Select;
 
@@ -23,5 +24,12 @@ final class LocalProjectionAliasesTest extends TestCase
         (new LocalProjectionAliases())->check($value);
 
         self::assertSame('SELECT 1 AS `n`', $value->toString());
+    }
+
+    public function testRequiresRequestedFindsAnAliasWithNativeDiagnostics(): void
+    {
+        $value = new Select([new ResultColumn(new IntegerLiteral('1'), new RequestedResultAlias(' n'))]);
+
+        self::assertTrue((new LocalProjectionAliases())->requiresRequested($value));
     }
 }

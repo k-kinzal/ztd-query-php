@@ -35,6 +35,7 @@ CONTRACTS = {
     "mysql-signed-comparison-widths-v2.json": "3215c17444d7cb94013aa41d6348129cee73a3cfba91e9fdf39bb8ef45bb7b1d",
     "mysql-signed-literal-projection-v1.json": "a0294a1e33ddc757efd780fae5e99196109bc420663263676ddfeff3536471ee",
     "mysql-signed-projection-alias-v1.json": "f3a86eb38cad5c432e3b7f6d08fe851b05e86935cd8c9cfc76201f5c94c9dc8a",
+    "mysql-with-projection-alias-v1.json": "462456fa60990115fda184224bcc14018da7cb4538187afd05176a20119d05bf",
     "mysql-signed-casts-v2.json": "b6a092682ba55ea4ca044c0131d35612de5cb42a8d85130e2834bb8ea395c069",
     "mysql-unsigned-casts-v3.json": "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b",
     "mysql-signed-quotient-v1.json": "66925621bd8a6e02a6e006be1163f34622ba75af77497f1958e052b7f9097996",

@@ -937,6 +937,8 @@ def faults(engine):
                   "while (preg_match('//u', $prefix) !== 1)", "while (false)"),
             Fault("discard-native-alias-effects-in-derived-binding", "From/DerivedSource::__construct",
                   "(new LocalProjectionAliases())->check($definition);", ""),
+            Fault("skip-mysql-cte-implicit-alias-binding-boundary", "Rows/With/WithLowering::lower",
+                  "$aliases->check($definition);", ""),
             Fault("allow-repeated-mysql-view-removal-target", "Schema/View/DropView::__construct",
                   "!isset($seen[$key]),", "true,"),
             Fault("consult-mysql-session-overlay-for-view-removal", "Schema/View/DropViewLowering::lower",

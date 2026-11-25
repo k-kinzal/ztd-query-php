@@ -1,0 +1,92 @@
+{
+  "revision": "SemanticsIR/mysql-with-projection-alias-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-with-projection-alias-v1.json",
+  "rules": {
+    "Ordering/LocalProjectionAliases::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$this->requiresRequested($child), 'A locally remapped output cannot discard requested alias diagnostics.');"
+      ]
+    },
+    "Ordering/LocalProjectionAliases::requiresRequested": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$output = $child instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $child->body : $child;",
+        "if (!$output instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select) {",
+        "    return false;",
+        "}",
+        "foreach ($output->columns as $column) {",
+        "    if ($column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        return true;",
+        "    }",
+        "}",
+        "return false;"
+      ]
+    },
+    "Rows/With/WithDefinition::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Rows/With/WithLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$with = $statement->with;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($with instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\With && !$with->recursive && $statement->orderBy === [] && $statement->limit === null, 'WITH requires ordinary definitions and a checked SELECT body.');",
+        "$positions = [];",
+        "$definitions = [];",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases();",
+        "foreach ($with->tables as $position => $table) {",
+        "    $definition = $this->query($operation, $table->query, $positions);",
+        "    if ($table->columns === []) {",
+        "        $aliases->check($definition);",
+        "    }",
+        "    $definitions[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithDefinition($definition);",
+        "    $positions[spl_object_id($table)] = $position;",
+        "}",
+        "$body = $this->query($operation, $statement->body, $positions);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$body instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection, 'An ordinary WITH requires a SELECT body in its own scope.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection($definitions, $body, $operation->context->profile->grammar);"
+      ]
+    },
+    "Rows/With/WithSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definitions = [];",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases();",
+        "$renderer = new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectSql();",
+        "foreach ($query->definitions as $position => $definition) {",
+        "    $body = $definition->body;",
+        "    $name = $this->name($position);",
+        "    $retain = $aliases->requiresRequested($body);",
+        "    if ($retain) {",
+        "        $names = [];",
+        "        $width = $body instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $body->width() : count($body->columns);",
+        "        for ($slot = 0; $slot < $width; ++$slot) {",
+        "            $names[] = $renderer->localColumn($slot);",
+        "        }",
+        "        $name .= ' (' . implode(', ', $names) . ')';",
+        "    }",
+        "    $definitions[] = $name . ' AS (' . $this->query($body, !$retain) . ')';",
+        "}",
+        "return 'WITH ' . implode(', ', $definitions) . ' ' . $this->query($query->body, $localNames);"
+      ]
+    }
+  }
+}
