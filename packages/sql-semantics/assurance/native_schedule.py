@@ -117,7 +117,7 @@ NATIVE = {
     "mysql_varchar_slots": "mysql-varchar-slots-v2.json",
     "mysql_external_views": "mysql-external-views-v1.json",
     "mysql_external_view_read_names": "mysql-external-view-read-names-v2.json",
-    "mysql_reopened_integral_view_fields": "mysql-reopened-integral-view-fields-v2.json",
+    "mysql_reopened_integral_view_fields": "mysql-reopened-integral-view-fields-v3.json",
     "mysql_drop_view": "mysql-drop-view-v3.json",
     "mysql_ordered_table_rename": "mysql-ordered-table-rename-v2.json",
     "mysql_truncate": "mysql-truncate-v3.json",

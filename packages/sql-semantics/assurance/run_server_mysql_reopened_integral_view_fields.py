@@ -14,8 +14,8 @@ from run_server_mysql_signed_membership import refusal
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-reopened-integral-view-fields"
-CONTRACT_NAME = "mysql-reopened-integral-view-fields-v2.json"
-CONTRACT = "302d0f263f9ca22bd3ae5d3ab12013399bc64c75cc17caeeaf59f590340809e0"
+CONTRACT_NAME = "mysql-reopened-integral-view-fields-v3.json"
+CONTRACT = "601dee017349a6e2195e11f37d8b4309384723497ed33e30ae0df478aee05e84"
 GRAPH = "mysql-reopened-integral-field-graph"
 MEANING = "meaning-mismatch"
 COMPARATOR_FAULTS = {"Ignore a changed native type or nullability in an otherwise equal observation": "wrongMetadata"}
@@ -25,6 +25,8 @@ def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "mysql-reopened-field-contract-mismatch")
     contract = json.loads(path.read_text())
+    prior = contract["versionedFrom"]
+    same(prior["sha256"], digest(TOOL / prior["path"]))
     same([], contract["finite"]["allowedExclusions"])
     same([], contract["exploration"]["allowedExclusions"])
     return {**contract, "negativeCount": 6}, view_specification()[1]

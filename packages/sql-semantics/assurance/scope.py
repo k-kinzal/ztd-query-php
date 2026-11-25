@@ -55,7 +55,7 @@ CONTRACTS = {
     "mysql-external-views-v1.json": "24ca8bdc80df5f8358b4020de5fad7219da5a2c58d045f4ecb0ff45cd4a8b18d",
     "mysql-external-view-read-names-v1.json": "2cb69bb12e38254dc35ab52711a810824c4e487678e8395952f8455ef7a60f03",
     "mysql-external-view-read-names-v2.json": "c995f94d2554e292aed4d3edb48b3c768f39362f6f577f6356f6d5a3fa3df6ec",
-    "mysql-reopened-integral-view-fields-v2.json": "302d0f263f9ca22bd3ae5d3ab12013399bc64c75cc17caeeaf59f590340809e0",
+    "mysql-reopened-integral-view-fields-v3.json": "601dee017349a6e2195e11f37d8b4309384723497ed33e30ae0df478aee05e84",
     "mysql-drop-view-v3.json": "47bfa7dc6ab719ea2fa3feac56b0d2434c43d194ee0fce699785ebffd0f096da",
     "mysql-ordered-table-rename-v2.json": "8fd94c11049645a17e8775960a7da377d610ece5deca2bbf4b0953ed27bc1954",
     "mysql-truncate-v3.json": "dd0846981c177b548590b345ae043fc2238b28c4c7a2cdab70d707486a760d74",
@@ -346,7 +346,7 @@ def declared_constructors(dialects):
                 clas = "SqlSemantics\\Platform\\" + dialect + "\\Ir\\" + concrete
                 definitions.setdefault(clas, []).append({"record": name, "role": role})
     if not supplemental.keys() <= definitions.keys():
-        raise ValueError("An evidence supplement references an unregistered constructor")
+        raise ValueError(f"Evidence supplements reference unregistered constructors: {sorted(supplemental.keys() - definitions.keys())}")
     return definitions, supplemental, roots_by_dialect
 
 
