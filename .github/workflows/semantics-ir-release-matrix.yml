@@ -1138,6 +1138,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-mysql-session-create-table-evidence"
+      - name: Compare MySQL InnoDB declaration widths
+        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_innodb_declaration_width.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-mysql-innodb-declaration-width-evidence"
       - name: Compare MySQL table definition copies
         if: ${{ !cancelled() && matrix.engine == 'mysql' }}
         env:
@@ -2845,6 +2860,12 @@ jobs:
         with:
           name: native-mysql-session-create-table-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-mysql-session-create-table-evidence/
+      - name: Preserve MySQL InnoDB width observations
+        if: ${{ always() && matrix.engine == 'mysql' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-mysql-innodb-declaration-width-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-mysql-innodb-declaration-width-evidence/
       - name: Preserve MySQL table definition copy observations
         if: ${{ always() && matrix.engine == 'mysql' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

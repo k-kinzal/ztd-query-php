@@ -14,7 +14,7 @@ function mysqlFixtureTableDefinition(PDO $pdo, string $name): ?array
     }
 }
 
-function observeMysqlFixtureTable(PDO $pdo, string $name): ?array
+function observeMysqlFixtureTable(PDO $pdo, string $name, bool $orderedRows = true): ?array
 {
     $definition = mysqlFixtureTableDefinition($pdo, $name);
     if ($definition === null) {
@@ -26,10 +26,10 @@ function observeMysqlFixtureTable(PDO $pdo, string $name): ?array
     }
     $fields = $pdo->query('SHOW FULL COLUMNS FROM ' . $name)->fetchAll(PDO::FETCH_ASSOC);
 
-    return observeMysqlFixtureBaseTable($pdo, $name, $definition['Create Table'], $fields);
+    return observeMysqlFixtureBaseTable($pdo, $name, $definition['Create Table'], $fields, $orderedRows);
 }
 
-function observeMysqlFixtureBaseTable(PDO $pdo, string $name, string $ddl, array $fields): array
+function observeMysqlFixtureBaseTable(PDO $pdo, string $name, string $ddl, array $fields, bool $orderedRows = true): array
 {
     $kind = str_starts_with($ddl, 'CREATE TEMPORARY TABLE ') ? 'temporary-table' : 'table';
     if (preg_match('/ ENGINE=([A-Za-z0-9]+)(?: AUTO_INCREMENT=[1-9][0-9]*)? DEFAULT CHARSET=utf8mb4 COLLATE=(utf8mb4_[a-z0-9_]+)/', $ddl, $storage) !== 1) {
@@ -43,8 +43,8 @@ function observeMysqlFixtureBaseTable(PDO $pdo, string $name, string $ddl, array
     foreach ($pdo->query('SHOW INDEX FROM ' . $name)->fetchAll(PDO::FETCH_ASSOC) as $term) {
         $key[] = [$term['Key_name'], $term['Non_unique'], $term['Seq_in_index'], $term['Column_name'], $term['Collation'], $term['Index_type']];
     }
-    $positions = implode(', ', range(1, count($columns)));
-    $rows = $pdo->query('SELECT * FROM ' . $name . ' ORDER BY ' . $positions)->fetchAll(PDO::FETCH_NUM);
+    $order = $orderedRows ? ' ORDER BY ' . implode(', ', range(1, count($columns))) : '';
+    $rows = $pdo->query('SELECT * FROM ' . $name . $order)->fetchAll(PDO::FETCH_NUM);
 
     return ['kind' => $kind, 'engine' => $storage[1], 'collation' => $storage[2], 'columns' => $columns, 'key' => $key, 'rows' => $rows];
 }

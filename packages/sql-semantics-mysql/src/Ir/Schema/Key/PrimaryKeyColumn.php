@@ -23,6 +23,6 @@ final class PrimaryKeyColumn
      */
     public function __construct(public readonly int $slot, public readonly bool $descending = false)
     {
-        Check::input($slot >= 0 && $slot < 128, 'A primary key needs a column slot from 0 through 127.');
+        Check::input($slot >= 0 && $slot < 1017, 'A primary key needs a column slot from 0 through 1016.');
     }
 }

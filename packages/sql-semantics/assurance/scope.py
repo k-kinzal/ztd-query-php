@@ -38,6 +38,7 @@ CONTRACTS = {
     "mysql-truncate-v2.json": "ae66fbc18e9d2fc59120550865194a38c82d6f6ad0b1da1f320988562e76414d",
     "mysql-session-drop-table-v1.json": "f74032510b22e940d5902b43156e39d1752e5bd51974561ee1ec127d13954da9",
     "mysql-session-create-table-v1.json": "d128967df8d5696561122f4064c976acc904293f4a301f5b8b432f3d4cdce79a",
+    "mysql-innodb-declaration-width-evidence-v1.json": "d2e586ccdcc6bf395aaa6350d56504258706099749ace11d173782e8a6db4b60",
     "mysql-create-like-v1.json": "0211e157e525a76943102e25042da8a860714b6c6e75c59fb0b529aab9439070",
     "mysql-create-table-as-v1.json": "a10a0af3b78e1307374fc41a20ace5c5639659e43197a7caa61b23d1a5d9bd95",
     "mysql-create-table-as-source-v1.json": "9a04d8c983e9484e70279798569fd1d83ef5ac2ca55432fc261bfa4eb4fb0ffe",

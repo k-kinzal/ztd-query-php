@@ -52,6 +52,8 @@ An independent derived input in a join can export native VARCHAR fields alongsid
 
 An ordinary InnoDB `CREATE TABLE` can declare `VARCHAR(n)` with the checked `utf8mb4_bin` collation, including inheritance from an explicit table default. `Schema\CharacterStorage` carries the declared capacity in characters. Each column keeps its own nullability and optional text or NULL default. Excess ASCII whitespace in a default remains in the emitted SQL so the server can report its truncation. Defaults that discard significant characters are rejected during construction.
 
+An ordinary InnoDB declaration accepts up to 1,017 columns. With the stock strict InnoDB profile and 16 KiB pages, the clustered record must be smaller than 8,126 bytes. The checked width includes fixed storage, the local VARCHAR representation, nullable bits and the implicit row identifier when no primary key is declared. Stock MySQL 5.6 allows a larger record declaration with a warning. It can still refuse an oversized row at insertion.
+
 Use `TINYINT`, `SMALLINT`, `MEDIUMINT`, `INTEGER` or `BIGINT` for an ordinary signed declaration. The model checks the exact signed range of a literal default, including both BIGINT endpoints, and retains its decimal value.
 
 An ordinary signed `PRIMARY KEY` retains the ordered positions of its required fields. Inline and table clauses resolve to the same key type. The column layout records effective defaults for the selected release, including the zero default that MySQL 5.6 can assign when a table key makes a column required. Key terms retain descending storage from MySQL 8.0.

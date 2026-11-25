@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\TextCollation;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey;
+use SqlSemantics\Platform\MySql\Ir\Schema\Storage\InnoDbRecord;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -48,7 +49,7 @@ final class CreateTable implements SemanticsIR
         public readonly ?PrimaryKey $primaryKey = null,
     ) {
         $checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);
-        Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');
+        Check::input(count($checked) <= 1017, 'An InnoDB table can declare at most 1017 columns.');
         $seen = [];
         $bytes = 0;
         $nullBits = 0;
@@ -72,6 +73,10 @@ final class CreateTable implements SemanticsIR
             );
             Check::input(!$term->descending || !$legacyDirection, 'The grammar release does not store descending primary key parts.');
         }
+        Check::input(
+            $release === GrammarRelease::MySql5651 || InnoDbRecord::fits($checked, $primaryKey !== null),
+            'The declared clustered InnoDB record must fit the native 8126-byte boundary.'
+        );
         $this->columns = $checked;
     }
 

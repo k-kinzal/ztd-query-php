@@ -105,7 +105,7 @@ def negatives(tag):
     good = ["c0", "INTEGER", False, literal(9)]
     yield description(tag, [good], []), "A primary key needs a nonempty ordered term list."
     yield description(tag, [good], [[i, False] for i in range(17)]), "A primary key can have at most 16 column positions."
-    yield description(tag, [good], [[-1, False]]), "A primary key needs a column slot from 0 through 127."
+    yield description(tag, [good], [[-1, False]]), "A primary key needs a column slot from 0 through 1016."
     yield description(tag, [good], [[0, False], [0, False]]), "A primary key cannot repeat a column position."
     yield description(tag, [good], [[1, False]]), OWNER
     yield description(tag, [["c0", "INTEGER", True, None]], [[0, False]]), OWNER

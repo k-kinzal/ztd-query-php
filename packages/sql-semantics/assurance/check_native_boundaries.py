@@ -414,7 +414,7 @@ def faults(engine):
         Fault("accept-excessive-compound-size", "Rows/Compound::__construct",
               "CompoundShape::arms($left) + CompoundShape::arms($right) <= 64,", "true,"),
         Fault("accept-excessive-table-width", "Schema/CreateTable::__construct",
-              "count($checked) <= 1600," if engine == "postgres" else "count($checked) <= 128,", "true,"),
+              "count($checked) <= 1600," if engine == "postgres" else "count($checked) <= 1017,", "true,"),
         Fault("allow-zero-parameter-position", "Binding/Parameter::__construct", "$position >= 1 && $position <= 1024,", "$position >= 0 && $position <= 1024,"),
         Fault("allow-missing-local-slot", "Rows/LocalProjection::__construct",
               "Check::input($exists," if engine == "postgres" else "$column->slot < $width,",
@@ -888,6 +888,16 @@ def faults(engine):
                   "$length >= 0 && $length <= 16383", "true"),
             Fault("discard-significant-mysql-default-characters", "Schema/TableColumn::__construct",
                   "$default->value) === 1,", "$default->value) !== false,"),
+            Fault("revive-mysql-128-field-limit", "Schema/CreateTable::__construct",
+                  "count($checked) <= 1017", "count($checked) <= 128"),
+            Fault("ignore-mysql-clustered-record-boundary", "Schema/Storage/InnoDbRecord::fits",
+                  "intdiv($nullable + 7, 8) < 8126", "intdiv($nullable + 7, 8) < 16384"),
+            Fault("erase-mysql-clustered-null-bitmap", "Schema/Storage/InnoDbRecord::fits",
+                  "intdiv($nullable + 7, 8)", "0"),
+            Fault("erase-mysql-hidden-clustered-identifier", "Schema/Storage/InnoDbRecord::fits",
+                  "$hasPrimaryKey ? 18 : 24", "18"),
+            Fault("revive-mysql-128-field-primary-slot", "Schema/Key/PrimaryKeyColumn::__construct",
+                  "$slot < 1017", "$slot < 128"),
             Fault("allow-excessive-mysql-logical-record", "Schema/CreateTable::__construct",
                   "$bytes + $bitmap <= 65535", "true"),
             Fault("widen-mysql-tiny-default-range", "Schema/IntegerStorage::accepts",
@@ -1112,16 +1122,8 @@ def main():
     write_json(args.out / "distribution.json", manifest)
     plan_path = args.out / "fault-plan.json"
     write_json(plan_path, {"candidate": identity, "contract": FAULT_REPLAY, "faults": fault_plan(args.candidate, manifest)})
-    results = {}
-    for engine in ENGINES:
-        healthy = shape(args, dialect=engine)
-        cases = faults(engine)
-        require({fault.role for fault in cases if not fault.artifact} <= set(healthy["checkedBoundaries"])
-                and {fault.artifact for fault in cases if fault.artifact} <= healthy["checkedBindingSources"].keys(),
-                "native-boundary-audit-incomplete", engine)
-        results[engine] = {"healthy": healthy, "faults": [check_fault(args, engine, fault, manifest) for fault in cases]}
+    outcomes = {engine: shape(args, dialect=engine) for engine in ENGINES}
     constructors, _, _ = declared_constructors(DIALECTS.values())
-    outcomes = {engine: result["healthy"] for engine, result in results.items()}
     values = certificate(manifest, constructors, outcomes)
     path = args.out / "value-closure.json"
     envelope = {"candidate": identity, "distribution": digest(args.out / "distribution.json")}
@@ -1130,6 +1132,13 @@ def main():
     write_json(dispatch, {**envelope, "certificate": dispatch_certificate(outcomes, values)})
     signed = args.out / "mysql-signed-storage.json"
     write_json(signed, {**envelope, "certificate": signed_storage_certificate(manifest, outcomes["mysql"])})
+    results = {}
+    for engine, healthy in outcomes.items():
+        cases = faults(engine)
+        require({fault.role for fault in cases if not fault.artifact} <= set(healthy["checkedBoundaries"])
+                and {fault.artifact for fault in cases if fault.artifact} <= healthy["checkedBindingSources"].keys(),
+                "native-boundary-audit-incomplete", engine)
+        results[engine] = {"healthy": healthy, "faults": [check_fault(args, engine, fault, manifest) for fault in cases]}
     verify_candidate(args.candidate, identity, manifest)
     write_json(args.out / "index.json", {
         "status": "provisional-native-construction-shape",

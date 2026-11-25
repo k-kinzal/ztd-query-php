@@ -1437,7 +1437,8 @@ if ($dialect !== 'sqlite') {
         $methods['Schema\\IntegerStorage'] = ['bytes', 'accepts'];
         $enumCases['Schema\\IntegerStorage'] = ['Tiny' => 'TINYINT', 'Small' => 'SMALLINT', 'Medium' => 'MEDIUMINT', 'Standard' => 'INTEGER', 'Wide' => 'BIGINT'];
         array_push($internal, 'Schema\\CreateColumnStorageLowering', 'Schema\\LiteralDefaultLowering');
-        array_push($internal, 'Schema\\Key\\CreatePrimaryKeyLowering', 'Schema\\CreateTableLayoutLowering', 'Schema\\Key\\PrimaryColumnPolicy');
+        array_push($internal, 'Schema\\Key\\CreatePrimaryKeyLowering', 'Schema\\CreateTableLayoutLowering', 'Schema\\Key\\PrimaryColumnPolicy', 'Schema\\Storage\\InnoDbRecord');
+        $pureCollaborators[] = 'Schema\\Storage\\InnoDbRecord';
         $viewRemoval = 'Schema\\View\\DropView';
         $viewName = 'Schema\\View\\ViewName';
         $roots[] = $viewRemoval;
@@ -2335,6 +2336,7 @@ try {
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'mysql' && in_array($short, ['Schema\\CreateTable', 'Schema\\Query\\CreateAsLayout'], true)
                         && $call->name->toString() === 'intdiv')
+                    || ($dialect === 'mysql' && $short === 'Schema\\Storage\\InnoDbRecord' && in_array($call->name->toString(), ['min', 'intdiv'], true))
                     || ($dialect === 'mysql' && $short === 'Schema\\Alter\\RenameTable' && $call->name->toString() === 'array_key_exists')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
                     || ($dialect === 'postgres' && in_array($short, ['Aggregation\\GroupedSelect', 'Ordering\\Order', 'Ordering\\ResultSql', 'Select'], true)

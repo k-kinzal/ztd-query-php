@@ -224,6 +224,42 @@ function observeMysqlSessionCreateTable(SqlSemantics\Platform\MySql\Semantics $s
         $analyzed->target->kind->value, $direct->target == $analyzed->target, $analyzed->toString(), $direct->toString()];
 }
 
+function observeMysqlInnoDbDeclarationWidth(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+        new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+            new SqlSemantics\Platform\MySql\Ir\Identifier('app'),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('staged_width'),
+        ),
+        SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable,
+    );
+    $fields = $signed = $definitions = [];
+    foreach (range(0, 1016) as $position) {
+        $name = new SqlSemantics\Platform\MySql\Ir\Identifier('c' . $position);
+        $fields[] = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+            $name, SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Tiny, false,
+        );
+        $signed[] = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+            $name, SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Wide, false,
+        );
+        $definitions[] = $name->quoted() . ' TINYINT NOT NULL';
+    }
+    $primary = new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey([
+        new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(1016),
+    ]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($target, $fields, primaryKey: $primary);
+    $analyzed = $semantics->analyze('CREATE TABLE app.staged_width (' . implode(', ', $definitions) . ', PRIMARY KEY (c1016))');
+    $refusal = null;
+    try {
+        new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($target, $signed, primaryKey: $primary);
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $refusal = $error->getMessage();
+    }
+
+    return [count($direct->columns), count($analyzed->columns), $analyzed->primaryKey->terms[0]->slot,
+        $analyzed->columns[1016]->name->value, $analyzed->toString() === $direct->toString(), $refusal];
+}
+
 function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $value = $semantics->analyze('CREATE TABLE app.key_decl (lo SMALLINT, hi BIGINT NOT NULL DEFAULT -7, PRIMARY KEY (HI DESC, lo))');
@@ -1746,6 +1782,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);
             $details['mysqlPrimaryKey'] = observeMysqlPrimaryKey($semantics);
             $details['mysqlSessionCreateTable'] = observeMysqlSessionCreateTable($semantics);
+            $details['mysqlInnoDbDeclarationWidth'] = observeMysqlInnoDbDeclarationWidth($semantics);
         }
         if ($platform === 'MySql' && $role === 'Schema\\Query\\CreateTableAs') {
             $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($result->target, $result->query, $result->ifNotExists);
