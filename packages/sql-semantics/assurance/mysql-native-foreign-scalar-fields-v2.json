@@ -1,0 +1,72 @@
+{
+  "revision": "SemanticsIR/mysql-native-foreign-scalar-fields-2",
+  "approval": "pending-human-review",
+  "extends": {
+    "mysql-add-foreign-key-groups-v1.json": "214b04864ac045b8ee9b10e5291a5d59c5f34d893df871dd3de791d7ed6bb09a",
+    "mysql-native-foreign-string-fields-v3.json": "f8e763f689a851c3cca878963d3a41e60b8921bfae5b676af0fda42e43b07e9d"
+  },
+  "language": {
+    "dialect": "MySql",
+    "mode": "Stock InnoDB storage, utf8mb4, empty sql_mode, foreign_key_checks=1, native markers, 16 KiB pages.",
+    "releases": [
+      "5.6.51",
+      "5.7.44",
+      "8.0.44",
+      "8.1.0",
+      "8.2.0",
+      "8.3.0",
+      "8.4.7",
+      "9.0.1",
+      "9.1.0"
+    ]
+  },
+  "sources": {
+    "storage": "https://dev.mysql.com/doc/refman/8.4/en/storage-requirements.html",
+    "syntax": "https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html",
+    "foreignKeys": "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+    "dictionaryTypes": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/storage/innobase/handler/ha_innodb.cc#L7676",
+    "nativeCompatibility": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/storage/innobase/rem/rem0cmp.cc#L106"
+  },
+  "rules": {
+    "binding": "Preserve each role and both physical field encodings. Normalize aliases and defaults only when the stored field domain and access semantics agree. Scope, nullable child roles, side effects and layout budgets are inherited from native foreign-key groups.",
+    "fixedPoint": "The payload of DECIMAL is packed, with native precision and scale and independently retained numeric attributes. Omitted precision and scale are 10 and 0. Precision is between 1 and 65, scale is between 0 and the lesser of precision and 30. The integer and fractional groups each consume four bytes for nine digits and 0, 1, 1, 2, 2, 3, 3, 4 or 4 bytes for the remainder.",
+    "bit": "BIT stores a vector of 1 to 64 bits, default 1, occupying the ceiling of the bit count divided by 8.",
+    "fractionalTime": "New TIME, DATETIME and TIMESTAMP fields are packed, with base widths 3, 5 and 4 bytes. Fractional precision defaults to zero, ranges up to 6 and adds the ceiling of the precision divided by 2 to the key width. The three distinct encodings and precision are part of the field roles. Tables whose temporal fields use the pre-5.6.4 format are outside the stock-create profile.",
+    "approximate": "The single and double native comparisons are distinct, independently of numeric attributes or display scale. FLOAT(p) selects single through precision 24 and double through precision 53. Unqualified REAL selects double in the fixed SQL mode. Retain optional declared nonstandard width, scale and numeric attributes when applicable. The explicit legacy display width is positive, at most 255, with display scale no larger than width or 30. The unsigned role holds when UNSIGNED or ZEROFILL is present.",
+    "compatibility": "The physical byte-comparison family includes BIT, DECIMAL, new TIME, DATETIME and TIMESTAMP, and the binary strings. The permitted packed types in this rule can pair even when their field grammars, signs and sizes differ. The InnoDB column compatibility check permits this broader region than an equal-size and equal-sign reading of the manual. Keep the nominal role descriptions for later stored value interpretation.",
+    "comparison": "A native admission check uses the common physical comparison family. With heterogeneous byte codecs, equal SQL displays can have different stored values and physically equal bytes can have different SQL displays. Cascades operate on physical encodings. Native storage conversion, width, refusal, column metadata and transactional effects are separate observations.",
+    "dateYear": "DATE stores one signed three-byte native comparison term. YEAR stores one unsigned single-byte term. Each can pair with the integral field of the same native width and sign. Keep the exact date or year codec when the counterpart is an integer. Noncanonical written YEAR widths require release-specific declaration normalization.",
+    "statementDefaults": "The observed native declaration DECIMAL(0,0) selects effective DECIMAL(10,0). MySQL 5.6 also maps a written BIT(0) to effective BIT(1). A directly constructed storage value carries the effective nonzero dimensions."
+  },
+  "observations": [
+    "Bound column references, exact normalized physical type and metadata per side.",
+    "True foreign constraint, physical backing key and the exact release-specific refusal.",
+    "Admitted or refused writes, type-aware stored observations including NULL, and rows after parent events.",
+    "Full key capacity in compositions with strings and integer fields."
+  ],
+  "authorCalibration": {
+    "recipeSha256": "13da8e7068a21a27acc7246cc230fdeae6a738ef9e841ce75521464021ee36aa",
+    "casesPerRelease": 734,
+    "releases": {
+      "5.6.51": "932c7458789543bedcb63b91dcb279195481548d675c9a17a5e1960889ef1d12",
+      "5.7.44": "427cf106685687c33aac6ef89ec056e47f846a364b2e915db002d8cdf4b4214e",
+      "8.0.44": "bf9ac48f9d48769bc33a10eae0f327cbe285173d0adc039cf48269fed2ecdb3f"
+    }
+  },
+  "remaining": [
+    "ENUM and SET carry their declared ordered member domains and require a separately verified storage and comparison rule. Legacy noncanonical YEAR widths remain under calibration.",
+    "Other collations, older physical temporal formats, externally changed foreign-key checks and other storage engines.",
+    "Additional SQL constructor and scope proof obligations in the work order."
+  ],
+  "revises": {
+    "mysql-native-foreign-scalar-fields-v1.json": "1ae22bb9ce82c08919de71787cb5e65399bbb099342b96762545c0f544bd2bbb"
+  },
+  "crossCalibration": {
+    "recipeSha256": "bcdfff5e439c73083fcda5193f3cde0b654deb6a7b781f3a7b1f0f0f7a14abd4",
+    "casesPerRelease": 357,
+    "releases": {
+      "5.6.51": "954eb006e2fa70dae6bd128b93420bacc0093681458e9d2447e9c814960eeb86",
+      "5.7.44": "83d34f3d69215c549101deb90add083e9630104a1b3d2f06ceed766ba42ac027"
+    }
+  }
+}
