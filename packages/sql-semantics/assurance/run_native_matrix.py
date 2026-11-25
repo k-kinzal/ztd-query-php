@@ -177,6 +177,7 @@ def check_fixture_connection(engine, release, environment, deadline, path):
 
 def run_jobs(jobs, args, raw, logs, environment, result, container):
     for domain, runner, flags in jobs:
+        require(fixture_state(container)["running"], "native-fixture-stopped-before-domain", domain)
         path = logs / f"{domain}.log"
         entry = {"domain": domain, "runner": runner, "runnerDigest": digest(TOOL / runner), "log": path.name}
         result.append(entry)
@@ -192,6 +193,12 @@ def run_jobs(jobs, args, raw, logs, environment, result, container):
             except subprocess.TimeoutExpired:
                 entry.update(outcome="timeout", exitCode=None)
         entry["logDigest"] = digest(path)
+
+
+def fixture_state(container):
+    state = json.loads(docker("inspect", "--format", "{{json .State}}", container))
+    return {"status": state["Status"], "running": state["Running"], "oomKilled": state["OOMKilled"],
+            "exitCode": state["ExitCode"], "error": state["Error"], "finishedAt": state["FinishedAt"]}
 
 
 def run_release(fixture, jobs, args, raw_root, logs_root):
@@ -222,7 +229,7 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         fixture_port_recovery()
         for attempt in range(2):
             try:
-                container = docker("run", "--rm", "--pull=never", "--name", launch_name, "--platform", f"linux/{arch}", "--detach",
+                container = docker("run", "--pull=never", "--name", launch_name, "--platform", f"linux/{arch}", "--detach",
                                    "--publish", f"127.0.0.1::{port}", *flags, image, timeout=startup_remaining(deadline))
             except subprocess.CalledProcessError as error:
                 if attempt != 0 or not recoverable_port_collision(error):
@@ -265,7 +272,7 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         receipt["startupSeconds"] = round(time.monotonic() - start, 3)
         phase = "execution"
         run_jobs(jobs, args, raw, logs, environment, receipt["executions"], container)
-    except (Failure, OSError, ValueError, subprocess.SubprocessError) as error:
+    except (Failure, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         receipt["failure"] = {"phase": phase, "type": type(error).__name__, "detail": str(error)}
         if isinstance(error, subprocess.CalledProcessError):
             receipt["failure"].update(command_failure(error))
@@ -280,6 +287,17 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
                 receipt["cleanupFailure"] = str(cleanup)
     finally:
         if container:
+            try:
+                state = fixture_state(container)
+                receipt["fixtureStateAtCleanup"] = state
+                if not state["running"] and receipt["failure"] is None:
+                    receipt["failure"] = {"phase": "fixture-stopped", "type": "Failure",
+                                          "detail": "The fixture exited before the launcher cleaned up."}
+            except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as inspection:
+                receipt["fixtureStateUnavailable"] = str(inspection)
+                if receipt["failure"] is None:
+                    receipt["failure"] = {"phase": "fixture-state", "type": type(inspection).__name__,
+                                          "detail": str(inspection)}
             try:
                 docker("rm", "-f", "-v", container)
             except (OSError, subprocess.SubprocessError) as error:

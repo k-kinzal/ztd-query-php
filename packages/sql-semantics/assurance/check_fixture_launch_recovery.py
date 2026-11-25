@@ -21,12 +21,13 @@ CONTROL_CASES = {
     "unrelated-fixture-setup-error": "incomplete",
     "fixture-launch-timeout": "incomplete",
     "completed-launch-then-domain-failure": "incomplete",
+    "fixture-stops-before-cleanup": "incomplete",
     "registered-postgres-storage": "observed",
     "unexpected-postgres-filesystem": "incomplete",
 }
 
 
-def simulated(outcomes, existing=False, domain_failure=False, profile=PROFILE, filesystem="tmpfs"):
+def simulated(outcomes, existing=False, domain_failure=False, profile=PROFILE, filesystem="tmpfs", died=False):
     launch_names, calls, connections = [], [], []
     engine, release, port = (profile[key] for key in ("engine", "release", "port"))
     jobs = [("result", "run_server_result.py", ["--engine", engine, "--release", release])]
@@ -49,6 +50,9 @@ def simulated(outcomes, existing=False, domain_failure=False, profile=PROFILE, f
             query, name = arguments[-2:]
             if query == "{{.Image}}" and name == "good-fixture":
                 return IMAGE
+            if query == "{{json .State}}" and name in ("good-fixture", "residual-fixture"):
+                return json.dumps({"Status": "exited" if died else "running", "Running": not died, "OOMKilled": died,
+                                   "ExitCode": 137 if died else 0, "Error": "", "FinishedAt": ""})
             if engine == "postgres" and query == "{{json .HostConfig.Tmpfs}}" and name == "good-fixture":
                 return json.dumps(fixed_storage()["mount"])
             if query == "{{.Id}}" and existing:
@@ -97,6 +101,7 @@ def controls():
         "unrelated-fixture-setup-error": (("denied by the local daemon",), {}, "incomplete", 1, 0),
         "fixture-launch-timeout": (("timeout",), {}, "incomplete", 1, 0),
         "completed-launch-then-domain-failure": (("launch",), {"domain_failure": True}, "incomplete", 1, 1),
+        "fixture-stops-before-cleanup": (("launch",), {"died": True}, "incomplete", 1, 1),
         "registered-postgres-storage": (("launch",), {"profile": POSTGRES}, "observed", 1, 1),
         "unexpected-postgres-filesystem": (("launch",), {"profile": POSTGRES, "filesystem": "ext2/ext3"}, "incomplete", 1, 0),
     }
@@ -117,9 +122,18 @@ def controls():
             require("failedLaunch" not in receipt, "fixture-control-unsafe-retry", name)
         if options.get("existing"):
             require(observed["cleanup"] == ["residual-fixture"], "fixture-control-residual-cleanup", name)
+        verify_cleanup_control(name, receipt)
         verify_storage_control(name, receipt)
         evidence.append({"case": name, "signal": f"native-fixture-{status}", "observed": observed})
     return evidence
+
+
+def verify_cleanup_control(name, receipt):
+    if name == "fixture-stops-before-cleanup":
+        state = receipt["fixtureStateAtCleanup"]
+        require(receipt["failure"]["phase"] == "fixture-stopped" and state["running"] is False
+                and state["oomKilled"] is True and state["exitCode"] == 137,
+                "fixture-control-records-termination", name)
 
 
 def verify_storage_control(name, receipt):

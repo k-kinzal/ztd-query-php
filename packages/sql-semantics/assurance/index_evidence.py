@@ -10,7 +10,7 @@ import re
 
 from compare_assurance_revisions import EVIDENCE_CONTRACTS, review
 from check_native_boundaries import native_boundary_procedures
-from check_fixture_launch_recovery import CONTROL_CASES as NATIVE_FIXTURE_CONTROLS, verify_storage_control
+from check_fixture_launch_recovery import CONTROL_CASES as NATIVE_FIXTURE_CONTROLS, verify_cleanup_control, verify_storage_control
 from check_native_workflow import audit as audit_workflow
 from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import certificate
@@ -259,8 +259,11 @@ class Evidence:
             require(result["status"] == record["status"] == ("observed" if success else "incomplete"),
                     "bundle-native-launch-release-status", key)
             if success:
+                state = result["fixtureStateAtCleanup"]
                 require(re.fullmatch(r"sha256:[a-f0-9]{64}", result["imageIdentity"])
                         and result["architecture"] in {"amd64", "arm64"}
+                        and state["status"] == "running" and state["running"] is True and state["oomKilled"] is False
+                        and state["exitCode"] == 0 and state["error"] == ""
                         and 0 <= result["startupSeconds"] <= FIXTURE_STARTUP_SECONDS,
                         "bundle-native-launch-fixture-identity", key)
                 if profile[0] == "postgres":
@@ -539,6 +542,7 @@ def main():
             require(receipt["status"] == NATIVE_FIXTURE_CONTROLS[key]
                     and item["signal"] == f"native-fixture-{receipt['status']}", "bundle-native-fixture-control-status", key)
             verify_fixture_recovery(receipt, key)
+            verify_cleanup_control(key, receipt)
             verify_storage_control(key, receipt)
         selected = {item["case"]: item for item in cases if item["case"] in NATIVE_REDUCTION_CONTROLS}
         require(selected.keys() == NATIVE_REDUCTION_CONTROLS.keys(), "bundle-missing-native-reduction-controls")
