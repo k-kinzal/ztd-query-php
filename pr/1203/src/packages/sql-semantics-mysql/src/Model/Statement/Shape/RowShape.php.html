@@ -78,22 +78,24 @@
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param list&lt;OutputSlot&gt; $slots The known positions in order</span></span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param list&lt;MissingInput&gt; $missing The inputs whose absence leaves the shape open</span></span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$slots</span>, <span class="tok-kw">array</span> <span class="tok-var">$missing</span> = [])</span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    {</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">slots</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$slots</span>, <span class="tok-id">OutputSlot</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;A row shape holds an ordered list of output slots.&#039;</span>);</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">missing</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$missing</span>, <span class="tok-id">MissingInput</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;An open row shape names missing inputs.&#039;</span>);</span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a></span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     * Tells whether every output position is listed.</span></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">complete</span>(): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    {</span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">missing</span> === [];</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    }</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>}</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @param bool $nativeColumnNames Whether the relation exposes native local identifier keys</span></span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">42</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$slots</span>, <span class="tok-kw">array</span> <span class="tok-var">$missing</span> = [])</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$slots</span>, <span class="tok-kw">array</span> <span class="tok-var">$missing</span> = [], <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$nativeColumnNames</span> = <span class="tok-id">false</span>)</span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    {</span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">slots</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$slots</span>, <span class="tok-id">OutputSlot</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;A row shape holds an ordered list of output slots.&#039;</span>);</span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">missing</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$missing</span>, <span class="tok-id">MissingInput</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;An open row shape names missing inputs.&#039;</span>);</span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * Tells whether every output position is listed.</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">complete</span>(): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">missing</span> === [];</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>}</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
