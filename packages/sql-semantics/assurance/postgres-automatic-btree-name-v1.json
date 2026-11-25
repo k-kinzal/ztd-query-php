@@ -1,0 +1,131 @@
+{
+  "revision": "SemanticsIR/postgres-automatic-btree-name-1",
+  "approval": "pending-human-review",
+  "profile": {
+    "release": [
+      "16.6",
+      "17.2"
+    ],
+    "encoding": "UTF8",
+    "identifierByteLimit": 63,
+    "parameters": "native",
+    "strings": "standard-conforming"
+  },
+  "sources": [
+    "https://github.com/postgres/postgres/blob/REL_16_6/src/backend/commands/indexcmds.c",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/commands/indexcmds.c"
+  ],
+  "references": {
+    "postgres-create-btree-v2.json": "fb2bf03a058c6b1ae1e0c25f00bfacea7cbcce7cf1339767d9b63e0112d9860b",
+    "postgres-index-operand-bindings-v1.json": "bfc9d7a71baaec9cfeb8c8e6f8817e4ab7027c82ad22c686e088cd26f7f285b2",
+    "postgres-schema-indexes-v1.json": "c4008fd5e064005908b46fd3d40170f1de7afd6cd1b932452d8897deaadd0205",
+    "postgres-key-constraints-boundaries-v1.json": "f3ea6a07ebe77243e7c36968cd216850b145db5e9efbe6189b1e2e1f3be231ce"
+  },
+  "scope": "Ordinary, nonpartitioned, direct-column B-tree statements that omit the index name. Include a closed external namespace and the index phase of a new unguarded CREATE SCHEMA. The already specified key, covering and predicate constraints apply.",
+  "rules": [
+    "Resolve the owner and physical operand slots before allocating the name.",
+    "Allocate native attribute labels from the key occurrences followed by the INCLUDE occurrences. Leave the first occurrence of a label unchanged. For a clash, append the smallest positive decimal suffix that produces a free label, clipping the original to fit on a UTF-8 boundary.",
+    "Build the relation name from the exact table name, the attribute labels joined by underscores and the idx suffix. Start with idx, and try idx1, idx2 and later native suffixes in ascending order. Deduct both separators and the suffix from the 63-byte limit. Reduce the longer of the two name budgets one byte at a time, reducing the second on ties. Clip both resulting prefixes to valid UTF-8.",
+    "An occupied candidate in the target schema consumes that name regardless of relation kind. A same-name relation in another schema never consumes it. Native ordinary nonconstraint indexes do not reserve a database constraint name unless a relation occupies it.",
+    "Standalone analysis of an omitted name requires a complete context and a closed index namespace. In a fresh schema command, use the table, sequence, ordinary view and earlier-index occupants from the command's completed phases. Record the final name as an ordinary resolved Identifier with vacant presence.",
+    "Render the explicitly resolved name as a quoted native index identifier. A direct constructor with that identifier and the same bindings yields an equal completed value. The completed value has no dependence on whether the SQL wrote the name, the candidates considered, or the catalog used during analysis."
+  ],
+  "observations": [
+    "The owning namespace, selected name and byte length, exact physical index attribute names, attnum sequence, NULL placement, uniqueness, native condition and table rows.",
+    "For a new schema command observe every index name in declaration order, earlier occupants and all phases of the operation. Compare supplied and rendered SQL with the same rows and namespace setup.",
+    "Open or opaque namespaces cause a typed failure before publication. Deliberately changing a candidate name, column-label occurrence order or namespace must be detected."
+  ],
+  "finite": {
+    "standalone": {
+      "coordinates": 192,
+      "axes": {
+        "layout": [
+          "single",
+          "key-order",
+          "includes",
+          "label-collisions",
+          "asymmetric-utf8",
+          "equal-utf8-bytes"
+        ],
+        "existingRole": [
+          "named-table",
+          "generated-index",
+          "sequence",
+          "namespace-decoy"
+        ],
+        "occupiedPrefixLength": [
+          0,
+          1,
+          3,
+          11
+        ],
+        "policy": [
+          "plain",
+          "unique"
+        ]
+      }
+    },
+    "schema": {
+      "coordinates": 30,
+      "axes": {
+        "layout": [
+          "single",
+          "key-order",
+          "includes",
+          "label-collisions",
+          "asymmetric-utf8",
+          "equal-utf8-bytes"
+        ],
+        "earlierOccupant": [
+          "none",
+          "table",
+          "sequence",
+          "view",
+          "index"
+        ]
+      },
+      "indexCountPerCoordinate": 2
+    },
+    "complete": "Compare equal independent identities and all stable catalog observations for every coordinate on both releases. Require both public constructor output and analyzed publication for each new finite scope."
+  },
+  "budgets": {
+    "allowedExclusions": [],
+    "timeoutSecondsPerRelease": 420,
+    "priorSchedules": "Retain the existing native B-tree and CREATE SCHEMA finite coordinates, seed lists, counts, fault examples and effect comparisons."
+  },
+  "faults": [
+    "Ignore included attribute contribution",
+    "Pick a later suffix than the first available one",
+    "Use a same-name object in another schema as an occupant",
+    "Clip identifiers on a byte boundary that cuts a UTF-8 character",
+    "Let subsequent unnamed schema index members reuse an occupied name"
+  ],
+  "unverified": [
+    "Expression-based names, non-B-tree methods, prior anonymous indexes supplied only as catalog DDL, partition recursion and opaque namespaces stay in the wider obligation ledger.",
+    "A separate Semantics::analyzeAll result binds each statement against the same supplied namespace. A previous result changes the observed catalog only if the caller executes it and supplies the new declaration to a subsequent analysis.",
+    "Contended concurrent executions, permissions and external native catalog changes belong to the specified evaluation environment."
+  ],
+  "calibration": {
+    "generate.py": "934ddc537567e47ae945baa2dcce0989e43c3c995ea99c502d53b6ee02eaebd8",
+    "observe.sql": "b97ea79d01c4453820acfd2cd1aff9d3b6f00a739682067b70aa546362c093b1",
+    "inputs.jsonl": "ee11e53ffd3f189fe3d0fedd1ba029573fa6cc4aaf3bda0c76e0f99378a53698",
+    "schema.py": "d1a788192134666fa65b12f19a8c8c17bd7a252c7059578e1a4d9a1a5059fda6",
+    "schema-observe.sql": "bd9f11eb97367d713590b1ca3cdc38209045797bafdc0c027cf01814b3599ccc",
+    "schema-inputs.jsonl": "ee352d6a0cdac17e84a8b808a6b9a242b0378cc43ac98607ab76922324e45072",
+    "native-v1/16.6.stdout": "264151fa7ae241ff85159ca89f5a9cc20d51f283214caa7c82dd6735cde3a938",
+    "native-v1/17.2.stdout": "e856c1a4a400c2a9822eb049828df5c9e7b20120caafa0261f9411de6fac37ec"
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ]
+}
