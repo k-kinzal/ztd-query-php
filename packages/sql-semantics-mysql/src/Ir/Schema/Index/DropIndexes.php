@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Batch\IndexRemovalSet;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyClosure;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -31,9 +33,11 @@ final class DropIndexes implements SemanticsIR
     /**
      * Closes every ordered removal and their shared owner and policy.
      * @param list<IndexIdentity> $targets Exact physical targets of the same owner
+     * @param list<IndexForeignKeyRequirement> $requirements Complete native foreign-key sides owning supporting physical keys
      */
     public function __construct(
         array $targets,
+        array $requirements,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
         public readonly bool $ignore = false,
@@ -42,6 +46,7 @@ final class DropIndexes implements SemanticsIR
         $checked = Check::listOf($targets, IndexIdentity::class, 'An atomic index removal requires an ordered list of at least two targets.', 2);
         Check::input(count($checked) <= 64, 'An atomic index removal can contain at most 64 physical keys.');
         (new IndexRemovalSet())->check($checked, $policy);
+        (new IndexDependencyClosure())->check($checked, $requirements);
         $this->targets = $checked;
     }
 

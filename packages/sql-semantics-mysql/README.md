@@ -70,6 +70,8 @@ Use `ALTER TABLE ... RENAME INDEX` on MySQL 5.7 or later. `RenameIndexes` resolv
 
 When a single `ALTER TABLE` mixes native index removal and renaming, `AlterIndexes` preserves both operations in their written order. Each action resolves against the original table. A rename can take the name of a removed index. A surviving key continues to support an `AUTO_INCREMENT` field when the same statement renames that key.
 
+Persistent InnoDB index removal requires a complete catalog of foreign-key dependencies. The entire removal group must leave an eligible supporting index on each affected side. A renamed surviving index can still provide support. On the default MySQL 8.4 and 9 profiles, a referenced parent side requires a whole unique or primary key in the declared field order. Direct construction supplies the complete applicable support sets as `IndexForeignKeyRequirement` values.
+
 Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.

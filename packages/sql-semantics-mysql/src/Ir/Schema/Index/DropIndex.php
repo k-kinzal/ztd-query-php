@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyClosure;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -25,9 +27,11 @@ final class DropIndex implements SemanticsIR
 
     /**
      * Fixes the resolved removal target and the native release.
+     * @param list<IndexForeignKeyRequirement> $requirements Complete native foreign-key sides owning supporting physical keys
      */
     public function __construct(
         public readonly IndexIdentity $target,
+        array $requirements,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
         public readonly bool $ignore = false,
@@ -41,6 +45,7 @@ final class DropIndex implements SemanticsIR
             $policy->supports($target->owner->kind, $target->role->clustered()),
             'The algorithm and lock cannot remove this native InnoDB index.'
         );
+        (new IndexDependencyClosure())->check([$target], $requirements);
     }
 
     /**

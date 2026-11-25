@@ -20,7 +20,7 @@ final class DropIndexesTest extends TestCase
         $catalog = $semantics->context(['CREATE TABLE app.t (a INT, b INT, KEY by_a (a), KEY by_b (b))']);
         $value = $semantics->analyze('ALTER TABLE app.t LOCK=NONE, DROP INDEX by_b, DROP KEY by_a, ALGORITHM=INPLACE', $catalog);
         self::assertInstanceOf(DropIndexes::class, $value);
-        $rebuilt = new DropIndexes($value->targets, $value->release, $value->policy);
+        $rebuilt = new DropIndexes($value->targets, [], $value->release, $value->policy);
         $tick = chr(96);
         $expected = str_replace('%', $tick, 'ALTER TABLE %app%.%t% DROP INDEX %by_b%, DROP INDEX %by_a%, ALGORITHM=INPLACE, LOCK=NONE');
 

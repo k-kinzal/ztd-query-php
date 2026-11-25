@@ -26,7 +26,7 @@ final class TableIndexCandidates
     /**
      * Returns key policy, optional names, ordinary-part status and clustered eligibility.
      * @param array<array-key, array{Name, bool, bool}> $columns Physical names, required fields and generation flags by native case key
-     * @return list<array{IndexKind, ?Name, ?Name, bool, bool, ?Name}>|null
+     * @return list<array{IndexKind, ?Name, ?Name, bool, bool, ?Name, list<Name>}>|null
      */
     public function keys(TableElement $element, array $columns): ?array
     {
@@ -36,7 +36,7 @@ final class TableIndexCandidates
 
             return array_map(
                 static fn (IndexKind $kind): array => [$kind, $kind === IndexKind::Primary ? new Name('PRIMARY') : null,
-                    $field, true, $kind === IndexKind::Unique && $required, $incremented ? $field : null],
+                    $field, true, $kind === IndexKind::Unique && $required, $incremented ? $field : null, $field === null ? [] : [$field]],
                 (new InlineIdentityKey())->kinds($element)
             );
         }
@@ -51,8 +51,26 @@ final class TableIndexCandidates
         $leading = $first instanceof ColumnPart ? ($columns[$case->fold($first->column->value)] ?? null) : null;
         [$field, , $incremented] = $leading ?? [null, false, false];
         $support = $incremented && $first instanceof ColumnPart && $first->length === null ? $field : null;
+        $definition = $this->parts($element, $columns);
+        if ($definition === null) {
+            return null;
+        }
+        [$ordinary, $required, $leadingFields] = $definition;
+
+        return [[$element->kind, $name, $field, $ordinary, $element->kind === IndexKind::Unique && $ordinary && $required, $support, $leadingFields]];
+    }
+
+    /**
+     * Resolves effective named parts and the whole fields before any partial or functional part.
+     * @param array<array-key, array{Name, bool, bool}> $columns Resolved fields by native case key
+     * @return array{bool, bool, list<Name>}|null
+     */
+    public function parts(IndexDefinition $element, array $columns): ?array
+    {
+        $case = new NativeIdentifierCase();
         $ordinary = true;
         $required = true;
+        $leadingFields = [];
         foreach ($element->parts as $part) {
             if (!$part instanceof ColumnPart) {
                 $ordinary = false;
@@ -63,10 +81,13 @@ final class TableIndexCandidates
                 return null;
             }
             $ordinary = $ordinary && $part->length === null;
+            if ($ordinary) {
+                $leadingFields[] = $facts[0];
+            }
             $required = $required && $facts[1];
         }
 
-        return [[$element->kind, $name, $field, $ordinary, $element->kind === IndexKind::Unique && $ordinary && $required, $support]];
+        return [$ordinary, $required, $leadingFields];
     }
 
     /**

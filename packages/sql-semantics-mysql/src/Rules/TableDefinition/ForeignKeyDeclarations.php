@@ -7,9 +7,11 @@ namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 use SqlSemantics\Platform\MySql\Model\Contract\ForeignKeyEdge;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
@@ -36,13 +38,25 @@ final class ForeignKeyDeclarations
         $foreignKeys = [];
         foreach ($table->elements as $element) {
             $reference = $this->reference($element, $inline);
-            if ($reference !== null) {
+            if ($reference !== null && ($element instanceof ForeignKey || $element instanceof ColumnDefinition)) {
+                $fields = $this->childFields($element);
                 $parent = new QualifiedName($reference->table->name, $reference->table->schema ?? $schema);
-                $foreignKeys[] = new ForeignKeyEdge($child, $parent);
+                $foreignKeys[] = new ForeignKeyEdge($child, $parent, $fields, $reference->columns);
             }
         }
 
         return $foreignKeys;
+    }
+
+    /**
+     * Returns the ordered native child fields of a confirmed constraint declaration.
+     * @return non-empty-list<Name>
+     */
+    public function childFields(ForeignKey|ColumnDefinition $element): array
+    {
+        return $element instanceof ForeignKey
+            ? array_map(static fn (ColumnPart $part): Name => $part->column, $element->columns)
+            : [$element->name->column];
     }
 
     /**

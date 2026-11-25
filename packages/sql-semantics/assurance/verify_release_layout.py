@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v160.json"
-CONTRACT = "b3d17fa91ffe81193a42c286e5b398e03036d2722dd182b4796aba37dd1ede57"
+CONTRACT_NAME = "release-layout-v161.json"
+CONTRACT = "81d57a36c3e6eff50e8f1ca891e680dc15aa895218778f339aece9277314912e"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -728,6 +728,12 @@ def verify_probe(raw, catalog):
                 "a", ["retains_a"], "DROP INDEX `PRIMARY` ON `app`.`keeps_value`",
                 "DROP INDEX must retain a backing key for the AUTO_INCREMENT field.",
             ], "installed-mysql-auto-increment-support-mismatch", item)
+            dropping_fk = "DROP INDEX `first_key` ON `app`.`fk_index_parent`"
+            preserves_fk = "ALTER TABLE `app`.`fk_index_parent` DROP INDEX `first_key`, RENAME INDEX `loose_support` TO `moved`"
+            blocked_fk = "Index removal must retain a supporting key for each native foreign-key side."
+            require(item.get("mysqlIndexForeignRequirements") == [
+                dropping_fk, dropping_fk, "loose_support", preserves_fk, [blocked_fk] * 3,
+            ], "installed-mysql-index-foreign-key-support-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Index\\DropIndexes"):
             drop_set = "ALTER TABLE `app`.`batch_index` DROP INDEX `PRIMARY`, DROP INDEX `by_a`"
             require(item.get("mysqlAtomicIndexRemoval") == [

@@ -25,7 +25,7 @@ final class MixedIndexChangesTest extends TestCase
         $target = $value->actions[1]->operation;
         self::assertInstanceOf(IndexIdentity::class, $target);
 
-        (new MixedIndexChanges())->check($value->owner, $value->actions, $value->unmoved, $value->policy);
+        (new MixedIndexChanges())->check($value->owner, $value->actions, $value->unmoved, $value->policy, []);
 
         self::assertSame('by_a', $target->autoIncrement?->alternates[0]->value);
     }

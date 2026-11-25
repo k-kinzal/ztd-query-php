@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIndexCandidates;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Testing\MySql\Inspection;
 
@@ -38,5 +39,19 @@ final class TableIndexCandidatesTest extends TestCase
         $fields = $candidates->fields([[null, $required], [null, $nullable]]);
         self::assertSame(['n' => [$required->name, true, false], 'm' => [$nullable->name, false, false]], $fields);
         self::assertNull($candidates->fields([[null, $required], [null, $required]]));
+    }
+
+    public function testPartsStopFullPrefixAtTheFirstPartialField(): void
+    {
+        $statement = (new Inspection())->inspect('CREATE TABLE app.c (id INT, label VARCHAR(12), KEY named_idx (id, label(3)))')->statement;
+        self::assertInstanceOf(CreateTable::class, $statement);
+        $definition = $statement->elements[2];
+        self::assertInstanceOf(IndexDefinition::class, $definition);
+        $id = new Name('id');
+        $label = new Name('label');
+
+        self::assertSame([false, false, [$id]], (new TableIndexCandidates())->parts($definition, [
+            'id' => [$id, true, false], 'label' => [$label, false, false],
+        ]));
     }
 }

@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexDeclaration;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\PhysicalIndexKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeIdentifierCase;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\ForeignKeyDeclarations;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
@@ -40,14 +41,11 @@ final class TableIndexDeclarations
         $used = [];
         $firstCandidate = null;
         foreach ($definition->elements as $element) {
-            if ($element instanceof ForeignKey) {
-                return null;
-            }
             $items = $candidates->keys($element, $columnNames);
             if ($items === null) {
                 return null;
             }
-            foreach ($items as [$kind, $name, $first, $ordinary, $clusterCandidate, $support]) {
+            foreach ($items as [$kind, $name, $first, $ordinary, $clusterCandidate, $support, $leadingFields]) {
                 $resolved = $name ?? ($first === null ? null : (new IndexNameAllocation())->generated($first, $used, $release));
                 if ($resolved === null || preg_match('/\A[^\x00\x{10000}-\x{10FFFF}]{1,64}(?<! )\z/u', $resolved->value) !== 1) {
                     return null;
@@ -57,7 +55,7 @@ final class TableIndexDeclarations
                     return null;
                 }
                 $backing = in_array($kind, [IndexKind::Primary, IndexKind::Unique, IndexKind::Index], true) ? $support : null;
-                $used[$key] = new IndexDeclaration($resolved, PhysicalIndexKind::from($kind->value), $ordinary, autoIncrementField: $backing);
+                $used[$key] = new IndexDeclaration($resolved, PhysicalIndexKind::from($kind->value), $ordinary, false, $backing, $leadingFields, $clusterCandidate);
                 if ($clusterCandidate) {
                     $firstCandidate ??= $key;
                 }
@@ -71,9 +69,37 @@ final class TableIndexDeclarations
         }
         if ($firstCandidate !== null && !isset($used['primary'])) {
             $unique = $used[$firstCandidate];
-            $used[$firstCandidate] = new IndexDeclaration($unique->name, PhysicalIndexKind::Unique, true, true, $unique->autoIncrementField);
+            $used[$firstCandidate] = new IndexDeclaration($unique->name, PhysicalIndexKind::Unique, true, true, $unique->autoIncrementField, $unique->leadingFields, true);
         }
 
-        return array_values($used);
+        $indexes = array_values($used);
+
+        return $this->explicitSupport($definition, $indexes, $release) ? $indexes : null;
+    }
+
+    /**
+     * Confirms that each native child key can be supplied by explicit leading fields.
+     * @param list<IndexDeclaration> $indexes Declared physical indexes
+     */
+    public function explicitSupport(CreateTable $definition, array $indexes, GrammarRelease $release): bool
+    {
+        $rules = new ForeignKeyDeclarations();
+        $inline = $rules->inline($release);
+        $coverage = new IndexKeyCoverage();
+        foreach ($definition->elements as $element) {
+            if ((!$element instanceof ForeignKey && !$element instanceof ColumnDefinition) || $rules->reference($element, $inline) === null) {
+                continue;
+            }
+            $fields = $rules->childFields($element);
+            $backing = array_filter(
+                $indexes,
+                static fn (IndexDeclaration $key): bool => $coverage->covers($fields, $key, null, false),
+            );
+            if ($backing === []) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

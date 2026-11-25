@@ -1432,6 +1432,13 @@ if ($dialect !== 'sqlite') {
         $internal[] = 'Schema\\Index\\IndexAutoIncrementLowering';
         $properties[$indexAutoIncrement] = ['field' => ['Identifier'], 'alternates' => ['array']];
         $methods[$indexAutoIncrement] = ['__construct'];
+        $indexForeignKey = 'Schema\\Index\\Dependency\\IndexForeignKeyRequirement';
+        $dependencyClosure = 'Schema\\Index\\Dependency\\IndexDependencyClosure';
+        $properties[$indexForeignKey] = ['owner' => ['Schema\\Identity\\TableIdentity'], 'keys' => ['array']];
+        $methods[$indexForeignKey] = ['__construct'];
+        array_push($internal, $dependencyClosure, 'Schema\\Index\\Dependency\\IndexDependencyLowering',
+            'Schema\\Index\\Dependency\\IndexDependencyKeys');
+        $pureCollaborators[] = $dependencyClosure;
         $dropIndexes = 'Schema\\Index\\DropIndexes';
         $batchRemoval = 'Schema\\Index\\Batch\\IndexRemovalSet';
         $backingRemoval = 'Schema\\Index\\Batch\\AutoIncrementRemovalSet';
@@ -1803,8 +1810,8 @@ try {
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v7.json', '1304d4803619cd8fc849431ec1a8f3aed53f838e09767182feb9692f374f70e1', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v6.json', 'a55e5a9d21ea68213ff5c4609f4c24c2a12f154b03940bf69c938ebe2ed3ba26', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v6.json', 'f276e3a3ed8ac2d545c325e55509405b3acf07bacb35577d34d12fc71f8442cd', 'MySQL session table binding'],
-            ['mysql-native-index-binding-v5.json', '630a06f3b4142755ada05052b0aa05652067565ce6f718708efee31ea3c04c40', 'MySQL native index binding'],
+            ['mysql-session-table-binding-v7.json', 'd017b6d49d5c1ddd47a7b26c226b8bc052460a903c162bcffd5d9a8aefae30f8', 'MySQL session table binding'],
+            ['mysql-native-index-binding-v6.json', '93c028eb0873763393a2ebf7f51ae33eb5404ffd49134e9e3e22fcfbea16d476', 'MySQL native index binding'],
             ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
@@ -1855,6 +1862,7 @@ try {
         foreach ([
             ['mysql-index-namespace-storage-v1.json', '90a0725227d5c8931a4b9cb2ea92567cb4a93798161a81590874659da33c412d'],
             ['mysql-index-auto-increment-storage-v1.json', '6b6a146f979bb53a4dce55a241f642a75e4fdb61d541c7ba254ae158aa3344c7'],
+            ['mysql-index-foreign-key-storage-v1.json', '53ab347ce233a749cd3ec986c1005857615bf16e9f80e7b7d18f3c7aefebec7e'],
             ['mysql-index-removal-set-storage-v1.json', 'ed343981fe207cd80b7d6628cdd6685787c39f241bfc5bc27cee629e80e243a1'],
             ['mysql-index-rename-storage-v1.json', 'ffc8cd41e898f15ecae3343c9dfdcfbe1a72678249e21fb2edbe8d02c1d73831'],
             ['mysql-mixed-index-storage-v1.json', '281216083a6a07e02dc27a5730a9b347b9f512f77e4507b1037a39557a28490f'],
@@ -2430,6 +2438,7 @@ try {
             requireShape(in_array($name->toString(), $allowed, true)
                 || ($dialect === 'mysql' && in_array($short, ['Schema\\Index\\CreateIndex', 'Schema\\Index\\IndexIdentity', 'Schema\\Index\\IndexNamespace', 'Schema\\Index\\IndexAutoIncrement',
                     'Schema\\Index\\Batch\\IndexRemovalSet', 'Schema\\Index\\Batch\\AutoIncrementRemovalSet',
+                    'Schema\\Index\\Dependency\\IndexDependencyClosure', 'Schema\\Index\\Dependency\\IndexForeignKeyRequirement',
                     'Schema\\Index\\Rename\\IndexRename', 'Schema\\Index\\Rename\\IndexRenameNamespace',
                     'Schema\\Index\\Change\\MixedIndexNamespace'], true)
                     && $name->toString() === $platform . '\\Model\\Statement\\Identifier\\NativeIdentifierCase')

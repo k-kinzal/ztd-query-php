@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ForeignKeyDeclarations;
 use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ForeignKeyDeclarations::class)]
@@ -48,5 +49,17 @@ final class ForeignKeyDeclarationsTest extends TestCase
 
         self::assertNull($references->reference($parsed->elements[0], false));
         self::assertSame('p', $references->reference($parsed->elements[0], true)?->table->name->value);
+    }
+
+    public function testChildFieldsKeepConstraintOrder(): void
+    {
+        $parsed = (new Inspection())->inspect('CREATE TABLE app.c (pid INT, other INT, FOREIGN KEY (other, pid) REFERENCES app.p (a, b))')->statement;
+        self::assertInstanceOf(CreateTable::class, $parsed);
+        $constraint = $parsed->elements[2];
+        self::assertInstanceOf(ForeignKey::class, $constraint);
+        $fields = (new ForeignKeyDeclarations())->childFields($constraint);
+
+        self::assertSame('other', $fields[0]->value);
+        self::assertSame('pid', $fields[1]->value);
     }
 }

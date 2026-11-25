@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Alter;
 
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
@@ -67,8 +68,10 @@ final class AlterIndexRemovalLowering
             $targets[] = $identities->identity($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
         }
 
+        $requirements = (new IndexDependencyLowering())->resolve($operation, $statement, $targets);
+
         return count($targets) === 1
-            ? new DropIndex($targets[0], $release, $policy, $statement->ignore)
-            : new DropIndexes($targets, $release, $policy, $statement->ignore);
+            ? new DropIndex($targets[0], $requirements, $release, $policy, $statement->ignore)
+            : new DropIndexes($targets, $requirements, $release, $policy, $statement->ignore);
     }
 }

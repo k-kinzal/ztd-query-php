@@ -2329,7 +2329,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             ]);
             $drop = $semantics->analyze('DROP INDEX `éLAN_2` ON app.drop_owner LOCK=NONE ALGORITHM=COPY', $catalog);
             $primary = $semantics->analyze('DROP INDEX `PRİMARY` ON app.primary_drop', $catalog);
-            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex($drop->target, $drop->release, $drop->policy);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex($drop->target, [], $drop->release, $drop->policy);
             $rejected = null;
             try {
                 $semantics->analyze('DROP INDEX persistent_only ON app.drop_owner', $catalog);
@@ -2354,7 +2354,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $legacyCatalog,
             );
             $legacyDirect = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
-                $legacyDrop->target, $legacyDrop->release, $legacyDrop->policy, $legacyDrop->ignore,
+                $legacyDrop->target, [], $legacyDrop->release, $legacyDrop->policy, $legacyDrop->ignore,
             );
             $details['mysqlAlterIndexRemoval'] = [
                 $legacyDrop->target->owner->kind->value, $legacyDrop->ignore, $legacyDrop->target->name->value,
@@ -2376,12 +2376,49 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $advance->field->value, array_map(static fn ($key): string => $key->value, $advance->alternates),
                 $preserved->toString(), $protected,
             ];
+            $definitions = [
+                'CREATE TABLE app.fk_index_parent (a INT NOT NULL, b INT NOT NULL, z INT PRIMARY KEY, UNIQUE KEY first_key (a), KEY by_b (b), KEY loose_support (a))',
+                'CREATE TABLE other_app.fk_index_child (x INT NOT NULL, KEY child_key (x), FOREIGN KEY (x) REFERENCES app.fk_index_parent (a))',
+            ];
+            $oldDialect = new SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44');
+            $newDialect = new SqlSemantics\Platform\MySql\Semantics('mysql-8.4.7');
+            $oldContext = $oldDialect->context($definitions);
+            $newContext = $newDialect->context($definitions);
+            $sourceDrop = 'DROP INDEX first_key ON app.fk_index_parent';
+            $kept = $oldDialect->analyze($sourceDrop, $oldContext);
+            $factory = SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement::class;
+            $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $dropType = SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex::class;
+            $alternate = new $identifier('loose_support');
+            $requirement = new $factory($kept->target->owner, [$kept->target->name, &$alternate]);
+            $alternate = new $identifier('wrong_key');
+            $rebuilt = new $dropType($kept->target, [$requirement], $kept->release);
+            $failures = [];
+            try {
+                new $dropType($kept->target, [new $factory($kept->target->owner, [$kept->target->name])], $kept->release);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $failures[] = $error->getMessage();
+            }
+            foreach ([
+                [$newDialect, $newContext, $sourceDrop],
+                [$oldDialect, $oldContext, 'ALTER TABLE app.fk_index_parent DROP KEY first_key, DROP KEY loose_support'],
+            ] as [$dialect, $indexCatalog, $dropSql]) {
+                try {
+                    $dialect->analyze($dropSql, $indexCatalog);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $failures[] = $error->getMessage();
+                }
+            }
+            $changed = $oldDialect->analyze('ALTER TABLE app.fk_index_parent DROP INDEX first_key, RENAME INDEX loose_support TO moved', $oldContext);
+            $details['mysqlIndexForeignRequirements'] = [
+                $kept->toString(), $rebuilt->toString(), $requirement->keys[1]->value, $changed->toString(), $failures,
+            ];
         }
         if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndexes') {
             $keys = $result->targets;
             $first = $keys[0];
             $keys[0] = &$first;
-            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes($keys, $result->release, $result->policy);
+            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes($keys, [], $result->release, $result->policy);
             $first = $keys[1];
             $rejected = null;
             try {
@@ -2442,7 +2479,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $first = $inputs[0];
             $inputs[0] = &$first;
             $class = SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes::class;
-            $rebuilt = new $class($result->owner, $inputs, $result->unmoved, $result->release, $result->policy);
+            $rebuilt = new $class($result->owner, $inputs, $result->unmoved, [], $result->release, $result->policy);
             $first = $inputs[1];
             $removed = $rebuilt->actions[0]->operation;
             $renamed = $rebuilt->actions[1]->operation;
@@ -2453,7 +2490,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $overlap = $error->getMessage();
             }
             try {
-                new $class($result->owner, $result->actions, $result->unmoved, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
+                new $class($result->owner, $result->actions, $result->unmoved, [], SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
             } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
                 $legacy = $error->getMessage();
             }

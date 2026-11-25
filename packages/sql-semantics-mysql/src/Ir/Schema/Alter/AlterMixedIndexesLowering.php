@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Alter;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\IndexAlteration;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\IndexRename;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -66,11 +67,12 @@ final class AlterMixedIndexesLowering
         $renames = new AlterIndexRenameLowering();
         $case = new NativeIdentifierCase();
         $owner = null;
-        $actions = $modified = [];
+        $actions = $modified = $removed = [];
         foreach ($written as $action) {
             if ($action instanceof DropElement) {
                 $source = $selector->identity($operation, $statement, $action->name->column ?? new Name('PRIMARY'), $action->name?->table);
                 $selected = $source;
+                $removed[] = $source;
             } else {
                 $source = $selector->identity($operation, $statement, $action->from->column, $action->from->table);
                 $renames->qualifier($source->owner, $action->to->table);
@@ -81,10 +83,13 @@ final class AlterMixedIndexesLowering
             $actions[] = new IndexAlteration($selected);
         }
 
+        Check::input($removed !== [], 'Mixed index changes need a removal.');
+
         return new AlterIndexes(
             $owner,
             $actions,
             $this->unmoved($resolved->table->indexes, $modified),
+            (new IndexDependencyLowering())->resolve($operation, $statement, $removed),
             $operation->context->profile->grammar,
             $renames->policy($statement),
         );

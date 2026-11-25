@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index\Change;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -38,18 +39,20 @@ final class AlterIndexes implements SemanticsIR
      * Closes the initial and final native namespaces of the mixed statement.
      * @param list<IndexAlteration> $actions Exact native index operations
      * @param list<Identifier> $unmoved Original keys not named by the actions
+     * @param list<IndexForeignKeyRequirement> $requirements Complete native foreign-key sides owning supporting physical keys
      */
     public function __construct(
         public readonly TableIdentity $owner,
         array $actions,
         array $unmoved,
+        array $requirements,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly IndexChangePolicy $policy = new IndexChangePolicy(),
     ) {
         Check::input($release !== GrammarRelease::MySql5651, 'Mixed native index removal and renaming requires MySQL 5.7 or later.');
         $owned = Check::listOf($actions, IndexAlteration::class, 'A mixed index alteration requires an ordered list of two or more actions.', 2);
         $stable = Check::listOf($unmoved, Identifier::class, 'A mixed index alteration requires an ordered list of unmoved names.');
-        (new MixedIndexChanges())->check($owner, $owned, $stable, $policy);
+        (new MixedIndexChanges())->check($owner, $owned, $stable, $policy, $requirements);
         $this->actions = $owned;
         $this->unmoved = $stable;
     }

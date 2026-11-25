@@ -55,6 +55,7 @@ CONTRACTS = {
     "mysql-multiple-index-removal-evidence-v1.json": "1309c74f71d04c1926a6de8fcb3f7b2dbb9710a2ad6af5a7152c34d8510b83ec",
     "mysql-index-renames-evidence-v1.json": "a0447f8248759f8627ee3cf4bba74c0396678d9de97e5f471554e6a652eb0074",
     "mysql-mixed-index-alteration-evidence-v2.json": "cf8dab798394497cf06f819a0d1f363cc4bf85dd9766e3a67945bc49f9421904",
+    "mysql-index-foreign-keys-evidence-v1.json": "a561cae8497665c4ec88ff6701d3d6412acb994000e22844d0729765d611b0da",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",

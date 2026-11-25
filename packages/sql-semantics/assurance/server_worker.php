@@ -994,12 +994,23 @@ function constructMysqlIndexIdentity(array $spec): SqlSemantics\Platform\MySql\I
     );
 }
 
+/** @return list<SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement> */
+function constructMysqlForeignKeyRequirements(array $input): array
+{
+    $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+    return array_map(static fn (array $requirement): SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement =>
+        new SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement(
+            mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $requirement['owner']),
+            array_map(static fn (string $key): object => new $identifier($key), $requirement['keys'])
+        ), $input['mysqlIndexForeignKeys'] ?? []);
+}
+
 function constructMysqlDropIndex(array $input): SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex
 {
     $spec = $input['mysqlDropIndex'];
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
-        constructMysqlIndexIdentity($spec), SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
+        constructMysqlIndexIdentity($spec), constructMysqlForeignKeyRequirements($input), SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
         constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
     );
 }
@@ -1009,7 +1020,7 @@ function constructMysqlDropIndexes(array $input): SqlSemantics\Platform\MySql\Ir
     $spec = $input['mysqlDropIndexes'];
 
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes(
-        array_map(constructMysqlIndexIdentity(...), $spec['targets']),
+        array_map(constructMysqlIndexIdentity(...), $spec['targets']), constructMysqlForeignKeyRequirements($input),
         SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
         constructMysqlIndexPolicy($spec['policy']), $spec['ignore']
     );
@@ -1055,6 +1066,7 @@ function constructMysqlMixedIndexes(array $input): SqlSemantics\Platform\MySql\I
     return new SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes(
         mysqlTableIdentity('SqlSemantics\\Platform\\MySql\\Ir\\', $spec['owner']), $actions,
         array_map(static fn (string $unmoved): SqlSemantics\Platform\MySql\Ir\Identifier => new $name($unmoved), $spec['unmoved']),
+        constructMysqlForeignKeyRequirements($input),
         SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::from($input['release']),
         constructMysqlIndexPolicy($spec['policy'])
     );

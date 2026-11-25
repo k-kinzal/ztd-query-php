@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\Index;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexDependencyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexPolicyLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
@@ -38,8 +39,11 @@ final class DropIndexLowering
      */
     public function lower(BoundStatement $operation, ParsedDropIndex $statement): DropIndex
     {
+        $target = $this->identity($operation, $statement, $statement->index);
+
         return new DropIndex(
-            $this->identity($operation, $statement, $statement->index),
+            $target,
+            (new IndexDependencyLowering())->resolve($operation, $statement, [$target]),
             $operation->context->profile->grammar,
             (new IndexPolicyLowering())->lower($statement->options),
         );
