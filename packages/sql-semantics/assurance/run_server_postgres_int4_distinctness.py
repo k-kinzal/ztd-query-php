@@ -110,7 +110,7 @@ def controls():
 def faults(_engine, tag):
     renderer = "sql-semantics-postgres/src/Ir/SelectSql.php"
     polarity = "$test->negated ? $same : '(NOT ' . $same . ')'"
-    qualified = "OPERATOR(pg_catalog.=)"
+    qualified = "$equality = '(' . $left . ' OPERATOR(pg_catalog.=) ' . $right . ')';"
     null_fallback = "$same = 'COALESCE(' . $equality . ', (' . $left . ' IS NULL AND ' . $right . ' IS NULL))';"
     shadow = {**item(tag, "projection", distinctness(integer(1), integer(1), True), "unit"), "shadow": True}
     return [
@@ -120,7 +120,7 @@ def faults(_engine, tag):
                     item(tag, "projection", distinctness(NULL, NULL, True), "unit"), "meaning-mismatch"),
         RenderFault("compare-the-left-value-twice", renderer, "$this->integerOrNull($test->right,", "$this->integerOrNull($test->left,",
                     item(tag, "projection", distinctness(["slot", 0], ["slot", 1], True), "only"), "meaning-mismatch"),
-        RenderFault("rebind-equality-in-caller-schema", renderer, qualified, "=", shadow, "meaning-mismatch"),
+        RenderFault("rebind-equality-in-caller-schema", renderer, qualified, qualified.replace("OPERATOR(pg_catalog.=)", "="), shadow, "meaning-mismatch"),
     ]
 
 
