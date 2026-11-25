@@ -50,11 +50,16 @@ def finite_ids(_, spec, _tag):
     second = cases.independent_ids()
     require(len(in_order) == len(second) == spec["finite"]["coordinatesPerRoute"] and set(in_order) == second,
             "mysql-signed-case-finite-definition")
-    return second
+    return {coordinate_id(coord) for coord in second}
+
+
+def coordinate_id(coordinate):
+    return json.dumps(coordinate, separators=(",", ":"))
+
 
 def identify(item, response):
     check_value(item,response)
-    return cases.physical(response["columns"][0][0],response["source"])
+    return coordinate_id(cases.physical(response["columns"][0][0], response["source"]))
 
 def finite_id(_, response, item):
     return identify(item,response)
