@@ -227,7 +227,7 @@ def faults(_, tag):
             "viewNames: []", empty, "mysql-generated-view-native-refusal", law.structure(empty),
         )
     return [
-        RenderFault("ignore-native-generated-heading", src + "Ir/Schema/View/CreateViewLowering.php",
+        RenderFault("ignore-native-generated-heading", src + "Ir/Schema/View/ViewHeadingLowering.php",
                     "$assign->allocate($labels, $generated)", "$labels",
                     {**generated, "wrongRejection": "The view heading cannot repeat a column name."}, GRAPH,
                     source_request(tag, law.command(generated))),
