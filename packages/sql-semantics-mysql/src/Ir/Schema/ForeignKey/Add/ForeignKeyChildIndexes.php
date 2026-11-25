@@ -37,7 +37,7 @@ final class ForeignKeyChildIndexes
         }
         foreach ($occupied as $key) {
             if ($key->referenceKey) {
-                $existing[] = $layout->physical($key);
+                $existing[] = [$layout->physical($key), $key->implicitForeignKey];
             }
         }
         $introduced = [];
@@ -107,14 +107,14 @@ final class ForeignKeyChildIndexes
     /**
      * Checks full ordered directional coverage by existing or retained generated keys.
      * @param non-empty-list<non-empty-list<array{string, bool}>> $proposed Checked directional prefixes
-     * @param list<list<array{string, bool}>> $existing Prior full leading child keys
+     * @param list<array{list<array{string, bool}>, bool}> $existing Prior leading child fields and implicit origin
      */
     public function covered(int $position, array $proposed, array $existing): bool
     {
         $wanted = $proposed[$position];
         $width = count($wanted);
-        foreach ($existing as $key) {
-            if (array_slice($key, 0, $width) === $wanted) {
+        foreach ($existing as [$key, $implicit]) {
+            if ((!$implicit || count($key) > $width) && array_slice($key, 0, $width) === $wanted) {
                 return true;
             }
         }

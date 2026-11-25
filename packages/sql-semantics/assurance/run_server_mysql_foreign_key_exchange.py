@@ -1,6 +1,7 @@
 """Check native MySQL mixed foreign-key edits and physical replacements."""
 
 from copy import deepcopy
+from itertools import product
 import json
 import sys
 
@@ -13,13 +14,14 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-foreign-key-exchange"
 OBSERVER = "mysql_foreign_key_exchange_observer.php"
-NAME = "mysql-foreign-key-exchange-evidence-v1.json"
-CONTRACT = "eda03e63a67d29664dad6768874551486b183d4e754040c0d84ceb922c16c396"
+NAME = "mysql-foreign-key-exchange-evidence-v2.json"
+CONTRACT = "92d71447548f0191a3f0b92edbe2e737a47f8cdf36175138b6cb7230130a63aa"
 POLICY = "The checked InnoDB profile needs copying and a compatible lock to add a native foreign key."
 REMOVAL = "The exchange removal must select an original native constraint on its owning table."
 COMPARATOR_FAULTS = {
     "Discard physical width when a name was reused.": "same-name-wrong-width",
     "Retain the original referential edge after the exchange.": "keep-original-reference",
+    "Keep the old name during equal-width implicit replacement.": "equal-width-stale-name",
 }
 
 
@@ -64,12 +66,22 @@ def negative(kind, label, model):
         }
 
 
-def edges(tag):
+def edges(tag, specification):
     for kind in ("exchange", "add", "copy"):
         for name, mode in ((None, "allocated"), ("code_id", "distinct-explicit"), ("Widened", "distinct-explicit")):
             key = f"{kind}/{name or 'automatic'}"
             yield key, laws.model(tag, requested=mode, composite=True, origin="implicit", kind=kind, name=name)
     yield "last-slot-replaces-implicit", laws.model(tag, composite=True, origin="implicit", padding=62, name="Widened")
+
+    plan = specification["prefixWitnesses"]
+    points = tuple(product(plan["operations"], plan["prefixes"], plan["names"]))
+    same(plan["coordinates"], len(set(points)))
+    for kind, prefix, name in points:
+        mode = "allocated" if name == "automatic" else "distinct-explicit"
+        key = "code_id" if name == "reused" else "New_Support"
+        yield f"{kind}/{prefix}/{name}", laws.model(
+            tag, requested=mode, origin="implicit", kind=kind, name=key, prior_composite=prefix == "longer-prior",
+        )
 
 
 def invalid(tag):
@@ -98,6 +110,13 @@ def invalid(tag):
     changed = deepcopy(base)
     changed[path]["actions"] = {"3": base[path]["actions"][0], "4": base[path]["actions"][1]}
     yield "sparse-clauses", changed, "A foreign-key exchange needs a nonempty ordered action list."
+    for prior_is_longer, wrong in ((False, None), (True, "Forced_Change")):
+        model = laws.model(tag, requested="distinct-explicit", origin="implicit", kind="add",
+                           name="Forced_Change", prior_composite=prior_is_longer)
+        request = laws.direct(model)
+        request["mysqlAddForeignKeys"]["additions"][0]["created"] = wrong
+        yield ("force-shorter-index" if prior_is_longer else "deny-equal-replacement"), request, (
+            "The declared foreign-key index effect differs from native allocation.")
     absent = deepcopy(base)
     absent["mysqlForeignKeyCatalog"]["keys"] = [
         key for key in absent["mysqlForeignKeyCatalog"]["keys"] if key["owner"] == laws.OWNER
@@ -115,7 +134,7 @@ def requests(engine, tag, spec):
         else:
             negatives += 2
             yield from negative("finite", label, model)
-    for name, model in edges(tag):
+    for name, model in edges(tag, spec):
         yield from positive("edge", name, model)
     for name, model in (("in-place", laws.model(tag, algorithm="INPLACE")),
                         ("unlocked-copy", laws.model(tag, algorithm="COPY", lock="NONE"))):
@@ -248,6 +267,22 @@ def controls():
             records[name] = failure.detail
         else:
             raise Failure("mysql-foreign-key-exchange-fault-missed", name)
+    equal = {"model": laws.model("mysql-9.1.0", requested="distinct-explicit", origin="implicit", kind="add",
+                                 name="New_Support")}
+    actual = {**laws.prediction(equal["model"]), "affected": len(laws.ROWS), "diagnostics": []}
+    sql = laws.statement(equal["model"], True)
+    check_observation(equal, actual, sql)
+    stale = deepcopy(actual)
+    for key in stale["after"]["keys"]:
+        if key[0] == "New_Support":
+            key[0] = "code_id"
+    try:
+        check_observation(equal, stale, sql)
+    except Failure as failure:
+        same("meaning-mismatch", failure.signal)
+        records["equal-width-stale-name"] = failure.detail
+    else:
+        raise Failure("mysql-foreign-key-exchange-fault-missed", "equal-width-stale-name")
     return records
 
 

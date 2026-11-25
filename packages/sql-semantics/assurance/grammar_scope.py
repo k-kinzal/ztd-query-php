@@ -831,12 +831,12 @@ def inventory(root):
                 entry.startswith("alter_list_item: ADD ") and any(term in entry for term in ("constraint", "foreign_key", "key_def"))
             }
             for alternative in signatures & (foreign_addition | alter_index):
-                related[alternative] = (*related.get(alternative, ()), "mysql-add-foreign-keys-evidence-v2.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-add-foreign-keys-evidence-v3.json")
                 related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-string-evidence-v1.json")
                 related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-scalar-evidence-v2.json")
                 related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-enumeration-evidence-v2.json")
             for alternative in signatures & (foreign_addition | foreign_removal | alter_index):
-                related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-exchange-evidence-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-foreign-key-exchange-evidence-v2.json")
             for alternative in signatures & alter_index:
                 related[alternative] = (*related.get(alternative, ()), "mysql-alter-index-removal-evidence-v1.json")
             generated_keys = {

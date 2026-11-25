@@ -34,13 +34,16 @@ def grid(spec):
 
 def model(tag, original="explicit", requested="allocated", order="drop-before-add", repeat=False, retained=False,
           algorithm="DEFAULT", *, composite=False, extra=None, cross=False, origin="explicit", kind="exchange",
-          name=None, padding=0, lock="DEFAULT"):
+          name=None, padding=0, lock="DEFAULT", prior_composite=False):
     prior_symbol = {"explicit": "Original", "ordinal-one": TABLE + "_ibfk_1", "ordinal-nine": TABLE + "_ibfk_9"}[original]
     prior_ordinal = {"explicit": 0, "ordinal-one": 1, "ordinal-nine": 9}[original]
     retained_symbol = TABLE + "_ibfk_4" if retained else None
     parent = [ALTERNATE if cross else SCHEMA, PARENT, "table"]
     cols = [("code_id", "code"), ("peer_id", "id")] if composite else [("code_id", "code")]
     origin_field, origin_target = ("code_id", "code") if origin != "explicit" else ("pid", "id")
+    old_pairs = [(origin_field, origin_target)]
+    if prior_composite:
+        old_pairs.append(("peer_id", "id"))
     old_key = "prior_pid" if origin == "explicit" else "code_id"
     prior_symbol = TABLE + "_ibfk_1" if origin != "explicit" else prior_symbol
     prior_ordinal = 1 if origin != "explicit" else prior_ordinal
@@ -53,9 +56,9 @@ def model(tag, original="explicit", requested="allocated", order="drop-before-ad
     if extra is not None:
         additions.append({"symbol": extra, "requested": "distinct-explicit", "pairs": [("tag_id", "id")],
                           "effects": [UPDATE, DELETE]})
-    replacement = origin != "explicit" and composite
+    replacement = origin != "explicit" and (composite or not prior_composite)
     created = [addition["pairs"][0][0] if addition["requested"] == "allocated" else addition["symbol"] for addition in additions]
-    if origin != "explicit" and not composite:
+    if prior_composite and not composite:
         created[0] = None
     drop = [prior_symbol] * (2 if repeat else 1) if kind == "exchange" else []
     edits = [*drop, *range(len(additions))] if order == "drop-before-add" else [*range(len(additions)), *drop]
@@ -64,7 +67,7 @@ def model(tag, original="explicit", requested="allocated", order="drop-before-ad
     return {"release": tag, "original": original, "requested": requested, "order": order, "repeat": repeat,
             "retained": retained, "algorithm": algorithm, "lock": lock, "owner": OWNER, "parent": parent,
             "origin": origin, "kind": kind, "old": prior_symbol, "oldKey": old_key, "retainedSymbol": retained_symbol,
-            "oldPair": [origin_field, origin_target], "edits": edits, "additions": additions, "created": created,
+            "oldPairs": old_pairs, "edits": edits, "additions": additions, "created": created,
             "removed": [old_key] if replacement else [], "padding": padding, "error": error}
 
 
@@ -80,7 +83,7 @@ def exploratory(tag, seed, limit, specification):
 
 
 def build_keys(item):
-    facts = [("PRIMARY", ["rid"], "primary", False), (item["oldKey"], [item["oldPair"][0]], "ordinary", item["origin"] != "explicit")]
+    facts = [("PRIMARY", ["rid"], "primary", False), (item["oldKey"], [child for child, _ in item["oldPairs"]], "ordinary", item["origin"] != "explicit")]
     if item["retained"]:
         facts.append(("retained_index", ["spare_id"], "ordinary", False))
     facts.extend((f"f{index}", [f"c{index}"], "ordinary", False) for index in range(item["padding"]))
@@ -93,14 +96,14 @@ def ddl(item):
     declarations = [f"CREATE TABLE {parent} (id INT NOT NULL PRIMARY KEY, code INT NOT NULL UNIQUE, UNIQUE KEY by_both(code,id)) ENGINE=InnoDB"]
     target = qualified([SCHEMA, TABLE + "_source"]) if item["kind"] == "copy" else owner
     cols = ["rid INT PRIMARY KEY", *(f"{name} INT" for name in HEAD[1:])]
-    keys = [f"KEY {quoted(name)} ({quoted(fields[0])})" for name, fields, role, implicit in build_keys(item)
+    keys = [f"KEY {quoted(name)} ({', '.join(map(quoted, fields))})" for name, fields, role, implicit in build_keys(item)
             if role != "primary" and not implicit]
     cols.extend(f"c{index} INT" for index in range(item["padding"]))
     constraints = []
-    first, second = item["oldPair"]
+    prior_columns, prior_targets = zip(*item["oldPairs"])
     label = f"CONSTRAINT {quoted(item['old'])} " if item["origin"] == "explicit" else ""
     actions = "" if item["origin"] == "explicit" else " ON UPDATE CASCADE ON DELETE SET NULL"
-    constraints.append(f"{label}FOREIGN KEY ({quoted(first)}) REFERENCES {parent} ({quoted(second)}){actions}")
+    constraints.append(f"{label}FOREIGN KEY ({', '.join(map(quoted, prior_columns))}) REFERENCES {parent} ({', '.join(map(quoted, prior_targets))}){actions}")
     if item["retained"]:
         label = quoted(item["retainedSymbol"])
         constraints.append(f"CONSTRAINT {label} FOREIGN KEY (`spare_id`) REFERENCES {parent} (`id`) ON DELETE SET NULL")
@@ -156,7 +159,7 @@ def original_edges(item):
         return []
     default = "RESTRICT" if item["release"] in OLD else "NO ACTION"
     effects = [default, default] if item["origin"] == "explicit" else [UPDATE, DELETE]
-    prior = [(item["old"], [item["oldPair"]], effects)]
+    prior = [(item["old"], item["oldPairs"], effects)]
     if item["retained"]:
         prior.append((item["retainedSymbol"], [("spare_id", "id")], [default, "SET NULL"]))
     return prior

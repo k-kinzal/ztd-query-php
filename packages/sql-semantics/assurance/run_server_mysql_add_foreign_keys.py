@@ -13,9 +13,9 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-add-foreign-keys"
 OBSERVER = "mysql_add_foreign_keys_observer.php"
-NAME = "mysql-add-foreign-keys-evidence-v2.json"
+NAME = "mysql-add-foreign-keys-evidence-v3.json"
 BASE = "214b04864ac045b8ee9b10e5291a5d59c5f34d893df871dd3de791d7ed6bb09a"
-CONTRACT = "3d92083cb67c04cfa7afec67376108c90c973c2c9f087494697c91a29b4b9999"
+CONTRACT = "ada4f2890c01347741ae019ba709c825d20e84d0b645ca3ec165c20a8bc5f81c"
 COMPARATOR_FAULTS = {
     "Erase native MATCH metadata with unchanged rows.": "erase-match-metadata",
     "Erase an observed partial-NULL insertion outcome.": "erase-partial-null-effects",

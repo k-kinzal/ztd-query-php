@@ -50,11 +50,20 @@ final class ForeignKeyChildIndexesTest extends TestCase
         self::assertSame(['implicit' => $initial->identity->name], $replaced);
     }
 
+    public function testCoveredPrefersTheNewEqualImplicitKeyAndKeepsLongerSupport(): void
+    {
+        $keys = new ForeignKeyChildIndexes();
+        $proposed = [[['owner_id', false]]];
+
+        self::assertFalse($keys->covered(0, $proposed, [[[['owner_id', false]], true]]));
+        self::assertTrue($keys->covered(0, $proposed, [[[['owner_id', false], ['code', true]], true]]));
+    }
+
     public function testCoveredUsesExactNativeDirection(): void
     {
         $keys = new ForeignKeyChildIndexes();
 
-        self::assertFalse($keys->covered(0, [[['owner_id', true]]], [[['owner_id', false]]]));
-        self::assertTrue($keys->covered(0, [[['owner_id', true]]], [[['owner_id', true]]]));
+        self::assertFalse($keys->covered(0, [[['owner_id', true]]], [[[['owner_id', false]], false]]));
+        self::assertTrue($keys->covered(0, [[['owner_id', true]]], [[[['owner_id', true]], false]]));
     }
 }
