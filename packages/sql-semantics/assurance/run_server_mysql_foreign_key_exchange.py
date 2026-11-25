@@ -98,7 +98,7 @@ def invalid(tag):
         ("unresolved-spelling", {"drop": [previous.upper(), "constraint"]}, REMOVAL),
         ("ignored-removal", {"drop": [None, "ignored-on-temporary"]},
          "The foreign-key action does not belong to this native table lifetime."),
-        ("wrong-kind", 19, "A mixed key alteration requires checked foreign-key additions, removals or secondary keys."),
+        ("wrong-kind", 19, "A mixed key alteration requires checked foreign-key or physical index actions."),
     ):
         changed = deepcopy(base)
         changed[path]["actions"][0] = action

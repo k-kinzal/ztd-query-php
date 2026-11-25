@@ -199,7 +199,9 @@ def negatives(dialect):
                     diagnostics + "InvalidConstruction"))
     invalid.extend([(field, boundary["message"], boundary["exception"]), (grouped, rejection["message"], exception)])
     if dialect == "mysql":
-        invalid.append((case(dialect, None, [["integer", "1"]], [" before"]), "cannot start with SQL whitespace", None))
+        invalid.append((case(dialect, None, [["integer", "1"]], [" before"]),
+                        "A MySQL result name must begin with a native graphic character or be empty.",
+                        diagnostics + "InvalidConstruction"))
     else:
         invalid.append((case(dialect, None, [["integer", "1"]], [""]), "nonempty", None))
         invalid.append((analyzed(dialect, "SELECT 1 OPERATOR(public.+) 2"), "pg_catalog operator", None))
