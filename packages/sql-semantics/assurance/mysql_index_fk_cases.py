@@ -72,7 +72,7 @@ def model(tag, side, shape, plan, scope, variation=0, descending=False, invisibl
     ]
     return {"dialect": "mysql", "release": tag, "side": side, "shape": shape, "plan": plan, "scope": scope,
             "target": target, "owner": [*coordinate, "temporary-table" if shadow else "table"], "labels": labels,
-            "parent": [SCHEMA, PARENT], "child": [child_schema, CHILD], "parentFields": p, "childFields": c,
+            "parent": [SCHEMA, PARENT], "child": [child_schema, CHILD], "parentFields": list(p), "childFields": list(c),
             "parents": parents, "children": children, "session": session, "initial": primary_target, "final": final,
             "supports": [] if shadow else supports, "legal": legal, "offset": variation}
 
