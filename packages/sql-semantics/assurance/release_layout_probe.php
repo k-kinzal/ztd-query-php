@@ -1526,7 +1526,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['postgresSchemaIndexes'] = [
                 $fresh->table->schema->value, $fresh->table->table->value, $fresh->name->value,
-                $fresh->keys[0]->slot, $fresh->keys[0]->order->value, $fresh->table->columnKind(1)->value,
+                $fresh->keys[0]->slot, $fresh->keys[0]->order->value, $fresh->bindings[1]->kind->value,
                 $fresh === $rebuilt->indexes[0], $fresh->presence->value, $guarded->presence->value,
                 $indexBatch->toString(), $rebuilt->toString(), $mismatched,
             ];
