@@ -85,7 +85,7 @@
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
 <span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>            <span class="tok-str">&#039;&quot;appended&quot; INTEGER CONSTRAINT &quot;minimum&quot; CHECK ((&quot;appended&quot; &gt; &quot;operand&quot;)) CONSTRAINT &quot;upper&quot;&quot;bound&quot; CHECK (&quot;appended&quot;)&#039;</span>,</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>            (<span class="tok-kw">new</span> <span class="tok-id">TableDeclarationSql</span>())-&gt;<span class="tok-id">addition</span>(<span class="tok-var">$column</span>, [<span class="tok-var">$prior</span>], <span class="tok-var">$checks</span>),</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>            (<span class="tok-kw">new</span> <span class="tok-id">TableDeclarationSql</span>())-&gt;<span class="tok-id">addition</span>(<span class="tok-var">$column</span>, [<span class="tok-var">$prior</span>, <span class="tok-var">$column</span>-&gt;<span class="tok-id">name</span>], <span class="tok-var">$checks</span>),</span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        );</span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a></span>
