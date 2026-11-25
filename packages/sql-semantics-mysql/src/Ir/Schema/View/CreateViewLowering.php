@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\View;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView as ParsedCreateView;
 
 /**
@@ -33,12 +35,18 @@ final class CreateViewLowering
         $schema = ($definition->name->schema ?? $operation->context->declarationSchema)->value;
         Check::input($schema !== SessionDatabase::UNNAMED && $definition->name->catalog === null, 'CREATE VIEW requires an absolute view identity.');
         $name = new ViewName(new Identifier($schema), new Identifier($definition->name->name->value));
+        $aliases = new ViewProjectionAliases();
+        foreach ($definition->query->items as $item) {
+            if ($item instanceof SelectExpression && $item->alias !== null) {
+                $aliases->check($item->alias->value);
+            }
+        }
         $query = (new SelectLowering())->lower($operation, $definition->query);
         $columns = [];
         if ($definition->columns === null) {
             foreach ($query->columns as $column) {
-                Check::input($column->name instanceof Identifier, 'A view requires an explicit name for a long intrinsic integer heading.');
-                $columns[] = new ViewColumn($column->name);
+                Check::input(!$column->name instanceof IntrinsicIntegerName, 'A view requires an explicit name for a long intrinsic integer heading.');
+                $columns[] = new ViewColumn(new Identifier($column->name->value));
             }
         } else {
             foreach ($definition->columns as $column) {

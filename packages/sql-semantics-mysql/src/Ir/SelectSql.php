@@ -42,13 +42,14 @@ final class SelectSql
     /**
      * Renders the result columns in order, then the optional source and filter.
      */
-    public function render(Select $select, bool $localNames = false): string
+    public function render(Select $select, bool $localNames = false, bool $retainRequested = false): string
     {
         $source = $select->source;
         $items = [];
         foreach ($select->columns as $slot => $column) {
             $label = $column->name->value;
-            if ($localNames) {
+            $retain = $retainRequested && $column->name instanceof RequestedResultAlias;
+            if ($localNames && !$retain) {
                 $alias = ' AS ' . $this->localColumn($slot);
             } elseif ($column->name instanceof IntrinsicIntegerName || $label !== ltrim($label, "\x00..\x20\x7f")) {
                 $alias = '';

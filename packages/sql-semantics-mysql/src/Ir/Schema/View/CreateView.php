@@ -78,6 +78,6 @@ final class CreateView implements SemanticsIR
         }
 
         return $start . ' ALGORITHM=' . $this->algorithm->value . ' SQL SECURITY ' . $this->security->value . ' VIEW '
-            . $preserve . $this->name->quoted() . ' (' . implode(', ', $names) . ') AS ' . (new SelectSql())->render($this->query, true);
+            . $preserve . $this->name->quoted() . ' (' . implode(', ', $names) . ') AS ' . (new SelectSql())->render($this->query, true, true);
     }
 }

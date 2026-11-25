@@ -159,6 +159,28 @@ function observeMysqlDerivedProjectionAlias(SqlSemantics\Platform\MySql\Semantic
     return [$local == $batch, $local == $direct, $joined == $joinedDirect, $local->toString(), $joined->toString()];
 }
 
+function observeMysqlCreateViewProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $sql = 'CREATE VIEW app.alias_effect (stored_heading) AS SELECT -2147483649 AS ` requested`';
+    $analyzed = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $label = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' requested');
+    $operand = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral('-2147483649');
+    $selection = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn($operand, $label),
+    ], release: $semantics->profile()->grammar);
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('alias_effect')
+    );
+    $field = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('stored_heading')
+    );
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView($target, $selection, [$field]);
+
+    return [$analyzed == $batch, $analyzed == $direct, $analyzed->columns[0]->name->value,
+        $analyzed->query->columns[0]->name->requested, $analyzed->query->columns[0]->expression->decimal(), $analyzed->toString()];
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -1239,6 +1261,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         $details = [];
         if ($platform === 'MySql' && $role === 'Schema\\View\\CreateView') {
+            $details['createViewAlias'] = observeMysqlCreateViewProjectionAlias($semantics);
             $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
             $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
             $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,

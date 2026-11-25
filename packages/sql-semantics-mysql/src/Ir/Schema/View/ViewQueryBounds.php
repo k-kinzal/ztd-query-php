@@ -9,9 +9,10 @@ use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
-use SqlSemantics\Platform\MySql\Ir\Ordering\LocalProjectionAliases;
+use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -28,7 +29,6 @@ final class ViewQueryBounds
      */
     public function check(Select $query, ViewName $target, ViewAlgorithm $algorithm): void
     {
-        (new LocalProjectionAliases())->check($query);
         Check::input(!$query->distinct && $query->orderBy === [] && $query->limit === null, 'A checked view requires an ordinary unbounded projection.');
         $source = $query->source;
         Check::input(
@@ -42,11 +42,16 @@ final class ViewQueryBounds
                 'A view cannot read its own target identity.'
             );
         }
+        $aliases = new ViewProjectionAliases();
         foreach ($query->columns as $column) {
+            if ($column->name instanceof RequestedResultAlias) {
+                $aliases->check($column->name->requested);
+            }
             $value = $column->expression;
             Check::input(
                 $value instanceof ColumnReference || $value instanceof TextColumnReference
-                || $value instanceof IntegerLiteral || $value instanceof TextLiteral || $value instanceof NullLiteral || $value instanceof BooleanLiteral,
+                || $value instanceof IntegerLiteral || $value instanceof ProjectedIntegerLiteral || $value instanceof TextLiteral
+                || $value instanceof NullLiteral || $value instanceof BooleanLiteral,
                 'A checked view result must read a native field or a literal without parameters.'
             );
         }

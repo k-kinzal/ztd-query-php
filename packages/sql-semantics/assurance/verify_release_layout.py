@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v197.json"
-CONTRACT = "973b8dd1c86b097de0bb6be5a55f7d59c18e2d8d64046b6db6998e5f46634709"
+CONTRACT_NAME = "release-layout-v198.json"
+CONTRACT = "d0691538ad3e0c1c7a1c7602849fa2938501f4a75c9dbabee677955e65a0cca5"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -551,6 +551,12 @@ def verify_probe(raw, catalog):
                                                'AS SELECT 42 AS `__ztd_c0` FROM DUAL WHERE FALSE']
                     and item["sql"] == 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `app`.`answer` (`value`) AS SELECT 42 AS `__ztd_c0`',
                     "installed-mysql-create-view-mismatch", item)
+            view_alias = item.get("createViewAlias")
+            require(view_alias == [
+                True, True, "stored_heading", " requested", "-2147483649",
+                'CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `app`.`alias_effect` (`stored_heading`) '
+                'AS SELECT -2147483649 AS ` requested`',
+            ], "installed-mysql-create-view-alias-mismatch", view_alias)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("mysqlSignedComparisonWidths") == [True, True, True, ["val", "lo", "hi"],
                 [["BIGINT", True], ["SMALLINT", False], ["MEDIUMINT", True]],

@@ -1738,8 +1738,9 @@ if ($dialect !== 'sqlite') {
         $viewSecurity = 'Schema\\View\\ViewSecurity';
         $viewPolicy = 'Schema\\View\\ViewCreationPolicy';
         $roots[] = $viewCreate;
-        array_push($internal, 'Schema\\CreateRelationLowering', 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds');
-        $pureCollaborators[] = 'Schema\\View\\ViewQueryBounds';
+        array_push($internal, 'Schema\\CreateRelationLowering', 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds',
+            'Schema\\View\\ViewProjectionAliases');
+        array_push($pureCollaborators, 'Schema\\View\\ViewQueryBounds', 'Schema\\View\\ViewProjectionAliases');
         $properties[$viewCreate] = ['name' => [$viewName], 'query' => ['Select'], 'columns' => ['array'],
             'policy' => [$viewPolicy], 'algorithm' => [$viewAlgorithm], 'security' => [$viewSecurity]];
         $properties[$viewColumn] = ['name' => ['Identifier']];
