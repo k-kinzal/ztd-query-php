@@ -1,0 +1,195 @@
+{
+  "revision": "SemanticsIR/mysql-signed-comparison-widths-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/sql-mode-empty/utf8mb4/native",
+    "mysql-5.7.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.0.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.1.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.2.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.3.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.4.7/sql-mode-empty/utf8mb4/native",
+    "mysql-9.0.1/sql-mode-empty/utf8mb4/native",
+    "mysql-9.1.0/sql-mode-empty/utf8mb4/native"
+  ],
+  "scope": "The native signed integer relational comparisons and inclusive range tests in ordinary result expressions, predicates, joins and single-table writes. Preserve all five signed native field widths, signed64 literal values with supported spelling attributes and SQL NULL.",
+  "constructors": {
+    "Predicate/IntegerOperator": {
+      "role": "One of seven integer comparison operations.",
+      "structure": "Equality, inequality, the four ordered comparisons and NULL-safe equality.",
+      "conditions": "Select the exact closed enum value.",
+      "meaning": "The six ordinary forms compare two known exact integers, returning NULL if either operand is NULL. NULL-safe equality also compares NULL references, returning 1 for two NULLs, 0 for one NULL and the ordinary signed comparison for two known operands.",
+      "externalInterpretation": "The same closed absolute table or visible derived occurrence and signed type, with exact NULL interpretation.",
+      "sql": "Print the checked operator token between its operands.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Predicate/IntegerComparison": {
+      "role": "An ordered comparison of two pure signed atoms.",
+      "structure": "Separate left and right atoms and the exact comparison operator. Literal atoms retain their signed decimal and relevant token distinctions. Field atoms retain the resolved occurrence and exact signed role.",
+      "conditions": "The parent closes both references over its local layout. The analyzer selects the signed comparison only for its checked signed or NULL operands.",
+      "meaning": "The operation is exact on signed integer values. The result is native LONGLONG. An ordinary comparison may produce NULL. NULL-safe equality is never NULL.",
+      "externalInterpretation": "The same closed absolute table or visible derived occurrence and signed type, with exact NULL interpretation.",
+      "sql": "Render the signed operands separated by the native operator, and use parentheses to preserve composition.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Predicate/IntegerRange": {
+      "role": "One subject, lower bound, upper bound and polarity.",
+      "structure": "All three operand positions are separate signed values or NULL, with resolved physical widths and exact signed literal tokens.",
+      "conditions": "The parent checks all three references in their correct local scopes, and the analyzer refuses operands from unsupported coercion domains.",
+      "meaning": "The range is inclusive. If a known bound disproves the range, the result is false. Otherwise any unknown comparison makes the result NULL. A NULL subject is NULL. Negation reverses only the known result.",
+      "externalInterpretation": "The same closed absolute table or visible derived occurrence and signed type, with exact NULL interpretation.",
+      "sql": "Emit the native parenthesized BETWEEN or NOT BETWEEN in subject, lower and upper order.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/IntegralColumnReference": {
+      "role": "Resolved pure signed physical read in a bound input occurrence.",
+      "structure": "An exact occurrence ordinal and a local slot that references its input layout.",
+      "conditions": "The owning source must provide the declared closed signed role in the required slot. No unresolved alternative is admissible.",
+      "meaning": "Read the same mathematical signed integer or NULL at the resolved occurrence.",
+      "externalInterpretation": "The same closed absolute table or visible derived occurrence and signed type, with exact NULL interpretation.",
+      "sql": "Emit the checked table alias and field name, or the unqualified name where the native single-table mutation requires it.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "finite": {
+    "sources": [
+      "unit",
+      "five-widths"
+    ],
+    "placements": [
+      "projection",
+      "filter"
+    ],
+    "values": [
+      "NULL",
+      "2",
+      "2147483648"
+    ],
+    "physicalWidths": [
+      "TINYINT",
+      "SMALLINT",
+      "MEDIUMINT",
+      "INT",
+      "BIGINT"
+    ],
+    "operators": [
+      "=",
+      "<>",
+      "<",
+      "<=",
+      ">",
+      ">=",
+      "<=>"
+    ],
+    "rangeNegations": [
+      false,
+      true
+    ],
+    "coordinatesPerRoute": 3178,
+    "routes": [
+      "direct",
+      "analyze"
+    ],
+    "completion": "Record every ordered pair and triple for every selected source, placement, operator and polarity, independently reconstruct the physical identity and compare with a mixed-radix oracle.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      17059,
+      35537,
+      67189
+    ],
+    "casesPerSeed": 48,
+    "directCasesPerSeed": 48,
+    "timeoutSecondsPerRelease": 900,
+    "shape": "Explore full signed extrema and padded tokens, intersecting and reversed bounds, TRUE/FALSE/NULL, nested tested comparisons, whole typed layout and distinct qualified occurrences. Inspect joins and all rows after reversible UPDATE and DELETE.",
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Measure column labels, native type identity and native nullability, together with typed values, duplicates and contractually defined ordering.",
+    "Compare both originals and emitted SQL with the independent typed evaluator. Check the full changed table and the restored table for mutations.",
+    "Distinct signed values from different widths and occurrences must distinguish incorrect reads. Include NULL in different operand positions, all signed ranges and the native integer boundary values.",
+    "Keep mandatory fault inputs, applied diffs, exact comparator evidence and the original counterexample for each failure."
+  ],
+  "faults": [
+    "Erase an operand scope check",
+    "Read a different native slot",
+    "Swap ordered bounds",
+    "Replace NULL-safe equality with ordinary equality",
+    "Drop range negation",
+    "Ignore a native NULL distinct from zero"
+  ],
+  "trust": [
+    "Pinned native profile and admitted signed comparison coercion",
+    "Exact checked constructor and SQL source forms",
+    "Independently executed signed integer and tri-valued comparator",
+    "Human approval pending"
+  ],
+  "unmetAdjacentAreas": [
+    "Mixed approximate, unsigned, decimal, text, temporal, row or regex comparisons need their own resolved coercions.",
+    "The checked signed expression must have fixed role and ordering. A future generalized scalar layout must show how its parent interprets native conversion."
+  ],
+  "source": "https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html",
+  "calibration": {
+    "5.6.51": "ce512f3b59bc643467f2c4acecac56d6e1feda5e63634b4707fa34dce99794c4",
+    "5.7.44": "1eed8909e206ea46b294e89e23bea46bd8bcebf43ef00d618ab49610f2fc52f8",
+    "8.0.44": "9eb71a3a773d6b7d547bb2bff00f0608f8aaeddbff0f566c5e812f90b10d4f99",
+    "8.1.0": "de9d02ffe7c9a0b1b5db40324f387cf9c2a07bbea8eaa42728e24faa3c7e70b4",
+    "8.2.0": "d43dfecf4360ede08f2fa602217c4df35c759b484b20a5c0b496eefcbf9f26d8",
+    "8.3.0": "562f1e184fd247d9807961b66e22a1ba10d6ecd674703200ae1a2a02c376fcf4",
+    "8.4.7": "80055bd3658732b08f6446e23ed6218f2937732ffcdb45a58ca3f5d5304298b0",
+    "9.0.1": "8a94e4a4a424321eb0769a6912e86061b9dda451d74e232ca65cfca25866f732",
+    "9.1.0": "61659feadf5aff2d659f0735fb6961e9722260027d02f3c2a3fb18e0647e57be"
+  }
+}
