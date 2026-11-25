@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewSecurity;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
-use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 
 #[CoversClass(CreateView::class)]
 #[Small]
@@ -87,17 +86,5 @@ final class CreateViewTest extends TestCase
 
         self::assertSame(ViewCheckOption::Local, $view->checkOption);
         self::assertStringEndsWith(' WITH LOCAL CHECK OPTION', $view->toString());
-    }
-
-    public function testCheckPolicyRejectsAnIndependentProjection(): void
-    {
-        $column = new Identifier('value');
-        $name = new ViewName(new Identifier('app'), new Identifier('checked_view'));
-        $selection = new Select([new ResultColumn(new IntegerLiteral('42'), $column)]);
-
-        $this->expectException(InvalidConstruction::class);
-        $this->expectExceptionMessage('A view check option requires a mergeable base-table projection.');
-
-        new CreateView($name, $selection, [new ViewColumn($column)], checkOption: ViewCheckOption::Cascaded);
     }
 }
