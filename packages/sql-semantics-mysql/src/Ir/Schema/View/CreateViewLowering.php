@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema\View;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\View\Definer\ViewDefinerLowering;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;

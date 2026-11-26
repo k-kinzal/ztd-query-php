@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Ir\Schema\View;
+namespace SqlSemantics\Platform\MySql\Ir\Schema\View\Definer;
 
+use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewDefiner;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir\Schema\View;
+namespace Tests\Unit\Ir\Schema\View\Definer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Schema\View\Definer\ViewDefinerLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewDefiner;
-use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewDefinerLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
