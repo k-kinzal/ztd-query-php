@@ -49,7 +49,7 @@ final class FrameBoundTest extends TestCase
 
     public function testRenderQuotesABareUnboundedColumn(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', []);
         self::assertSame('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', $query->toString());
     }
 }

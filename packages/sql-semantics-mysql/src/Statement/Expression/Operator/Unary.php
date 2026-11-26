@@ -30,9 +30,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * https://dev.mysql.com/doc/refman/8.4/en/logical-operators.html#operator_not.
  * Status: Implemented.
  *
- * @visibility public
- * @example Writing the tight negation
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE !a = 1')->toString() // => 'SELECT a FROM t WHERE ! a = 1'
+ * @visibility SqlSemantics
  */
 final class Unary implements Scalar
 {

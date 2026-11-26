@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * Rule: PG-NULL-001. Facts: the null-only type, nullable; the type it takes
  * is decided by its context. Source: https://www.postgresql.org/docs/17/typeconv-overview.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the facts of NULL
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NULL');
- *     $query->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable
+ * @visibility SqlSemantics
  */
 final class NullLiteral implements Scalar, OutputNaming
 {

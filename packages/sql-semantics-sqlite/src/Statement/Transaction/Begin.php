@@ -20,10 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * relation and returns no rows.
  * Source: https://sqlite.org/lang_transaction.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a transaction start
- *     $begin = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('BEGIN EXCLUSIVE TRANSACTION');
- *     [$begin->statement->behavior?->value, $begin->toString()] // => ['EXCLUSIVE', 'BEGIN EXCLUSIVE']
+ * @visibility SqlSemantics
  */
 final class Begin implements Statement
 {

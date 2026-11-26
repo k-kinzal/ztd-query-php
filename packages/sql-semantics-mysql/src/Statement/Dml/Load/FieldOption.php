@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.
  *
- * @visibility public
- * @example Reading the field terminator of INTO OUTFILE
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT 1 INTO OUTFILE 'f' FIELDS TERMINATED BY ','");
- *     [$query->statement->into->format->fields[0]->kind, $query->statement->into->format->fields[0]->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, ',']
+ * @visibility SqlSemantics
  */
 final class FieldOption implements Node
 {

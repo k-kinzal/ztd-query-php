@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
  * records its RETURNING rows as the output of the root.
  * Source: https://www.postgresql.org/docs/17/queries-with.html#QUERIES-WITH-MODIFYING.
  *
- * @visibility public
- * @example Telling whether a statement returns rows
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     [$semantics->analyze('DELETE FROM t')->statement->returnsRows(), $semantics->analyze('DELETE FROM t RETURNING *')->statement->returnsRows()] // => [false, true]
+ * @visibility SqlSemantics
  */
 interface Modification extends Statement, Query
 {

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
  * relation fact or diagnostic is recorded.
  * Source: https://sqlite.org/lang_reindex.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the target of a reindex
- *     $reindex = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('REINDEX main.users');
- *     [$reindex->statement->target?->schema?->value, $reindex->statement->target?->name->value] // => ['main', 'users']
+ * @visibility SqlSemantics
  */
 final class Reindex implements Statement
 {

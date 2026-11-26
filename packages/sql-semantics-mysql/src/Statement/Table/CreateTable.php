@@ -45,14 +45,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
  * https://dev.mysql.com/doc/refman/8.4/en/create-table-select.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-temporary-table.html. Status: Implemented.
  *
- * @visibility public
- * @example Providing a declaration to a context
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20), note TEXT NULL)');
- *     $table = $create->declarations()[0];
- *     [count($table->columns), $table->columns[0]->nullability, $table->columns[2]->nullability] // => [3, \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull, \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable]
- * @example The relation fact of the statement resolves to the declaration it provides
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
- *     $create->facts->scalar($create->statement->elements[1]->condition->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ * @visibility SqlSemantics
  */
 final class CreateTable implements Statement, Relation
 {

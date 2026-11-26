@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Table\Option;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(UnionOption::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class UnionOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) UNION = (x, db.y)');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT) UNION = (x, db.y)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

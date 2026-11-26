@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
  * Mirrors an `A_Indices` item with `is_slice` false.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-SUBSCRIPTS.
  *
- * @visibility public
- * @example Reading a subscript
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $1[2]');
- *     $query->field(0)->expression->steps[0]->index->value->digits // => '2'
+ * @visibility SqlSemantics
  */
 final class Subscript implements IndirectionStep
 {

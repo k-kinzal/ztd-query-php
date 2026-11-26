@@ -25,13 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  * alias and keeps no layout.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
- * @visibility public
- * @example Reading a projected expression and its alias
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a AS total FROM t');
- *     [$query->statement->items[0]->expression->name->value, $query->statement->items[0]->alias?->value] // => ['a', 'total']
- * @example Reading the text an unaliased item is written as
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1+1');
- *     [$query->statement->items[0]->layout?->text(), $query->field(0)->name?->value, $query->toString()] // => ['1+1', '1+1', 'SELECT 1+1']
+ * @visibility SqlSemantics
  */
 final class SelectExpression implements SelectItem
 {

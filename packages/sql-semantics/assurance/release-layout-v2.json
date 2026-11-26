@@ -1,0 +1,41 @@
+{
+  "revision": "SemanticsIR/release-layout-2",
+  "approval": "pending-human-review",
+  "recipe": {
+    "path": ".github/workflows/split.yml",
+    "sha256": "68a692747c399644db1a5ffc7abcc85418b11750cac3c73ff4c9e79c5843df8f"
+  },
+  "profiles": {
+    "main": {
+      "version": "dev-main",
+      "constraint": ""
+    },
+    "tag-example": {
+      "version": "1.0.0",
+      "constraint": "^1.0"
+    }
+  },
+  "packages": "The exact runtime package set and source and resource paths from runtime-package-v1.json.",
+  "acceptance": "Apply the fixed package metadata transform, install offline through Composer, verify exact installed source and resource bytes, verify dependency metadata, and observe every registered root through installed autoload.",
+  "fault": "Append a newline to one installed PHP file after its healthy measurement. Require exact installed-path digest rejection.",
+  "trust": [
+    "Pinned package split recipe and package contract",
+    "Composer invoked without plugins, scripts, network or development dependencies",
+    "Isolated read-only PHP worker",
+    "Staged local package installations and their measured provenance"
+  ],
+  "extends": "release-layout-v1.json",
+  "runtimeRoles": {
+    "inventory": "Every closed concrete role in the pinned constructor contracts, reconciled with the independent PHP inventory in the review bundle.",
+    "interfaces": {
+      "SqlSemantics\\AnalysisContext": "src/AnalysisContext.php",
+      "SqlSemantics\\Analyzer": "src/Analyzer.php",
+      "SqlSemantics\\SemanticsIR": "src/SemanticsIR.php"
+    },
+    "observation": "Load each role through the installed Composer loader. Record and check the exact reflected name, kind, installed source path and in-container source hash. Every concrete role is final. Preserve the publication probes of every root.",
+    "controls": {
+      "omitted-role": "Remove a known role from the measurement and require the coverage check to fail.",
+      "wrong-source": "Replace one measured path by another installed source path and require the path check to fail."
+    }
+  }
+}

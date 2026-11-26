@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * is kept as written; the server compares it without case.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the encoding of a format
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonFormat(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('utf16')))->encoding() // => \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonEncoding::Utf16
  * @example Rejecting an unknown encoding

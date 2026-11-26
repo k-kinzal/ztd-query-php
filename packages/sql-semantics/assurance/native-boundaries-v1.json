@@ -1,0 +1,104 @@
+{
+  "revision": "SemanticsIR/native-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "The guarded native reference, join, INSERT and UPDATE value boundaries in the published profiles.",
+  "trust": [
+    "The closed readonly property and publication checker establishes the declared roles and normal construction paths.",
+    "The value primitive digests bind the checked list copy, assertion behavior and snapshot restrictions.",
+    "The method checker compares resolved PHP syntax trees with the expected sequences below. The engine evidence independently checks SQL meaning."
+  ],
+  "rules": {
+    "ColumnReference::__construct": {
+      "common": [
+        "Check::input($slot >= 0, 'A column slot must be nonnegative.');",
+        "Check::input($occurrence >= 0, 'A table occurrence must be nonnegative.');"
+      ]
+    },
+    "From/Join::inputs": {
+      "common": [
+        "$left = $this->left instanceof self ? $this->left->inputs() : [$this->left];",
+        "$right = $this->right instanceof self ? $this->right->inputs() : [$this->right];",
+        "return array_merge($left, $right);"
+      ]
+    },
+    "From/Join::__construct": {
+      "common": [
+        "$inputs = $this->inputs();",
+        "Check::input(count($inputs) <= 61, 'A joined source can have at most 61 input occurrences.');",
+        "Check::input(($kind === JoinKind::Cross) === ($on === null), 'Only CROSS has no join predicate.');",
+        "(new OccurrenceScope())->predicate($on, $inputs);"
+      ],
+      "postgres": [
+        "if ($kind === JoinKind::Full) {",
+        "    $leftWidth = $left instanceof self ? count($left->inputs()) : 1;",
+        "    Check::input($on instanceof IntegerComparison && $on->operator === IntegerOperator::Equal",
+        "        && $on->left instanceof ColumnReference && $on->right instanceof ColumnReference",
+        "        && ($on->left->occurrence < $leftWidth) !== ($on->right->occurrence < $leftWidth),",
+        "        'A PostgreSQL FULL join requires integer equality between opposite inputs.',",
+        "    );",
+        "}"
+      ]
+    },
+    "From/OccurrenceScope::predicate": {
+      "common": [
+        "if ($condition instanceof IntegerComparison) {",
+        "    foreach ([$condition->left, $condition->right] as $operand) {",
+        "        Check::input(!$operand instanceof ColumnReference || isset($inputs[$operand->occurrence]->columns[$operand->slot]),",
+        "            'A predicate slot must belong to a visible input occurrence.',",
+        "        );",
+        "    }",
+        "}"
+      ]
+    },
+    "Mutation/Insert::__construct": {
+      "common": [
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');"
+      ],
+      "postgres": [
+        "Check::input(!$target->only, 'An INSERT target has no ONLY policy.');"
+      ],
+      "tail": [
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "}"
+      ]
+    },
+    "Mutation/UpdateAssignment::__construct": {
+      "common": [
+        "Check::input($target->occurrence === 0, 'An UPDATE target slot must belong to occurrence zero.');",
+        "Check::input(!$value instanceof ColumnReference || $value->occurrence === 0, 'An UPDATE read slot must belong to occurrence zero.');"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "common": [
+        "$this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);",
+        "Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');"
+      ],
+      "mysql": [
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');",
+        "}"
+      ],
+      "postgres": [
+        "$written = [];",
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');",
+        "    Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');",
+        "    $written[$slot] = true;",
+        "}"
+      ],
+      "tail": [
+        "(new OccurrenceScope())->predicate($where, [$target]);"
+      ]
+    }
+  }
+}

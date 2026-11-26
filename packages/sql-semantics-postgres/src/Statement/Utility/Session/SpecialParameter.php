@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
  * keyword spelling.
  * Source: https://www.postgresql.org/docs/17/sql-reset.html, https://www.postgresql.org/docs/17/sql-show.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the parameter a keyword form names
  *     \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialParameter::TimeZone->parameter() // => 'timezone'
  */

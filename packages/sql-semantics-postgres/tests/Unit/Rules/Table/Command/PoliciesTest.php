@@ -14,10 +14,10 @@ final class PoliciesTest extends TestCase
 {
     public function testDeriveDerivesTheConditions(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE POLICY p ON t USING (zz) WITH CHECK (a + 1)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE POLICY p ON t USING (zz) WITH CHECK (a + 1)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
           1 => 'argument of POLICY must be type boolean',
@@ -26,15 +26,15 @@ final class PoliciesTest extends TestCase
 
     public function testWriteWritesTheRolesAndConditions(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE POLICY p ON t TO bob USING (true) WITH CHECK (false)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE POLICY p ON t TO bob USING (true) WITH CHECK (false)', []);
         self::assertSame('CREATE POLICY p ON t TO bob USING (TRUE) WITH CHECK (FALSE)', $statement->toString());
     }
 
     public function testDeriveReportsAView(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE POLICY p ON v', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE POLICY p ON v', $context)->facts->diagnostics));
     }
 }

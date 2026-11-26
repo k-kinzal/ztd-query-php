@@ -1,0 +1,34 @@
+{
+  "revision": "SemanticsIR/sqlite-numeric-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Map each admitted parsed binary operator to its exact closed semantic operation.",
+  "rules": {
+    "Expression/BinaryOperatorLowering::lower": {
+      "common": [
+        "return match ($operator) {",
+        "    BinaryOperator::Add => ArithmeticOperator::Add,",
+        "    BinaryOperator::Subtract => ArithmeticOperator::Subtract,",
+        "    BinaryOperator::Multiply => ArithmeticOperator::Multiply,",
+        "    BinaryOperator::Divide => ArithmeticOperator::Divide,",
+        "    BinaryOperator::Modulo => ArithmeticOperator::Remainder,",
+        "    BinaryOperator::BitAnd => ArithmeticOperator::BitAnd,",
+        "    BinaryOperator::BitOr => ArithmeticOperator::BitOr,",
+        "    BinaryOperator::ShiftLeft => ArithmeticOperator::ShiftLeft,",
+        "    BinaryOperator::ShiftRight => ArithmeticOperator::ShiftRight,",
+        "    BinaryOperator::And => LogicalOperator::And,",
+        "    BinaryOperator::Or => LogicalOperator::Or,",
+        "    BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,",
+        "    BinaryOperator::NotEqual, BinaryOperator::BangEqual => ComparisonOperator::NotEqual,",
+        "    BinaryOperator::Is, BinaryOperator::IsNotDistinctFrom => ComparisonOperator::Is,",
+        "    BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom => ComparisonOperator::IsNot,",
+        "    BinaryOperator::Less => ComparisonOperator::Less,",
+        "    BinaryOperator::LessOrEqual => ComparisonOperator::LessOrEqual,",
+        "    BinaryOperator::Greater => ComparisonOperator::Greater,",
+        "    BinaryOperator::GreaterOrEqual => ComparisonOperator::GreaterOrEqual,",
+        "    BinaryOperator::Concat, BinaryOperator::Extract, BinaryOperator::ExtractValue",
+        "        => throw new InvalidConstruction('This operation has no complete SQLite scalar representation.'),",
+        "};"
+      ]
+    }
+  }
+}

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Creating a database with options
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('create schema if not exists shop default charset utf8mb4 collate utf8mb4_bin');
- *     [$create->toString(), count($create->statement->options)] // => ['CREATE DATABASE IF NOT EXISTS shop CHARACTER SET utf8mb4 COLLATE utf8mb4_bin', 2]
+ * @visibility SqlSemantics
  */
 final class CreateDatabase implements Statement
 {

@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Replication\Source;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SourceOption::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class SourceOptionTest extends TestCase
 
         self::assertSame(
             'CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = a@b, REQUIRE_TABLE_PRIMARY_KEY_CHECK = GENERATE, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL, SOURCE_TLS_CIPHERSUITES = NULL, SOURCE_HEARTBEAT_PERIOD = 1.5',
-            (new Semantics())->analyze($sql)->toString(),
+            (new Inspection())->inspect($sql)->toString(),
         );
     }
 

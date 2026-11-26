@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-tablespace.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Renaming a tablespace
- *     $rename = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter tablespace a rename to b');
- *     [$rename->toString(), $rename->statement->target->value] // => ['ALTER TABLESPACE a RENAME TO b', 'b']
+ * @visibility SqlSemantics
  */
 final class RenameTablespace implements Statement
 {

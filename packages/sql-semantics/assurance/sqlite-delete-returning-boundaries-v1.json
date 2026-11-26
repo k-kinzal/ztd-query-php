@@ -1,0 +1,38 @@
+{
+  "revision": "SemanticsIR/sqlite-delete-returning-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Guard the returning slot scope and emit its ordered layout through the native old-row namespace.",
+  "rules": {
+    "Mutation/Delete::__construct": {
+      "common": [
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');",
+        "Check::input(count($checked) <= 2000, 'A DELETE can return at most 2000 fields in this profile.');",
+        "foreach ($checked as $column) {",
+        "    Check::input(isset($target->columns[$column->reference->slot]), 'A returned slot must belong to the DELETE target.');",
+        "}",
+        "(new ExpressionScope())->check([count($target->columns)], $where === null ? [] : [[$where, 0, 1]]);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/Delete::toString": {
+      "common": [
+        "$renderer = new SelectSql();",
+        "$target = $renderer->source($this->target, 0);",
+        "$where = $this->where === null ? '' : ' WHERE ' . $renderer->expression($this->where, $this->target);",
+        "",
+        "$fields = [];",
+        "foreach ($this->returning as $column) {",
+        "    $fields[] = $this->target->columns[$column->reference->slot]->quoted() . ' AS ' . $column->name->quoted();",
+        "}",
+        "$returning = $fields === [] ? '' : ' RETURNING ' . implode(', ', $fields);",
+        "",
+        "return 'DELETE FROM ' . $target . $where . $returning;"
+      ]
+    },
+    "Mutation/ReturnedColumn::__construct": {
+      "common": [
+        "Check::input($reference->source === 0, 'A returned column must read the single target occurrence.');"
+      ]
+    }
+  }
+}

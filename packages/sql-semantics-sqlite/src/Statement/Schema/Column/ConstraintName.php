@@ -25,10 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint;
  * Source: https://sqlite.org/syntax/column-constraint.html,
  * https://sqlite.org/syntax/table-constraint.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a constraint name that precedes a CHECK
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a CONSTRAINT positive CHECK (a > 0))');
- *     $create->statement->columns[0]->constraints[0]->name->value // => 'positive'
+ * @visibility SqlSemantics
  */
 final class ConstraintName implements ColumnConstraint, TableConstraint
 {

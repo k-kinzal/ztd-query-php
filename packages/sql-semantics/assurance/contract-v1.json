@@ -1,0 +1,173 @@
+{
+  "revision": "SemanticsIR/1.0-initial",
+  "baseline": "9703938a21d69446897512513e61df47e1e7172c",
+  "approval": "pending-human-review",
+  "requiredScope": {
+    "mysql": {
+      "releases": ["5.6.51", "5.7.44", "8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+      "modes": "Every lexical mode, parameter style and name interpretation supported at the baseline."
+    },
+    "postgres": {
+      "releases": ["16.6", "17.2"],
+      "modes": "UTF-8 and standard_conforming_strings on, every baseline parameter style and supported search path."
+    },
+    "sqlite": {
+      "releases": ["3.47.2"],
+      "modes": "Every baseline parameter style, supported search path and language setting."
+    },
+    "semanticFamilies": [
+      "relations, columns and names in local, enclosing and external scopes",
+      "scalar and row values, literal types, functions, casts, operators, collations and parameter binding",
+      "select, joins, projection, distinctness, predicates, grouping, windows, ordering, limits and offsets",
+      "subqueries, compound selects, values and ordinary, recursive or data-modifying common tables",
+      "inserts, updates, deletes, dialect-specific mutations and returning clauses",
+      "schema declarations and changes, views, constraints, indexes and triggers",
+      "transactions, session state and all other statement families of each shipped grammar"
+    ],
+    "coverageRule": "Unregistered grammar forms, concrete roles, paths, modes and observations remain open. Grammar membership is a coverage input. It supplies no evidence of semantic implementation."
+  },
+  "initialExecutableDomain": {
+    "profile": {
+      "engine": "SQLite",
+      "version": "3.47.2",
+      "encoding": "UTF-8",
+      "shortColumnNames": true,
+      "fullColumnNames": false,
+      "maxVariableNumber": 32766,
+      "maxColumns": 2000
+    },
+    "identifier": "Any valid UTF-8 string up to 255 bytes without NUL. Comparison of reference names folds ASCII A-Z only. Result names preserve spelling.",
+    "externalInterpretation": "The same schema-qualified table and named columns, with the same rows and SQLite storage values, are supplied at evaluation. The directly built source lists required columns as an external interface. Analysis establishes those names against a resolved complete base table declaration and does not publish the declaration.",
+    "projection": "One SELECT with 1 to 2000 results and zero or one named source. ALL or the default bag behavior. No other SELECT clauses. A source can have an alias on input. Every result owns its observed output name. A nested binary arithmetic tree has height at most 32, with leaves at height zero. At most 8192 expanded expression nodes across the result list.",
+    "inputAnalysis": "Accept the projection domain with explicit or derived result names, parentheses, signed decimal integer constants, NULL, numbered question markers, resolved column names and binary addition, subtraction and multiplication. Reject unsupported syntax or unresolved static meaning before returning this IR. A resolved column of the input source maps to a source slot. The analyzer requires a complete resolved base table declaration and references to its explicitly declared columns.",
+    "observations": ["exact ordered result names", "row multiset with duplicate counts", "SQLite storage classes and values including NULL", "numbered parameter markers and their slots", "plain SELECT has no data changes", "no guaranteed row order in this domain"],
+    "references": [
+      "https://sqlite.org/releaselog/3_47_2.html",
+      "https://sqlite.org/lang_select.html#simple_select_processing",
+      "https://sqlite.org/lang_expr.html",
+      "https://sqlite.org/c3ref/column_name.html"
+    ]
+  },
+  "constructors": {
+    "identifier": {
+      "type": "Identifier", "role": "decoded identifier or output label",
+      "structure": "UTF-8 bytes", "conditions": "no NUL, valid UTF-8, up to 255 bytes",
+      "meaning": "value with exact bytes, ASCII-folded only for identifier lookup",
+      "sql": "double quotes around the bytes with doubled embedded double quotes",
+      "evidence": ["shape", "negative", "sqlite", "F01", "F02"]
+    },
+    "integer": {
+      "type": "IntegerLiteral", "role": "signed SQLite integer value",
+      "structure": "decimal value", "conditions": "signed 64-bit range, normalized spelling",
+      "meaning": "exact SQLite INTEGER",
+      "sql": "decimal digits with a leading minus for a negative value",
+      "evidence": ["shape", "negative", "finite", "sqlite", "F02"]
+    },
+    "null": {
+      "type": "NullLiteral", "role": "NULL expression",
+      "structure": "no operands", "conditions": "none",
+      "meaning": "SQL NULL", "sql": "NULL",
+      "evidence": ["shape", "finite", "sqlite"]
+    },
+    "parameter": {
+      "type": "Parameter", "role": "SQLite numbered binding",
+      "structure": "decimal label and its derived numeric slot",
+      "conditions": "digits and slot 1 to 32766",
+      "meaning": "value supplied to that slot, preserving native name metadata when labels share a slot",
+      "sql": "question mark followed by label",
+      "evidence": ["shape", "negative", "finite", "sqlite"]
+    },
+    "column": {
+      "type": "ColumnReference", "role": "reference to a column of the sole local source",
+      "structure": "zero-based source slot",
+      "conditions": "nonnegative locally, indexes a present source column at SELECT boundary",
+      "meaning": "that source row value, including its SQLite storage class",
+      "sql": "fixed source alias, dot, source column identifier",
+      "evidence": ["shape", "negative", "finite", "sqlite", "F03"]
+    },
+    "arithmetic": {
+      "type": "Arithmetic", "role": "binary numeric expression",
+      "structure": "operator and ordered left and right closed expressions",
+      "conditions": "SQLite addition, subtraction or multiplication, depth bounded at SELECT boundary",
+      "meaning": "SQLite numeric coercion, NULL propagation and overflow rules",
+      "sql": "parenthesized expression with the matching operator between its operands",
+      "evidence": ["shape", "negative", "finite", "fuzz", "sqlite", "F07"]
+    },
+    "operator": {
+      "type": "ArithmeticOperator", "role": "binary numeric operation",
+      "structure": "closed enum", "conditions": "addition, subtraction or multiplication",
+      "meaning": "the SQLite operation in the selected language profile",
+      "sql": "one of +, -, *",
+      "evidence": ["shape", "finite", "sqlite"]
+    },
+    "source": {
+      "type": "TableSource", "role": "external interface of the sole local source",
+      "structure": "schema, table, ordered column names",
+      "conditions": "closed list, no case-insensitive duplicate column names",
+      "meaning": "one absolute table identity with named column inputs",
+      "sql": "qualified table followed by a fixed correlation name",
+      "evidence": ["shape", "negative", "finite", "sqlite", "F04", "F05"]
+    },
+    "projection": {
+      "type": "ResultColumn", "role": "one result field",
+      "structure": "closed expression and output label",
+      "conditions": "expression of the supported value role",
+      "meaning": "the ordered expression value with that result name",
+      "sql": "expression followed by an explicit quoted AS alias",
+      "evidence": ["shape", "finite", "sqlite", "F07"]
+    },
+    "select": {
+      "type": "Select", "role": "complete SQLite statement",
+      "structure": "nonempty ordered result list and optional source",
+      "conditions": "result count, reference membership, expression height and expanded node count",
+      "meaning": "one row without a source, or one result row per source row",
+      "sql": "SELECT and ordered result columns, optionally FROM the source",
+      "evidence": ["shape", "negative", "finite", "fuzz", "sqlite", "F01", "F04", "F06"]
+    }
+  },
+  "properties": {
+    "P01": ["Q01", "Q02", "Q03"],
+    "P02": ["Q01", "Q02", "Q03"],
+    "P03": ["Q03", "Q05"],
+    "P04": ["Q03", "Q04"],
+    "P05": ["Q01", "Q03", "Q05"],
+    "P06": ["Q04", "Q05"]
+  },
+  "acceptance": {
+    "Q01": "Exact closed shape and checked construction boundaries plus targeted negatives. Treat bypass via privileged Reflection or native extensions as outside PHP's regular construction API.",
+    "Q02": "Every positive in the independent finite domain and seeded exploration must construct. Record unverified language input separately.",
+    "Q03": "Closed operand unions and explicit scope checks. Verify constructor, traversal and rendering cases against the registry and mutation fixtures.",
+    "Q04": "A structural termination and emission argument plus independent real SQLite observations in the finite and seeded domains. Finite results are empirical evidence.",
+    "Q05": "Independent inventory, content digests, known mismatch checks, controlled runner and review of differences against a pinned baseline. Evidence from an unprotected run stays provisional."
+  },
+  "finite": {
+    "atoms": ["integer -2", "integer 0", "integer 3", "NULL", "?2", "source slot 0", "source slot 1"],
+    "operations": ["add", "subtract", "multiply"],
+    "domain": "For each source choice, no source or accounts, use every eligible atom in a single result and every ordered pair of eligible atoms under each operator in a single result. In addition, use every ordered pair of eligible atoms in two results. Slot atoms require a source.",
+    "completeness": "Compare observed structural case IDs one for one with an independent Cartesian product. Duplicates and missing IDs fail."
+  },
+  "exploration": {
+    "seeds": [1717, 9587, 21929],
+    "attemptsPerSeed": 128,
+    "height": 5,
+    "projectionWidth": 5,
+    "timeoutSeconds": 120,
+    "allowedExclusions": []
+  },
+  "faults": {
+    "F01": {"fault": "Remove the nonempty projection condition", "signal": "negative rejects empty projection"},
+    "F02": {"fault": "Reject every projection", "signal": "direct positive construction fails"},
+    "F03": {"fault": "Swap the two fixture columns during emission", "signal": "independent result rows differ"},
+    "F04": {"fault": "Remove readonly from the source column list", "signal": "closed shape rejects writable property"},
+    "F05": {"fault": "Add a retained source SQL property", "signal": "closed shape rejects extra property"},
+    "F06": {"fault": "Emit a fixed SELECT", "signal": "independent result rows or names differ"},
+    "F07": {"fault": "Emit the left operand of arithmetic only", "signal": "independent result rows differ"},
+    "F08": {"fault": "Return a strict subset of the finite cases", "signal": "observed case IDs fail the Cartesian-product check"},
+    "F09": {"fault": "Comparator accepts every observation", "signal": "known observation differences are accepted"},
+    "F10": {"fault": "Skip a comparison after attempting a case", "signal": "execution accounting reports a missing terminal event"},
+    "F11": {"fault": "Remove storage class from the observations", "signal": "frozen contract digest mismatch"},
+    "F12": {"fault": "Modify a shipped file after evidence collection", "signal": "distribution digest mismatch"}
+  },
+  "trust": ["PHP 8.1+ language semantics", "SQLite binary and C interface", "baseline parser and lowering during analysis", "source audit and contract digest verifier", "independent oracle and fixture driver", "trusted runner configuration and artifact custody"],
+  "formalProof": "No machine-checked proof specified. Review the closed composition argument. Universal dialect fidelity and unimplemented scope remain open."
+}

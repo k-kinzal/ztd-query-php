@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/kill.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Ending the statement of a connection
- *     $kill = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('kill query 42');
- *     [$kill->toString(), $kill->statement->scope] // => ['KILL QUERY 42', \SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query]
+ * @visibility SqlSemantics
  */
 final class Kill implements Statement
 {

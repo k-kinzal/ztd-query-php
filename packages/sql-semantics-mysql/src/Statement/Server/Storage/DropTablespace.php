@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-tablespace.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing a tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("drop tablespace ts engine ndb");
- *     [$statement->toString(), $statement->statement->name->value] // => ["DROP TABLESPACE ts ENGINE `ndb`", 'ts']
+ * @visibility SqlSemantics
  */
 final class DropTablespace implements Statement
 {

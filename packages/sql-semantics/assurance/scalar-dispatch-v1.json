@@ -1,0 +1,75 @@
+{
+  "revision": "SemanticsIR/scalar-dispatch-1",
+  "approval": "pending-human-review",
+  "scope": "SELECT scalar emission in the three dialects and the native predicate dispatch that reaches it.",
+  "obligations": [
+    "P04",
+    "P06",
+    "Q03",
+    "Q04"
+  ],
+  "method": {
+    "owner": "SelectSql",
+    "scalar": "expression",
+    "predicate": "predicate"
+  },
+  "admittedForms": [
+    "One typed operand and a sequence of positive instanceof early-return branches",
+    "A final match(true) with an explicit instanceof arm for each remaining concrete role",
+    "For native predicates a terminal call to the previously checked scalar method with the same narrowed input"
+  ],
+  "inputs": {
+    "sqlite": {
+      "expression": [
+        "ResultColumn.expression",
+        "Arithmetic.left",
+        "Arithmetic.right",
+        "Expression/CastExpression.operand",
+        "Expression/CollatedExpression.operand",
+        "Expression/Concatenation.left",
+        "Expression/Concatenation.right",
+        "Expression/CaseBranch.when",
+        "Expression/CaseBranch.then",
+        "Predicate/Comparison.left",
+        "Predicate/Comparison.right",
+        "Predicate/MembershipItem.expression"
+      ]
+    },
+    "mysql": {
+      "expression": [
+        "ResultColumn.expression",
+        "Arithmetic.left",
+        "Arithmetic.right",
+        "Expression/SignedCast.operand",
+        "Expression/UnsignedCast.operand"
+      ],
+      "predicate": [
+        "From/Join.on",
+        "Select.where"
+      ]
+    },
+    "postgres": {
+      "expression": [
+        "ResultColumn.expression",
+        "Arithmetic.left",
+        "Arithmetic.right",
+        "Expression/BuiltinCast.operand",
+        "Expression/IntegerCaseArm.result"
+      ],
+      "predicate": [
+        "From/Join.on",
+        "Select.where",
+        "Expression/IntegerCaseArm.condition"
+      ]
+    }
+  },
+  "negativeControls": [
+    "Remove an explicitly typed scalar branch from an admitted operand role",
+    "Add a fallback that silently swallows an unhandled role",
+    "Narrow the scalar method signature and dispatch together while a checked caller field can still contain the removed role"
+  ],
+  "proofLimit": "This check establishes dispatch coverage for the typed argument and the listed caller edges. The SQL body semantics and availability of referenced slots are separate obligations.",
+  "trust": [
+    "Resolved PHP AST, closed immutable-field evidence, and the fixed role-specific SQL body checks."
+  ]
+}

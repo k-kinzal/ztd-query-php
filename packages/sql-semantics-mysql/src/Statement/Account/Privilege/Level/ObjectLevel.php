@@ -19,11 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-table-privileges,
  * https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-routine-privileges.
  *
- * @visibility public
- * @example Resolving the table of a grant
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $grant = $semantics->analyze('GRANT SELECT ON t TO u', [$semantics->analyze('CREATE TABLE t (a INT)')]);
- *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable // => true
+ * @visibility SqlSemantics
  */
 final class ObjectLevel implements PrivilegeLevel
 {

@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * The facts follow MYSQL-HANDLER-READ-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/handler.html.
  *
- * @visibility public
- * @example Reading a scan of a handler
- *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ NEXT WHERE a > 1 LIMIT 5');
- *     [$read->statement->direction, $read->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::Next, 'HANDLER h READ NEXT WHERE a > 1 LIMIT 5']
+ * @visibility SqlSemantics
  */
 final class HandlerScan implements Statement
 {

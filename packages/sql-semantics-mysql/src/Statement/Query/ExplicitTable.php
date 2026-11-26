@@ -29,10 +29,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
  * in order. Source: https://dev.mysql.com/doc/refman/8.4/en/table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the table of a TABLE statement
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('TABLE shop.t');
- *     [$query->statement->name()->schema?->value, $query->statement->name()->name->value] // => ['shop', 't']
+ * @visibility SqlSemantics
  */
 final class ExplicitTable implements Statement, Query, NamedRelation
 {

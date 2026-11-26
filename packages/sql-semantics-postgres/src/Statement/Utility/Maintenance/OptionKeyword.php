@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
  * is an ordinary word. The value is the keyword.
  * Source: https://www.postgresql.org/docs/17/sql-explain.html, https://www.postgresql.org/docs/17/sql-analyze.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the option both spellings name
  *     [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Analyse->option(), \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Format->option()] // => ['analyze', 'format']
  */

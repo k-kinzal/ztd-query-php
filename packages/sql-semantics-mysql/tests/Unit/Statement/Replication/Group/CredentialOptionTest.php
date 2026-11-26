@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Replication\Group;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CredentialOption::class)]
 #[Medium]
@@ -16,6 +16,6 @@ final class CredentialOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame("START GROUP_REPLICATION DEFAULT_AUTH = 'a'", (new Semantics())->analyze("start group_replication default_auth = 'a'")->toString());
+        self::assertSame("START GROUP_REPLICATION DEFAULT_AUTH = 'a'", (new Inspection())->inspect("start group_replication default_auth = 'a'")->toString());
     }
 }

@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Schema\Table;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ConstraintName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\ConstraintRun;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ConstraintRun::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class ConstraintRunTest extends TestCase
 {
     public function testRenderWritesTheConstraintsOfARunWithoutCommas(): void
     {
-        $operation = (new Semantics())->analyze('create table t (a, constraint c check (a > 0) unique (a), check (a < 9))');
+        $operation = (new Inspection())->inspect('create table t (a, constraint c check (a > 0) unique (a), check (a < 9))');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -35,7 +35,7 @@ final class ConstraintRunTest extends TestCase
 
     public function testRenderKeepsACommaThatCutsAConstraintNameOff(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a, CONSTRAINT c, CHECK (a > 0))');
+        $operation = (new Inspection())->inspect('CREATE TABLE t (a, CONSTRAINT c, CHECK (a > 0))');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

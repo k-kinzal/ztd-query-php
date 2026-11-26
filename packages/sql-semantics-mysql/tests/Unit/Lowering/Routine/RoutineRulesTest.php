@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
@@ -26,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RoutineRules::class)]
 #[Medium]
@@ -33,12 +33,12 @@ final class RoutineRulesTest extends TestCase
 {
     public function testStatementLowersSignalResignalAndGetDiagnostics(): void
     {
-        $semantics = new Semantics();
-        self::assertInstanceOf(Signal::class, $semantics->analyze("SIGNAL SQLSTATE '45000'")->statement);
-        self::assertInstanceOf(Resignal::class, $semantics->analyze('RESIGNAL')->statement);
-        self::assertInstanceOf(GetDiagnostics::class, $semantics->analyze('GET DIAGNOSTICS @n = NUMBER')->statement);
-        self::assertInstanceOf(AlterRoutine::class, $semantics->analyze('ALTER PROCEDURE p COMMENT "x"')->statement);
-        self::assertInstanceOf(DropProgram::class, $semantics->analyze('DROP TRIGGER IF EXISTS tr')->statement);
+        $semantics = new Inspection();
+        self::assertInstanceOf(Signal::class, $semantics->inspect("SIGNAL SQLSTATE '45000'")->statement);
+        self::assertInstanceOf(Resignal::class, $semantics->inspect('RESIGNAL')->statement);
+        self::assertInstanceOf(GetDiagnostics::class, $semantics->inspect('GET DIAGNOSTICS @n = NUMBER')->statement);
+        self::assertInstanceOf(AlterRoutine::class, $semantics->inspect('ALTER PROCEDURE p COMMENT "x"')->statement);
+        self::assertInstanceOf(DropProgram::class, $semantics->inspect('DROP TRIGGER IF EXISTS tr')->statement);
     }
 
     public function testStatementRefusesANodeOfNoProduction(): void
@@ -54,10 +54,10 @@ final class RoutineRulesTest extends TestCase
 
     public function testDefinitionRoutesAlterAndDropForms(): void
     {
-        $semantics = new Semantics('mysql-5.7.44');
-        self::assertSame('ALTER FUNCTION db.f NO SQL', $semantics->analyze('alter function db.f no sql')->toString());
-        self::assertInstanceOf(AlterEvent::class, $semantics->analyze('ALTER EVENT e ENABLE')->statement);
-        self::assertSame('DROP PROCEDURE IF EXISTS p', $semantics->analyze('drop procedure if exists p')->toString());
+        $semantics = new Inspection('mysql-5.7.44');
+        self::assertSame('ALTER FUNCTION db.f NO SQL', $semantics->inspect('alter function db.f no sql')->toString());
+        self::assertInstanceOf(AlterEvent::class, $semantics->inspect('ALTER EVENT e ENABLE')->statement);
+        self::assertSame('DROP PROCEDURE IF EXISTS p', $semantics->inspect('drop procedure if exists p')->toString());
     }
 
     public function testDefinitionReportsAnotherForm(): void
@@ -73,12 +73,12 @@ final class RoutineRulesTest extends TestCase
 
     public function testCreateLowersEveryKindOfStoredProgram(): void
     {
-        $semantics = new Semantics();
-        self::assertInstanceOf(CreateProcedure::class, $semantics->analyze('CREATE PROCEDURE p() SELECT 1')->statement);
-        self::assertInstanceOf(CreateFunction::class, $semantics->analyze('CREATE FUNCTION f() RETURNS INT RETURN 1')->statement);
-        self::assertInstanceOf(CreateLoadableFunction::class, $semantics->analyze("CREATE FUNCTION u RETURNS STRING SONAME 'u.so'")->statement);
-        self::assertInstanceOf(CreateTrigger::class, $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1')->statement);
-        self::assertInstanceOf(CreateEvent::class, $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1')->statement);
+        $semantics = new Inspection();
+        self::assertInstanceOf(CreateProcedure::class, $semantics->inspect('CREATE PROCEDURE p() SELECT 1')->statement);
+        self::assertInstanceOf(CreateFunction::class, $semantics->inspect('CREATE FUNCTION f() RETURNS INT RETURN 1')->statement);
+        self::assertInstanceOf(CreateLoadableFunction::class, $semantics->inspect("CREATE FUNCTION u RETURNS STRING SONAME 'u.so'")->statement);
+        self::assertInstanceOf(CreateTrigger::class, $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1')->statement);
+        self::assertInstanceOf(CreateEvent::class, $semantics->inspect('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1')->statement);
     }
 
     public function testCreateRefusesANodeOfNoProduction(): void

@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * `json_scalar`.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonScalar(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()))->outputName()->value // => 'json_scalar'
  */

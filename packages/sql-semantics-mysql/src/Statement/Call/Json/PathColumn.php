@@ -31,7 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a path column
  *     $column = new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.a']));
  *     [$column->name->value, $column->type->name(), $column->exists] // => ['a', 'INT', false]

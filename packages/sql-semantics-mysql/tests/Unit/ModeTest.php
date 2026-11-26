@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Mode;
-use SqlSemantics\Platform\MySql\Semantics;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Mode::class)]
 #[Medium]
@@ -41,11 +41,11 @@ final class ModeTest extends TestCase
 
     public function testToStringFixesTheProfileLexicalSettings(): void
     {
-        $semantics = new Semantics(null, Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
+        $semantics = new Inspection(null, Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
 
         self::assertTrue($semantics->profile()->lexical->ansiQuotes);
         self::assertTrue($semantics->profile()->lexical->noBackslashEscapes);
         self::assertFalse($semantics->profile()->lexical->pipesAsConcat);
-        self::assertSame('SELECT `order`, \'a\\nb\' FROM t', $semantics->analyze('SELECT "order", \'a\\nb\' FROM t')->toString());
+        self::assertSame('SELECT `order`, \'a\\nb\' FROM t', $semantics->inspect('SELECT "order", \'a\\nb\' FROM t')->toString());
     }
 }

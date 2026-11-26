@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createdatabase.html.
  *
- * @visibility public
- * @example Reading the value of an option set to its default
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d TEMPLATE DEFAULT');
- *     $operation->statement->options[0]->value // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DefaultSetting::Default
+ * @visibility SqlSemantics
  */
 enum DefaultSetting: string implements OptionArgument
 {

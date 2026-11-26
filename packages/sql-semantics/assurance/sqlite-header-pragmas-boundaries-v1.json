@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/sqlite-header-pragmas-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Close native header roles, enforce field-specific writes and pin the shared native signed integer prefix.",
+  "rules": {
+    "Maintenance/Argument/NativePragmaInteger::parse": {
+      "common": [
+        "$hexadecimal = preg_match('/\\A0[xX]([0-9a-fA-F]+)/', $text, $prefix) === 1;",
+        "if (!$hexadecimal) {",
+        "    preg_match('/\\A[+-]?([0-9]+)/', $text, $prefix);",
+        "}",
+        "if (!isset($prefix[1])) {",
+        "    return null;",
+        "}",
+        "$negative = str_starts_with($text, '-');",
+        "$digits = strtolower(ltrim($prefix[1], '0'));",
+        "$maximum = $hexadecimal ? '7fffffff' : ($negative ? '2147483648' : '2147483647');",
+        "if (strlen($digits) > strlen($maximum) || strlen($digits) === strlen($maximum) && strcmp($digits, $maximum) > 0) {",
+        "    return null;",
+        "}",
+        "return intval(($negative ? '-' : '') . $digits, $hexadecimal ? 16 : 10);"
+      ]
+    },
+    "Maintenance/Header/HeaderPragma::__construct": {
+      "common": [
+        "Check::input($value === null || $field instanceof HeaderCookie, 'A read-only header pragma cannot carry a cookie write.');"
+      ]
+    },
+    "Maintenance/Header/HeaderPragma::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Header/HeaderPragma::toString": {
+      "common": [
+        "$argument = $this->value === null ? '' : '(' . $this->value->value . ')';",
+        "return 'PRAGMA ' . $this->schema->quoted() . '.' . $this->field->value . $argument;"
+      ]
+    },
+    "Maintenance/Header/HeaderInteger::__construct": {
+      "common": [
+        "Check::input($value >= -2147483648 && $value <= 2147483647, 'A header pragma write requires a signed 32-bit integer.');"
+      ]
+    },
+    "Maintenance/Header/HeaderPragmaLowering::lower": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema) ?? new Identifier('main');",
+        "$value = $statement->value;",
+        "if ($value === null || $field instanceof HeaderReadField) {",
+        "    return new HeaderPragma($field, $schema);",
+        "}",
+        "$text = $value instanceof PragmaNumber ? $value->nativeText() : $value->value;",
+        "$integer = (new NativePragmaInteger())->parse($text) ?? 0;",
+        "return new HeaderPragma($field, $schema, new HeaderInteger($integer));"
+      ]
+    }
+  }
+}

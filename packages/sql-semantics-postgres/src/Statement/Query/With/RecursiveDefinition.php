@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
  * Source: https://www.postgresql.org/docs/17/queries-with.html#QUERIES-WITH-RECURSIVE,
  * https://www.postgresql.org/docs/17/sql-createview.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the recursive query of a common table expression
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]);
  *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), $one, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]);

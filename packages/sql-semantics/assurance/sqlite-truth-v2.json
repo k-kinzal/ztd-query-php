@@ -1,0 +1,151 @@
+{
+  "revision": "SemanticsIR/sqlite-truth-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with the ordinary-table, numbered-parameter and scalar roles already defined for the checked SQLite profile.",
+  "existingRoles": [
+    "IntegerLiteral",
+    "ColumnReference",
+    "Predicate/Comparison",
+    "Predicate/ComparisonOperator",
+    "Expression/UnaryExpression",
+    "Select",
+    "Rows/ValuesQuery",
+    "Aggregation/GroupedSelect",
+    "Aggregation/CountComparison"
+  ],
+  "scope": "Unqualified truth words and the Boolean interpretation of the right operand of IS and IS NOT.",
+  "constructors": {
+    "TruthTest": {
+      "type": "Predicate/TruthTest",
+      "role": "The resolved comparison of one scalar's Boolean value to true or false",
+      "structure": [
+        "one scalar operand",
+        "requested truth value",
+        "whether to complement the match"
+      ],
+      "conditions": "The checked scalar scope owns all descendants and bounds. Both Boolean attributes are closed.",
+      "meaning": "Convert the operand through SQLite Boolean conversion. A NULL result matches neither required truth value. Produce INTEGER 1 for a match and INTEGER 0 otherwise, complemented when requested.",
+      "externalInterpretation": "The same bound values, column scopes and SQLite truth conversion apply.",
+      "sql": "Emit a searched CASE yielding integer 0 or 1. Use the operand directly as the condition for true and logical NOT for false. Complement the two explicit results for the negated test. Register the operand once and avoid truth-word lookup in the emitted statement.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "admission": [
+    "Resolve TRUE and FALSE as a column name when the checked analysis facts bind it to a visible ordinary column. Treat it as INTEGER 1 or 0 in ordinary scalar roles when no such name applies.",
+    "For IS, IS NOT, IS NOT DISTINCT FROM and IS DISTINCT FROM, a right-hand truth word resolved as a constant triggers Boolean comparison. Redundant grouping does not change this role.",
+    "An explicit unary plus on the right is an ordinary numeric expression. A right-hand resolved column named true or false also keeps ordinary NULL-safe comparison.",
+    "Unknown or unsupported name bindings cannot publish a completed value.",
+    "For COUNT followed by IS or IS NOT and an unshadowed truth word on the right, use the equivalent comparison with INTEGER zero. The COUNT result has nonnull INTEGER storage."
+  ],
+  "observations": [
+    "INTEGER 0 and 1 for truth tests, exact NULL-safe equality for shadowed columns, integer storage for truth constants, the same labels and numbered binding registration.",
+    "Different results for 7 IS TRUE and 7 IS +TRUE. NULL matches neither truth value and both complemented tests succeed.",
+    "An explicit truth-test value remains a truth test when its input relation exposes columns named true or false.",
+    "A count greater than one satisfies the unshadowed IS TRUE group filter. A truth word on the left remains the ordinary integer operand."
+  ],
+  "finite": {
+    "roots": [
+      "select",
+      "values"
+    ],
+    "truthValues": [
+      false,
+      true
+    ],
+    "negated": [
+      false,
+      true
+    ],
+    "operands": [
+      [
+        "null"
+      ],
+      [
+        "integer",
+        "-9"
+      ],
+      [
+        "integer",
+        "0"
+      ],
+      [
+        "integer",
+        "1"
+      ],
+      [
+        "integer",
+        "8"
+      ],
+      [
+        "real",
+        "0",
+        "5",
+        null,
+        false
+      ],
+      [
+        "text",
+        "0x1"
+      ],
+      [
+        "text",
+        "2tail"
+      ],
+      [
+        "blob",
+        "31"
+      ],
+      [
+        "parameter",
+        "02"
+      ]
+    ],
+    "identity": "Recover root, requested truth, negation, and operand identity from constructed values. Exhaust all 80 combinations."
+  },
+  "exploration": {
+    "seeds": [
+      3167,
+      15391,
+      28319
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 150,
+    "allowedExclusions": [],
+    "structure": "Generate nested truth tests under both root forms, with NULL, numeric and nonnumeric data, compound scalar operands and repeated parameter slots."
+  },
+  "negative": [
+    "Direct operand outside projection scope",
+    "Missing column beneath a truth test",
+    "Ambiguous truth-word name on analysis",
+    "Excess truth-test depth"
+  ],
+  "faults": [
+    "Use ordinary integer equality for a truth test",
+    "Treat NULL as false in a positive false test",
+    "Ignore test negation",
+    "Emit a native truth word in a scope with a same-named column"
+  ],
+  "trust": [
+    "Independent SQLite Boolean rules and fixture bindings",
+    "Pinned native engine and typed observer"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_expr.html#boolean_expressions"
+  ],
+  "extends": "sqlite-truth-v1.json"
+}

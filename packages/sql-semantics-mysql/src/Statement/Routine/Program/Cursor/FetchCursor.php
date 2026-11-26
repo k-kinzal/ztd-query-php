@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * The facts follow MYSQL-PROGRAM-CURSORS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/fetch.html.
  *
- * @visibility public
- * @example Reading the targets of a FETCH
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH NEXT FROM c INTO a; END');
- *     [$create->statement->body->statements[0]->targets[0]->value, $create->toString()] // => ['a', 'CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH c INTO a; END']
+ * @visibility SqlSemantics
  */
 final class FetchCursor implements ProgramStatement
 {

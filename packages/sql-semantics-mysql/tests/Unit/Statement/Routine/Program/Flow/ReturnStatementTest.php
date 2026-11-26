@@ -10,10 +10,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ReturnStatement::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class ReturnStatementTest extends TestCase
 {
     public function testDeriveProgramResolvesTheParameter(): void
     {
-        $operation = (new Semantics())->inspect('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
+        $operation = (new Inspection())->diagnose('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
         $create = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $create);
         $return = $create->body;
@@ -38,7 +38,7 @@ final class ReturnStatementTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsAReturnOutsideAFunction')]
     public function testDeriveProgramReportsAReturnOutsideAFunction(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -58,7 +58,7 @@ final class ReturnStatementTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     /**

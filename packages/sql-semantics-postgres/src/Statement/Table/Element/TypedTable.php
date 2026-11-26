@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * definition (PG-TABLE-DECLARATION-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a typed table
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t OF person (PRIMARY KEY (id))');
- *     [$create->statement->definition->type->last()->value, $create->declarations()[0]->complete] // => ['person', false]
+ * @visibility SqlSemantics
  */
 final class TypedTable implements TableForm
 {

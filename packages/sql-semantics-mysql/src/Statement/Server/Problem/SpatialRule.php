@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Problem;
  * Each case holds the server error it mirrors.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the server error of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::MissingAttribute->value // => 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE'
  */

@@ -56,7 +56,8 @@ final class Projection
             if ($item instanceof SelectExpression) {
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
-                $name = (new ItemNaming($derivation->context->profile))->name($item);
+                $declaredViewColumn = $item->alias === null && $origin?->column?->usesViewHeading === true ? $origin->column : null;
+                $name = $declaredViewColumn->name ?? (new ItemNaming($derivation->context->profile))->name($item);
                 $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);
                 $fields[] = new Field(count($fields), $slot, $item->expression, $fact->resolution);
             } elseif ($item instanceof Star) {

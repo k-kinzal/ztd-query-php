@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(EscapeRule::class)]
 #[Medium]
@@ -37,8 +37,8 @@ final class EscapeRuleTest extends TestCase
 
     public function testUnderFollowsTheProfileOfAnAnalysis(): void
     {
-        $verbatim = (new Semantics(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->analyze("SELECT 'a\\nb'");
-        $backslash = (new Semantics())->analyze("SELECT 'a\\nb'");
+        $verbatim = (new Inspection(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->inspect("SELECT 'a\\nb'");
+        $backslash = (new Inspection())->inspect("SELECT 'a\\nb'");
         $verbatimSelect = $verbatim->statement;
         $backslashSelect = $backslash->statement;
         self::assertInstanceOf(Select::class, $verbatimSelect);

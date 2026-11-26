@@ -23,9 +23,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication;
  * https://dev.mysql.com/doc/refman/8.0/en/start-replica.html,
  * https://dev.mysql.com/doc/relnotes/mysql/8.2/en/news-8-2-0.html.
  *
- * @visibility public
- * @example Reading the vocabulary of a statement
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('STOP SLAVE')->statement->terminology // => \SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy
+ * @visibility SqlSemantics
  */
 enum Terminology
 {

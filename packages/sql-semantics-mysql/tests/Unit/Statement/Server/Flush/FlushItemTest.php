@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Server\Flush;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(FlushItem::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class FlushItemTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame('FLUSH ERROR LOGS, ENGINE LOGS, GENERAL LOGS, SLOW LOGS, LOGS, STATUS', (new Semantics('mysql-5.6.51'))->analyze('flush error logs, engine logs, general logs, slow logs, logs, status')->toString());
+        self::assertSame('FLUSH ERROR LOGS, ENGINE LOGS, GENERAL LOGS, SLOW LOGS, LOGS, STATUS', (new Inspection('mysql-5.6.51'))->inspect('flush error logs, engine logs, general logs, slow logs, logs, status')->toString());
     }
 
     public function testChannelIsNullByDefault(): void

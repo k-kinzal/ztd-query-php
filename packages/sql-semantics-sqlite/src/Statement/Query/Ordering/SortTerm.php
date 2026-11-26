@@ -15,11 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * The same term form orders query results, window partitions and aggregate
  * arguments, and lists the columns of an index or of a conflict target.
  *
- * @visibility public
- * @example Reading an ordering term
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t ORDER BY a + 1 ASC NULLS FIRST');
- *     $term = $query->statement->orderBy[0];
- *     [$term->direction, $term->nulls] // => [\SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection::Ascending, \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder::First]
+ * @visibility SqlSemantics
  */
 final class SortTerm implements Node
 {

@@ -14,10 +14,10 @@ final class CreatePolicyTest extends TestCase
 {
     public function testDeriveStatementDerivesTheConditions(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE POLICY p ON t AS permissive USING (zz)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE POLICY p ON t AS permissive USING (zz)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -25,10 +25,10 @@ final class CreatePolicyTest extends TestCase
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE POLICY p ON t', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE POLICY p ON t', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\CreatePolicy::class, $n1);
         self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context), new \SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment($statement->context))->shape->slots));
@@ -36,13 +36,13 @@ final class CreatePolicyTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE POLICY p ON t AS PERMISSIVE FOR ALL TO PUBLIC USING (true) WITH CHECK (a > 0)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE POLICY p ON t AS PERMISSIVE FOR ALL TO PUBLIC USING (true) WITH CHECK (a > 0)', []);
         self::assertSame('CREATE POLICY p ON t AS permissive FOR ALL TO public USING (TRUE) WITH CHECK (a > 0)', $statement->toString());
     }
 
     public function testRenderWritesTheModeAsAnIdentifier(): void
     {
-        self::assertSame('CREATE POLICY p ON t AS restrictive', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE POLICY p ON t AS "restrictive"')->toString());
+        self::assertSame('CREATE POLICY p ON t AS restrictive', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE POLICY p ON t AS "restrictive"')->toString());
     }
 }

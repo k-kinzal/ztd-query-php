@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-SCALAR-SUBQUERIES.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\RowArity('an ARRAY subquery', 1, 2))->message() // => 'an ARRAY subquery needs 1 column(s) but has 2.'
  */

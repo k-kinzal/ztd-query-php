@@ -14,8 +14,8 @@ final class DefaultExpressionTest extends TestCase
 {
     public function testKindIsDefault(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int DEFAULT 1)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int DEFAULT 1)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -29,8 +29,8 @@ final class DefaultExpressionTest extends TestCase
 
     public function testDeriveClauseSeesNoColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, b int DEFAULT a)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, b int DEFAULT a)', []);
         self::assertSame([
           0 => 'Column a does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -38,8 +38,8 @@ final class DefaultExpressionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int CONSTRAINT d DEFAULT 1 + 2)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int CONSTRAINT d DEFAULT 1 + 2)', []);
         self::assertSame('CREATE TABLE t (a INT CONSTRAINT d DEFAULT 1 + 2)', $statement->toString());
     }
 

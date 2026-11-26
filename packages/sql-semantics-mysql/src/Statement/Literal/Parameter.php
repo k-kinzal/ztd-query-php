@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  * marker as the missing input. Diagnostics: none.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/prepare.html. Status: Implemented.
  *
- * @visibility public
- * @example Naming the unbound parameter a fact depends on
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = ?');
- *     $query->facts->scalar($query->statement->where->right)->type->missing[0]->describe() // => 'the value bound to parameter ?'
+ * @visibility SqlSemantics
  */
 final class Parameter implements Scalar
 {

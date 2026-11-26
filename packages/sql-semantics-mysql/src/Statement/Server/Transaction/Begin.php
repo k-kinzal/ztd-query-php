@@ -20,9 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Starting a transaction with BEGIN WORK
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('BEGIN WORK')->toString() // => 'BEGIN'
+ * @visibility SqlSemantics
  */
 final class Begin implements Statement
 {

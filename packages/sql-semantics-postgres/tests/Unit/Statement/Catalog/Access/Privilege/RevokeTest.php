@@ -14,17 +14,17 @@ final class RevokeTest extends TestCase
 {
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('REVOKE GRANT OPTION FOR SELECT, usage ON SEQUENCE s.q FROM joe GRANTED BY CURRENT_ROLE CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE GRANT OPTION FOR SELECT, usage ON SEQUENCE s.q FROM GROUP joe GRANTED BY CURRENT_ROLE CASCADE')->toString());
+        self::assertSame('REVOKE GRANT OPTION FOR SELECT, usage ON SEQUENCE s.q FROM joe GRANTED BY CURRENT_ROLE CASCADE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE GRANT OPTION FOR SELECT, usage ON SEQUENCE s.q FROM GROUP joe GRANTED BY CURRENT_ROLE CASCADE')->toString());
     }
 
     public function testRenderWritesAll(): void
     {
-        self::assertSame('REVOKE ALL ON DATABASE d FROM public RESTRICT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE ALL PRIVILEGES ON DATABASE d FROM PUBLIC RESTRICT')->toString());
+        self::assertSame('REVOKE ALL ON DATABASE d FROM public RESTRICT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE ALL PRIVILEGES ON DATABASE d FROM PUBLIC RESTRICT')->toString());
     }
 
     public function testAnalysisKeepsTheBehavior(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE CREATE ON TABLESPACE ts FROM joe RESTRICT')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE CREATE ON TABLESPACE ts FROM joe RESTRICT')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Revoke::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior::Restrict, $statement->behavior);
         self::assertFalse($statement->grantOptionOnly);
@@ -32,7 +32,7 @@ final class RevokeTest extends TestCase
 
     public function testDeriveStatementReportsTheProblems(): void
     {
-        self::assertSame(['invalid privilege type CONNECT for tablespace', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE connect ON TABLESPACE ts FROM joe GRANTED BY PUBLIC')->facts->diagnostics));
+        self::assertSame(['invalid privilege type CONNECT for tablespace', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE connect ON TABLESPACE ts FROM joe GRANTED BY PUBLIC')->facts->diagnostics));
     }
 
     public function testRejectsNoRole(): void

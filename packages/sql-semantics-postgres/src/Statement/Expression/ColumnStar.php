@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * Source: https://www.postgresql.org/docs/17/rowtypes.html#ROWTYPES-USAGE,
  * https://www.postgresql.org/docs/17/sql-select.html#SQL-SELECT-LIST. Status: Implemented.
  *
- * @visibility public
- * @example Reading the relation of a star
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ROW(t.*) FROM t');
- *     $query->toString() // => 'SELECT ROW (t.*) FROM t'
+ * @visibility SqlSemantics
  */
 final class ColumnStar implements Scalar, OutputNaming
 {

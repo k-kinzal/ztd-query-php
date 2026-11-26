@@ -13,10 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
  *
  * Two occurrences of the same declared table are two relations.
  *
- * @visibility public
- * @example Reading the input relation of a query
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t');
- *     $operation->inputRelation() instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Relation // => true
+ * @visibility SqlSemantics
  */
 interface Relation extends Node
 {

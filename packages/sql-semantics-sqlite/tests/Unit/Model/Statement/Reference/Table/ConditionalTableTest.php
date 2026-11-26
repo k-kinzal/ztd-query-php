@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\ConditionalTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ConditionalTable::class)]
 #[Medium]
@@ -20,9 +20,9 @@ final class ConditionalTableTest extends TestCase
 {
     public function testCandidatesAreKeptWhileAnEarlierSchemaIsUnknown(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE main.t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t', $semantics->context([$table], false));
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE main.t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t', $semantics->context([$table], false));
 
         $resolution = $query->facts->relation($query->singleNamedInput())->table;
 
@@ -34,9 +34,9 @@ final class ConditionalTableTest extends TestCase
 
     public function testCandidatesAreNotNeededWhenTheContextIsComplete(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE main.t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE main.t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
         self::assertInstanceOf(DeclaredTable::class, $query->facts->relation($query->singleNamedInput())->table);
     }

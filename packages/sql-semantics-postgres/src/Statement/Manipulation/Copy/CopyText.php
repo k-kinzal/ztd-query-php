@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * The AS between the keyword and the string is optional.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html#id-1.9.3.55.10.
  *
- * @visibility public
- * @example Reading a string option
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY t FROM STDIN NULL AS '-' ENCODING 'UTF8'");
- *     [$copy->statement->legacy[0]->value->value, $copy->statement->legacy[1]->option(), $copy->toString()] // => ['-', 'encoding', "COPY t FROM STDIN NULL '-' ENCODING 'UTF8'"]
+ * @visibility SqlSemantics
  */
 final class CopyText implements Node
 {

@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json;
  * primary expression.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the colon form
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\KeyValueSpelling::Colon->value // => ':'
  */

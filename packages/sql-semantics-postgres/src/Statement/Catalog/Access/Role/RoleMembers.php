@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
- * @example Reading the roles a new role becomes a member of
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe IN ROLE staff, sales');
- *     [$operation->statement->options[0]->kind->value, count($operation->statement->options[0]->roles)] // => ['IN ROLE', 2]
+ * @visibility SqlSemantics
  */
 final class RoleMembers implements RoleOption
 {

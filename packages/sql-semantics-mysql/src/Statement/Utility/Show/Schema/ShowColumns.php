@@ -33,10 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-columns.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW FULL FIELDS IN t FROM shop LIKE 'a%'");
- *     [count($show->fields()), $show->toString()] // => [9, "SHOW FULL COLUMNS FROM t FROM shop LIKE 'a%'"]
+ * @visibility SqlSemantics
  */
 final class ShowColumns implements Statement, Relation
 {

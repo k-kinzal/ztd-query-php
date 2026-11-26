@@ -1,0 +1,167 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL, utf8mb4, empty sql_mode, lower_case_table_names=0, sql_notes=1, default permanent and temporary storage InnoDB. The named schemas have fixed defaults and table identity is interpreted on the owning connection.",
+  "extends": [
+    "mysql-session-create-table-v1.json",
+    "server-projection-v1.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Query/CreateTableAs"
+  ],
+  "existingRoles": [
+    "Schema/Identity/TableIdentity",
+    "Select",
+    "ResultColumn",
+    "IntegerLiteral",
+    "NullLiteral",
+    "BooleanLiteral",
+    "Expression/SignedCast",
+    "Ordering/Order",
+    "Ordering/Limit"
+  ],
+  "constructors": {
+    "CreateTableAs": {
+      "type": "Schema/Query/CreateTableAs",
+      "role": "Create and populate one table from a source-free integral and NULL projection.",
+      "structure": "A checked absolute TableIdentity, a completed Select with its native release and ordered labels, and an explicit existence policy. The table lifetime comes from the target identity.",
+      "conditions": "The query has no source and produces 1 to 128 columns. Its published heading is ASCII with names of 1 to 64 characters, no trailing space and no case-fold duplicates. Each selected term is an unpadded IntegerLiteral with canonical sign, a BooleanLiteral, a NullLiteral, or one SignedCast of one of those terms. The filter is absent, BooleanLiteral or NullLiteral. Checked DISTINCT, positional ordering and LIMIT operands retain the meanings of the Select child. The analyzer accepts an explicit InnoDB option or its pinned default with no other table elements, options, partitions or duplicate policy. It resolves the target schema before construction.",
+      "meaning": "The destination is created in the selected native namespace. Its ordered column names and native inferred types follow the exact query expressions and release. The zero or one selected rows populate the table. A pre-existing target in that namespace is handled by the existence policy. Temporary InnoDB definitions survive rollback while their new rows and pending writes roll back. Permanent creation commits surrounding writes. Physical row order is unspecified. The native environment must interpret the target coordinates and schema defaults consistently.",
+      "sql": "Emit CREATE, TEMPORARY for a session-local target, TABLE, the explicit guard, the qualified target, ENGINE=InnoDB AS and the complete child SELECT. Preserve expression width, signedness, NULL, heading, and all checked selection options."
+    }
+  },
+  "structure": "A closed creation operator with one destination coordinate and one typed query. No string-valued query operand or catalog snapshot.",
+  "conditions": "The destination, the projected heading and its permitted expression and filter roles are checked before publication.",
+  "meaning": "Evaluate the source-free query, derive ordered native storage from the selected expressions, then observe its guarded creation and row effects using the native policy and release.",
+  "sql": "Qualified target with explicit InnoDB storage and a structural SELECT.",
+  "finite": {
+    "destinationSchema": [
+      "primary",
+      "decoy"
+    ],
+    "destinationKind": [
+      "table",
+      "temporary-table"
+    ],
+    "destinationTopology": [
+      "absent",
+      "persistent",
+      "temporary",
+      "shadow"
+    ],
+    "ifNotExists": [
+      false,
+      true
+    ],
+    "body": [
+      "literal",
+      "cast",
+      "truth-null",
+      "mixed"
+    ],
+    "population": [
+      "row",
+      "no-row"
+    ],
+    "identities": 256,
+    "completeness": "Compute the Cartesian domain independently. Recover the actual target coordinates, namespace, guard, body and row-selection operand from the serialized complete value. Pair it with the fixture's observed prior topology and check every identity exactly once."
+  },
+  "exploration": {
+    "seeds": [
+      331,
+      8123,
+      40751
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary all coordinates, lifetimes and collision states, term roles, signed boundaries, field order and labels, width, distinctness, boolean and NULL filtering, output ordering and row-count/offset limits. Include the 128-column boundary and headings of 64 characters."
+  },
+  "analysis": [
+    "Qualified temporary query with omitted storage and a single integer result, previously the shared declaration negative",
+    "Unqualified target with an explicit current database",
+    "Explicit InnoDB and qualified decoy target",
+    "Temporary guarded collision against a temporary target",
+    "Signed integer ranges and distinct overlapping names of different spelling",
+    "Unaliased literal names",
+    "NULL selection and NULL filtering",
+    "Explicit DUAL with positional order and zero row count",
+    "Distinct projection and alternate LIMIT spelling"
+  ],
+  "negative": [
+    "Direct duplicate heading under ASCII folding",
+    "Direct empty heading",
+    "Direct overlong heading",
+    "Direct heading with a trailing space",
+    "Direct non-ASCII heading",
+    "Direct projection of 129 columns",
+    "Direct source operand",
+    "Direct parameter operand",
+    "Direct padded integral token",
+    "Direct nonliteral cast",
+    "Direct nonconstant predicate",
+    "Analyzed foreign storage option",
+    "Analyzed target without an absolute schema",
+    "Analyzed explicit definition with a SELECT"
+  ],
+  "observations": [
+    "Both connections observe absolute coordinates, namespaces, exact ordered column names, native storage kinds and widths, default values, nullability, table collation and lack of declared keys.",
+    "For unpadded signed 32-bit literals, an unsigned-looking decimal token of ten significant digits maps to BIGINT, with the exact legacy display width. Negative signed 32-bit literals and boolean constants map to INT. The display width derives from the emitted literal on MySQL 5.x. Signed casts of these literal roles produce BIGINT on MySQL 8 and later and legacy INT with the operand's width on MySQL 5.x. The bare NULL column is BINARY(0) through 8.3.0 and VARBINARY(0) in the three later pinned profiles.",
+    "Observe selected row values and explicit NULL, the exact affected-row count, native errors and notes, and prior/after database state. No data order contract applies to the materialized table. Compare row multiplicity before and after rollback.",
+    "Check marker visibility and owner transaction state. Temporary success rolls back row population while preserving the definition and eventually drops the definition at owner disconnect. Permanent success durably creates the table and rows and commits the marker.",
+    "Independently execute every authored SQL and compare it to both the prediction and the rendering result under the same observed fixture."
+  ],
+  "faults": [
+    "Omit temporary lifetime",
+    "Use the other schema at the destination",
+    "Drop an operand from the selecting query",
+    "Replace signed cast with the uncast expression",
+    "Invert the existence guard",
+    "Remove the folded heading uniqueness check"
+  ],
+  "evidence": {
+    "P01": "Resolve target, destination lifetime, release, existence policy and result expression roles. Derive column storage from the fixed native expression rules.",
+    "P02": "Enforce names, source, width, expression/filter role and coordinates at their ownership boundaries and check admissible direct and analyzed cases.",
+    "P03": "The complete root keeps only target, completed query and existence policy.",
+    "P04": "The native DDL wrapper composes column and row selection with destination lifetime and guard.",
+    "P05": "Closed final readonly value graph with passive restoration denied.",
+    "P06": "Compare authored and canonical creation against an independent native-effect prediction."
+  },
+  "trust": [
+    "Exact server images and connection settings",
+    "Native CTAS field construction",
+    "Separate suite prediction and PDO catalog observers",
+    "Audited complete projection and table identity boundaries"
+  ],
+  "open": [
+    "Table-backed and compound query operands, explicit column creation/overrides, wide and padded integers, other expression families, options, engines, headings and partitions. Grammar-wide completion remains governed by the work order."
+  ],
+  "calibration": "Raw CLI calibration on all nine pinned releases, with native image pins, SQL, rows, storage and stderr. SHA-256 bc0f9938588a1439dd42ed2899ba7432d1a38b97898550afbb4c21d9505f5bd9.",
+  "sharedAdmission": {
+    "previous": "server-create-table-temporary-admission-v1.json",
+    "previousSql": "CREATE TEMPORARY TABLE ir_fixture.ir_create_target AS SELECT 1 AS c0",
+    "previousExpectation": "Reject a declaration that requests a query.",
+    "newExpectation": "Compare this same input as an authored positive and verify a complete temporary query-backed declaration.",
+    "replacementNegativeSql": "CREATE TEMPORARY TABLE ir_fixture.ir_create_target (c0 INTEGER) ENGINE=MEMORY",
+    "replacementNegativeSignal": "CREATE TABLE requires the native InnoDB storage role.",
+    "preserves": "All positive observations, finite identities, seeds, budgets, faults and previous evidence. PostgreSQL maintains the original negative and the shared MySQL declaration suite checks a real out-of-profile storage role."
+  },
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-select.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html"
+  ]
+}

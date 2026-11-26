@@ -58,7 +58,7 @@ final class TableDeclaration
     {
         $domains = [];
         foreach ($definition->columns as $column) {
-            $domains[] = (new TypeRecording())->domain($column->type, $definition->strict());
+            $domains[] = (new TypeRecording())->domain($column->type, $definition->strict(), $column->typeLayout);
         }
 
         return $domains;
@@ -84,7 +84,7 @@ final class TableDeclaration
         $columns = [];
         foreach ($definition->columns as $position => $column) {
             $notNull = $column->notNull() || $position === $rowid || ($keyed && in_array($position, $key->columns, true));
-            $columns[] = new Column($column->name, $domains[$position], $notNull ? Nullability::NotNull : Nullability::Nullable, $column->generated() !== null);
+            $columns[] = new Column($column->name, $domains[$position], $notNull ? Nullability::NotNull : Nullability::Nullable, $column->generated() !== null, $column->collation());
         }
 
         return new Table($this->name($definition->name, $definition->temporary), $profile, $columns, $definition->withoutRowid() ? [] : [$this->rowid($rowid === null ? null : $columns[$rowid])]);

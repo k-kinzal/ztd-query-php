@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * (ER_MFA_METHODS_INVALID_ORDER) is reported by the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-multifactor.
  *
- * @visibility public
- * @example Dropping the second factor
- *     $change = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER USER u DROP 2 FACTOR')->statement->users[0];
- *     $change->action // => \SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction::Drop
+ * @visibility SqlSemantics
  */
 final class FactorChange implements UserAlteration
 {

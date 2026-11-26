@@ -29,10 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#operator_binary.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing a binary cast
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE BINARY a = 'x'");
- *     $query->facts->scalar($query->statement->where->left)->type->descriptor->name() // => 'VARBINARY'
+ * @visibility SqlSemantics
  */
 final class BinaryCast implements Scalar
 {

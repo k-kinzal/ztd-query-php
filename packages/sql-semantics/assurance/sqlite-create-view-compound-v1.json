@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/sqlite-create-view-compound-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "constructors": {
+    "Schema/View/CreateView": {
+      "role": "Define an explicitly addressed SQLite view with a checked Compound body whose projected values have no declared-type affinity.",
+      "structure": "A Compound with ordered checked SELECT and VALUES arms, explicit ordered set operations, and optional outer ordering and limits, inside the effective view naming boundary.",
+      "conditions": "View width matches every arm. The absence of parameters applies to all arm and outer operations, including inert registrations. Sources must follow the view's schema policy. Result positions cannot derive their declaration types from a column reference or CAST, including under COLLATE. The complete declaration, including its quoted name and column prefix, fits the pinned SQLite SQL size limit.",
+      "meaning": "Register a view whose checked compound query is evaluated on later reads. Preserve arm order and grouping of the set operations, output names and positions, the absence of a declared type in exported slots, actual row storage types, duplicate and NULL semantics, ordering when defined, limit, and native guard and catalog behavior.",
+      "externalInterpretation": "Use identical external schema and relation identities, source slots, base data, built-in collations, and destination catalog.",
+      "sql": "Emit the same checked view header, followed by the checked compound expression, arm operations, and outer modifiers.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "Observe the same native view catalog, result column metadata, typed row multiset and guard as for projection bodies.",
+    "Compare all four native set operations over fixed duplicate and NULL rows. Vary SELECT and VALUES positions, width, operands and operation sequences.",
+    "For ordered native witnesses compare exact row positions and the outer limit using equal comparator keys only for identical fixture rows.",
+    "Probe an absolute base-table identity in a compound arm predicate with source shadowing."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "operators": ["UNION ALL", "UNION", "INTERSECT", "EXCEPT"],
+    "armPairs": ["select-select", "values-select", "select-values", "values-values"],
+    "guard": [false, true],
+    "identity": "Observe all 64 destination, operation, arm placement and guard tuples. Determine the identity from the published body and native catalog."
+  },
+  "exploration": {
+    "seeds": [1187, 2843, 17093],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary set operation sequences, operand storage classes, number and placement of VALUES rows, width, destination and SQL delimiters, and the native view guard."
+  },
+  "analysis": [
+    "UNION ALL preserves repeated values across a VALUES and SELECT arm.",
+    "UNION [distinct] deduplicates identical NULL results.",
+    "INTERSECT takes the matching row and keeps a named first result.",
+    "EXCEPT preserves outer ordering, then applies the configured limit.",
+    "A persistent arm predicate uses main despite a shadowing temp table.",
+    "A temporary arm predicate explicitly addresses main."
+  ],
+  "negative": [
+    "View output width differs from the compound arms.",
+    "A persistent arm predicate uses a temp table.",
+    "A live parameter in the first SELECT arm.",
+    "An inert marker in a later VALUES arm.",
+    "A parameter in the outer compound LIMIT.",
+    "A projected base column determines the view's declared type.",
+    "A projected CAST determines a declared type.",
+    "COLLATE wraps a projected CAST."
+  ],
+  "faults": [
+    "Erase resolved UNION ALL multiplicity.",
+    "Drop the final compound arm.",
+    "Move the compound view to a different schema.",
+    "Erase the outer LIMIT."
+  ],
+  "evidence": {
+    "Q01": "Check the exact shape of complete compound bodies and cause a typed rejection for each independent negative condition.",
+    "Q02": "All 64 finite identities, six analyzed inputs and exploration seeds must be compared.",
+    "Q03": "Check every arm, outer clause, output slot, schema identity and header-aware text budget.",
+    "Q04": "Compute the set and multiplicity behavior independently, observe the view's native types and evaluate the emitted SQL.",
+    "Q05": "Check the root composition through the exact installed Composer split."
+  },
+  "open": [
+    "Compound view results that expose declared types require a separate recorded affinity contract, including the native choice among arms of different affinities.",
+    "View bodies with WITH remain a separate scope."
+  ],
+  "trust": [
+    "SQLite 3.47.2 and its set and declaration-affinity rules",
+    "Native fixture interpretation of external source identity and the independent set-operation and result observation models"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createview.html",
+    "https://sqlite.org/lang_select.html",
+    "https://sqlite.org/datatype3.html#column_affinity_for_compound_views"
+  ]
+}

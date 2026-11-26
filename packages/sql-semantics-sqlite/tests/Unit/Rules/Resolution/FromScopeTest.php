@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
@@ -31,6 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\NestedInput;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableCall;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FromScope::class)]
 #[Medium]
@@ -38,8 +38,8 @@ final class FromScopeTest extends TestCase
 {
     public function testOpenMakesATableVisibleWithItsNameAliasAndRowIdentifier(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $input = new TableInput(new QualifiedName(new Name('t')), new Name('x'));
         $joined = (new FromScope())->open($input, $derivation, $derivation->environment());
@@ -57,9 +57,9 @@ final class FromScopeTest extends TestCase
 
     public function testOpenEntersAChainOrANestedInputAndRecordsItsFact(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $chain = new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [new JoinStep(new JoinOperator(), new TableInput(new QualifiedName(new Name('u'))), new JoinUsing([new Name('a')]))]);
         $nested = new NestedInput($chain);
@@ -77,8 +77,8 @@ final class FromScopeTest extends TestCase
 
     public function testOpenResolvesTableCallArgumentsAgainstTheTermsToTheLeft(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $scope = new FromScope();
         $left = $scope->open(new TableInput(new QualifiedName(new Name('t'))), $derivation, $derivation->environment())->visible;
@@ -97,8 +97,8 @@ final class FromScopeTest extends TestCase
 
     public function testEnterReportsConstraintsWithoutAJoinAndInvalidOperators(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $on = new JoinOn(new IntegerLiteral('1'));
         $step = new JoinStep(new JoinOperator(false, [JoinKeyword::Natural, JoinKeyword::Outer]), new TableInput(new QualifiedName(new Name('t')), new Name('t2')), $on);
@@ -114,9 +114,9 @@ final class FromScopeTest extends TestCase
 
     public function testEnterDerivesEveryOnConditionInTheScopeOfTheWholeChain(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $condition = new ColumnUse(new Name('c'), new QualifiedName(new Name('u')));
         $first = new TableInput(new QualifiedName(new Name('t')));
@@ -133,8 +133,8 @@ final class FromScopeTest extends TestCase
 
     public function testNestedRenamesASingleTermByTheAliasOrKeepsItsRelations(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $scope = new FromScope();
         $aliased = $scope->nested(new NestedInput(new TableInput(new QualifiedName(new Name('t'))), new Name('x')), $derivation, $derivation->environment(), true);
@@ -150,9 +150,9 @@ final class FromScopeTest extends TestCase
 
     public function testNestedAddsAQualifiedOnlyRelationForAnAliasedJoin(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $scope = new FromScope();
         $chain = new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [new JoinStep(new JoinOperator(), new TableInput(new QualifiedName(new Name('u'))), new JoinUsing([new Name('a')]))]);
@@ -171,8 +171,8 @@ final class FromScopeTest extends TestCase
 
     public function testStarListsTheUnhiddenSlotsOfQualifiableRelationsOnly(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
         $declared = new TableInput(new QualifiedName(new Name('t'), new Name('main')));

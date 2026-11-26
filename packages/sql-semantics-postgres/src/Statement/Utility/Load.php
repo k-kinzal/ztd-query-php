@@ -17,9 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * the server resolves in its own file system. Facts: none.
  * Source: https://www.postgresql.org/docs/17/sql-load.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the library file
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("LOAD 'auto_explain'")->statement->file->value // => 'auto_explain'
+ * @visibility SqlSemantics
  */
 final class Load implements Statement
 {

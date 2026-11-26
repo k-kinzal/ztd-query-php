@@ -14,11 +14,11 @@ final class AlterUserMappingTest extends TestCase
 {
     public function testRenderWritesTheChanges(): void
     {
-        self::assertSame('ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password \'x\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password \'x\')')->toString());
+        self::assertSame('ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password \'x\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password \'x\')')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER USER MAPPING FOR CURRENT_ROLE SERVER s OPTIONS (DROP a)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER USER MAPPING FOR CURRENT_ROLE SERVER s OPTIONS (DROP a)')->facts->diagnostics);
     }
 }

@@ -28,9 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  * with an optional IDENTIFIED clause per account.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html. Status: Implemented.
  *
- * @visibility public
- * @example Revoking a privilege
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('revoke if exists execute on procedure p from u ignore unknown user')->toString() // => 'REVOKE IF EXISTS EXECUTE ON PROCEDURE p FROM u IGNORE UNKNOWN USER'
+ * @visibility SqlSemantics
  */
 final class RevokePrivileges implements Statement
 {

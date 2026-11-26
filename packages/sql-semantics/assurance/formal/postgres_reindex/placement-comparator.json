@@ -1,0 +1,11 @@
+{
+  "challenge_module": "PlacementChallenge",
+  "solution_module": "PlacementSolution",
+  "theorem_names": [
+    "PostgreSqlReindex.quotedIdentifier",
+    "PostgreSqlReindex.commandRoundTrip",
+    "PostgreSqlReindex.placementRoundTrip"
+  ],
+  "definition_names": [],
+  "permitted_axioms": []
+}

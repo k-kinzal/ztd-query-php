@@ -29,7 +29,7 @@ final class PrivilegeTest extends TestCase
 
     public function testRenderWritesTheNameAndTheColumns(): void
     {
-        self::assertSame('GRANT SELECT (a, "B"), "select", update ON TABLE t TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT select (a, "B"), "select", update ON t TO joe')->toString());
+        self::assertSame('GRANT SELECT (a, "B"), "select", update ON TABLE t TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT select (a, "B"), "select", update ON t TO joe')->toString());
     }
 
     public function testRejectsAllWithoutColumns(): void

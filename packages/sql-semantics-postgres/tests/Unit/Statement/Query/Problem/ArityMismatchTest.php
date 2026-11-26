@@ -14,8 +14,8 @@ final class ArityMismatchTest extends TestCase
 {
     public function testMessageOfASetOperation(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT 1 UNION SELECT 1, 2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT 1 UNION SELECT 1, 2');
         self::assertSame('each UNION query must have the same number of columns', $query->facts->diagnostics[0]->message());
     }
 
@@ -24,8 +24,8 @@ final class ArityMismatchTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT 1 FROM t AS x (p, q, r)', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT 1 FROM t AS x (p, q, r)', [$t, $u]);
         self::assertSame('table "x" has 2 columns available but 3 columns specified', $query->facts->diagnostics[0]->message());
     }
 }

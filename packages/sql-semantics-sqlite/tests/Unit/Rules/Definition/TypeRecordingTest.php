@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TypeRecording;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote;
@@ -18,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TypeRecording::class)]
 #[Small]
@@ -85,7 +85,7 @@ final class TypeRecordingTest extends TestCase
 
     public function testWrittenIsTheTextTheRenderedSqlSpells(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a  DECIMAL ( + 10 , -2 ), b "big" int)');
+        $operation = (new Inspection())->inspect('CREATE TABLE t (a  DECIMAL ( + 10 , -2 ), b "big" int)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

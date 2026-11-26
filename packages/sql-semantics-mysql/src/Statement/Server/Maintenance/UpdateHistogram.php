@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * statement checks them (MYSQL-HISTOGRAM-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.
  *
- * @visibility public
- * @example Reading the histogram request
- *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS");
- *     [$analyze->toString(), $analyze->statement->histogram->buckets?->text === '8'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS", true]
+ * @visibility SqlSemantics
  */
 final class UpdateHistogram implements Histogram
 {

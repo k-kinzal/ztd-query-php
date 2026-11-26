@@ -1,0 +1,20 @@
+{
+  "revision": "SemanticsIR/mysql-drop-index-native-metadata-1",
+  "approval": "pending-human-review",
+  "extends": "mysql-drop-native-index-v1.json",
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "scope": "Full column metadata for the named native ordinary signed table shapes.",
+  "rule": "Persistent Extra is the empty string. Temporary Extra is the empty string in 5.6.51 and 5.7.44 and the literal string NULL in each later pinned release. Compare this exact field in both before and after observations. In the legacy pair the native type label is int(11), and each later pinned release reports int. Preserve the nullability and real native default value separately.",
+  "calibrationArchiveDigest": "9ced72fbdb67c665ccb81d5f833b042d716f63ff509b0376c23856e47d212bf6",
+  "revisionReason": "The first newest-release comparison correctly exposed a difference in 102 temporary table cases. The raw observations and failed result are retained. A separate nine-release PDO calibration classified every Extra value; no observed field is removed or normalized."
+}

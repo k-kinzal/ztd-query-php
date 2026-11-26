@@ -19,9 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * The facts follow MYSQL-PROGRAM-CURSORS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/open.html.
  *
- * @visibility public
- * @example Reading the cursor an OPEN names
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() OPEN c') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Undefined CURSOR: c
+ * @visibility SqlSemantics
  */
 final class OpenCursor implements ProgramStatement
 {

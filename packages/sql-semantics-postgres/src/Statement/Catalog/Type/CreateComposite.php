@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
  * provides no declaration. Attribute names must be distinct.
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html#id-1.9.3.94.5.8. Status: Implemented.
  *
- * @visibility public
- * @example Reading the attributes of a composite type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TYPE pair AS (a int4, b text)');
- *     count($operation->statement->attributes) // => 2
+ * @visibility SqlSemantics
  */
 final class CreateComposite implements Statement
 {

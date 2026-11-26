@@ -1,0 +1,149 @@
+{
+  "revision": "SemanticsIR/mysql-index-foreign-keys-evidence-3",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-index-foreign-dependencies-v1.json",
+    "mysql-drop-native-index-v1.json",
+    "mysql-mixed-index-alteration-evidence-v2.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "InnoDB, native markers, utf8mb4, empty sql_mode, lower_case_table_names=0, foreign_key_checks=1. restrict_fk_on_non_standard_key=ON on releases supplying that option.",
+  "constructors": {
+    "IndexForeignKeyRequirement": {
+      "type": "Schema/Index/Dependency/IndexForeignKeyRequirement",
+      "role": "One complete alternative set of original key identities supporting one native foreign-key side on the resolved persistent owner.",
+      "structure": "One absolute TableIdentity and nonempty ordered list of original physical index names.",
+      "conditions": "Persistent owner, exact owner of the enclosing statement, distinct names by MySQL case comparison and at least one survivor after the complete removal.",
+      "meaning": "The given external inference establishes that each listed surviving key can enforce this foreign-key side in the settled final native layout.",
+      "sql": "The alternatives constrain the enclosing statement's native alteration. The enclosing statement emits only checked change operands."
+    }
+  },
+  "existingRoles": [
+    "Schema/Index/DropIndex",
+    "Schema/Index/DropIndexes",
+    "Schema/Index/Change/AlterIndexes"
+  ],
+  "finite": {
+    "sides": [
+      "parent",
+      "child"
+    ],
+    "shapes": [
+      "exact",
+      "unrelated",
+      "long",
+      "nonunique",
+      "hidden",
+      "permuted"
+    ],
+    "plans": [
+      "single",
+      "with-decoy",
+      "remove-both"
+    ],
+    "scopes": [
+      "same",
+      "cross",
+      "shadow"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteIdentities": 108,
+  "exploration": {
+    "seeds": [
+      173,
+      2309,
+      9089
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Ordered qualified operand and exact physical index identity",
+    "Before and after named indexes, uniqueness, ordered fields, directions, prefix lengths and native type",
+    "Before and after complete fixture foreign-key coordinates and ordered field pairs",
+    "Statement status, diagnostic class and transaction effect",
+    "A same-named control table and constraint with distinct native key properties",
+    "Original native input and rendered output each execute against independently restored state",
+    "Compare the retained keys in the native catalog while keeping the original unaffected namespace as a constructor input."
+  ],
+  "negative": [
+    "Exhaust the surviving native constraints with same-schema and cross-schema child and parent fixtures. Preserve exact rejections through direct and deployed analyzer routes.",
+    "Reject an open persistent catalog, a dependency from a different table, temporary ownership, duplicate physical names and an empty support group."
+  ],
+  "evidence": {
+    "P01": "Observe fixed participant, original key role, original names, selected release, ordered fields and effect.",
+    "P02": "Audit constructor checks for each dependent physical group and verify the complete affected owner layout before publication.",
+    "P03": "After checking, retain only resolved native operations and checked operands. Temporary catalog records and dependency set are construction inputs.",
+    "P04": "Compose the survivor condition over the complete ordered removal group and the settled final physical support set.",
+    "P05": "Check closed roles and detached ordered supporting names and immutable final statement.",
+    "P06": "Measure checked emitted SQL, original native input and independent anticipated catalog effects."
+  },
+  "obligations": {
+    "Q01": "Audit actual guards, the support-boundary transition, immutable constructor roles and rejected native cases.",
+    "Q02": "Observe every admitted finite coordinate and fixed explored positive neighbor. Refuse every independently invalid coordinate at its required boundary.",
+    "Q03": "Audit the complete set of physical changes and final continued support. Renames preserve the originally referenced supporting key.",
+    "Q04": "Compare independently predicted native keys, fields, effects and results and inject a missing removal operand.",
+    "Q05": "Repeat source boundary checks, witness replay and both exact staged Composer layouts."
+  },
+  "faults": [
+    "Remove one original ordered key term from the native observation.",
+    "Erase a persistent referential coordinate after execution.",
+    "Keep a decoy that the second operation explicitly removes."
+  ],
+  "trust": [
+    "The provided complete native external catalog",
+    "Pinned MySQL and PHP profiles",
+    "Independent native settings, structure and effect observation"
+  ],
+  "trackedBeyondThisSlice": [
+    "Implicit foreign-key indexes when native allocation cannot be resolved",
+    "Persisted metadata from upgrade paths and nonstandard parent-key session settings",
+    "Dynamically formed stored definitions, partitioning and non-InnoDB engines",
+    "Other index alterations, including visibility updates and statements that also create keys or add or remove foreign keys"
+  ],
+  "admitted": {
+    "mysql-5.6.51": 68,
+    "mysql-5.7.44": 68,
+    "mysql-8.0.44": 64,
+    "mysql-8.1.0": 64,
+    "mysql-8.2.0": 64,
+    "mysql-8.3.0": 64,
+    "mysql-8.4.7": 52,
+    "mysql-9.0.1": 52,
+    "mysql-9.1.0": 52
+  },
+  "negativeCount": {
+    "mysql-5.6.51": 125,
+    "mysql-5.7.44": 117,
+    "mysql-8.0.44": 133,
+    "mysql-8.1.0": 133,
+    "mysql-8.2.0": 133,
+    "mysql-8.3.0": 133,
+    "mysql-8.4.7": 167,
+    "mysql-9.0.1": 167,
+    "mysql-9.1.0": 167
+  },
+  "publicationContracts": {
+    "mysql-index-removal-construction-facts-v1.json": "0a0b00b9f59a18adc6776398770fb7d43ab3e742f5a39e7f0a581e5e30772308",
+    "mysql-index-foreign-keys-evidence-v2.json": "f7759163f14432a7202b90891d5e8eeab2c1e75da50c0862f8499ee777bc0154",
+    "mysql-index-transient-validation-v1.json": "fa9dfe525c4c3f0909d1f56c0656ea7f31e603a4ee970ee3f19c2e51f3f54c70"
+  },
+  "change": "Retain the complete original finite design, native observations and faults, and verify that generation support is transient at every physical removal boundary."
+}

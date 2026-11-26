@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication;
  *
  * Source: https://www.postgresql.org/docs/17/sql-alterpublication.html, https://www.postgresql.org/docs/17/sql-altersubscription.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the replacing action
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction::Set->value // => 'SET'
  */

@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableCheck::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class TableCheckTest extends TestCase
 {
     public function testDeriveConstraintResolvesColumnsAndTheRowIdentifier(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, CHECK (a < rowid))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a, CHECK (a < rowid))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -35,14 +35,14 @@ final class TableCheckTest extends TestCase
 
     public function testDeriveConstraintReportsANameThatIsNoColumn(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, CHECK (zz > 0))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a, CHECK (zz > 0))', []);
 
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }
 
     public function testRenderKeepsTheIgnoredConflictResolution(): void
     {
-        $operation = (new Semantics())->inspect('create table t (a, check (a > 0) on conflict fail)');
+        $operation = (new Inspection())->diagnose('create table t (a, check (a > 0) on conflict fail)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

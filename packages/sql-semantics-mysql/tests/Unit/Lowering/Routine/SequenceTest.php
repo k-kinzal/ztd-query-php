@@ -15,13 +15,13 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Sequence::class)]
 #[Medium]
@@ -40,7 +40,7 @@ final class SequenceTest extends TestCase
     #[DataProvider('providerItemsAnswersTheMembersInSourceOrder')]
     public function testItemsAnswersTheMembersInSourceOrder(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create procedure p(a int, b int, c int) begin declare x int; declare y, z int; set @a = 1; set @b = 2; set @c = 3; end');
+        $create = (new Inspection($release))->inspect('create procedure p(a int, b int, c int) begin declare x int; declare y, z int; set @a = 1; set @b = 2; set @c = 3; end');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Parameter $parameter): string => $parameter->name->value, $statement->parameters->parameters));

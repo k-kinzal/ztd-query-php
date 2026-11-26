@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Option\Kind;
  * server's second spelling of CHECKSUM; the spelling is kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\NumberOptionKind::MaxRows->value // => 'MAX_ROWS'
  */

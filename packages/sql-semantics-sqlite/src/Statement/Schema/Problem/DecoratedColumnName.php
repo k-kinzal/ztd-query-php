@@ -16,9 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * key, of a parent key and of a view with "syntax error after column name".
  * Source: https://sqlite.org/syntax/foreign-key-clause.html.
  *
- * @visibility public
- * @example Reporting a sort order in a foreign key column list
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p, FOREIGN KEY (p DESC) REFERENCES parent)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column name p of a column list is written with a collation or a sort order.
+ * @visibility SqlSemantics
  */
 final class DecoratedColumnName implements Diagnostic
 {

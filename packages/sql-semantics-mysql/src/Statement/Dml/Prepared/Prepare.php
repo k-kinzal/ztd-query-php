@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * returns no rows. Terminates: no nested statement is lowered. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/prepare.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a PREPARE
- *     $prepare = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("PREPARE stmt FROM 'SELECT ?'");
- *     [$prepare->statement->name->value, $prepare->statement->source->value, $prepare->toString()] // => ['stmt', 'SELECT ?', "PREPARE stmt FROM 'SELECT ?'"]
+ * @visibility SqlSemantics
  */
 final class Prepare implements Statement
 {

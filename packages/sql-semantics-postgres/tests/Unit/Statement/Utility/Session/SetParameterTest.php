@@ -14,28 +14,28 @@ final class SetParameterTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET search_path TO a, \'b\', 1, on')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET search_path TO a, \'b\', 1, on')->facts->diagnostics);
     }
 
     public function testDeriveStatementReturnsNoRows(): void
     {
-        $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET a = 1');
+        $operation = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET a = 1');
         self::assertSame(null, $operation->facts->output);
     }
 
     public function testRenderWritesToForEitherWord(): void
     {
-        self::assertSame('SET a TO 1, \'x\', - 2.5, TRUE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET a = 1, \'x\', -2.5, true')->toString());
+        self::assertSame('SET a TO 1, \'x\', - 2.5, TRUE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET a = 1, \'x\', -2.5, true')->toString());
     }
 
     public function testRenderDropsSessionAndKeepsLocal(): void
     {
-        self::assertSame(['SET a TO b', 'SET LOCAL a TO b'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET SESSION a TO b')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET LOCAL a TO b')->toString()]);
+        self::assertSame(['SET a TO b', 'SET LOCAL a TO b'], [(new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET SESSION a TO b')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET LOCAL a TO b')->toString()]);
     }
 
     public function testValuesAreKeptInOrder(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET a TO x, y')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET a TO x, y')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter::class, $statement);
         self::assertCount(2, $statement->values);
     }

@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * Rule: PG-COLLATION-001. Mirrors `AlterCollationStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-altercollation.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the collation
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER COLLATION "de_DE" REFRESH VERSION');
- *     $operation->statement->name->last()->value // => 'de_DE'
+ * @visibility SqlSemantics
  */
 final class RefreshCollationVersion implements Statement
 {

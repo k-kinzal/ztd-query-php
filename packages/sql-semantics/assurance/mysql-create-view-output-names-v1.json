@@ -1,0 +1,134 @@
+{
+  "revision": "SemanticsIR/mysql-create-view-output-names-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "extends": {
+    "path": "mysql-create-view-projection-alias-v1.json",
+    "sha256": "fbb47880cde2e45f72899d6bf18abc720c75fdf9fc2587bd7f02bc447486eecf"
+  },
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "scope": "Persistent view result names in a checked independent signed projection. Include UTF-8 BMP declared and inherited names, exact legacy name processing, modern empty inherited names, duplicates, and both name-related warning phases.",
+  "constructors": {
+    "Schema/View/ViewColumn": {
+      "role": "The name at one stored ordered view position, with a requested name retained when its spelling is semantically observable.",
+      "structure": "A decoded UTF-8 result name and, for a legacy explicit name that changes during assignment, the checked request needed to preserve warnings.",
+      "conditions": "A name is admitted in at least one result-heading role. It can be empty, and may use at most 256 valid UTF-8 bytes. A requested legacy name retains its exact decoding and may clip only on a complete character boundary. The view validates the selected release and full heading.",
+      "meaning": "Keep the result position available to native use with its effective name, and the input needed for assignment diagnostics. Legacy information_schema metadata can expose a 64-character display field even when the native view exposes a wider name.",
+      "externalInterpretation": "Stock MySQL utf8mb4 with native system case tables and the pinned release.",
+      "sql": "Quote the effective name in an ordinary explicit list or the requested name in the legacy explicit list. A modern empty heading is obtained from a validated inherited projection.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/View/CreateView": {
+      "role": "A complete persistent view with a checked declaration profile and exact output positions.",
+      "structure": "Resolved persistent identity, immutable query, ordered column roles, creation policy, algorithm and SQL security.",
+      "conditions": "The heading covers the query width and contains distinct effective names using native simple lowercase. A written body alias and a modern explicit heading each require one through 64 BMP characters and cannot end in ASCII space or control whitespace 09–0D. Older explicit headings normalize using the native byte prefix and may be empty or retain trailing whitespace. Modern empty inferred headings require a valid complete projection with matching effect and valid requested body aliases.",
+      "meaning": "Install the exact observable heading under the release and retain the original requested aliases at their semantic placement. The explicit legacy list and the defining SELECT have separate warning phases.",
+      "externalInterpretation": "Observe native prepare and text statement execution, persistent storage, information_schema and subsequent readers under the same stock release and session profile.",
+      "sql": "Use the distinct explicit or inferred heading rule validated by construction. Exact requested names reproduce their separate diagnostics. Generated aliases may be substituted for ordinary body names when a checked declared heading supplies the output names.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "Compare installed column names and ordinals, information_schema metadata separately from native read labels, native signed widths and types, NULL, values, exact warnings with preparation and execution phases, and retained catalog policy.",
+    "Verify Unicode case collisions, distinct accents and canonical forms, quoted names, leading non-graphic bytes, trailing whitespace, catalog maxima, and legal empty inferred names.",
+    "Modern explicit names are not trimmed. Inherited names undergo the body alias assignment. A legacy explicit list may apply the visible assignment transformation and issue diagnostics at execution."
+  ],
+  "finite": {
+    "headingShapes": [
+      "case-distinct",
+      "non-expansion",
+      "unicode-64",
+      "leading-control",
+      "ordinary",
+      "empty-inherited",
+      "trailing-control-valid"
+    ],
+    "order": [
+      "written",
+      "reverse"
+    ],
+    "sources": [
+      "explicit",
+      "inherited"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "complete": "Check the full admissible release-specific product and separately prove the mapping from standardized source forms to its unique direct field graph. Every invariant violation has a separate negative cell.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      4109,
+      23459,
+      52313
+    ],
+    "casesPerSeed": 20,
+    "directCasesPerSeed": 20,
+    "timeoutSecondsPerRelease": 600,
+    "shape": "Vary two to four independent signed operands, arrangements of declared and inferred UTF-8 names, case and quoting, and lengths near each selected name boundary.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Reject a native body alias that ends in each of the six ASCII whitespace characters.",
+    "Reject duplicate native spellings once the assigned names are known.",
+    "Reject a modern explicit name outside its native character length, including an explicit empty name.",
+    "Refuse a legacy explicit name whose native prefix cuts through UTF-8 and leaves an unreadable persisted definition."
+  ],
+  "faults": [
+    "Discard a retained legacy explicit request.",
+    "Compare stored headings using ASCII-only case folding.",
+    "Ignore native catalog metadata or a warning phase.",
+    "Ignore an invalid trailing whitespace byte in a body alias."
+  ],
+  "trust": [
+    "Fixed native SQL-family and client profile, independently observed case table and native view metadata.",
+    "Proof and finite observations concern the admitted positions and a readable complete persistent view."
+  ],
+  "open": [
+    "Supplementary Unicode conversion, alias generation for arbitrary expressions, and additional source, policy, statement and grant combinations remain separately tracked."
+  ],
+  "referenceSources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-view.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/identifier-length.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_view.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/sql_view.cc"
+  ]
+}

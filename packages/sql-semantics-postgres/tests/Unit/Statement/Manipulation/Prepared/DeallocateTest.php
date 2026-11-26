@@ -14,15 +14,15 @@ final class DeallocateTest extends TestCase
 {
     public function testDeriveStatementDerivesNothing(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('DEALLOCATE p');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('DEALLOCATE p');
         self::assertNull($query->facts->output);
     }
 
     public function testRenderDropsTheIgnoredKeyword(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('DEALLOCATE PREPARE p');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('DEALLOCATE PREPARE p');
         self::assertSame('DEALLOCATE p', $query->toString());
     }
 }

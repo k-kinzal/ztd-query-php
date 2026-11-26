@@ -14,8 +14,8 @@ final class IdentitySettingTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ALTER a SET MAXVALUE 100', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('ALTER TABLE t ALTER a SET MAXVALUE 100', []);
         self::assertSame('ALTER TABLE t ALTER a SET MAXVALUE 100', $statement->toString());
     }
 }

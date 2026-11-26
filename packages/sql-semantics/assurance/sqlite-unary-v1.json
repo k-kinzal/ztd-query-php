@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/sqlite-unary-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 under the closed scalar profile and declared ordinary-table affinities and collations.",
+  "existingRoles": ["Arithmetic", "ArithmeticOperator", "Predicate/Comparison", "Predicate/ComparisonOperator", "NullLiteral", "Select", "Rows/ValuesQuery"],
+  "constructors": {
+    "UnaryExpression": {
+      "type": "Expression/UnaryExpression",
+      "role": "One prefix scalar operation with a single scoped operand",
+      "structure": ["closed operator", "one closed scalar operand"],
+      "conditions": "The owning statement checks the operand and its descendants against its visible slots and the scalar budgets.",
+      "meaning": "Apply unary plus, logical NOT or signed bit complement. Unary plus preserves the value and applicable column collation while removing affinity.",
+      "sql": "Emit a parenthesized prefix expression with its single operand."
+    },
+    "UnaryKind": {
+      "type": "Expression/UnaryKind",
+      "role": "Closed SQLite prefix operation",
+      "values": ["+", "NOT", "~"],
+      "meaning": "Plus keeps the operand value and storage class. NOT returns integer 0 or 1 after native Boolean conversion, and retains NULL. Bit complement converts to a signed 64-bit word, inverts all bits and retains NULL.",
+      "sql": "Use the fixed prefix token with a separating space."
+    }
+  },
+  "admission": [
+    "Resolve a directly signed numeric literal, including grouped literals and intervening unary plus, to its native literal storage role. A written negative hexadecimal minimum remains an invalid literal.",
+    "Resolve computed numeric negation to subtraction from INTEGER zero, with SQLite coercion and overflow. Direct construction expresses the same computation using the ordered arithmetic role.",
+    "Resolve ISNULL to the NULL-safe IS comparison with NULL. Resolve NOTNULL and NOT NULL to the NULL-safe IS NOT comparison with NULL."
+  ],
+  "observations": [
+    "Typed results, signed zero, overflow, missing bindings, NULL results and exact result names.",
+    "Unary plus removes INTEGER column affinity while preserving applicable NOCASE comparison on a text column.",
+    "A generic computed negation and the sign of a numeric literal retain their independently observed storage and signed-zero effects."
+  ],
+  "finite": {
+    "roots": ["select", "values"],
+    "operators": ["plus", "negate", "complement", "not", "is-null", "is-not-null"],
+    "atoms": [
+      ["null"], ["integer", "-9223372036854775808"], ["integer", "-7"], ["integer", "0"], ["integer", "9"],
+      ["real", "0", "0", null, true], ["real", "0", "5", null, false], ["text", "8z"], ["blob", "FF"], ["parameter", "02"]
+    ],
+    "identity": "Recover both root and the six operation roles from the actual constructed values and exhaust the 120 finite tuples."
+  },
+  "exploration": {
+    "seeds": [6553, 17597, 27043],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 160,
+    "allowedExclusions": [],
+    "structure": "Generate nested prefix, negation and NULL tests across values and projection roots, with bound parameters and declared columns."
+  },
+  "negative": ["Reference outside the unary scope", "Absent reference beneath a composed unary operand", "Native-invalid negative hexadecimal minimum", "Unary depth beyond the admitted bound"],
+  "faults": ["Erase unary plus with an affinity-changing witness", "Replace NOT with complement", "Reverse a NULL test", "Erase unary signs in a distinguishing computation"],
+  "trust": ["Pinned SQLite engine and direct typed observation", "Independent assignment of scalar roles and the unary, comparison and signed arithmetic rules"],
+  "sources": ["https://sqlite.org/lang_expr.html", "https://sqlite.org/datatype3.html#affinity_of_expressions", "https://sqlite.org/datatype3.html#assigning_collating_sequences_from_sql"]
+}

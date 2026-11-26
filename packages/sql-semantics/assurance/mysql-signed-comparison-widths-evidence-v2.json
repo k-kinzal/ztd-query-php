@@ -1,0 +1,20 @@
+{
+  "revision": "SemanticsIR/mysql-signed-comparison-widths-evidence-2",
+  "approval": "pending-human-review",
+  "reference": {
+    "file": "mysql-signed-comparison-widths-v2.json",
+    "sha256": "3215c17444d7cb94013aa41d6348129cee73a3cfba91e9fdf39bb8ef45bb7b1d"
+  },
+  "negativeCount": 6,
+  "faults": [
+    "Read a different native slot",
+    "Swap ordered bounds",
+    "Replace NULL-safe equality with ordinary equality",
+    "Drop range negation",
+    "Ignore a native NULL distinct from zero",
+    "Treat legacy IS NOT UNKNOWN as the complement of IS UNKNOWN"
+  ],
+  "sourceFaults": [
+    "mysql-signed-comparison-skip-right-operand-scope"
+  ]
+}

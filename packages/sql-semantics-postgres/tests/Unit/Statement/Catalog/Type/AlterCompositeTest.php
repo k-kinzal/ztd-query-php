@@ -14,11 +14,11 @@ final class AlterCompositeTest extends TestCase
 {
     public function testRenderWritesTheChanges(): void
     {
-        self::assertSame('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a')->toString());
+        self::assertSame('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a')->toString());
     }
 
     public function testDeriveStatementDerivesTheChanges(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a')->facts->diagnostics);
     }
 }

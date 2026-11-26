@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Problem;
  * `execMain.c` (CheckValidResultRel, CheckValidRowMarkRel), `parse_merge.c`, `copyto.c`, `copyfrom.c`,
  * `lockcmds.c`, `parse_utilcmd.c`, `trigger.c`, `rewriteDefine.c`, `policy.c`, `statscmds.c`, `sequence.c`.
  *
- * @visibility public
- * @example Reading the rule a DROP VIEW of a table breaks
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $semantics->analyze('DROP VIEW t', [$semantics->analyze('CREATE TABLE t (a int)')])->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView
+ * @visibility SqlSemantics
  */
 enum KindRule: string
 {

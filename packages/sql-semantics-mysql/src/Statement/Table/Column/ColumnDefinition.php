@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  * (MYSQL-DEFINITION-SCOPE-001). Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/5.7/en/identifier-qualifiers.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a column definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (id BIGINT UNSIGNED NOT NULL)');
- *     [$create->statement->elements[0]->name->column->value, $create->statement->elements[0]->specification->dataType()->name()] // => ['id', 'BIGINT']
+ * @visibility SqlSemantics
  */
 final class ColumnDefinition implements TableElement
 {

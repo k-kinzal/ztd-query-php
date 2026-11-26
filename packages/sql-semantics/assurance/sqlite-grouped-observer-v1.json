@@ -1,0 +1,13 @@
+{
+  "revision": "SemanticsIR/sqlite-grouped-observer-1",
+  "approval": "pending-human-review",
+  "engine": "SQLite 3.47.2",
+  "extends": "sqlite-observer-v1.json",
+  "allowedActions": {
+    "SQLITE_READ": 20,
+    "SQLITE_SELECT": 21
+  },
+  "allowedFunction": {"action": 31, "name": "count"},
+  "comparison": "Use the builtin registry on a fresh observer connection. Permit only read operations and builtin COUNT through observation. Record preparation, successful evaluation, explicit denial and subsequent recovery.",
+  "fixturePolicy": "Only the trusted fixture builder supplies schema and rows before observation."
+}

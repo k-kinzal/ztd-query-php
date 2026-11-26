@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-check-constraints.html.
  *
- * @visibility public
- * @example Reading the attribute of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT CHECK (a > 0) NOT ENFORCED)');
- *     $create->statement->elements[0]->specification->attributes[1]->enforced // => false
+ * @visibility SqlSemantics
  */
 final class EnforcementAttribute implements ColumnAttribute
 {

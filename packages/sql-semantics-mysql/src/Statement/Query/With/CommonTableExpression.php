@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * clause that holds the expression derives it (MYSQL-WITH-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/with.html.
  *
- * @visibility public
- * @example Reading a common table expression
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c');
- *     [$query->statement->with->tables[0]->name->value, $query->statement->with->tables[0]->columns[0]->value] // => ['c', 'x']
+ * @visibility SqlSemantics
  */
 final class CommonTableExpression implements Node
 {

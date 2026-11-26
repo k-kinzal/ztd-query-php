@@ -1,0 +1,225 @@
+{
+  "revision": "SemanticsIR/postgres-signed-membership-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "postgres-signed-membership-v1.json",
+  "rules": {
+    "Predicate/IntegerMembership::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(array_is_list($alternatives) && $alternatives !== [] && count($alternatives) <= 8190, 'Signed membership requires an ordered list of one to 8190 alternatives.');",
+        "$terms = [];",
+        "foreach ($alternatives as $alternative) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral || $alternative instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerNull, 'A membership alternative must be a pure native signed operand.');",
+        "    $terms[] = $alternative;",
+        "}",
+        "$this->alternatives = $terms;"
+      ]
+    },
+    "Predicate/Membership/IntegerMembershipLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($catalogFirst, 'A membership predicate requires the pg_catalog comparison profile.');",
+        "$resolver = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerAtomLowering();",
+        "[$subject] = $resolver->lower($test->operand, $binding, $catalogFirst);",
+        "$alternatives = [];",
+        "foreach ($test->values as $value) {",
+        "    [$alternative] = $resolver->lower($value, $binding, $catalogFirst);",
+        "    $alternatives[] = $alternative;",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership($subject, $alternatives, $test->negated);"
+      ]
+    },
+    "ExpressionLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\BinaryOperation) {",
+        "    return \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerOperator::tryFrom($expression->operator->name->value) !== null ? (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\PredicateLowering())->comparison($expression, $binding, $catalogFirst) : $this->binary($expression, $binding, $catalogFirst);",
+        "}",
+        "$integer = $this->integerLiteral($expression, $catalogFirst);",
+        "if ($integer !== null) {",
+        "    return $integer;",
+        "}",
+        "return match (true) {",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Cast => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCastLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Collation => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CollatedTextLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\CaseExpression => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\DistinctTest => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\InList => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\Membership\\IntegerMembershipLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\NullTest => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\PredicateLowering())->nullTest($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\BooleanTest => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTestLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\Between => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\Constant && $expression->value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant && $simpleOutput => new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral($expression->value->value),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\BooleanLiteral => new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral($expression->value),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NullLiteral => new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\ColumnReference => $binding->reference($expression),",
+        "    default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),",
+        "};"
+      ]
+    },
+    "Predicate/PredicateLowering::leaf": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($condition instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\ColumnReference) {",
+        "    $field = $binding->field($condition);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($field instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference, 'A filter needs a Boolean or signed integer comparison.');",
+        "    return $field;",
+        "}",
+        "$value = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ExpressionLowering())->lower($condition, $binding, $catalogFirst);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral || $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral || $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRange || $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctness || $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership || $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTest, 'A filter needs a Boolean or signed integer comparison.');",
+        "return $value;"
+      ]
+    },
+    "From/OccurrenceScope::checkTree": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference || $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference || $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference || $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference) {",
+        "    $this->column($operand, $inputs, $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerComparison, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctness, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\Text\\TextComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership => [$operand->subject, ...$operand->alternatives],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\NullTest, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTest => [$operand->operand],",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral, $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerNull => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "return $count;"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position));",
+        "}",
+        "if ($query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesQuery) {",
+        "    return match ($query->columnKind($position)) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Integer,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::WideInteger,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Boolean,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Text => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Text,",
+        "    };",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "return match (true) {",
+        "    $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCast, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Binding\\Parameter => match ($column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCast ? $column->target : $column->input) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CastDestination::Integer => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Integer,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CastDestination::WideInteger => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::WideInteger,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CastDestination::Boolean => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Boolean,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CastDestination::Text => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Text,",
+        "    },",
+        "    $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::WideInteger,",
+        "    $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CollatedText => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Text,",
+        "    $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Unknown,",
+        "    $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerComparison, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRange, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctness, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\NullTest, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTest, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\Text\\TextComparison => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Boolean,",
+        "    $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Arithmetic, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\IntegerCase, $column instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Integer,",
+        "};"
+      ]
+    },
+    "SelectBounds::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$inputs = $source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$positions = [];",
+        "foreach ($expressions as $root) {",
+        "    $pending = [[$root, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership || $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRange || $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctness || $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\NullTest || $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTest || $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\Text\\TextComparison) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A tested predicate slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        if ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\IntegerCase) {",
+        "            foreach ($expression->arms as $arm) {",
+        "                $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);",
+        "                $pending[] = [$arm->result, $height + 1];",
+        "            }",
+        "            if ($expression->otherwise !== null) {",
+        "                $pending[] = [$expression->otherwise, $height + 1];",
+        "            }",
+        "            continue;",
+        "        }",
+        "        match (true) {",
+        "            $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference => $scope->column($expression, $inputs),",
+        "            $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCast, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CollatedText => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Arithmetic, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerComparison => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Binding\\Parameter => $positions[$expression->position] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Binding\\ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),",
+        "            $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral => null,",
+        "        };",
+        "    }",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(max([0, ...array_keys($positions)]) === count($positions), 'PostgreSQL parameter positions must cover the contiguous bound slots.');"
+      ]
+    },
+    "SelectSql::expression": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\ColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerMembership => $this->integerMembership($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\NullTest, $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\IntegerComparison => $this->predicate($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\TruthTest => $this->truthTest($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CollatedText => $this->collated($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\Text\\TextComparison => $this->textComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral => 'NULL',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Binding\\Parameter => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "SelectSql::integerMembership": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$subject = $this->integerOrNull($test->subject, $source, $offset, $qualify);",
+        "$alternatives = [];",
+        "foreach ($test->alternatives as $alternative) {",
+        "    $alternatives[] = $this->integerOrNull($alternative, $source, $offset, $qualify);",
+        "}",
+        "$list = 'CAST(ARRAY[' . implode(', ', $alternatives) . '] AS pg_catalog.int8[])';",
+        "$match = '(' . $subject . ' OPERATOR(pg_catalog.=) ANY (' . $list . '))';",
+        "return $test->negated ? '(NOT ' . $match . ')' : $match;"
+      ]
+    }
+  }
+}

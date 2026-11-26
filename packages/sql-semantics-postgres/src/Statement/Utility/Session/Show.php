@@ -32,13 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * parameter registry. Termination: no recursion.
  * Source: https://www.postgresql.org/docs/17/sql-show.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the columns of SHOW ALL
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SHOW ALL');
- *     [$operation->field(0)->name->value, $operation->field(1)->name->value, $operation->field(2)->name->value] // => ['name', 'setting', 'description']
- * @example Reading the open row of a named parameter
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SHOW work_mem');
- *     [$operation->shape()->complete(), $operation->shape()->missing[0]->describe()] // => [false, 'the session state: the registered name of the configuration parameter work_mem']
+ * @visibility SqlSemantics
  */
 final class Show implements Statement
 {

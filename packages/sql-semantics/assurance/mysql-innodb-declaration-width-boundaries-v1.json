@@ -1,0 +1,65 @@
+{
+  "revision": "SemanticsIR/mysql-innodb-declaration-width-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "The native signed and VARCHAR clustered record size and primary key slot constraints in direct table construction.",
+  "rules": {
+    "Schema/CreateTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($checked) <= 1017, 'An InnoDB table can declare at most 1017 columns.');",
+        "$seen = [];",
+        "$bytes = 0;",
+        "$nullBits = 0;",
+        "$packed = false;",
+        "foreach ($checked as $column) {",
+        "    $key = $column->name->key();",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "    $bytes += $column->storageBytes();",
+        "    $nullBits += (int) $column->nullable;",
+        "    $packed = $packed || $column->storage instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\CharacterStorage;",
+        "}",
+        "$bitmap = intdiv($nullBits + ($packed ? 0 : 1) + 7, 8);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($bytes + $bitmap <= 65535, 'The declared logical record cannot exceed 65535 bytes.');",
+        "$legacyDirection = $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744;",
+        "foreach ($primaryKey->terms ?? [] as $term) {",
+        "    $column = $checked[$term->slot] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column !== null && !$column->nullable && $column->storage instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage, 'A primary key must reference an existing required signed column.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$term->descending || !$legacyDirection, 'The grammar release does not store descending primary key parts.');",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Storage\\InnoDbRecord::fits($checked, $primaryKey !== null), 'The declared clustered InnoDB record must fit the native 8126-byte boundary.');",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Schema/Key/PrimaryKeyColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($slot >= 0 && $slot < 1017, 'A primary key needs a column slot from 0 through 1016.');"
+      ]
+    },
+    "Schema/Storage/InnoDbRecord::fits": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$payload = $hasPrimaryKey ? 18 : 24;",
+        "$nullable = 0;",
+        "foreach ($columns as $column) {",
+        "    $storage = $column->storage;",
+        "    $payload += $storage instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\CharacterStorage ? min(4 * $storage->length, 40) + 1 : $storage->bytes();",
+        "    $nullable += (int) $column->nullable;",
+        "}",
+        "return $payload + intdiv($nullable + 7, 8) < 8126;"
+      ]
+    }
+  }
+}

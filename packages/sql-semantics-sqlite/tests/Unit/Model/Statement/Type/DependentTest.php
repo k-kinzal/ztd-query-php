@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UnboundParameter;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Dependent::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class DependentTest extends TestCase
 {
     public function testMissingNamesTheDeclarationATypeWaitsFor(): void
     {
-        $type = (new Semantics())->analyze('SELECT a FROM t')->field('a')->type;
+        $type = (new Inspection())->inspect('SELECT a FROM t')->field('a')->type;
 
         self::assertInstanceOf(Dependent::class, $type);
         self::assertCount(1, $type->missing);
@@ -28,7 +28,7 @@ final class DependentTest extends TestCase
 
     public function testMissingNamesTheParameterATypeWaitsFor(): void
     {
-        $type = (new Semantics())->analyze('SELECT ?1')->field(0)->type;
+        $type = (new Inspection())->inspect('SELECT ?1')->field(0)->type;
 
         self::assertInstanceOf(Dependent::class, $type);
         self::assertInstanceOf(UnboundParameter::class, $type->missing[0]);

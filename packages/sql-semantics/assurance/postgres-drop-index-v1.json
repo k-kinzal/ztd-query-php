@@ -1,0 +1,206 @@
+{
+  "revision": "SemanticsIR/postgres-drop-index-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF8, default identifier and system-catalog modes, ordinary user indexes on declared application tables including the session temporary schema.",
+  "scope": "Resolved PostgreSQL DROP INDEX for installed user indexes and guarded typed absence. Preserve native lock mode, presence policy, dependency policy, target order and notices.",
+  "additionalPublicRoots": [
+    "Schema/Index/DropIndex"
+  ],
+  "constructors": {
+    "Schema/Index/DropIndex": {
+      "role": "Remove an ordered list of bound PostgreSQL indexes under an explicit native policy.",
+      "structure": "A detached ordered nonempty list of IndexReference and MissingIndex, the IF EXISTS and CASCADE policies, native locking mode and exact GrammarRelease.",
+      "conditions": "Absence requires IF EXISTS. CONCURRENTLY requires exactly one target and the restrictive dependency policy. Installed, absent and wrong-kind identities stay distinct. Repeated installed identities stay in the submitted order.",
+      "meaning": "Remove the exact indexes under native dependency and locking behavior. Respect runtime transaction restrictions and the same external catalog relationships. Preserve the ordered notices for guarded absence.",
+      "sql": "Emit DROP INDEX, optional CONCURRENTLY and IF EXISTS, the ordered quoted target list and its dependency policy.",
+      "externalInterpretation": "Same fixed PostgreSQL release, ordinary catalog relation and index identities, session temporary schema, effective search path and dependency graph. Native runtime transaction state is observed separately.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/IndexReference": {
+      "role": "The absolute identity of one installed ordinary PostgreSQL index and the relation it indexes.",
+      "structure": "Decoded schema and index identifiers and the exact owning table identifier.",
+      "conditions": "The ordinary index and table are in the same known schema. Use pg_temp for the session's own temporary schema. System-owned, partitioned or constraint-owned indexes require separate roles or rejection before publication.",
+      "meaning": "Refer to the ordinary index in the specified external namespace and the known indexed table. The table identifier distinguishes same-named indexes on separate relations.",
+      "sql": "Quote the absolute schema and index. The resolved indexed relation supplies identity and is not rendered as a DROP operand.",
+      "externalInterpretation": "Same fixed PostgreSQL release, ordinary catalog relation and index identities, session temporary schema, effective search path and dependency graph. Native runtime transaction state is observed separately.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/MissingIndex": {
+      "role": "One known absence under PostgreSQL's exact relation namespace.",
+      "structure": "Decoded requested name, optional schema qualifier and whether the absence concerns the schema itself.",
+      "conditions": "A missing namespace requires a name. Existing builtin schemas cannot have that role. The root requires IF EXISTS.",
+      "meaning": "Preserve the checked absence and its notice outcome. A missing index and a missing schema are different native messages.",
+      "sql": "Emit the exact optional qualified selector. Retain a bare name when the absent selector searched the whole path.",
+      "externalInterpretation": "Same fixed PostgreSQL release, ordinary catalog relation and index identities, session temporary schema, effective search path and dependency graph. Native runtime transaction state is observed separately.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/IndexDropMode": {
+      "role": "The native execution route for index removal.",
+      "structure": "Ordinary or Concurrently.",
+      "conditions": "The containing operation checks supported cardinality and CASCADE. Transaction state is a native execution condition.",
+      "meaning": "An ordinary drop uses the regular access exclusion. Concurrent permanent removal follows PostgreSQL's index removal workflow. A temporary index has no cross-session accesses, and native transaction-block rejection still applies to a written CONCURRENTLY.",
+      "sql": "Emit CONCURRENTLY only for the represented mode.",
+      "externalInterpretation": "Same fixed PostgreSQL release, ordinary catalog relation and index identities, session temporary schema, effective search path and dependency graph. Native runtime transaction state is observed separately.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Identifier"
+  ],
+  "rules": [
+    "Resolve declared CREATE INDEX identities in the owning table's schema. Explicit index names use the same relation namespace as tables and views. An earlier wrong-kind relation shadows a later index and is rejected before publication.",
+    "Honor the effective schema search order including the live temporary namespace and pinned stock builtin names. The path is not evidence of schema existence. Know empty schemas from explicit declarations and actual temporary namespace presence from session-relative declarations.",
+    "A complete catalog supplies the relevant installed indexes and namespace absences. Keep unresolved creation, copied or generated index names as opaque until their possible shadowing is eliminated. Do not infer optional absence from an incomplete index namespace.",
+    "An index directly owned by a table constraint is protected from DROP INDEX. A standalone unique index that serves an external foreign key instead responds to the represented dependency policy. Preserve the confirmed PostgreSQL RESTRICT/CASCADE distinction.",
+    "CONCURRENTLY with multiple targets or CASCADE is a construction failure. A legal CONCURRENTLY operation can fail in an active transaction block with the native transaction error. TEMP resolves through pg_temp, preserving native diagnostics and lookup.",
+    "Multiple target selectors preserve occurrence order, including repeated resolved targets. IF EXISTS for an absent relation retains its requested local identifier and for an absent namespace preserves the missing namespace diagnostic."
+  ],
+  "observations": [
+    "Exact installed target and owner, relation kind and native notice ordering, chosen dependency policy and lock mode.",
+    "Stock command status and SQLSTATE, notice fields, retained catalog entries, preserved table data, exact constraint membership and a subsequent write that tests foreign-key effects.",
+    "Transactional rollback of ordinary removal, unchanged transaction-block rejection for CONCURRENTLY, temporary namespace behavior, and actual server version."
+  ],
+  "finite": {
+    "layouts": [
+      "empty",
+      "front",
+      "later",
+      "both",
+      "table-shadows",
+      "owned-constraint",
+      "foreign-dependent"
+    ],
+    "qualifiers": [
+      null,
+      "front",
+      "later",
+      "absent_schema"
+    ],
+    "guards": [
+      false,
+      true
+    ],
+    "behavior": [
+      "RESTRICT",
+      "CASCADE"
+    ],
+    "concurrent": [
+      false,
+      true
+    ],
+    "transaction": [
+      false,
+      true
+    ],
+    "identity": "On each pinned release exhaust all 448 Cartesian coordinates. Pair the 204 structurally admitted coordinates with direct and analyzed construction, including specified state-dependent failures. The 244 coordinates with permanent input or binding errors must be refused at their documented boundary. Native transaction precedence can surface a different error when a rejected selector is deliberately run inside a block."
+  },
+  "exploration": {
+    "seeds": [
+      16241,
+      50993,
+      88919
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 420,
+    "allowedExclusions": [],
+    "domain": "Vary ordered and repeated target lists, qualified and unqualified names, ordinary temporary and persistent indices, related constraints, case-sensitive identifiers, search order and targeted user-schema absence."
+  },
+  "negative": [
+    "Empty target list",
+    "An unguarded missing target",
+    "A missing schema role without a schema",
+    "CONCURRENTLY with multiple targets",
+    "CONCURRENTLY with CASCADE"
+  ],
+  "analysisNegative": [
+    "Unqualified index shadowed by a table",
+    "Installed internal or table-constraint owned index",
+    "Unconditional absence",
+    "An absent name with an incomplete index namespace",
+    "Conditional drop cannot skip an earlier open namespace",
+    "A pinned built-in relation shadows a user index",
+    "Declared conflicting index identities"
+  ],
+  "faults": [
+    "Change the resolved schema",
+    "Remove the existence guard",
+    "Drop a target from the ordered list",
+    "Lose the concurrency route",
+    "Substitute RESTRICT for CASCADE",
+    "Switch an absent schema into a known absent index",
+    "Bypass cardinality checks",
+    "Accept a wrong-kind namespace entry"
+  ],
+  "calibration": {
+    "driver": "d0a43e95239bd31b6fb85e2808c0c696f3c3a0fa1ccf4a7cc84de6f68943b6cd",
+    "queryPack": "141252a125ba788793812121911eefbd5192a7d182fea7374a62615cf771f356",
+    "16.6": {
+      "stdout": "10004bda9bb34e0bf79887ba184c122d745ae190e6c468b54b53fcfdf9cc79d6",
+      "stderr": "19e908e86e911e8de0e246d5b8d11e86302e177a5c164ed9ba87660a6649d876",
+      "namespace": "b88a1019452fb8ceb581cdcd12072e9b482488166f064bb812f181b349ad0cdb"
+    },
+    "17.2": {
+      "stdout": "91e9d020668dbcae56891eaa9270e767141735de10ead1b2e9221e75c614d0de",
+      "stderr": "8b0bf5e8e3f56ce492691776607f6d0fcb2f7b3ebb2851d8e42e2c4677d2919b",
+      "namespace": "6453b375b453b69f3c5650fba3c56cf05c23a1ee72db3b267764fef00e283d3f"
+    },
+    "namespaceQuery": "b6ed7b9faa241a09f7bff5e002cbcbe1ff6bd1a337d6396b88787bd1cbc359e1"
+  },
+  "trust": [
+    "Pinned PostgreSQL and native SQLSTATE/notice observer, the exact dialect binder and typed copy and retirement checks, and the separately checked catalog transition model."
+  ],
+  "open": [
+    "Partitioned index dependencies, nonstock system catalogs, cross-session temporary schemas and all unresolved DDL forms remain in the frozen whole-language inventory."
+  ]
+}

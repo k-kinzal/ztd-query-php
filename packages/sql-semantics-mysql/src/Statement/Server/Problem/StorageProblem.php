@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The server rejects the statement with the error of the rule.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a repeated option
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageRule::RepeatedOption, 'COMMENT'))->message() // => 'The COMMENT option is written more than once (ER_FILEGROUP_OPTION_ONLY_ONCE).'
  */

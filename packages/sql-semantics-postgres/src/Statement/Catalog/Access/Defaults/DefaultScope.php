@@ -13,10 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  * the schemas and one for the roles and rejects a clause given twice.
  * Source: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html.
  *
- * @visibility public
- * @example Telling which option of the server a clause fills
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES FOR USER joe GRANT SELECT ON TABLES TO ann');
- *     $operation->statement->scopes[0]->option() // => 'roles'
+ * @visibility SqlSemantics
  */
 interface DefaultScope extends Node
 {

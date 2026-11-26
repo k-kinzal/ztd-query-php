@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * nothing is resolved here.
  * Source: https://www.postgresql.org/docs/17/sql-update.html, https://www.postgresql.org/docs/17/sql-declare.html.
  *
- * @visibility public
- * @example Reading the cursor of a positioned DELETE
- *     $delete = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DELETE FROM t WHERE CURRENT OF c');
- *     $delete->statement->where->cursor->value // => 'c'
+ * @visibility SqlSemantics
  */
 final class CurrentOf implements Clause
 {

@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  * a table qualify the symbol; the qualifier is kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html.
  *
- * @visibility public
- * @example Reading the symbol of a constraint
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, CONSTRAINT c UNIQUE (a))');
- *     $create->statement->elements[1]->constraint->name->column->value // => 'c'
+ * @visibility SqlSemantics
  */
 final class ConstraintName implements Node
 {

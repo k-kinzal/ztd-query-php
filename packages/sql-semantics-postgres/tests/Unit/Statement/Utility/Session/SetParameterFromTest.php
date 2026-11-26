@@ -14,16 +14,16 @@ final class SetParameterFromTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET a FROM CURRENT')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET a FROM CURRENT')->facts->diagnostics);
     }
 
     public function testRenderWritesToDefault(): void
     {
-        self::assertSame('SET LOCAL a TO DEFAULT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET LOCAL a = DEFAULT')->toString());
+        self::assertSame('SET LOCAL a TO DEFAULT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET LOCAL a = DEFAULT')->toString());
     }
 
     public function testRenderWritesFromCurrent(): void
     {
-        self::assertSame('SET a FROM CURRENT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET a FROM CURRENT')->toString());
+        self::assertSame('SET a FROM CURRENT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET a FROM CURRENT')->toString());
     }
 }

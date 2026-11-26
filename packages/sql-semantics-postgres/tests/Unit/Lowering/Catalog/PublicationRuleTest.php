@@ -14,7 +14,7 @@ final class PublicationRuleTest extends TestCase
 {
     public function testStatementLowersAlterPublication(): void
     {
-        self::assertSame('ALTER PUBLICATION p SET TABLE t', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER PUBLICATION p SET TABLE t')->toString());
+        self::assertSame('ALTER PUBLICATION p SET TABLE t', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER PUBLICATION p SET TABLE t')->toString());
     }
 
     public function testObjectsReadsAContinuedSchema(): void

@@ -14,11 +14,11 @@ final class AlterSystemSettingTest extends TestCase
 {
     public function testDeriveStatementDerivesTheSetting(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SYSTEM SET a = \'x\', 1')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SYSTEM SET a = \'x\', 1')->facts->diagnostics);
     }
 
     public function testRenderWritesTheSettingAfterTheCommand(): void
     {
-        self::assertSame(['ALTER SYSTEM SET a TO DEFAULT', 'ALTER SYSTEM RESET ALL', 'ALTER SYSTEM RESET a'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SYSTEM SET a = DEFAULT')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SYSTEM RESET ALL')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SYSTEM RESET a')->toString()]);
+        self::assertSame(['ALTER SYSTEM SET a TO DEFAULT', 'ALTER SYSTEM RESET ALL', 'ALTER SYSTEM RESET a'], [(new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SYSTEM SET a = DEFAULT')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SYSTEM RESET ALL')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SYSTEM RESET a')->toString()]);
     }
 }

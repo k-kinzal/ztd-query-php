@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/index-hints.html.
  *
- * @visibility public
- * @example Reading the primary key in an index hint
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t USE INDEX (PRIMARY, i)');
- *     $query->statement->from->indexHints[0]->indexes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex // => true
+ * @visibility SqlSemantics
  */
 final class PrimaryIndex implements Node
 {

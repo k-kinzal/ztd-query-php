@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing COUNT(*)
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT COUNT(*)');
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['BIGINT', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  * @example Refusing several arguments without DISTINCT
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum, [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

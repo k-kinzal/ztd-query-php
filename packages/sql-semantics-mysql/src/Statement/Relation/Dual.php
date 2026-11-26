@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * purely for the convenience of people who require that all SELECT
  * statements should have FROM"). Status: Implemented.
  *
- * @visibility public
- * @example Reading a selection from DUAL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM DUAL');
- *     $query->statement->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual // => true
+ * @visibility SqlSemantics
  */
 final class Dual implements \SqlSemantics\Platform\MySql\Model\Statement\Relation
 {

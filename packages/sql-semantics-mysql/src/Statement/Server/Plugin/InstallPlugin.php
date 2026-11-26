@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/install-plugin.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Installing a plugin
- *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("install plugin audit soname 'audit.so'");
- *     [$install->toString(), $install->statement->library->value] // => ["INSTALL PLUGIN audit SONAME 'audit.so'", 'audit.so']
+ * @visibility SqlSemantics
  */
 final class InstallPlugin implements Statement
 {

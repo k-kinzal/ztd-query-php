@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/shutdown.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('shutdown')->toString() // => 'SHUTDOWN'
+ * @visibility SqlSemantics
  */
 final class Shutdown implements Statement
 {

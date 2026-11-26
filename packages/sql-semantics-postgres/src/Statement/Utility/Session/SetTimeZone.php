@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  * MINUTE is rejected by the server while parsing.
  * Source: https://www.postgresql.org/docs/17/sql-set.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a time zone set by an interval
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE");
- *     [$operation->statement->zone->value->value, $operation->toString()] // => ['-08:00', "SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE"]
+ * @visibility SqlSemantics
  * @example Refusing a constant of another type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('date')]))),

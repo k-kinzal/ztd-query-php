@@ -14,8 +14,8 @@ final class CreateIndexTest extends TestCase
 {
     public function testCreatedSchemaIsTheSchemaOfTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE INDEX ON s.t (a)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE INDEX ON s.t (a)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         self::assertSame('s', $n1->createdSchema()?->value);
@@ -23,10 +23,10 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveStatementResolvesTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE INDEX i ON t (a) WHERE zz', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE INDEX i ON t (a) WHERE zz', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         $n2 = $statement->facts->relation($n1)->table;
@@ -38,7 +38,7 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveElementLocatesTheTableInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE INDEX ON t (a)');
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE INDEX ON t (a)');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
         $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         $statement->statement->deriveElement($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'));
@@ -51,10 +51,10 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveRelationResolvesTheTableAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE INDEX ON t (a)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE INDEX ON t (a)', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context), new \SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment($statement->context))->shape->slots));
@@ -62,8 +62,8 @@ final class CreateIndexTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0', []);
         self::assertSame('CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0', $statement->toString());
     }
 

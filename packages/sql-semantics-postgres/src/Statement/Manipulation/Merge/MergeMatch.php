@@ -14,10 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
  * PostgreSQL 17, `NOT MATCHED BY TARGET`).
  * Source: https://www.postgresql.org/docs/17/sql-merge.html.
  *
- * @visibility public
- * @example Reading the kind of a WHEN clause
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED BY TARGET THEN DO NOTHING');
- *     [$merge->statement->clauses[0]->match, $merge->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch::NotMatched, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN DO NOTHING']
+ * @visibility SqlSemantics
  */
 enum MergeMatch
 {

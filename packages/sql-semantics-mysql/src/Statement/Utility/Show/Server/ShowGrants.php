@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-grants.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the column named after the account
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW GRANTS FOR 'u'@'localhost' USING r");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Grants for u@localhost', 'SHOW GRANTS FOR u@localhost USING r']
+ * @visibility SqlSemantics
  */
 final class ShowGrants implements Statement
 {

@@ -1,0 +1,79 @@
+{
+  "revision": "SemanticsIR/mysql-session-create-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Fix the declaration namespace from the parsed modifier and emit the native operation from the retained identity. Keep the closed column and primary-key composition and check exact relation-name settings.",
+  "rules": {
+    "Schema/CreateTableLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input(",
+        "    $profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "        && $context->relationNames === Comparison::Sensitive,",
+        "    'CREATE TABLE requires the default native profile.'",
+        ");",
+        "Check::input(",
+        "    $statement->query === null && $statement->partitioning === null && !$statement->enclosed,",
+        "    'CREATE TABLE requires an ordinary table with explicit columns.'",
+        ");",
+        "$engine = null;",
+        "$textOptions = false;",
+        "foreach ($statement->options as $option) {",
+        "    if ($option instanceof EngineOption) {",
+        "        Check::input($engine === null && strcasecmp($option->engine->value, 'InnoDB') === 0, 'CREATE TABLE requires the native InnoDB storage role.');",
+        "        $engine = $option;",
+        "    } else {",
+        "        Check::input($option instanceof CharsetOption || $option instanceof CollationOption, 'CREATE TABLE requires the native InnoDB storage role.');",
+        "        $textOptions = true;",
+        "    }",
+        "}",
+        "$tableCollation = (new TableDeclaration())->tableCollation($statement, $profile->grammar);",
+        "Check::input(!$textOptions || $tableCollation !== null, 'CREATE TABLE needs the exact stock utf8mb4_bin table collation.');",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "Check::input($schema !== SessionDatabase::UNNAMED, 'CREATE TABLE requires a named declaration schema.');",
+        "$name = new TableName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "$kind = $statement->temporary() ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;",
+        "[$columns, $key] = (new CreateTableLayoutLowering())->lower($statement, $profile->grammar, $tableCollation);",
+        "",
+        "return new CreateTable(",
+        "    new TableIdentity($name, $kind),",
+        "    $columns,",
+        "    $statement->ifNotExists,",
+        "    $profile->grammar,",
+        "    $tableCollation === null ? null : TextCollation::Utf8mb4Bin,",
+        "    $key",
+        ");"
+      ]
+    },
+    "Schema/CreateTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $column->toString();",
+        "}",
+        "if ($this->primaryKey !== null) {",
+        "    $parts = [];",
+        "    foreach ($this->primaryKey->terms as $term) {",
+        "        $parts[] = $this->columns[$term->slot]->name->quoted() . ($term->descending ? ' DESC' : '');",
+        "    }",
+        "    $columns[] = 'PRIMARY KEY (' . implode(', ', $parts) . ')';",
+        "}",
+        "",
+        "return 'CREATE ' . ($this->target->kind === ExternalRelationKind::TemporaryTable ? 'TEMPORARY ' : '')",
+        "    . 'TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') ENGINE=InnoDB'",
+        "    . ($this->defaultCollation === null ? '' : ' DEFAULT CHARACTER SET utf8mb4 COLLATE ' . $this->defaultCollation->value);"
+      ]
+    }
+  }
+}

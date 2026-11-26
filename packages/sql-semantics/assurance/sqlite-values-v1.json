@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/sqlite-values-1",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "All earlier obligations, additional row expressions and the other grammar families remain in scope.",
+  "additionalPublicRoots": ["Rows/ValuesQuery"],
+  "constructors": {
+    "Rows/ValueRow": {
+      "role": "A nonempty ordered row of independent scalar operands.",
+      "structure": "An ordered list of integer, NULL, numbered parameter and arithmetic values.",
+      "boundary": "At most 2000 values. Every arithmetic subtree has an empty table scope. The usual height and expanded node bounds apply.",
+      "meaning": "Evaluate each expression without a local relation, retaining its value and storage class at the given position.",
+      "sql": "Emit one parenthesized list, preserving lexical parameter order."
+    },
+    "Rows/Values": {
+      "type": "Rows/ValuesQuery",
+      "role": "Complete top-level SQLite VALUES statement.",
+      "structure": "A nonempty ordered list of checked rows of a single width.",
+      "boundary": "The row widths agree. The whole statement meets the expansion and parameter label budgets.",
+      "meaning": "Return a bag with one result row per operand row. SQLite supplies result names column1 through columnN. No order is promised.",
+      "sql": "Emit VALUES followed by rows in their recorded order."
+    }
+  },
+  "analysis": "Lower a top-level VALUES clause using the same scalar semantics as SELECT on an empty local scope. Supported operands are signed decimal integers, NULL, numbered parameters and the supported binary arithmetic. Compound queries, other value expressions and other statement uses remain open.",
+  "observations": ["Ordered generated column names", "Typed rows including duplicates and NULL", "Native parameter count and first labels", "Read-only effect"],
+  "finite": {
+    "atoms": ["0", "-2", "NULL", "?02"],
+    "shapes": ["single cell", "two rows of one cell", "one row of two cells", "two rows of two cells"],
+    "completeness": "Check every assignment of the four atom indices to each shape against the returned structure."
+  },
+  "exploration": {"seeds": [87, 643, 1823], "casesPerSeed": 32, "timeoutSeconds": 240, "allowedExclusions": []},
+  "negative": ["No rows", "Empty row", "Width mismatch", "A column inside a nested value expression"],
+  "faults": ["Drop a row", "Swap the value order within each row"],
+  "coverage": {
+    "Q01": ["closed scalar types and shape checks", "direct rejections"],
+    "Q02": ["finite constructor cases", "structural tests", "analyzed cases"],
+    "Q03": ["row width equality", "zero visible tables", "statement budget"],
+    "Q04": ["independent bag oracle", "SQLite original and emitted comparison"],
+    "Q05": ["closed source inventory", "distribution digest", "isolated candidate"]
+  },
+  "sources": ["https://sqlite.org/lang_select.html#the_values_clause"]
+}

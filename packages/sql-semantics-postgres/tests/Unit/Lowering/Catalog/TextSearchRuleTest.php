@@ -14,7 +14,7 @@ final class TextSearchRuleTest extends TestCase
 {
     public function testStatementLowersAConfigurationChange(): void
     {
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a REPLACE b WITH c', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a REPLACE b WITH c')->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a REPLACE b WITH c', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a REPLACE b WITH c')->toString());
     }
 
     public function testWithAcceptsTheMandatoryWith(): void

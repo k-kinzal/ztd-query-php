@@ -47,19 +47,19 @@ final class LateralReachTest extends TestCase
 
     public function testReportNamesAnUnaliasedJoin(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM (SELECT 1 AS a) AS t JOIN (SELECT 2 AS b) AS u ON true FULL JOIN LATERAL (SELECT b AS x) AS s ON true', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('SELECT * FROM (SELECT 1 AS a) AS t JOIN (SELECT 2 AS b) AS u ON true FULL JOIN LATERAL (SELECT b AS x) AS s ON true', []);
         self::assertSame(['invalid reference to FROM-clause entry for table "unnamed_join"'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
 
     public function testReportNamesTheAliasOfAWholeRow(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM (SELECT 1 AS a) AS t RIGHT JOIN LATERAL (SELECT t AS x) AS s ON true', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('SELECT * FROM (SELECT 1 AS a) AS t RIGHT JOIN LATERAL (SELECT t AS x) AS s ON true', []);
         self::assertSame('invalid reference to FROM-clause entry for table "t"', $query->facts->diagnostics[0]->message());
     }
 
     public function testReportIsNotRaisedForALeftJoin(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM (SELECT 1 AS a) AS t LEFT JOIN LATERAL (SELECT t.a AS x) AS s ON true', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('SELECT * FROM (SELECT 1 AS a) AS t LEFT JOIN LATERAL (SELECT t.a AS x) AS s ON true', []);
         self::assertSame([], $query->facts->diagnostics);
     }
 }

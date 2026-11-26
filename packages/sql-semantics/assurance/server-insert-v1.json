@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/server-insert-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "The releases and native language settings in server-projection-v1.json.",
+  "scope": "One top-level INSERT with an explicit nonempty target column list and a nonempty list of VALUES rows. Target columns are declared ordinary writable signed 32-bit integers. Each supplied value is a signed integer literal or explicit NULL.",
+  "open": ["Implicit column lists, DEFAULT as an operand, identity or generated target columns, additional target types and literal or expression roles", "WITH, RETURNING, conflict modifiers, REPLACE, INSERT from a query, row aliases and partition selection"],
+  "additionalPublicRoots": ["Mutation/Insert"],
+  "constructors": {
+    "Insert": {
+      "type": "Mutation/Insert",
+      "fields": ["target", "rows", "release"],
+      "role": "Insert ordered value rows into one absolute base table identity",
+      "invariants": ["The ordered target slots are nonempty and distinct", "PostgreSQL does not admit ONLY in this target role", "Every row has exactly one supplied value per target slot", "At most 1024 target slots, 512 rows and 8192 supplied cells"],
+      "sql": "Emit INSERT INTO, the qualified target and ordered column list, then VALUES and the ordered rows.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "InsertRow": {
+      "type": "Mutation/InsertRow",
+      "fields": ["values"],
+      "role": "One owned nonempty list of inserted cells in target order",
+      "invariants": ["Each cell is an InsertCell", "The owning INSERT matches the row width to the target slots"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "InsertCell": {
+      "type": "Mutation/InsertCell",
+      "fields": ["value"],
+      "role": "An exact signed integer value or SQL NULL",
+      "invariants": ["An integer is carried by the existing closed IntegerLiteral role", "A null value supplies explicit SQL NULL"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Resolve the write table and each explicit target name against its complete declaration. Verify the supported signed type and that the columns admit a written literal. Lower the ordered literal cells from binding. Apply the same closed constructors as direct callers.",
+  "meaning": "For each row associate supplied cells with target columns by position. Execute the standard engine insertion with the same physical table definitions, ordinary omitted-column defaults, constraints and triggers. Input NULL is supplied as a value. Unnamed columns use their defaults.",
+  "observations": ["Affected row count", "Full typed target contents with repeated rows", "Separate control table for wrong-target detection", "Transactional row trigger observations", "Complete restoration after observer rollback"],
+  "finite": {
+    "targetLayouts": ["key and payload", "payload and key", "key only", "payload only"],
+    "rowCounts": [1, 2],
+    "valueVectors": ["zero and one", "NULL and negative", "signed boundaries", "equal keys with distinct payloads"],
+    "identitiesPerRelease": 32,
+    "completeness": "Require the independent Cartesian product of target layout, row count and value vector observed from actual closed values exactly once."
+  },
+  "exploration": {"seeds": [1207, 3691, 7723], "casesPerSeed": 32, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
+  "negative": ["Missing target columns", "Empty row list", "Empty row cells", "Row width mismatch", "Duplicate target column", "Read-only generated target column where the release supports it, or a non-integer target in MySQL 5.6", "Unresolved target column", "Signed integer value outside the profile"],
+  "additionalPostgreSqlNegatives": ["A directly declared identity target", "An identity copied by LIKE INCLUDING IDENTITY", "An identity inherited by a partition"],
+  "faults": ["Swap two target columns", "Drop the final row", "Redirect to the independent control table"],
+  "evidence": "Capture the inputs, observed structures, emitted SQL, typed state before and after, trigger log, rollback state and exact distribution. Use deterministic defaults and distinct fixture rows. Preserve any counterexample and complete the same release matrix.",
+  "trust": ["Closed runtime values and their snapshots", "Native declaration resolution and writable type checks", "Disposable transactional database and observer with fixed target boundaries", "Independent row-placement and default calculation"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/insert.html", "https://www.postgresql.org/docs/17/sql-insert.html", "https://www.postgresql.org/docs/17/ddl-identity-columns.html", "https://www.postgresql.org/docs/17/sql-createtable.html"]
+}

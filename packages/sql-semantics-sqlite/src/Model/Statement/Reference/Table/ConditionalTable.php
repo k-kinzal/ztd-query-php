@@ -15,12 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * An undeclared relation of the earlier schema would be found first, so the
  * known declaration is a candidate and not the resolution.
  *
- * @visibility public
- * @example Keeping a declaration that an unknown earlier schema could shadow
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE main.t (a INTEGER)')], false);
- *     $query = $semantics->analyze('SELECT a FROM t', $declarations);
- *     count($query->facts->relation($query->inputRelation())->table->candidates) // => 1
+ * @visibility SqlSemantics
  */
 final class ConditionalTable implements TableResolution
 {

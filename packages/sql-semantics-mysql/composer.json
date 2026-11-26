@@ -90,7 +90,8 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Bench\\": "bench/",
-            "Fuzz\\": "fuzz/"
+            "Fuzz\\": "fuzz/",
+            "SqlSemantics\\Testing\\MySql\\": "fuzz/Grammar/"
         }
     },
     "scripts": {

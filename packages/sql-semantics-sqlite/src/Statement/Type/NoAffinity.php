@@ -19,10 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
  * Source: https://sqlite.org/datatype3.html#affinity_of_expressions
  * (and `sqlite3SubqueryColumnTypes()` in select.c of the release). Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of a view column computed by a literal
- *     $view = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v AS SELECT 1 AS one');
- *     [$view->declarations()[0]->columns[0]->type instanceof \SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity, $view->declarations()[0]->columns[0]->type->name()] // => [true, '']
+ * @visibility SqlSemantics
  */
 final class NoAffinity implements TypeDescriptor
 {

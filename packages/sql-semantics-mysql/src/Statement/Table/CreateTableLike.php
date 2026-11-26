@@ -29,12 +29,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
  * request. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-like.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Copying the columns of a declared table
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $source = $semantics->analyze('CREATE TABLE s (a INT NOT NULL)');
- *     $copy = $semantics->analyze('CREATE TABLE c LIKE s', [$source])->declarations()[0];
- *     [$copy->name->name->value, $copy->columns[0]->name->value, $copy->columns[0] === $source->declarations()[0]->columns[0]] // => ['c', 'a', false]
+ * @visibility SqlSemantics
  */
 final class CreateTableLike implements Statement
 {
@@ -63,7 +58,12 @@ final class CreateTableLike implements Statement
     {
         $fact = $derivation->target($this, (new TableTargets())->existing($derivation, $this->source));
         (new RelationKinds())->require($derivation, $this->source, $fact->table, RelationKind::BaseTable);
-        $derivation->declare((new TableDeclaration())->like($this->name, $fact->table instanceof DeclaredTable ? $fact->table->table : null, $derivation->context->profile));
+        $derivation->declare((new TableDeclaration())->like(
+            $this->name,
+            $fact->table instanceof DeclaredTable ? $fact->table->table : null,
+            $derivation->context->profile,
+            $this->temporaryWords > 0,
+        ));
     }
 
     /**

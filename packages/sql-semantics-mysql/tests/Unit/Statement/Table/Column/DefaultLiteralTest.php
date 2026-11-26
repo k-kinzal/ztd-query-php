@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Table\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DefaultLiteral::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class DefaultLiteralTest extends TestCase
 {
     public function testDeriveAttributeDerivesTheValue(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT DEFAULT -1)');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT DEFAULT -1)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -33,6 +33,6 @@ final class DefaultLiteralTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT DEFAULT - 1)', (new Semantics())->analyze('CREATE TABLE t (a INT DEFAULT -1)')->toString());
+        self::assertSame('CREATE TABLE t (a INT DEFAULT - 1)', (new Inspection())->inspect('CREATE TABLE t (a INT DEFAULT -1)')->toString());
     }
 }

@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * (ER_DUP_ARGUMENT), which the statement reports.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-tls.
  *
- * @visibility public
- * @example Reading the conditions of a requirement
- *     $tls = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER u REQUIRE SUBJECT 's' ISSUER 'i'")->statement->tls;
- *     [$tls?->kind, count($tls?->conditions ?? [])] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind::Specified, 2]
+ * @visibility SqlSemantics
  */
 final class TlsRequirement implements Node
 {

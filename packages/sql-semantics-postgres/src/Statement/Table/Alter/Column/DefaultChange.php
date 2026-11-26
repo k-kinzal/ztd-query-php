@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * Mirrors `AT_ColumnDefault` with `def`. The expression sees no column, as in a column definition.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading a new default
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET DEFAULT 0');
- *     $statement->toString() // => 'ALTER TABLE t ALTER a SET DEFAULT 0'
+ * @visibility SqlSemantics
  */
 final class DefaultChange implements AlterCommand
 {

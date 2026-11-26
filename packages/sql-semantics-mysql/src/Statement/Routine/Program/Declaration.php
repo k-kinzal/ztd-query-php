@@ -11,10 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare.html.
  *
- * @visibility public
- * @example Reading the declarations of a block
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT; END');
- *     $create->statement->body->declarations[0] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration // => true
+ * @visibility SqlSemantics
  */
 interface Declaration extends Node
 {

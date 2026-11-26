@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * declarations prevent from expanding stays a typed request and leaves the
  * shape open; no field is invented for it.
  *
- * @visibility public
- * @example Reading the output of a query
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS a, 2 AS b');
- *     [count($query->facts->output->projection), $query->facts->output->shape->complete()] // => [2, true]
+ * @visibility SqlSemantics
  */
 final class QueryFact
 {

@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * The ROW or ROWS written after the start in the SQL-standard spelling are
  * noise words. Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-LIMIT.
  *
- * @visibility public
- * @example Reading an offset
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 OFFSET 3 ROWS');
- *     $query->toString() // => 'SELECT 1 OFFSET 3'
+ * @visibility SqlSemantics
  */
 final class Offset implements Node
 {

@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
  * `PRESERVE_ROWS`). PRESERVE ROWS is the default and is kept when written.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the ON COMMIT action
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TEMP TABLE t (a int) ON COMMIT DELETE ROWS');
- *     $create->statement->onCommit // => \SqlSemantics\Platform\PostgreSql\Statement\Table\OnCommit::DeleteRows
+ * @visibility SqlSemantics
  */
 enum OnCommit: string
 {

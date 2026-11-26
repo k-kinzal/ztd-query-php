@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
  * Its type, NULL fact and name resolution are not stored on the node; the
  * operation that contains the node derives and owns them.
  *
- * @visibility public
- * @example Reading the facts an operation derived for an expression
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1');
- *     $operation->facts->scalar($operation->field(0)->expression)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 interface Scalar extends Node
 {

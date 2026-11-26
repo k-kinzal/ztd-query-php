@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Parameterized;
  * Source: https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT,
  * https://www.postgresql.org/docs/17/functions-info.html#FUNCTIONS-INFO-SESSION. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a precise current timestamp
  *     $value = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\ValueFunction(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\ValueFunctionKind::CurrentTimestamp,

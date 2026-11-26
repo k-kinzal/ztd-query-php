@@ -31,10 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * context. The facts follow MYSQL-EVENT-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-event.html.
  *
- * @visibility public
- * @example Reading the changes of an event
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
- *     [$alter->statement->newName->name->value, $alter->statement->status, $alter->statement->schedule] // => ['f', \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable, null]
+ * @visibility SqlSemantics
  */
 final class AlterEvent implements Statement
 {

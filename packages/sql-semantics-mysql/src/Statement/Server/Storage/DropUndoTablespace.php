@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-tablespace.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing an undo tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("drop undo tablespace u");
- *     [$statement->toString(), $statement->statement->options] // => ["DROP UNDO TABLESPACE u", []]
+ * @visibility SqlSemantics
  */
 final class DropUndoTablespace implements Statement
 {

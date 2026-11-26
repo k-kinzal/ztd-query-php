@@ -21,6 +21,6 @@ final class FunctionClauseTest extends TestCase
 
     public function testRenderWritesTheFunction(): void
     {
-        self::assertSame('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v')->toString());
+        self::assertSame('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v')->toString());
     }
 }

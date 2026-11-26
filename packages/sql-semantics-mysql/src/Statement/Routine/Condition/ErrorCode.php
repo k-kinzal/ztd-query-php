@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html,
  * https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/sql_yacc.yy (rules `sp_cond`, `ulong_num`).
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding an error code
  *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1051')))->code->text // => '1051'
  * @example Reading the error number the server takes from a floating number

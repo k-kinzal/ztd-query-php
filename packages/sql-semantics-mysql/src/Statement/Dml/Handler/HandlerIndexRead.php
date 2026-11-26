@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * The facts follow MYSQL-HANDLER-READ-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/handler.html.
  *
- * @visibility public
- * @example Reading an index read of a handler
- *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ idx PREV');
- *     [$read->statement->index->value, $read->statement->direction, $read->toString()] // => ['idx', \SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection::Previous, 'HANDLER h READ idx PREV']
+ * @visibility SqlSemantics
  */
 final class HandlerIndexRead implements Statement
 {

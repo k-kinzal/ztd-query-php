@@ -100,7 +100,7 @@ final class TableConstraintRule
                 $this->columns->autoincrement($form->node(4)),
             ),
             'tcons: UNIQUE LP sortlist RP onconf' => new TableUnique((new KeyTermRule())->keyTerms($this->lowering->ordering->terms($form->node(2))), $this->lowering->conflicts->onConflict($form->node(4))),
-            'tcons: CHECK LP expr RP onconf' => new TableCheck($this->lowering->expressions->expression($form->node(2)), $this->lowering->conflicts->onConflict($form->node(4))),
+            'tcons: CHECK LP expr RP onconf' => new TableCheck($this->lowering->expressions->expression($form->node(2)), $this->lowering->conflicts->onConflict($form->node(4)), (new ImplicitCheckLayout())->capture($form)),
             'tcons: FOREIGN KEY LP eidlist RP REFERENCES nm eidlist_opt refargs defer_subclause_opt' => new ForeignKey(
                 $this->lowering->ordering->columns($form->node(3)),
                 $this->foreignKeys->clause($form->node(6), $form->node(7), $form->node(8)),

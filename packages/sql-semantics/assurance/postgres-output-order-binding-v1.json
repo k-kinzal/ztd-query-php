@@ -1,0 +1,30 @@
+{
+  "revision": "SemanticsIR/postgres-output-order-binding-1",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Rules/Query/Ordering.php": {
+      "sha256": "d8fbe0685479dded35d6da335fb7a26e0f7d046e93d823f7ba7f0ac58b05e592",
+      "role": "Resolve simple ORDER BY labels before input names and compare repeated names by their resolved column identities."
+    },
+    "src/Rules/Expression/ColumnFacts.php": {
+      "sha256": "315de47f331533087efa9b9af87e0b9b68822c64b7b3bb3ca87e4de9e42ddd3e",
+      "role": "Publish the single result-field alias or report a genuine ambiguity."
+    },
+    "src/Rules/Query/Facts/SelectFacts.php": {
+      "sha256": "205c901e7f916ffd4865042762b3f0a6ce714055ca82b6e4db8ee775e03c237a",
+      "role": "Derive ordering in the same closed projection as the owning SELECT."
+    },
+    "src/Statement/Expression/Grouped.php": {
+      "sha256": "ae8254b71d3c6cd539c0ae6150ca576ea60592c0f425e4375842b5f77c4a6411",
+      "role": "Preserve exact resolved input and output references through transparent grouping."
+    },
+    "src/Statement/Query/Clause/OutputPosition.php": {
+      "sha256": "deccaeafb3cd278a2308da1969196d9561fd767a51efa4e6253a17e2230e5741",
+      "role": "Bind an explicitly written position within the ordered projection."
+    },
+    "src/Model/Statement/Shape/Fields.php": {
+      "sha256": "fbe6cfea341dc1b7e57decd617c59ead6ad9527ff3b4d21142af2cb519e0a4b5",
+      "role": "Keep the zero-based projection layout and prove ownership by object identity."
+    }
+  }
+}

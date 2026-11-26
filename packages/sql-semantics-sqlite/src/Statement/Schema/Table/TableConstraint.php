@@ -14,10 +14,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  * The closed set is: a constraint name, PRIMARY KEY, UNIQUE, CHECK and FOREIGN KEY.
  * Source: https://sqlite.org/syntax/table-constraint.html.
  *
- * @visibility public
- * @example Reading a table constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
- *     $create->statement->constraints[0]->items[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint // => true
+ * @visibility SqlSemantics
  */
 interface TableConstraint extends Node
 {

@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
  * scope of the changed table (MYSQL-PARTITIONING-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table-partition-operations.html.
  *
- * @visibility public
- * @example Partitioning a table by hash
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 4');
- *     $alter->toString() // => 'ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 4'
+ * @visibility SqlSemantics
  */
 final class PartitionBy implements TrailingCommand
 {

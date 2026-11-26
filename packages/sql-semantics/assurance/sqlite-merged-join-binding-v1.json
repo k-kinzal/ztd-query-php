@@ -1,0 +1,33 @@
+{
+  "revision": "SemanticsIR/sqlite-merged-join-binding-1",
+  "approval": "pending-human-review",
+  "scope": "Pin the binder that suppresses right wildcard slots, names the left representative, and rejects conflicting syntax before SELECT lowering.",
+  "artifacts": {
+    "src/Rules/Resolution/FromScope.php": {
+      "methods": [
+        "enter"
+      ],
+      "sha256": "19abd8c70c6fdd73906e8142c91fd96ad284d28e71109355116ba5ccd56312e5"
+    },
+    "src/Rules/Resolution/Joining.php": {
+      "methods": [
+        "join",
+        "locate",
+        "uniqueNames"
+      ],
+      "sha256": "bd7da22e39a3b1aa8e0a67e8f39c9fdde92024f4e277f91f3455365edf2c2282"
+    },
+    "src/Rules/Resolution/ColumnResolver.php": {
+      "methods": [
+        "find"
+      ],
+      "sha256": "2549b866049c6e30d693ddad0fd7b89c588e256aeaea720b9a35696b43504e19"
+    },
+    "src/Rules/Query/Projection.php": {
+      "methods": [
+        "expand"
+      ],
+      "sha256": "57cec6549d8948531191f20054c9f6fd748fd808fc755a80c84e3b5b106eeb20"
+    }
+  }
+}

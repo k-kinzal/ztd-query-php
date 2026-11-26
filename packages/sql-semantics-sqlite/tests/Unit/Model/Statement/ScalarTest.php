@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Scalar::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class ScalarTest extends TestCase
 {
     public function testDeriveScalarRecordsAFactForEveryOperand(): void
     {
-        $operation = (new Semantics())->analyze("SELECT 1 + 'a'");
+        $operation = (new Inspection())->inspect("SELECT 1 + 'a'");
         $expression = $operation->field(0)->expression;
 
         self::assertInstanceOf(Binary::class, $expression);

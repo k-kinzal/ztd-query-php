@@ -1,0 +1,118 @@
+{
+  "revision": "SemanticsIR/mysql-merged-join-1",
+  "extends": [
+    "server-join-v2.json",
+    "wildcard-projection-v2.json"
+  ],
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": "All nine pinned MySQL releases and lexical, connection and name settings from server-projection-v1.json.",
+  "requiredScope": "All previously required engine releases, modes and syntax remain in scope.",
+  "constructors": {
+    "From/Join": {
+      "role": "Normalize a MySQL NATURAL or USING merge of two ordinary complete base-table headings.",
+      "structure": "Two ordered input occurrences, resolved join kind and an optional closed ON predicate.",
+      "conditions": "Both operands are ordinary base relations with complete visible headings with distinct ASCII field names. Each equality uses a declared signed INT field from both sources. Additional aliases may qualify each input; a merged subtree remains out of this domain.",
+      "meaning": "Bind the named or common fields, compare them by signed equality in the owning scope and retain the specified unmatched rows. A NATURAL outer join with no common fields uses a true predicate. A NATURAL inner join with no common names is an unfiltered join.",
+      "sql": "Emit ordered ordinary join operands and their explicit predicate."
+    },
+    "ResultColumn": {
+      "role": "A named field of the physical or merged result heading.",
+      "structure": "Ordered result label and resolved physical occurrence and slot.",
+      "conditions": "The result owner requires each slot to belong to the source. Qualified references and qualified stars use physical columns.",
+      "meaning": "For merged star output, emit common fields first in the preserved operand's declaration order, then unmerged fields of that operand followed by unmerged fields from the other. A RIGHT merge preserves the right operand. For explicit ON, a star retains the written input order.",
+      "sql": "Render each resolved slot under its fixed output label."
+    }
+  },
+  "externalInterpretation": "Both executions interpret the same declared source identities, signed INT fields, table heading order and rows. The fixed profile uses ordinary visible stored fields.",
+  "observations": [
+    "Preserve exact names, metadata types, NULL, multiplicity, absolute sources and input occurrence identities.",
+    "USING order can differ from declaration order. A RIGHT merged star and a RIGHT ON star have different native order rules.",
+    "Qualified stars preserve physical fields in their own declaration order. Unqualified merged names select the kept slot.",
+    "Disjoint headings make a NATURAL outer join keep an unmatched preserved row when the other input is empty."
+  ],
+  "finite": {
+    "joinKinds": [
+      "INNER",
+      "LEFT",
+      "RIGHT"
+    ],
+    "keys": [
+      "id",
+      "lane",
+      "both"
+    ],
+    "orientation": [
+      "left-first",
+      "right-first"
+    ],
+    "projection": [
+      "visible",
+      "physical"
+    ],
+    "completeness": "Derive and visit the complete 36-element finite product from the actual operations, canonical direction and scoped output in each release."
+  },
+  "exploration": {
+    "seeds": [
+      1907,
+      12343,
+      54037
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "structure": "Generate varying join operations, ordered key layouts, repeated input occurrences, projection order and slot repetition, nonstandard labels and null-extended branches."
+  },
+  "analysis": [
+    "The exact previous binary NATURAL rejection is now positive.",
+    "USING in reversed written key order keeps the native declaration order for the result.",
+    "NATURAL INNER compares each shared key.",
+    "NATURAL RIGHT uses the right heading and right values.",
+    "RIGHT with explicit ON preserves the physical star order.",
+    "NATURAL LEFT with qualified stars keeps both physical headings.",
+    "NATURAL RIGHT with qualified stars keeps both physical headings.",
+    "Explicit merged and qualified column names identify their own declared slots.",
+    "Disjoint NATURAL LEFT preserves rows when the independent right input is empty.",
+    "Disjoint NATURAL RIGHT retains the right-first merged heading order."
+  ],
+  "negative": [
+    "A direct equality refers to a missing occurrence.",
+    "A direct projection addresses a missing column slot.",
+    "A merged input includes a joined subtree.",
+    "A merged column is absent from one complete heading.",
+    "A merged column has an unsigned or non-INT type.",
+    "A list repeats one merged column name."
+  ],
+  "faults": [
+    "Address the wrong result occurrence.",
+    "Drop the second equality.",
+    "Convert RIGHT to INNER.",
+    "Delete a projected field."
+  ],
+  "evidence": {
+    "P01": "Inspect both resolved operands, each result slot and every named external occurrence.",
+    "P02": "Require direct and analyzed constructors to accept their specified shapes, and require exact failures for unsupported roles.",
+    "P03": "Use only closed native IR predicates, explicit slots and ordered headings.",
+    "P04": "Derive row pairing and preserved outputs independently of the PHP binder.",
+    "P05": "Use the audited immutable native value graph and distribution match.",
+    "P06": "Compare both original and emitted SQL on the pinned servers with exact types and duplicate rows.",
+    "Q01": "Exercise declared key membership and owner scope.",
+    "Q02": "Visit all finite tuples, required prior inputs and seeded cases in every release.",
+    "Q03": "Observe source occurrence and result layout under native join rules.",
+    "Q04": "Require independent row/type agreement and detectable rendering faults.",
+    "Q05": "Link the checked boundary and native observations to the exact source and controlled fixture."
+  },
+  "open": [
+    "Non-INT keys, non-ASCII identifier comparison, invisible columns, derived headings, aliases on entire joins and merged prefixes require independent contracts and checks."
+  ],
+  "trust": [
+    "Frozen MySQL SQL mode and name resolution",
+    "Independent rows and signed integer tests",
+    "Exact PDO/native results under the approved controller"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/join.html"
+  ]
+}

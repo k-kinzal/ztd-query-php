@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  * changed table.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-order-by.
  *
- * @visibility public
- * @example Ordering the rows by a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ORDER BY a DESC');
- *     $alter->toString() // => 'ALTER TABLE t ORDER BY a DESC'
+ * @visibility SqlSemantics
  */
 final class Reorder implements AlterCommand
 {

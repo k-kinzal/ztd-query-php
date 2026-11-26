@@ -22,9 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * Source: https://www.postgresql.org/docs/17/datatype-enum.html#DATATYPE-ENUM-IMPLEMENTATION-DETAILS
  * ("Existing values cannot be removed from an enum type"). Status: Implemented.
  *
- * @visibility public
- * @example Reading the rejected request
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER TYPE mood DROP VALUE 'sad'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: dropping an enum value is not implemented
+ * @visibility SqlSemantics
  */
 final class DropEnumLabel implements Statement
 {

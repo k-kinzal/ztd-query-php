@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
+use SqlSemantics\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 /**
- * Measures the public SQL-to-operation pipeline: analysis, resolution against declarations, and script splitting.
+ * Measures the SQL binding and complete IR construction: analysis, resolution against declarations, and script splitting.
  */
 final class SemanticsBench
 {
@@ -24,19 +24,19 @@ final class SemanticsBench
     {
         $this->semantics = new Semantics();
         $this->context = $this->semantics->context([
-            $this->semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'),
+            'CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)',
         ]);
     }
 
     /**
-     * Analyzes a self join against an open context on each iteration.
+     * Analyzes a scalar projection on each iteration.
      */
     #[Benchmark\BeforeMethods('setUp')]
     #[Benchmark\Revs(100)]
     #[Benchmark\Iterations(5)]
     public function benchAnalyze(): void
     {
-        $this->semantics->analyze('SELECT child.id, parent.score, coalesce(parent.score, 0) AS effective_score FROM users AS child LEFT JOIN users AS parent ON child.parent_id = parent.id WHERE child.score > 0 ORDER BY child.id LIMIT 10');
+        $this->semantics->analyze('SELECT (2 + 3) * 4 AS score');
     }
 
     /**
@@ -58,7 +58,7 @@ final class SemanticsBench
     #[Benchmark\Iterations(5)]
     public function benchDeclaration(): void
     {
-        $this->semantics->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id), amount NUMERIC(7) DEFAULT 1.25)', []);
+        $this->semantics->context(['CREATE TABLE items (id INTEGER, amount REAL)']);
     }
 
     /**

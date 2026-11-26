@@ -1,0 +1,64 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-index-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Seal the requested rebuild and the absolute index selection in the installed PHP routes.",
+  "rules": {
+    "Schema/Index/ReindexIndex::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/ReindexIndex::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Index/ReindexIndex::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REINDEX INDEX ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Index/ReindexIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX INDEX requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index && $statement->object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\QualifiedName, 'A complete REINDEX needs a named index target.');",
+        "foreach ($statement->options as $option) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($option->option() === 'concurrently', 'A complete REINDEX INDEX accepts only concurrency options.');",
+        "}",
+        "$target = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexTargetLowering())->resolve($context, $statement->object, false);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::invariant($target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexReference, 'A rebuild requires a resolved index.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndex($target, $statement->requestsConcurrentBuild() ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    }
+  }
+}

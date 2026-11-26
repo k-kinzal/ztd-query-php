@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
  * https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html.
  *
- * @visibility public
- * @example Reading whether the parentheses are written
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT CURRENT_DATE');
- *     $query->statement->items[0]->expression->parentheses // => \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted
+ * @visibility SqlSemantics
  */
 enum OptionalWords
 {

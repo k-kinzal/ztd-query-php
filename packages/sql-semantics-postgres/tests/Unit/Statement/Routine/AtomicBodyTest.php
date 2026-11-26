@@ -15,11 +15,11 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\AtomicBody;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\ReturnStatement;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(AtomicBody::class)]
 #[Medium]
@@ -42,7 +42,7 @@ final class AtomicBodyTest extends TestCase
 
     public function testDropsEmptyStatements(): void
     {
-        $operation = (new Semantics())->analyze('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC ; SELECT 1; ; END');
+        $operation = (new Inspection())->inspect('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC ; SELECT 1; ; END');
         self::assertSame('CREATE FUNCTION f () RETURNS int4 BEGIN ATOMIC SELECT 1; END', $operation->toString());
     }
 

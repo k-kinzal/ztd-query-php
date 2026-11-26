@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
  * Mirrors one bit of `events` with `columns` for UPDATE OF.
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
- * @visibility public
- * @example Reading an UPDATE OF event
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRIGGER g AFTER UPDATE OF a, b ON t EXECUTE FUNCTION f()');
- *     count($statement->statement->events[0]->columns) // => 2
+ * @visibility SqlSemantics
  */
 final class TriggerEvent implements Node
 {

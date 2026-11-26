@@ -35,9 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html,
  * https://dev.mysql.com/doc/refman/5.7/en/alter-user.html. Status: Implemented.
  *
- * @visibility public
- * @example Changing a password and keeping the old one
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter user if exists u identified by 'new' replace 'old' retain current password")->toString() // => "ALTER USER IF EXISTS u IDENTIFIED BY 'new' REPLACE 'old' RETAIN CURRENT PASSWORD"
+ * @visibility SqlSemantics
  */
 final class AlterUser implements Statement
 {

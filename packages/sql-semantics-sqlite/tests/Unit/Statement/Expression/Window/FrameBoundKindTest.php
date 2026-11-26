@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Expression\Window;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FrameBoundKind::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class FrameBoundKindTest extends TestCase
 
     public function testCasesMatchTheBoundariesOfAnAnalyzedFrame(): void
     {
-        $statement = (new Semantics())->analyze('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING), sum(a) OVER (ROWS 2 PRECEDING) FROM t')->statement;
+        $statement = (new Inspection())->inspect('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING), sum(a) OVER (ROWS 2 PRECEDING) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);

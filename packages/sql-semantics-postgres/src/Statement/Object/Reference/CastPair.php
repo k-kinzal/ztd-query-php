@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * Source: https://www.postgresql.org/docs/17/sql-dropcast.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the target type
  *     $text = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('text')])));
  *     $mood = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('mood')])));

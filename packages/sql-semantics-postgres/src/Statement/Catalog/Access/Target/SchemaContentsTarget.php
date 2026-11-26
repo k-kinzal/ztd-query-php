@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * schemas hold is known when the statement runs, so nothing is resolved.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
- * @example Reading the schemas whose tables are granted
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe');
- *     [$operation->statement->target->object()->value, $operation->statement->target->schemas[0]->value] // => ['TABLE', 'app']
+ * @visibility SqlSemantics
  */
 final class SchemaContentsTarget implements PrivilegeTarget
 {

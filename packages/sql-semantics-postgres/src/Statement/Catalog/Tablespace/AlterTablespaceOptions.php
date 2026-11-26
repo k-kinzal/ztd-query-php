@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * `isReset` flag. RESET names parameters only; a value given to RESET is a
  * diagnostic. Source: https://www.postgresql.org/docs/17/sql-altertablespace.html. Status: Implemented.
  *
- * @visibility public
- * @example Resetting a parameter
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLESPACE fast RESET (seq_page_cost)');
- *     [$operation->statement->reset, $operation->facts->diagnostics] // => [true, []]
+ * @visibility SqlSemantics
  */
 final class AlterTablespaceOptions implements Statement
 {

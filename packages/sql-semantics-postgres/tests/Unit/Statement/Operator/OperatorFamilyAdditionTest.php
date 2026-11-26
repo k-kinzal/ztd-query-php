@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorFamilyAddition;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(OperatorFamilyAddition::class)]
 #[Medium]
@@ -20,13 +20,13 @@ final class OperatorFamilyAdditionTest extends TestCase
 {
     public function testDeriveStatementReportsAStorageType(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR FAMILY f USING btree ADD STORAGE int4');
+        $operation = (new Inspection())->diagnose('ALTER OPERATOR FAMILY f USING btree ADD STORAGE int4');
         self::assertEquals([new ObjectProblem(ObjectProblemKind::StorageInFamily)], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheItems(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8), FUNCTION 1 f(int4, int8)');
+        $operation = (new Inspection())->diagnose('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8), FUNCTION 1 f(int4, int8)');
         self::assertSame('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8), FUNCTION 1 f (int4, int8)', $operation->toString());
     }
 

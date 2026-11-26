@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\ResultSlots;
  * different lengths are reported. The values see no column of the query.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/values.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the rows of VALUES
  *     $values = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]);
  *     count($values->rows) // => 1

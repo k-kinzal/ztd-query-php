@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ReplicationFilter::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class ReplicationFilterTest extends TestCase
 {
     public function testRenderWritesTablesAndTheEmptyList(): void
     {
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (a.b, c.d), REPLICATE_IGNORE_DB = ()', (new Semantics())->analyze('change replication filter replicate_do_table = (a.b, c.d), replicate_ignore_db = ()')->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (a.b, c.d), REPLICATE_IGNORE_DB = ()', (new Inspection())->inspect('change replication filter replicate_do_table = (a.b, c.d), replicate_ignore_db = ()')->toString());
     }
 
     public function testValuesRejectAnUnqualifiedTable(): void

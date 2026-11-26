@@ -14,11 +14,11 @@ final class CreateConversionTest extends TestCase
 {
     public function testRenderWritesDefault(): void
     {
-        self::assertSame('CREATE DEFAULT CONVERSION myconv FOR \'UTF8\' TO \'LATIN1\' FROM myfunc', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DEFAULT CONVERSION myconv FOR \'UTF8\' TO \'LATIN1\' FROM myfunc')->toString());
+        self::assertSame('CREATE DEFAULT CONVERSION myconv FOR \'UTF8\' TO \'LATIN1\' FROM myfunc', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE DEFAULT CONVERSION myconv FOR \'UTF8\' TO \'LATIN1\' FROM myfunc')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE CONVERSION s.c FOR \'UTF8\' TO \'LATIN1\' FROM s.f')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE CONVERSION s.c FOR \'UTF8\' TO \'LATIN1\' FROM s.f')->facts->diagnostics);
     }
 }

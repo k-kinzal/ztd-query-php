@@ -7,15 +7,15 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UnboundParameter;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(BindParameter::class)]
 #[Medium]
@@ -32,7 +32,7 @@ final class BindParameterTest extends TestCase
 
     public function testMarkerReadsEveryWrittenPrefix(): void
     {
-        $statement = (new Semantics())->analyze('SELECT ?, ?7, :a, @b, $c')->statement;
+        $statement = (new Inspection())->inspect('SELECT ?, ?7, :a, @b, $c')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         $parameters = array_map(static function (object $column): BindParameter {
@@ -48,7 +48,7 @@ final class BindParameterTest extends TestCase
 
     public function testDeriveScalarDependsOnTheBoundValue(): void
     {
-        $operation = (new Semantics())->analyze('SELECT ?2', []);
+        $operation = (new Inspection())->inspect('SELECT ?2', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -63,7 +63,7 @@ final class BindParameterTest extends TestCase
 
     public function testDeriveScalarNamesTheMarkerOfANamedParameter(): void
     {
-        $operation = (new Semantics())->analyze('SELECT :name', []);
+        $operation = (new Inspection())->inspect('SELECT :name', []);
         $type = $operation->field(0)->type;
 
         self::assertInstanceOf(Dependent::class, $type);
@@ -74,13 +74,13 @@ final class BindParameterTest extends TestCase
 
     public function testRenderWritesTheMarkerAsWritten(): void
     {
-        self::assertSame('SELECT ?, ?7, :a, @b, $c', (new Semantics())->analyze('select ?, ?7, :a, @b, $c')->toString());
+        self::assertSame('SELECT ?, ?7, :a, @b, $c', (new Inspection())->inspect('select ?, ?7, :a, @b, $c')->toString());
     }
 
     public function testRenderWritesANewlyBuiltParameter(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new BindParameter(ParameterPrefix::Question)), new ResultColumn(new BindParameter(ParameterPrefix::At, 'x'))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new BindParameter(ParameterPrefix::Question)), new ResultColumn(new BindParameter(ParameterPrefix::At, 'x'))]));
 
         self::assertSame('SELECT ?, @x', $operation->toString());
     }

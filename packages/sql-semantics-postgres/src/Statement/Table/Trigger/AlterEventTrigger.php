@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Mirrors PostgreSQL's `AlterEventTrigStmt` (`trigname`, `tgenabled`).
  * Source: https://www.postgresql.org/docs/17/sql-altereventtrigger.html.
  *
- * @visibility public
- * @example Disabling an event trigger
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EVENT TRIGGER e DISABLE');
- *     $statement->toString() // => 'ALTER EVENT TRIGGER e DISABLE'
+ * @visibility SqlSemantics
  */
 final class AlterEventTrigger implements Statement
 {

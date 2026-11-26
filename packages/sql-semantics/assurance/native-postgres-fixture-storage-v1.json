@@ -1,0 +1,19 @@
+{
+  "id": "native-postgres-fixture-storage-v1",
+  "scope": "Data storage for disposable PostgreSQL containers in the registered native release matrix.",
+  "mount": {
+    "/var/lib/postgresql/data": "rw,nosuid,size=1073741824,mode=0700"
+  },
+  "filesystem": "tmpfs",
+  "observations": [
+    "The container configuration contains the exact registered mount.",
+    "Inside the running container, stat reports the registered filesystem at the data directory."
+  ],
+  "retained": [
+    "Server images, versions, language profiles and external reference interpretation",
+    "Per-statement deadlines and per-domain execution budgets",
+    "Catalog, transactional effects and rollback observations",
+    "Fixture, case, refusal, comparison and fault inventories"
+  ],
+  "durability": "Crash and power-loss durability are outside the observed domain. Each container and its fixture data are disposable."
+}

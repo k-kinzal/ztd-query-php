@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Utility\VacuumChecks;
  * a column list without ANALYZE; a column the declared table does not have.
  * Source: https://www.postgresql.org/docs/17/sql-vacuum.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a VACUUM written with words
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VACUUM FULL ANALYZE t');
- *     [$operation->statement->options[1]->option(), $operation->statement->targets[0]->table->name->value, $operation->toString()] // => ['analyze', 't', 'VACUUM FULL ANALYZE t']
+ * @visibility SqlSemantics
  * @example Refusing words in another order than the grammar reads
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum([
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('verbose')),

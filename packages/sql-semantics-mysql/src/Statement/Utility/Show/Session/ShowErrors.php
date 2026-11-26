@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-errors.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW ERRORS LIMIT 1, 2');
- *     [$show->field(2)->name?->value, $show->toString()] // => ['Message', 'SHOW ERRORS LIMIT 1, 2']
+ * @visibility SqlSemantics
  */
 final class ShowErrors implements Statement
 {

@@ -1,0 +1,90 @@
+{
+  "revision": "SemanticsIR/postgres-typed-columns-1",
+  "extends": ["server-join-v2.json", "wildcard-projection-v2.json", "postgres-text-literal-v1.json"],
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "TableSource": {
+      "role": "A resolved ordinary table occurrence with typed consumed slots.",
+      "structure": "Absolute schema and table identifiers, ONLY policy, unique ordered column names and one immutable native kind for each consumed position.",
+      "conditions": "The external declaration supplies the stated physical names and types. An explicit type vector has the same length as the names. An empty type vector intrinsically supplies int4 for every named position.",
+      "meaning": "The source provides the table rows and the PostgreSQL values of its named and typed columns. Each occurrence keeps its own scan and column list.",
+      "sql": "Read the exact schema-qualified table and render each reference through its checked occurrence."
+    },
+    "From/ColumnKind": {
+      "role": "The built-in native type supplied by a consumed ordinary column.",
+      "structure": "A closed int4 or text case.",
+      "conditions": "The owning source records one case at each consumed slot and the observer supplies matching tables.",
+      "meaning": "A signed int4 field has native integer semantics. A text field has the declared PostgreSQL text value and associated external collation.",
+      "sql": "A correctly associated named column carries its native type from the table."
+    },
+    "TextColumnReference": {
+      "role": "Read the exact native text field of a resolved occurrence.",
+      "structure": "One nonnegative column position and one nonnegative occurrence position.",
+      "conditions": "The owning projection checks that the selected slot exists and has the native text kind. Signed arithmetic, predicates and mutation roles require their own int4 slots.",
+      "meaning": "Read the exact value, or NULL under native data or outer extension, from the specified occurrence.",
+      "sql": "Emit its scoped alias and exact field name, and write the result label at the owning projection."
+    }
+  },
+  "externalInterpretation": "Use the same absolute ordinary and inherited table declarations, resolved int4 and text types, native values and collations.",
+  "observations": [
+    "Exact text and integer metadata, text bytes, typed NULL, duplicate rows and ordered names.",
+    "Source slots and resolved reference roles follow the declaration regardless of qualification.",
+    "A joined occurrence supplies its own text field, including unmatched-side NULL values.",
+    "The signed arithmetic, predicate and mutation roles refuse a slot of the wrong type."
+  ],
+  "finite": {
+    "sources": ["ordinary", "left-join", "right-join"],
+    "projections": ["text", "integer", "mixed", "repeated"],
+    "policy": ["only", "include"],
+    "orientation": ["forward", "reversed"],
+    "identities": 48,
+    "completeness": "Recover all coordinates from the actually published type and reference graph for every pinned release."
+  },
+  "exploration": {
+    "seeds": [1511, 24671, 62137],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 250,
+    "allowedExclusions": [],
+    "requiredForms": "Vary ordered slot metadata, integer and text coordinates, nullable outer rows, repeated fields, aliases and distinct source occurrences."
+  },
+  "analysis": [
+    "Unqualified and qualified text expressions identify the same typed coordinate.",
+    "A plain star expands mixed kinds in declaration order.",
+    "A qualified star from the later occurrence retains its own mixed fields.",
+    "An ordinary LEFT join reads distinct text fields and preserves NULL extension.",
+    "An ordinary RIGHT join preserves the right field and unmatched rows.",
+    "ONLY governs the text-bearing source occurrence."
+  ],
+  "negative": [
+    "A source provides a different number of kinds and names.",
+    "A text reference addresses an integer slot.",
+    "An integer reference addresses a text slot.",
+    "An integer predicate takes a text slot.",
+    "An integer target assignment addresses a text slot."
+  ],
+  "faults": [
+    "Read a different occurrence for a text projection.",
+    "Swap two distinct text slot indices.",
+    "Suppress an input occurrence's ONLY policy."
+  ],
+  "evidence": {
+    "P01": "Check every stored type, name and reference against the actual published graph.",
+    "P02": "Check matching layouts, reference roles and typed mutation owners.",
+    "P03": "Retain only immutable semantic values and resolved coordinates.",
+    "P04": "Compose slot kinds and typed consumers by checked rules.",
+    "P05": "Use the checked detached copy of both vectors and immutable reference fields.",
+    "P06": "Compare typed rows from the original and emitted SQL on both releases.",
+    "Q01": "Audit the exact runtime boundaries and test incompatible kinds.",
+    "Q02": "Require each finite and exploratory identity and every supported analysis case.",
+    "Q03": "Check closed operands and observe independent occurrence identity in composed queries.",
+    "Q04": "Compare exact typed result values, labels and NULL extension.",
+    "Q05": "Bind the measured graph and installed classes to the selected candidate distribution."
+  },
+  "open": [
+    "Text operators, text mutation targets, values with further native column types and merged text keys retain separate admission and evidence obligations."
+  ],
+  "trust": ["Exact externally resolved relation declaration", "PostgreSQL native text and int4 output", "Audited value construction and independent observer"]
+}

@@ -1,0 +1,51 @@
+{
+  "revision": "SemanticsIR/sqlite-between-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 in UTF-8 with the checked scalar envelope and ordinary builtin collation sequences.",
+  "scope": "Ordered single-value range tests with positive and negated forms in the closed SQLite scalar roles.",
+  "constructors": {
+    "Predicate/BetweenTest": {
+      "role": "A scalar range test that evaluates one tested expression against two ordered bounds.",
+      "structure": "One tested scalar, one lower scalar bound, one upper scalar bound, and one Boolean negation flag. Each scalar child has a closed concrete type.",
+      "conditions": "Every admitted scalar can occupy each operand role. The enclosing statement validates references, bindings and the expanded expression envelope. Row-value operands require a separate role.",
+      "meaning": "Evaluate the tested scalar once. Compare it to the lower bound with greater than or equal, and to the upper bound with less than or equal. Apply affinity and collation separately for each comparison. Combine with SQLite three-valued conjunction, then negate if requested.",
+      "externalInterpretation": "Bindings, declared affinities, implicit collations and column values refer to the same physical slots under the same SQLite profile.",
+      "sql": "Emit one parenthesized BETWEEN or NOT BETWEEN expression with each operand rendered once in its grammar position. Parenthesize the operands where needed to keep the association.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "Rows/ValuesQuery", "ColumnReference", "Parameter", "Predicate/Comparison", "Predicate/Logical"],
+  "observations": [
+    "Inclusive lower and upper bounds, exact INTEGER or NULL results, distinct affinity decisions, builtin text collation, ordered result names, duplicate rows, and binding registration.",
+    "Observe both operand failures separately. FALSE dominates an unknown comparison in the conjunction. NOT BETWEEN complements each decided result while retaining an unknown result.",
+    "Compare original analyzed SQL and rendered SQL when a case is obtained through analysis. Enforce one rendered occurrence of the tested expression through the audited rendering rule."
+  ],
+  "finite": {
+    "roots": ["select-unit", "select-table", "values"],
+    "negated": [false, true],
+    "atoms": [["null"], ["integer", "-1"], ["integer", "0"], ["integer", "2"], ["text", "2"]],
+    "slots": [0, 1],
+    "identity": "For each root and negation, cross all ordered triples. The table root adds two slot leaves, one INTEGER and one TEXT with NOCASE. Exhaust all 1186 identities observed from constructed values."
+  },
+  "exploration": {
+    "seeds": [8191, 23333, 34649],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 180,
+    "allowedExclusions": [],
+    "structure": "Generate nested range tests, unary and arithmetic expressions, distinct operand slots, bound parameters, multiple result positions, multiple VALUES rows and repeated labels. Include deliberate affinity and collation witnesses outside the finite lattice."
+  },
+  "negative": ["Missing tested slot", "Missing lower bound slot", "Missing upper bound slot", "Row-valued operand", "Expanded height above the checked limit"],
+  "faults": ["Drop the upper bound", "Drop the lower bound", "Ignore NOT", "Swap lower and upper operand roles"],
+  "open": ["Row-value BETWEEN and application-defined collations."],
+  "trust": [
+    "Pinned SQLite C observation and exact SQLite value transport",
+    "Independent pairwise coercion and three-valued comparison evaluator",
+    "Reviewed ordered rendering and scalar-slot traversal patterns"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_expr.html#the_between_operator",
+    "https://sqlite.org/datatype3.html#type_conversions_prior_to_comparison",
+    "https://sqlite.org/datatype3.html#collating_sequences"
+  ]
+}

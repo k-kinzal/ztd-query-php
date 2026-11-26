@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * supported by the server, which is reported. Transition tables are visible to the trigger function only.
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
- * @visibility public
- * @example Naming a transition table
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRIGGER g AFTER INSERT ON t REFERENCING NEW TABLE AS fresh FOR EACH STATEMENT EXECUTE FUNCTION f()');
- *     $statement->statement->transitions[0]->name->value // => 'fresh'
+ * @visibility SqlSemantics
  */
 final class TriggerTransition implements Node
 {

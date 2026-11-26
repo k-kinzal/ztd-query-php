@@ -1,0 +1,299 @@
+"""Observe one admitted PostgreSQL B-tree creation and its ordered catalog effects."""
+
+import json
+from platform import python_version
+import re
+import sys
+
+from postgres_create_btree_cases import declarations, predicate_sql, qualified, quoted
+from postgres_index_inference import EXPRESSIONS
+from postgres_libpq import LIB, Session
+from run import TOOL, digest, require
+
+CATALOG = """SELECT pg_catalog.json_build_array(i.indisunique::text, i.indnullsnotdistinct::text,
+       i.indisvalid::text, i.indisready::text, i.indislive::text,
+       i.indnkeyatts::text, i.indnatts::text, i.indkey::text, i.indoption::text, i.indcollation::text,
+       a.amname, n.nspname, c.relname, r.relname,
+       (SELECT pg_catalog.json_agg(op.opcname ORDER BY x.n)
+        FROM pg_catalog.unnest(i.indclass::oid[]) WITH ORDINALITY AS x(oid, n)
+        JOIN pg_catalog.pg_opclass op ON op.oid=x.oid)::text,
+       pg_catalog.pg_get_expr(i.indpred, i.indrelid, false))
+FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON c.oid=i.indexrelid
+JOIN pg_catalog.pg_class r ON r.oid=i.indrelid
+JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+JOIN pg_catalog.pg_am a ON a.oid=c.relam
+WHERE i.indexrelid=pg_catalog.to_regclass({index}) AND i.indrelid=pg_catalog.to_regclass({table})
+"""
+ATTRIBUTE = """SELECT pg_catalog.json_agg(pg_catalog.json_build_array(a.attname, t.typname) ORDER BY a.attnum) FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_type t ON t.oid=a.atttypid
+WHERE a.attrelid=pg_catalog.to_regclass({relation}) AND a.attnum>0 AND NOT a.attisdropped"""
+
+
+def literal(value):
+    if value is None:
+        return "NULL"
+    if type(value) is bool:
+        return "TRUE" if value else "FALSE"
+    require(type(value) is int, "postgres-btree-observer-fixture-type", value)
+    return str(value)
+
+
+def data_literal(value):
+    # Standard-conforming fixture session; quote a catalog lookup as a string.
+    return "'" + value.replace("'", "''") + "'"
+
+
+def admit_condition(expression, fields, allow_bare=False):
+    test = r" IS (?:NOT )?(?:NULL|TRUE|FALSE|UNKNOWN)"
+    atom = rf"{fields}(?:{test})?" if allow_bare else fields + test
+    token = rf"(?:{atom}|AND|OR|NOT|[()]| )"
+    return re.fullmatch(rf"{token}+", expression) is not None
+
+
+def admitted_command(command, data):
+    trial = data["trial"]
+    root = trial["createBtree"]
+    _, table, columns, _, _ = root["table"]
+    heading = "(?:" + "|".join(map(re.escape, map(quoted, columns))) + ")"
+    atom = heading + r"(?: (?:ASC|DESC)(?: NULLS (?:FIRST|LAST))?)?"
+    ident = re.escape(quoted(root["name"]))
+    target = r'(?:(?:"fixture"|"pg_temp")[.])?' + re.escape(quoted(table))
+    key_list = rf"\({atom}(?:, {atom}){{0,31}}\)"
+    payload = rf"(?: INCLUDE \({heading}(?:, {heading}){{0,31}}\))?"
+    field = rf"(?:{target}[.])?{heading}"
+    where = r"(?: WHERE (?P<condition>.+))?"
+    pattern = rf"CREATE (?:UNIQUE )?INDEX (?:CONCURRENTLY )?(?:IF NOT EXISTS )?{ident} ON (?:ONLY )?{target} USING btree {key_list}{payload}(?: NULLS (?:NOT )?DISTINCT)?{where}"
+
+    match = re.fullmatch(pattern, command)
+    if match is not None and (
+        match["condition"] is None or admit_condition(match["condition"], field, trial.get("observeTruthValues"))
+    ):
+        return match
+    return None
+
+
+def chosen(item):
+    index = item["createBtree"]
+    schema, table, columns, _, _ = index["table"]
+
+    return qualified(schema, table), qualified(schema, index["name"]), quoted(columns[item.get("sortSlot", 1)])
+
+
+def initialize(db, trial, path):
+    db.execute("SET client_min_messages=warning; DROP SCHEMA IF EXISTS fixture CASCADE;"
+               "DROP TABLE IF EXISTS public.ir_btree_marker; CREATE TABLE public.ir_btree_marker(n integer);"
+               "INSERT INTO public.ir_btree_marker VALUES (0);" + ";".join(declarations(trial)))
+    table, index, _ = chosen(trial)
+    values = ["(" + ", ".join(map(literal, row)) + ")" for row in trial["rows"]]
+    commands = [f"INSERT INTO {table} VALUES " + ", ".join(values)]
+    if trial["createBtree"]["table"][0] == "pg_temp":
+        commands.append("INSERT INTO fixture.orders VALUES (97)")
+    if trial["occupancy"] == "existing-table":
+        commands.append(f"INSERT INTO {index} VALUES (TRUE)")
+    commands.append("SET search_path=" + ", ".join(map(quoted, path)))
+    commands.append("SET client_min_messages=notice")
+    db.execute(";".join(commands))
+
+
+def observed_predicate(expression):
+    if expression is None:
+        return None
+    form = re.fullmatch(r'\(("(?:[^"]|"")+"|[^() "]+) IS (NOT )?NULL\)', expression)
+    require(form is not None, "postgres-btree-native-predicate-form", expression)
+    name = form[1][1:-1].replace('""', '"') if form[1].startswith('"') else form[1]
+
+    return [name, form[2] is not None]
+
+
+def native_truth_values(db, trial, expression):
+    _, _, columns, _, _ = trial["createBtree"]["table"]
+    if expression is None:
+        return [True] * len(trial["rows"])
+    fields = "(?:" + "|".join(re.escape(form) for name in columns for form in (quoted(name), name)
+                             if form.startswith('"') or re.fullmatch(r"[a-z_][a-z_0-9]*", form)) + ")"
+    nullable = trial.get("observeTruthValues")
+    require(admit_condition(expression, fields, nullable), "postgres-btree-native-predicate-form", expression)
+    table, _, order = chosen(trial)
+    raw = db.execute(f"SELECT pg_catalog.json_agg(({expression}) ORDER BY {order}) FROM {table}")[0][0]
+    truth = json.loads(raw)
+    require(len(truth) == len(trial["rows"]) and all(type(value) is bool or (nullable and value is None) for value in truth),
+            "postgres-btree-native-predicate-result", truth)
+    return truth
+
+
+def indexed(db, raw, trial, scope):
+    if raw is None:
+        return None
+    row = json.loads(raw)
+    unique, nulls, valid, ready, live = (value == "true" for value in row[:5])
+    key_count, member_count = map(int, row[5:7])
+    positions, orders, collations = (list(map(int, value.split())) for value in row[7:10])
+    method, schema, name, owner = row[10:14]
+
+    predicate = row[15]
+    if predicate is not None:
+        predicate = ([value is True for value in native_truth_values(db, trial, predicate)] if trial.get("observeMembership")
+                     else observed_predicate(predicate))
+    return {
+        "schema": "pg_temp" if scope == "pg_temp" and schema.startswith("pg_temp_") else schema,
+        "index": name, "table": owner, "accessMethod": method, "unique": unique, "nullsNotDistinct": nulls,
+        "valid": valid, "ready": ready, "live": live, "keyCount": key_count, "memberCount": member_count,
+        "positions": positions, "classNames": json.loads(row[14]), "collations": collations, "orders": orders,
+        "predicate": predicate,
+    }
+
+
+def rows_query(table, order):
+    return f"""SELECT pg_catalog.json_agg(sub ORDER BY {order})
+               FROM (SELECT * FROM {table}) AS sub"""
+
+
+def decoded_rows(raw):
+    return [list(row.values()) for row in json.loads(raw)]
+
+
+def snapshot(db, trial):
+    table, index, order = chosen(trial)
+    scope, name, _, _, _ = trial["createBtree"]["table"]
+    occupant = trial["occupancy"] == "existing-table"
+    queries = [
+        ATTRIBUTE.format(relation=data_literal(table)),
+        rows_query(table, order),
+        'SELECT pg_catalog.json_agg(n ORDER BY n) FROM public.ir_btree_marker',
+        rows_query("fixture.orders", "decoy") if scope == "pg_temp" else "SELECT NULL",
+        rows_query(index, "decoy") if occupant else "SELECT NULL",
+        CATALOG.format(index=data_literal(index), table=data_literal(table)),
+    ]
+    # All six views of the fixture share one database snapshot and one client round trip.
+    heading, rows, marker, decoy, competitor, catalog = db.execute(
+        "SELECT " + ", ".join(f"({query})" for query in queries)
+    )[0]
+    contestant = {"name": trial["createBtree"]["name"], "rows": decoded_rows(competitor)} if occupant else None
+
+    return {
+        "owner": [scope, name, json.loads(heading)], "rows": decoded_rows(rows),
+        "otherRows": None if decoy is None else decoded_rows(decoy), "marker": json.loads(marker),
+        "competitor": contestant, "index": indexed(db, catalog, trial, scope),
+    }
+
+
+def detect_conflict(db, trial):
+    table, _, _ = chosen(trial)
+    active = trial["transaction"]
+    findings = []
+    pending = [trial["rows"][number] for number in trial["probeRows"]] + trial.get("probeValues", [])
+    for row in pending:
+        db.execute("SAVEPOINT observe_write" if active else "BEGIN")
+        values = ", ".join(map(literal, row))
+        findings.append(db.run(f"INSERT INTO {table} VALUES ({values})")["sqlState"])
+        db.execute("ROLLBACK TO SAVEPOINT observe_write; RELEASE SAVEPOINT observe_write" if active else "ROLLBACK")
+
+    return findings
+
+
+def observe_membership(db, trial, condition):
+    """Use a disposable nonunique index to see membership even after a unique build refusal."""
+    table, _, order = chosen(trial)
+    scope = trial["createBtree"]["table"][0]
+    name = "ztd_ir_membership_witness"
+    where = " WHERE " + condition if condition is not None else ""
+    db.execute(f"BEGIN; CREATE INDEX {name} ON {table} ({order}){where}")
+    witness = qualified(scope, name)
+    expression = db.execute("SELECT pg_catalog.pg_get_expr(indpred, indrelid, false) FROM pg_catalog.pg_index "
+                            f"WHERE indexrelid=pg_catalog.to_regclass({data_literal(witness)})")[0][0]
+    result = native_truth_values(db, trial, expression)
+    db.execute("ROLLBACK")
+    return result
+
+
+def observe_conflict_inference(db, trial):
+    index = trial["createBtree"]
+    _, request, row = trial["conflictProbe"]
+    require(len(index["keys"]) == 1 and not trial["transaction"], "postgres-inference-fixture-layout")
+    table, _, _ = chosen(trial)
+    columns = index["table"][2]
+    key = quoted(columns[index["keys"][0][0]])
+    condition = predicate_sql(EXPRESSIONS[request], lambda slot: quoted(columns[slot]))
+    values = ", ".join(map(literal, row))
+    db.execute("BEGIN")
+    result = db.run(
+        f"WITH written AS (INSERT INTO {table} VALUES ({values})"
+        f" ON CONFLICT ({key}) WHERE {condition} DO NOTHING RETURNING {key})"
+        " SELECT pg_catalog.count(*) FROM written"
+    )
+    db.execute("ROLLBACK")
+    return {"sqlState": result["sqlState"], "insertCount": None if result["rows"] is None else int(result["rows"][0][0])}
+
+
+def observe(db, data):
+    match = admitted_command(data["sql"], data)
+    if match is None:
+        return {"status": "outside-observer-scope"}
+    trial = data["trial"]
+    initialize(db, trial, data["path"])
+    membership = observe_membership(db, trial, match["condition"]) if trial.get("observeMembership") else None
+    before = snapshot(db, trial)
+    active = trial["transaction"]
+    if active:
+        db.execute("BEGIN; INSERT INTO public.ir_btree_marker VALUES (7)")
+    result = db.run(data["sql"])
+    transaction = db.transaction()
+    success = result["sqlState"] == "00000"
+    after = snapshot(db, trial) if success or not active else None
+    probes_available = success or (trial.get("probeFailedBuild") and not active and result["sqlState"] == "23505")
+    probe = detect_conflict(db, trial) if probes_available else None
+    inference = observe_conflict_inference(db, trial) if "conflictProbe" in trial and success else None
+    if active:
+        db.execute("ROLLBACK")
+    observed = {
+        "status": "btree-creation", "before": before, "after": after, "probe": probe,
+        "settled": snapshot(db, trial), "transactionAfter": transaction,
+        **{name: result[name] for name in ("sqlState", "command", "notices")},
+    }
+    if membership is not None:
+        observed["membership"] = [value is True for value in membership]
+        if trial.get("observeTruthValues"):
+            observed["truthValues"] = membership
+    if "conflictProbe" in trial:
+        observed["inference"] = inference
+    return observed
+
+
+def session_settings(db):
+    return [db.execute("SHOW " + name)[0][0] for name in (
+        "server_version_num", "server_encoding", "client_encoding", "standard_conforming_strings", "search_path")]
+
+
+def require_empty_temporary_catalog(db):
+    remaining = db.execute("SELECT c.relname FROM pg_catalog.pg_class c "
+                           "WHERE c.relnamespace=pg_catalog.pg_my_temp_schema() ORDER BY c.relname")
+    require(remaining == [], "postgres-btree-temporary-catalog-occupied", remaining)
+
+
+def reset_temporary_case(db):
+    require(db.transaction() == "idle", "postgres-btree-temporary-session-open")
+    db.execute("SET client_min_messages=warning; DISCARD TEMP")
+    require_empty_temporary_catalog(db)
+
+
+def main():
+    reset = TOOL / "postgres-btree-temp-session-reset-v1.json"
+    require(digest(reset) == "e9ec09abc6972e2ec36bdd571e54ce3746b30d9e03b2adb92b63cdd4af4bfd90", "postgres-btree-temporary-reset-contract")
+    with Session() as regular, Session() as temporary:
+        settings = session_settings(regular)
+        require(session_settings(temporary) == settings, "postgres-btree-temporary-profile-mismatch")
+        print(json.dumps({"database": settings, "python": python_version(), "libpq": LIB.PQlibVersion()}), flush=True)
+
+        def run(request):
+            if request["trial"]["createBtree"]["table"][0] == "pg_temp":
+                reset_temporary_case(temporary)
+                return observe(temporary, request)
+            return observe(regular, request)
+
+        for line in sys.stdin:
+            request = json.loads(line)
+            response = [run(record) for record in request] if isinstance(request, list) else run(request)
+            print(json.dumps(response, ensure_ascii=False), flush=True)
+
+
+if __name__ == "__main__":
+    main()

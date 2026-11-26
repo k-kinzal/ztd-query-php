@@ -14,20 +14,20 @@ final class KeyColumnsTest extends TestCase
 {
     public function testPositionFindsTheSlotOfAName(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('SELECT 1', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('SELECT 1', $context);
         $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         self::assertSame(2, (new \SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns())->position($derivation, (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->shape($context[0]), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c')));
     }
 
     public function testReportReportsANameAShapeLacks(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE TABLE n (a int, UNIQUE (a, zz))', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE TABLE n (a int, UNIQUE (a, zz))', $context);
         self::assertSame([
           0 => 'column "zz" named in key does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));

@@ -17,8 +17,8 @@ final class OrderingTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT b AS a FROM t ORDER BY a', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT b AS a FROM t ORDER BY a', [$t, $u]);
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $term = $select->options?->order[0]->expression;
@@ -31,8 +31,8 @@ final class OrderingTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT b AS a FROM t GROUP BY a', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT b AS a FROM t GROUP BY a', [$t, $u]);
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $item = $select->groupBy[0];
@@ -42,15 +42,15 @@ final class OrderingTest extends TestCase
 
     public function testOutputsReportsAnExpressionAfterASetOperation(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT 1 AS a UNION SELECT 2 ORDER BY a + 1');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT 1 AS a UNION SELECT 2 ORDER BY a + 1');
         self::assertSame('invalid UNION/INTERSECT/EXCEPT ORDER BY clause', $query->facts->diagnostics[0]->message());
     }
 
     public function testTermReportsANonIntegerConstant(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT 1 ORDER BY 'x'");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT 1 ORDER BY 'x'");
         self::assertSame('non-integer constant in ORDER BY', $query->facts->diagnostics[0]->message());
     }
 
@@ -73,8 +73,8 @@ final class OrderingTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT a, a FROM t ORDER BY a', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT a, a FROM t ORDER BY a', [$t, $u]);
         self::assertSame([], $query->facts->diagnostics);
     }
 
@@ -92,8 +92,8 @@ final class OrderingTest extends TestCase
 
     public function testGroupReadsTheMembersOfAGroupingRowAsGroupingTerms(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT 1 AS x, 2 AS y GROUP BY ROLLUP ((x, 2))', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT 1 AS x, 2 AS y GROUP BY ROLLUP ((x, 2))', []);
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $set = $select->groupBy[0];
@@ -108,7 +108,7 @@ final class OrderingTest extends TestCase
 
     public function testGroupReportsAPositionOutOfRangeInsideARow(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 AS x GROUP BY (x, 3)', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('SELECT 1 AS x GROUP BY (x, 3)', []);
         self::assertSame('GROUP BY position 3 is not in select list', $query->facts->diagnostics[0]->message());
     }
 }

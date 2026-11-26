@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * the value. The result column is named `pg_collation_for`.
  * Source: https://www.postgresql.org/docs/17/functions-info.html#FUNCTIONS-INFO-CATALOG. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\CollationFor(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()))->outputName()->value // => 'pg_collation_for'
  */

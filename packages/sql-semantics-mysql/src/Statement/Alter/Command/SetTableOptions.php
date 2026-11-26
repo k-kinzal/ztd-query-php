@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
  * (PT_create_table_option); options separated by commas are separate runs.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-options.
  *
- * @visibility public
- * @example Changing the storage engine and the comment
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x'");
- *     count($alter->statement->commands[0]->options) // => 2
+ * @visibility SqlSemantics
  */
 final class SetTableOptions implements AlterCommand
 {

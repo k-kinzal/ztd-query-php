@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * owner of the constraint gives.
  * Source: https://www.postgresql.org/docs/17/ddl-constraints.html.
  *
- * @visibility public
- * @example Reading the kind of a column constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int NOT NULL)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->kind() // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind::NotNull
+ * @visibility SqlSemantics
  */
 interface Constraint extends Clause
 {

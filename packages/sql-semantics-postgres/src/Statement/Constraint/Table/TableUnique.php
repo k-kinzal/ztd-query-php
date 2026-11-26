@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * must be a column of the table (PG-KEY-COLUMNS-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a unique constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, b int, UNIQUE NULLS DISTINCT (a) INCLUDE (b) DEFERRABLE)');
- *     $create->toString() // => 'CREATE TABLE t (a INT, b INT, UNIQUE NULLS DISTINCT (a) INCLUDE (b) DEFERRABLE)'
+ * @visibility SqlSemantics
  */
 final class TableUnique implements Constraint
 {

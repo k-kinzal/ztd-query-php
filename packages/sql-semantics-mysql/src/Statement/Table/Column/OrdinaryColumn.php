@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * the server; it is kept as a request. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/ansi-diff-foreign-keys.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the attributes of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT NOT NULL DEFAULT 0)');
- *     count($create->statement->elements[0]->specification->attributes) // => 2
+ * @visibility SqlSemantics
  */
 final class OrdinaryColumn implements ColumnSpecification
 {

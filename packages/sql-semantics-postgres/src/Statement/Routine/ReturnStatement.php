@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * statement of a `BEGIN ATOMIC` block; the expression sees the parameters.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the returned expression
  *     $return = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\ReturnStatement(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral(true));
  *     $return->value->value // => true

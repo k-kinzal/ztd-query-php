@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
  * DISTINCT; the absence is kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-operations.html.
  *
- * @visibility public
- * @example Reading the quantifier of a union
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 UNION ALL SELECT 2');
- *     $query->statement->quantifier // => \SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier::All
+ * @visibility SqlSemantics
  */
 enum SetQuantifier: string
 {

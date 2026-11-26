@@ -14,16 +14,16 @@ final class DomainCheckTest extends TestCase
 {
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('ALTER DOMAIN d ADD CONSTRAINT c CHECK (value <> 0)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD CONSTRAINT c CHECK (VALUE <> 0)')->toString());
+        self::assertSame('ALTER DOMAIN d ADD CONSTRAINT c CHECK (value <> 0)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DOMAIN d ADD CONSTRAINT c CHECK (VALUE <> 0)')->toString());
     }
 
     public function testDeriveClauseReportsDeferrable(): void
     {
-        self::assertSame('CHECK constraints cannot be marked DEFERRABLE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD CHECK (VALUE <> 0) DEFERRABLE')->facts->diagnostics[0]->message());
+        self::assertSame('CHECK constraints cannot be marked DEFERRABLE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DOMAIN d ADD CHECK (VALUE <> 0) DEFERRABLE')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveClauseReportsNoInherit(): void
     {
-        self::assertSame('check constraints for domains cannot be marked NO INHERIT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NO INHERIT')->facts->diagnostics[0]->message());
+        self::assertSame('check constraints for domains cannot be marked NO INHERIT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NO INHERIT')->facts->diagnostics[0]->message());
     }
 }

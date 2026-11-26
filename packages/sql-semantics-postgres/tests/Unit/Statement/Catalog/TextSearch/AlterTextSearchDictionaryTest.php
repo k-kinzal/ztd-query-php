@@ -14,11 +14,11 @@ final class AlterTextSearchDictionaryTest extends TestCase
 {
     public function testRenderWritesTheOptions(): void
     {
-        self::assertSame('ALTER TEXT SEARCH DICTIONARY my_dict (stopwords = newrussian)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH DICTIONARY my_dict (StopWords = newrussian)')->toString());
+        self::assertSame('ALTER TEXT SEARCH DICTIONARY my_dict (stopwords = newrussian)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TEXT SEARCH DICTIONARY my_dict (StopWords = newrussian)')->toString());
     }
 
     public function testDeriveStatementDerivesTheOptions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH DICTIONARY d (dummy)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TEXT SEARCH DICTIONARY d (dummy)')->facts->diagnostics);
     }
 }

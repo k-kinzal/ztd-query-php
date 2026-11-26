@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\SetSchema;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(SetSchema::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class SetSchemaTest extends TestCase
 {
     public function testDeriveStatementResolvesAMovedTable(): void
     {
-        $operation = (new Semantics())->inspect('ALTER TABLE IF EXISTS t SET SCHEMA s', []);
+        $operation = (new Inspection())->diagnose('ALTER TABLE IF EXISTS t SET SCHEMA s', []);
         self::assertSame([], $operation->facts->diagnostics);
         $statement = $operation->statement;
         self::assertInstanceOf(SetSchema::class, $statement);
@@ -28,7 +28,7 @@ final class SetSchemaTest extends TestCase
 
     public function testRenderWritesTheSchema(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR CLASS c USING btree SET SCHEMA "S"');
+        $operation = (new Inspection())->diagnose('ALTER OPERATOR CLASS c USING btree SET SCHEMA "S"');
         self::assertSame('ALTER OPERATOR CLASS c USING btree SET SCHEMA "S"', $operation->toString());
     }
 
@@ -46,9 +46,9 @@ final class SetSchemaTest extends TestCase
 
     public function testDeriveStatementReportsAnotherKind(): void
     {
-        $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE TABLE t (a int)')];
-        self::assertSame(['"t" is not a foreign table'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER FOREIGN TABLE t SET SCHEMA x', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE t SET SCHEMA x', $context)->facts->diagnostics));
+        $semantics = new Inspection();
+        $context = [$semantics->diagnose('CREATE TABLE t (a int)')];
+        self::assertSame(['"t" is not a foreign table'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER FOREIGN TABLE t SET SCHEMA x', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE t SET SCHEMA x', $context)->facts->diagnostics));
     }
 }

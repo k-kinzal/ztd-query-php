@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
  * Each case holds its keywords.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-transaction.html#set-transaction-access-mode.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a mode
  *     \SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode::ReadOnly->value // => 'READ ONLY'
  */

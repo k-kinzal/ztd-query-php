@@ -9,7 +9,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A statement parameter whose value, and therefore type, is supplied only at execution.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming an unbound parameter
  *     (new \SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UnboundParameter('?1'))->describe() // => 'the value bound to parameter ?1'
  */

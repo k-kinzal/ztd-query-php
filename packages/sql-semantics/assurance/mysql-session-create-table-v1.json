@@ -1,0 +1,91 @@
+{
+  "revision": "SemanticsIR/mysql-session-create-table-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "MySQL InnoDB native mode, utf8mb4, empty sql_mode, lower_case_table_names=0, sql_notes=1, a separate writer and permanent observer, and the same qualified schema identities.",
+  "extends": ["server-create-table-v2.json", "mysql-create-signed-v2.json", "mysql-create-varchar-v1.json", "mysql-create-primary-v2.json", "mysql-truncate-v2.json"],
+  "additionalPublicRoots": [],
+  "existingRoles": ["Schema/Identity/TableIdentity", "From/ExternalRelationKind", "Schema/TableName", "Schema/TableColumn", "Schema/Key/PrimaryKey", "Schema/Key/PrimaryKeyColumn"],
+  "constructors": {
+    "CreateTable": {
+      "type": "Schema/CreateTable",
+      "role": "The native ordinary table declaration in the persistent or session-local namespace.",
+      "structure": "A checked absolute TableIdentity, ordered checked columns, optional owner-relative signed primary key, effective table collation, IF NOT EXISTS policy and native grammar release.",
+      "conditions": "Use only the two table namespaces. Apply the same column and key constraints as the persistent signed and VARCHAR contracts. Direct and analyzed statements carry the same closed target identity. Analyzed unqualified declarations require a named current schema.",
+      "meaning": "Create the ordered definition in the specified namespace. A temporary declaration can shadow a same-named permanent table or view. Guarded collisions in the selected namespace preserve the existing definition and rows. The temporary declaration survives rollback while its surrounding transactional row writes are rolled back. A permanent declaration commits pending work.",
+      "sql": "Use CREATE, the native TEMPORARY keyword exactly for the session-local role, TABLE, the optional IF NOT EXISTS clause, the qualified checked name, the declared ordered columns and key, and the fixed InnoDB and text clauses."
+    }
+  },
+  "structure": "The namespace survives publication as part of the declaration identity, along with all physically relevant ordered operands.",
+  "conditions": "This domain admits explicit columns with the previously registered signed and VARCHAR roles and the optional previously registered signed primary key. The release-specific direction rule applies in each namespace. A target view role, unresolved declaration coordinate and invalid combinations are rejected at their responsible constructor or analysis boundary.",
+  "meaning": "The target namespace determines collision, visibility and transaction effects. Engine state and parameter-free DDL are observed independently on two native connections.",
+  "sql": "Render directly from the checked table declaration. Qualify exact database and table names, including when the written statement used the current database.",
+  "finite": {
+    "schema": ["primary", "decoy"],
+    "fixture": ["absent", "base", "view", "temporary", "shadow-base", "shadow-view"],
+    "kind": ["table", "temporary-table"],
+    "ifNotExists": [false, true],
+    "layout": ["signed", "varchar-key"],
+    "identities": 96,
+    "completeness": "Observe all 96 coordinate combinations per release. Independently recover the kind, schema, policy and layout from the loaded value and the prior namespace topology from the native fixture."
+  },
+  "exploration": {
+    "seeds": [1117, 4021, 8017],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary schema, both namespaces, guard, preexisting namespace topology, column count and order, signed widths, exact defaults including NULL, VARCHAR capacity, nullable fields and primary key membership and order. Use release-specific descending key terms."
+  },
+  "analysis": [
+    "Unqualified temporary target has the same absolute identity as its qualified form",
+    "A qualified temporary declaration may target the non-current database",
+    "Shadow a persistent name or view in both schemas",
+    "Temporary collision with and without IF NOT EXISTS",
+    "Permanent creation while a temporary table is visible",
+    "Compose signed columns, checked VARCHAR defaults and an ordered key in both namespaces",
+    "Both written temporary key directions with release-specific native storage"
+  ],
+  "negative": [
+    "Direct view in the table declaration identity",
+    "Direct invalid table name",
+    "Direct empty column list",
+    "Temporary declaration without a resolved absolute schema",
+    "Temporary non-InnoDB table in the fixed InnoDB profile",
+    "Direct out-of-scope primary key slot",
+    "Direct nullable primary key slot"
+  ],
+  "observations": [
+    "Physical name, namespace, engine, ordered column names and storage, native column default metadata and nullability, explicit VARCHAR collation, primary key slots and directions",
+    "Exact native signed type name and legacy display width as reported by SHOW FULL COLUMNS",
+    "Both schema decoys, existing base or view definitions and rows, temporary visibility only on its owning connection",
+    "Success or exact SQLSTATE 42S01 and code 1050 for a namespace collision; IF NOT EXISTS reports native note 1050 with the original name",
+    "A durable newly declared table after rollback, rollback of temporary-table row insertion and surrounding marker, and persistence of the marker under implicit commit",
+    "Actual typed values from insertion of declared defaults after rollback, including NULL and duplicate key rejection",
+    "Native connection closure drops its temporary declaration and reveals the permanent target to a fresh session",
+    "Optimizer estimates, index cardinality, grants and generated catalogue identifiers are outside this observation. Native formatting of full columns and key direction is checked."
+  ],
+  "faults": [
+    "Always emit the persistent CREATE TABLE form for a temporary identity",
+    "Lose the qualified declaration schema",
+    "Invert the existence guard on a preexisting temporary table",
+    "Erase the default of an observable signed column",
+    "Drop the primary-key operand in a temporary declaration",
+    "Admit a view as a declaration identity"
+  ],
+  "evidence": {
+    "P01": "Absolute table identity and lifetime category, ordered definition, collation and key slots",
+    "P02": "Closed namespace and checked column and primary-key composition, with independent direct and analysis negatives",
+    "P03": "No catalog, parser, DDL text or connection fields in a completed declaration",
+    "P04": "Column, key and declaration rules compose with the selected namespace independently of the input spelling",
+    "P05": "Checked retained list, sealed field type and clone and restoration policy verified by the static source audit",
+    "P06": "Compare direct and analyzed SQL with an independent declaration effect model on the native releases"
+  },
+  "trust": ["Native release and the disposable fixture", "Separate catalog and owner PDO connections", "The previously pinned column, key and identifier rules", "Independent finite coordinate reconstruction and oracle"],
+  "open": ["CREATE TEMPORARY TABLE LIKE, AS, partition and other table definitions", "Nondefault storage and session language profiles"],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-temporary-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table.html"
+  ]
+}

@@ -26,9 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\NotImplemented
  * its type is invalid.
  * Source: https://www.postgresql.org/docs/17/features.html (feature F291), the grammar action of `a_expr: UNIQUE …`. Status: Implemented.
  *
- * @visibility public
- * @example Reporting the predicate
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: UNIQUE predicate is not yet implemented.
+ * @visibility SqlSemantics
  */
 final class UniquePredicate implements Scalar
 {

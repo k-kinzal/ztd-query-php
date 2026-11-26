@@ -1,0 +1,44 @@
+{
+  "revision": "SemanticsIR/server-update-2",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "Every release and native setting pinned in server-projection-v1.json.",
+  "scope": "One single-target UPDATE. The ordered assignments write declared writable signed integer columns. Each right operand is a signed integer literal, explicit NULL or a signed integer column from the same row. WHERE uses the registered native predicate roles.",
+  "open": ["Other scalar roles, UPDATE FROM and joined targets, assignment rows, WITH, conflict modifiers, RETURNING, ORDER BY and row bounds", "Generated and identity targets and writes requesting DEFAULT"],
+  "additionalPublicRoots": ["Mutation/Update"],
+  "constructors": {
+    "Update": {
+      "type": "Mutation/Update",
+      "fields": ["target", "assignments", "where", "release"],
+      "invariants": ["A nonempty owned list of at most 1024 ordered assignments", "Each written and read slot belongs to the target layout", "Every scope in this statement has only one input occurrence", "PostgreSQL target slots are distinct"],
+      "meaning": "Select matching rows using the pre-assignment predicate. MySQL assignments read the current row in written order. PostgreSQL assignments read the old row. Update the same external objects, including PostgreSQL descendant tables unless ONLY applies.",
+      "sql": "Emit the absolute target and its canonical alias, followed by the checked assignments in order and the optional filter. PostgreSQL emits ONLY for the named-only scan.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "UpdateAssignment": {
+      "type": "Mutation/UpdateAssignment",
+      "fields": ["target", "value"],
+      "role": "One ordered write to a slot of the target row",
+      "invariants": ["The target is a zero-occurrence column reference", "Right operands use the signed literal, NULL or row reference roles", "The UPDATE boundary checks actual membership of both read and write references"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Read the declared relation identity and inheritance policy from binding. Resolve each named write column to a writable signed 32-bit declaration. Allocate the read and write slots in the same target. Close the ordered assignments and the optional predicate using the public constructors.",
+  "observations": ["Native affected-row count from the fixed client profile", "Complete before and after target, independent control and PostgreSQL child contents", "Repeated rows and NULLs", "Typed before and after row-trigger records", "Full restoration after rollback"],
+  "finite": {
+    "layouts": ["target slots id then delta", "target slots delta then id"],
+    "assignmentForms": ["constant assignment", "copy another slot", "NULL assignment", "dependent assignments"],
+    "filters": ["omitted", "signed integer equality", "signed integer inequality", "FALSE", "target slot 1 IS NULL", "NOT (target slot 0 IS NULL) AND target slot 1 < 2"],
+    "policies": {"mysql": ["ordinary"], "postgres": ["include descendants", "ONLY"]},
+    "identities": {"mysql": 48, "postgres": 96},
+    "completeness": "Verify the exact product of independently fixed layouts, assignment forms, filter forms and policies in the observed runtime values."
+  },
+  "exploration": {"seeds": [1883, 17623, 22913], "casesPerSeed": 36, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
+  "negative": ["Empty assignment list", "A read reference outside the target", "A write reference outside the target", "A nonzero write occurrence", "A WHERE reference outside the target", "Invisible occurrence nested under NOT and IS NULL", "Undeclared or unwritable assignment target"],
+  "additionalPostgreSqlNegatives": ["A repeated write slot"],
+  "faults": ["Write to the wrong target slot", "Omit WHERE", "Reverse a scalar null test in WHERE"],
+  "dialectFaults": {"mysql": ["Reverse the assignment order"], "postgres": ["Omit ONLY"]},
+  "evidence": "Preserve actual typed state and emitted SQL on exact runtime bytes. The observer accepts recursive truth syntax over the registered scalar tokens and rejects nested SQL queries and multiple statements. Compare an independent old-row or current-row interpreter with the native engine and check that the fixture is restored.",
+  "trust": ["Closed runtime rules and declared relation facts", "Deterministic fixture table definitions and observers", "Native expression profile and effect model"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/update.html", "https://www.postgresql.org/docs/17/sql-update.html"]
+}

@@ -1,0 +1,55 @@
+{
+  "revision": "SemanticsIR/postgres-create-signed-defaults-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check the exact source of the native default, keep the deferred assignment in the owning column and emit an explicit builtin int8 role.",
+  "rules": {
+    "Schema/TableColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];",
+        "Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');",
+        "Check::input(!$default instanceof TextLiteral || $storage === CharacterStorage::Text, 'A text default requires native text storage.');"
+      ]
+    },
+    "Schema/TableColumn::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$definition = $this->name->quoted() . ' ' . $this->storage->value . ($this->nullable ? ' NULL' : ' NOT NULL');",
+        "",
+        "return $definition . match (true) {",
+        "    $this->default instanceof IntegerLiteral => ' DEFAULT ' . $this->default->decimal,",
+        "    $this->default instanceof WideIntegerLiteral => ' DEFAULT CAST(' . $this->default->decimal . ' AS pg_catalog.int8)',",
+        "    $this->default instanceof TextLiteral => ' DEFAULT ' . $this->default->toString(),",
+        "    $this->default instanceof NullLiteral => ' DEFAULT NULL',",
+        "    $this->default === null => '',",
+        "};"
+      ]
+    },
+    "Schema/LiteralDefaultLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$path = $operation->context->searchPath;",
+        "$catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';",
+        "$default = (new ExpressionLowering())->lower($clause->value, new SourceBinding($operation, null), $catalogFirst, $kind === CharacterStorage::Text);",
+        "if ($default instanceof BuiltinCast && $default->target === CastDestination::WideInteger",
+        "    && ($default->operand instanceof IntegerLiteral || $default->operand instanceof WideIntegerLiteral)) {",
+        "    return new WideIntegerLiteral($default->operand->decimal);",
+        "}",
+        "Check::input($default instanceof IntegerLiteral || $default instanceof WideIntegerLiteral",
+        "    || $default instanceof TextLiteral || $default instanceof NullLiteral, 'The column requires an integer, text or NULL default.');",
+        "",
+        "return $default;"
+      ]
+    }
+  }
+}

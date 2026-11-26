@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Query\ResultSlots;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
@@ -24,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\ValueRow;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ResultSlots::class)]
 #[Medium]
@@ -31,7 +31,7 @@ final class ResultSlotsTest extends TestCase
 {
     public function testCombineNamesAfterTheLeftOperand(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context());
         $left = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull))], $semantics->context()->columnNames);
         $right = new QueryFact([new Field(0, new OutputSlot(new Name('b'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable))], $semantics->context()->columnNames);
@@ -53,14 +53,14 @@ final class ResultSlotsTest extends TestCase
 
     public function testValuesReportsARowAsAValue(): void
     {
-        $operation = (new Semantics())->inspect('VALUES ROW((1, 2))');
+        $operation = (new Inspection())->diagnose('VALUES ROW((1, 2))');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testValuesNamesTheColumnsByPosition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context());
         $fact = (new ResultSlots())->values(new ValuesQuery([new ValueRow([new NumberLiteral('1'), new NullLiteral()])]), $derivation, $derivation->environment());
 
@@ -70,7 +70,7 @@ final class ResultSlotsTest extends TestCase
 
     public function testCombineKeepsTheInputsAnUnnamedLeftColumnDependsOn(): void
     {
-        $operation = (new Semantics())->inspect("SELECT x FROM (SELECT 'é' UNION SELECT 1) AS d");
+        $operation = (new Inspection())->diagnose("SELECT x FROM (SELECT 'é' UNION SELECT 1) AS d");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Dependent::class, $operation->field(0)->type);

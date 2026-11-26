@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
  * its type, and so on; every other expression is named `?column?`.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-SELECT-LIST.
  *
- * @visibility public
- * @example Reading the name a typed constant gives its column
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT integer '1'");
- *     $query->statement->targets[0]->expression->outputName()?->value // => 'int4'
+ * @visibility SqlSemantics
  */
 interface OutputNaming
 {

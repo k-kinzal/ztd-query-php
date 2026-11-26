@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * column is named after the function in lower case.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a JSON_EXISTS call
  *     $exists = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonQueryFunction(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonFunctionKind::Exists,

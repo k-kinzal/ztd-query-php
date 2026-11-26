@@ -1,0 +1,141 @@
+{
+  "revision": "SemanticsIR/mysql-legacy-inherited-alias-2",
+  "approval": "pending-human-review",
+  "related": {
+    "path": "mysql-inherited-local-alias-v2.json",
+    "sha256": "bf8092d648b1800c51fcd22ca61a13ca17758b35f1dbc63554530f2a0810ba44"
+  },
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44"
+  ],
+  "scope": "Independent MySQL 5.6 and 5.7 derived sources over signed integer literals. Preserve exact requested ASCII aliases, their native warnings, and references to inherited names without a separate column list.",
+  "constructors": {
+    "Rows/LocalProjection": {
+      "role": "An independent derived occurrence with a checked inherited export heading.",
+      "structure": "Closed child SELECT and an explicit inherited-export choice, with ordered bound occurrence and slot references in the consumer.",
+      "conditions": "A child with at least one requested alias uses inherited naming on these releases. The retained child must expose exact signed literal operands, unique effective ASCII names and a supported typed layout. A separate list is unavailable. Every read must address an existing position.",
+      "meaning": "The current derived table owns the effective labels. The branch selects the identical column names that native preparation inferred while retaining the raw aliases necessary for warnings. A joined field also names the exact occurrence.",
+      "externalInterpretation": "MySQL 5.6.51 with the native materialized derived-table implementation, or MySQL 5.7.44 with derived_merge=on. Use utf8mb4, empty SQL mode, lower_case_table_names=0 and the native prepared and text protocols.",
+      "sql": "Emit the raw requested aliases inside the derived definition. Address each chosen slot through its checked, quoted effective name. Emit generated headings for ordinary children and emit only the resolved output names at the outer position.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/DerivedSource": {
+      "role": "An independent join input with its own checked inherited export heading.",
+      "structure": "Closed child SELECT and an explicit inherited-export choice, with ordered bound occurrence and slot references in the consumer.",
+      "conditions": "A child with at least one requested alias uses inherited naming on these releases. The retained child must expose exact signed literal operands, unique effective ASCII names and a supported typed layout. A separate list is unavailable. Every read must address an existing position.",
+      "meaning": "The current derived table owns the effective labels. The branch selects the identical column names that native preparation inferred while retaining the raw aliases necessary for warnings. A joined field also names the exact occurrence.",
+      "externalInterpretation": "MySQL 5.6.51 with the native materialized derived-table implementation, or MySQL 5.7.44 with derived_merge=on. Use utf8mb4, empty SQL mode, lower_case_table_names=0 and the native prepared and text protocols.",
+      "sql": "Emit the raw requested aliases inside the derived definition. Address each chosen slot through its checked, quoted effective name. Emit generated headings for ordinary children and emit only the resolved output names at the outer position.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "Compare both protocol phases, typed rows, native integer width, nullability and exact headings. Unlike the source-free projection observer, a derived alias warning in the prepared scope is measured at prepare without repetition at execute.",
+    "Select inherited names after removing leading control bytes and applying the 256-byte limit. Preserve quoted empty names and exact trailing bytes. Include distinct aliased input occurrences and an independent nested reader.",
+    "Verify duplicate or absent effective source names against native SQLSTATE and error number, and verify source syntax rejects the unavailable separate list.",
+    "Set and read the derived_merge switch on MySQL 5.7. Verify its absence in the independently observed MySQL 5.6 optimizer settings, and require the candidate's materialized language profile.",
+    "An unaliased nested read under materialization uses the written column reference's case on MySQL 5.6. The merged native profile on MySQL 5.7 reports the immediately exposed name for an unaliased reader of a projected field."
+  ],
+  "finite": {
+    "aliasShapes": [
+      "plain",
+      "trim",
+      "control",
+      "delimiter",
+      "wide-ascii",
+      "empty"
+    ],
+    "placement": [
+      "local",
+      "nested",
+      "join"
+    ],
+    "layout": [
+      "in-order",
+      "reverse",
+      "repeat"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "coordinatesPerRoute": 54,
+    "complete": "Verify both routes using the exact Cartesian product and reconstruct each positive from the published scope and operand graph.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      6803,
+      23473,
+      59183
+    ],
+    "casesPerSeed": 18,
+    "directCasesPerSeed": 18,
+    "timeoutSecondsPerRelease": 480,
+    "shape": "Vary signed operand values, independent decoded aliases, two to four columns per source, nested and joined scopes, ordering and repeat counts.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "An authored leading-space alias does not exist under that written name.",
+    "Two inherited aliases whose effective names match are invalid.",
+    "Separate derived column lists are invalid native syntax.",
+    "The inherited choice cannot name a nonexistent direct output slot.",
+    "The inherited choice cannot admit a duplicate direct native heading."
+  ],
+  "faults": [
+    "Ignore the native inherited field name when rendering the chosen slot.",
+    "Accept an invalid inherited pair with duplicate native names.",
+    "Ignore a missing warning from the native prepared phase."
+  ],
+  "trust": [
+    "Native prepared and text protocols and the exact licensed release profile.",
+    "The binding and rendering checks use separate finite definitions and the fixed native observation contract.",
+    "Human approval of the independent verifier is pending."
+  ],
+  "open": [
+    "Unicode identifier comparison and clipped multibyte bytes need a separate rule.",
+    "Additional statement and derived expression placements remain independently tracked."
+  ],
+  "referenceSources": [
+    "https://dev.mysql.com/doc/refman/5.7/en/derived-tables.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/identifier-length.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/item.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/item.cc"
+  ],
+  "extends": {
+    "path": "mysql-legacy-inherited-alias-v1.json",
+    "sha256": "ef89ac259b7255d67bb14867e3c60124bcdcbd48458d8d8731b1f11423a894e6"
+  },
+  "optimizer": {
+    "mysql-5.6.51": "materialized",
+    "mysql-5.7.44": "derived-merge=on"
+  }
+}

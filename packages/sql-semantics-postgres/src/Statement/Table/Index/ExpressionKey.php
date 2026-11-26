@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
  * the key has its type and NULL fact.
  * Source: https://www.postgresql.org/docs/17/sql-createindex.html.
  *
- * @visibility public
- * @example Reading an expression key
- *     $index = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE INDEX ON t ((a + 1), lower(b))');
- *     [$index->statement->elements[0]->key->parenthesized, $index->statement->elements[1]->key->parenthesized] // => [true, false]
+ * @visibility SqlSemantics
  * @example Refusing an operator without parentheses
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]), false), false) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

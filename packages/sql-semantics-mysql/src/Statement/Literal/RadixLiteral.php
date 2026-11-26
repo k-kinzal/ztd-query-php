@@ -39,10 +39,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  * Diagnostics: none. Source: https://dev.mysql.com/doc/refman/8.4/en/hexadecimal-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/bit-value-literals.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading one literal from either spelling
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->statement->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
+ * @visibility SqlSemantics
  */
 final class RadixLiteral implements Scalar
 {

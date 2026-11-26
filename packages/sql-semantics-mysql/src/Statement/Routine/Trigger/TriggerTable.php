@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the table of a trigger
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TRIGGER tr AFTER DELETE ON shop.t FOR EACH ROW SET @a = 1');
- *     [$create->statement->table->name->schema->value, $create->statement->table->name->name->value] // => ['shop', 't']
+ * @visibility SqlSemantics
  */
 final class TriggerTable implements Relation
 {

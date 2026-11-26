@@ -6,11 +6,19 @@ deptrac:
     - name: Core
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\(AnalysisContext|AnalysisException|Analyzer|Query|Contract\\(Dialect|Mode))$'
+          value: '^SqlSemantics\\(AnalysisContext|AnalysisException|Analyzer|SemanticsIR|Contract\\(Dialect|Mode))$'
     - name: DatabaseModel
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Platform\\PostgreSql\\Model\\.*'
+          value: '^SqlSemantics\\Platform\\PostgreSql\\Model\\(?!Statement\\Declaration\\IndexHeading$).*'
+    - name: IndexConstructionInput
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\IndexHeading$'
+    - name: Ir
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\PostgreSql\\Ir\\.*'
     - name: Parser
       collectors:
         - type: classLike
@@ -34,8 +42,10 @@ deptrac:
   ruleset:
     Core: []
     DatabaseModel: [Core, Parser, Wiring]
+    Ir: [Core, DatabaseModel, Model, Wiring, IndexConstructionInput]
+    IndexConstructionInput: [DatabaseModel, Ir]
     Parser: []
     Model: [Core, DatabaseModel, Rules]
     Rules: [Core, DatabaseModel, Model, Parser]
     PlatformLowering: [Core, DatabaseModel, Model, Rules, Parser]
-    Wiring: [Core, DatabaseModel, Model, Rules, PlatformLowering, Parser]
+    Wiring: [Core, DatabaseModel, Model, Rules, PlatformLowering, Parser, Ir]

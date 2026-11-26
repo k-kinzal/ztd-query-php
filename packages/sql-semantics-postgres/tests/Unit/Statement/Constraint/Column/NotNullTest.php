@@ -14,8 +14,8 @@ final class NotNullTest extends TestCase
 {
     public function testKindIsNotNull(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE TABLE t (a int NOT NULL)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE TABLE t (a int NOT NULL)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -29,15 +29,15 @@ final class NotNullTest extends TestCase
 
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE TABLE t (a int NOT NULL)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE TABLE t (a int NOT NULL)', []);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, $statement->declarations()[0]->columns[0]->nullability);
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE TABLE t (a int CONSTRAINT n NOT NULL)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE TABLE t (a int CONSTRAINT n NOT NULL)', []);
         self::assertSame('CREATE TABLE t (a INT CONSTRAINT n NOT NULL)', $statement->toString());
     }
 }

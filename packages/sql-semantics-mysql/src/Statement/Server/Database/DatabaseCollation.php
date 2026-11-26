@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
  * the character set.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
  *
- * @visibility public
- * @example Reading the collation
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
- *     $alter->statement->options[0]->collation->name?->value // => 'utf8mb4_bin'
+ * @visibility SqlSemantics
  */
 final class DatabaseCollation implements DatabaseOption
 {

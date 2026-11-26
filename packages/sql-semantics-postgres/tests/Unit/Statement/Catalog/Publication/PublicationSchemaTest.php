@@ -19,12 +19,12 @@ final class PublicationSchemaTest extends TestCase
 
     public function testRenderContinuesSchemas(): void
     {
-        self::assertSame('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s, CURRENT_SCHEMA', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s, CURRENT_SCHEMA')->toString());
+        self::assertSame('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s, CURRENT_SCHEMA', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s, CURRENT_SCHEMA')->toString());
     }
 
     public function testRenderReadsABareNameAfterASchemaAsASchema(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA a, b')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE PUBLICATION p FOR TABLES IN SCHEMA a, b')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationSchema::class, $statement->objects[1]::class);
     }

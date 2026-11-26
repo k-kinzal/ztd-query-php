@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use SqlSemantics\Platform\PostgreSql\Semantics;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 /**
  * Measures analyzing a PostgreSQL statement into its semantic model and back to SQL.
  */
 final class AnalyzeBench
 {
-    private Semantics $semantics;
+    private Inspection $semantics;
 
     /**
      * Loads the profile and the parser before measurement.
      */
     public function setUp(): void
     {
-        $this->semantics = new Semantics();
+        $this->semantics = new Inspection();
     }
 
     /**
@@ -30,6 +30,6 @@ final class AnalyzeBench
     #[Benchmark\Iterations(5)]
     public function benchAnalyze(): void
     {
-        $this->semantics->analyze("SELECT a, x.b AS total, 0x1F, 1.50e3, timestamp(3) with time zone '2024-01-01' FROM app.t AS x WHERE a >= \$1");
+        $this->semantics->inspect("SELECT a, x.b AS total, 0x1F, 1.50e3, timestamp(3) with time zone '2024-01-01' FROM app.t AS x WHERE a >= \$1");
     }
 }

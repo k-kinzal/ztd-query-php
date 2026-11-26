@@ -1,0 +1,169 @@
+{
+  "revision": "SemanticsIR/server-local-projection-4",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql",
+    "PostgreSql"
+  ],
+  "profiles": "Every pinned projection release. Derived projections apply to all releases. Ordinary single-use WITH is available in PostgreSQL and the pinned MySQL releases from 8.0 onward.",
+  "scope": "A chain of one to sixteen ordered projections through independent SELECTs. Each layer is a derived table or ordinary single-use CTE, and each projection reads the exact local output positions of its immediate definition.",
+  "open": [
+    "LATERAL, correlated subqueries, multiple CTEs, recursive CTEs, materialization options, additional outer clauses and local bindings in joined sources"
+  ],
+  "additionalPublicRoots": [
+    "Rows/LocalProjection"
+  ],
+  "constructors": {
+    "LocalProjection": {
+      "type": "Rows/LocalProjection",
+      "role": "An ordered projection over one independently scoped input",
+      "fields": [
+        "definition",
+        "columns"
+      ],
+      "invariants": [
+        "The definition is a checked unordered and unbounded SELECT or another checked local projection.",
+        "The nonempty result list has at most 1024 columns",
+        "Every result slot belongs to the definition's output",
+        "There are at most sixteen local projection boundaries on the definition chain."
+      ],
+      "meaning": "Project the named ordered slots over each row of the definition. Preserve typed values, NULLs, repeated input rows and repeated selected slots. The selected positions are independent of spelling or physical table names. Resolve every ordinal in its immediate definition's layout even when an earlier layer uses the same result names.",
+      "sql": "Render each layer independently. Assign distinct generated names to its input by ordinal and emit the consumer's result labels. The one-use independent CTE has the same row source under this profile.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "LocalResultColumn": {
+      "type": "Rows/LocalResultColumn",
+      "role": "One result name and ordinal into the scoped definition",
+      "fields": [
+        "slot",
+        "name"
+      ],
+      "invariants": [
+        "Slot is nonnegative and its local parent requires membership"
+      ],
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Resolve the proven derived-table relation or the exact referenced CTE against the bound facts. Map each resolved output slot by identity and discard analyzed names that do not contribute to the outer result. Lower each nested scope from its own bound query, without sharing resolutions from its siblings or consumers.",
+  "observations": [
+    "Ordered output names and native type tags",
+    "Typed multiset of result rows with duplicate and NULL preservation",
+    "Reference to the correct local slot even through aliases, reorderings and physical name collisions"
+  ],
+  "nativeMetadata": {
+    "mysqlOptimization": "MySQL 5.6 materializes. From MySQL 5.7 onward the observer sets derived_merge=on and verifies it independently. Literal-only and DISTINCT definitions still materialize.",
+    "merged": "An input merged with the consumer keeps the ordinary projected field tags.",
+    "materialized": "For the tested operand rules, materialization keeps a physical signed INT column as LONG. Integer constants use LONG through a display width of nine characters including a negative sign in 5.x or eight digits in 8.x and 9.x, and LONGLONG above the threshold. Bare booleans use LONG. A bare NULL uses STRING through 8.3 and VAR_STRING in the pinned 8.4 and 9.x releases.",
+    "integerWidthValue": "The MySQL integer stores a signed 32-bit decimal, an effective leading-zero count capped at 32 and a negative-zero flag. Reconstruction preserves the effective materialized field type, including when the input spelling has more than 32 leading zeroes.",
+    "boundaries": "Observe seven to ten character signed literals on both sides of the width thresholds, bare NULL and boolean, physical references, merged and materialized forms with and without duplicate removal. Analyzed inputs retain padded literals and signed zero through a materialized definition.",
+    "changeFromRevision1": "The first MySQL counterexample reported LONG where the unrevised scalar oracle predicted LONGLONG. Revision 2 defines the derived field tag and adds boundary checks. It keeps exact equality of field names, types and typed rows, the finite identities, seeds, fault injections, timeout and exclusion policy."
+  },
+  "finite": {
+    "layouts": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "definitions": [
+      "literal",
+      "ordinary table",
+      "independent table",
+      "empty table"
+    ],
+    "completeness": "Require the exact depth, base definition and outer slot layout product from observed runtime shapes, including the checked inner reversal in the two-layer domain.",
+    "depths": [
+      1,
+      2
+    ],
+    "nestedLayout": [
+      1,
+      0
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      2089,
+      4243,
+      11719
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 175,
+    "allowedExclusions": [],
+    "nestedCasesPerSeed": 12,
+    "nestedDepths": [
+      2,
+      8
+    ]
+  },
+  "negative": [
+    "Empty outer result",
+    "Negative slot",
+    "Slot outside the definition",
+    "Definition with local ordering or bounds",
+    "Non-column expression in the outer projection",
+    "A missing slot in an intermediate definition",
+    "A seventeenth projection boundary"
+  ],
+  "additionalMySqlNegatives": [
+    "Negative integer padding",
+    "Integer padding above the effective width",
+    "Negative zero flag on a nonzero value"
+  ],
+  "faults": [
+    "Read the wrong local slot after reordering",
+    "Collapse a duplicate row",
+    "Change the definition selected by a one-use binding",
+    "Bypass a nested projection that swaps its two defined output slots"
+  ],
+  "dialectFaults": {
+    "mysql": [
+      "Erase the effective integer width while preserving the scalar value"
+    ]
+  },
+  "changeFromRevision2": "The required MySQL field-width mutation is registered only for MySQL. PostgreSQL has no integer padding field. Retains all applicable faults and every comparison, rejection and execution bound.",
+  "trust": [
+    "Fixed reference interpretation and native name profiles",
+    "Independent evaluation of the existing signed projection rules and explicit slot mapping",
+    "The registered definition forms have no volatile effects"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html",
+    "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_tmp_table.cc",
+    "https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_tmp_table.cc",
+    "https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/with.html",
+    "https://www.postgresql.org/docs/17/queries-with.html",
+    "https://www.postgresql.org/docs/17/sql-select.html"
+  ],
+  "boundary": "Observe a sixteen-layer input and reject a seventeen-layer input under the same profile.",
+  "changeFromRevision3": "Adds separately enumerated nested scopes and boundary checks. Keeps the original depth-one domain, all previous fault obligations, seeds, time budget and exclusion policy."
+}

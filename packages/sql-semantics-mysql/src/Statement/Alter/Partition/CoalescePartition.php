@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * are synonyms.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-management-hash-key.html.
  *
- * @visibility public
- * @example Removing two hash partitions
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t COALESCE PARTITION 2')->statement->commands[0]->count->text // => '2'
+ * @visibility SqlSemantics
  */
 final class CoalescePartition implements StandaloneCommand
 {

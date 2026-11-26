@@ -22,9 +22,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  * Source: https://sqlite.org/lang_createtable.html#the_default_clause.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reporting a column reference in a default expression
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b DEFAULT (a))') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a does not exist.
+ * @visibility SqlSemantics
  */
 final class DefaultExpression implements ColumnConstraint
 {

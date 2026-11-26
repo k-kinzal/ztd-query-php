@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
  * SET is written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-character-set.
  *
- * @visibility public
- * @example Converting a table to utf8mb4
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t CONVERT TO CHARSET utf8mb4');
- *     [$alter->statement->commands[0]->charset->name?->value, $alter->toString()] // => ['utf8mb4', 'ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4']
+ * @visibility SqlSemantics
  */
 final class ConvertCharset implements AlterCommand
 {

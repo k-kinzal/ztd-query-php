@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html.
  *
- * @visibility public
- * @example Reading an index option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TEXT, FULLTEXT (a) WITH PARSER ngram)');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexParser // => true
+ * @visibility SqlSemantics
  */
 final class IndexParser implements IndexOption
 {

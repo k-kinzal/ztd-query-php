@@ -14,12 +14,12 @@ final class DomainChecksTest extends TestCase
 {
     public function testConstraintsReportsTwoDefaults(): void
     {
-        self::assertSame('multiple default expressions', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DOMAIN d int4 DEFAULT 1 DEFAULT 2')->facts->diagnostics[0]->message());
+        self::assertSame('multiple default expressions', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DOMAIN d int4 DEFAULT 1 DEFAULT 2')->facts->diagnostics[0]->message());
     }
 
     public function testConstraintsReportsDeferrability(): void
     {
-        self::assertSame('specifying constraint deferrability not supported for domains', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DOMAIN d int4 NOT NULL DEFERRABLE')->facts->diagnostics[0]->message());
+        self::assertSame('specifying constraint deferrability not supported for domains', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DOMAIN d int4 NOT NULL DEFERRABLE')->facts->diagnostics[0]->message());
     }
 
     public function testRuleOfAForeignKey(): void
@@ -34,6 +34,6 @@ final class DomainChecksTest extends TestCase
 
     public function testAttributesAcceptsTheDefaults(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD CHECK (VALUE > 0) NOT DEFERRABLE INITIALLY IMMEDIATE')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DOMAIN d ADD CHECK (VALUE > 0) NOT DEFERRABLE INITIALLY IMMEDIATE')->facts->diagnostics);
     }
 }

@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Flush;
  * keywords it is written with. FOR EXPORT needs a table list.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport->value // => 'FOR EXPORT'
  */

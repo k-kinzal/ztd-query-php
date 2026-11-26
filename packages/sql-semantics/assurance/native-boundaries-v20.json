@@ -1,0 +1,1403 @@
+{
+  "revision": "SemanticsIR/native-boundaries-20",
+  "approval": "pending-human-review",
+  "scope": "The guarded native projection, recursive series, parameter, truth, local binding, join, compound, mutation, declaration and transaction boundaries. The named rules cover the signed derived join scope, its profile and its rendering. The grouped boundary checks slot membership, aggregate shape and pure emission of the grouped role. The field-binding shapes require exact source-occurrence and declared-slot identity for wildcard and explicit projections.",
+  "trust": [
+    "The closed readonly property and publication checker establishes the declared roles and normal construction paths.",
+    "The value primitive digests bind the checked list copy, assertion behavior and snapshot restrictions.",
+    "The method checker compares resolved PHP syntax trees with the expected sequences below. The engine evidence independently checks SQL meaning."
+  ],
+  "rules": {
+    "Binding/Parameter::__construct": {
+      "common": [
+        "Check::input($position >= 1 && $position <= 1024, 'A parameter position must be between 1 and 1024.');"
+      ],
+      "mysql": [],
+      "postgres": []
+    },
+    "ColumnReference::__construct": {
+      "common": [
+        "Check::input($slot >= 0, 'A column slot must be nonnegative.');",
+        "Check::input($occurrence >= 0, 'A table occurrence must be nonnegative.');"
+      ]
+    },
+    "From/Join::__construct": {
+      "common": [
+        "$inputs = $this->inputs();",
+        "Check::input(count($inputs) <= 61, 'A joined source can have at most 61 input occurrences.');",
+        "Check::input(($kind === JoinKind::Cross) === ($on === null), 'Only CROSS has no join predicate.');",
+        "(new OccurrenceScope())->predicate($on, $inputs);"
+      ],
+      "postgres": [
+        "if ($kind === JoinKind::Full) {",
+        "    $leftWidth = $left instanceof self ? count($left->inputs()) : 1;",
+        "    Check::input($on instanceof IntegerComparison && $on->operator === IntegerOperator::Equal",
+        "        && $on->left instanceof ColumnReference && $on->right instanceof ColumnReference",
+        "        && ($on->left->occurrence < $leftWidth) !== ($on->right->occurrence < $leftWidth),",
+        "        'A PostgreSQL FULL join requires integer equality between opposite inputs.',",
+        "    );",
+        "}"
+      ]
+    },
+    "From/Join::inputs": {
+      "common": [
+        "$left = $this->left instanceof self ? $this->left->inputs() : [$this->left];",
+        "$right = $this->right instanceof self ? $this->right->inputs() : [$this->right];",
+        "return array_merge($left, $right);"
+      ]
+    },
+    "From/OccurrenceScope::checkTree": {
+      "common": [],
+      "mysql": [
+        "Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof ColumnReference) {",
+        "    Check::input($this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot), $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof NullTest => [$operand->operand],",
+        "    $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof RangeIntegerLiteral => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "",
+        "return $count;"
+      ],
+      "postgres": [
+        "Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof ColumnReference) {",
+        "    Check::input($this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot), $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof NullTest => [$operand->operand],",
+        "    $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "",
+        "return $count;"
+      ]
+    },
+    "From/OccurrenceScope::predicate": {
+      "common": [
+        "if ($condition !== null) {",
+        "    $this->checkTree($condition, $inputs, $invalidSlot, 0, 0);",
+        "}"
+      ]
+    },
+    "IntegerLiteral::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(preg_match('/\\A(?:0|-?[1-9][0-9]{0,9})\\z/', $decimal) === 1, 'Expected a normalized signed decimal integer.');",
+        "$magnitude = ltrim($decimal, '-');",
+        "$maximum = $decimal[0] === '-' ? '2147483648' : '2147483647';",
+        "Check::input(strlen($magnitude) < 10 || strcmp($magnitude, $maximum) <= 0, 'Integer is outside the signed 32-bit range.');",
+        "Check::input($leadingZeroes >= 0 && $leadingZeroes <= self::MAX_LEADING_ZEROES, 'Integer padding exceeds the effective field width.');",
+        "Check::input(!$negativeZero || $decimal === '0', 'A separate negative sign applies only to zero.');"
+      ]
+    },
+    "IntegerLiteral::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$sign = $this->negativeZero || $this->decimal[0] === '-' ? '-' : '';",
+        "return $sign . str_repeat('0', $this->leadingZeroes) . ltrim($this->decimal, '-');"
+      ]
+    },
+    "Mutation/Delete::__construct": {
+      "common": [
+        "(new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');"
+      ],
+      "postgres": [
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/Insert::__construct": {
+      "common": [],
+      "postgres": [
+        "$width = count($target->written);",
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "}",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target->relation, $checked);",
+        "$this->returning = $checked;"
+      ],
+      "mysql": [
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');",
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "}"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "common": [
+        "$this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);",
+        "Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');"
+      ],
+      "mysql": [
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$target]);"
+      ],
+      "postgres": [
+        "$written = [];",
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');",
+        "    Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');",
+        "    $written[$slot] = true;",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$target]);",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'An UPDATE needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/UpdateAssignment::__construct": {
+      "common": [
+        "Check::input($target->occurrence === 0, 'An UPDATE target slot must belong to occurrence zero.');",
+        "Check::input(!$value instanceof ColumnReference || $value->occurrence === 0, 'An UPDATE read slot must belong to occurrence zero.');"
+      ]
+    },
+    "Predicate/LogicalPredicate::__construct": {
+      "common": [
+        "Check::input(($operator === LogicalOperator::Not) === ($right === null), 'Only logical NOT has one operand.');"
+      ]
+    },
+    "Rows/Compound::__construct": {
+      "common": [
+        "Check::input($left->profileId() === $right->profileId(), 'Compound operands must have the same language profile.');",
+        "Check::input(CompoundShape::width($left) === CompoundShape::width($right), 'Compound operands must have the same width.');",
+        "Check::input(CompoundShape::arms($left) + CompoundShape::arms($right) <= 64, 'A compound can expand to at most 64 query arms.');",
+        "foreach ([$left, $right] as $operand) {",
+        "    Check::input(!$operand instanceof Select || ($operand->orderBy === [] && $operand->limit === null), 'A compound arm requires an unbounded projection without ordering.');",
+        "    Check::input(CompoundShape::depth($operand) < 16, 'A compound has at most 16 nested operations.');",
+        "}"
+      ],
+      "mysql": [
+        "if (CompoundShape::legacy($left)) {",
+        "    Check::input($operator === CompoundOperator::Union && $right instanceof Select, 'MySQL 5.x compounds require a left-associated UNION.');",
+        "}"
+      ],
+      "postgres": [
+        "for ($index = 0; $index < CompoundShape::width($left); ++$index) {",
+        "    CompoundShape::merge(CompoundShape::type($left, $index), CompoundShape::type($right, $index));",
+        "}"
+      ]
+    },
+    "Rows/CompoundShape::merge": {
+      "common": [],
+      "mysql": [
+        "if ($left === ResultKind::WideInteger || $right === ResultKind::WideInteger) {",
+        "    return ResultKind::WideInteger;",
+        "}",
+        "",
+        "return $left === ResultKind::Integer || $right === ResultKind::Integer ? ResultKind::Integer : ResultKind::NullOnly;"
+      ],
+      "postgres": [
+        "if ($left === ResultKind::Unknown) {",
+        "    return $right === ResultKind::Unknown ? ResultKind::Text : $right;",
+        "}",
+        "Check::input($right === ResultKind::Unknown || $left === $right, 'PostgreSQL compound output types are incompatible.');",
+        "",
+        "return $left;"
+      ]
+    },
+    "Rows/LocalProjection::__construct": {
+      "common": [
+        "Check::input($definition instanceof self || ($definition->orderBy === [] && $definition->limit === null), 'The local definition requires an unbounded projection without ordering.');",
+        "$layers = 1;",
+        "for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {",
+        "    Check::input(++$layers <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "}",
+        "$checked = Check::listOf($columns, LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);",
+        "Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');",
+        "foreach ($checked as $column) {",
+        "    Check::input(isset($definition->columns[$column->slot]), 'The local slot must belong to the definition.');"
+      ],
+      "mysql": [
+        "    Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ],
+      "postgres": [
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Rows/LocalProjection::toString": {
+      "common": [
+        "return (new LocalProjectionSql())->render($this);"
+      ]
+    },
+    "Rows/LocalProjectionSql::render": {
+      "common": [
+        "$renderer = new SelectSql();"
+      ],
+      "mysql": [
+        "$alias = '`__ztd_local`';"
+      ],
+      "postgres": [
+        "$alias = '\"__ztd_local\"';"
+      ],
+      "tail": [
+        "$columns = [];",
+        "foreach ($projection->columns as $position => $column) {",
+        "    $name = $localNames ? $renderer->localColumn($position) : $column->name->quoted();",
+        "    $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;",
+        "}",
+        "$source = $projection->definition;",
+        "$input = $source instanceof Select ? $renderer->render($source, true) : $this->render($source, true);",
+        "",
+        "return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias;"
+      ]
+    },
+    "Rows/LocalResultColumn::__construct": {
+      "common": [
+        "Check::input($slot >= 0, 'A local result slot must be nonnegative.');"
+      ],
+      "mysql": [],
+      "postgres": []
+    },
+    "Rows/RecursiveSeries::__construct": {
+      "common": [],
+      "mysql": [
+        "$available = match ($release) {",
+        "    GrammarRelease::MySql5651, GrammarRelease::MySql5744 => false,",
+        "    GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830,",
+        "    GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910 => true,",
+        "};",
+        "Check::input($available, 'Recursive WITH requires MySQL 8.0 or later.');",
+        "Check::input($comparison === IntegerOperator::Less || $comparison === IntegerOperator::Greater, 'A recursive series requires a strict bound.');",
+        "Check::input($increment->decimal !== '0', 'A recursive series requires a nonzero increment.');",
+        "Check::input(($increment->decimal[0] === '-') === ($comparison === IntegerOperator::Greater), 'A recursive series must advance toward its boundary.');",
+        "$checked = Check::listOf($columns, LocalResultColumn::class, 'A recursive series requires a nonempty result.', 1);",
+        "Check::input(count($checked) <= 1024, 'A recursive series can have at most 1024 result columns.');",
+        "foreach ($checked as $column) {",
+        "    Check::input($column->slot === 0, 'A recursive result must read the single working column.');",
+        "    Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ],
+      "postgres": [
+        "Check::input($comparison === IntegerOperator::Less || $comparison === IntegerOperator::Greater, 'A recursive series requires a strict bound.');",
+        "Check::input($increment->decimal !== '0', 'A recursive series requires a nonzero increment.');",
+        "Check::input(($increment->decimal[0] === '-') === ($comparison === IntegerOperator::Greater), 'A recursive series must advance toward its boundary.');",
+        "$checked = Check::listOf($columns, LocalResultColumn::class, 'A recursive series requires a nonempty result.', 1);",
+        "Check::input(count($checked) <= 1024, 'A recursive series can have at most 1024 result columns.');",
+        "foreach ($checked as $column) {",
+        "    Check::input($column->slot === 0, 'A recursive result must read the single working column.');",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Rows/RecursiveSeries::toString": {
+      "common": [],
+      "mysql": [
+        "$renderer = new SelectSql();",
+        "$table = '`__ztd_recursive`';",
+        "$slot = '`__ztd_current`';",
+        "$reference = $table . '.' . $slot;",
+        "$start = $renderer->expression($this->start, null);",
+        "$increment = $renderer->expression($this->increment, null);",
+        "$boundary = $renderer->expression($this->boundary, null);",
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $reference . ' AS ' . $column->name->quoted();",
+        "}",
+        "$operator = '+';",
+        "$comparison = $this->comparison->value;",
+        "",
+        "return 'WITH RECURSIVE ' . $table . '(' . $slot . ') AS (SELECT ' . $start",
+        "    . ($this->all ? ' UNION ALL SELECT ' : ' UNION SELECT ')",
+        "    . '(' . $reference . ' ' . $operator . ' ' . $increment . ') FROM ' . $table . ' WHERE '",
+        "    . $reference . ' ' . $comparison . ' ' . $boundary . ') SELECT ' . implode(', ', $columns) . ' FROM ' . $table;"
+      ],
+      "postgres": [
+        "$renderer = new SelectSql();",
+        "$table = '\"__ztd_recursive\"';",
+        "$slot = '\"__ztd_current\"';",
+        "$reference = $table . '.' . $slot;",
+        "$start = $renderer->expression($this->start, null);",
+        "$increment = $renderer->expression($this->increment, null);",
+        "$boundary = $renderer->expression($this->boundary, null);",
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $reference . ' AS ' . $column->name->quoted();",
+        "}",
+        "$operator = 'OPERATOR(pg_catalog.+)';",
+        "$comparison = 'OPERATOR(pg_catalog.' . $this->comparison->value . ')';",
+        "",
+        "return 'WITH RECURSIVE ' . $table . '(' . $slot . ') AS (SELECT ' . $start",
+        "    . ($this->all ? ' UNION ALL SELECT ' : ' UNION SELECT ')",
+        "    . '(' . $reference . ' ' . $operator . ' ' . $increment . ') FROM ' . $table . ' WHERE '",
+        "    . $reference . ' ' . $comparison . ' ' . $boundary . ') SELECT ' . implode(', ', $columns) . ' FROM ' . $table;"
+      ]
+    },
+    "Schema/CreateTable::__construct": {
+      "common": [
+        "$checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);",
+        "Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');",
+        "$seen = [];",
+        "foreach ($checked as $column) {"
+      ],
+      "mysql": [
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $checked;"
+      ],
+      "postgres": [
+        "    $key = $column->name->value;",
+        "    Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Schema/DropTable::__construct": {
+      "common": [
+        "$names = Check::listOf($targets, TableName::class, 'DROP TABLE needs a nonempty target list.', 1);",
+        "$seen = [];",
+        "foreach ($names as $target) {",
+        "    $key = $target->quoted();",
+        "    Check::input(!isset($seen[$key]), 'DROP TABLE cannot repeat a target.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->targets = $names;"
+      ]
+    },
+    "Schema/TableColumn::__construct": {
+      "common": [],
+      "mysql": [
+        "Check::input(preg_match('/\\A[\\x01-\\x7f]{1,64}(?<! )\\z/D', $name->value) === 1, 'This MySQL declaration requires an ASCII column name of 1 to 64 characters without a trailing space.');",
+        "Check::input($nullable || !$default instanceof NullLiteral, 'A MySQL NOT NULL column cannot declare a NULL default.');",
+        "if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {",
+        "    $integer = (int) $default->decimal;",
+        "    Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');",
+        "}"
+      ],
+      "postgres": [
+        "$systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];",
+        "Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');",
+        "if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {",
+        "    $integer = (int) $default->decimal;",
+        "    Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');",
+        "}"
+      ]
+    },
+    "Schema/TableName::__construct": {
+      "common": [],
+      "mysql": [
+        "foreach ([$schema, $table] as $identifier) {",
+        "    Check::input(",
+        "        strpbrk($identifier->value, '/\\\\.') === false && preg_match('/\\A.{1,64}(?<! )\\z/us', $identifier->value) === 1,",
+        "        'An absolute MySQL table name needs 1 to 64 characters without path separators or a trailing space.',",
+        "    );",
+        "}"
+      ],
+      "postgres": [
+        "Check::input($schema->value !== 'pg_temp', 'A persistent PostgreSQL relation requires an absolute schema.');"
+      ]
+    },
+    "SelectBounds::check": {
+      "common": [],
+      "mysql": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$position = 0;",
+        "foreach ($results as $result) {",
+        "    $label = $result->name->value;",
+        "    if ($label !== ltrim($label, \" \\t\\r\\n\\v\\f\")) {",
+        "        $reference = $result->expression;",
+        "        Check::invariant($reference instanceof ColumnReference, 'An intrinsic label belongs to a column reference.');",
+        "        $table = $inputs[$reference->occurrence] ?? null;",
+        "        Check::input(",
+        "            $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,",
+        "            'An intrinsic MySQL result name must equal its physical input field.'",
+        "        );",
+        "    }",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A range slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference => Check::input(",
+        "                $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),",
+        "                'Column slot must belong to the SELECT source.',",
+        "            ),",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral => null,",
+        "        };",
+        "    }",
+        "}"
+      ],
+      "postgres": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$positions = [];",
+        "foreach ($results as $result) {",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A range slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        if ($expression instanceof IntegerCase) {",
+        "            foreach ($expression->arms as $arm) {",
+        "                $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);",
+        "                $pending[] = [$arm->result, $height + 1];",
+        "            }",
+        "            if ($expression->otherwise !== null) {",
+        "                $pending[] = [$expression->otherwise, $height + 1];",
+        "            }",
+        "            continue;",
+        "        }",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference => Check::input(",
+        "                $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),",
+        "                'Column slot must belong to the SELECT source.',",
+        "            ),",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => $positions[$expression->position] = true,",
+        "            $expression instanceof IntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral => null,",
+        "        };",
+        "    }",
+        "}",
+        "for ($position = 1; $position <= count($positions); ++$position) {",
+        "    Check::input(isset($positions[$position]), 'PostgreSQL parameter positions must cover the contiguous bound slots.');",
+        "}"
+      ]
+    },
+    "SelectSql::predicate": {
+      "common": [
+        "if ($condition instanceof IntegerComparison) {",
+        "    $left = $this->expression($condition->left, $source, $offset, $qualify);",
+        "    $right = $this->expression($condition->right, $source, $offset, $qualify);"
+      ],
+      "mysql": [
+        "    $operator = $condition->operator->value;"
+      ],
+      "postgres": [
+        "    $operator = 'OPERATOR(pg_catalog.' . $condition->operator->value . ')';"
+      ],
+      "tail": [
+        "",
+        "    return '(' . $left . ' ' . $operator . ' ' . $right . ')';",
+        "}",
+        "",
+        "if ($condition instanceof LogicalPredicate) {",
+        "    $left = $this->predicate($condition->left, $source, $offset, $qualify);",
+        "    if ($condition->right === null) {",
+        "        return '(NOT ' . $left . ')';",
+        "    }",
+        "",
+        "    return '(' . $left . ' ' . $condition->operator->value . ' ' . $this->predicate($condition->right, $source, $offset, $qualify) . ')';",
+        "}",
+        "if ($condition instanceof NullTest) {",
+        "    $operand = $this->predicate($condition->operand, $source, $offset, $qualify);",
+        "",
+        "    return '(' . $operand . ($condition->negated ? ' IS NOT NULL)' : ' IS NULL)');",
+        "}",
+        "",
+        "return $this->expression($condition, $source, $offset, $qualify);"
+      ]
+    },
+    "Transaction/Transaction::__construct": {
+      "common": [
+        "$named = match ($command) {",
+        "    TransactionCommand::Begin, TransactionCommand::Commit, TransactionCommand::Rollback => false,",
+        "    TransactionCommand::Savepoint, TransactionCommand::Release, TransactionCommand::RollbackTo => true,",
+        "};",
+        "Check::input($named === ($name !== null), 'Only a savepoint operation requires a name.');"
+      ],
+      "mysql": [
+        "Check::input($name === null || preg_match('/\\A[\\x{1}-\\x{FFFF}]{1,64}\\z/u', $name->value) === 1, 'A savepoint requires a representable native label.');"
+      ]
+    },
+    "From/DerivedSource::__construct": {
+      "common": [
+        "Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');",
+        "Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');",
+        "foreach ($definition->columns as $column) {",
+        "    Check::input(",
+        "        $column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference,",
+        "        'A derived join field requires a signed literal or a signed column.'",
+        "    );",
+        "}"
+      ]
+    },
+    "From/OccurrenceScope::hasSlot": {
+      "common": [
+        "return $input instanceof DerivedSource ? isset($input->definition->columns[$slot]) : isset($input->columns[$slot]);"
+      ]
+    },
+    "Select::__construct": {
+      "common": [
+        "$results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);",
+        "(new SelectBounds())->check($results, $source, $where);",
+        "if ($source instanceof Join) {",
+        "    foreach ($source->inputs() as $input) {",
+        "        Check::input(!$input instanceof DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');",
+        "    }",
+        "}",
+        "$this->columns = $results;",
+        "$this->orderBy = Check::listOf($orderBy, Order::class, 'ORDER BY needs an owned list of output keys.');",
+        "Check::input(count($this->orderBy) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');",
+        "foreach ($this->orderBy as $key) {",
+        "    Check::input($key->position <= count($results), 'An output order position must belong to the projection.');",
+        "}"
+      ]
+    },
+    "SelectSql::expression": {
+      "common": [],
+      "mysql": [
+        "if ($expression instanceof ColumnReference) {",
+        "    $inputs = $source instanceof Join ? $source->inputs() : [$source];",
+        "    $input = $inputs[$expression->occurrence] ?? null;",
+        "    if ($input instanceof DerivedSource) {",
+        "        Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');",
+        "        $name = $this->localColumn($expression->slot);",
+        "    } else {",
+        "        Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "        $name = $input->columns[$expression->slot]->quoted();",
+        "    }",
+        "",
+        "    return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerLiteral => $expression->toString(),",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => $expression->toString(),",
+        "    $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ],
+      "postgres": [
+        "if ($expression instanceof ColumnReference) {",
+        "    $inputs = $source instanceof Join ? $source->inputs() : [$source];",
+        "    $input = $inputs[$expression->occurrence] ?? null;",
+        "    if ($input instanceof DerivedSource) {",
+        "        Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');",
+        "        $name = $this->localColumn($expression->slot);",
+        "    } else {",
+        "        Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "        $name = $input->columns[$expression->slot]->quoted();",
+        "    }",
+        "",
+        "    return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => $expression->toString(),",
+        "    $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "SelectSql::from": {
+      "common": [],
+      "mysql": [
+        "if ($source instanceof DerivedSource) {",
+        "    return '(' . $this->render($source->definition, true) . ') AS ' . $this->alias($offset);",
+        "}",
+        "if ($source instanceof TableSource) {",
+        "    return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($offset);",
+        "}",
+        "$rightOffset = $offset + ($source->left instanceof Join ? count($source->left->inputs()) : 1);",
+        "$sql = '(' . $this->from($source->left, $offset) . ' ' . $source->kind->value . ' JOIN ' . $this->from($source->right, $rightOffset);",
+        "if ($source->on !== null) {",
+        "    $sql .= ' ON ' . $this->predicate($source->on, $source, $offset);",
+        "}",
+        "",
+        "return $sql . ')';"
+      ],
+      "postgres": [
+        "if ($source instanceof DerivedSource) {",
+        "    return '(' . $this->render($source->definition, true) . ') AS ' . $this->alias($offset);",
+        "}",
+        "if ($source instanceof TableSource) {",
+        "    return ($source->only ? 'ONLY ' : '') . $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($offset);",
+        "}",
+        "$rightOffset = $offset + ($source->left instanceof Join ? count($source->left->inputs()) : 1);",
+        "$sql = '(' . $this->from($source->left, $offset) . ' ' . $source->kind->value . ' JOIN ' . $this->from($source->right, $rightOffset);",
+        "if ($source->on !== null) {",
+        "    $sql .= ' ON ' . $this->predicate($source->on, $source, $offset);",
+        "}",
+        "",
+        "return $sql . ')';"
+      ]
+    },
+    "From/DerivedBinding::__construct": {
+      "common": [
+        "Check::input(!$input->lateral, 'A derived join input cannot be lateral.');",
+        "$query = $input->query;",
+        "while ($query instanceof ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "Check::input($query instanceof ParsedSelect, 'A derived join input requires a SELECT definition.');",
+        "$from = JoinBinding::ungroup($query->from);",
+        "Check::input(!$from instanceof ParsedJoin && !$from instanceof DerivedTable, 'A derived join input must be independent of any joined input.');",
+        "$this->value = new DerivedSource((new SelectLowering())->lower($operation, $query));"
+      ]
+    },
+    "From/DerivedBinding::source": {
+      "common": [
+        "return $this->value;"
+      ]
+    },
+    "Select::profileId": {
+      "common": [],
+      "mysql": [
+        "$optimization = $this->release === GrammarRelease::MySql5651 ? 'materialized' : 'derived-merge=on';",
+        "",
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/' . $optimization;"
+      ],
+      "postgres": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Aggregation/Aggregate::__construct": {
+      "common": [
+        "Check::input(",
+        "    $argument !== null || ($operator === AggregateOperator::Count && !$distinct),",
+        "    'Only a nondistinct COUNT can omit the aggregate argument.'",
+        ");",
+        "Check::input($argument === null || $argument->occurrence === 0, 'The aggregate argument must read its single input occurrence.');"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "common": [],
+      "mysql": [
+        "$grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input($key->occurrence === 0 && isset($source->columns[$key->slot]), 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "        $name = $result->name->value;",
+        "        Check::input(",
+        "            $name === ltrim($name, \" \\t\\r\\n\\v\\f\") || $source->columns[$value->slot]->value === $name,",
+        "            'An intrinsic MySQL grouped name must equal its physical input field.'",
+        "        );",
+        "    } else {",
+        "        Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$source]);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ],
+      "postgres": [
+        "$grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input($key->occurrence === 0 && isset($source->columns[$key->slot]), 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } else {",
+        "        Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$source]);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "Aggregation/GroupedSelect::toString": {
+      "common": [
+        "return (new GroupedSql())->render($this);"
+      ]
+    },
+    "Aggregation/GroupedSelect::profileId": {
+      "common": [],
+      "mysql": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/grouped';"
+      ],
+      "postgres": [
+        "return $this->release->value . '/UTF8/standard-conforming-strings=on/native/grouped';"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "common": [],
+      "mysql": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        $result = $renderer->expression($value, $query->source);",
+        "    } else {",
+        "        $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);",
+        "        $result = $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';",
+        "    }",
+        "    $name = $column->name->value;",
+        "    $items[] = $result . ($name === ltrim($name, \" \\t\\r\\n\\v\\f\") ? ' AS ' . $column->name->quoted() : '');",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->predicate($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key, $query->source);",
+        "}",
+        "",
+        "return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));"
+      ],
+      "postgres": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        $result = $renderer->expression($value, $query->source);",
+        "    } else {",
+        "        $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);",
+        "        $result = 'pg_catalog.' . $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';",
+        "    }",
+        "    $items[] = $result . ' AS ' . $column->name->quoted();",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->predicate($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key, $query->source);",
+        "}",
+        "",
+        "return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));"
+      ]
+    },
+    "From/DerivedBinding::resolved": {
+      "common": [
+        "Check::input(",
+        "    $resolution->depth === 0 && $resolution->relation === $this->input,",
+        "    'A derived reference must belong to its join input.'",
+        ");",
+        "$slots = $this->operation->facts->relation($this->input)->shape->slots;",
+        "$position = array_search($resolution->slot, $slots, true);",
+        "Check::input($position !== false && isset($this->value->definition->columns[$position]), 'A derived reference must resolve to a defined field.');",
+        "",
+        "return new ColumnReference($position);"
+      ]
+    },
+    "From/JoinBinding::resolved": {
+      "common": [],
+      "mysql": [
+        "Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');",
+        "foreach ($this->inputs as $occurrence => $binding) {",
+        "    if ($binding->relation() === $resolution->relation) {",
+        "        return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);",
+        "    }",
+        "}",
+        "",
+        "throw new InvalidConstruction('A column must resolve within this join scope.');"
+      ],
+      "postgres": [
+        "Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');",
+        "$wholeJoin = self::ungroup($resolution->relation) === $this->join;",
+        "$expanded = null;",
+        "foreach ($this->inputs as $occurrence => $binding) {",
+        "    $relation = $binding->relation();",
+        "    if ($relation === $resolution->relation) {",
+        "        return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);",
+        "    }",
+        "    if ($wholeJoin && $relation !== null",
+        "        && in_array($resolution->slot, $this->operation->facts->relation($relation)->shape->slots, true)) {",
+        "        Check::input($expanded === null, 'An expanded join field must bind to exactly one input occurrence.');",
+        "        $bound = $binding->resolved(new ResolvedColumn($relation, $resolution->slot));",
+        "        $expanded = new ColumnReference($bound->slot, $occurrence);",
+        "    }",
+        "}",
+        "Check::input($expanded !== null, 'A column must resolve within this join scope.');",
+        "",
+        "return $expanded;"
+      ]
+    },
+    "SourceBinding::resolved": {
+      "common": [
+        "Check::input(",
+        "    $resolution->relation === $this->source && $resolution->depth === 0,",
+        "    'The column must resolve to the projection source.'",
+        ");",
+        "$column = $resolution->declaration();",
+        "Check::input($column !== null, 'The column must be an explicit member of the projection source.');",
+        "",
+        "return $this->slotFor($column);"
+      ]
+    },
+    "ResultColumn::__construct": {
+      "common": [
+        "Check::input($expression instanceof ColumnReference || $name->value === ltrim($name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Aggregation/GroupColumn::__construct": {
+      "common": [
+        "Check::input($value instanceof ColumnReference || $name->value === ltrim($name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL grouped result name cannot start with SQL whitespace.');"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Ordering/ProjectionLabel::lower": {
+      "common": [
+        "$trimmed = ltrim($name, \" \\t\\r\\n\\v\\f\");",
+        "if ($name === $trimmed || $field->expression === null) {",
+        "    return new Identifier($name);",
+        "}",
+        "if (!$field->resolution instanceof ResolvedColumn) {",
+        "    return new Identifier($trimmed);",
+        "}",
+        "foreach ($statement->items as $item) {",
+        "    if ($item instanceof SelectExpression && $item->expression === $field->expression && $item->alias !== null) {",
+        "        return new Identifier($trimmed);",
+        "    }",
+        "}",
+        "",
+        "return new Identifier($name);"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Ordering/ProjectionColumns::lower": {
+      "common": [
+        "$expressions = new ExpressionLowering();",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "$parameterPosition = 0;",
+        "$labels = new ProjectionLabel();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = $labels->lower($statement, $field, $name->value);",
+        "    $expression = $field->expression;",
+        "    if ($expression === null) {",
+        "        $resolution = $field->resolution;",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');",
+        "        $results[] = new ResultColumn($binding->resolved($resolution), $label);",
+        "        continue;",
+        "    }",
+        "    $parameter = $parameters->lower($expression, $parameterPosition + 1);",
+        "    if ($parameter !== null) {",
+        "        ++$parameterPosition;",
+        "    }",
+        "    $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding), $label);",
+        "}",
+        "",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "",
+        "return $results;"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "SelectSql::integerCase": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$sql = '(CASE';",
+        "foreach ($expression->arms as $arm) {",
+        "    $sql .= ' WHEN ' . $this->predicate($arm->condition, $source, $offset, $qualify)",
+        "        . ' THEN ' . $this->integerOrNull($arm->result, $source, $offset, $qualify);",
+        "}",
+        "if ($expression->otherwise !== null) {",
+        "    $sql .= ' ELSE ' . $this->integerOrNull($expression->otherwise, $source, $offset, $qualify);",
+        "}",
+        "",
+        "return $sql . ' END)';"
+      ]
+    },
+    "Expression/IntegerCase::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($arms) <= 32, 'An int4 CASE can have at most 32 arms.');",
+        "$this->arms = Check::listOf($arms, IntegerCaseArm::class, 'An int4 CASE needs a nonempty list of typed arms.', 1);"
+      ]
+    },
+    "Expression/IntegerCaseLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($expression->operand === null, 'An int4 CASE requires the searched form.');",
+        "$type = $binding->typeOf($expression);",
+        "Check::input($type instanceof Known && $type->descriptor === Builtin::Int4, 'A searched CASE must resolve to pg_catalog.int4.');",
+        "$predicates = new PredicateLowering();",
+        "$arms = [];",
+        "foreach ($expression->branches as $branch) {",
+        "    $condition = $predicates->lowerValue($branch->condition, $binding, $catalogFirst);",
+        "    $result = $this->result($branch->result, $binding, $catalogFirst);",
+        "    $arms[] = new IntegerCaseArm($condition, $result);",
+        "}",
+        "$otherwise = $expression->default === null ? null : $this->result($expression->default, $binding, $catalogFirst);",
+        "",
+        "return new IntegerCase($arms, $otherwise);"
+      ]
+    },
+    "Expression/IntegerCaseLowering::result": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($expression instanceof Cast && !$expression->type->setOf) {",
+        "    $operand = $expression->operand;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    $type = $binding->typeOf($expression);",
+        "    if ($operand instanceof ParsedNull && $type instanceof Known && $type->descriptor === Builtin::Int4) {",
+        "        return new NullLiteral();",
+        "    }",
+        "}",
+        "$result = (new ExpressionLowering())->lower($expression, $binding, $catalogFirst);",
+        "Check::input(!$result instanceof BooleanLiteral && !$result instanceof IntegerRange, 'An int4 CASE arm requires a signed integer or NULL.');",
+        "",
+        "return $result;"
+      ]
+    },
+    "From/JoinBinding::typeOf": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->operation->facts->scalar($expression)->type;"
+      ]
+    },
+    "SourceBinding::typeOf": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->operation->facts->scalar($expression)->type;"
+      ]
+    },
+    "Predicate/PredicateLowering::lowerValue": {
+      "common": [],
+      "postgres": [
+        "while ($condition instanceof Grouped) {",
+        "    $condition = $condition->operand;",
+        "}",
+        "if ($condition instanceof ParsedLogical) {",
+        "    $operator = match ($condition->operator) {",
+        "        BooleanOperator::And => LogicalOperator::And,",
+        "        BooleanOperator::Or => LogicalOperator::Or,",
+        "    };",
+        "",
+        "    return new LogicalPredicate($operator, $this->lowerValue($condition->left, $binding, $catalogFirst), $this->lowerValue($condition->right, $binding, $catalogFirst));",
+        "}",
+        "if ($condition instanceof ParsedNot) {",
+        "    return new LogicalPredicate(LogicalOperator::Not, $this->lowerValue($condition->operand, $binding, $catalogFirst));",
+        "}",
+        "$expression = new ExpressionLowering();",
+        "if ($condition instanceof ParsedNullTest) {",
+        "    $operand = $condition->operand;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison",
+        "        ? $this->lowerValue($operand, $binding, $catalogFirst)",
+        "        : $expression->lower($operand, $binding, $catalogFirst);",
+        "    Check::input(!$tested instanceof Arithmetic && !$tested instanceof IntegerCase, 'A null test needs a supported scalar value.');",
+        "",
+        "    return new NullTest($tested, $condition->negated);",
+        "}",
+        "if ($condition instanceof ParsedComparison) {",
+        "    $qualifiers = array_column($condition->operator->qualifiers, 'value');",
+        "    $allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];",
+        "    Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');",
+        "    $operator = IntegerOperator::tryFrom($condition->operator->name->value);",
+        "    Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');",
+        "    $left = $expression->lower($condition->left, $binding, $catalogFirst);",
+        "    $right = $expression->lower($condition->right, $binding, $catalogFirst);",
+        "    Check::input(($left instanceof ColumnReference || $left instanceof IntegerLiteral)",
+        "        && ($right instanceof ColumnReference || $right instanceof IntegerLiteral), 'A predicate comparison needs two signed integer operands.');",
+        "",
+        "    return new IntegerComparison($operator, $left, $right);",
+        "}",
+        "$constant = $expression->lower($condition, $binding, $catalogFirst);",
+        "Check::input($constant instanceof BooleanLiteral || $constant instanceof NullLiteral || $constant instanceof IntegerRange, 'A filter needs a Boolean or signed integer comparison.');",
+        "",
+        "return $constant;"
+      ],
+      "mysql": [
+        "while ($condition instanceof Grouped) {",
+        "    $condition = $condition->operand;",
+        "}",
+        "if ($condition instanceof ParsedLogical) {",
+        "    $operator = LogicalOperator::from($condition->operator->value);",
+        "",
+        "    return new LogicalPredicate($operator, $this->lowerValue($condition->left, $binding), $this->lowerValue($condition->right, $binding));",
+        "}",
+        "if ($condition instanceof ParsedNot) {",
+        "    return new LogicalPredicate(LogicalOperator::Not, $this->lowerValue($condition->operand, $binding));",
+        "}",
+        "$expression = new ExpressionLowering();",
+        "if ($condition instanceof ParsedNullTest) {",
+        "    $operand = $condition->operand;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison",
+        "        ? $this->lowerValue($operand, $binding)",
+        "        : $expression->lower($operand, $binding);",
+        "    Check::input(!$tested instanceof Arithmetic, 'A null test needs a supported scalar value.');",
+        "",
+        "    return new NullTest($tested, $condition->negated);",
+        "}",
+        "if ($condition instanceof ParsedComparison) {",
+        "    $operator = IntegerOperator::tryFrom($condition->operator->value);",
+        "    Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');",
+        "    $left = $expression->lower($condition->left, $binding);",
+        "    $right = $expression->lower($condition->right, $binding);",
+        "    Check::input(($left instanceof ColumnReference || $left instanceof IntegerLiteral)",
+        "        && ($right instanceof ColumnReference || $right instanceof IntegerLiteral), 'A predicate comparison needs two signed integer operands.');",
+        "",
+        "    return new IntegerComparison($operator, $left, $right);",
+        "}",
+        "$constant = $expression->lower($condition, $binding);",
+        "Check::input($constant instanceof BooleanLiteral || $constant instanceof NullLiteral || $constant instanceof IntegerRange, 'A filter needs a Boolean or signed integer comparison.');",
+        "",
+        "return $constant;"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "common": [],
+      "postgres": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "",
+        "return match (true) {",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof BooleanLiteral, $column instanceof IntegerRange => ResultKind::Boolean,",
+        "    $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral, $column instanceof Parameter => ResultKind::Integer,",
+        "};"
+      ],
+      "mysql": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "",
+        "return match (true) {",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof ColumnReference => ResultKind::Integer,",
+        "    $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerRange, $column instanceof Parameter => ResultKind::WideInteger,",
+        "};"
+      ]
+    },
+    "SelectSql::integerOrNull": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $value instanceof NullLiteral ? 'CAST(NULL AS pg_catalog.int4)' : $this->expression($value, $source, $offset, $qualify);"
+      ]
+    },
+    "SelectSql::integerRange": {
+      "common": [],
+      "postgres": [
+        "$subject = $this->integerOrNull($range->subject, $source, $offset, $qualify);",
+        "$lower = $this->integerOrNull($range->lower, $source, $offset, $qualify);",
+        "$upper = $this->integerOrNull($range->upper, $source, $offset, $qualify);",
+        "$format = '((%1$s OPERATOR(pg_catalog.>=) %2$s) AND (%1$s OPERATOR(pg_catalog.<=) %3$s))';",
+        "$interval = sprintf($format, $subject, $lower, $upper);",
+        "if ($range->symmetric) {",
+        "    $interval = '(' . $interval . ' OR ' . sprintf($format, $subject, $upper, $lower) . ')';",
+        "}",
+        "",
+        "return $range->negated ? '(NOT ' . $interval . ')' : $interval;"
+      ],
+      "mysql": [
+        "$subject = $this->rangeOperand($range->subject, $source, $offset, $qualify);",
+        "$lower = $this->rangeOperand($range->lower, $source, $offset, $qualify);",
+        "$upper = $this->rangeOperand($range->upper, $source, $offset, $qualify);",
+        "",
+        "return '(' . $subject . ($range->negated ? ' NOT BETWEEN ' : ' BETWEEN ') . $lower . ' AND ' . $upper . ')';"
+      ]
+    },
+    "Predicate/IntegerRangeLowering::lower": {
+      "common": [],
+      "postgres": [
+        "Check::input($catalogFirst, 'A range predicate must resolve to pg_catalog operators.');",
+        "$operands = new IntegerRangeOperandLowering();",
+        "[$subject, $knownSubject] = $operands->lower($range->operand, $binding, $catalogFirst);",
+        "[$lower, $knownLower] = $operands->lower($range->low, $binding, $catalogFirst);",
+        "[$upper, $knownUpper] = $operands->lower($range->high, $binding, $catalogFirst);",
+        "Check::input($knownSubject || ($knownLower && $knownUpper), 'Each range comparison requires a known int4 operand.');",
+        "",
+        "return new IntegerRange($subject, $lower, $upper, $range->negated, $range->symmetric);"
+      ],
+      "mysql": [
+        "return new IntegerRange(",
+        "    $this->operand($test->operand, $binding),",
+        "    $this->operand($test->low, $binding),",
+        "    $this->operand($test->high, $binding),",
+        "    $test->negated,",
+        ");"
+      ]
+    },
+    "ExpressionLowering::lower": {
+      "common": [],
+      "postgres": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($expression instanceof BinaryOperation) {",
+        "    return $this->binary($expression, $binding, $catalogFirst);",
+        "}",
+        "if ($expression instanceof Constant && $expression->value instanceof IntegerConstant) {",
+        "    return new IntegerLiteral($expression->value->digits);",
+        "}",
+        "if ($expression instanceof UnaryOperation && $expression->operand instanceof Constant",
+        "    && [$expression->operator->name->value, $expression->operator->explicit] === ['-', false]) {",
+        "    $number = $expression->operand->value;",
+        "    if ($number instanceof IntegerConstant && $catalogFirst) {",
+        "        return new IntegerLiteral($number->digits === '0' ? '0' : '-' . $number->digits);",
+        "    }",
+        "    if ($number instanceof NumericConstant && $number->text === '2147483648') {",
+        "        return new IntegerLiteral('-2147483648');",
+        "    }",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),",
+        "    $expression instanceof ParsedNull => new NullLiteral(),",
+        "    $expression instanceof ParsedColumn => $binding->reference($expression),",
+        "    default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),",
+        "};"
+      ],
+      "mysql": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($expression instanceof ParsedArithmetic) {",
+        "    $operator = ArithmeticOperator::tryFrom($expression->operator->value);",
+        "    Check::input($operator !== null, 'The operator has no checked MySQL signed arithmetic representation.');",
+        "    $left = $this->lower($expression->left, $binding);",
+        "    $right = $this->lower($expression->right, $binding);",
+        "    Check::input(",
+        "        ($left instanceof Arithmetic || $left instanceof ColumnReference || $left instanceof IntegerLiteral)",
+        "            && ($right instanceof Arithmetic || $right instanceof ColumnReference || $right instanceof IntegerLiteral),",
+        "        'Arithmetic operands must have the signed integer role.',",
+        "    );",
+        "",
+        "    return new Arithmetic($operator, $left, $right);",
+        "}",
+        "$token = (new IntegerTokenLowering())->lower($expression);",
+        "if ($token !== null) {",
+        "    return new IntegerLiteral($token[0], $token[1], $token[2]);",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding),",
+        "    $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),",
+        "    $expression instanceof ParsedNull => new NullLiteral(),",
+        "    $expression instanceof ColumnUse => $binding->reference($expression),",
+        "    default => throw new InvalidConstruction('The operand has no complete MySQL projection representation.'),",
+        "};"
+      ]
+    },
+    "ExpressionLowering::binary": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$qualifiers = array_column($expression->operator->qualifiers, 'value');",
+        "Check::input(",
+        "    ($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],",
+        "    'Integer arithmetic must resolve to a pg_catalog operator.',",
+        ");",
+        "$operator = ArithmeticOperator::tryFrom($expression->operator->name->value);",
+        "Check::input($operator !== null, 'The operator has no checked PostgreSQL int4 arithmetic representation.');",
+        "$left = $this->lower($expression->left, $binding, $catalogFirst);",
+        "$right = $this->lower($expression->right, $binding, $catalogFirst);",
+        "$typeError = 'Arithmetic operands must have the int4 role.';",
+        "Check::input(!$left instanceof BooleanLiteral && !$left instanceof NullLiteral && !$left instanceof IntegerRange, $typeError);",
+        "Check::input(!$right instanceof BooleanLiteral && !$right instanceof NullLiteral && !$right instanceof IntegerRange, $typeError);",
+        "",
+        "return new Arithmetic($operator, $left, $right);"
+      ]
+    },
+    "Predicate/IntegerRangeOperandLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($expression instanceof ParsedNull) {",
+        "    return [new NullLiteral(), false];",
+        "}",
+        "$type = $binding->typeOf($expression);",
+        "Check::input($type instanceof Known && $type->descriptor === Builtin::Int4, 'A range operand must resolve to pg_catalog.int4 or NULL.');",
+        "if ($expression instanceof Cast && !$expression->type->setOf) {",
+        "    $inner = $expression->operand;",
+        "    while ($inner instanceof Grouped) {",
+        "        $inner = $inner->operand;",
+        "    }",
+        "    if ($inner instanceof ParsedNull) {",
+        "        return [new NullLiteral(), true];",
+        "    }",
+        "}",
+        "$value = (new ExpressionLowering())->lower($expression, $binding, $catalogFirst);",
+        "Check::input($value instanceof ColumnReference || $value instanceof IntegerLiteral, 'A range operand requires a pure signed integer or NULL.');",
+        "",
+        "return [$value, true];"
+      ]
+    },
+    "Literal/IntegerTokenLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$negative = false;",
+        "if ($expression instanceof Unary && $expression->operand instanceof NumberLiteral",
+        "    && ($expression->operator === UnaryOperator::Minus || $expression->operator === UnaryOperator::Plus)) {",
+        "    $negative = $expression->operator === UnaryOperator::Minus;",
+        "    $expression = $expression->operand;",
+        "} elseif ($expression instanceof SignedLiteral) {",
+        "    $negative = $expression->negative;",
+        "    $expression = $expression->number;",
+        "}",
+        "if ($expression instanceof NumberLiteral) {",
+        "    $number = $expression;",
+        "    Check::input($number->form === NumberForm::Integer, 'The numeric literal must have the signed integer role.');",
+        "    $digits = ltrim($number->text, '0');",
+        "    $zeroes = min(strlen($number->text) - max(1, strlen($digits)), IntegerLiteral::MAX_LEADING_ZEROES);",
+        "",
+        "    return [$digits === '' ? '0' : (($negative ? '-' : '') . $digits), $zeroes, $negative && $digits === ''];",
+        "}",
+        "",
+        "return null;"
+      ]
+    },
+    "Predicate/IntegerRangeLowering::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "$token = (new IntegerTokenLowering())->lower($expression);",
+        "if ($token !== null) {",
+        "    return new RangeIntegerLiteral($token[0], $token[1], $token[2]);",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof ParsedNull => new NullLiteral(),",
+        "    $expression instanceof ColumnUse => $binding->reference($expression),",
+        "    default => throw new InvalidConstruction('A range operand requires a pure signed integer or NULL.'),",
+        "};"
+      ]
+    },
+    "Predicate/RangeIntegerLiteral::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(preg_match('/\\A(?:0|-?[1-9][0-9]{0,18})\\z/', $decimal) === 1, 'Expected a normalized signed range integer.');",
+        "$magnitude = ltrim($decimal, '-');",
+        "$maximum = $decimal[0] === '-' ? '9223372036854775808' : '9223372036854775807';",
+        "Check::input(strlen($magnitude) < 19 || strcmp($magnitude, $maximum) <= 0, 'Range integer is outside the signed 64-bit range.');",
+        "Check::input($leadingZeroes >= 0 && $leadingZeroes <= IntegerLiteral::MAX_LEADING_ZEROES, 'Range integer padding exceeds the effective field width.');",
+        "Check::input(!$negativeZero || $decimal === '0', 'A separate negative sign applies only to zero.');"
+      ]
+    },
+    "Predicate/RangeIntegerLiteral::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$sign = $this->negativeZero || $this->decimal[0] === '-' ? '-' : '';",
+        "",
+        "return $sign . str_repeat('0', $this->leadingZeroes) . ltrim($this->decimal, '-');"
+      ]
+    },
+    "SelectSql::rangeOperand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $operand instanceof RangeIntegerLiteral ? $operand->toString() : $this->expression($operand, $source, $offset, $qualify);"
+      ]
+    }
+  },
+  "extends": "SemanticsIR/native-boundaries-12"
+}

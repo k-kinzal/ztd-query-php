@@ -10,9 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A select list position in ORDER BY or GROUP BY beyond the select list.
  *
- * @visibility public
- * @example Reading a position outside the select list
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 ORDER BY 3') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown column '3' in 'order clause': the select list has 1 items.
+ * @visibility SqlSemantics
  */
 final class OrdinalOutOfRange implements Diagnostic
 {

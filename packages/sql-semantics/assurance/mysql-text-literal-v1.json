@@ -1,0 +1,75 @@
+{
+  "revision": "SemanticsIR/mysql-text-literal-1",
+  "approval": "pending-human-review",
+  "extends": ["server-projection-v1.json", "server-compound-v2.json"],
+  "dialects": ["MySql"],
+  "profiles": {
+    "5.6.51": "utf8mb4_general_ci",
+    "5.7.44": "utf8mb4_general_ci",
+    "8.0.44": "utf8mb4_0900_ai_ci",
+    "8.1.0": "utf8mb4_0900_ai_ci",
+    "8.2.0": "utf8mb4_0900_ai_ci",
+    "8.3.0": "utf8mb4_0900_ai_ci",
+    "8.4.7": "utf8mb4_0900_ai_ci",
+    "9.0.1": "utf8mb4_0900_ai_ci",
+    "9.1.0": "utf8mb4_0900_ai_ci"
+  },
+  "scope": "A plain MySQL character string literal in a projection with its exact output name. Preserve independently scoped literals in UNION ALL operands.",
+  "constructors": {
+    "Literal/TextLiteral": {
+      "role": "A decoded utf8mb4 literal of the owning MySQL projection.",
+      "fields": ["value"],
+      "structure": "One immutable string containing its decoded UTF-8 bytes. The containing complete statement's release fixes the default connection collation and lexical rules.",
+      "conditions": "Accept well-formed UTF-8 including U+0000 and supplementary code points. Own projection names must meet the Identifier contract. Lower plain single- or double-quoted literals and adjacent plain spellings in empty sql_mode.",
+      "meaning": "The exact string value occurs in its declared output position, including all decoded escapes, whitespace and zero bytes. Character set is utf8mb4 and coercibility is 4. The owning release fixes collation under the declared profile.",
+      "sql": "Use single quotes and double their interior occurrence. Escape backslash, NUL, backspace, line feed, carriage return, tab and Control-Z under empty sql_mode. Preserve the ordered containing projection's result labels with its ordinary checked aliases.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "existingRoles": ["ResultColumn", "Select", "Rows/Compound", "Rows/ResultKind"],
+  "externalInterpretation": "Run both statements under the pinned release, client, connection and result character set utf8mb4, the specified collation_connection, lower_case_table_names=0 and empty sql_mode. Referenced table names and their fields denote the same external objects on both sides.",
+  "observations": [
+    "Exact code points and decoded bytes, ordered output names and VAR_STRING metadata",
+    "Preserve duplicate rows, nullable independent fields, and the explicit ordering guarantees of the containing query",
+    "Observe HEX, CHARSET, COLLATION and COERCIBILITY of emitted literal spellings",
+    "UNION ALL with plain text, primitive signed integers and NULL retains multiplicity and text metadata; numeric operands become strings"
+  ],
+  "finite": {
+    "values": ["", "plain", "a'b", "\\", "\\'", "\u0000", "\u0008\t\n\r\u001a", "CR\rLF\n", "\t x ", "値", "𐐷é", "\\%\\_", "tail ", "\"double\""],
+    "projection": ["literal", "literal-and-int", "repeated"],
+    "source": ["none", "declared"],
+    "identities": 84,
+    "completeness": "Derive the finite key independently from the observed value, ordered result roles and presence of the declared table. Each identity occurs once per release."
+  },
+  "exploration": {"seeds": [2699, 12457, 31973], "casesPerSeed": 19, "timeoutSecondsPerRelease": 200, "allowedExclusions": [], "requiredForms": "Vary code points, quote placement, escapes, zero bytes, output names, projection width and whether repeated external rows are present."},
+  "analysis": [
+    "A standalone unaliased string retains its native label.",
+    "A single-quoted string parses doubled apostrophes.",
+    "A double-quoted string parses doubled double quotes under empty sql_mode.",
+    "An adjacent string uses the first segment as its label and concatenates the value.",
+    "Multiple common backslash escapes decode exactly.",
+    "Escaped pattern characters keep the backslash and an unknown escape drops it.",
+    "An unaliased leading space is trimmed in the label only.",
+    "An empty string has an empty native label without an explicit alias.",
+    "An explicit BMP alias names a supplementary UTF-8 value."
+  ],
+  "compoundWitnesses": ["Text then text", "Text then signed literal", "NULL then text", "Text then NULL"],
+  "negative": ["A direct string contains invalid UTF-8.", "A charset introducer accompanies a plain string.", "A national prefix accompanies a plain string."],
+  "faults": ["Replace a nonempty string by an empty one.", "Replace the decoded NUL by a printable character.", "Attach an explicit COLLATE with the same collation, changing coercibility without changing the value.", "Drop the last projection operand."],
+  "evidence": {
+    "P01": "Compare the decoded text role and derive collation from the fixed release.",
+    "P02": "Check the UTF-8 domain and reject omitted character-set roles before publication.",
+    "P03": "Audit the closed decoded-value shape and the pure encoder dependency set.",
+    "P04": "Inspect composite projection positions and native UNION ALL operands without parsing original SQL.",
+    "P05": "Verify readonly scalar storage and installed Composer class identity.",
+    "P06": "Use independent decoded values, type metadata and coercibility observations.",
+    "Q01": "Require the expected InvalidConstruction categories on the negative inputs.",
+    "Q02": "Require each finite identity and seed and all admitted lexical witnesses.",
+    "Q03": "Connect literal dispatch and result kind to the owning query roles.",
+    "Q04": "Compare exact rows and names in the real engine, including native literal metadata beyond row values.",
+    "Q05": "Pin loaded source boundaries, verifier inputs and release images in the receipts."
+  },
+  "open": ["Other lexical modes or connection collations", "Introduced and national strings, binary and explicit collation roles", "Labels outside the checked Identifier domain", "Additional string type coercions, comparison or aggregation over character data"],
+  "trust": ["UTF-8 validation by PHP", "The release's fixed connection charset and collation", "Independent native observation and statement boundary audit"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/string-literals.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-literal.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-collation-coercibility.html"]
+}

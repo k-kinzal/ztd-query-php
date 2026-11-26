@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * GENERATED ALWAYS are optional and change nothing. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a generated column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, b INT AS (a + 1) STORED)');
- *     $create->statement->elements[1]->specification->storage // => \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored
+ * @visibility SqlSemantics
  */
 final class GeneratedColumn implements ColumnSpecification
 {

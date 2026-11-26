@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
  * type that holds M bytes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-type-syntax.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a binary type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Binary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind::VarBinary, '16');
  *     [$type->name(), $type->length] // => ['VARBINARY', '16']

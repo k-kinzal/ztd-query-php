@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
  * for compatibility, so the model keeps the spelling written.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-calling-funcs.html#SQL-SYNTAX-CALLING-FUNCS-NAMED.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the standard named-argument arrow
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\ArgumentSpelling::Arrow->value // => '=>'
  */

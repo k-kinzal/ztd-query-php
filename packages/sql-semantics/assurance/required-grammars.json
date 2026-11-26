@@ -1,0 +1,53 @@
+{
+  "artifacts": {
+    "packages/sql-semantics-mysql/resources/productions/mysql-5.6.51.php": {
+      "alternatives": 2258,
+      "sha256": "b88007bc5375078c2c7ba5d846db8dc3263f8ae05d0ae3382fc42e7c8dd567cb"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-5.7.44.php": {
+      "alternatives": 2386,
+      "sha256": "7856e29b605bd6d70015d5fc27e5a244b2805c98f0ba3ade67633f01d25e7a75"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-8.0.44.php": {
+      "alternatives": 2925,
+      "sha256": "de8226544d0f6bec14ce68617565c3fa4841b18e1c26438798af0cfad027d3cb"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-8.1.0.php": {
+      "alternatives": 2934,
+      "sha256": "cdabf5af892d90f53f050f3ce8673c02044755a7e4b92bbb986abfda3a8350ed"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-8.2.0.php": {
+      "alternatives": 2948,
+      "sha256": "528d344b410e77497d2f97c53506d6fe52c8b7a74822ea21a864b2b950ad47db"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-8.3.0.php": {
+      "alternatives": 2950,
+      "sha256": "783556a3f9d3a8e9b25a332e4a260c9fbf79bfd0522145161e57f8295260e1d6"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-8.4.7.php": {
+      "alternatives": 2869,
+      "sha256": "b6d41c0a2517407aa13b6f8441e4ebefd75373874ddd159e5359d3f3890dc48d"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-9.0.1.php": {
+      "alternatives": 2871,
+      "sha256": "19fb73146042f444efd193dd29bf5135c25e521e90099b53d2a1ba99243ce5d8"
+    },
+    "packages/sql-semantics-mysql/resources/productions/mysql-9.1.0.php": {
+      "alternatives": 2871,
+      "sha256": "096854d9fa205bea04cf4be914c754d8155b160a4eafcead19091cbc984c7516"
+    },
+    "packages/sql-semantics-postgres/resources/productions/pg-16.6.php": {
+      "alternatives": 3097,
+      "sha256": "faaa683d9fac3fde9758313384c1320da997458ec77a40c5e69d703f5a486047"
+    },
+    "packages/sql-semantics-postgres/resources/productions/pg-17.2.php": {
+      "alternatives": 3213,
+      "sha256": "3e38392125a1f87c28509137d68537420a06aaf4cc15719cec6159492cb7b68f"
+    },
+    "packages/sql-semantics-sqlite/resources/productions/sqlite-3.47.2.php": {
+      "alternatives": 351,
+      "sha256": "db41edf7dee58ef648d8f33f0ed08a9e9324cdf8b1526cad921607223e2d1992"
+    }
+  },
+  "baseline": "9703938a21d69446897512513e61df47e1e7172c"
+}

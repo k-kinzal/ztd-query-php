@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Flushing the relay logs of one channel
  *     $item = new \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem(\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::RelayLogs, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('c1'));
  *     $item->channel?->value // => 'c1'

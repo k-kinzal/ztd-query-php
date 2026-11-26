@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * expression is decided by the query that groups. Source:
  * https://www.postgresql.org/docs/17/functions-aggregate.html#FUNCTIONS-GROUPING-TABLE. Status: Implemented.
  *
- * @visibility public
- * @example Reading the arguments of GROUPING
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT GROUPING(1, 2)');
- *     [count($query->field(0)->expression->arguments), $query->field(0)->name->value] // => [2, 'grouping']
+ * @visibility SqlSemantics
  */
 final class GroupingFunction implements Scalar, OutputNaming
 {

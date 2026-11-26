@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
  *
- * @visibility public
- * @example Reading the condition number
- *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT');
- *     [$get->statement->information->number->text, count($get->statement->information->items)] // => ['2', 1]
+ * @visibility SqlSemantics
  */
 final class ConditionDiagnostics implements Node
 {

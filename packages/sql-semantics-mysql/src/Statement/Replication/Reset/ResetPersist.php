@@ -25,9 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/reset-persist.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing one persisted setting
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('reset persist if exists max_connections')->toString() // => 'RESET PERSIST IF EXISTS max_connections'
+ * @visibility SqlSemantics
  */
 final class ResetPersist implements Statement
 {

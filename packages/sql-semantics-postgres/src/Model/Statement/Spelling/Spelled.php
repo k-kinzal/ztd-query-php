@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * rendering produces at that position, such as the letter case of a keyword
  * or the quoting of a name. It never adds or removes a token.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the spelling of a token
  *     $token = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Spelling\Spelled(' ', 'and');
  *     [$token->gap, $token->text] // => [' ', 'and']

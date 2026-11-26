@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Problem;
  * Source: https://www.postgresql.org/docs/17/queries-union.html, https://www.postgresql.org/docs/17/sql-values.html,
  * https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-TABLE-ALIASES.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the rule of set operations
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule::SetOperation->value // => 'each %1$s query must have the same number of columns'
  */

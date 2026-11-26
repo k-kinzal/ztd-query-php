@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\DerivedAffinity;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\ExpressionAffinity;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\ValueKinds;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
@@ -27,6 +26,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ExpressionAffinity::class)]
 #[Medium]
@@ -34,9 +34,9 @@ final class ExpressionAffinityTest extends TestCase
 {
     public function testOfLooksThroughParenthesesAndCollateAndReadsCastsRowValuesAndSubqueries(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT, b INTEGER, c)');
-        $query = $semantics->inspect('SELECT (a) COLLATE nocase, CAST(b AS REAL), CAST(b AS), (a, b), (SELECT b FROM t UNION ALL SELECT a FROM t), a || b, c, rowid, (VALUES (1), (CAST(1 AS TEXT))) FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT, b INTEGER, c)');
+        $query = $semantics->diagnose('SELECT (a) COLLATE nocase, CAST(b AS REAL), CAST(b AS), (a, b), (SELECT b FROM t UNION ALL SELECT a FROM t), a || b, c, rowid, (VALUES (1), (CAST(1 AS TEXT))) FROM t', [$table]);
         $select = $query->statement;
         $rule = new ExpressionAffinity();
 
@@ -49,9 +49,9 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testReferenceReadsADoubleQuotedWordThatIsNoColumnAsAStringWithoutAffinity(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT)');
-        $query = $semantics->inspect('SELECT "a", "zz", zz FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
+        $query = $semantics->diagnose('SELECT "a", "zz", zz FROM t', [$table]);
         $select = $query->statement;
         $rule = new ExpressionAffinity();
 
@@ -71,9 +71,9 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testFieldReadsTheExpressionOrTheColumnAnExpandedStarExposes(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT, b)');
-        $query = $semantics->inspect('SELECT *, 1 FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT, b)');
+        $query = $semantics->diagnose('SELECT *, 1 FROM t', [$table]);
         $rule = new ExpressionAffinity();
 
         self::assertSame(Affinity::Text, $rule->field($query->field(0), $query->facts)->affinity);
@@ -82,11 +82,27 @@ final class ExpressionAffinityTest extends TestCase
         self::assertTrue($rule->field($query->field(2), $query->facts)->determined);
     }
 
+    public function testResolvedFullMergeHasKnownAbsenceOfAffinity(): void
+    {
+        $sqlite = new Inspection();
+        $left = $sqlite->inspect('CREATE TABLE a (key TEXT)');
+        $right = $sqlite->inspect('CREATE TABLE b (key NUMERIC)');
+        $query = $sqlite->inspect('SELECT key, a.key, b.key FROM a FULL JOIN b USING (key)', [$left, $right]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $rule = new ExpressionAffinity();
+
+        $merged = $rule->column($query->statement, 0, $query->facts);
+        self::assertTrue($merged->determined);
+        self::assertNull($merged->affinity);
+        self::assertSame(Affinity::Text, $rule->column($query->statement, 1, $query->facts)->affinity);
+        self::assertSame(Affinity::Numeric, $rule->column($query->statement, 2, $query->facts)->affinity);
+    }
+
     public function testResolvedReadsADeclarationADerivedTableAndACommonTable(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT, b INTEGER)');
-        $query = $semantics->inspect('WITH w AS (SELECT CAST(b AS INT) AS x FROM t UNION ALL SELECT b FROM t) SELECT t.a, d.y, w.x FROM t, (SELECT b AS y FROM t) AS d, w', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT, b INTEGER)');
+        $query = $semantics->diagnose('WITH w AS (SELECT CAST(b AS INT) AS x FROM t UNION ALL SELECT b FROM t) SELECT t.a, d.y, w.x FROM t, (SELECT b AS y FROM t) AS d, w', [$table]);
         $rule = new ExpressionAffinity();
         $declared = $query->field(0)->resolution;
         $derived = $query->field(1)->resolution;
@@ -113,9 +129,9 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testComputingAnswersTheQueryOfADerivedTableOrACommonTable(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a)');
-        $query = $semantics->inspect('WITH w AS (SELECT a FROM t) SELECT t.a, d.a, w.a FROM t, (SELECT a FROM t) AS d, w', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a)');
+        $query = $semantics->diagnose('WITH w AS (SELECT a FROM t) SELECT t.a, d.a, w.a FROM t, (SELECT a FROM t) AS d, w', [$table]);
         $rule = new ExpressionAffinity();
         $declared = $query->field(0)->resolution;
         $derived = $query->field(1)->resolution;
@@ -134,13 +150,13 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testPositionFindsTheOutputFieldASlotReExposes(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a, b)');
-        $query = $semantics->inspect('SELECT d.b, d.a FROM (SELECT a, b FROM t UNION ALL SELECT b, a FROM t) AS d', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a, b)');
+        $query = $semantics->diagnose('SELECT d.b, d.a FROM (SELECT a, b FROM t UNION ALL SELECT b, a FROM t) AS d', [$table]);
         $derived = $query->inputRelation();
         $resolution = $query->field(0)->resolution;
         $select = $query->statement;
-        $other = $semantics->inspect('SELECT 1')->statement;
+        $other = $semantics->diagnose('SELECT 1')->statement;
 
         self::assertInstanceOf(DerivedQuery::class, $derived);
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
@@ -153,9 +169,9 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testArmsFlattensWithClausesCompoundsAndValuesRows(): void
     {
-        $semantics = new Semantics();
-        $compound = $semantics->inspect('WITH w AS (SELECT 1) SELECT 1 UNION ALL VALUES (2), (3) UNION SELECT 4')->statement;
-        $values = $semantics->inspect('VALUES (1), (2)')->statement;
+        $semantics = new Inspection();
+        $compound = $semantics->diagnose('WITH w AS (SELECT 1) SELECT 1 UNION ALL VALUES (2), (3) UNION SELECT 4')->statement;
+        $values = $semantics->diagnose('VALUES (1), (2)')->statement;
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(ValuesClause::class, $values);
@@ -174,10 +190,10 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testArmReadsAPositionOfASelectionOrARow(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT)');
-        $query = $semantics->inspect('SELECT *, CAST(1 AS INT) FROM t', [$table]);
-        $rows = $semantics->inspect("VALUES (1, 'x')");
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
+        $query = $semantics->diagnose('SELECT *, CAST(1 AS INT) FROM t', [$table]);
+        $rows = $semantics->diagnose("VALUES (1, 'x')");
         $values = $rows->statement;
         $select = $query->statement;
         $rule = new ExpressionAffinity();
@@ -193,10 +209,10 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testWrittenReadsTheExpressionOfAPositionAndNothingForAStar(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT)');
-        $query = $semantics->inspect('SELECT *, CAST(1 AS INT) FROM t', [$table]);
-        $rows = $semantics->inspect("VALUES (1, 'x')");
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
+        $query = $semantics->diagnose('SELECT *, CAST(1 AS INT) FROM t', [$table]);
+        $rows = $semantics->diagnose("VALUES (1, 'x')");
         $values = $rows->statement;
         $select = $query->statement;
         $rule = new ExpressionAffinity();
@@ -212,9 +228,9 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testFirstReadsTheFirstResultOfTheRightmostArm(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT, b INTEGER)');
-        $query = $semantics->inspect('SELECT (SELECT a FROM t UNION ALL SELECT b FROM t), (VALUES (1), (CAST(1 AS BLOB))), (SELECT * FROM u) FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT, b INTEGER)');
+        $query = $semantics->diagnose('SELECT (SELECT a FROM t UNION ALL SELECT b FROM t), (VALUES (1), (CAST(1 AS BLOB))), (SELECT * FROM u) FROM t', [$table]);
         $select = $query->statement;
         $rule = new ExpressionAffinity();
 
@@ -226,9 +242,9 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testColumnAdjustsACompoundByTheOtherArms(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT, b INTEGER, c, d DECIMAL)');
-        $query = $semantics->inspect("SELECT a, b, b, a, CAST(b AS INT), 1, NULL, CAST(d AS NUMERIC), c FROM t UNION ALL SELECT 1, 'x', b, a, b, b, a, d, a FROM t", [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT, b INTEGER, c, d DECIMAL)');
+        $query = $semantics->diagnose("SELECT a, b, b, a, CAST(b AS INT), 1, NULL, CAST(d AS NUMERIC), c FROM t UNION ALL SELECT 1, 'x', b, a, b, b, a, d, a FROM t", [$table]);
         $compound = $query->statement;
         $rule = new ExpressionAffinity();
 
@@ -242,9 +258,9 @@ final class ExpressionAffinityTest extends TestCase
 
     public function testColumnIsNotDeterminedWhenAnArmDependsOnAMissingDeclaration(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT)');
-        $query = $semantics->inspect('SELECT t.a FROM t UNION ALL SELECT u.x FROM u', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
+        $query = $semantics->diagnose('SELECT t.a FROM t UNION ALL SELECT u.x FROM u', [$table]);
         $compound = $query->statement;
 
         self::assertInstanceOf(Compound::class, $compound);

@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  * the options its grammar rule lists.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
- * @example Reading the keyword of an option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd' FILE_BLOCK_SIZE = 8192");
- *     $create->statement->options[0]->keyword() // => 'FILE_BLOCK_SIZE'
+ * @visibility SqlSemantics
  */
 interface StorageOption extends Node
 {

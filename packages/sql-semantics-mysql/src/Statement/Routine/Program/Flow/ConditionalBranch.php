@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/if.html,
  * https://dev.mysql.com/doc/refman/8.4/en/case.html.
  *
- * @visibility public
- * @example Reading the branches of IF
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p(a INT) IF a = 1 THEN SELECT 1; ELSEIF a = 2 THEN SELECT 2; SELECT 3; END IF');
- *     [count($create->statement->body->branches), count($create->statement->body->branches[1]->statements)] // => [2, 2]
+ * @visibility SqlSemantics
  */
 final class ConditionalBranch implements Node
 {

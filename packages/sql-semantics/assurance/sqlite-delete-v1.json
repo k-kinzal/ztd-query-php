@@ -1,0 +1,36 @@
+{
+  "revision": "SemanticsIR/sqlite-delete-1",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "All earlier obligations and other statement kinds remain in scope.",
+  "additionalPublicRoots": ["Mutation/Delete"],
+  "constructors": {
+    "Mutation/Delete": {
+      "role": "Complete top-level SQLite DELETE of a declared base table.",
+      "structure": "One absolute target with explicit consumed column slots and one optional closed predicate.",
+      "boundary": "All predicate references are to the target at occurrence zero. Every referenced slot exists. The existing expression height, expansion and parameter bounds apply.",
+      "meaning": "Remove every matching row from the target. Omitted WHERE matches every row. WHERE uses SQLite truth conversion and removes only true rows. Database-local triggers and target definitions supplied at execution contribute the same effects.",
+      "sql": "Write DELETE FROM with an absolute table name and a generated alias. Emit the predicate with that alias. Preserve numbered binding slots and labels."
+    }
+  },
+  "analysis": "Accept a top-level DELETE with a resolved, complete SQLite base-table declaration and an optional existing predicate. Correlation names are supported for the target. A WITH clause, RETURNING, explicit index selection, nested trigger statements, and other variants remain open.",
+  "observations": "Typed target and rival table contents, trigger log as a multiset, changes, no result columns, native numbered binding slot count and first labels, writing status.",
+  "fixture": "Two schemas contain distinct rows in base tables of the same name. Duplicate rows and NULLs in the main table can be selected. An AFTER DELETE trigger on the main table records OLD values. Use a fresh savepoint for every original and emitted execution.",
+  "finite": {
+    "schemas": ["main", "temp"],
+    "predicates": ["absent", "false", "NULL", "column truth", "ordinary comparison", "NULL-safe comparison"],
+    "bindings": [0, 1, null],
+    "completeness": "Compare actual domain identities to the full mixed-radix index set with count one"
+  },
+  "exploration": {"seeds": [31, 1103, 22159], "casesPerSeed": 40, "timeoutSeconds": 240, "allowedExclusions": []},
+  "negative": ["Column refers outside target scope", "Column slot absent from target", "Unresolved target", "RETURNING unsupported"],
+  "faults": ["Write the wrong schema", "Drop the predicate", "Read the wrong target slot"],
+  "coverage": {
+    "Q01": ["closed target and predicate types", "scope rejections"],
+    "Q02": ["direct finite and structural tests", "analyzed positives"],
+    "Q03": ["shared expression traversal and target slot boundary"],
+    "Q04": ["independent row selection and effect observer", "original statement comparison"],
+    "Q05": ["closed source inventory", "digest", "isolated candidate"]
+  },
+  "sources": ["https://sqlite.org/lang_delete.html", "https://sqlite.org/lang_expr.html#booleanexpr"]
+}

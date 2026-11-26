@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html.
  *
- * @visibility public
- * @example Reading an index option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) COMMENT \'x\')');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexComment // => true
+ * @visibility SqlSemantics
  */
 final class IndexComment implements IndexOption
 {

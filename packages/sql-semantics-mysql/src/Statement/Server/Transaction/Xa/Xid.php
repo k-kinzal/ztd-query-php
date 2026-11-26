@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * for such a release (MYSQL-SERVER-MAGNITUDE-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the three parts of an identifier
  *     $xid = new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('g'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('7'));
  *     [$xid->transaction->value, $xid->branch?->value, $xid->format?->text] // => ['g', 'b', '7']

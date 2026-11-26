@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * Mirrors LEX_GRANT_AS.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-as.
  *
- * @visibility public
- * @example Reading the account a grant is executed as
- *     $as = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT SELECT ON *.* TO u AS admin WITH ROLE DEFAULT')->statement->as;
- *     $as?->roles?->set // => \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::Default
+ * @visibility SqlSemantics
  */
 final class GrantAs implements Node
 {

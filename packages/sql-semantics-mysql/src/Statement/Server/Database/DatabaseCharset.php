@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
  * set.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
  *
- * @visibility public
- * @example Reading the character set
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE DATABASE d DEFAULT CHARACTER SET = latin1');
- *     [$create->toString(), $create->statement->options[0]->charset->name?->value] // => ['CREATE DATABASE d CHARACTER SET latin1', 'latin1']
+ * @visibility SqlSemantics
  */
 final class DatabaseCharset implements DatabaseOption
 {

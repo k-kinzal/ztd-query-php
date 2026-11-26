@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * `ABORT` is kept for historical reasons and is equivalent to `ROLLBACK`. The value is the keyword.
  * Source: https://www.postgresql.org/docs/17/sql-rollback.html, https://www.postgresql.org/docs/17/sql-abort.html.
  *
- * @visibility public
- * @example Reading the spelling of an ABORT
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ABORT');
- *     $operation->statement->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\RollbackSpelling::Abort
+ * @visibility SqlSemantics
  */
 enum RollbackSpelling: string
 {

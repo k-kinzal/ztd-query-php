@@ -1,0 +1,103 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-database-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-reindex-schema-boundaries-v1.json",
+  "scope": "Fix both explicit current-database selectors and the typed separation of the system-only standard mode.",
+  "rules": {
+    "Schema/Index/Scope/ReindexDatabase::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/Scope/ReindexDatabase::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Index/Scope/ReindexDatabase::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REINDEX DATABASE ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->database->quoted();"
+      ]
+    },
+    "Schema/Index/Scope/ReindexSystemCatalogs::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/Scope/ReindexSystemCatalogs::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Index/Scope/ReindexSystemCatalogs::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REINDEX SYSTEM ' . $this->database->quoted();"
+      ]
+    },
+    "Schema/Index/Scope/ReindexDatabaseLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX requires the native PostgreSQL database profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database || $statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, 'REINDEX requires a database or system selector.');",
+        "$database = $context->currentDatabase;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($database !== null, 'A database-wide rebuild requires a declared current database.');",
+        "$written = $statement->object;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($written === null || $written instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name && $written->value === $database->value, 'A database-wide rebuild must select the declared current database.');",
+        "foreach ($statement->options as $option) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($option->option() === 'concurrently', 'A complete database-wide rebuild accepts only concurrency options.');",
+        "}",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($database->value);",
+        "$concurrent = $statement->requestsConcurrentBuild();",
+        "if ($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$concurrent, 'A system catalog rebuild requires the standard mode.');",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSystemCatalogs($name, $profile->grammar);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabase($name, $concurrent ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard, $profile->grammar);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => match ($statement->target) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSchemaLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabaseLowering())->lower($operation, $statement),",
+        "    },",
+        "};"
+      ]
+    }
+  }
+}

@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_not_supported_yet.
  *
- * @visibility public
- * @example Reporting CAST … AT LOCAL
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATETIME)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'AT LOCAL'.
+ * @visibility SqlSemantics
  */
 final class NotSupportedYet implements Diagnostic
 {

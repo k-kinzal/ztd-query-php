@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createtransform.html.
  *
- * @visibility public
- * @example Reading the direction of a transform function
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f(internal))');
- *     $operation->statement->functions[0]->direction // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\TransformDirection::ToSql
+ * @visibility SqlSemantics
  */
 final class TransformFunction implements Clause
 {

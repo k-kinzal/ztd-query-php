@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
  * ANALYZE does not know; a column the declared table does not have.
  * Source: https://www.postgresql.org/docs/17/sql-analyze.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading an ANALYZE in the British spelling
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ANALYSE VERBOSE t');
- *     [$operation->statement->keyword, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Analyse, 'ANALYSE VERBOSE t']
+ * @visibility SqlSemantics
  * @example Refusing a command keyword that is not a spelling of ANALYZE
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Analyze(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Format) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

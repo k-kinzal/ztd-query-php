@@ -19,7 +19,7 @@ final class ParameterNameTest extends TestCase
 
     public function testRenderQuotesEveryPartAsAColumnName(): void
     {
-        self::assertSame('GRANT set ON PARAMETER a."select".c TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SET ON PARAMETER a."select".c TO joe')->toString());
+        self::assertSame('GRANT set ON PARAMETER a."select".c TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT SET ON PARAMETER a."select".c TO joe')->toString());
     }
 
     public function testRejectsNoPart(): void

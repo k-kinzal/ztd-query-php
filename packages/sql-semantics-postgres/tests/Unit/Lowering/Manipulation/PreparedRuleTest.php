@@ -14,8 +14,8 @@ final class PreparedRuleTest extends TestCase
 {
     public function testPrepareLowersTheTypes(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('PREPARE p (int, text[]) AS SELECT 1');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('PREPARE p (int, text[]) AS SELECT 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Prepare::class, $statement);
         self::assertCount(2, $statement->parameters->types ?? []);
@@ -23,8 +23,8 @@ final class PreparedRuleTest extends TestCase
 
     public function testExecuteLowersTheName(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('EXECUTE p');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('EXECUTE p');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Execute::class, $statement);
         self::assertSame(['p', []], [$statement->name->value, $statement->parameters]);
@@ -32,8 +32,8 @@ final class PreparedRuleTest extends TestCase
 
     public function testParametersLowersTheValues(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('EXECUTE p (1, 2, 3)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('EXECUTE p (1, 2, 3)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Execute::class, $statement);
         self::assertCount(3, $statement->parameters);
@@ -41,8 +41,8 @@ final class PreparedRuleTest extends TestCase
 
     public function testDeallocateLowersAll(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('DEALLOCATE ALL');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('DEALLOCATE ALL');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Deallocate::class, $statement);
         self::assertNull($statement->name);

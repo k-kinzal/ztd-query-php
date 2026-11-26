@@ -1,0 +1,124 @@
+{
+  "revision": "SemanticsIR/postgres-text-update-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check native write roles and every old-row field in the target occurrence before publication.",
+  "rules": {
+    "Mutation/UpdateAssignment::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($target->occurrence === 0, 'An UPDATE target slot must belong to occurrence zero.');",
+        "$read = $value instanceof ColumnReference || $value instanceof TextColumnReference;",
+        "Check::input(!$read || $value->occurrence === 0, 'An UPDATE read slot must belong to occurrence zero.');",
+        "Check::input(",
+        "    $target instanceof TextColumnReference || (!$value instanceof TextColumnReference && !$value instanceof TextLiteral),",
+        "    'An UPDATE assignment value must match its target native kind.',",
+        ");"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);",
+        "Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');",
+        "$written = [];",
+        "$scope = new OccurrenceScope();",
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    $scope->column($assignment->target, [$target], 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    if ($value instanceof ColumnReference || $value instanceof TextColumnReference) {",
+        "        $scope->column($value, [$target], 'An UPDATE read slot must belong to the target.');",
+        "    }",
+        "    Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');",
+        "    $written[$slot] = true;",
+        "}",
+        "$scope->predicate($where, [$target]);",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'An UPDATE needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/UpdateLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The UPDATE requires the native language profile.');",
+        "Check::input($statement->with === null && $statement->from === null",
+        "    && !$statement->where instanceof CurrentOf, 'A complete UPDATE requires one ordinary target.');",
+        "$binding = new SourceBinding($operation, $statement->target);",
+        "$path = $operation->context->searchPath;",
+        "$catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$assignments = [];",
+        "foreach ($statement->assignments as $assignment) {",
+        "    Check::input($assignment instanceof ParsedAssignment && $assignment->column->steps === [], 'An UPDATE requires scalar assignments to whole columns.');",
+        "    $slot = $binding->writeReference($assignment->column->column->value);",
+        "    $value = $this->value($assignment->value, $binding, $catalogFirst, $slot instanceof TextColumnReference);",
+        "    $assignments[] = new UpdateAssignment($slot, $value);",
+        "}",
+        "$returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);",
+        "$target = $binding->source();",
+        "Check::input($target !== null, 'An UPDATE requires a resolved target.');",
+        "",
+        "return new Update($target, $assignments, $where, $profile->grammar, $returning);"
+      ]
+    },
+    "Mutation/UpdateLowering::value": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($text && $operand instanceof ParsedColumn) {",
+        "    return $binding->field($operand);",
+        "}",
+        "$value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst, $text);",
+        "Check::input(",
+        "    $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral || $value instanceof TextLiteral,",
+        "    'An UPDATE assignee requires a checked native literal, NULL or a row reference.',",
+        ");",
+        "",
+        "return $value;"
+      ]
+    },
+    "SourceBinding::writableColumn": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($this->table !== null, 'A write requires a resolved base table.');",
+        "$matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);",
+        "Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');",
+        "$column = $matches[0];",
+        "Check::input(",
+        "    !$column->generated && !$column->identity && ($column->type === Builtin::Int4 || ($allowText && $column->type === Builtin::Text)),",
+        "    'A write column must be a writable signed 32-bit integer or an admitted text field.',",
+        ");",
+        "",
+        "return $column;"
+      ]
+    },
+    "SourceBinding::writeReference": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$column = $this->writableColumn($name, true);",
+        "",
+        "return $column->type === Builtin::Text ? new TextColumnReference($this->allocate($column)) : $this->slotFor($column);"
+      ]
+    }
+  }
+}

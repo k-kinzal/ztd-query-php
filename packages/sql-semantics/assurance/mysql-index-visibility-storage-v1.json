@@ -1,0 +1,11 @@
+{
+  "revision": "SemanticsIR/mysql-index-visibility-storage-1",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/Visibility/SetIndexVisibility",
+  "storage": {
+    "edits": [
+      "Schema/Index/Visibility/IndexVisibilityEdit",
+      1
+    ]
+  }
+}

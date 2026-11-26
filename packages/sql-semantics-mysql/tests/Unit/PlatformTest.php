@@ -12,13 +12,14 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Platform::class)]
 #[Medium]
@@ -59,7 +60,7 @@ final class PlatformTest extends TestCase
     {
         $this->expectExceptionMessage('MySQL reads SQL under a MySQL session mode');
 
-        new Semantics(null, new class () implements \SqlSemantics\Contract\Mode {
+        new Inspection(null, new class () implements \SqlSemantics\Contract\Mode {
             public function toString(): string
             {
                 return '';
@@ -107,7 +108,7 @@ final class PlatformTest extends TestCase
 
         self::assertSame('`order`', $codec->name(new Name('order'), NameUse::Column));
         self::assertSame('t', $codec->name(new Name('t'), NameUse::Relation));
-        self::assertSame('SELECT `rank`, `order` FROM t', (new Semantics('mysql-8.4.7'))->analyze('SELECT `rank`, `order` FROM t')->toString());
+        self::assertSame('SELECT `rank`, `order` FROM t', (new Inspection('mysql-8.4.7'))->inspect('SELECT `rank`, `order` FROM t')->toString());
     }
 
     public function testLeafKeysReadTokensUnderTheLexicalSettings(): void
@@ -156,5 +157,18 @@ final class PlatformTest extends TestCase
     public function testSharedReusesTheDatabasePlatform(): void
     {
         self::assertSame(Platform::shared(), Platform::shared());
+    }
+
+    public function testForeignKeysBindsTheDeclaredParentSchema(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-9.0.1', null, ParameterStyle::Native);
+        $root = $platform->context($profile, ['default_db'], [], false);
+        $binder = new StatementBinder($platform->parser($profile));
+        $definition = $binder->resolve('CREATE TABLE app.c (pid INT REFERENCES parent(id))', $root);
+        $keys = $platform->foreignKeys($definition);
+
+        self::assertCount(1, $keys);
+        self::assertSame('app', $keys[0]->parent->schema?->value);
     }
 }

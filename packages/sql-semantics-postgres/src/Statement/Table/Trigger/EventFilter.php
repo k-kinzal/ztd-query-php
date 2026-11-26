@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * The server accepts the variable `tag` with command tags, and reports other variables.
  * Source: https://www.postgresql.org/docs/17/sql-createeventtrigger.html.
  *
- * @visibility public
- * @example Reading an event filter
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE EVENT TRIGGER e ON ddl_command_start WHEN TAG IN ('CREATE TABLE', 'DROP TABLE') EXECUTE FUNCTION f()");
- *     count($statement->statement->filters[0]->values) // => 2
+ * @visibility SqlSemantics
  */
 final class EventFilter implements Node
 {

@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Type\Kind;
  * Each case holds the keywords the type is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier::Unsigned->value // => 'UNSIGNED'
  */

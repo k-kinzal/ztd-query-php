@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('analyze local tables t, shop.u');
- *     [$statement->toString(), $statement->statement->noWriteToBinlog] // => ['ANALYZE NO_WRITE_TO_BINLOG TABLE t, shop.u', true]
+ * @visibility SqlSemantics
  */
 final class AnalyzeTable implements Statement
 {

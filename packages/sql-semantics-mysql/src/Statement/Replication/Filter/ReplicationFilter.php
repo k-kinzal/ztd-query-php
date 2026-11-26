@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * rules, not references: they are not resolved against declarations.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-filter.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the databases of a filter
  *     $filter = new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter(\SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind::DoDb, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')]);
  *     $filter->values[0]->value // => 'a'

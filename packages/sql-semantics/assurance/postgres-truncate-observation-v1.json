@@ -1,0 +1,13 @@
+{
+  "revision": "SemanticsIR/postgres-truncate-observation-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-truncate-v1.json",
+  "previousWitness": "7f1017c4e7caf045385fbb0b8e78ddff04dc3c2e",
+  "change": "Store the native per-table OIDs and full phase observations in the comparison ledger, and derive identity stability independently at execution and replay.",
+  "preserves": "The exact finite domain, exploration budget, ordered trigger and rollback expectations, and every previously required observation and fault.",
+  "controls": [
+    "The same initial and final table identities pass.",
+    "A changed table OID with unchanged rows and metadata fails the semantic comparison.",
+    "Missing native identity evidence fails before a comparison can be counted."
+  ]
+}

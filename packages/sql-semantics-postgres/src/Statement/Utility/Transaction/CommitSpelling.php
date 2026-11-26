@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * `END` is a PostgreSQL extension equivalent to `COMMIT`. The value is the keyword.
  * Source: https://www.postgresql.org/docs/17/sql-commit.html, https://www.postgresql.org/docs/17/sql-end.html.
  *
- * @visibility public
- * @example Reading the spelling of an END
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('END');
- *     $operation->statement->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\CommitSpelling::End
+ * @visibility SqlSemantics
  */
 enum CommitSpelling: string
 {

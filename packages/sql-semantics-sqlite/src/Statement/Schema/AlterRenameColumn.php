@@ -24,15 +24,13 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * Rule: SQLITE-ALTER-RENAME-COLUMN-001. The resolution of the table is the
  * relation fact of the statement node. When the column list of the table is
  * completely known, an old name that is no column of it and a new name that
- * another column already has are diagnostics. The optional COLUMN keyword is
- * not written. The statement changes no declaration and provides none.
+ * another column already has are diagnostics. The destination quoting mode
+ * determines the rewrite SQLite applies to dependent schema references.
+ * The optional COLUMN keyword has no effect. The statement provides no declaration.
  * Source: https://sqlite.org/lang_altertable.html#alter_table_rename_column.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a column rename
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t RENAME COLUMN a TO b');
- *     [$alter->statement->column->value, $alter->statement->newName->value, $alter->toString()] // => ['a', 'b', 'ALTER TABLE t RENAME a TO b']
+ * @visibility SqlSemantics
  */
 final class AlterRenameColumn implements Statement
 {
@@ -42,9 +40,14 @@ final class AlterRenameColumn implements Statement
      * @param QualifiedName $table The table to change
      * @param Name $column The column to rename
      * @param Name $newName The new column name
+     * @param bool $quoteReferences Whether every dependent reference is rewritten as a quoted identifier
      */
-    public function __construct(public readonly QualifiedName $table, public readonly Name $column, public readonly Name $newName)
-    {
+    public function __construct(
+        public readonly QualifiedName $table,
+        public readonly Name $column,
+        public readonly Name $newName,
+        public readonly bool $quoteReferences,
+    ) {
         Check::input($table->catalog === null, 'A table name has at most a schema qualifier.');
     }
 
@@ -66,6 +69,7 @@ final class AlterRenameColumn implements Statement
     {
         $out->keyword('ALTER', 'TABLE');
         (new ObjectNames())->write($out, $this->table);
-        $out->keyword('RENAME')->name($this->column, NameUse::Column)->keyword('TO')->name($this->newName, NameUse::Column);
+        $destination = $this->quoteReferences ? '`' . str_replace('`', '``', $this->newName->value) . '`' : $this->newName->value;
+        $out->keyword('RENAME')->name($this->column, NameUse::Column)->keyword('TO')->spelled($destination);
     }
 }

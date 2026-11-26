@@ -1,0 +1,76 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-authorization-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": ["Schema/Sequence/Authorization/AlterSequenceAuthorization"],
+  "scope": "Native ALTER SEQUENCE with at least one OWNER TO assignment, including admissible combinations with ordered logging assignments.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-altersequence.html",
+    "https://www.postgresql.org/docs/17/sql-altersequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/tablecmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/tablecmds.c"
+  ],
+  "constructors": {
+    "AlterSequenceAuthorization": {
+      "type": "Schema/Sequence/Authorization/AlterSequenceAuthorization",
+      "role": "Apply ordered role and logging changes to one resolved sequence.",
+      "structure": "Checked SequenceSelector, detached ordered list of SequenceAuthorizationAction, guard, exact release.",
+      "conditions": "A present sequence requires at least one owner action. Check the native stock role availability and logging prefix for the complete ordered list. Temporary sequences admit authorization actions alone. Guarded absence has no evaluated action roles.",
+      "meaning": "Native preparation checks logging consistency with the old storage state. Assign explicit owning principals in order, preserving generator values, OID, defaults and applicable owning-column dependencies. Apply the effective storage change if preparation and ownership succeed atomically. A guarded absent source yields the native notice.",
+      "sql": "Emit ALTER SEQUENCE with the checked selector and exact ordered action spellings. Emit inert OWNER TO CURRENT_USER in the guarded absent role."
+    },
+    "SequenceAuthorizationAction": {
+      "type": "Schema/Sequence/Authorization/SequenceAuthorizationAction",
+      "role": "Select one logging assignment or one owner assignment within the checked action list.",
+      "structure": "Closed union of SequenceLogging and SequencePrincipal.",
+      "conditions": "Each action has one concrete role. Its parent verifies placement, order and release conditions.",
+      "meaning": "Request either a resolved owning role or a logging assignment under the same fixed native authorization and relation state.",
+      "sql": "Dispatch on the concrete action role and emit its defined native spelling."
+    },
+    "SequencePrincipal": {
+      "type": "Schema/Sequence/Authorization/SequencePrincipal",
+      "role": "Select the new owning principal using a nominal role or explicit native session role.",
+      "structure": "Decoded Identifier or SchemaSessionRole representing the effective or authenticated role.",
+      "conditions": "A nominal role requires a single valid decoded name. Reject PUBLIC and the reserved name none. Check release-specific stock roles at the complete statement.",
+      "meaning": "Refer to the same single role in equivalent external state. CURRENT_ROLE and CURRENT_USER select the effective authorization. SESSION_USER selects the authenticated role independently.",
+      "sql": "Render OWNER TO and an independently quoted role name or a closed session-role keyword."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "roles": ["local", "other", "temporary", "missing-scoped", "missing-bare", "missing-namespace"],
+    "plans": [["first"], ["effective"], ["session"], ["first", "second"], ["session", "first", "effective"],
+              ["logged", "first", "unlogged"], ["first", "unlogged", "logged"]],
+    "guard": [false, true],
+    "transactional": [false, true],
+    "bound": "168 coordinates per release. Both paths admit 118 and require 50 typed refusals per path, comprising 42 unguarded absences and 8 temporary mixed plans. Compare the native rejection for every refused analyzed coordinate."
+  },
+  "exploration": {
+    "seeds": [8861, 31223, 65239],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "structure": "Vary decoded principal and source names, session/effective choice and login distinction, role order, action interleaving, storage modes, scope, owner-column dependency, ACLs, membership context and rollback."
+  },
+  "observations": [
+    "Exact relation OID, filenode, mode, owner, generator specification and tuple values, catalog defaults and row bag.",
+    "Automatic owning-column dependency and shared owner and ACL dependencies. Compare exploded grants including grantor, grantee, privilege and grant option before, during and after rollback.",
+    "Visible state differences for prior logged or unlogged modes, effective versus authenticated roles, nominal role rewrites, and ownership or logging refusal precedence without partial effects."
+  ],
+  "negative": [
+    "An unresolved nominal role, reserved role, foreign database selector, wrong relation kind, open absence or unguarded absence.",
+    "Missing owner action, an impossible logging prefix, logging on a temporary sequence, unknown action value, or nonempty actions on a guarded absent source."
+  ],
+  "faults": [
+    "Select a same-named decoy sequence.",
+    "Replace an effective role with the authenticated role.",
+    "Collapse distinct owner actions and lose their execution order.",
+    "Drop the logging branch from a mixed action list."
+  ],
+  "trust": [
+    "The same external catalog contains the declared role identities and connection authorization. Permission decisions use the native execution environment.",
+    "Native ordering, ACL transfer, rollback and persistent effects are separately observed on the pinned releases."
+  ]
+}

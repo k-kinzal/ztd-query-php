@@ -14,8 +14,8 @@ final class NamedActionTest extends TestCase
 {
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t CLUSTER ON i', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('ALTER TABLE t CLUSTER ON i', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -23,8 +23,8 @@ final class NamedActionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ENABLE REPLICA RULE r', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('ALTER TABLE t ENABLE REPLICA RULE r', []);
         self::assertSame('ALTER TABLE t ENABLE REPLICA RULE r', $statement->toString());
     }
 }

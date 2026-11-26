@@ -12,9 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * Source: https://sqlite.org/lang_altertable.html.
  *
- * @visibility public
- * @example Reporting an added UNIQUE column
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t ADD COLUMN code TEXT UNIQUE') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: A UNIQUE column cannot be added.
+ * @visibility SqlSemantics
  */
 final class AlterationRefused implements Diagnostic
 {

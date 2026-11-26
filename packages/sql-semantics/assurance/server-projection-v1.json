@@ -1,0 +1,113 @@
+{
+  "revision": "SemanticsIR/server-projection-1",
+  "extends": "SemanticsIR/1.0-initial",
+  "approval": "pending-human-review",
+  "requiredScope": "The required scope in contract-v1.json remains in force. This record adds executable domains and excludes no existing obligation.",
+  "profiles": {
+    "mysql": {
+      "releases": ["5.6.51", "5.7.44", "8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+      "requiredFixtureReleases": ["9.1.0"],
+      "interpretation": "Native grammar, default lexical settings, lower_case_table_names=0, utf8mb4 connection and result encodings, signed arithmetic, empty sql_mode."
+    },
+    "postgres": {
+      "releases": ["16.6", "17.2"],
+      "requiredFixtureReleases": ["17.2"],
+      "interpretation": "Native grammar, UTF-8, stock 63-byte name limit, standard_conforming_strings on. Analyzed unqualified integer operators use pg_catalog ahead of user schemas. Emitted operators denote the exact pg_catalog int4 signature."
+    }
+  },
+  "constructors": {
+    "Identifier": {
+      "role": "decoded SQL identifier",
+      "conditions": "PostgreSQL: 1–63 UTF-8 bytes, excluding NUL. MySQL: 0–256 Unicode BMP characters excluding NUL, with object-name restrictions checked by TableSource.",
+      "sql": "PostgreSQL double quotes and MySQL backticks, doubling the delimiter."
+    },
+    "IntegerLiteral": {
+      "role": "signed 32-bit integer value",
+      "conditions": "canonical decimal text from -2147483648 through 2147483647",
+      "meaning": "MySQL signed integer literal and PostgreSQL int4",
+      "sql": "Signed decimal. PostgreSQL explicitly casts to pg_catalog.int4."
+    },
+    "BooleanLiteral": {
+      "role": "boolean result expression",
+      "conditions": "PHP bool",
+      "meaning": "PostgreSQL boolean and MySQL signed 0 or 1",
+      "sql": "TRUE or FALSE"
+    },
+    "NullLiteral": {
+      "role": "bare result expression",
+      "conditions": "projection only; no operands",
+      "meaning": "MySQL NULL and PostgreSQL NULL of text type at the result boundary",
+      "sql": "NULL"
+    },
+    "ColumnReference": {
+      "role": "local source slot",
+      "conditions": "nonnegative slot, valid membership checked at SELECT construction",
+      "meaning": "signed INT in MySQL or int4 in PostgreSQL, including NULL values",
+      "sql": "qualified with the fixed source alias"
+    },
+    "ArithmeticOperator": {
+      "role": "signed integer binary operation",
+      "conditions": "addition, subtraction and multiplication",
+      "meaning": "MySQL signed BIGINT arithmetic or PostgreSQL pg_catalog int4 signature, with NULL propagation and engine overflow",
+      "sql": "fixed operator symbol, schema-qualified in PostgreSQL"
+    },
+    "Arithmetic": {
+      "role": "signed integer expression",
+      "conditions": "ordered left and right operands, each an integer literal, column slot or arithmetic expression",
+      "meaning": "operator applied to its ordered children",
+      "sql": "parenthesized expression with both operands"
+    },
+    "ResultColumn": {
+      "role": "one output position",
+      "conditions": "one of the closed expression roles and its exact output name",
+      "sql": "explicit quoted AS alias"
+    },
+    "TableSource": {
+      "role": "external base table and interfaces to the referenced columns",
+      "conditions": "absolute schema and table, ordered unique column names under dialect identifier comparison; PostgreSQL also records inclusion or exclusion of descendants.",
+      "meaning": "external precondition to provide the named columns with the type defined by their slot role",
+      "sql": "schema-qualified table with fixed alias and PostgreSQL ONLY when selected"
+    },
+    "Select": {
+      "role": "complete projection statement",
+      "conditions": "1–1024 results, zero or one source, every column slot in scope, depth at most 32 and at most 8192 expanded expression nodes",
+      "meaning": "one result row per input row, or one result row when no source is specified",
+      "sql": "SELECT with ordered results and the optional source"
+    }
+  },
+  "constructionPaths": [
+    "Dialect-owned final value constructors with closed operand unions and copied array fields.",
+    "Dialect Semantics::ir() and Ir::Analyzer::analyze() with the fixed release and a supplied base table declaration when names must be resolved.",
+    "Native PHP clone, serialization, restoration and dynamic properties are blocked by the dialect Snapshot trait."
+  ],
+  "observations": ["exact ordered output names", "runtime value and database type", "multiset with duplicate counts", "no data changes", "no parameter slots or guaranteed row order in these domains"],
+  "finiteDomain": "For each engine and for no source and the fixed source, enumerate every allowed individual leaf and every ordered pair of integer atoms under each of +, -, *. For the PostgreSQL source, repeat with and without inheritance. Enumerate the actual structural IDs exactly once.",
+  "exploration": {
+    "seeds": [5441, 7237, 11261],
+    "attemptsPerSeed": 80,
+    "maxDepth": 4,
+    "maxWidth": 4,
+    "timeoutSeconds": 170,
+    "allowedExclusions": []
+  },
+  "evidence": {
+    "P01": ["resolved-reference analysis cases", "typed row observations", "scope negatives"],
+    "P02": ["closed code shape", "positive finite IDs", "negative constructor tests"],
+    "P03": ["closed dependency and property shape"],
+    "P04": ["exhaustive ordered expression cases", "structural exploration"],
+    "P05": ["readonly fields", "copied lists", "Snapshot"],
+    "P06": ["independent typed row comparison", "original and rendered SQL differential", "boundary cases"],
+    "Q01": ["closed shape", "scope check", "negatives"],
+    "Q02": ["executable finite domain", "structural exploration", "analysis path"],
+    "Q03": ["closed operands", "slot membership", "qualified PostgreSQL operators"],
+    "Q04": ["independent numeric semantics plus fixed server releases"],
+    "Q05": ["protected-side observations", "distribution digests", "source inventory"]
+  },
+  "sources": [
+    "https://www.postgresql.org/docs/17/sql-syntax-lexical.html",
+    "https://www.postgresql.org/docs/17/typeconv-oper.html",
+    "https://www.postgresql.org/docs/17/sql-select.html",
+    "https://dev.mysql.com/doc/refman/9.1/en/identifiers.html",
+    "https://dev.mysql.com/doc/refman/9.1/en/arithmetic-functions.html"
+  ]
+}

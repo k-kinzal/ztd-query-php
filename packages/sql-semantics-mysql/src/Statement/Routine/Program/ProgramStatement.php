@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
  * around it are in scope.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-compound-statements.html.
  *
- * @visibility public
- * @example Telling a program statement from other statements
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN END');
- *     $create->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement // => true
+ * @visibility SqlSemantics
  */
 interface ProgramStatement extends Node
 {

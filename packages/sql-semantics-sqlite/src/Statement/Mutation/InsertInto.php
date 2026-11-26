@@ -19,10 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
  * one is written.
  * Source: https://sqlite.org/lang_insert.html, https://sqlite.org/lang_replace.html.
  *
- * @visibility public
- * @example Reading the head of an INSERT
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)');
- *     [$insert->statement->into->resolution, $insert->statement->into->target->name->name->value, count($insert->statement->into->columns)] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore, 't', 2]
+ * @visibility SqlSemantics
  * @example Refusing a conflict resolution next to REPLACE
  *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t'))), [], true, \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */

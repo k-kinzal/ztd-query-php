@@ -30,9 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
  * operator (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-comparisons.html#FUNCTIONS-COMPARISONS-ANY-SOME. Status: Implemented.
  *
- * @visibility public
- * @example Comparing with the elements of an array
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 = ANY (ARRAY[1, 2])')->field(0)->type->descriptor->name() // => 'boolean'
+ * @visibility SqlSemantics
  */
 final class QuantifiedArray implements Scalar
 {

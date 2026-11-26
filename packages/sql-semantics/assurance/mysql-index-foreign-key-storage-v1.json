@@ -1,0 +1,11 @@
+{
+  "revision": "SemanticsIR/mysql-index-foreign-key-storage-1",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/Dependency/IndexForeignKeyRequirement",
+  "storage": {
+    "keys": [
+      "Identifier",
+      1
+    ]
+  }
+}

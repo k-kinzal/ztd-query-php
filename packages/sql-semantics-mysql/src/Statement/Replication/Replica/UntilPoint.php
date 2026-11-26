@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Replica;
  * Each case holds the keyword it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a condition
  *     \SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::BeforeGtids->value // => 'SQL_BEFORE_GTIDS'
  */

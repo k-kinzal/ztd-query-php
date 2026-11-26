@@ -30,10 +30,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
  * Source: https://sqlite.org/lang_createvtab.html, https://sqlite.org/vtab.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Declaring a virtual table without knowing its columns
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIRTUAL TABLE docs USING fts5(title, body)');
- *     [$create->statement->module->value, count($create->statement->arguments), $create->declarations()[0]->complete] // => ['fts5', 2, false]
+ * @visibility SqlSemantics
  */
 final class CreateVirtualTable implements Statement
 {

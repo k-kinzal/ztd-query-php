@@ -15,13 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * An undeclared relation of the earlier schema would be found first, so the
  * known declaration is a candidate and not the resolution.
  *
- * @visibility public
- * @example Recording a conditional declaration
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (id INT)')->declarations()[0];
- *     $missing = new \SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRelation($table->name);
- *     $conditional = new \SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConditionalTable([$table], $missing);
- *     $conditional->candidates[0] === $table // => true
+ * @visibility SqlSemantics
  */
 final class ConditionalTable implements TableResolution
 {

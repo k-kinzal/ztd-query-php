@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Server\Storage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DropTablespace::class)]
 #[Medium]
@@ -17,12 +17,12 @@ final class DropTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('DROP TABLESPACE ts', (new Semantics('mysql-5.6.51'))->inspect('drop tablespace ts')->toString());
+        self::assertSame('DROP TABLESPACE ts', (new Inspection('mysql-5.6.51'))->diagnose('drop tablespace ts')->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect('DROP TABLESPACE ts ENGINE a ENGINE b');
+        $operation = (new Inspection())->diagnose('DROP TABLESPACE ts ENGINE a ENGINE b');
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

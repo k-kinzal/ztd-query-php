@@ -1,0 +1,139 @@
+{
+  "revision": "SemanticsIR/postgres-signed-range-widths-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Pin the exact signed atom classification, scoped recursive operand walk and qualified range and distinctness rendering.",
+  "rules": {
+    "From/OccurrenceScope::checkTree": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof ColumnReference || $operand instanceof TextColumnReference || $operand instanceof BooleanColumnReference || $operand instanceof WideIntegerColumnReference) {",
+        "    $this->column($operand, $inputs, $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand],",
+        "    $operand instanceof BooleanLiteral, $operand instanceof BooleanColumnReference, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral, $operand instanceof WideIntegerColumnReference, $operand instanceof WideIntegerLiteral, $operand instanceof WideIntegerNull => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "",
+        "return $count;"
+      ]
+    },
+    "Predicate/IntegerAtomLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($expression instanceof ParsedNull) {",
+        "    return [new NullLiteral(), false];",
+        "}",
+        "$type = $binding->typeOf($expression);",
+        "Check::input($type instanceof Known && ($type->descriptor === Builtin::Int4 || $type->descriptor === Builtin::Int8), 'A signed comparison operand must resolve to pg_catalog.int4, pg_catalog.int8 or NULL.');",
+        "$wide = $type->descriptor === Builtin::Int8;",
+        "if ($expression instanceof Cast && !$expression->type->setOf) {",
+        "    $inner = $expression->operand;",
+        "    while ($inner instanceof Grouped) {",
+        "        $inner = $inner->operand;",
+        "    }",
+        "    if ($inner instanceof ParsedNull) {",
+        "        return [$wide ? new WideIntegerNull() : new NullLiteral(), true];",
+        "    }",
+        "}",
+        "$value = $expression instanceof ParsedColumn ? $binding->field($expression) : (new ExpressionLowering())->integerLiteral($expression, $catalogFirst);",
+        "Check::input(",
+        "    $wide ? $value instanceof WideIntegerColumnReference || $value instanceof WideIntegerLiteral",
+        "        : $value instanceof ColumnReference || $value instanceof IntegerLiteral,",
+        "    'A signed comparison operand requires a pure signed integer or NULL.',",
+        ");",
+        "",
+        "return [$value, true];"
+      ]
+    },
+    "Predicate/IntegerDistinctnessLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($catalogFirst, 'A null-safe comparison requires the pg_catalog comparison profile.');",
+        "$operands = new IntegerAtomLowering();",
+        "[$left] = $operands->lower($test->left, $binding, $catalogFirst);",
+        "[$right] = $operands->lower($test->right, $binding, $catalogFirst);",
+        "",
+        "return new IntegerDistinctness($left, $right, $test->negated);"
+      ]
+    },
+    "Predicate/IntegerRangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($catalogFirst, 'A range predicate must resolve to pg_catalog operators.');",
+        "$operands = new IntegerAtomLowering();",
+        "[$subject, $knownSubject] = $operands->lower($range->operand, $binding, $catalogFirst);",
+        "[$lower, $knownLower] = $operands->lower($range->low, $binding, $catalogFirst);",
+        "[$upper, $knownUpper] = $operands->lower($range->high, $binding, $catalogFirst);",
+        "Check::input($knownSubject || ($knownLower && $knownUpper), 'Each range comparison requires a known signed operand.');",
+        "",
+        "return new IntegerRange($subject, $lower, $upper, $range->negated, $range->symmetric);"
+      ]
+    },
+    "SelectSql::integerOrNull": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $value instanceof NullLiteral => 'CAST(NULL AS pg_catalog.int4)',",
+        "    $value instanceof WideIntegerNull => 'CAST(NULL AS pg_catalog.int8)',",
+        "    $value instanceof Arithmetic, $value instanceof ColumnReference, $value instanceof IntegerCase,",
+        "    $value instanceof IntegerLiteral, $value instanceof WideIntegerColumnReference, $value instanceof WideIntegerLiteral",
+        "        => $this->expression($value, $source, $offset, $qualify),",
+        "};"
+      ]
+    },
+    "SelectSql::integerDistinctness": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$left = $this->integerOrNull($test->left, $source, $offset, $qualify);",
+        "$right = $this->integerOrNull($test->right, $source, $offset, $qualify);",
+        "$equality = '(' . $left . ' OPERATOR(pg_catalog.=) ' . $right . ')';",
+        "$same = 'COALESCE(' . $equality . ', (' . $left . ' IS NULL AND ' . $right . ' IS NULL))';",
+        "",
+        "return $test->negated ? $same : '(NOT ' . $same . ')';"
+      ]
+    },
+    "SelectSql::integerRange": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$subject = $this->integerOrNull($range->subject, $source, $offset, $qualify);",
+        "$lower = $this->integerOrNull($range->lower, $source, $offset, $qualify);",
+        "$upper = $this->integerOrNull($range->upper, $source, $offset, $qualify);",
+        "$format = '((%1$s OPERATOR(pg_catalog.>=) %2$s) AND (%1$s OPERATOR(pg_catalog.<=) %3$s))';",
+        "$interval = sprintf($format, $subject, $lower, $upper);",
+        "if ($range->symmetric) {",
+        "    $interval = '(' . $interval . ' OR ' . sprintf($format, $subject, $upper, $lower) . ')';",
+        "}",
+        "",
+        "return $range->negated ? '(NOT ' . $interval . ')' : $interval;"
+      ]
+    }
+  }
+}

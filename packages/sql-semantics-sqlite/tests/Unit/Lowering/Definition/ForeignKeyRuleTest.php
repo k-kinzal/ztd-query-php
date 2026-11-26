@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\ForeignKeyRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\Deferrability;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
@@ -18,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceAction;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceReaction;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\ForeignKey;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ForeignKeyRule::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class ForeignKeyRuleTest extends TestCase
 {
     public function testClauseLowersTheParentAndItsOptionalColumns(): void
     {
-        $statement = (new Semantics())->analyze('CREATE TABLE c (a REFERENCES p, b REFERENCES q (x, y))')->statement;
+        $statement = (new Inspection())->inspect('CREATE TABLE c (a REFERENCES p, b REFERENCES q (x, y))')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $first = $statement->columns[0]->constraints[0];
@@ -39,7 +39,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testArgumentsKeepTheirWrittenOrder(): void
     {
-        $statement = (new Semantics())->analyze('CREATE TABLE c (a REFERENCES p ON DELETE CASCADE MATCH full ON UPDATE NO ACTION ON INSERT RESTRICT)')->statement;
+        $statement = (new Inspection())->inspect('CREATE TABLE c (a REFERENCES p ON DELETE CASCADE MATCH full ON UPDATE NO ACTION ON INSERT RESTRICT)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];
@@ -52,7 +52,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testArgumentLowersEveryEventAndReaction(): void
     {
-        $statement = (new Semantics())->analyze('CREATE TABLE c (a REFERENCES p ON DELETE SET NULL ON UPDATE SET DEFAULT ON INSERT CASCADE ON DELETE RESTRICT ON UPDATE NO ACTION)')->statement;
+        $statement = (new Inspection())->inspect('CREATE TABLE c (a REFERENCES p ON DELETE SET NULL ON UPDATE SET DEFAULT ON INSERT CASCADE ON DELETE RESTRICT ON UPDATE NO ACTION)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];
@@ -69,7 +69,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testDeferrabilityLowersBothForms(): void
     {
-        $statement = (new Semantics())->analyze('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p NOT DEFERRABLE)')->statement;
+        $statement = (new Inspection())->inspect('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p NOT DEFERRABLE)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $plain = $statement->columns[0]->constraints[1];
@@ -82,7 +82,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testOptionalDeferrabilityIsNullWhenNoClauseIsWritten(): void
     {
-        $statement = (new Semantics())->analyze('CREATE TABLE c (a, FOREIGN KEY (a) REFERENCES p, FOREIGN KEY (a) REFERENCES p DEFERRABLE)')->statement;
+        $statement = (new Inspection())->inspect('CREATE TABLE c (a, FOREIGN KEY (a) REFERENCES p, FOREIGN KEY (a) REFERENCES p DEFERRABLE)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $without = $statement->constraints[0]->items[0];
@@ -95,7 +95,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testInitiallyLowersTheOptionalMode(): void
     {
-        $statement = (new Semantics())->analyze('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p DEFERRABLE INITIALLY DEFERRED, d REFERENCES p DEFERRABLE INITIALLY IMMEDIATE)')->statement;
+        $statement = (new Inspection())->inspect('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p DEFERRABLE INITIALLY DEFERRED, d REFERENCES p DEFERRABLE INITIALLY IMMEDIATE)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $modes = array_map(static fn (object $column): ?InitialMode => $column->constraints[1] instanceof Deferrability ? $column->constraints[1]->initially : null, $statement->columns);

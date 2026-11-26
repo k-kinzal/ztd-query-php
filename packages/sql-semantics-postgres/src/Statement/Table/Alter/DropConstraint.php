@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  * Mirrors `AT_DropConstraint` with `missing_ok` and `behavior`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Dropping a constraint
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t DROP CONSTRAINT IF EXISTS c RESTRICT');
- *     $statement->toString() // => 'ALTER TABLE t DROP CONSTRAINT IF EXISTS c RESTRICT'
+ * @visibility SqlSemantics
  */
 final class DropConstraint implements AlterCommand
 {

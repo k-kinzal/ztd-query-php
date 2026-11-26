@@ -10,9 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Policy;
  * Mirrors the `cmd_name` of `CreatePolicyStmt`. ALL is the default and is kept when written.
  * Source: https://www.postgresql.org/docs/17/sql-createpolicy.html.
  *
- * @visibility public
- * @example Reading the command of a policy
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE POLICY p ON t FOR SELECT USING (true)')->statement->command // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\PolicyCommand::Select
+ * @visibility SqlSemantics
  */
 enum PolicyCommand: string
 {

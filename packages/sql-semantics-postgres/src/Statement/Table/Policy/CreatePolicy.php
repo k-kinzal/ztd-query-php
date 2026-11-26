@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * RESTRICTIVE; the grammar rejects another word.
  * Source: https://www.postgresql.org/docs/17/sql-createpolicy.html.
  *
- * @visibility public
- * @example Reading a policy
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE POLICY p ON t AS RESTRICTIVE FOR UPDATE TO CURRENT_USER USING (a > 0) WITH CHECK (a < 10)');
- *     $statement->toString() // => 'CREATE POLICY p ON t AS restrictive FOR UPDATE TO CURRENT_USER USING (a > 0) WITH CHECK (a < 10)'
+ * @visibility SqlSemantics
  */
 final class CreatePolicy implements Statement, Relation
 {

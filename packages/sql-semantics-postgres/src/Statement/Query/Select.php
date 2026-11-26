@@ -40,10 +40,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet;
  * DISTINCT requires a select list.
  * Source: https://www.postgresql.org/docs/17/sql-select.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a selection
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3');
- *     [count($query->statement->targets), $query->statement->distinct !== null, count($query->statement->groupBy), count($query->statement->options->order), $query->toString()] // => [2, true, 1, 1, 'SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3']
+ * @visibility SqlSemantics
  * @example Refusing DISTINCT without a select list
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([], distinct: new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\DistinctClause()) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

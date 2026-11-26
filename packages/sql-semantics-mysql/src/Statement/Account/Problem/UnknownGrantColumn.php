@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * (mysql_table_grant). REVOKE does not check the columns.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-column-privileges.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('c'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'))))->message() // => 'Column c does not exist in table t.'
  */

@@ -1,0 +1,26 @@
+{
+  "revision": "SemanticsIR/postgres-integer-binding-sources-1",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Rules/Lexical/Numerals.php": {
+      "sha256": "075d0906683edcd1a7207a4f4d95b3662cf78f7bab0f54f911d48f06200ed6b2",
+      "role": "Decode exact integral bases and separators to canonical decimal digits."
+    },
+    "src/Rules/Expression/Typing/PrefixTyping.php": {
+      "sha256": "cdb036ce1e5196ff10803b2e875cc9191ff61bb3db8c5047c5b18953646e7718",
+      "role": "Resolve native folded minus, including its integer endpoint types."
+    },
+    "src/Statement/Literal/NumericConstant.php": {
+      "sha256": "f4f73ffeefac5fd2f65fc17ab1603482751525e65eda8093829917c19dc9fd86",
+      "role": "Expose integral digits through the transient constant type."
+    },
+    "src/Statement/Literal/IntegerConstant.php": {
+      "sha256": "db815a4a6e47624958b904f29bd9053796ddb7b42215795f1d2a2e3437a65c76",
+      "role": "Hold exact canonical result of the int4-producing scanner."
+    },
+    "src/Rules/Typing/TypeLookup.php": {
+      "sha256": "e35bf169d69d109bcdf3818ef77a7d9108a3f80242df2b5aa600f38dbd4c2bbd",
+      "role": "Resolve a named cast target to the visible catalog identity."
+    }
+  }
+}

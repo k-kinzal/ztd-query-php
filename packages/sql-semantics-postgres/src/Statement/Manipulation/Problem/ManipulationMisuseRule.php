@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem;
  * https://www.postgresql.org/docs/17/sql-declare.html,
  * https://www.postgresql.org/docs/17/ddl-generated-columns.html.
  *
- * @visibility public
- * @example Reading which rule a statement breaks
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t (a, a) VALUES (1, 2)');
- *     $insert->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule::RepeatedInsertColumn
+ * @visibility SqlSemantics
  */
 enum ManipulationMisuseRule: string
 {

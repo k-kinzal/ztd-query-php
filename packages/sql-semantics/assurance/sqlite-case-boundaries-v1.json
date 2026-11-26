@@ -1,0 +1,91 @@
+{
+  "revision": "SemanticsIR/sqlite-case-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Check the branch list, walk every CASE operand and preserve native CASE emission.",
+  "rules": {
+    "Expression/CaseExpression::__construct": {
+      "common": [
+        "Check::input(count($branches) <= 32, 'A CASE expression can have at most 32 branches.');",
+        "$this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression needs at least one checked branch.', 1);"
+      ]
+    },
+    "Predicate/ExpressionScope::check": {
+      "common": [
+        "$nodes = 0;",
+        "$payloadBytes = 0;",
+        "while ($pending !== []) {",
+        "    [$expression, $height, $visibility] = array_pop($pending);",
+        "    Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "    if ($expression instanceof CaseExpression) {",
+        "        foreach ($this->choice($expression, $height + 1, $visibility) as $operand) {",
+        "            $pending[] = $operand;",
+        "        }",
+        "        continue;",
+        "    }",
+        "    match (true) {",
+        "        $expression instanceof ColumnReference => Check::input(",
+        "            $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),",
+        "            'Column slot must belong to the statement source at a visible occurrence.',",
+        "        ),",
+        "        $expression instanceof Parameter => $payloadBytes += strlen($expression->label),",
+        "        $expression instanceof TextLiteral => $payloadBytes += strlen($expression->value) + substr_count($expression->value, \"'\"),",
+        "        $expression instanceof BlobLiteral => $payloadBytes += strlen($expression->hex),",
+        "        $expression instanceof RealLiteral => $payloadBytes += strlen($expression->whole) + strlen($expression->fraction ?? '') + strlen($expression->exponent ?? ''),",
+        "        $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical",
+        "            => array_push($pending, [$expression->right, $height + 1, $visibility], [$expression->left, $height + 1, $visibility]),",
+        "        $expression instanceof HexIntegerLiteral, $expression instanceof IntegerLiteral, $expression instanceof NullLiteral => null,",
+        "    };",
+        "    Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');",
+        "}"
+      ]
+    },
+    "Predicate/ExpressionScope::choice": {
+      "common": [
+        "$operands = [];",
+        "if ($expression->base !== null) {",
+        "    $operands[] = [$expression->base, $height, $visibility];",
+        "}",
+        "foreach ($expression->branches as $branch) {",
+        "    $operands[] = [$branch->when, $height, $visibility];",
+        "    $operands[] = [$branch->then, $height, $visibility];",
+        "}",
+        "if ($expression->otherwise !== null) {",
+        "    $operands[] = [$expression->otherwise, $height, $visibility];",
+        "}",
+        "",
+        "return $operands;"
+      ]
+    },
+    "SelectSql::choice": {
+      "common": [
+        "$sql = '(CASE';",
+        "if ($expression->base !== null) {",
+        "    $sql .= ' ' . $this->expression($expression->base, $source, $joins);",
+        "}",
+        "foreach ($expression->branches as $branch) {",
+        "    $sql .= ' WHEN ' . $this->expression($branch->when, $source, $joins)",
+        "        . ' THEN ' . $this->expression($branch->then, $source, $joins);",
+        "}",
+        "if ($expression->otherwise !== null) {",
+        "    $sql .= ' ELSE ' . $this->expression($expression->otherwise, $source, $joins);",
+        "}",
+        "",
+        "return $sql . ' END)';"
+      ]
+    },
+    "ExpressionLowering::choice": {
+      "common": [
+        "$branches = [];",
+        "foreach ($expression->branches as $branch) {",
+        "    $branches[] = new CaseBranch($this->lower($branch->when, $binding), $this->lower($branch->then, $binding));",
+        "}",
+        "",
+        "return new CaseExpression(",
+        "    $expression->base === null ? null : $this->lower($expression->base, $binding),",
+        "    $branches,",
+        "    $expression->otherwise === null ? null : $this->lower($expression->otherwise, $binding),",
+        ");"
+      ]
+    }
+  }
+}

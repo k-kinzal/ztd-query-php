@@ -1,0 +1,138 @@
+{
+  "revision": "SemanticsIR/mysql-index-renames-evidence-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-index-renames-v1.json",
+    "mysql-index-rename-statistics-v1.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "legacyRefusals": [
+    "5.6.51"
+  ],
+  "mode": "Native parameters, SQL mode empty, lower_case_table_names=0, utf8mb4, stock InnoDB with 16 KiB pages.",
+  "constructors": {
+    "RenameIndexes": {
+      "type": "Schema/Index/Rename/RenameIndexes",
+      "role": "Rename one original index or an ordered group of original indexes in one catalog transaction.",
+      "structure": "Absolute TableIdentity, detached ordered IndexRename list, detached unmoved physical name list, grammar release and effective IndexChangePolicy.",
+      "conditions": "Close the two independent original and resulting physical namespaces under native name comparison. Each namespace fits the native key count. Check the release, owner and effective physical policy.",
+      "meaning": "Rename the physical index definitions from the original owning table simultaneously. Preserve index attributes, rows, retained keys, generator support and the ordered statistics effects.",
+      "sql": "One ALTER TABLE on the exact absolute owner, emitting the checked rename actions in retained order and the resolved algorithm and lock."
+    },
+    "IndexRename": {
+      "type": "Schema/Index/Rename/IndexRename",
+      "role": "Rename one original physical index within its enclosing owner's native namespace.",
+      "structure": "The original exact physical name and new checked name.",
+      "conditions": "Each operand is 1 to 64 BMP characters with no trailing space. Neither operand may be the native PRIMARY key name. The containing rename validates placement and final uniqueness.",
+      "meaning": "The new name denotes the same selected physical index and all its existing attributes.",
+      "sql": "Emit relative RENAME INDEX with distinct source and destination positions and quote both names independently."
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Index/Rename/RenameIndexes"
+  ],
+  "finite": {
+    "lifetimes": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "widths": [
+      1,
+      2,
+      3,
+      8,
+      63,
+      64
+    ],
+    "topologies": [
+      "fresh",
+      "closed-cycle",
+      "open-chain"
+    ],
+    "orders": [
+      "forward",
+      "reverse"
+    ],
+    "nameBoundaries": [
+      0,
+      1,
+      64,
+      65
+    ],
+    "legacyAvailability": "Run registered 5.6 rejection controls for analysis and direct construction.",
+    "finiteOrder": "Cross life, width, topology and written order for each admitted release. A cycle at width one retains its source name. Widths below 64 retain an unrelated physical name.",
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteLayouts": 108,
+  "negativeCount": {
+    "mysql-5.7.44": 39,
+    "default": 38
+  },
+  "negative": [
+    "Require the fixed finite policy, parsed source, final namespace, reserved name, spelling and capacity failures at their typed boundaries.",
+    "Check refusal at 5.6 in the installed layout and the independent legacy calibration."
+  ],
+  "exploration": {
+    "seeds": [
+      1891,
+      4057,
+      16273
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Observe ordered parts, exact physical names, key type, uniqueness, visibility, table field metadata, rows, next generated value and the unaffected physical sibling where present.",
+    "Canonical SQL performs all moves in one ALTER TABLE. Compare both the original accepted SQL and the emitted SQL with the independent final namespace and data rule.",
+    "Detect swapped source identity through distinct ordered key parts. Observe a successful cycle, positive fresh and case-only renames, an absent or reused original source and an occupied final destination.",
+    "Observe native rejection class and whether the pre-statement transaction marker was committed.",
+    "Include the ordered database warnings of persistent InnoDB index statistics for every admitted input. Temporary tables have no persistent statistics rows. The native metadata update may complete while a statistics rename is deferred by a duplicate key.",
+    "Compare the exact native affected-row count. The fixture reports copied rows for COPY and temporary-table operations and zero for a persistent in-place change."
+  ],
+  "evidence": {
+    "P01": "Check source identity on the original namespace and preserve exact, checked destination names.",
+    "P02": "Reject repeated or absent sources, result name conflicts, owner incoherence, reserved names, invalid capacities and unsupported release or policy.",
+    "P03": "Use closed immutable value roles and native identifiers.",
+    "P04": "Compose a single final namespace from initially resolved source moves and stable occupied keys.",
+    "P05": "Require detached lists, final value children and audited construction.",
+    "P06": "Emit one ALTER operation and compare measured metadata, transaction and data effects."
+  },
+  "obligations": {
+    "Q01": "Check all owning and local rules in restricted source shape and with independent typed negatives.",
+    "Q02": "Measure all fixed direct and analyzed finite identities and exact releases; include cycles, permitted qualifiers and policy.",
+    "Q03": "The initial namespace has distinct owners and keys; the resulting namespace is injective under native comparison.",
+    "Q04": "Observe native effects with source-sensitive catalog data and an applied mutation that changes the identity of a moved key.",
+    "Q05": "Audit exact distribution, fixed generated evidence, direct and analyzed installed layout and replay."
+  },
+  "faults": [
+    "Ignore the ordered native statistics warnings.",
+    "Omit one initial source and destination pair from the rendered SQL."
+  ],
+  "trust": "The fixed native catalog fixture, original and resulting metadata rule, registered comparator and renderer controls, and independently selected exact runtime.",
+  "trackedBeyondThisSlice": [
+    "Mixed rename, removal, visibility and addition change the final namespace together and remain separate required domains.",
+    "Foreign-key-backed owners, partitioned declarations, prefix and functional indexes, and FULLTEXT and SPATIAL indexes remain separate required domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/relnotes/mysql/5.7/en/news-5-7-1.html",
+    "https://dev.mysql.com/worklog/task/?id=6555",
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html"
+  ]
+}

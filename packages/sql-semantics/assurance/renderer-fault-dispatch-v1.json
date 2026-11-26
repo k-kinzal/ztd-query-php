@@ -1,0 +1,23 @@
+{
+  "revision": "SemanticsIR/renderer-fault-dispatch-1",
+  "approval": "pending-human-review",
+  "scope": "Renderer and construction controls executed by the common protected fault runner.",
+  "previousFailure": {
+    "candidate": "7169a74149cff4560542cfe4ac923ea9a61e60b3",
+    "archiveSha256": "e6447c3efcb56afeb348f3f120ae38c93ea96a50cfdf1fe1c2201d151f118208",
+    "fact": "Two fault controls passed a prediction object to the constructor worker. Its unsupported frame failed before any injection. The existing artifact did not identify the attempted fault or dispatched input."
+  },
+  "required": [
+    "Write the ordered plan before opening a worker. It records every fault name, source, independent semantic input, exact executable request and expected failure signal.",
+    "A normal receipt records the digest of that plan and the actual executable request used in both the healthy and altered executions.",
+    "An unsuccessful trial retains the exact last phase, fault name, chosen request, error type and reported signal. It remains an unsuccessful run.",
+    "Independent replay reconstructs the plan from the protected fault definitions and checks every normal receipt against its plan and the existing source, overlay and comparison witnesses."
+  ],
+  "controls": [
+    "Reconstruct and verify a healthy execution and its expected injected failure.",
+    "Fail an executable request before injection and recover the original incorrect request, phase and planned fault set.",
+    "Reject a missing plan, a changed executable request or a receipt with a mismatched plan digest."
+  ],
+  "preserves": "All preexisting native and SQLite comparison observations, expected detections, source integrity, execution budgets and mandatory F01–F12 controls.",
+  "trust": "The fixed outer runner and worker transport. Published candidate PHP runs with the existing isolation rules and has no access to write the dispatch record."
+}

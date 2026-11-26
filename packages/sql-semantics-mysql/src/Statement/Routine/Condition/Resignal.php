@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * of the statement. The facts follow MYSQL-PROGRAM-CONDITIONS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/resignal.html.
  *
- * @visibility public
- * @example Reading the statement
- *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('RESIGNAL SET MYSQL_ERRNO = 5');
- *     [$signal->statement->condition, $signal->toString()] // => [null, 'RESIGNAL SET MYSQL_ERRNO = 5']
+ * @visibility SqlSemantics
  */
 final class Resignal implements Statement, ProgramStatement
 {

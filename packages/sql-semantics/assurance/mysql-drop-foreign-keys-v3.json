@@ -1,0 +1,167 @@
+{
+  "revision": "SemanticsIR/mysql-drop-foreign-keys-3",
+  "approval": "pending-human-review",
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Ordinary InnoDB session, native markers, utf8mb4, empty sql_mode, lower_case_table_names=0 and foreign_key_checks=1.",
+  "constructors": {},
+  "rules": {
+    "persistent": "Resolve each DROP FOREIGN KEY name within the exact owning persistent table. Its matched declaration supplies native spelling. Stock native foreign-key label comparison resolves names case-insensitively. A nonexistent key fails before publishing a complete operation.",
+    "catalogNames": "Use the explicit constraint symbol if present. Otherwise allocate table_ibfk_n in original order among unnamed effective foreign constraints, beginning at one. The physical backing index label and explicit symbols do not advance the suffix. MySQL 9 inline constraints participate in native declaration order. A symbol collision is an unresolved or invalid original catalog.",
+    "lifetime": "The session-temporary namespace selects its native table. MySQL 5.6 and 5.7 accept a named DROP FOREIGN KEY action on the temporary owner and ignore the requested constraint label. Record the distinct ignored-on-temporary operand and retain the native statement's execution and policy. MySQL 8.0 and later refuse missing foreign-key labels on a temporary owner.",
+    "duplicates": "Legacy MySQL 5.6 and 5.7 allow repeated occurrences of the same resolved foreign constraint. Retain each action in order. MySQL 8.0 and later reject a second occurrence with native 1091 and leave the group unchanged. A nonexistent persistent label also rejects the group.",
+    "qualification": "On the two old grammar releases an explicit column-style qualifier must identify the selected physical owning table and schema. Modern syntax uses the bare foreign-key label. SQL rendering uses one absolute owner and canonical quoted relative targets.",
+    "combination": "A complete group can also drop ordered resolved native ordinary indexes. Validate their native scope and policy. Compute index survival against the native foreign-key sides remaining after all selected physical constraints on that owning table are removed. Keep every other incoming and outgoing edge, including foreign constraints on an independent child. Applying both kinds in one ALTER admits either written order when the residual graph allows it.",
+    "effects": "Dropping a constraint alone preserves its physical backing keys. Mixed operations remove only their checked index operands and constraints. Other table data, index behavior and unremoved constraints remain in force.",
+    "policy": "Native persistent ordinary DEFAULT and INPLACE support every lock. Persistent COPY supports DEFAULT, SHARED and EXCLUSIVE. INSTANT is outside the checked native algorithm roles. Temporary native COPY and default support the same temporary InnoDB policy as index removal. Legacy IGNORE is available only on 5.6.51 and remains explicit.",
+    "failedCopyEffects": "On MySQL 5.6.51 and 5.7.44, an explicit persistent COPY with an applicable lock can remove the selected outgoing constraints before failing to replace the physical table because another foreign-key side requires a removed index. Keep the original index set, observe any removed outgoing constraints and check row enforcement after HY000 1025 with InnoDB errno 150. Legacy COPY NONE rejects before that effect. Modern retained-dependency refusal preserves constraints and indexes, including when COPY NONE also fails a policy check. The complete IR construction boundary refuses these groups in all releases.",
+    "nameBoundaries": "Explicit native symbols are decoded BMP names of zero through 64 characters. A final space and embedded escaped backtick are admitted. The 64-character bound counts Unicode characters. The legacy temporary label is ignored by the DB, so represent the corresponding semantic action without a name and emit the native empty quoted label. The tracked stock profile uses decoded BMP identifiers without encoding warnings."
+  },
+  "nativeRefusals": {
+    "missingOrModernDuplicate": [
+      "42000",
+      1091
+    ],
+    "wrongLegacyQualifier": [
+      "42000",
+      1103
+    ],
+    "modernQualifierOrIgnore": [
+      "42000",
+      1064
+    ],
+    "retainedDependency": [
+      "HY000",
+      1553
+    ],
+    "copyNone": [
+      "0A000",
+      1846
+    ],
+    "legacyUnknownInstant": [
+      "HY000",
+      1800
+    ],
+    "modernInstant": [
+      "0A000",
+      1845
+    ],
+    "modernInstantWithLock": [
+      "HY000",
+      1221
+    ],
+    "legacyCopyRetainedDependency": [
+      "HY000",
+      1025
+    ]
+  },
+  "observations": [
+    "Exact qualified owning table and lifetime",
+    "Exact native constraint identities, ordered child and parent field pairs and independent outgoing and incoming pairs",
+    "Complete original and resulting physical keys",
+    "Actual diagnostics, transaction marker and affected counts",
+    "Rejection or admission of distinguishable postcondition rows under removed and retained constraints"
+  ],
+  "finite": {
+    "actions": [
+      "one-constraint",
+      "two-constraints",
+      "repeated",
+      "constraint-then-index",
+      "index-then-constraint",
+      "remaining-foreign-key",
+      "retained-incoming"
+    ],
+    "names": [
+      "explicit symbol",
+      "generated name"
+    ],
+    "fixtures": [
+      "persistent",
+      "temporary-shadow"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      669,
+      1217,
+      1553
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "faults": [
+    "Remove the wrong physical constraint",
+    "Drop the physical index along with a standalone constraint",
+    "Forget a foreign key belonging to an incoming child",
+    "Admit modern duplicate or temporary labels",
+    "Leave the legacy ignored action out of the SQL",
+    "Ignore the resulting data enforcement"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html"
+  ],
+  "nativeCalibrationTsvSha256": {
+    "5.6.51": "d05460d018d58012e9487db04d56714e0610a6c7898f0591ee193b4a752a1190",
+    "5.7.44": "e49ada98281bcbf54a13b84a7b0a865d3ced91d4d14b8174d21c16091d73fa70",
+    "8.0.44": "5023cde48b1e1061940fdb0dcbbfae7b37540129eebdd5bd3600441c9c761a4d",
+    "8.4.7": "bc5d0c09fcf61587a798d6d7740598366a65009b7a1fa9485131b1cf3b5a17ce",
+    "9.1.0": "b6f59c59359eaff50b44434e642dc75622d4d794e5064cd15ec21f6a6683e099"
+  },
+  "remaining": [
+    "Adding or renaming constraints, other mixed ALTER operations, unmodeled table engines and server modes",
+    "Native constraints created by external alteration history without complete catalog declarations"
+  ],
+  "extends": "mysql-drop-foreign-keys-v2.json",
+  "priorSha256": "b938243260fdb04d6da60ffc975ea080ac8d803c6ef687e736587e523eebfb3f",
+  "nativeCalibrationSupplementalTsvSha256": {
+    "5.6.51": "a73d8802cf3808f1fd7d4dafa557e0b99995694ac866e10453079f0b49f3e46d",
+    "5.7.44": "df161dfa8ed64fa73e9b782a50eee615195ae6774acc3ff90b681af89cdcf70d",
+    "8.0.44": "e08c59fbe8b036abe610e37fdc1cb7813d34efb682a8e397e50b4a9788b9e69c",
+    "8.4.7": "bf9cadc9abfde5c0173a4a8ee4721f78c6a6acb6fa922d6b9da84ee1f37d9df0",
+    "9.1.0": "84033cc1db8c77b8d44a51e98d3f118e3420c78b197e40eacd472868923caa0f"
+  },
+  "nativeCalibrationPdoSha256": {
+    "5.6.51": "29210486c760c422baa3465939c014535e30745e6258f49b02704e994b345f7f",
+    "5.7.44": "54692a871ddbfb6b596c2772b80955ed2eba8b0cd7e7a501c58ed265d71c8e17",
+    "8.0.44": "1c768b08d3e7158172f40d7303d249313148cbc828f9d38b3903fc51875cbb3f",
+    "8.4.7": "b43e6e11be097fcd2738e1468e10aced7d44f3db704219d6715fee3f561bd14e",
+    "9.1.0": "caf4d20561ad30afdd280b78c44983d9de909770851bb12abc107bf0998af048"
+  },
+  "nameBoundaries": {
+    "persistent": [
+      "empty",
+      "space-suffix",
+      "escaped-backtick",
+      "64-bmp"
+    ],
+    "legacyTemporary": [
+      "empty",
+      "space-suffix",
+      "escaped-backtick",
+      "64-bmp",
+      "255-bmp"
+    ]
+  },
+  "nativeNameBoundaryTsvSha256": {
+    "5.6.51": "d9a5c7959d1619dfab5dc96b6107042758b910bfb4354af078a79643f3a78f07",
+    "5.7.44": "d9a5c7959d1619dfab5dc96b6107042758b910bfb4354af078a79643f3a78f07",
+    "8.0.44": "b1fd2c4f20d1a66666f6e060f32f44fae334708924103bfcac19691ae051fda7",
+    "9.1.0": "b1fd2c4f20d1a66666f6e060f32f44fae334708924103bfcac19691ae051fda7"
+  }
+}

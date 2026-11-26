@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
  * are those of the script; the rows of a member are not, since a script has
  * no single row set.
  *
- * @visibility public
- * @example Keeping the statements of one input apart
- *     $script = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1; SELECT 2');
- *     [count($script->statement->statements), $script->toString()] // => [2, 'SELECT 1; SELECT 2']
+ * @visibility SqlSemantics
  */
 final class Script implements Statement
 {

@@ -1,0 +1,156 @@
+{
+  "revision": "SemanticsIR/mysql-unsigned-casts-4",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profile": "The nine fixed MySQL releases with UTF-8 identifiers, signed numeric operands, standard SQL modes and the pinned native conversion rules.",
+  "scope": "Explicit unsigned BIGINT conversions in result expressions, nested signed and unsigned conversions, and composition through UNION of the admitted integer and NULL result roles.",
+  "constructors": {
+    "Expression/UnsignedCast": {
+      "role": "Convert a checked scalar value to the native unsigned BIGINT domain.",
+      "structure": "One exact closed scalar operand: a signed integer, Boolean, NULL, checked signed arithmetic tree, resolved signed column, SignedCast or UnsignedCast.",
+      "conditions": "The Select owner checks every operand occurrence, the binding slots and expansion limits. A marker, range predicate, nonintegral source or arbitrary text is outside this scalar role. An admitted native evaluation may report signed arithmetic overflow before applying the cast.",
+      "meaning": "Convert an integral value modulo 2^64 and retain unsigned BIGINT result metadata. NULL remains NULL with the cast result type. An outer signed conversion over this value reinterprets the same 64 bits as signed.",
+      "externalInterpretation": "Use the same MySQL release, session mode, signed source roles and runtime values. Observe integer SQLSTATE on evaluation failures.",
+      "sql": "Render CAST with an explicit UNSIGNED target and the composed scalar operand. Preserve the output label separately from any normalized spelling of the cast.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Expression/SignedCast",
+    "Select",
+    "ResultColumn",
+    "Rows/Compound",
+    "Rows/ResultKind",
+    "Predicate/RangeIntegerLiteral",
+    "Arithmetic"
+  ],
+  "rules": [
+    "An unsigned cast uses the same scalar binding and output-name rules for CAST and type-form CONVERT. The numeric kind remains visible through native result metadata.",
+    "MySQL 5.6.51 and 5.7.44 preserve the first output's signedness in the tested mixed UNION role. Converting to that common BIGINT output clips values outside its representable interval. A leading untyped NULL before an unsigned projection gives a signed BIGINT result in these releases.",
+    "In the tested MySQL 8.0 through 9.1 releases, signed and unsigned integer results mixed in the same UNION position require exact decimal storage. An untyped NULL arm does not change unsignedness. An unsigned typed NULL still contributes its unsigned type.",
+    "For UNION DISTINCT, evaluate duplicate comparison after conversion to the common native output type. For UNION ALL, retain every row. Preserve result labels from the leftmost output.",
+    "A signed operand in the 32-bit range keeps its narrow literal role. A larger signed token uses the existing checked 64-bit literal role, including within arithmetic under an integral cast. Both literal roles preserve effective numeric spelling and the native evaluation boundary."
+  ],
+  "observations": [
+    "Compare native field order, exact names, type codes and unsigned flags, NULL, exact integer values including the two 64-bit boundaries, runtime SQLSTATE, and row multiplicity.",
+    "Measure projected column bindings with different input slots and values, including duplicates and NULL. Compare both analyzed source SQL and emitted SQL independently.",
+    "Check output kind derivation from the built compound and compare actual native values for both operand orders and for at least one left-spine three-arm compound."
+  ],
+  "finite": {
+    "projections": {
+      "sources": [
+        "unit",
+        "table"
+      ],
+      "distinct": [
+        false,
+        true
+      ],
+      "inputs": [
+        "minimum",
+        "minus-one",
+        "zero",
+        "positive",
+        "maximum",
+        "null",
+        "truth"
+      ],
+      "patterns": [
+        "unsigned",
+        "unsigned-unsigned",
+        "unsigned-signed-unsigned",
+        "signed-unsigned"
+      ],
+      "identity": "Compare the full Cartesian product of 112 projection identities derived from the built structure."
+    },
+    "compounds": {
+      "arms": [
+        "unsigned-bound",
+        "unsigned-zero",
+        "unsigned-null",
+        "signed-minimum",
+        "signed-positive",
+        "signed-zero",
+        "untyped-null"
+      ],
+      "unsignedArms": [
+        "unsigned-bound",
+        "unsigned-zero",
+        "unsigned-null"
+      ],
+      "all": [
+        false,
+        true
+      ],
+      "identity": "Compare all 66 ordered two-arm combinations over the two UNION policies with an unsigned type in at least one arm. The independent identity set includes both operand orders."
+    }
+  },
+  "exploration": {
+    "seeds": [
+      48119,
+      59341,
+      62137
+    ],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 245,
+    "allowedExclusions": [],
+    "structure": "Vary source binding slots, output count and labels, scalar nesting, signed and unsigned conversion positions, bounded arithmetic operands and NULL. Count observed roles and shapes."
+  },
+  "negative": [
+    "An unsigned cast around an out-of-scope resolved column",
+    "An unsigned conversion beyond the expanded scalar depth budget",
+    "An unsigned conversion containing a native marker below a second integral cast",
+    "An analyzed unsigned conversion whose operand is an unsupported string",
+    "An analyzed unsigned conversion whose operand is a predicate outside the cast role"
+  ],
+  "faults": [
+    "Replace UNSIGNED emission with SIGNED for a negative integral value",
+    "Drop the operand from an unsigned conversion",
+    "Drop the outer signed target from a nested signed-over-unsigned result whose bits denote different values",
+    "Swap distinct source slots for an unsigned projection",
+    "Reverse a mixed signedness UNION"
+  ],
+  "predecessorCheck": {
+    "admittedInput": "SELECT CAST(1 AS UNSIGNED)",
+    "change": "Compare the exact formerly unadmitted SQL as a positive in this contract. Retain a nonconforming target rejection in the signed-cast contract."
+  },
+  "open": [
+    "Unsigned physical column declarations, untyped unsigned literal tokens beyond INT64, arbitrary decimal and string coercion, unsigned bound parameters, casts as operands of general arithmetic and predicates, and additional modes and releases."
+  ],
+  "trust": [
+    "Pinned native result type and conversion rules for each release",
+    "Independent integer and compound evaluation and the mysqlnd prepared-protocol type and unsigned observations",
+    "Closed PHP roles, bound source validation, fixed proof tooling and staged Composer identity"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/set-operations.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/integer-types.html"
+  ],
+  "extends": "mysql-unsigned-casts-v2.json",
+  "faultCorrection": "The composed result can mask an inner conversion for integral operands. The mandatory fault changes the outer observable type and a negative signed value while preserving the nested input.",
+  "boundaryWitness": {
+    "input": "CAST(-9223372036854775808 AS UNSIGNED)",
+    "finiteIdentity": "The first minimum signed projection",
+    "change": "Admit the already required operand through the 64-bit literal role. Preserve the finite product, negative cases and budgets."
+  },
+  "markerScope": "The original unaliased unsigned marker now participates in mysql-unsigned-parameter-v1.json. A marker underneath another integral conversion is outside the enclosing projected-marker role.",
+  "versionedFrom": {
+    "path": "mysql-unsigned-casts-v3.json",
+    "sha256": "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b"
+  }
+}

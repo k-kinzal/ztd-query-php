@@ -1,0 +1,53 @@
+{
+  "revision": "SemanticsIR/sqlite-query-scope-boundaries-1",
+  "rules": {
+    "From/SelectBounds::check": {
+      "common": [
+        "Check::input(count($results) <= 2000, 'A SELECT can have at most 2000 result columns in this profile.');",
+        "Check::input(count($joins) < 64 && ($joins === [] || $source !== null), 'Joins require a first table and at most 64 inputs.');",
+        "Check::input(!$source instanceof LocalSource || $joins === [], 'A local row source requires a SELECT without joins.');",
+        "Check::input(count($orderBy) <= 2000, 'A SELECT can have at most 2000 ordering terms in this profile.');",
+        "foreach ($orderBy as $order) {",
+        "    Check::input($order->position <= count($results), 'An output order position must belong to the projection.');",
+        "}",
+        "",
+        "$widths = [$source === null ? 0 : count($source->columns)];",
+        "$pending = [];",
+        "if ($source instanceof LocalSource && $source->query instanceof RecursiveDefinition) {",
+        "    $pending = $source->query->scopedExpressions();",
+        "} elseif ($source instanceof LocalSource) {",
+        "    foreach ($source->query->rows as $row) {",
+        "        foreach ($row->values as $value) {",
+        "            $pending[] = [$value, 0, 0];",
+        "        }",
+        "    }",
+        "}",
+        "foreach ($joins as $join) {",
+        "    $widths[] = count($join->source->columns);",
+        "    if ($join->on !== null) {",
+        "        $pending[] = [$join->on, 0, count($widths)];",
+        "    }",
+        "}",
+        "foreach ($results as $result) {",
+        "    $pending[] = [$result->expression, 0, count($widths)];",
+        "}",
+        "foreach ([$where, $limit?->count, $limit?->offset] as $operand) {",
+        "    if ($operand !== null) {",
+        "        $pending[] = [$operand, 0, count($widths)];",
+        "    }",
+        "}",
+        "",
+        "(new ExpressionScope())->check($widths, $pending);"
+      ]
+    },
+    "Select::__construct": {
+      "common": [
+        "$results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);",
+        "$this->joins = Check::listOf($joins, Join::class, 'Joins must be an ordered list of join steps.');",
+        "$this->orderBy = Check::listOf($orderBy, Order::class, 'Ordering must be an ordered list of output positions.');",
+        "(new SelectBounds())->check($results, $source, $this->joins, $where, $this->orderBy, $limit);",
+        "$this->columns = $results;"
+      ]
+    }
+  }
+}

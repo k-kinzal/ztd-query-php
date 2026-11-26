@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice;
  * `pg_catalog.int2` and `char` as `pg_catalog.bpchar`.
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, `DefineType` in `src/backend/commands/typecmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an alignment written as a type keyword
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Alignment::read('pg_catalog.int4')?->name // => 'Int'
  */

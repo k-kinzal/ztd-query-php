@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-binlog-events.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2");
- *     [$show->statement->file?->value, $show->toString()] // => ['binlog.000001', "SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2"]
+ * @visibility SqlSemantics
  */
 final class ShowBinlogEvents implements Statement
 {

@@ -32,10 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-tables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW FULL TABLES FROM shop LIKE 'o%'");
- *     [$show->field(0)->name?->value, $show->field(1)->name?->value, $show->toString()] // => ['Tables_in_shop (o%)', 'Table_type', "SHOW FULL TABLES FROM shop LIKE 'o%'"]
+ * @visibility SqlSemantics
  */
 final class ShowTables implements Statement, Relation
 {

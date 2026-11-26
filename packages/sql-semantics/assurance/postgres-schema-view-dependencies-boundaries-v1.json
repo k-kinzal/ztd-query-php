@@ -1,0 +1,102 @@
+{
+  "revision": "SemanticsIR/postgres-schema-view-dependencies-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-schema-indexes-boundaries-v1.json",
+  "scope": "Validate exact earlier ordinary views, complete output field kinds, and ordinary-view placement without extending materialized declarations.",
+  "rules": {
+    "Schema/Namespace/View/SchemaViewOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($views === []) {",
+        "    return $occupied;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && !$guard, 'Schema views require an unguarded, statically named namespace.');",
+        "$earlier = [];",
+        "foreach ($views as $view) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($view->name->schema->value === $name->value && $view->query->release === $release, 'A schema view must belong to its namespace and release.');",
+        "    $coordinate = $view->name->view->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($occupied[$coordinate]), 'A schema view requires an unused relation name.');",
+        "    $source = $view->query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Select ? $view->query->source : null;",
+        "    if ($source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource && $source->schema->value === $name->value) {",
+        "        $local = $occupied[$source->table->value] ?? null;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewInputs::check($source, $local instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable ? $local : null, $earlier[$source->table->value] ?? null);",
+        "    }",
+        "    $earlier[$coordinate] = $view;",
+        "    $occupied[$coordinate] = true;",
+        "}",
+        "return $occupied;"
+      ]
+    },
+    "Schema/Namespace/View/SchemaViewInputs::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = [];",
+        "if ($source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::View) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($view !== null, 'A schema view must resolve its local view input to a preceding ordinary view.');",
+        "    foreach ($view->columns as $position => $column) {",
+        "        $fields[$column->value] = match (\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\CompoundShape::type($view->query, $position)) {",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Integer => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4,",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::WideInteger => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8,",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Boolean => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean,",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Text, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Unknown => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Text,",
+        "        };",
+        "    }",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::BaseTable && $local !== null, 'A schema view must resolve its local input to a preceding base table.');",
+        "    foreach ($local->columns as $column) {",
+        "        $fields[$column->name->value] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::columnKind($column);",
+        "    }",
+        "}",
+        "foreach ($source->columns as $slot => $column) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($fields[$column->value]) && $fields[$column->value] === $source->columnKind($slot), 'A schema view requires each local input field in the checked native kind.');",
+        "}"
+      ]
+    },
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$heading = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier::class, 'A persistent view needs a nonempty ordered heading.', 1);",
+        "$width = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewDefinitionBounds())->width($query, $name, $checkOption, true);",
+        "(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewHeading())->check($heading, $width);",
+        "$this->columns = $heading;"
+      ]
+    },
+    "Schema/View/ViewDefinitionBounds::width": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesQuery) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($check === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewCheckOption::None, 'A view check option requires a simple base-table projection.');",
+        "    return count($query->rows[0]->cells);",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$query->distinct && $query->orderBy === [] && $query->limit === null, 'CREATE VIEW requires an unbounded ordinary projection.');",
+        "$source = $query->source;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($source === null || $source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource && ($source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::BaseTable || $ordinaryViewSource && $source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::View), 'CREATE VIEW requires no source or one supported persistent relation.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($check === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewCheckOption::None || $source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource && $source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::BaseTable, 'A view check option requires a simple base-table projection.');",
+        "if ($source !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($source->schema->value !== 'pg_temp' && preg_match('/\\Apg_(?:toast_)?temp_[0-9]+\\z/D', $source->schema->value) === 0, 'CREATE VIEW requires a persistent source schema.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name->schema->value !== $source->schema->value || $name->view->value !== $source->table->value, 'A persistent view definition cannot read its own identity.');",
+        "}",
+        "foreach ($query->columns as $column) {",
+        "    $expression = $column->expression;",
+        "    while ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCast) {",
+        "        $expression = $expression->operand;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Binding\\Parameter, 'A persistent view definition cannot bind a native parameter.');",
+        "}",
+        "return count($query->columns);"
+      ]
+    }
+  }
+}

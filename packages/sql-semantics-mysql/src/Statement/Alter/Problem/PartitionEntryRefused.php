@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_yacc.yy (rule partition_entry).
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused())->message() // => 'A partitioning clause is not a statement a client can send.'
  */

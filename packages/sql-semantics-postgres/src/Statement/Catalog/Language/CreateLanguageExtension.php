@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Source: https://www.postgresql.org/docs/17/sql-createlanguage.html ("CREATE LANGUAGE … without handler … is
  * equivalent to CREATE EXTENSION"). Status: Implemented.
  *
- * @visibility public
- * @example Installing a language by name
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE LANGUAGE plperl');
- *     [$operation->statement->ifNotExists(), $operation->statement->name->value] // => [true, 'plperl']
+ * @visibility SqlSemantics
  */
 final class CreateLanguageExtension implements Statement
 {

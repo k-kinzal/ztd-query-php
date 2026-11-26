@@ -28,10 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
  * too. The facts follow PG-COPY-001.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a COPY of a table
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY t (a) FROM PROGRAM 'cat x' WITH (format csv) WHERE a > 0");
- *     [$copy->statement->program, $copy->statement->file->value, $copy->toString()] // => [true, 'cat x', "COPY t (a) FROM PROGRAM 'cat x' (format csv) WHERE a > 0"]
+ * @visibility SqlSemantics
  * @example Refusing both kinds of options
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable(false, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')))), [], \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection::To, false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout, null, [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyFlag::Csv], [new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('header'))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * Mirrors PostgreSQL's `AlterOwnerStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-alterschema.html, https://www.postgresql.org/docs/17/sql-alterfunction.html.
  *
- * @visibility public
- * @example Reading the new owner
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SCHEMA app OWNER TO CURRENT_USER');
- *     $operation->statement->owner->kind->name // => 'CurrentUser'
+ * @visibility SqlSemantics
  */
 final class ChangeOwner implements Statement
 {

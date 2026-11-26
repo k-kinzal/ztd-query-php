@@ -14,11 +14,11 @@ final class CreateUserMappingTest extends TestCase
 {
     public function testRenderWritesUser(): void
     {
-        self::assertSame('CREATE USER MAPPING FOR USER SERVER s OPTIONS (user \'bob\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE USER MAPPING FOR USER SERVER s OPTIONS (user \'bob\')')->toString());
+        self::assertSame('CREATE USER MAPPING FOR USER SERVER s OPTIONS (user \'bob\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE USER MAPPING FOR USER SERVER s OPTIONS (user \'bob\')')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE USER MAPPING IF NOT EXISTS FOR public SERVER s')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE USER MAPPING IF NOT EXISTS FOR public SERVER s')->facts->diagnostics);
     }
 }

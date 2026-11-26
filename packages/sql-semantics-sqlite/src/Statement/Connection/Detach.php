@@ -19,9 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * Whether the schema is attached is connection state and no fact of the model.
  * Source: https://sqlite.org/lang_detach.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the schema a detach request names
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DETACH DATABASE aux')->statement->schema->name->value // => 'aux'
+ * @visibility SqlSemantics
  */
 final class Detach implements Statement
 {

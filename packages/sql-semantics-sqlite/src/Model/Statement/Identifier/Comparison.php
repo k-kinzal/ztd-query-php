@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Model\Statement\Identifier;
 /**
  * How two decoded identifiers are compared in one name space of a language profile.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Comparing names without regard to ASCII letter case
  *     \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison::AsciiInsensitive->equal('Users', 'USERS') // => true
  */

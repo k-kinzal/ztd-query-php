@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature;
  * server as a missing argument.
  * Source: https://www.postgresql.org/docs/17/sql-dropoperator.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Counting the written types of a prefix operator
  *     \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorArity::Prefix->types() // => 1
  */

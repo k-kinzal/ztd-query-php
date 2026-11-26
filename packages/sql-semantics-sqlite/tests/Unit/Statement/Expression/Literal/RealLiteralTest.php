@@ -7,14 +7,14 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RealLiteral::class)]
 #[Medium]
@@ -33,7 +33,7 @@ final class RealLiteralTest extends TestCase
 
     public function testDeriveScalarGivesReal(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1.5, .5, 5., 1e2, 1.50E-3, 1E+2', []);
+        $operation = (new Inspection())->inspect('SELECT 1.5, .5, 5., 1e2, 1.50E-3, 1E+2', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -54,15 +54,15 @@ final class RealLiteralTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    public function testRenderWritesThePartsWithALowerCaseExponentMarker(): void
+    public function testRenderPreservesTheExponentMarker(): void
     {
-        self::assertSame('SELECT 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50e-3 AS c5, 1e+2 AS c6', (new Semantics())->analyze('select 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50E-3 AS c5, 1E+2 AS c6')->toString());
+        self::assertSame('SELECT 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50E-3 AS c5, 1E+2 AS c6', (new Inspection())->inspect('select 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50E-3 AS c5, 1E+2 AS c6')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new RealLiteral('', '5', '+2')), new ResultColumn(new RealLiteral('7', null, '-1')), new ResultColumn(new RealLiteral('3', '14'))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new RealLiteral('', '5', '+2')), new ResultColumn(new RealLiteral('7', null, '-1')), new ResultColumn(new RealLiteral('3', '14'))]));
 
         self::assertSame('SELECT .5e+2, 7e-1, 3.14', $operation->toString());
     }

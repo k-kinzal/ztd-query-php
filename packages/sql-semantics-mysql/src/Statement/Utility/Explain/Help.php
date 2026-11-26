@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * regard to quoting. Terminates: a leaf.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/help.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the topic
- *     $help = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("HELP 'contents'");
- *     [$help->statement->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, 'HELP contents']
+ * @visibility SqlSemantics
  */
 final class Help implements Statement
 {

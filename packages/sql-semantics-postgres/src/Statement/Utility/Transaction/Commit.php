@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * the state of a session.
  * Source: https://www.postgresql.org/docs/17/sql-commit.html, https://www.postgresql.org/docs/17/sql-end.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a chained end of a transaction
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('END AND CHAIN');
- *     [$operation->statement->chaining, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::Chain, 'END AND CHAIN']
+ * @visibility SqlSemantics
  */
 final class Commit implements Statement
 {

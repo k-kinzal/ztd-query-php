@@ -1,0 +1,119 @@
+{
+  "revision": "SemanticsIR/sqlite-merged-right-join-1",
+  "extends": [
+    "sqlite-relational-v3.json",
+    "sqlite-merged-join-v1.json"
+  ],
+  "approval": "pending-human-review",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "requiredScope": "All previously required families, releases and modes remain in scope.",
+  "constructors": {
+    "Select": {
+      "role": "Root of a projection over two ordinary external inputs in a RIGHT join",
+      "structure": "Closed left and right occurrences, their ordered predicate and explicit ordered result fields",
+      "conditions": "Both headings are complete and contain unique names. Native analyzed syntax uses one join, with declared keys and no conflicting NATURAL clause. The existing constructor validates reference scope.",
+      "meaning": "Evaluate ON equality pairs in written input order, and NULL-extend the left occurrence for unmatched right rows. Output labels and expressions encode visibility and merged provenance.",
+      "sql": "Emit RIGHT JOIN with its explicit predicate and result list. Unconstrained RIGHT is allowed when NATURAL has no common names."
+    },
+    "ResultColumn": {
+      "role": "A visible output position and its resolved value in a RIGHT merge",
+      "structure": "Exact result label and a complete scalar expression",
+      "conditions": "The binder determines labels before publishing. The result owner checks the scalar against actual input slots.",
+      "meaning": "An unqualified star keeps the left heading position and spelling for a merged key but reads the right value. An explicit unqualified column use reads the right slot and takes its declared spelling absent an alias. A qualified use retains the original occurrence and spelling. Under the pinned release, a left qualified star also reads the right representative in each merged position and retains every item of its own heading.",
+      "sql": "Render the bound expression and its explicit label. Independent owners may reuse the right slot under distinct result labels."
+    },
+    "ColumnReference": {
+      "role": "The exact original or right representative slot",
+      "structure": "Independent occurrence and field indices",
+      "conditions": "The analyzer resolves each role to one exact physical slot. SELECT checks scope before construction succeeds.",
+      "meaning": "Read the affinity, collation and value of the referred slot. For an unqualified merged reference, this is the right slot even on a matched pair. Qualified names distinguish both input cells.",
+      "sql": "Use the original occurrence's generated qualifier and declared column name."
+    }
+  },
+  "externalInterpretation": "SQLite evaluates the same absolute relations, declared column affinities and collations, and rows. The resolved IR stores no declarations or analysis context.",
+  "observations": [
+    "A matched NOCASE pair can hold different values. The RIGHT representative remains the exact right BINARY string and its declared name where native name rules select it.",
+    "A matched TEXT and NUMERIC pair can hold different storage classes. The merged output follows the right class. A predicate consuming a merged column inherits the right affinity and collation.",
+    "Unmatched right rows, NULL keys, duplicate matches, exact output names and positions, and both separately qualified inputs.",
+    "When NATURAL has no common columns, the unqualified star retains the full ordered headings and no equality is emitted.",
+    "The qualified left star and a list of explicitly qualified column names differ on a matched pair and on a right-only row. Compare both forms."
+  ],
+  "finite": {
+    "keyLayouts": [
+      "none",
+      "key",
+      "lane",
+      "both"
+    ],
+    "orientation": [
+      "original",
+      "swapped"
+    ],
+    "projections": [
+      "visible",
+      "qualified",
+      "representative"
+    ],
+    "completeness": "Visit all 24 combinations exactly once. Independently identify them from the emitted public graph."
+  },
+  "exploration": {
+    "seeds": [
+      1447,
+      17563,
+      50321
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Generate different orientation, key counts and repetitions, right and left reference roles, projection width, ordering of fields and generated labels."
+  },
+  "analysis": [
+    "Admit the exact former RIGHT USING rejection.",
+    "NATURAL RIGHT star retains left heading order and spelling while reading the right merged cells.",
+    "Qualified stars keep both complete ordered headings. A left qualified star still reads the right representative in a merged position on SQLite 3.47.2.",
+    "Case-varied unqualified uses, parenthesized name, and qualified names each take native spelling.",
+    "Reversed input orientation changes column comparison and representative value.",
+    "A disjoint NATURAL RIGHT join has no ON and no suppressed field.",
+    "A merged WHERE name uses the right BINARY collation.",
+    "A merged WHERE name uses the right numeric affinity."
+  ],
+  "negative": [
+    "The compared right column slot is missing.",
+    "A merged RIGHT over a prefix of joins has no admitted binary derivation.",
+    "A FULL merge has a different representative rule and remains an explicit refusal.",
+    "The name of a USING key is absent from a complete heading."
+  ],
+  "faults": [
+    "Read the left occurrence in a projected right representative.",
+    "Emit LEFT instead of RIGHT, losing right-only rows.",
+    "Drop the final output field, losing a qualified value.",
+    "Remove the second equality in a two-key RIGHT join."
+  ],
+  "evidence": {
+    "P01": "Measure named operand and result references directly in the published graph.",
+    "P02": "Observe typed rejection at construction or at analysis before publication.",
+    "P03": "The normalized RIGHT join uses the same closed values as direct construction.",
+    "P04": "Derive right-row groups, NULL extension and each projected field from explicit operands.",
+    "P05": "Replay the immutable closed role graph and installed composition.",
+    "P06": "Compare actual SQL and native source syntax to an independent right-pair model.",
+    "Q01": "Verify normalized references and checked positive and negative boundaries.",
+    "Q02": "Require every finite identity, analyzed input and seeded case.",
+    "Q03": "Check both directions of value selection independently from the source parser.",
+    "Q04": "Require the real engine to agree with typed effects and rows in each checked case.",
+    "Q05": "Tie the observed PHP sources, renderer mutants and native results to the fixed manifest."
+  },
+  "open": [
+    "FULL selects the first non-NULL of both merged slots and has separate unaliased name and affinity rules.",
+    "Merged joins involving multiple prefix inputs, local definitions, views or virtual tables remain open."
+  ],
+  "trust": [
+    "Native SQLite 3.47.2 join, short-column-name and comparison rules",
+    "Independent fixture pairs",
+    "Fixed analysis boundaries and verified distribution"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_select.html#the_from_clause",
+    "https://sqlite.org/datatype3.html#collation",
+    "https://sqlite.org/2024/sqlite-src-3470200.zip"
+  ]
+}

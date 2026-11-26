@@ -10,9 +10,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Rules\Routine\TriggerAssignments;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TriggerAssignments::class)]
 #[Medium]
@@ -21,9 +21,9 @@ final class TriggerAssignmentsTest extends TestCase
     #[DataProvider('providerCheckAcceptsAnAssignmentToTheNewRowOfABeforeTrigger')]
     public function testCheckAcceptsAnAssignmentToTheNewRowOfABeforeTrigger(string $sql): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame([], $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
     }
 
     /**
@@ -42,9 +42,9 @@ final class TriggerAssignmentsTest extends TestCase
     #[DataProvider('providerCheckLeavesOtherAssignmentsAlone')]
     public function testCheckLeavesOtherAssignmentsAlone(string $sql): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame([], $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
     }
 
     /**
@@ -67,8 +67,8 @@ final class TriggerAssignmentsTest extends TestCase
     #[DataProvider('providerCheckReportsAnAssignmentTheTriggerCannotMake')]
     public function testCheckReportsAnAssignmentTheTriggerCannotMake(string $sql, array $messages): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -98,8 +98,8 @@ final class TriggerAssignmentsTest extends TestCase
     #[DataProvider('providerCheckReportsTheAssignmentInEveryRelease')]
     public function testCheckReportsTheAssignmentInEveryRelease(string $release, string $sql, array $messages): void
     {
-        $semantics = new Semantics($release);
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $semantics = new Inspection($release);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -117,15 +117,15 @@ final class TriggerAssignmentsTest extends TestCase
 
     public function testCheckReportsNothingForATableThatIsNotKnown(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1');
+        $operation = (new Inspection())->diagnose('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1');
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testCheckReportsAProgramProblemOfTheRule(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertEquals([new ProgramProblem(ProgramRule::AfterRowUpdate)], $operation->facts->diagnostics);
     }

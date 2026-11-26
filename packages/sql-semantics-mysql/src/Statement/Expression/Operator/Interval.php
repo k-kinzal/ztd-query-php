@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
  * unit, so it may be any expression.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/expressions.html#temporal-intervals.
  *
- * @visibility public
- * @example Reading the quantity and the unit
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a + INTERVAL 2 DAY_HOUR');
- *     [$query->statement->where->interval->quantity->text, $query->statement->where->interval->unit->value] // => ['2', 'DAY_HOUR']
+ * @visibility SqlSemantics
  */
 final class Interval implements Node
 {

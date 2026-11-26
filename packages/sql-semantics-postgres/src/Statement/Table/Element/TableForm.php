@@ -13,10 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  * `ofTypename`, or `partbound` with one parent in `inhRelations`.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the form of a table definition
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t OF person');
- *     $create->statement->definition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TypedTable // => true
+ * @visibility SqlSemantics
  */
 interface TableForm extends Node
 {

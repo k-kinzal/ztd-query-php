@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * are not kept. Facts: none.
  * Source: https://www.postgresql.org/docs/17/sql-set-transaction.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the modes of SET TRANSACTION
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET TRANSACTION READ ONLY, DEFERRABLE');
- *     [$operation->statement->modes[1], $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode::Deferrable, 'SET TRANSACTION READ ONLY DEFERRABLE']
+ * @visibility SqlSemantics
  * @example Refusing a SET TRANSACTION without modes
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetTransaction(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::Transaction, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

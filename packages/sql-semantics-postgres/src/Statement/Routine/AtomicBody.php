@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * nothing and are not kept, as the server discards them.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Counting the statements of an empty block
  *     count((new \SqlSemantics\Platform\PostgreSql\Statement\Routine\AtomicBody([]))->statements) // => 0
  */

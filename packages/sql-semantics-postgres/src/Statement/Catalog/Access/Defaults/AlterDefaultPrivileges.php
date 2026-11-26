@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Access\DefaultPrivilegeChecks;
  * and a grant option for PUBLIC.
  * Source: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the action of the request
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES IN SCHEMA app GRANT SELECT ON TABLES TO PUBLIC');
- *     [$operation->statement->scopes[0]->option(), $operation->statement->action->objects->value] // => ['schemas', 'TABLES']
+ * @visibility SqlSemantics
  */
 final class AlterDefaultPrivileges implements Statement
 {

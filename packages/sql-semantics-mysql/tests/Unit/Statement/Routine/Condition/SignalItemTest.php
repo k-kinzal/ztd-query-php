@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SignalItem::class)]
 #[Medium]
@@ -33,7 +33,7 @@ final class SignalItemTest extends TestCase
 
     public function testRenderWritesEveryKindOfValue(): void
     {
-        $signal = (new Semantics())->analyze("SIGNAL SQLSTATE '45000' SET message_text = @m, mysql_errno = NULL, class_origin = x'41', table_name = 't'");
+        $signal = (new Inspection())->inspect("SIGNAL SQLSTATE '45000' SET message_text = @m, mysql_errno = NULL, class_origin = x'41', table_name = 't'");
         $statement = $signal->statement;
         self::assertInstanceOf(Signal::class, $statement);
 

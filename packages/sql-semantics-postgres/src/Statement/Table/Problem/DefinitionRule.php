@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Problem;
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html and the
  * reference pages of the other commands.
  *
- * @visibility public
- * @example Reading which rule a definition breaks
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, a text)');
- *     $create->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule::DuplicateColumn
+ * @visibility SqlSemantics
  */
 enum DefinitionRule: string
 {

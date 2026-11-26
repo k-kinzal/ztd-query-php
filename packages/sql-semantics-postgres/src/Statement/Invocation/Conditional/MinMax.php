@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * is named `greatest` or `least`.
  * Source: https://www.postgresql.org/docs/17/functions-conditional.html#FUNCTIONS-GREATEST-LEAST. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional\MinMax(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional\MinMaxKind::Greatest, [new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()]))->outputName()->value // => 'greatest'
  */

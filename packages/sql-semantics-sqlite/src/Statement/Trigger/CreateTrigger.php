@@ -36,14 +36,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
  * and provides no relation declaration.
  * Source: https://sqlite.org/lang_createtrigger.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a trigger
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TEMP TRIGGER IF NOT EXISTS r AFTER UPDATE OF a ON t FOR EACH ROW WHEN new.a > old.a BEGIN DELETE FROM log; SELECT 1; END');
- *     $statement = $trigger->statement;
- *     [$statement->name->name->value, $statement->temporary, $statement->timing, $statement->columns[0]->value, $statement->forEachRow, count($statement->steps)] // => ['r', true, \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming::After, 'a', true, 2]
- * @example Refusing a program statement the trigger grammar does not admit
- *     $delete = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DELETE FROM t RETURNING a')->statement;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('r')), \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent::Delete, new \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t'))), [$delete]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class CreateTrigger implements Statement
 {

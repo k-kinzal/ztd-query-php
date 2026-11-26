@@ -14,6 +14,6 @@ final class ImportRestrictionKindTest extends TestCase
 {
     public function testLimitToIsTwoKeywords(): void
     {
-        self::assertSame('IMPORT FOREIGN SCHEMA r LIMIT TO (a) FROM SERVER s INTO l', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('IMPORT FOREIGN SCHEMA r LIMIT TO (a) FROM SERVER s INTO l')->toString());
+        self::assertSame('IMPORT FOREIGN SCHEMA r LIMIT TO (a) FROM SERVER s INTO l', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('IMPORT FOREIGN SCHEMA r LIMIT TO (a) FROM SERVER s INTO l')->toString());
     }
 }

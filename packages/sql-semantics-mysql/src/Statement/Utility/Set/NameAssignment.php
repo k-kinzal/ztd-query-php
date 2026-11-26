@@ -33,10 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  * https://dev.mysql.com/doc/refman/8.4/en/structured-system-variables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a scoped name assignment
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET SESSION sort_buffer_size = DEFAULT');
- *     [$set->statement->items[0]->scope, $set->statement->items[0]->name->value, $set->statement->items[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, 'sort_buffer_size', \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Default]
+ * @visibility SqlSemantics
  */
 final class NameAssignment implements SetItem
 {

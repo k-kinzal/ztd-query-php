@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * to case written as a string or a word.
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, `defGetTypeLength` in `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading a variable length
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TYPE box3 (input = box3_in, output = box3_out, internallength = VARIABLE)');
- *     [$operation->statement->definition[2]->value->bytes(), $operation->statement->definition[2]->value->variable()] // => [null, true]
+ * @visibility SqlSemantics
  * @example Rejecting another word
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\LengthArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('fixed')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

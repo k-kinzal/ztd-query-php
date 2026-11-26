@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\CallRule;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -19,6 +18,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CallRule::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class CallRuleTest extends TestCase
 {
     public function testExpressionLowersTheArgumentsTheStarFormAndTheQuantifier(): void
     {
-        $operation = (new Semantics())->inspect('SELECT count(*), count(DISTINCT a), count(ALL a), max(a, b), random() FROM t');
+        $operation = (new Inspection())->diagnose('SELECT count(*), count(DISTINCT a), count(ALL a), max(a, b), random() FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([[0, true, null], [1, false, SetQuantifier::Distinct], [1, false, SetQuantifier::All], [2, false, null], [0, false, null]], array_map(static function (object $column): array {
@@ -43,7 +43,7 @@ final class CallRuleTest extends TestCase
 
     public function testExpressionKeepsTheArgumentOrderingOfAnAggregate(): void
     {
-        $operation = (new Semantics())->inspect("SELECT group_concat(a ORDER BY b DESC), group_concat(a, ',' ORDER BY b, c) FROM t");
+        $operation = (new Inspection())->diagnose("SELECT group_concat(a ORDER BY b DESC), group_concat(a, ',' ORDER BY b, c) FROM t");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -63,7 +63,7 @@ final class CallRuleTest extends TestCase
 
     public function testNameKeepsTheFunctionNameAsWritten(): void
     {
-        $operation = (new Semantics())->inspect('SELECT Count(*) AS c1, "max"(a) AS c2, [min](a) AS c3 FROM t');
+        $operation = (new Inspection())->diagnose('SELECT Count(*) AS c1, "max"(a) AS c2, [min](a) AS c3 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(['Count', 'max', 'min'], array_map(static function (object $column): string {
@@ -77,7 +77,7 @@ final class CallRuleTest extends TestCase
 
     public function testFilterOverLowersAFilterOnlyAWindowOnlyAndBoth(): void
     {
-        $operation = (new Semantics())->inspect('SELECT sum(a) FILTER (WHERE b), sum(a) OVER (), sum(a) FILTER (WHERE b) OVER w, count(*) FILTER (WHERE b) OVER (), group_concat(a ORDER BY b) OVER w FROM t WINDOW w AS ()');
+        $operation = (new Inspection())->diagnose('SELECT sum(a) FILTER (WHERE b), sum(a) OVER (), sum(a) FILTER (WHERE b) OVER w, count(*) FILTER (WHERE b) OVER (), group_concat(a ORDER BY b) OVER w FROM t WINDOW w AS ()');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([[true, null], [false, WindowSpec::class], [true, Name::class], [true, WindowSpec::class], [false, Name::class]], array_map(static function (object $column): array {
@@ -91,7 +91,7 @@ final class CallRuleTest extends TestCase
 
     public function testFilterLowersThePredicateOfTheFilterClause(): void
     {
-        $operation = (new Semantics())->inspect('SELECT sum(a) FILTER (WHERE b > 1) FROM t');
+        $operation = (new Inspection())->diagnose('SELECT sum(a) FILTER (WHERE b > 1) FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -105,7 +105,7 @@ final class CallRuleTest extends TestCase
 
     public function testOverLowersAWindowSpecificationOrAWindowName(): void
     {
-        $operation = (new Semantics())->inspect('SELECT sum(a) OVER (PARTITION BY b ORDER BY c), sum(a) OVER w FROM t WINDOW w AS (ORDER BY c)');
+        $operation = (new Inspection())->diagnose('SELECT sum(a) OVER (PARTITION BY b ORDER BY c), sum(a) OVER w FROM t WINDOW w AS (ORDER BY c)');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);

@@ -19,9 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/uninstall-plugin.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing a plugin
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('uninstall plugin audit')->toString() // => 'UNINSTALL PLUGIN audit'
+ * @visibility SqlSemantics
  */
 final class UninstallPlugin implements Statement
 {

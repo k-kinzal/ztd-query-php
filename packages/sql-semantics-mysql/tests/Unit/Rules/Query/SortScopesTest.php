@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SortScopes::class)]
 #[Medium]
@@ -37,7 +37,7 @@ final class SortScopesTest extends TestCase
 
     public function testDeriveResolvesOrdinalsAliasesAndColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -46,7 +46,7 @@ final class SortScopesTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT b AS a FROM t ORDER BY a, 1, b', [$t]);
+        $operation = $semantics->inspect('SELECT b AS a FROM t ORDER BY a, 1, b', [$t]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->resolution);

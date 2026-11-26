@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
  * Mirrors the `is_from` flag of PostgreSQL's `CopyStmt`; the value is the keyword.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html.
  *
- * @visibility public
- * @example Reading the direction of COPY
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t FROM STDIN');
- *     $copy->statement->direction // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection::From
+ * @visibility SqlSemantics
  */
 enum CopyDirection: string
 {

@@ -40,10 +40,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  * construction. Source: https://dev.mysql.com/doc/refman/8.4/en/string-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/charset-literal.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the value of adjacent strings
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a = 'x' \"y\"");
- *     [$query->statement->where->right->segments, $query->statement->where->right->value()] // => [['x', 'y'], 'xy']
+ * @visibility SqlSemantics
  */
 final class StringLiteral implements Scalar
 {

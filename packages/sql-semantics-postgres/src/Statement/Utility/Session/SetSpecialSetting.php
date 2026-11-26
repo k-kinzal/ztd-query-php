@@ -28,10 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  * https://www.postgresql.org/docs/17/sql-set-session-authorization.html, https://www.postgresql.org/docs/17/sql-set-transaction.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading SET SESSION AUTHORIZATION DEFAULT
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET SESSION AUTHORIZATION DEFAULT');
- *     [$operation->statement->setting, $operation->statement->default, $operation->statement->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::SessionAuthorization, true, null]
+ * @visibility SqlSemantics
  * @example Refusing a schema that is not a string
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetSpecialSetting(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::Schema, null) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

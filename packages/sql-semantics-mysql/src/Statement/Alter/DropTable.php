@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter;
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
@@ -29,11 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resolving the dropped table to its declaration
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $drop = $semantics->analyze('drop tables if exists t, u cascade', []);
- *     [$drop->toString(), $drop->statement->behavior] // => ['DROP TABLE IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
+ * @visibility SqlSemantics
  */
 final class DropTable implements Statement
 {
@@ -62,8 +59,9 @@ final class DropTable implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $targets = new Targets();
+        $namespace = $this->temporary ? TableNamespace::Temporary : TableNamespace::Visible;
         foreach ($this->tables as $index => $table) {
-            $fact = $derivation->target($table, $targets->optional($derivation, $table->name, $this->ifExists));
+            $fact = $derivation->target($table, $targets->optional($derivation, $table->name, $this->ifExists, $namespace));
             if (!$this->ifExists) {
                 (new RelationKinds())->refuseView($derivation, $table->name, $fact->table, KindRefusal::UnknownTable);
             }

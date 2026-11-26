@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The expression is evaluated when a row is inserted; it may refer to earlier columns of the table, and the server stores it as an expression default even when it is a literal.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html#data-type-defaults-explicit.
  *
- * @visibility public
- * @example Reading the clause of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TIMESTAMP DEFAULT (NOW()))');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression // => true
+ * @visibility SqlSemantics
  */
 final class DefaultExpression implements ColumnAttribute
 {

@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop;
  * transform. Objects of a kind ALTER EXTENSION cannot address are rejected.
  * Source: https://www.postgresql.org/docs/17/sql-alterextension.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the object added to an extension
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EXTENSION hstore ADD SCHEMA s');
- *     [$operation->statement->action, $operation->statement->kind] // => [\SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop::Add, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Schema]
+ * @visibility SqlSemantics
  */
 final class AlterExtensionContents implements Statement
 {

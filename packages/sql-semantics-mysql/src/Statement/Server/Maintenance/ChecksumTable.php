@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/checksum-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('checksum table t extended');
- *     [$statement->toString(), $statement->statement->mode === \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode::Extended] // => ['CHECKSUM TABLE t EXTENDED', true]
+ * @visibility SqlSemantics
  */
 final class ChecksumTable implements Statement
 {

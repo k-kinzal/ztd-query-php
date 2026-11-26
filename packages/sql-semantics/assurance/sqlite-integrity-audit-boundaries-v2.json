@@ -1,0 +1,72 @@
+{
+  "revision": "SemanticsIR/sqlite-integrity-audit-boundaries-2",
+  "approval": "pending-human-review",
+  "scope": "Fix the native audit modes, numeric binding, ordinary and catalog target guards and the exact scope emitted by each role.",
+  "rules": {
+    "Maintenance/Integrity/IntegrityAudit::__construct": {
+      "common": [
+        "if (!$target instanceof IntegrityLimit) {",
+        "    Check::input($schema === null || $schema->key() === $target->schema->key(), 'An integrity audit target must belong to its explicit schema.');",
+        "    if ($target instanceof RelationTarget) {",
+        "        Check::input(!(new CatalogAliases())->isCatalogName($target->name), 'An internal SQLite schema table requires a catalog role.');",
+        "    } elseif ($schema === null) {",
+        "        $key = $target->schema->key();",
+        "        Check::input($key === 'main' || $key === 'temp', 'An implicit integrity audit cannot select an attached builtin catalog.');",
+        "    }",
+        "}"
+      ]
+    },
+    "Maintenance/Integrity/IntegrityAudit::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Integrity/IntegrityAudit::toString": {
+      "common": [
+        "$target = $this->target;",
+        "$qualifier = $this->schema === null ? '' : $this->schema->quoted() . '.';",
+        "$argument = match (true) {",
+        "    $target instanceof IntegrityLimit => $target->value === IntegrityLimit::DEFAULT_VALUE ? '' : '(' . $target->value . ')',",
+        "    $target instanceof RelationTarget => '(' . $target->name->quoted() . ')',",
+        "    $target instanceof CatalogTable => '(' . $target->name()->quoted() . ')',",
+        "};",
+        "return 'PRAGMA ' . $qualifier . $this->kind->value . $argument;"
+      ]
+    },
+    "Maintenance/Integrity/IntegrityLimit::__construct": {
+      "common": [
+        "Check::input($value >= 1 && $value <= self::MAX_VALUE, 'An integrity report limit must be a positive signed 32-bit integer.');"
+      ]
+    },
+    "Maintenance/Integrity/IntegrityAuditLowering::lower": {
+      "common": [
+        "$context = $operation->context;",
+        "$scope = (new PragmaScope())->resolve($context, $statement->name->schema);",
+        "$value = $statement->value;",
+        "if ($value === null) {",
+        "    return new IntegrityAudit($kind, schema: $scope);",
+        "}",
+        "if ($value instanceof PragmaNumber) {",
+        "    $limit = (new IntegrityNumber())->limit($value->token);",
+        "    if ($limit !== null) {",
+        "        return new IntegrityAudit($kind, new IntegrityLimit($limit), $scope);",
+        "    }",
+        "}",
+        "$name = new Identifier($value instanceof PragmaNumber ? $value->nativeText() : $value->value);",
+        "$target = (new TableMetadataLowering())->target($context, $name, $scope);",
+        "Check::input(!$target instanceof MissingMetadataTable, 'Integrity audit requires a resolved table, view or schema catalog.');",
+        "return new IntegrityAudit($kind, $target, $scope);"
+      ]
+    },
+    "Maintenance/Integrity/IntegrityNumber::limit": {
+      "common": [
+        "if (str_starts_with($token, '-') || str_starts_with($token, '+')) {",
+        "    return null;",
+        "}",
+        "$value = (new NativePragmaInteger())->parse($token);",
+        "return $value === 0 ? IntegrityLimit::DEFAULT_VALUE : $value;"
+      ]
+    }
+  },
+  "revises": "sqlite-integrity-audit-boundaries-v1.json"
+}

@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS,
  * https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-OPERATOR-CALLS.
  *
- * @visibility public
- * @example Reading the operator of a comparison
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t WHERE a != 1');
- *     $query->statement->where->operator->name->value // => '<>'
+ * @visibility SqlSemantics
  */
 final class OperatorName implements OptionArgument
 {

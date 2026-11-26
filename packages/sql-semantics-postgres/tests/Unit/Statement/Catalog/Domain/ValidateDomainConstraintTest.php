@@ -14,11 +14,11 @@ final class ValidateDomainConstraintTest extends TestCase
 {
     public function testRenderWritesValidate(): void
     {
-        self::assertSame('ALTER DOMAIN d VALIDATE CONSTRAINT c', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d VALIDATE CONSTRAINT c')->toString());
+        self::assertSame('ALTER DOMAIN d VALIDATE CONSTRAINT c', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d VALIDATE CONSTRAINT c')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN s.d VALIDATE CONSTRAINT c')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN s.d VALIDATE CONSTRAINT c')->facts->diagnostics);
     }
 }

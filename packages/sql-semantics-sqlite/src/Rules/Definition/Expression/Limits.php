@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Raise;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\Exists;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InTable;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\ScalarSubquery;
@@ -49,7 +50,9 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
  * Each kind of construct is reported once per expression. A subquery is
  * found at the expression that holds it and at the query itself; the inside
  * of a subquery is not examined, as SQLite stops at the subquery. Terminates: the
- * expression is walked once with an explicit stack.
+ * expression is walked once with an explicit stack. Empty membership in
+ * a schema expression discards its left operand before these
+ * semantic limits apply. Its lexical registrations survive separately.
  * Source: https://sqlite.org/lang_createtable.html#check_constraints,
  * https://sqlite.org/lang_createtable.html#the_default_clause,
  * https://sqlite.org/partialindex.html, https://sqlite.org/expridx.html,
@@ -84,9 +87,10 @@ final class Limits
     /**
      * Answers the nodes of an expression in depth-first order, without the inside of a subquery.
      *
+     * @param bool $discardEmptyMembership Whether to omit operands SQLite discards in a checked definition
      * @return list<Node>
      */
-    public function nodes(Scalar $expression): array
+    public function nodes(Scalar $expression, bool $discardEmptyMembership = false): array
     {
         $nodes = [];
         $pending = [$expression];
@@ -100,7 +104,7 @@ final class Limits
                 continue;
             }
             $nodes[] = $value;
-            if ($value instanceof Query) {
+            if ($value instanceof Query || ($discardEmptyMembership && $value instanceof InList && $value->items === [])) {
                 continue;
             }
             array_push($pending, ...array_reverse(array_values(get_object_vars($value))));
@@ -136,7 +140,7 @@ final class Limits
     public function rejected(Scalar $expression, DefinitionPosition $position): array
     {
         $found = [];
-        foreach ($this->nodes($expression) as $node) {
+        foreach ($this->nodes($expression, true) as $node) {
             $construct = $this->classify($node);
             if ($construct !== null && in_array($construct, self::REJECTED[$position->name], true) && !in_array($construct, $found, true)) {
                 $found[] = $construct;
@@ -161,7 +165,7 @@ final class Limits
      */
     public function nonConstant(Scalar $expression): bool
     {
-        foreach ($this->nodes($expression) as $node) {
+        foreach ($this->nodes($expression, true) as $node) {
             if ($node instanceof BindParameter || $node instanceof Query || $node instanceof InTable || $node instanceof ColumnUse || $node instanceof DoubleQuotedWord || $node instanceof Raise) {
                 return true;
             }

@@ -18,11 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-handler.html.
  *
- * @visibility public
- * @example Reading a handler
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND, 1051 BEGIN END; END');
- *     $handler = $create->statement->body->declarations[0];
- *     [$handler->action, count($handler->conditions)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction::Continue, 2]
+ * @visibility SqlSemantics
  */
 final class HandlerDeclaration implements Declaration
 {

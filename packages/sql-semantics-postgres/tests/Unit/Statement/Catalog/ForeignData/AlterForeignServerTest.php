@@ -14,12 +14,12 @@ final class AlterForeignServerTest extends TestCase
 {
     public function testRenderWritesTheVersionAndOptions(): void
     {
-        self::assertSame('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')')->toString());
+        self::assertSame('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s OPTIONS (DROP a)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SERVER s OPTIONS (DROP a)')->facts->diagnostics);
     }
 
     public function testRejectsAnEmptyChange(): void

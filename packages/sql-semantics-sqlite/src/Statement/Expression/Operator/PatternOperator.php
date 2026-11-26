@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
  *
  * Source: https://sqlite.org/lang_expr.html#the_like_glob_regexp_match_and_extract_operators.
  *
- * @visibility public
- * @example Reading the operator of a pattern match
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT a GLOB 'x*' FROM t");
- *     $query->statement->columns[0]->expression->operator // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Glob
+ * @visibility SqlSemantics
  */
 enum PatternOperator: string
 {

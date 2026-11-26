@@ -24,9 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-password.html,
  * https://dev.mysql.com/doc/refman/5.7/en/set-password.html. Status: Implemented.
  *
- * @visibility public
- * @example Setting the password of another account
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("set password for app = 'pw' retain current password")->toString() // => "SET PASSWORD FOR app = 'pw' RETAIN CURRENT PASSWORD"
+ * @visibility SqlSemantics
  */
 final class SetPassword implements Statement
 {

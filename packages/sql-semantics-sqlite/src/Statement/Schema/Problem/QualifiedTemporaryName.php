@@ -14,9 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * SQLite rejects it with "temporary table name must be unqualified".
  * Source: https://sqlite.org/lang_createtable.html.
  *
- * @visibility public
- * @example Reporting a temporary table in the main schema
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TEMP TABLE main.t (a)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Temporary object t must not be qualified with schema main.
+ * @visibility SqlSemantics
  */
 final class QualifiedTemporaryName implements Diagnostic
 {

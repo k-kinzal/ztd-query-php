@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/server-transaction-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "The pinned native releases. MySQL also uses completion_type=0 for omitted completion options. The fixture uses ordinary transactional tables and an autocommit connection before BEGIN.",
+  "scope": "Plain begin, commit, rollback, savepoint, release and rollback-to statements. Named operations store the exact decoded label in their connection-local role.",
+  "open": ["Transaction characteristics and isolation clauses, chaining or connection release, prepared and XA transactions, session configuration, and lock and cursor observations"],
+  "additionalPublicRoots": ["Transaction/Transaction"],
+  "constructors": {
+    "TransactionCommand": {
+      "type": "Transaction/TransactionCommand",
+      "role": "One of the six ordered connection-local transition roles",
+      "invariants": ["Every case has a fixed native SQL form"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "Transaction": {
+      "type": "Transaction/Transaction",
+      "fields": ["command", "name", "release"],
+      "invariants": ["Savepoint, release and rollback-to have one checked name", "Other commands have no name", "MySQL labels use one to 64 non-NUL BMP characters. PostgreSQL labels use the checked nonempty UTF-8 identifier role and its 63-byte bound."],
+      "meaning": "Begin opens a transaction. When one is open, MySQL commits it before starting another. PostgreSQL keeps the current transaction and issues a warning. Commit publishes, and rollback discards its writes. A savepoint records the current transactional state. Rollback-to removes later work and retains its target. PostgreSQL releases the named savepoint with its successors. MySQL releases the named entry. PostgreSQL keeps older equal-name entries underneath the newest one. MySQL replaces an equal-name entry.",
+      "sql": "Emit the registered command and quote the decoded label when required. MySQL explicitly emits AND NO CHAIN NO RELEASE on commit and rollback.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Normalize equivalent plain command spellings. Accept omitted and explicitly non-chaining completion under the fixed profile. Reject transaction characteristics, positive chaining, connection release and other transaction forms. The active connection supplies the open transaction and savepoint stack when executed.",
+  "observations": ["Session transaction state", "Typed rows visible on the executing connection", "Committed rows visible on an independent connection", "Rollbacks to distinct checkpoints and equal-label reuse"],
+  "finite": {
+    "labels": ["ordinary identifier", "embedded delimiter", "whitespace"],
+    "ends": ["commit", "rollback"],
+    "programs": ["ordinary checkpoint", "two live checkpoints", "reuse checkpoint label"],
+    "identitiesPerRelease": 18,
+    "completeness": "Check every combination of label, final terminal command and program role in the observed constructed operations."
+  },
+  "exploration": {"seeds": [2857, 6553, 17191], "casesPerSeed": 18, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
+  "negative": ["Named command without a label", "Non-named command with a label", "Unrepresentable label", "Unsupported transaction characteristics", "Positive completion chaining"],
+  "faults": ["Convert COMMIT to ROLLBACK", "Make rollback-to use the other live checkpoint", "Convert ROLLBACK to COMMIT"],
+  "trust": ["Fixed native profile and transactional fixture", "Closed command and label roles", "Independent interpreter of local writes, visibility and checkpoint transitions"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/commit.html", "https://dev.mysql.com/doc/refman/8.4/en/savepoint.html", "https://www.postgresql.org/docs/17/sql-begin.html", "https://www.postgresql.org/docs/17/sql-rollback-to.html", "https://www.postgresql.org/docs/17/sql-release-savepoint.html"]
+}

@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
@@ -18,10 +17,11 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRel
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ColumnUse::class)]
 #[Medium]
@@ -29,9 +29,9 @@ final class ColumnUseTest extends TestCase
 {
     public function testDeriveScalarResolvesADeclaredColumnWithItsFacts(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT a, t.b, main.t.a FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT a, t.b, main.t.a FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -52,9 +52,9 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarReportsAMissingColumn(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT nope, t.nope FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT nope, t.nope FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -69,7 +69,7 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredRelation(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a, u.a FROM u');
+        $operation = (new Inspection())->diagnose('SELECT a, u.a FROM u');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -84,9 +84,9 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarResolvesAResultAliasInTheOrdering(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT b AS c FROM t ORDER BY c', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT b AS c FROM t ORDER BY c', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -98,15 +98,15 @@ final class ColumnUseTest extends TestCase
 
     public function testRenderWritesTheQualifierPartsAndTheName(): void
     {
-        $operation = (new Semantics())->inspect('select a AS c1, t.b AS c2, main.t.a AS c3, [c] AS c4, `d` AS c5 from t');
+        $operation = (new Inspection())->diagnose('select a AS c1, t.b AS c2, main.t.a AS c3, [c] AS c4, `d` AS c5 from t');
 
         self::assertSame('SELECT a AS c1, t.b AS c2, main.t.a AS c3, c AS c4, d AS c5 FROM t', $operation->toString());
     }
 
     public function testRenderQuotesANameThatNeedsIt(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new ColumnUse(new Name('select'), new QualifiedName(new Name('my table'), new Name('main'))))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new ColumnUse(new Name('select'), new QualifiedName(new Name('my table'), new Name('main'))))]));
 
         self::assertSame('SELECT main.`my table`.`select`', $operation->toString());
     }

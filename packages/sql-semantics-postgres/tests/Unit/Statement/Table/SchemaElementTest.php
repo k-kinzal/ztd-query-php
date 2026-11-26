@@ -14,8 +14,8 @@ final class SchemaElementTest extends TestCase
 {
     public function testCreatedSchemaIsNullForAnUnqualifiedName(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE INDEX ON t (a)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE INDEX ON t (a)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         self::assertSame(null, $n1->createdSchema());
@@ -23,7 +23,7 @@ final class SchemaElementTest extends TestCase
 
     public function testDeriveElementLocatesTheTableInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE INDEX ON t (a)');
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE INDEX ON t (a)');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
         $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         $statement->statement->deriveElement($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'));

@@ -14,6 +14,6 @@ final class EnumPositionTest extends TestCase
 {
     public function testRenderWritesAfter(): void
     {
-        self::assertSame('ALTER TYPE mood ADD VALUE \'x\' AFTER \'y\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE mood ADD VALUE \'x\' AFTER \'y\'')->toString());
+        self::assertSame('ALTER TYPE mood ADD VALUE \'x\' AFTER \'y\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE mood ADD VALUE \'x\' AFTER \'y\'')->toString());
     }
 }

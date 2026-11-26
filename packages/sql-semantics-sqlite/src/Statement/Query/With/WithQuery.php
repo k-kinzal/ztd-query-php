@@ -25,10 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
  * nested in it. The output is that of the body.
  * Source: https://sqlite.org/lang_with.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the body of a query with common tables
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c');
- *     [$query->statement->body->columns[0]->expression->name->value, $query->field('x')->type->descriptor] // => ['x', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer]
+ * @visibility SqlSemantics
  */
 final class WithQuery implements Statement, Query
 {

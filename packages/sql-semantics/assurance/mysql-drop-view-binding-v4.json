@@ -1,0 +1,23 @@
+{
+  "revision": "SemanticsIR/mysql-drop-view-binding-4",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Resolution/TableLookup.php": {
+      "sha256": "78ff02773d800472eac2afb20b2bd3a5ec57322ae28a5b18bb56976bfa326acc",
+      "role": "Resolve a persistent absolute view name and classify known and unknown absence."
+    },
+    "src/Statement/View/DropView.php": {
+      "sha256": "67f45c63cc8d1d70c537cf6193a3c85a43b520c93b38ad17cceacd7d7eb5ac5f",
+      "role": "Derive view removal diagnostics with correct branch conditions."
+    },
+    "src/Rules/TableDefinition/RelationKinds.php": {
+      "sha256": "970796edf9b09de5ef9142a49a57da5eef6e27e540b410991c3317d85de165f2",
+      "role": "Report non-view targets in the pinned analysis policy."
+    },
+    "src/Model/Statement/Declaration/RelationKind.php": {
+      "sha256": "1a3d4de11bfa1bb1e8388222e15ecf3b2add90a7ba2b09587c62bb2b77098a47",
+      "role": "Keep the distinction between view and non-view declarations."
+    }
+  },
+  "extends": "mysql-drop-view-binding-v3.json"
+}

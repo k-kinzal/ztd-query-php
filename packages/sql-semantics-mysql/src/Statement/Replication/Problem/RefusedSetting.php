@@ -14,9 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * with the error the check names.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
- * @visibility public
- * @example Reading the refused value of a statement
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CHANGE REPLICATION SOURCE TO GTID_ONLY = 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).
+ * @visibility SqlSemantics
  */
 final class RefusedSetting implements Diagnostic
 {

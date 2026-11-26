@@ -29,10 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
  * one pass over the items. Source: https://dev.mysql.com/doc/refman/8.4/en/do.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the expressions of DO
- *     $do = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DO SLEEP(1), @a := 2');
- *     [count($do->statement->items), $do->facts->output, $do->toString()] // => [2, null, 'DO SLEEP(1), @a := 2']
+ * @visibility SqlSemantics
  */
 final class Evaluation implements Statement
 {

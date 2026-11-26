@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/savepoint.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Naming the savepoint
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('rollback work to sp1');
- *     [$statement->toString(), $statement->statement->savepoint->value] // => ['ROLLBACK TO SAVEPOINT sp1', 'sp1']
+ * @visibility SqlSemantics
  */
 final class RollbackToSavepoint implements Statement
 {

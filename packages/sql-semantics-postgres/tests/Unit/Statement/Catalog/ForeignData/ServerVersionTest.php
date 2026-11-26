@@ -21,6 +21,6 @@ final class ServerVersionTest extends TestCase
 
     public function testRenderWritesTheVersion(): void
     {
-        self::assertSame('ALTER SERVER s VERSION \'2\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s VERSION \'2\'')->toString());
+        self::assertSame('ALTER SERVER s VERSION \'2\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SERVER s VERSION \'2\'')->toString());
     }
 }

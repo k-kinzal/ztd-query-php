@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * declares no indexes.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Attaching an index
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER INDEX pi ATTACH PARTITION pi1');
- *     $statement->toString() // => 'ALTER INDEX pi ATTACH PARTITION pi1'
+ * @visibility SqlSemantics
  */
 final class AttachIndex implements AlterCommand
 {

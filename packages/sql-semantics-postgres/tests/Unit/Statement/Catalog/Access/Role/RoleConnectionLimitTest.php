@@ -26,7 +26,7 @@ final class RoleConnectionLimitTest extends TestCase
 
     public function testRenderWritesTheSignedLimit(): void
     {
-        self::assertSame('CREATE ROLE r CONNECTION LIMIT - 1', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE r CONNECTION LIMIT -1')->toString());
+        self::assertSame('CREATE ROLE r CONNECTION LIMIT - 1', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE ROLE r CONNECTION LIMIT -1')->toString());
     }
 
     public function testRejectsAFraction(): void

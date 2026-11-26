@@ -13,8 +13,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AmbiguousFields::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class AmbiguousFieldsTest extends TestCase
 {
     public function testFieldsAreEveryFieldWithTheNameInOutputOrder(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT 1 AS a, 2 AS b, 3 AS a')->lookupField('a');
+        $lookup = (new Inspection())->inspect('SELECT 1 AS a, 2 AS b, 3 AS a')->lookupField('a');
 
         self::assertInstanceOf(AmbiguousFields::class, $lookup);
         self::assertSame('a', $lookup->name);

@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
  * and its declared type is checked by PG-IDENTITY-TYPE-001.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Adding an identity
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)');
- *     $statement->toString() // => 'ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)'
+ * @visibility SqlSemantics
  */
 final class AddIdentity implements AlterCommand
 {

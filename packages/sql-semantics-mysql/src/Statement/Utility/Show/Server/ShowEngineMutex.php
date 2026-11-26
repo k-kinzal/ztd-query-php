@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-engine.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW ENGINE InnoDB MUTEX');
- *     [$show->statement->engine?->value, $show->toString()] // => ['InnoDB', 'SHOW ENGINE InnoDB MUTEX']
+ * @visibility SqlSemantics
  */
 final class ShowEngineMutex implements Statement
 {

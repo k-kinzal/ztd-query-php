@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\DataAccess;
@@ -21,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AlterRoutine::class)]
 #[Medium]
@@ -28,9 +28,9 @@ final class AlterRoutineTest extends TestCase
 {
     public function testDeriveStatementChangesNoContext(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $alter = $semantics->analyze("ALTER PROCEDURE shop.p COMMENT 'c' MODIFIES SQL DATA", [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $alter = $semantics->inspect("ALTER PROCEDURE shop.p COMMENT 'c' MODIFIES SQL DATA", [$table]);
 
         self::assertSame([], $alter->facts->diagnostics);
         self::assertSame([], $alter->facts->declarations);
@@ -39,7 +39,7 @@ final class AlterRoutineTest extends TestCase
 
     public function testDeriveStatementReadsTheKindTheNameAndTheCharacteristics(): void
     {
-        $alter = (new Semantics())->analyze('ALTER FUNCTION shop.f NO SQL SQL SECURITY INVOKER');
+        $alter = (new Inspection())->inspect('ALTER FUNCTION shop.f NO SQL SQL SECURITY INVOKER');
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
 
@@ -67,12 +67,12 @@ final class AlterRoutineTest extends TestCase
     #[DataProvider('providerRenderWritesTheAlteration')]
     public function testRenderWritesTheAlteration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedAlteration(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new AlterRoutine(ProgramKind::Procedure, new QualifiedName(new Name('p'), new Name('shop')), [new SqlSecurity(SecurityContext::Definer)]))->render($out);
 

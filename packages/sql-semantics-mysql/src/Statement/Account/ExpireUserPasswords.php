@@ -18,9 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * USER; every account is followed by PASSWORD EXPIRE.
  * Source: https://dev.mysql.com/doc/refman/5.6/en/alter-user.html. Status: Implemented.
  *
- * @visibility public
- * @example Expiring two passwords
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->analyze('alter user a password expire, b password expire')->toString() // => 'ALTER USER a PASSWORD EXPIRE, b PASSWORD EXPIRE'
+ * @visibility SqlSemantics
  */
 final class ExpireUserPasswords implements Statement
 {

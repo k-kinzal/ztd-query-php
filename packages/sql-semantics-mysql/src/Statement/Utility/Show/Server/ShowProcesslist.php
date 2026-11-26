@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW FULL PROCESSLIST');
- *     [$show->statement->full, $show->toString()] // => [true, 'SHOW FULL PROCESSLIST']
+ * @visibility SqlSemantics
  */
 final class ShowProcesslist implements Statement
 {

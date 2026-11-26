@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\CallMisuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\CallMisuseRule;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CallMisuse::class)]
 #[Medium]
@@ -45,7 +45,7 @@ final class CallMisuseTest extends TestCase
 
     public function testMessageNamesTheFunctionAsWritten(): void
     {
-        $query = (new Semantics())->inspect('SELECT ABS(1) OVER ()');
+        $query = (new Inspection())->diagnose('SELECT ABS(1) OVER ()');
 
         self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
         self::assertSame('ABS() may not be used as a window function', $query->facts->diagnostics[0]->message());

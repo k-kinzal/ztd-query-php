@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading the comment of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ALTER FUNCTION f COMMENT 'adds'");
- *     $alter->statement->characteristics[0]->text->value // => 'adds'
+ * @visibility SqlSemantics
  */
 final class RoutineComment implements Characteristic
 {

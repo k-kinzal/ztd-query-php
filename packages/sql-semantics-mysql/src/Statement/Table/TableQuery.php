@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
  * either such a row is an error. The word AS before the query is optional
  * and changes nothing. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-select.html.
  *
- * @visibility public
- * @example Reading the query part
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t IGNORE AS SELECT 1 AS a');
- *     $create->statement->query->duplicate // => \SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Ignore
+ * @visibility SqlSemantics
  */
 final class TableQuery implements Node
 {

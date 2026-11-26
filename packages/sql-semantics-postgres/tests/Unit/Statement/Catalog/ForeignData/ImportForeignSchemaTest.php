@@ -14,11 +14,11 @@ final class ImportForeignSchemaTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('IMPORT FOREIGN SCHEMA remote LIMIT TO (a, b) FROM SERVER s INTO local OPTIONS (x \'y\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('IMPORT FOREIGN SCHEMA remote LIMIT TO (a, b) FROM SERVER s INTO local OPTIONS (x \'y\')')->toString());
+        self::assertSame('IMPORT FOREIGN SCHEMA remote LIMIT TO (a, b) FROM SERVER s INTO local OPTIONS (x \'y\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('IMPORT FOREIGN SCHEMA remote LIMIT TO (a, b) FROM SERVER s INTO local OPTIONS (x \'y\')')->toString());
     }
 
     public function testDeriveStatementDeclaresNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('IMPORT FOREIGN SCHEMA r FROM SERVER s INTO l')->declarations());
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('IMPORT FOREIGN SCHEMA r FROM SERVER s INTO l')->declarations());
     }
 }

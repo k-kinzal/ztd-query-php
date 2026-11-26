@@ -1,0 +1,142 @@
+{
+  "revision": "SemanticsIR/mysql-external-view-read-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-external-view-read-names-v2.json",
+  "rules": {
+    "TableSource::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier::class, 'A table source needs an ordered list of identifier slots.');",
+        "foreach ([$schema, $table] as $object) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(strpbrk($object->value, '/\\.') === false, 'A database or table name excludes path and dot separators.');",
+        "}",
+        "$view = $kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::View;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$materializedView || $view, 'Only a view uses the native materialized view heading.');",
+        "foreach ([$schema, $table, ...$view ? [] : $names] as $object) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $object->value) === 1, 'A schema object name has 1 to 64 characters and no trailing space.');",
+        "}",
+        "$seen = [];",
+        "$native = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "foreach ($names as $name) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$view || strlen($name->value) <= 256, 'An external view field needs at most 256 native bytes.');",
+        "    $key = $view ? $native->key($name->value) : $name->key();",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'A table source cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$types = $columnTypes === [] ? array_fill(0, count($names), \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind::SignedInt) : $columnTypes;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(array_is_list($types) && count($types) === count($names), 'A table source needs one native type per input slot.');",
+        "$owned = [];",
+        "foreach ($types as $type) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind || $type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\IntegralSlot || $type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar, 'A table source needs checked native slot types.');",
+        "    $owned[] = $type;",
+        "}",
+        "$this->columns = $names;",
+        "$this->columnTypes = $owned;"
+      ]
+    },
+    "SourceBinding::source": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->table === null ? null : new \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier(($this->table->name->schema ?? $this->operation->context->declarationSchema)->value), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($this->table->name->name->value), $this->names, $this->columnTypes, $this->kind, $this->table->materializedView);"
+      ]
+    },
+    "SelectBounds::checkLabel": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$label = $result->name->value;",
+        "if ($label !== ltrim($label, \"\\x00.. \")) {",
+        "    $reference = $result->expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($reference instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $reference instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference, 'An intrinsic label belongs to a column reference.');",
+        "    $table = $inputs[$reference->occurrence] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($table instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource, 'An intrinsic MySQL result name must equal its physical input field.');",
+        "    $name = $table->columns[$reference->slot]->value ?? null;",
+        "    $native = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name === $label || $name !== null && $table->materializedView && $native->key($name) === $native->key($label), 'An intrinsic MySQL result name must equal its physical input field.');",
+        "}"
+      ]
+    },
+    "SelectSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $name = $viewNames[$slot] ?? $column->name;",
+        "    $label = $name->value;",
+        "    $retain = $retainRequested && $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias;",
+        "    $intrinsic = $label !== ltrim($label, \"\\x00.. \");",
+        "    if ($localNames && !$retain) {",
+        "        $alias = ' AS ' . $this->localColumn($slot);",
+        "    } elseif ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || $intrinsic) {",
+        "        $alias = '';",
+        "    } elseif ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        $alias = ' AS ' . $name->aliasSql();",
+        "    } else {",
+        "        $alias = ' AS ' . $name->quoted();",
+        "    }",
+        "    if ($intrinsic) {",
+        "        $items[] = $this->projectionOperand($column, $source, $name) . $alias;",
+        "        continue;",
+        "    }",
+        "    $items[] = $this->expression($column->expression, $source) . $alias;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "} elseif ($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $select->orderBy !== []) {",
+        "    $sql .= ' FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single`';",
+        "} elseif (($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744) && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {",
+        "    $sql .= ' FROM DUAL';",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "return $sql . (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultSql())->render($select);"
+      ]
+    },
+    "SelectSql::column": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$inputs = $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join ? $source->inputs() : [$source];",
+        "$input = $inputs[$expression->occurrence] ?? null;",
+        "if ($input instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');",
+        "    $name = $this->localColumn($expression->slot, $input->inheritsRequestedAliases ? $input->definition : null);",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "    $name = $input->columns[$expression->slot]->quoted();",
+        "    if ($spelling !== null) {",
+        "        $name = $spelling->quoted();",
+        "    }",
+        "}",
+        "return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;"
+      ]
+    },
+    "SelectSql::projectionOperand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$operand = $column->expression;",
+        "if ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier && ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference)) {",
+        "    return $this->column($operand, $source, 0, true, $name);",
+        "}",
+        "return $this->expression($operand, $source);"
+      ]
+    }
+  }
+}

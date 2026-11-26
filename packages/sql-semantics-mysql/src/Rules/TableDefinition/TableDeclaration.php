@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\InnoDbKeyLimit;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\ImplicitColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexDeclaration;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
@@ -16,12 +19,22 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIdentityKeys;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\TableIndexDeclarations;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption;
+use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
 
 /**
  * Derives the declaration a table or view definition provides.
@@ -69,11 +82,66 @@ final class TableDeclaration
     /**
      * Answers the declaration of one column definition; `$keyed` tells whether a table-level primary key includes it.
      */
-    public function column(ColumnDefinition $definition, bool $keyed = false): Column
+    public function column(ColumnDefinition $definition, bool $keyed = false, ?Name $tableCollation = null): Column
     {
         $specification = $definition->specification;
 
-        return new Column($definition->name->column, $specification->dataType(), (new ColumnFlags())->nullability($specification, $keyed), $specification instanceof GeneratedColumn);
+        return new Column(
+            $definition->name->column,
+            $specification->dataType(),
+            (new ColumnFlags())->nullability($specification, $keyed),
+            $specification instanceof GeneratedColumn,
+            $this->columnCollation($specification, $tableCollation),
+        );
+    }
+
+    /**
+     * Resolves the column override before considering the checked table default.
+     */
+    public function columnCollation(ColumnSpecification $specification, ?Name $tableCollation = null): ?Name
+    {
+        $collations = [];
+        foreach ($specification->columnAttributes() as $attribute) {
+            if ($attribute instanceof CollateAttribute) {
+                $collations[] = $attribute->collation->name;
+            }
+        }
+
+        if ($collations !== []) {
+            return count($collations) === 1 ? $collations[0] : null;
+        }
+        $type = $specification->dataType();
+        if ($type instanceof Enumeration && $type->charset === null) {
+            return $tableCollation;
+        }
+
+        return $type instanceof Character && !$type->national && $type->charset === null ? $tableCollation : null;
+    }
+
+    /**
+     * Resolves the only native table collation whose character-set identity is checked.
+     */
+    public function tableCollation(CreateTable $definition, GrammarRelease $release): ?Name
+    {
+        $collations = [];
+        $charsets = [];
+        foreach ($definition->options as $position => $option) {
+            if ($option instanceof CollationOption) {
+                $collations[$position] = $option->collation->name;
+            } elseif ($option instanceof CharsetOption) {
+                $charsets[$position] = $option->charset->name;
+            }
+        }
+        $collation = array_values($collations)[0] ?? null;
+        if (count($collations) !== 1 || strtolower($collation->value ?? '') !== 'utf8mb4_bin') {
+            return null;
+        }
+        if ($charsets !== [] && (count($charsets) !== 1 || strtolower(array_values($charsets)[0]->value ?? '') !== 'utf8mb4')) {
+            return null;
+        }
+
+        $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
+        return $legacy && $charsets !== [] && array_key_first($charsets) > array_key_first($collations) ? null : $collation;
     }
 
     /**
@@ -103,11 +171,14 @@ final class TableDeclaration
     public function table(CreateTable $definition, ?QueryFact $output, Derivation $derivation): Table
     {
         $comparison = $derivation->context->columnNames;
+        $profile = $derivation->context->profile;
         $primary = $this->primaryColumns($definition);
+        $collation = $this->tableCollation($definition, $profile->grammar);
         $defined = [];
         foreach ($definition->elements as $element) {
             if ($element instanceof ColumnDefinition) {
-                $defined[] = [$element, $this->column($element, $this->named($element->name->column, $primary, $comparison))];
+                $keyed = $this->named($element->name->column, $primary, $comparison);
+                $defined[] = [$element, $this->column($element, $keyed, $collation)];
             }
         }
         $selected = [];
@@ -133,15 +204,63 @@ final class TableDeclaration
             }
         }
 
-        return $this->split($definition->name, [...$all, ...$selected], $derivation->context->profile, $complete);
+        return $this->physical($definition, [...$all, ...$selected], $profile, $complete);
+    }
+
+    /**
+     * Completes the declared native physical layout after resolving all columns.
+     * @param list<array{ColumnDefinition|null, Column}> $columns The settled table fields in order
+     */
+    public function physical(CreateTable $definition, array $columns, LanguageProfile $profile, bool $complete): Table
+    {
+        $storage = (new DeclaredTableStorage())->resolve($definition);
+        $hasIdentity = (new TableIdentityKeys())->hasIdentity($definition, $columns);
+        $indexes = (new TableIndexDeclarations())->collect($definition, $columns, $profile->grammar);
+
+        return $this->split(
+            $definition->name,
+            $columns,
+            $profile,
+            $complete,
+            $definition->temporary(),
+            $storage,
+            $hasIdentity,
+            $indexes,
+            $this->keyLimit($definition, $profile->grammar)
+        );
+    }
+
+    /**
+     * Resolves the native field limit of the final declared row layout.
+     */
+    public function keyLimit(CreateTable $definition, GrammarRelease $release): ?InnoDbKeyLimit
+    {
+        $rowFormat = null;
+        foreach ($definition->options as $option) {
+            if ($option instanceof RowFormatOption) {
+                $rowFormat = $option->format;
+            }
+        }
+
+        if ($release === GrammarRelease::MySql5651) {
+            return InnoDbKeyLimit::Compact;
+        }
+
+        return match ($rowFormat) {
+            RowFormat::Compact, RowFormat::Redundant => InnoDbKeyLimit::Compact,
+            RowFormat::Dynamic, RowFormat::Compressed => InnoDbKeyLimit::LargePrefix,
+            RowFormat::Fixed => null,
+            RowFormat::Default, null => InnoDbKeyLimit::stock($release),
+        };
     }
 
     /**
      * Builds a declaration from columns, keeping INVISIBLE columns as implicit columns.
      *
      * @param list<array{ColumnDefinition|null, Column}> $columns Each column with the definition it comes from, if any
+     * @param list<IndexDeclaration>|null $indexes The settled physical index layout
      */
-    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete): Table
+    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false, ?string $storageEngine = null, bool $identityKey = false, ?array $indexes = null, ?InnoDbKeyLimit $keyLimit = null): Table
     {
         $visible = [];
         $implicit = [];
@@ -154,7 +273,18 @@ final class TableDeclaration
             }
         }
 
-        return new Table($name, $profile, $visible, $implicit, $complete);
+        return new Table(
+            $name,
+            $profile,
+            $visible,
+            $implicit,
+            $complete,
+            temporary: $temporary,
+            storageEngine: $storageEngine,
+            hasIdentityKey: $identityKey,
+            indexes: $indexes,
+            keyLimit: $keyLimit
+        );
     }
 
     /**
@@ -163,41 +293,62 @@ final class TableDeclaration
      * @param list<Name|null> $names The name of each column: the column list when one is written, else the names the query gives
      * @param bool $listed Whether the names are a written column list, whose length must match the query
      */
-    public function view(QualifiedName $name, QueryFact $output, array $names, bool $listed, LanguageProfile $profile): Table
+    public function view(QualifiedName $name, QueryFact $output, array $names, bool $listed, LanguageProfile $profile, bool $materialized, bool $sourceFree): Table
     {
         $fields = $this->settled($output);
         $complete = $output->shape->complete() && (!$listed || count($names) === count($fields));
         $columns = [];
+        $types = new ViewReadLayout();
         foreach ($fields as $position => $field) {
-            $column = $this->fieldColumn($field, $names[$position] ?? null);
-            if ($column === null) {
+            $label = $names[$position] ?? null;
+            if ($label === null || !$field->type instanceof Known) {
                 $complete = false;
                 break;
             }
-            $columns[] = $column;
+            $origin = $field->column();
+            $reopened = $sourceFree ? $types->integer($field->expression, $profile->grammar) : null;
+            $columns[] = new Column(
+                $label,
+                $reopened ?? $field->type->descriptor,
+                $field->nullability,
+                collation: $field->column()?->collation,
+                usesViewHeading: !$materialized && $origin !== null,
+                readTypeResolved: $reopened !== null || $origin?->readTypeResolved === true
+            );
         }
 
-        return new Table($name, $profile, $columns, [], $complete, RelationKind::View);
+        return new Table($name, $profile, $columns, [], $complete, RelationKind::View, materializedView: $materialized);
     }
 
     /**
      * Builds the declaration of CREATE TABLE ... LIKE from the declaration of the source table, when it is declared.
      */
-    public function like(QualifiedName $name, ?Table $source, LanguageProfile $profile): Table
+    public function like(QualifiedName $name, ?Table $source, LanguageProfile $profile, bool $temporary = false): Table
     {
         if ($source === null) {
-            return new Table($name, $profile, [], [], false);
+            return new Table($name, $profile, [], [], false, temporary: $temporary);
         }
         $columns = [];
         foreach ($source->columns as $column) {
-            $columns[] = new Column($column->name, $column->type, $column->nullability, $column->generated);
+            $columns[] = new Column($column->name, $column->type, $column->nullability, $column->generated, $column->collation);
         }
         $implicit = [];
         foreach ($source->implicit as $hidden) {
-            $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability, $hidden->column->generated));
+            $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability, $hidden->column->generated, $hidden->column->collation));
         }
 
-        return new Table($name, $profile, $columns, $implicit, $source->complete);
+        return new Table(
+            $name,
+            $profile,
+            $columns,
+            $implicit,
+            $source->complete,
+            temporary: $temporary,
+            storageEngine: $source->storageEngine,
+            hasIdentityKey: $source->hasIdentityKey,
+            indexes: $source->indexes,
+            keyLimit: $source->keyLimit
+        );
     }
 
     /**
@@ -205,7 +356,7 @@ final class TableDeclaration
      */
     public function renamed(Column $column, Name $name): Column
     {
-        return new Column($name, $column->type, $column->nullability, $column->generated);
+        return new Column($name, $column->type, $column->nullability, $column->generated, $column->collation);
     }
 
     /**
@@ -229,9 +380,11 @@ final class TableDeclaration
     /**
      * Answers the column an output field makes under a name, or null when its name or type is not determined.
      */
-    public function fieldColumn(Field $field, ?Name $name): ?Column
+    public function fieldColumn(Field $field, ?Name $name, ?Name $collation = null): ?Column
     {
-        return $name === null || !$field->type instanceof Known ? null : new Column($name, $field->type->descriptor, $field->nullability);
+        return $name === null || !$field->type instanceof Known
+            ? null
+            : new Column($name, $field->type->descriptor, $field->nullability, collation: $collation);
     }
 
     /**

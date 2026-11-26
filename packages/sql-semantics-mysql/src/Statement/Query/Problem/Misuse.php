@@ -10,9 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A query MySQL rejects because it breaks a rule of the language.
  *
- * @visibility public
- * @example Reading the problem of a star without input
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: No tables used
+ * @visibility SqlSemantics
  */
 final class Misuse implements Diagnostic
 {

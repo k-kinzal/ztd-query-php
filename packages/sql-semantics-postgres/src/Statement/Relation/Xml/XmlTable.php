@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * not LATERAL is written; the word is kept as written.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PROCESSING-XMLTABLE. Status: Implemented.
  *
- * @visibility public
- * @example Reading the columns of XMLTABLE
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' NOT NULL) AS x");
- *     [$query->field(0)->type->descriptor->name(), $query->field(1)->nullability->name] // => ['integer', 'NotNull']
+ * @visibility SqlSemantics
  */
 final class XmlTable implements Relation
 {

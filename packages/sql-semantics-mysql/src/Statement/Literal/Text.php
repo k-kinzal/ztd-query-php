@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Strings;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/hexadecimal-literals.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding decoded text
  *     (new \SqlSemantics\Platform\MySql\Statement\Literal\Text("it's"))->value // => "it's"
  */

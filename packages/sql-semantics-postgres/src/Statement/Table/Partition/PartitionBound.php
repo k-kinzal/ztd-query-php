@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * is visible ("cannot use column reference in partition bound expression").
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the kind of a bound
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES IN (1, 2)');
- *     $create->statement->definition->bound instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\ListBound // => true
+ * @visibility SqlSemantics
  */
 interface PartitionBound extends Clause
 {

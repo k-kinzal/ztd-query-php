@@ -14,8 +14,8 @@ final class TriggerEventTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TRIGGER g AFTER UPDATE OF a, b OR INSERT ON t EXECUTE FUNCTION f()', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TRIGGER g AFTER UPDATE OF a, b OR INSERT ON t EXECUTE FUNCTION f()', []);
         self::assertSame('CREATE TRIGGER g AFTER UPDATE OF a, b OR INSERT ON t EXECUTE FUNCTION f()', $statement->toString());
     }
 

@@ -14,11 +14,11 @@ final class AddEnumLabelTest extends TestCase
 {
     public function testRenderWritesIfNotExists(): void
     {
-        self::assertSame('ALTER TYPE mood ADD VALUE IF NOT EXISTS \'calm\' BEFORE \'happy\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE mood ADD VALUE IF NOT EXISTS \'calm\' BEFORE \'happy\'')->toString());
+        self::assertSame('ALTER TYPE mood ADD VALUE IF NOT EXISTS \'calm\' BEFORE \'happy\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE mood ADD VALUE IF NOT EXISTS \'calm\' BEFORE \'happy\'')->toString());
     }
 
     public function testDeriveStatementReportsALongLabel(): void
     {
-        self::assertCount(1, (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE mood ADD VALUE \'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\'')->facts->diagnostics);
+        self::assertCount(1, (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE mood ADD VALUE \'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\'')->facts->diagnostics);
     }
 }

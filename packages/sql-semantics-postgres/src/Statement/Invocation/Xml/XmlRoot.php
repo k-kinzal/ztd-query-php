@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * `xmlroot`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML-XMLROOT. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a root without a version
  *     $root = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlRoot(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), null, \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlStandalone::Yes);
  *     [$root->version, $root->standalone->value] // => [null, 'YES']

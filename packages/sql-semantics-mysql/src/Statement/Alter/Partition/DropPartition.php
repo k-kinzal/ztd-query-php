@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions;
  * Mirrors PT_alter_table_drop_partition.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table-partition-operations.html.
  *
- * @visibility public
- * @example Dropping two partitions
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t DROP PARTITION p0, p1');
- *     count($alter->statement->commands[0]->partitions->names) // => 2
+ * @visibility SqlSemantics
  */
 final class DropPartition implements StandaloneCommand
 {

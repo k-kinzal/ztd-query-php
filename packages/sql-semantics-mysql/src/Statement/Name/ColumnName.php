@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * of the statement, so it is kept as written.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/identifier-qualifiers.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a qualified column name
  *     $name = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')));
  *     [$name->table?->name->value, $name->column->value] // => ['t', 'a']

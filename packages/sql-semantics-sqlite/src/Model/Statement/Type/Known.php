@@ -9,10 +9,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A type the rules of the language profile determine exactly.
  *
- * @visibility public
- * @example Reading a known type
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT 'a'");
- *     $operation->field(0)->type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known // => true
+ * @visibility SqlSemantics
  */
 final class Known implements TypeFact
 {

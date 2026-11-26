@@ -1,0 +1,66 @@
+{
+  "revision": "SemanticsIR/postgres-move-sequence-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": ["Schema/Sequence/Alter/MoveSequence"],
+  "scope": "Native ALTER SEQUENCE SET SCHEMA for an absolute persistent source and declared destination, or a guarded absent source whose destination is unevaluated.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-altersequence.html",
+    "https://www.postgresql.org/docs/17/sql-altersequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/tablecmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/tablecmds.c"
+  ],
+  "constructors": {
+    "MoveSequence": {
+      "type": "Schema/Sequence/Alter/MoveSequence",
+      "role": "Move a persistent sequence by its resolved coordinates or report its guarded absence.",
+      "structure": "SequenceSelector, nullable decoded destination namespace, existence guard, and exact native grammar release.",
+      "conditions": "Apply the stock occupancy rules to the selector. A present source requires a declared and portable persistent destination, including a destination equal to the source namespace. A missing source requires IF EXISTS and has no semantic destination. Temporary and TOAST namespace moves are invalid.",
+      "meaning": "Move the same physical sequence and preserve its name, type, persistence, generator state, and references to it. A move to the current namespace checks the same native source restrictions. Ownership and destination collisions can reject the effect atomically at evaluation. If the guarded source is absent the server issues its native relation notice before resolving any destination.",
+      "sql": "Emit ALTER SEQUENCE, the optional guard, and the absolute or checked absent selector, then SET SCHEMA and the independently quoted target. Use the stock pg_catalog destination spelling for the guarded no-op."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "roles": ["local", "other", "missing-scoped", "missing-bare", "missing-namespace"],
+    "destinations": ["same", "first", "second"],
+    "guard": [false, true],
+    "transactional": [false, true],
+    "owned": [false, true],
+    "bound": "120 coordinates per release. Accept 84 analyzed and 84 direct coordinates. Require typed refusals for the 36 unguarded absent coordinates by both paths and compare one corresponding execution of source SQL per coordinate."
+  },
+  "exploration": {
+    "seeds": [7109, 14159, 58243],
+    "casesPerSeed": 15,
+    "directCasesPerSeed": 15,
+    "timeoutSecondsPerRelease": 180,
+    "allowedExclusions": [],
+    "structure": "Vary qualification, quote-sensitive names, catalogue generator settings, absence, dependent default, initial contents, ownership, collisions, destination and transaction."
+  },
+  "observations": [
+    "Catalogue namespace and name, physical OID and filenode, generator settings and last-value state, owner, persistence and rollback.",
+    "Dependent defaults continue pointing to the same sequence OID and unchanged consumer rows retain values, duplicate rows and NULLs.",
+    "External reference interpretation requires the same source and destination namespaces, relation and authorization environment. Check no-op, absent-source notice, wrong kind, missing namespace, unavailable storage namespace, owned-sequence refusal, and occupied destination without dropping effects."
+  ],
+  "negative": [
+    "Analysis refuses unguarded absence, absent selector in an open namespace, a present selector with undeclared destination, foreign database qualification, wrong relation kind, and source or destination temporary/TOAST moves.",
+    "Direct construction refuses unguarded absence, a missing role carrying a destination, a present role without a destination, temporary/TOAST destination and a stock non-sequence source."
+  ],
+  "edges": [
+    "The checked absence of a source is observable even when the written destination does not exist.",
+    "Moving an unowned sequence to its current namespace preserves it exactly.",
+    "An owned sequence cannot be moved even to its own namespace. Observe the native dependent column and refusal.",
+    "Moving to or from an ordinary stock persistent namespace is allowed when the relation name is free and the server grants access.",
+    "A valid local database qualifier, decoded quoted destination, and occupied destination cover distinct cases."
+  ],
+  "faults": [
+    "Select a different physical sequence with the same local name.",
+    "Omit the destination movement by selecting an unchanged or independently empty namespace.",
+    "Remove the guard from an absent source."
+  ],
+  "trust": [
+    "Context declarations identify equivalent external namespaces and relations during analysis.",
+    "Engine-native dependency, schema and storage behaviour are observed in the two registered PostgreSQL releases."
+  ]
+}

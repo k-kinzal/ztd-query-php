@@ -14,10 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
  * https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/with.html.
  *
- * @visibility public
- * @example Reading which lengths disagree
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 UNION SELECT 1, 2');
- *     $query->facts->diagnostics[0]->list // => \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList::SetOperands
+ * @visibility SqlSemantics
  */
 enum CountedList: string
 {

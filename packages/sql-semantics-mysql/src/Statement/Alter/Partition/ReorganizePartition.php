@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
  * are synonyms. The partition values are constants.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-management-range-list.html.
  *
- * @visibility public
- * @example Splitting a partition
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REORGANIZE PARTITION p0 INTO (PARTITION a VALUES LESS THAN (5), PARTITION b VALUES LESS THAN (10))');
- *     count($alter->statement->commands[0]->definitions) // => 2
+ * @visibility SqlSemantics
  */
 final class ReorganizePartition implements StandaloneCommand
 {

@@ -9,8 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder;
@@ -19,6 +17,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(SortTerm::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class SortTermTest extends TestCase
 {
     public function testRenderWritesTheDirectionAndTheNullPlacement(): void
     {
-        $query = (new Semantics())->analyze('select a from t order by a + 1 asc nulls first, b desc, a nulls last, b');
+        $query = (new Inspection())->inspect('select a from t order by a + 1 asc nulls first, b desc, a nulls last, b');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $terms = $query->statement->orderBy;
@@ -44,16 +44,16 @@ final class SortTermTest extends TestCase
 
     public function testRenderWritesANewlyBuiltTerm(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $term = new SortTerm(new ColumnUse(new Name('a')), SortDirection::Descending, NullsOrder::Last);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new ColumnUse(new Name('a')))], new TableInput(new QualifiedName(new Name('t'))), null, [], null, [], [$term]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new ColumnUse(new Name('a')))], new TableInput(new QualifiedName(new Name('t'))), null, [], null, [], [$term]));
 
         self::assertSame('SELECT a FROM t ORDER BY a DESC NULLS LAST', $operation->toString());
     }
 
     public function testRenderWritesTheOrderingOfAnAggregateArgument(): void
     {
-        $query = (new Semantics())->analyze('select group_concat(a order by b desc, a) AS c1 from t');
+        $query = (new Inspection())->inspect('select group_concat(a order by b desc, a) AS c1 from t');
 
         self::assertSame('SELECT group_concat(a ORDER BY b DESC, a) AS c1 FROM t', $query->toString());
     }

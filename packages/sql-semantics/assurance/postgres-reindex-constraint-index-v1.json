@@ -1,0 +1,127 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-constraint-index-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-reindex-index-v1.json",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings and native parameters. A declared explicit named key in an ordinary table owns a physical local index.",
+  "scope": "Rebuild explicitly named standalone constraint-owned indexes of ordinary application tables. Preserve native primary, unique, NULL equality and deferral semantics and observe exact FK dependency changes.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Index/ConstraintIndexReference": {
+      "role": "The exact physical index owned by a named declarative primary or unique key.",
+      "structure": "One decoded absolute schema, explicit constraint and index name, and the indexed owner table name.",
+      "conditions": "The index and table have different relation names and share the declared application schema. The analyzer identifies a definite explicitly named key owned by the selected ordinary table. The value is eligible for the checked rebuild but does not inhabit an ordinary removal target.",
+      "meaning": "Reference the local physical index of the exact named constraint in the supplied declared table identity. Rebuilding changes storage and may swap the physical index identity while preserving and reconnecting the owning and referring constraints.",
+      "sql": "Use the independently quoted decoded schema and constraint index name at the checked REINDEX INDEX boundary.",
+      "externalInterpretation": "Same declared table and constraint-backed index, same native grammar release and options, constraints and peer tables, and the same fixture data and transaction state.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "amendedConstructors": {
+    "Schema/Index/ReindexIndex": "Accept either an ordinary index reference or a checked constraint-owned index reference. Retain the same requested concurrency mode and native publication checks."
+  },
+  "existingRoles": [
+    "Schema/Index/IndexReference",
+    "Schema/Index/ReindexIndex",
+    "Schema/Index/IndexRebuildMode",
+    "Schema/Index/DropIndex"
+  ],
+  "rules": [
+    "A named primary or unique declaration supplies a definite index coordinate and a distinct constraint-owned target role.",
+    "During persistent concurrent rebuilding PostgreSQL can swap the index OID. The owning constraint and any FK dependency retain their own identities and refer to the replacement index.",
+    "Standard rebuilding and transaction rollback follow the existing ordinary-index transition rules. Requests inside a transaction use the same exact native concurrency restriction.",
+    "A declared constraint index preserves its enforcement, including NULL policy, primary-key non-null conditions and explicit deferral."
+  ],
+  "observations": [
+    "Bound index role and owner, rebuild status, catalog OID and file-node relations, primary and unique policies, position and physical types, validation and deferral flags, and phase-specific state.",
+    "Exact conindid link from the preserved owner and referring foreign constraint to the current physical index.",
+    "Preservation of rows and typed write effects after a rebuild or rollback, with SQLSTATE for duplicate keys, repeated NULL and missing foreign-key values."
+  ],
+  "finite": {
+    "kind": [
+      "primary",
+      "unique",
+      "unique-nulls",
+      "deferrable"
+    ],
+    "concurrently": [
+      false,
+      true
+    ],
+    "active": [
+      false,
+      true
+    ],
+    "spelling": [
+      "qualified",
+      "local"
+    ],
+    "identity": "Consume all 32 ordered coordinates on each pinned native release through public direct and analyzed construction. A named FK points at each immediate unique declaration and is absent for the deferrable key fixture. The reference and its dependent constraint identities are checked in each phase."
+  },
+  "exploration": {
+    "seeds": [
+      8203,
+      62449,
+      170141
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 360,
+    "allowedExclusions": [],
+    "domain": "Vary the primary or unique constraint kind, ordered schema selection, explicit identifier spelling, concurrent request, transaction, NULL policy, linked referential values and unrelated decoys."
+  },
+  "negative": [
+    "DROP INDEX refuses a declared primary index",
+    "DROP INDEX refuses a declared unique constraint index",
+    "A missing named constraint index cannot publish",
+    "Two conflicting index declarations cannot bind",
+    "A partitioned index remains outside the nonpartitioned rebuild role"
+  ],
+  "faults": [
+    "Publish a constraint-owned index through the ordinary role",
+    "Emit a different owner schema",
+    "Suppress the requested concurrent mode and its constraint-link transition",
+    "Accept a stale reconstructed foreign-key index link as valid evidence"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html"
+  ],
+  "trust": [
+    "Exact declarations, closed target types and physical relation identity, pinned PHP construction and renderer, independently observed catalog link identities and typed PostgreSQL writes.",
+    "The protected verifier distinguishes equivalent shapes and exact dependency preservation within the specified fixed finite profiles."
+  ],
+  "open": [
+    "Exclusion indexes, partitioned indexes, implicit names and generated collision suffixes, invalid physical indexes and non-index REINDEX targets remain in the fixed whole-language inventory."
+  ],
+  "calibration": {
+    "driver": "703f8d2295c520a13beb21e8673342d191d2c13f3bfe62b2a9f61082a5e6100d",
+    "queryPack": "ff8d771ec13dbe488339a6bf6542a4942b3fa960cb5dc41029238075114442f3",
+    "referenceComparison": "b8b72de61ca6bf38a487c553f7b8529b06ac21746dd74ff9b26fd71e09ed1cbb",
+    "nativeTransitions": "27146b29df158d8175317917b897683e34d225c1c02300e8451fc983ba1503f6",
+    "successfulRebuilds": 24,
+    "concurrentOidsReassigned": 8,
+    "prohibitedInTransaction": 8,
+    "16.6": {
+      "stdout": "57c9eddacd16891ecfc29da429a124d1b1e295f37778c60e6ccb80912e2fb5e5",
+      "stderr": "99c5342ac497562417f2dff9d39cd7bf16bfdd473a75119fe849e26a02906934"
+    },
+    "17.2": {
+      "stdout": "c820a83fc43db68ab3b138d712ad0466382f6f666f5938dd2121a8eb80632bca",
+      "stderr": "8c156832e1e3af1d0b91815bfbafb1ace2a85aebb848762223727692d0db8cf2"
+    }
+  }
+}

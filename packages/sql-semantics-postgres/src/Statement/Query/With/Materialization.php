@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\With;
  * absence of the clause and is kept as null.
  * Source: https://www.postgresql.org/docs/17/queries-with.html#QUERIES-WITH-CTE-MATERIALIZATION.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the choice that folds the query in
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\With\Materialization::NotMaterialized->value // => 'NOT MATERIALIZED'
  */

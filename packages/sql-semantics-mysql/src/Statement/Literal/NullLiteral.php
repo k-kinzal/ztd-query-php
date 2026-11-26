@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
  * Rule: MYSQL-NULL-LITERAL-001. Facts: the type of a bare NULL; always NULL.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/null-values.html. Status: Implemented.
  *
- * @visibility public
- * @example Typing a bare NULL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = NULL');
- *     $query->facts->scalar($query->statement->where->right)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable
+ * @visibility SqlSemantics
  */
 final class NullLiteral implements Scalar
 {

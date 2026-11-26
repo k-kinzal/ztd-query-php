@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Table\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\StorageMedium;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StorageAttribute::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class StorageAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT STORAGE MEMORY)');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT STORAGE MEMORY)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -34,6 +34,6 @@ final class StorageAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT STORAGE MEMORY)', (new Semantics())->analyze('CREATE TABLE t (a INT STORAGE MEMORY)')->toString());
+        self::assertSame('CREATE TABLE t (a INT STORAGE MEMORY)', (new Inspection())->inspect('CREATE TABLE t (a INT STORAGE MEMORY)')->toString());
     }
 }

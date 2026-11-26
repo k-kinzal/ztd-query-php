@@ -14,11 +14,11 @@ final class CreateForeignServerTest extends TestCase
 {
     public function testRenderWritesTypeVersionAndWrapper(): void
     {
-        self::assertSame('CREATE SERVER IF NOT EXISTS s TYPE \'pg\' VERSION \'17\' FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host \'db\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SERVER IF NOT EXISTS s TYPE \'pg\' VERSION \'17\' FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host \'db\')')->toString());
+        self::assertSame('CREATE SERVER IF NOT EXISTS s TYPE \'pg\' VERSION \'17\' FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host \'db\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE SERVER IF NOT EXISTS s TYPE \'pg\' VERSION \'17\' FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host \'db\')')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SERVER s FOREIGN DATA WRAPPER w')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE SERVER s FOREIGN DATA WRAPPER w')->facts->diagnostics);
     }
 }

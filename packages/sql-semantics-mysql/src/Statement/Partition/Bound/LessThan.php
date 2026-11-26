@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * values. The two spellings of the greatest bound are kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-range.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the unbounded last range
  *     (new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\LessThan(null))->row // => null
  */

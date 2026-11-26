@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-indexes-keys.
  *
- * @visibility public
- * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: All parts of a PRIMARY KEY must be NOT NULL; column a is declared NULL.
+ * @visibility SqlSemantics
  */
 final class NullablePrimaryKey implements Diagnostic
 {

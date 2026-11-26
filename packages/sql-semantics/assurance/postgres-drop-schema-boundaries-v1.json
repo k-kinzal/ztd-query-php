@@ -1,0 +1,98 @@
+{
+  "revision": "SemanticsIR/postgres-drop-schema-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-reindex-tablespace-boundaries-v1.json",
+  "scope": "Check namespace identity, absence, order, detached storage and exact DROP SCHEMA publication.",
+  "rules": {
+    "Schema/Namespace/DropSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checked = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($targets, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaDropTarget::class, 'A schema removal requires a nonempty ordered selector list.', 1);",
+        "$presence = [];",
+        "foreach ($checked as $target) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($target->present || $ifExists, 'An absent schema removal target requires IF EXISTS.');",
+        "    $name = $target->name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($presence[$name]) || $presence[$name] === $target->present, 'A schema removal cannot disagree about a named target.');",
+        "    $presence[$name] = $target->present;",
+        "}",
+        "$this->targets = $checked;"
+      ]
+    },
+    "Schema/Namespace/DropSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->targets as $target) {",
+        "    $names[] = $target->name->quoted();",
+        "}",
+        "return 'DROP SCHEMA ' . ($this->ifExists ? 'IF EXISTS ' : '') . implode(', ', $names) . ($this->cascade ? ' CASCADE' : ' RESTRICT');"
+      ]
+    },
+    "Schema/Namespace/SchemaDropTarget::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name->value !== 'pg_temp' && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($name->value), 'A schema removal needs a persistent namespace coordinate.');"
+      ]
+    },
+    "Schema/Namespace/DropSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema && $context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'DROP SCHEMA requires the native PostgreSQL namespace profile.');",
+        "$binding = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding();",
+        "$targets = [];",
+        "foreach ($statement->objects as $object) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\UnqualifiedName, 'DROP SCHEMA requires an unqualified namespace selector.');",
+        "    $present = $binding->known($context, $object->name);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($present || $context->complete, 'An absent schema requires a complete namespace declaration context.');",
+        "    $targets[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaDropTarget(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($object->name->value), $present);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\DropSchema($targets, $statement->ifExists, $statement->behavior === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior::Cascade, $context->profile->grammar);"
+      ]
+    },
+    "Schema/DropRelationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match ($statement->kind) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\DropIndexLowering())->lower($operation, $statement),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\DropSchemaLowering())->lower($operation, $statement),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropTableLowering())->lower($operation, $statement),",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::View, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::MaterializedView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\DropViewLowering())->lower($operation, $statement),",
+        "    default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The complete DROP requires a supported persistent relation kind.'),",
+        "};"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => match ($statement->target) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSchemaLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabaseLowering())->lower($operation, $statement),",
+        "    },",
+        "};"
+      ]
+    }
+  }
+}

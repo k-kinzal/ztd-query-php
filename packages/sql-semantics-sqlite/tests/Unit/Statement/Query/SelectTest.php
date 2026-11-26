@@ -9,14 +9,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -30,6 +28,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Select::class)]
 #[Medium]
@@ -37,7 +37,7 @@ final class SelectTest extends TestCase
 {
     public function testInputIsTheFromRelation(): void
     {
-        $statement = (new Semantics())->inspect('SELECT a FROM t')->statement;
+        $statement = (new Inspection())->diagnose('SELECT a FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(TableInput::class, $statement->input());
@@ -47,7 +47,7 @@ final class SelectTest extends TestCase
 
     public function testInputIsNullWithoutFrom(): void
     {
-        $statement = (new Semantics())->inspect('SELECT 1')->statement;
+        $statement = (new Inspection())->diagnose('SELECT 1')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertNull($statement->input());
@@ -55,9 +55,9 @@ final class SelectTest extends TestCase
 
     public function testDeriveStatementRecordsTheOutputFields(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a, b AS x, a+1 FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a, b AS x, a+1 FROM t', [$create]);
 
         self::assertCount(3, $query->fields() ?? []);
         self::assertSame('a', $query->field(0)->name?->value);
@@ -70,7 +70,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
-        $query = (new Semantics())->inspect('SELECT RAISE(IGNORE)');
+        $query = (new Inspection())->diagnose('SELECT RAISE(IGNORE)');
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
@@ -78,9 +78,9 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryLetsOrderByPreferABareAlias(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a AS b, b AS a FROM t ORDER BY a', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a AS b, b AS a FROM t ORDER BY a', [$create]);
 
         self::assertInstanceOf(Select::class, $query->statement);
         $resolution = $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution;
@@ -91,9 +91,9 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryLetsWhereSeeInputColumnsBeforeAliases(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a AS c, b AS a FROM t WHERE c > 1 AND a > 1', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a AS c, b AS a FROM t WHERE c > 1 AND a > 1', [$create]);
 
         self::assertInstanceOf(Select::class, $query->statement);
         $where = $query->statement->where;
@@ -110,9 +110,9 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryKeepsResultColumnsFromSeeingEachOther(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a AS c, c FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a AS c, c FROM t', [$create]);
 
         self::assertInstanceOf(MissingColumn::class, $query->field(1)->resolution);
         self::assertSame('Column c does not exist.', $query->facts->diagnostics[0]->message());
@@ -120,11 +120,11 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryMakesEveryInputColumnNullableInAnAggregateQueryWithoutGroupBy(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $aggregate = $semantics->inspect('SELECT count(*), a FROM t', [$create]);
-        $grouped = $semantics->inspect('SELECT count(*), a FROM t GROUP BY a', [$create]);
-        $window = $semantics->inspect('SELECT count(*) OVER (), a FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $aggregate = $semantics->diagnose('SELECT count(*), a FROM t', [$create]);
+        $grouped = $semantics->diagnose('SELECT count(*), a FROM t GROUP BY a', [$create]);
+        $window = $semantics->diagnose('SELECT count(*) OVER (), a FROM t', [$create]);
 
         self::assertSame(Nullability::Nullable, $aggregate->field(1)->nullability);
         self::assertSame(Nullability::NotNull, $grouped->field(1)->nullability);
@@ -133,7 +133,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryReportsAStarWithoutInput(): void
     {
-        $query = (new Semantics())->inspect('SELECT *');
+        $query = (new Inspection())->diagnose('SELECT *');
 
         self::assertCount(0, $query->fields() ?? []);
         self::assertSame([], $query->shape()?->slots);
@@ -142,9 +142,9 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryReportsARowValueInEveryClauseThatNeedsASingleValue(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT (a, b) FROM t WHERE (a, b) GROUP BY (a, b) HAVING (a, b) ORDER BY (a, b)', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT (a, b) FROM t WHERE (a, b) GROUP BY (a, b) HAVING (a, b) ORDER BY (a, b)', [$create]);
 
         self::assertCount(5, $query->facts->diagnostics);
         self::assertSame(['row value misused'], array_unique(array_map(static fn (object $problem): string => $problem->message(), $query->facts->diagnostics)));
@@ -152,7 +152,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryGivesAnUndeclaredStarAnOpenProjection(): void
     {
-        $query = (new Semantics())->inspect('SELECT a, * FROM t');
+        $query = (new Inspection())->diagnose('SELECT a, * FROM t');
 
         self::assertNull($query->fields());
         self::assertInstanceOf(OpenStar::class, $query->facts->output?->projection[1]);
@@ -162,9 +162,9 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryKeepsLimitFromSeeingTheColumns(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a FROM t LIMIT a', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a FROM t LIMIT a', [$create]);
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertNotNull($query->statement->limit);
@@ -173,16 +173,16 @@ final class SelectTest extends TestCase
 
     public function testRenderWritesEveryClauseInGrammarOrder(): void
     {
-        $query = (new Semantics())->inspect('select distinct a, count(*) as n from t where a > 1 group by a having n > 1 window w as (partition by a) order by n desc limit 3 offset 1');
+        $query = (new Inspection())->diagnose('select distinct a, count(*) as n from t where a > 1 group by a having n > 1 window w as (partition by a) order by n desc limit 3 offset 1');
 
         self::assertSame('SELECT DISTINCT a, count(*) AS n FROM t WHERE a > 1 GROUP BY a HAVING n > 1 WINDOW w AS (PARTITION BY a) ORDER BY n DESC LIMIT 3 OFFSET 1', $query->toString());
     }
 
     public function testRenderWritesANewlyBuiltSelection(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $select = new Select([new ResultColumn(new ColumnUse(new Name('a')), new Name('x')), new Star()], new TableInput(new QualifiedName(new Name('t'))), null, [new ColumnUse(new Name('a'))], null, [], [new SortTerm(new OutputOrdinal(new IntegerLiteral('1')))], null, SetQuantifier::All);
-        $operation = new Operation($semantics->context(), $select);
+        $operation = new InspectedStatement($semantics->context(), $select);
 
         self::assertSame('SELECT ALL a AS x, * FROM t GROUP BY a ORDER BY 1', $operation->toString());
         self::assertSame(SetQuantifier::All, $select->quantifier);
@@ -211,7 +211,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryTypesAConstantResultColumn(): void
     {
-        $query = (new Semantics())->inspect("SELECT 1 AS n, 'x' AS s");
+        $query = (new Inspection())->diagnose("SELECT 1 AS n, 'x' AS s");
         $type = $query->field('n')->type;
 
         self::assertInstanceOf(Known::class, $type);

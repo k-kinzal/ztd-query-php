@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * where no column is visible.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the values of a list bound
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TABLE p1 PARTITION OF p FOR VALUES IN ('a', 'b')");
- *     count($create->statement->definition->bound->values) // => 2
+ * @visibility SqlSemantics
  */
 final class ListBound implements PartitionBound
 {

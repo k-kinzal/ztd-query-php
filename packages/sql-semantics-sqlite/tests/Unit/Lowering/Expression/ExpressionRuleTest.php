@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\ExpressionRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
@@ -33,6 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ExpressionRule::class)]
 #[Medium]
@@ -40,7 +40,7 @@ final class ExpressionRuleTest extends TestCase
 {
     public function testExpressionKeepsEveryParenthesisPairAsAGrouping(): void
     {
-        $operation = (new Semantics())->analyze('SELECT (1 + 2) * 3, ((4))');
+        $operation = (new Inspection())->inspect('SELECT (1 + 2) * 3, ((4))');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -60,7 +60,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testExpressionLowersCollateCastAndRowExpressions(): void
     {
-        $operation = (new Semantics())->analyze("SELECT a COLLATE nocase, CAST(a AS TEXT), (1, 'x') = (2, 'y') FROM t");
+        $operation = (new Inspection())->inspect("SELECT a COLLATE nocase, CAST(a AS TEXT), (1, 'x') = (2, 'y') FROM t");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([Collate::class, Cast::class, Binary::class], array_map(static function (object $column): string {
@@ -79,7 +79,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testExpressionLowersAScalarSubqueryAndAnExistsTest(): void
     {
-        $operation = (new Semantics())->analyze('SELECT (SELECT 1), EXISTS (SELECT 1 FROM t)');
+        $operation = (new Inspection())->inspect('SELECT (SELECT 1), EXISTS (SELECT 1 FROM t)');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -93,7 +93,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testExpressionLowersRaiseWithAndWithoutAMessage(): void
     {
-        $operation = (new Semantics())->analyze("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(IGNORE), RAISE(ABORT, 'no'); END");
+        $operation = (new Inspection())->inspect("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(IGNORE), RAISE(ABORT, 'no'); END");
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         $select = $operation->statement->steps[0];
@@ -114,7 +114,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testTermLowersALiteralTerm(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 7');
+        $operation = (new Inspection())->inspect('SELECT 7');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -124,7 +124,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testWordLowersAnUnqualifiedWordByHowItIsWritten(): void
     {
-        $operation = (new Semantics())->analyze('SELECT "w" AS c1, TRUE AS c2, false AS c3, a AS c4, [true] AS c5, `false` AS c6 FROM t');
+        $operation = (new Inspection())->inspect('SELECT "w" AS c1, TRUE AS c2, false AS c3, a AS c4, [true] AS c5, `false` AS c6 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $expressions = array_map(static function (object $column): object {
@@ -149,7 +149,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testColumnLowersTableAndSchemaQualifiedColumnUses(): void
     {
-        $operation = (new Semantics())->analyze('SELECT t.a, main.t.b FROM t');
+        $operation = (new Inspection())->inspect('SELECT t.a, main.t.b FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -169,7 +169,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testParameterLowersEveryPrefixWithItsLabel(): void
     {
-        $operation = (new Semantics())->analyze('SELECT ?, ?1, :x, @y, $z');
+        $operation = (new Inspection())->inspect('SELECT ?, ?1, :x, @y, $z');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([[ParameterPrefix::Question, ''], [ParameterPrefix::Question, '1'], [ParameterPrefix::Colon, 'x'], [ParameterPrefix::At, 'y'], [ParameterPrefix::Dollar, 'z']], array_map(static function (object $column): array {
@@ -183,7 +183,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testConditionalLowersTheBaseTheBranchesAndTheElsePart(): void
     {
-        $operation = (new Semantics())->analyze('SELECT CASE a WHEN 1 THEN 2 WHEN 3 THEN 4 ELSE 5 END, CASE WHEN a THEN 1 END FROM t');
+        $operation = (new Inspection())->inspect('SELECT CASE a WHEN 1 THEN 2 WHEN 3 THEN 4 ELSE 5 END, CASE WHEN a THEN 1 END FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -207,7 +207,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testListLowersAnEmptyAndAFilledExpressionList(): void
     {
-        $operation = (new Semantics())->analyze('SELECT random(), max(1, 2, 3)');
+        $operation = (new Inspection())->inspect('SELECT random(), max(1, 2, 3)');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([0, 3], array_map(static function (object $column): int {
@@ -220,7 +220,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testItemsLowersTheExpressionsOfARowInWrittenOrder(): void
     {
-        $operation = (new Semantics())->analyze("VALUES (1, 'two', 3.0)");
+        $operation = (new Inspection())->inspect("VALUES (1, 'two', 3.0)");
 
         self::assertInstanceOf(ValuesClause::class, $operation->statement);
         self::assertSame([IntegerLiteral::class, TextLiteral::class, 'SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\RealLiteral'], array_map(static fn (object $value): string => $value::class, $operation->statement->rows[0]->values));
@@ -228,7 +228,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testOptionalListIsNullWithoutParenthesesAfterATableValuedIn(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a IN t, a IN f(), a IN f(1, 2) FROM u');
+        $operation = (new Inspection())->inspect('SELECT a IN t, a IN f(), a IN f(1, 2) FROM u');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([null, 0, 2], array_map(static function (object $column): ?int {
@@ -242,14 +242,24 @@ final class ExpressionRuleTest extends TestCase
 
     public function testWhereIsNullWithoutTheClause(): void
     {
-        $semantics = new Semantics();
-        $bare = $semantics->analyze('SELECT 1 FROM t')->statement;
-        $filtered = $semantics->analyze('SELECT 1 FROM t WHERE a = 1')->statement;
+        $semantics = new Inspection();
+        $bare = $semantics->inspect('SELECT 1 FROM t')->statement;
+        $filtered = $semantics->inspect('SELECT 1 FROM t WHERE a = 1')->statement;
 
         self::assertInstanceOf(Select::class, $bare);
         self::assertInstanceOf(Select::class, $filtered);
         self::assertNull($bare->where);
         self::assertInstanceOf(Binary::class, $filtered->where);
         self::assertSame(BinaryOperator::Equal, $filtered->where->operator);
+    }
+
+    public function testCastRetainsTheNativeTypeTokenRange(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT CAST(1 AS NUMERIC (04, 02))');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
+        $cast = $operation->statement->columns[0]->expression;
+        self::assertInstanceOf(Cast::class, $cast);
+        self::assertSame('NUMERIC (04, 02)', $cast->nativeType());
     }
 }

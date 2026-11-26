@@ -13,11 +13,11 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ColumnRule::class)]
 #[Medium]
@@ -70,12 +70,12 @@ final class ColumnRuleTest extends TestCase
 
     public function testRefuseNamesTheFirstRefusedAttribute(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         $this->expectException(AnalysisException::class);
         $this->expectExceptionMessage('Incorrect usage of COLUMN_FORMAT and generated column');
 
-        $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
+        $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
     }
 
     public function testRefuseNamesTheTypeSerial(): void
@@ -83,12 +83,12 @@ final class ColumnRuleTest extends TestCase
         $this->expectException(AnalysisException::class);
         $this->expectExceptionMessage('Incorrect usage of SERIAL and generated column');
 
-        (new Semantics())->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+        (new Inspection())->inspect('ALTER TABLE t ADD g SERIAL AS (1)');
     }
 
     public function testRefuseAcceptsTheOtherAttributes(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
 
         self::assertSame([], $create->facts->diagnostics);
     }

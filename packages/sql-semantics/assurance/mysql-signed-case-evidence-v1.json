@@ -1,0 +1,26 @@
+{
+  "revision": "SemanticsIR/mysql-signed-case-evidence-1",
+  "approval": "pending-human-review",
+  "reference": {
+    "file": "mysql-signed-case-v1.json",
+    "sha256": "8441115abb49621405f9b4edae5ef4a06a5e006ccd6b20bb1e612c4753f19046"
+  },
+  "faults": [
+    "Remove the nonempty arm guard",
+    "Swap two effective WHEN branches",
+    "Drop the explicit ELSE",
+    "Substitute the wrong signed field occurrence",
+    "Apply the modern result merge to a legacy release",
+    "Ignore an independently known native nullability mismatch"
+  ],
+  "legacyFaults": [],
+  "legacyReleases": [
+    "mysql-5.6.51",
+    "mysql-5.7.44"
+  ],
+  "negativeCount": 7,
+  "sourceFaults": [
+    "mysql-case-use-caller-arm-array",
+    "mysql-case-skip-result-in-scope"
+  ]
+}

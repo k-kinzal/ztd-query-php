@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * is. The result column is named `json_serialize`.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonSerialize(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral())))->outputName()->value // => 'json_serialize'
  */

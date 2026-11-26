@@ -12,10 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A command that names a relation of a kind it does not accept, as the declaration of the relation states it.
  *
- * @visibility public
- * @example Reading the problem of a TRUNCATE of a view
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $semantics->analyze('TRUNCATE v', [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: "v" is not a table
+ * @visibility SqlSemantics
  * @example Refusing a problem without the relation its message names
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView, null) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  * @example Refusing an action for a rule that names none

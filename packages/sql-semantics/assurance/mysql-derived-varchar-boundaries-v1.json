@@ -1,0 +1,91 @@
+{
+  "revision": "SemanticsIR/mysql-derived-varchar-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Keep derived leaf field kinds, column lookup and every consuming reference at the same checked boundaries.",
+  "rules": {
+    "From/DerivedSource::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');",
+        "Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');",
+        "foreach ($definition->columns as $column) {",
+        "    Check::input(",
+        "        $column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference",
+        "            || $column->expression instanceof TextColumnReference,",
+        "        'A derived join field requires a signed literal or a signed column, or a native VARCHAR column.'",
+        "    );",
+        "}"
+      ]
+    },
+    "From/DerivedSource::columnType": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expression = $this->definition->columns[$slot]->expression ?? null;",
+        "if ($expression === null) {",
+        "    return null;",
+        "}",
+        "if ($expression instanceof TextColumnReference) {",
+        "    $source = $this->definition->source;",
+        "    Check::invariant($source instanceof TableSource, 'A derived VARCHAR read has an independent physical source.');",
+        "    $type = $source->columnTypes[$expression->slot] ?? null;",
+        "    Check::invariant($type instanceof Varchar, 'A checked derived VARCHAR field has its declared type.');",
+        "",
+        "    return $type;",
+        "}",
+        "Check::invariant($expression instanceof IntegerLiteral || $expression instanceof ColumnReference, 'A derived signed field has a checked expression.');",
+        "",
+        "return ColumnKind::SignedInt;"
+      ]
+    },
+    "From/DerivedBinding::resolved": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(",
+        "    $resolution->depth === 0 && $resolution->relation === $this->input,",
+        "    'A derived reference must belong to its join input.'",
+        ");",
+        "$slots = $this->operation->facts->relation($this->input)->shape->slots;",
+        "$position = array_search($resolution->slot, $slots, true);",
+        "Check::input($position !== false && isset($this->value->definition->columns[$position]), 'A derived reference must resolve to a defined field.');",
+        "",
+        "return $this->value->columnType($position) instanceof Varchar ? new TextColumnReference($position) : new ColumnReference($position);"
+      ]
+    },
+    "From/OccurrenceScope::hasSlot": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $input instanceof DerivedSource ? $input->columnType($slot) === ColumnKind::SignedInt",
+        "    : ($input->columnTypes[$slot] ?? null) === ColumnKind::SignedInt;"
+      ]
+    },
+    "From/OccurrenceScope::textColumn": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$input = $inputs[$reference->occurrence] ?? null;",
+        "if ($input instanceof DerivedSource) {",
+        "    Check::input($input->columnType($reference->slot) instanceof Varchar, 'A derived VARCHAR reference must read a native VARCHAR output.');",
+        "",
+        "    return;",
+        "}",
+        "Check::input(",
+        "    $input instanceof TableSource && ($input->columnTypes[$reference->slot] ?? null) instanceof Varchar,",
+        "    'A VARCHAR slot must belong to a visible physical input occurrence.',",
+        ");"
+      ]
+    }
+  }
+}

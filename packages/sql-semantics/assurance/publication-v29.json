@@ -1,0 +1,174 @@
+{
+  "revision": "SemanticsIR/publication-29",
+  "approval": "pending-human-review",
+  "replaces": "publication-v28.json",
+  "analyzerInterface": "SqlSemantics\\Analyzer::analyze",
+  "interfaceResult": "SqlSemantics\\SemanticsIR",
+  "dialects": [
+    "MySql",
+    "PostgreSql",
+    "Sqlite"
+  ],
+  "single": {
+    "method": "Semantics::analyze",
+    "result": "Ir\\Select",
+    "boundary": "Bind a single SQL statement against a dialect context, reject semantic errors, and construct the registered final dialect value before returning it. SQLite INSERT publishes its checked default, VALUES or SELECT input through the same checked write constructor.",
+    "additionalDialectResults": {
+      "MySql": [
+        "Ir\\Aggregation\\GroupedSelect",
+        "Ir\\Mutation\\Delete",
+        "Ir\\Mutation\\Insert",
+        "Ir\\Mutation\\InsertQuery",
+        "Ir\\Mutation\\Update",
+        "Ir\\Rows\\Compound",
+        "Ir\\Rows\\LocalProjection",
+        "Ir\\Rows\\RecursiveSeries",
+        "Ir\\Rows\\With\\WithProjection",
+        "Ir\\Schema\\CreateTable",
+        "Ir\\Schema\\DropTable",
+        "Ir\\Schema\\View\\DropView",
+        "Ir\\Transaction\\Transaction"
+      ],
+      "PostgreSql": [
+        "Ir\\Aggregation\\GroupedSelect",
+        "Ir\\Mutation\\Delete",
+        "Ir\\Mutation\\Insert",
+        "Ir\\Mutation\\InsertQuery",
+        "Ir\\Mutation\\Update",
+        "Ir\\Rows\\Compound",
+        "Ir\\Rows\\LocalProjection",
+        "Ir\\Rows\\RecursiveSeries",
+        "Ir\\Rows\\With\\WithProjection",
+        "Ir\\Schema\\CreateTable",
+        "Ir\\Schema\\DropTable",
+        "Ir\\Transaction\\Transaction"
+      ],
+      "Sqlite": [
+        "Ir\\Aggregation\\GroupedSelect",
+        "Ir\\Mutation\\Delete",
+        "Ir\\Mutation\\Insert",
+        "Ir\\Mutation\\Update",
+        "Ir\\Rows\\Compound",
+        "Ir\\Rows\\ValuesQuery",
+        "Ir\\Schema\\CreateTable",
+        "Ir\\Schema\\DropTable",
+        "Ir\\Schema\\DropView",
+        "Ir\\Transaction\\Transaction",
+        "Ir\\Schema\\Query\\CreateTableAs",
+        "Ir\\Schema\\View\\CreateView",
+        "Ir\\Schema\\Alter\\RenameTable",
+        "Ir\\Schema\\Alter\\RenameColumn"
+      ]
+    }
+  },
+  "batch": {
+    "method": "Semantics::analyzeAll",
+    "result": "list<SemanticsIR>",
+    "boundary": "Call analyze for each statement against the same supplied context. Rejection prevents publication of the batch."
+  },
+  "context": {
+    "method": "Semantics::context",
+    "input": "An ordered list of SQL relation definitions or null",
+    "result": "SqlSemantics\\AnalysisContext",
+    "boundary": "Build declaration facts from definitions. Reject inputs that do not provide a relation declaration. Null leaves the catalog open and an explicit list can establish a complete catalog. Contexts must belong to the same dialect and language profile."
+  },
+  "surface": [
+    "__construct",
+    "profile",
+    "context",
+    "analyze",
+    "analyzeAll",
+    "split"
+  ],
+  "forbidden": [
+    "ir",
+    "inspect",
+    "diagnose",
+    "SqlSemantics\\Query",
+    "Model\\Statement\\Operation"
+  ],
+  "construction": "The dialect value constructors remain public. Binding state is internal and carries no rendered statement. Previously fixed semantic domains, tests, observations, faults and budgets retain their requirements.",
+  "arrayRoutes": {
+    "SqlSemantics\\Platform\\MySql\\Ir\\From\\Join::inputs": [
+      "array",
+      "SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource",
+      "SqlSemantics\\Platform\\MySql\\Ir\\TableSource"
+    ],
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\Join::inputs": [
+      "array",
+      "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\DerivedSource",
+      "SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource"
+    ],
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\RecursiveDefinition::scopedExpressions": [
+      "array"
+    ],
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Query\\CreateTableAs::columns": [
+      "array",
+      "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Query\\CreatedColumn"
+    ]
+  },
+  "unconstrainedReturns": {
+    "rule": "Independently extract public methods able to deliver arbitrary values or collections, including nullable, union and intersection returns. Account for each against the checked complete IR and non-IR routes. A public non-construction method lacking a PHP return annotation is unconstrained.",
+    "intrinsicKinds": [
+      "array",
+      "iterable",
+      "object",
+      "mixed",
+      "callable",
+      "Closure",
+      "Traversable",
+      "Iterator",
+      "IteratorAggregate",
+      "Generator",
+      "ArrayAccess",
+      "untyped"
+    ],
+    "nonIrRoutes": {
+      "Semantics::split": [
+        "array"
+      ]
+    },
+    "constructionLanguageMethods": [
+      "__construct",
+      "__clone",
+      "__destruct"
+    ],
+    "trust": [
+      "PHP declared return semantics and PHPDoc package visibility. Composer-loaded concrete IR methods and retained fields must still pass their independent shape and distribution checks."
+    ]
+  },
+  "backedEnums": {
+    "routes": [
+      "case constants",
+      "cases",
+      "from",
+      "tryFrom",
+      "PHP enum serialization and restoration"
+    ],
+    "conditions": "Every supported concrete IR enum has a string backing and the fixed literal cases required by the shape checker. Native routes refer to the same fixed enum singleton. Unknown backing values fail via the native from and tryFrom boundaries.",
+    "evidence": "Record the source cases and check each direct, listed, selected and restored singleton through both staged Composer installations."
+  },
+  "extends": "publication-v25.json",
+  "typedValueRoutes": {
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Predicate\\ImplicitCheckLabel::operation": [
+      "SqlSemantics\\Platform\\Sqlite\\Ir\\Predicate\\ComparisonOperator"
+    ],
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource::columnKind": [
+      "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind",
+      "null"
+    ],
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\DerivedSource::columnKind": [
+      "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind",
+      "null"
+    ],
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Insert\\Destination::columnKind": [
+      "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind",
+      "null"
+    ],
+    "SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource::columnType": [
+      "SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind",
+      "SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar",
+      "null"
+    ]
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "revision": "SemanticsIR/mysql-add-foreign-keys-evidence-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-add-foreign-key-groups-v1.json",
+    "mysql-native-foreign-reference-actions-v1.json",
+    "mysql-implicit-foreign-index-evidence-v1.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Ordinary persistent InnoDB with stock foreign_key_checks=1, utf8mb4 and empty sql_mode.",
+  "additionalPublicRoots": [
+    "Schema/ForeignKey/Add/AddForeignKeys"
+  ],
+  "constructors": {
+    "Schema/ForeignKey/Add/AddForeignKeys": {
+      "role": "One completed ALTER TABLE group of native persistent InnoDB foreign-key additions.",
+      "structure": "Absolute child table, detached ordered declarations, effective algorithm, lock, legacy IGNORE and release.",
+      "conditions": "Validate native schema symbol allocation, physical generated keys and earlier parent support from complete original facts. Validate release, scope and lock before publication.",
+      "meaning": "Declare each ordered child-parent reference and its physical key effect. Keep the independent parent update and delete effects and exact catalog metadata.",
+      "sql": "Emit the native ALTER owner, checked group and effective policy."
+    },
+    "Schema/ForeignKey/Add/ForeignKeyAddition": {
+      "role": "One resolved native constraint relative to its enclosing child table.",
+      "structure": "Absolute parent, exact symbol and origin, checked ordered pairs and effect variant, optional named and created physical index.",
+      "conditions": "One through sixteen paired fields, distinct on each side, resolved parent and matching nullability for SET NULL. The enclosing group checks symbols and physical effects.",
+      "meaning": "Introduce a distinct native foreign key on the selected parent field coordinates, with an explicit generated physical index effect when applicable.",
+      "sql": "Emit ADD FOREIGN KEY, explicit symbol or native generation, paired field lists, and declarative effects."
+    },
+    "Schema/ForeignKey/Add/ForeignKeyPair": {
+      "role": "One ordered native child and parent field pair.",
+      "structure": "Decoded relative physical identifiers, native integer width and sign, child nullability and ordered physical direction.",
+      "conditions": "Both identifiers are within the native physical column namespace. The pairing uses one native integer domain and the full field on each side.",
+      "meaning": "Compare two external field values in the fixed integer domain, and use the child direction when a physical supporting index is created.",
+      "sql": "Emit both quoted identifiers in the two list positions and the selected child direction."
+    },
+    "Schema/ForeignKey/Add/ForeignKeyEffects": {
+      "role": "Foreign-key catalog MATCH metadata and separate parent-row event actions.",
+      "structure": "Closed update action, delete action and MATCH variant.",
+      "conditions": "The owner and release check capability. SET NULL requires each referenced child field to be nullable.",
+      "meaning": "Use independent parent update and delete effects and preserve exact catalog metadata. All admitted match variants allow child rows containing a NULL key field.",
+      "sql": "Emit the retained MATCH metadata and the two independently ordered event choices."
+    },
+    "Schema/ForeignKey/Add/ForeignKeyAction": {
+      "role": "The native declared action for one referenced row event.",
+      "structure": "Closed cases RESTRICT, NO ACTION, CASCADE, SET NULL and SET DEFAULT.",
+      "conditions": "The enclosing native release and child field layout check admissibility.",
+      "meaning": "CASCADE and SET NULL change the corresponding child rows. Under this InnoDB profile RESTRICT, NO ACTION and admitted SET DEFAULT refuse changes to a referenced parent row.",
+      "sql": "Emit the fixed native action token."
+    },
+    "Schema/ForeignKey/Add/ForeignKeyMatch": {
+      "role": "The retained native MATCH catalog metadata.",
+      "structure": "Closed absent, FULL and PARTIAL variants.",
+      "conditions": "Established by the native release and matched against the declared references.",
+      "meaning": "Preserve catalog metadata independently of child partial-NULL admission.",
+      "sql": "Emit FULL or PARTIAL when requested by the effective native metadata."
+    },
+    "Schema/ForeignKey/Add/Catalog/ForeignKeyConstraintIdentity": {
+      "role": "A checked original native constraint in the transient construction input.",
+      "structure": "Absolute persistent owner and decoded physical symbol.",
+      "conditions": "A valid physical foreign-key symbol is limited to 64 BMP characters. The owning statement checks native namespace uniqueness.",
+      "meaning": "Occupy one exact database-level constraint identity and its eligible owner-sequence marker.",
+      "sql": "Used by the group to compute its emitted constraint naming policy."
+    },
+    "Schema/ForeignKey/Add/Catalog/ForeignKeyNativeKey": {
+      "role": "A checked original physical key placement used by construction.",
+      "structure": "Absolute physical key identity, detached ordered full prefix, completeness and native reference eligibility.",
+      "conditions": "Persistent owning table, unique ordered field identifiers and explicit prefix completeness. A native non-B-tree key can occupy a name without supplying an eligible field.",
+      "meaning": "Occupy one physical index name and, when eligible, support a resolved native ordered prefix.",
+      "sql": "Constrain creation and binding of the group. Original keys are external declarations."
+    },
+    "Schema/ForeignKey/Add/Catalog/ForeignKeyKeyColumn": {
+      "role": "One physical full field term in an original supporting key.",
+      "structure": "A decoded native field ID and immutable direction.",
+      "conditions": "The name is a full physical column name; the key validates its ordered placement.",
+      "meaning": "Supply the precise field and direction of one existing physical key term.",
+      "sql": "Constrain the exact child-side key allocation and parent support; no additional declaration is emitted for this term."
+    }
+  },
+  "finite": {
+    "shapes": [
+      "single",
+      "paired",
+      "siblings"
+    ],
+    "names": [
+      "symbol",
+      "written-key",
+      "automatic"
+    ],
+    "effects": [
+      "default",
+      "cascade-set-null",
+      "match-full",
+      "set-default"
+    ],
+    "childKeys": [
+      "new-key",
+      "original-key"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteIdentities": 72,
+  "exploration": {
+    "seeds": [
+      669,
+      1217,
+      1452
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Exact persistent owners and parent column coordinates, order, and NULL effects",
+    "Native constraint names, metadata and matching logical rules",
+    "Original and resulting qualified physical keys with more than one pair, direction, and reuse versus allocation",
+    "Actual parent writes and child rows, including unresolved catalog refusal and data-dependent native rejection",
+    "Effective DDL transaction behavior and exact diagnostic categories"
+  ],
+  "negative": [
+    "Exact native policy, legacy direction, legacy SET DEFAULT and SET NULL nullability refusals",
+    "Absent parent physical support including exact unique requirement since 8.4",
+    "Open, inconsistent, ambiguous, or unaccounted construction facts",
+    "A distinct native execution-time integrity refusal under a valid structural operation"
+  ],
+  "evidence": {
+    "P01": "Observe resolved owner and persistent parent, exact ordered child-parent pairs, effective events, matching metadata, names and key effects.",
+    "P02": "Require the original complete physical catalog and reject unsupported policy, field, key, symbol or event conditions in both routes.",
+    "P03": "Interpret published typed immutable fields independently of the original syntax and declaration catalog.",
+    "P04": "Derive exact original/support/new key placement, ordered constraints and event behavior from the closed declaration values.",
+    "P05": "Verify fully detached typed child arrays, supported immutable parts and unreachable unvalidated restoration.",
+    "P06": "Compare emitted and original ALTER with independently expected catalog, referential effects, rows and native DDL observations."
+  },
+  "obligations": {
+    "Q01": "Audit closed typed construction plus exact local and boundary rejections.",
+    "Q02": "Reconcile both public routes over the fixed product and all executed seeds and directed neighbors.",
+    "Q03": "Check complete physical support, group order and symbol effects, including cross-database and same-field controls.",
+    "Q04": "Compare exact physical metadata and row effects against native InnoDB. Recheck designated semantic faults.",
+    "Q05": "Bind exact release ledgers, constructor and source receipts and both installed distribution paths."
+  },
+  "faults": [
+    "Resolve the wrong persistent parent in the current database.",
+    "Transpose the two effective parent-row actions.",
+    "Erase native MATCH metadata with unchanged rows.",
+    "Erase an observed partial-NULL insertion outcome."
+  ],
+  "trackedBeyondThisSlice": [
+    "Generated and non-integer key field profiles, including observed decimal encodings and collation families",
+    "ALTER forms mixing addition with dropping or renaming native keys or constraints",
+    "Legacy length corner cases containing truncated protocol names and database-encoded identities",
+    "Outlier automatic ordinal wraparound and affected legacy temporary dictionary artifacts",
+    "Mode changes that allow InnoDB online addition under disabled referential checks"
+  ],
+  "trust": [
+    "Complete accurately interpreted native schema facts and the specified stock language profile",
+    "The future independent executable verifier, its native fixture environment and the human-reviewed protected reference"
+  ],
+  "admitted": {
+    "mysql-5.6.51": 54,
+    "mysql-5.7.44": 54,
+    "mysql-8.0.44": 72,
+    "mysql-8.1.0": 72,
+    "mysql-8.2.0": 72,
+    "mysql-8.3.0": 72,
+    "mysql-8.4.7": 72,
+    "mysql-9.0.1": 72,
+    "mysql-9.1.0": 72
+  },
+  "negativeCount": {
+    "mysql-5.6.51": 65,
+    "mysql-5.7.44": 69,
+    "mysql-8.0.44": 15,
+    "mysql-8.1.0": 15,
+    "mysql-8.2.0": 15,
+    "mysql-8.3.0": 15,
+    "mysql-8.4.7": 17,
+    "mysql-9.0.1": 17,
+    "mysql-9.1.0": 17
+  }
+}

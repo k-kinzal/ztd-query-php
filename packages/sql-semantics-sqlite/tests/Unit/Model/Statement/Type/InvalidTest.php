@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Invalid::class)]
 #[Medium]
@@ -17,10 +17,10 @@ final class InvalidTest extends TestCase
 {
     public function testCauseIsTheDiagnosticThatLeavesTheExpressionWithoutAType(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
-        $field = $semantics->inspect('SELECT b FROM t', [$table])->field('b');
+        $field = $semantics->diagnose('SELECT b FROM t', [$table])->field('b');
 
         self::assertInstanceOf(Invalid::class, $field->type);
         self::assertInstanceOf(MissingColumn::class, $field->type->cause);

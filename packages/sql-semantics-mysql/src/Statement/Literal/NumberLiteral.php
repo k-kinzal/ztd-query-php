@@ -34,10 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * https://dev.mysql.com/doc/refman/8.4/en/precision-math-numbers.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Keeping the exact text of a number
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = 1.50');
- *     [$query->statement->where->right->text, $query->statement->where->right->form] // => ['1.50', \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal]
+ * @visibility SqlSemantics
  */
 final class NumberLiteral implements Scalar
 {

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
  * Source: https://sqlite.org/datatype3.html#determination_of_column_affinity,
  * https://sqlite.org/stricttables.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a declared type
  *     $domain = new \SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain('integer');
  *     [$domain->name(), $domain->affinity, $domain->standard] // => ['INTEGER', \SqlSemantics\Platform\Sqlite\Statement\Type\Affinity::Integer, true]

@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  * Permanent is the absence of these words.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the persistence of a table
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE LOCAL TEMP TABLE t (a int)');
- *     [$create->statement->persistence->temporary(), $create->declarations()[0]->name->schema->value] // => [true, 'pg_temp']
+ * @visibility SqlSemantics
  */
 enum Persistence: string implements Node
 {

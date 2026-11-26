@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineComment;
@@ -27,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\LoadableResult;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DefinitionRule::class)]
 #[Medium]
@@ -47,7 +47,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineLowersAProcedure')]
     public function testRoutineLowersAProcedure(string $release): void
     {
-        $create = (new Semantics($release))->analyze("create definer = 'root'@'%' procedure db.p(in a int, out b int, inout c int) comment 'x' select a");
+        $create = (new Inspection($release))->inspect("create definer = 'root'@'%' procedure db.p(in a int, out b int, inout c int) comment 'x' select a");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame('p', $statement->name->name->value);
@@ -75,7 +75,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineLowersAFunctionWithItsReturnCollation')]
     public function testRoutineLowersAFunctionWithItsReturnCollation(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create function f(a int) returns varchar(5) collate utf8mb4_bin deterministic return a');
+        $create = (new Inspection($release))->inspect('create function f(a int) returns varchar(5) collate utf8mb4_bin deterministic return a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame('f', $statement->name->name->value);
@@ -100,13 +100,13 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineReadsIfNotExists')]
     public function testRoutineReadsIfNotExists(string $release): void
     {
-        $semantics = new Semantics($release);
-        $procedure = $semantics->analyze('create procedure if not exists p() select 1');
+        $semantics = new Inspection($release);
+        $procedure = $semantics->inspect('create procedure if not exists p() select 1');
         self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
         self::assertTrue($procedure->statement->ifNotExists);
         self::assertSame('CREATE PROCEDURE IF NOT EXISTS p() SELECT 1', $procedure->toString());
 
-        $function = $semantics->analyze('create function if not exists db.f() returns int return 1');
+        $function = $semantics->inspect('create function if not exists db.f() returns int return 1');
         self::assertInstanceOf(CreateFunction::class, $function->statement);
         self::assertTrue($function->statement->ifNotExists);
         self::assertNull($function->statement->collation);
@@ -115,13 +115,13 @@ final class DefinitionRuleTest extends TestCase
 
     public function testRoutineLowersAStoredRoutineBody(): void
     {
-        $semantics = new Semantics('mysql-8.1.0');
-        $function = $semantics->analyze("create function f() returns int language javascript as 'return 1'");
+        $semantics = new Inspection('mysql-8.1.0');
+        $function = $semantics->inspect("create function f() returns int language javascript as 'return 1'");
         self::assertInstanceOf(CreateFunction::class, $function->statement);
         self::assertInstanceOf(ExternalBody::class, $function->statement->body);
         self::assertSame("CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS 'return 1'", $function->toString());
 
-        $procedure = $semantics->analyze('create procedure p() language javascript as $$ return 1 $$');
+        $procedure = $semantics->inspect('create procedure p() language javascript as $$ return 1 $$');
         self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
         self::assertInstanceOf(ExternalBody::class, $procedure->statement->body);
         self::assertSame('CREATE PROCEDURE p() LANGUAGE javascript AS $$ return 1 $$', $procedure->toString());
@@ -155,7 +155,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerLoadableLowersEveryLayoutAndResult')]
     public function testLoadableLowersEveryLayoutAndResult(string $release, string $sql, LoadableResult $result, bool $aggregate, bool $ifNotExists, string $expected): void
     {
-        $create = (new Semantics($release))->analyze($sql);
+        $create = (new Inspection($release))->inspect($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateLoadableFunction::class, $statement);
         self::assertSame('u', $statement->name->value);
@@ -191,7 +191,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerAlterLowersProceduresAndFunctions')]
     public function testAlterLowersProceduresAndFunctions(string $release, string $sql, ProgramKind $kind, string $expected): void
     {
-        $alter = (new Semantics($release))->analyze($sql);
+        $alter = (new Inspection($release))->inspect($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         self::assertSame($kind, $statement->kind);
@@ -232,7 +232,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerDropLowersEveryKindOfProgram')]
     public function testDropLowersEveryKindOfProgram(string $release, string $sql, ProgramKind $kind, ?string $schema, bool $ifExists, string $expected): void
     {
-        $drop = (new Semantics($release))->analyze($sql);
+        $drop = (new Inspection($release))->inspect($sql);
         $statement = $drop->statement;
         self::assertInstanceOf(DropProgram::class, $statement);
         self::assertSame($kind, $statement->kind);

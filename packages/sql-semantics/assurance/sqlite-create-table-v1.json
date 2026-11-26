@@ -1,0 +1,45 @@
+{
+  "revision": "SemanticsIR/sqlite-create-table-1",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "All earlier obligations remain. Strict tables, keys, defaults, other declared types, constraints and table options remain required outside this domain.",
+  "additionalPublicRoots": ["Schema/CreateTable"],
+  "constructors": {
+    "Schema/ColumnType": {
+      "type": "Schema/DeclaredDatatypeName",
+      "role": "Declared type of a column in an ordinary SQLite rowid table.",
+      "structure": "Absent declared type, INTEGER, TEXT, REAL or BLOB.",
+      "boundary": "Each alternative has a fixed native spelling and affinity.",
+      "meaning": "Preserve the declared type in catalog observations and the associated SQLite conversion on writes.",
+      "sql": "Emit the native type keyword or omit the type."
+    },
+    "Schema/TableColumn": {
+      "role": "An ordered column declaration.",
+      "structure": "Decoded column identifier, declared type and boolean NOT NULL constraint.",
+      "boundary": "The parent checks name uniqueness under SQLite identifier comparison.",
+      "meaning": "The column has the declared affinity and, when requested, an unnamed NOT NULL constraint with the default conflict policy.",
+      "sql": "Quote the name, emit the optional type, then the optional NOT NULL clause."
+    },
+    "Schema/CreateTable": {
+      "role": "Top-level declaration of an ordinary rowid table at an absolute schema location.",
+      "structure": "Decoded schema and table names, nonempty ordered columns and boolean IF NOT EXISTS policy.",
+      "boundary": "The schema is nonempty, table name is outside the reserved sqlite_ namespace and column names are unique. At most 2000 columns. Analyze resolves main, temp, or a known explicit attached schema.",
+      "meaning": "Create an empty table with the defined ordered columns and SQLite rowid behavior. The guard preserves an existing table or view where SQLite specifies a no-op.",
+      "sql": "Emit a schema-qualified CREATE TABLE and the checked column declarations in order.",
+      "assurance": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "analysis": "Lower an ordinary CREATE TABLE with no table constraints or options, and columns with no constraints or a single unnamed NOT NULL without policy. Accept conventional type names irrespective of the spelling variants SQLite canonicalizes.",
+  "observations": ["Schema and table identity", "Column names, order and native declared type", "Nullability and default rowid declaration", "Ordinary insertion affinity and constraint errors", "Guard preserving existing rows", "Absence of changes in the other schema"],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "types": ["", "INTEGER", "TEXT", "REAL", "BLOB"],
+    "notNull": [false, true],
+    "guard": [false, true],
+    "completeness": "For a fresh table with one column, independently recover all forty combinations from the observed structure."
+  },
+  "exploration": {"seeds": [571, 1789, 6749], "casesPerSeed": 24, "timeoutSeconds": 240, "allowedExclusions": []},
+  "negative": ["Empty column list", "Duplicate column under SQLite name comparison", "Reserved table name", "Unsupported column constraint", "Unknown explicit schema"],
+  "faults": ["Change the declared type", "Drop NOT NULL", "Omit IF NOT EXISTS", "Choose the other schema"],
+  "sources": ["https://sqlite.org/lang_createtable.html", "https://sqlite.org/datatype3.html#determination_of_column_affinity"]
+}

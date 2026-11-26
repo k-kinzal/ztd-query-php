@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/postgres-local-catalog-binding-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2 with UTF-8, standard-conforming strings, stock local schemas and native parameters. An explicitly supplied current database name is compared exactly, after identifier decoding.",
+  "scope": "Qualifiers on relation inputs, projected scalar columns and qualified stars, and on local relation targets that already support the corresponding operation. A database qualifier must be checked before the resolved schema and object are produced.",
+  "constructors": {},
+  "existingRoles": [
+    "Select", "TableSource", "ColumnReference", "Mutation/Insert", "Mutation/Update",
+    "Mutation/Delete", "Schema/View/RefreshMaterializedView"
+  ],
+  "paths": [
+    "PostgreSql Semantics::analyze",
+    "PostgreSql Semantics::analyzeAll",
+    "PostgreSql Semantics::context while deriving definitions"
+  ],
+  "rules": [
+    "A database qualifier can identify the local database only when the caller supplies its exact decoded name. An unknown or different name is rejected before any value is published.",
+    "Use the native ordered schema lookup for a bare relation and preserve its resolved absolute schema and relation. A verified current-database qualifier can be omitted in the output under the same external interpretation.",
+    "Preserve unrelated names and values, including dots inside quoted schema or relation names. Inspect decoded name roles as opposed to the original SQL spelling.",
+    "The supplied current database is a binding fact. The complete IR retains its resolved local references and does not retain the analysis context."
+  ],
+  "observations": [
+    "Same absolute schema and relation slot for local, schema-qualified and verified current-database spellings.",
+    "Result name and ordered native integer rows of an independent decoy fixture.",
+    "Native read or effect on the selected local table and materialized snapshot and an unchanged decoy.",
+    "SQLSTATE 0A000 for a mismatched native catalog with no local modification. Typed refusal at the local binding boundary for unknown and mismatched catalogs."
+  ],
+  "finite": {
+    "roles": ["source", "column", "insert", "update", "delete", "refresh"],
+    "qualification": ["schema-only", "verified-current"],
+    "positions": ["first-schema", "explicit-second-schema"],
+    "identity": "Observe all 24 analyzed coordinates using paired native original and rendered SQL. The underlying direct concrete formats retain their separately registered constructor domains."
+  },
+  "exploration": {
+    "seeds": [521, 3671, 91129],
+    "casesPerSeed": 16,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "domain": "Vary local role, current-database spelling, distinct source and decoy rows, quoted names containing dots, schema precedence and typed values."
+  },
+  "negative": [
+    "Unknown current database on a relation source",
+    "Unknown current database on a projected column",
+    "Unknown current database on a projected wildcard",
+    "Mismatched current database on a relation source",
+    "Mismatched current database on a projected column",
+    "Mismatched current database on a projected wildcard",
+    "Mismatched current database on an insert",
+    "Mismatched current database on an update",
+    "Mismatched current database on a delete",
+    "Mismatched current database on a materialized refresh",
+    "Mismatched current database in a nested relation input",
+    "Mismatched catalog in a context definition"
+  ],
+  "faults": [
+    "Ignore the qualifier on relation inputs",
+    "Ignore the fourth name part of a projected scalar column",
+    "Ignore the database qualifier on a projected wildcard"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/ddl-schemas.html",
+    "https://www.postgresql.org/docs/17/ddl-schemas.html",
+    "https://github.com/postgres/postgres/blob/REL_16_6/src/backend/catalog/namespace.c",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_expr.c"
+  ],
+  "trust": [
+    "The supplied current database and declarations describe the same external namespace during comparison.",
+    "The checked decoded roles and exact common PHP publication boundary preserve qualifiers until validation.",
+    "Stock native observer and independently scheduled observations for the stated finite names and read and write effects."
+  ],
+  "open": [
+    "Database-qualified forms of structurally distinct names, functions, types and other grammar alternatives remain governed by their individual role contracts.",
+    "Native acceptance in the absence of a declared current database cannot establish a portable absolute binding."
+  ],
+  "calibration": {
+    "sql": "f46db85ce0ce042f5d13ecca9ac1d4c985f4aa2790a1a21ceade75cbf1b50468",
+    "16.6": {"stdout": "37e5c6790f46504b077b89c83b161a22fafad4db47023c6a83f3065eb5dd72bf", "stderr": "8723a772cf4764a52510b919d2d0661a1c8c25a82622594c76ec535342e50c12"},
+    "17.2": {"stdout": "3325eb881cd0438e2152d062b05e0b8e2e9bb9bb4cbc3085fcdc885483649b5f", "stderr": "cdf009203e28b95875a94d596e353b36297e13dab9201757a76631e822990495"}
+  }
+}

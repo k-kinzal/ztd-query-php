@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow;
  * is assigned to, and a value may be DEFAULT.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html, https://www.postgresql.org/docs/17/sql-values.html.
  *
- * @visibility public
- * @example Reading the rows of an INSERT
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t VALUES (1), (DEFAULT)');
- *     count($insert->statement->rows->rows()) // => 2
+ * @visibility SqlSemantics
  * @example Refusing VALUES without a row
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\ValueRows([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

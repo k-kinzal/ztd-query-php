@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-event.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE EVENT shop.p');
- *     [$show->statement->name->schema?->value, $show->toString()] // => ['shop', 'SHOW CREATE EVENT shop.p']
+ * @visibility SqlSemantics
  */
 final class ShowCreateEvent implements Statement
 {

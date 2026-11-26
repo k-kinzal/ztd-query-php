@@ -14,16 +14,16 @@ final class DomainDefaultChangeTest extends TestCase
 {
     public function testRenderWritesSetDefault(): void
     {
-        self::assertSame('ALTER DOMAIN d SET DEFAULT 0', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d SET DEFAULT 0')->toString());
+        self::assertSame('ALTER DOMAIN d SET DEFAULT 0', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d SET DEFAULT 0')->toString());
     }
 
     public function testRenderWritesDropDefault(): void
     {
-        self::assertSame('ALTER DOMAIN d DROP DEFAULT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d DROP DEFAULT')->toString());
+        self::assertSame('ALTER DOMAIN d DROP DEFAULT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d DROP DEFAULT')->toString());
     }
 
     public function testDeriveStatementDerivesTheDefault(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d SET DEFAULT 1 + 1')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d SET DEFAULT 1 + 1')->facts->diagnostics);
     }
 }

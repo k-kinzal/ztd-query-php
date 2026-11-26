@@ -1,0 +1,16 @@
+{
+  "revision": "SemanticsIR/server-projection-publication-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "constructors": {},
+  "extends": ["server-projection-v1.json", "publication-v25.json"],
+  "replacesField": "server-projection-v1.json#/constructionPaths",
+  "publicationContract": "dcc301328298380a3425b7593c31b8946208164ce3ef512e047bef69e3d4d9f5",
+  "constructionPaths": [
+    "Construct final dialect values directly using their closed argument types and copied array fields.",
+    "Call the dialect's Semantics::analyze() under the fixed release with declarations when binding requires them. It returns the registered dialect value through SqlSemantics\\Analyzer::analyze. The batch route delegates to analyze for each statement.",
+    "The dialect Snapshot trait rejects ordinary clone, serialization, restoration and dynamic properties on the registered value classes. The separate enum route contract governs native case restoration."
+  ],
+  "assessment": "The immutable projection baseline supplies the original domains, observed behavior, generator budgets and required faults. This revision fixes the analysis route used by the runs and records the removed publication surface without modifying the behavioral test obligations.",
+  "verification": "Verify the registered public construction routes independently by PHP inventory, enforce the same dialect methods and publication body in the shape audit, and record this amendment and the publication digest in the native projection evidence and replay."
+}

@@ -29,10 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
  * open depends on the missing inputs; a query without any column is invalid.
  * Source: https://sqlite.org/lang_expr.html#subquery_expressions. Status: Implemented.
  *
- * @visibility public
- * @example Reading the facts of a scalar subquery
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT (SELECT 1)');
- *     [$query->field(0)->type->descriptor, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
+ * @visibility SqlSemantics
  */
 final class ScalarSubquery implements Scalar
 {

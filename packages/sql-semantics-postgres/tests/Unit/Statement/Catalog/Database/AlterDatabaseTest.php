@@ -14,16 +14,16 @@ final class AlterDatabaseTest extends TestCase
 {
     public function testRenderWritesWith(): void
     {
-        self::assertSame('ALTER DATABASE d WITH CONNECTION LIMIT = 10', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DATABASE d CONNECTION LIMIT 10')->toString());
+        self::assertSame('ALTER DATABASE d WITH CONNECTION LIMIT = 10', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DATABASE d CONNECTION LIMIT 10')->toString());
     }
 
     public function testDeriveStatementReportsATablespaceWithOtherOptions(): void
     {
-        self::assertSame('option "tablespace" cannot be specified with other options', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DATABASE d WITH tablespace x allow_connections false')->facts->diagnostics[0]->message());
+        self::assertSame('option "tablespace" cannot be specified with other options', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DATABASE d WITH tablespace x allow_connections false')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementReportsAnOptionOnlyCreateAccepts(): void
     {
-        self::assertSame('option "owner" not recognized', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DATABASE d OWNER x')->facts->diagnostics[0]->message());
+        self::assertSame('option "owner" not recognized', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DATABASE d OWNER x')->facts->diagnostics[0]->message());
     }
 }

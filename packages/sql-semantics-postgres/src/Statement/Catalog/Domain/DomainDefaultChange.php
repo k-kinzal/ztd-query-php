@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * expression is evaluated where no column is visible.
  * Source: https://www.postgresql.org/docs/17/sql-alterdomain.html. Status: Implemented.
  *
- * @visibility public
- * @example Removing the default
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d DROP DEFAULT');
- *     $operation->statement->default // => null
+ * @visibility SqlSemantics
  */
 final class DomainDefaultChange implements Statement
 {

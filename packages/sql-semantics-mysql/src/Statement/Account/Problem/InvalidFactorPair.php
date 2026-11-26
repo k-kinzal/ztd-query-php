@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * ER_MFA_METHODS_IDENTICAL or ER_MFA_METHODS_INVALID_ORDER.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-multifactor.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair(true))->message() // => 'Both factor changes name the same factor (ER_MFA_METHODS_IDENTICAL).'
  */

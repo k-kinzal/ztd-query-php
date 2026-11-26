@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * Mirrors the `List` argument of a COPY `DefElem`.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html.
  *
- * @visibility public
- * @example Reading a list argument
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY t FROM STDIN (format csv, force_null (a, 'b'))");
- *     count($copy->statement->options[1]->argument->items) // => 2
+ * @visibility SqlSemantics
  * @example Refusing an empty list
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyArguments([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

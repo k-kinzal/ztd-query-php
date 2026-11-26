@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
  * of the rows; the arguments are optional unsigned integers. The 8.0 server
  * removed it. Source: https://dev.mysql.com/doc/refman/5.7/en/procedure-analyse.html.
  *
- * @visibility public
- * @example Reading the arguments
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)');
- *     count($query->statement->procedure->arguments) // => 2
+ * @visibility SqlSemantics
  * @example Refusing a third argument
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse([$one, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction

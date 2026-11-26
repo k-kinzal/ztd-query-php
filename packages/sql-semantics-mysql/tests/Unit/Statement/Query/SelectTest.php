@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
@@ -24,7 +23,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
@@ -43,6 +41,8 @@ use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Select::class)]
 #[Medium]
@@ -50,7 +50,7 @@ final class SelectTest extends TestCase
 {
     public function testInputAnswersTheTableReference(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM t');
+        $operation = (new Inspection())->diagnose('SELECT a FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -60,7 +60,7 @@ final class SelectTest extends TestCase
 
     public function testInputAnswersNullWithoutAFromClause(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1');
+        $operation = (new Inspection())->diagnose('SELECT 1');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertNull($operation->statement->input());
@@ -69,12 +69,12 @@ final class SelectTest extends TestCase
 
     public function testDeriveStatementRecordsTheRowsAsTheOutput(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->inspect('SELECT a, b FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT a, b FROM t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame($operation->facts->query($operation->statement), $operation->facts->output);
@@ -86,12 +86,12 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryNamesTheFieldsAfterAliasesAndColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->inspect('SELECT a AS x, b, 1 FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT a AS x, b, 1 FROM t', [$table]);
 
         $fields = $operation->fields();
         self::assertNotNull($fields);
@@ -111,7 +111,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryNamesAnExpressionItemAfterItsText(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 + 1');
+        $operation = (new Inspection())->diagnose('SELECT 1 + 1');
 
         $fields = $operation->fields();
         self::assertNotNull($fields);
@@ -124,11 +124,11 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryKeepsDuplicateOutputNames(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT a, a FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT a, a FROM t', [$table]);
 
         self::assertNotNull($operation->fields());
         self::assertCount(2, $operation->fields());
@@ -137,12 +137,12 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryResolvesAQualifiedColumnAgainstTheTableOccurrence(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $byTable = $semantics->inspect('SELECT t.a FROM t', [$table]);
-        $byAlias = $semantics->inspect('SELECT u.a FROM t AS u', [$table]);
+        $byTable = $semantics->diagnose('SELECT t.a FROM t', [$table]);
+        $byAlias = $semantics->diagnose('SELECT u.a FROM t AS u', [$table]);
 
         self::assertSame($table->columns[0], $byTable->field('a')->column());
         self::assertSame([], $byTable->facts->diagnostics);
@@ -154,11 +154,11 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryReportsAColumnWithAWrongQualifier(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT u.a FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT u.a FROM t', [$table]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -169,12 +169,12 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryDerivesThePredicateInTheScopeOfTheTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->inspect('SELECT a FROM t WHERE b = 1', [$table]);
+        $operation = $semantics->diagnose('SELECT a FROM t WHERE b = 1', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -187,7 +187,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryDependsOnAnUndeclaredTable(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM t');
+        $operation = (new Inspection())->diagnose('SELECT a FROM t');
 
         $type = $operation->field('a')->type;
         self::assertInstanceOf(Dependent::class, $type);
@@ -198,7 +198,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryReportsAMissingTableInACompleteContext(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM t', []);
+        $operation = (new Inspection())->diagnose('SELECT a FROM t', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
@@ -209,27 +209,27 @@ final class SelectTest extends TestCase
 
     public function testRenderWritesTheClausesInGrammarOrder(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', $semantics->inspect('select a, b as c from t where a <=> 1')->toString());
-        self::assertSame('SELECT a FROM t', $semantics->inspect('SELECT a FROM t')->toString());
-        self::assertSame('SELECT 1', $semantics->inspect('select 1')->toString());
+        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', $semantics->diagnose('select a, b as c from t where a <=> 1')->toString());
+        self::assertSame('SELECT a FROM t', $semantics->diagnose('SELECT a FROM t')->toString());
+        self::assertSame('SELECT 1', $semantics->diagnose('select 1')->toString());
     }
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', (new Semantics('mysql-5.6.51'))->inspect('select a, b as c from t where a <=> 1')->toString());
-        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', (new Semantics('mysql-5.7.44'))->inspect('select a, b as c from t where a <=> 1')->toString());
-        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', (new Semantics('mysql-8.4.7'))->inspect('select a, b as c from t where a <=> 1')->toString());
+        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', (new Inspection('mysql-5.6.51'))->diagnose('select a, b as c from t where a <=> 1')->toString());
+        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', (new Inspection('mysql-5.7.44'))->diagnose('select a, b as c from t where a <=> 1')->toString());
+        self::assertSame('SELECT a, b AS c FROM t WHERE a <=> 1', (new Inspection('mysql-8.4.7'))->diagnose('select a, b as c from t where a <=> 1')->toString());
     }
 
     public function testRenderReadsADoubleQuotedNameUnderAnsiQuotes(): void
     {
-        $semantics = new Semantics(null, Mode::fromString('ANSI_QUOTES'));
+        $semantics = new Inspection(null, Mode::fromString('ANSI_QUOTES'));
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT "a" FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT "a" FROM t', [$table]);
 
         self::assertSame($table->columns[0], $operation->field('a')->column());
         self::assertSame('SELECT a FROM t', $operation->toString());
@@ -237,7 +237,7 @@ final class SelectTest extends TestCase
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
@@ -247,7 +247,7 @@ final class SelectTest extends TestCase
             new TableReference(new QualifiedName(new Name('t')), new Name('u')),
             new Comparison(ComparisonOperator::Less, new ColumnUse(new Name('a'), new QualifiedName(new Name('u'))), new NumberLiteral('3')),
         );
-        $operation = new Operation($semantics->context([$table]), $select);
+        $operation = new InspectedStatement($semantics->context([$table]), $select);
 
         self::assertSame('SELECT a AS x FROM t AS u WHERE u.a < 3', $operation->toString());
         self::assertSame($table->columns[0], $operation->field('x')->column());
@@ -256,9 +256,9 @@ final class SelectTest extends TestCase
 
     public function testClausesTellsWhetherAClauseFollowsTheSelectList(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->inspect('SELECT 1')->statement;
-        $limited = $semantics->inspect('SELECT 1 LIMIT 1')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->diagnose('SELECT 1')->statement;
+        $limited = $semantics->diagnose('SELECT 1 LIMIT 1')->statement;
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(Select::class, $limited);
@@ -268,10 +268,10 @@ final class SelectTest extends TestCase
 
     public function testTrailedTellsWhetherAClauseFollowsTheBlockProper(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->inspect('SELECT a FROM t WHERE a = 1')->statement;
-        $locked = $semantics->inspect('SELECT a FROM t FOR UPDATE')->statement;
-        $into = $semantics->inspect('SELECT a INTO @x FROM t')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->diagnose('SELECT a FROM t WHERE a = 1')->statement;
+        $locked = $semantics->diagnose('SELECT a FROM t FOR UPDATE')->statement;
+        $into = $semantics->diagnose('SELECT a INTO @x FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(Select::class, $locked);
@@ -283,32 +283,32 @@ final class SelectTest extends TestCase
 
     public function testRenderIntoWritesTheIntoClauseAtItsPosition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('SELECT a INTO @x FROM t', $semantics->inspect('select a into @x from t')->toString());
-        self::assertSame('SELECT a FROM t INTO @x', $semantics->inspect('select a from t into @x')->toString());
-        self::assertSame('SELECT a FROM t FOR UPDATE INTO @x', $semantics->inspect('select a from t for update into @x')->toString());
-        self::assertSame('SELECT 1 INTO @x', $semantics->inspect('select 1 into @x')->toString());
+        self::assertSame('SELECT a INTO @x FROM t', $semantics->diagnose('select a into @x from t')->toString());
+        self::assertSame('SELECT a FROM t INTO @x', $semantics->diagnose('select a from t into @x')->toString());
+        self::assertSame('SELECT a FROM t FOR UPDATE INTO @x', $semantics->diagnose('select a from t for update into @x')->toString());
+        self::assertSame('SELECT 1 INTO @x', $semantics->diagnose('select 1 into @x')->toString());
     }
 
     public function testRenderWritesEveryClauseInGrammarOrder(): void
     {
-        $semantics = new Semantics('mysql-9.1.0');
+        $semantics = new Inspection('mysql-9.1.0');
         $sql = 'SELECT DISTINCT a, b AS c FROM t WHERE a > 1 GROUP BY a WITH ROLLUP HAVING a > 2 WINDOW w AS () QUALIFY a > 3 ORDER BY a DESC LIMIT 1 OFFSET 2 FOR UPDATE SKIP LOCKED';
 
-        self::assertSame($sql, $semantics->inspect($sql)->toString());
-        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(1, 2) INTO @x LOCK IN SHARE MODE', (new Semantics('mysql-5.6.51'))->inspect('select a from t procedure analyse(1,2) into @x lock in share mode')->toString());
+        self::assertSame($sql, $semantics->diagnose($sql)->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(1, 2) INTO @x LOCK IN SHARE MODE', (new Inspection('mysql-5.6.51'))->diagnose('select a from t procedure analyse(1,2) into @x lock in share mode')->toString());
     }
 
     public function testDeriveQueryExtendsColumnsWithNullsInAnAggregateBlock(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $grouped = $semantics->inspect('SELECT a FROM t GROUP BY a', [$table]);
-        $rollup = $semantics->inspect('SELECT a FROM t GROUP BY a WITH ROLLUP', [$table]);
-        $having = $semantics->inspect('SELECT a FROM t HAVING a > 1', [$table]);
+        $grouped = $semantics->diagnose('SELECT a FROM t GROUP BY a', [$table]);
+        $rollup = $semantics->diagnose('SELECT a FROM t GROUP BY a WITH ROLLUP', [$table]);
+        $having = $semantics->diagnose('SELECT a FROM t HAVING a > 1', [$table]);
 
         self::assertSame(Nullability::NotNull, $grouped->field('a')->nullability);
         self::assertSame(Nullability::Nullable, $rollup->field('a')->nullability);
@@ -318,7 +318,7 @@ final class SelectTest extends TestCase
 
     public function testDeriveQueryExpandsStarsOverJoins(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::Int), Nullability::NotNull),
@@ -327,8 +327,8 @@ final class SelectTest extends TestCase
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $using = $semantics->inspect('SELECT * FROM t LEFT JOIN u USING (b)', [$t, $u]);
-        $qualified = $semantics->inspect('SELECT u.* FROM t JOIN u USING (b)', [$t, $u]);
+        $using = $semantics->diagnose('SELECT * FROM t LEFT JOIN u USING (b)', [$t, $u]);
+        $qualified = $semantics->diagnose('SELECT u.* FROM t JOIN u USING (b)', [$t, $u]);
 
         self::assertSame(['b', 'a', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $using->fields()->items ?? []));
         self::assertSame(Nullability::NotNull, $using->field('b')->nullability);
@@ -360,21 +360,21 @@ final class SelectTest extends TestCase
 
     public function testANodeUsedAtTwoPositionsIsRejected(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $column = new ColumnUse(new Name('a'));
 
         $this->expectExceptionMessage('A statement node occurs at one position only.');
 
-        new Operation($semantics->context(), new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column));
+        new InspectedStatement($semantics->context(), new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column));
     }
 
     public function testAStringLiteralUnderAnotherEscapeRuleIsRejected(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
 
-        new Operation($semantics->context(), new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]));
+        new InspectedStatement($semantics->context(), new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]));
     }
 
     public function testRejectsALateOrderingThatIsWrittenInPlace(): void
@@ -397,7 +397,7 @@ final class SelectTest extends TestCase
 
         $this->expectExceptionMessage('An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
 
-        new Operation((new Semantics('mysql-5.6.51'))->context([]), $select);
+        new InspectedStatement((new Inspection('mysql-5.6.51'))->context([]), $select);
     }
 
     public function testDeriveQueryRefusesALateOrderingBefore56(): void
@@ -406,6 +406,6 @@ final class SelectTest extends TestCase
 
         $this->expectExceptionMessage('An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block needs MySQL 5.6.');
 
-        new Operation((new Semantics('mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($select))]));
+        new InspectedStatement((new Inspection('mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($select))]));
     }
 }

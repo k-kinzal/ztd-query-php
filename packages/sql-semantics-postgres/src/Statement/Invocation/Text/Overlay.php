@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * named `overlay`.
  * Source: https://www.postgresql.org/docs/17/functions-string.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an overlay without a count
  *     $null = static fn () => new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral();
  *     $overlay = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\Overlay($null(), $null(), $null());

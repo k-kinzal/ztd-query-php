@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
  * NULL. Source: https://dev.mysql.com/doc/refman/8.4/en/boolean-literals.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a boolean literal
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = TRUE');
- *     $query->statement->where->right->value // => true
+ * @visibility SqlSemantics
  */
 final class BooleanLiteral implements Scalar
 {

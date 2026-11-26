@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-logfile-group.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing a log file group
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("drop logfile group lg engine ndb");
- *     [$statement->toString(), $statement->statement->name->value] // => ["DROP LOGFILE GROUP lg ENGINE `ndb`", 'lg']
+ * @visibility SqlSemantics
  */
 final class DropLogfileGroup implements Statement
 {

@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
@@ -24,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ParameterRule::class)]
 #[Medium]
@@ -43,7 +43,7 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerParametersLowersAProcedureListInOrder')]
     public function testParametersLowersAProcedureListInOrder(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create procedure p(in a int, out b char(3) collate latin1_bin, inout c int, d int) select 1');
+        $create = (new Inspection($release))->inspect('create procedure p(in a int, out b char(3) collate latin1_bin, inout c int, d int) select 1');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame(['a', 'b', 'c', 'd'], array_map(static fn (Parameter $parameter): string => $parameter->name->value, $statement->parameters->parameters));
@@ -66,7 +66,7 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerParametersLowersAFunctionList')]
     public function testParametersLowersAFunctionList(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create function f(a int, b char(3) collate latin1_bin) returns int return a');
+        $create = (new Inspection($release))->inspect('create function f(a int, b char(3) collate latin1_bin) returns int return a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame(['a', 'b'], array_map(static fn (Parameter $parameter): string => $parameter->name->value, $statement->parameters->parameters));
@@ -77,12 +77,12 @@ final class ParameterRuleTest extends TestCase
 
     public function testParametersLowersAnEmptyList(): void
     {
-        $semantics = new Semantics('mysql-5.7.44');
-        $procedure = $semantics->analyze('create procedure p() select 1')->statement;
+        $semantics = new Inspection('mysql-5.7.44');
+        $procedure = $semantics->inspect('create procedure p() select 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         self::assertSame([], $procedure->parameters->parameters);
 
-        $function = $semantics->analyze('create function f() returns int return 1')->statement;
+        $function = $semantics->inspect('create function f() returns int return 1')->statement;
         self::assertInstanceOf(CreateFunction::class, $function);
         self::assertSame([], $function->parameters->parameters);
     }
@@ -110,7 +110,7 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerParameterReadsTheModeNameAndType')]
     public function testParameterReadsTheModeNameAndType(string $release): void
     {
-        $statement = (new Semantics($release))->analyze('CREATE PROCEDURE p(OUT total INT) SELECT 1')->statement;
+        $statement = (new Inspection($release))->inspect('CREATE PROCEDURE p(OUT total INT) SELECT 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertEquals([new Parameter(new Name('total'), new Integral(IntegralKind::Int), null, ParameterMode::Out)], $statement->parameters->parameters);
     }
@@ -140,18 +140,18 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerDeclaredLowersATypeWithItsCollation')]
     public function testDeclaredLowersATypeWithItsCollation(string $release): void
     {
-        $semantics = new Semantics($release);
-        $function = $semantics->analyze('create function f() returns char(3) collate latin1_bin return 1');
+        $semantics = new Inspection($release);
+        $function = $semantics->inspect('create function f() returns char(3) collate latin1_bin return 1');
         self::assertInstanceOf(CreateFunction::class, $function->statement);
         self::assertSame('latin1_bin', $function->statement->collation?->name?->value);
         self::assertSame('CREATE FUNCTION f() RETURNS CHAR(3) COLLATE latin1_bin RETURN 1', $function->toString());
 
-        $plain = $semantics->analyze('create function f() returns int return 1')->statement;
+        $plain = $semantics->inspect('create function f() returns int return 1')->statement;
         self::assertInstanceOf(CreateFunction::class, $plain);
         self::assertEquals(new Integral(IntegralKind::Int), $plain->returns);
         self::assertNull($plain->collation);
 
-        $procedure = $semantics->analyze("create procedure p() begin declare v char(3) collate latin1_bin default 'a'; end");
+        $procedure = $semantics->inspect("create procedure p() begin declare v char(3) collate latin1_bin default 'a'; end");
         self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
         self::assertInstanceOf(Block::class, $procedure->statement->body);
         $declaration = $procedure->statement->body->declarations[0];

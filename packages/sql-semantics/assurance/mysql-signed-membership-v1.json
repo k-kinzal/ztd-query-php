@@ -1,0 +1,185 @@
+{
+  "revision": "SemanticsIR/mysql-signed-membership-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/sql-mode-empty/utf8mb4/native",
+    "mysql-5.7.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.0.44/sql-mode-empty/utf8mb4/native",
+    "mysql-8.1.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.2.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.3.0/sql-mode-empty/utf8mb4/native",
+    "mysql-8.4.7/sql-mode-empty/utf8mb4/native",
+    "mysql-9.0.1/sql-mode-empty/utf8mb4/native",
+    "mysql-9.1.0/sql-mode-empty/utf8mb4/native"
+  ],
+  "scope": "Scalar IN and NOT IN with pure signed integer operands under the fixed MySQL profile. Resolve nullable and required physical fields in all five signed native storage widths, exact signed 64-bit literal tokens, and SQL NULL.",
+  "constructors": {
+    "Predicate/IntegerMembership": {
+      "role": "One signed subject, ordered alternatives, and separate negation. Projection yields the native integer truth result.",
+      "structure": "Resolved INT and other signed integral slot roles, native signed literal tokens, or SQL NULL. Store a detached, nonempty value list in order and retain repetitions.",
+      "conditions": "One to 8190 alternatives, exact allowed operand values, and host checks of visible occurrence, signed width role and expanded expression budget. Analysis resolves every physical field and rejects unsigned or nonintegral values.",
+      "meaning": "True when a nonnull subject equals a nonnull alternative. Otherwise NULL if any comparison is unknown. Otherwise false. NOT reverses true and false and preserves NULL. WHERE, ON and writes select only true.",
+      "externalInterpretation": "Resolve the same absolute database/table and physical column, with signed storage width and known nullability. The scalar equals the exact mathematical integer for every admitted field width and literal token.",
+      "sql": "Parenthesize the native IN or NOT IN operation and emit all alternatives in their stored order. Use the checked signed decimal, leading zero and negative-zero spelling of each literal; use resolved aliases and quoted field names.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/IntegralSlotType": {
+      "role": "Native signed TINYINT, SMALLINT, MEDIUMINT or BIGINT field interpretation with their nullability.",
+      "structure": "Closed storage enum and known nullability. INT has a separate native reference role with the same source boundary.",
+      "conditions": "An integral slot type must select one of the four storage widths distinct from the INT role. Store it as an exact immutable source type.",
+      "meaning": "A read selects a value in the exact signed storage width or NULL when allowed.",
+      "externalInterpretation": "The resolved local source is supplied the same physical column definition.",
+      "sql": "Use the resolved physical field name at the consuming reference.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/IntegralColumnReference": {
+      "role": "A pure signed integral read within one visible input occurrence.",
+      "structure": "Nonnegative local slot and occurrence with exact storage supplied by its owning source.",
+      "conditions": "The containing signed predicate must check the exact source slot has the integral storage role. A different width role or an invisible input fails before publication.",
+      "meaning": "Read the exact value of the referenced field in the current row.",
+      "externalInterpretation": "Use the same resolved physical declaration and occurrence.",
+      "sql": "Emit the owning generated alias and quoted field label for SELECT or its allowed mutation form.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "finite": {
+    "sources": [
+      "unit",
+      "five-widths"
+    ],
+    "placements": [
+      "projection",
+      "filter"
+    ],
+    "negated": [
+      false,
+      true
+    ],
+    "lengths": [
+      1,
+      2
+    ],
+    "literals": [
+      [
+        "range-integer",
+        "2",
+        0,
+        false
+      ],
+      [
+        "range-integer",
+        "2147483648",
+        0,
+        false
+      ],
+      [
+        "null"
+      ]
+    ],
+    "physicalRoles": [
+      "tinyint",
+      "smallint",
+      "mediumint",
+      "int",
+      "bigint"
+    ],
+    "coordinatesPerRoute": 2448,
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      19463,
+      35771,
+      61813
+    ],
+    "casesPerSeed": 48,
+    "directCasesPerSeed": 48,
+    "timeoutSecondsPerRelease": 720,
+    "allowedExclusions": [],
+    "structure": "Vary the five signed input widths, repeated items, larger lists, neighboring signed extrema, NULL, literal padding and separate negative zero. Compose with NULL and logical predicates, joins and reversible mutations."
+  },
+  "observations": [
+    "Check the exact named column layout, native integer truth type and the typed observed rows including duplicates and NULL. Observe effect sets and updated values under the same catalog.",
+    "Check exact physical bindings of both routes and retain all signed width and nullability distinctions in the candidate graph.",
+    "Admit the maximum list bound with a final match and the corresponding nullable branch. Check local list sizes and persistent detachment from caller aliases."
+  ],
+  "negative": [
+    "Empty or associative alternatives, a non-closed item, list size beyond the profile, invalid occurrence and wrong storage role.",
+    "Signed literal outside the fixed native magnitude, unsigned physical field, nonintegral field, or computed expression outside the pure domain."
+  ],
+  "faults": [
+    "Skip the empty-list condition",
+    "Keep a mutable caller array reference",
+    "Drop the final alternative",
+    "Remove the NOT modifier",
+    "Substitute a different signed-width physical slot",
+    "Ignore a known output type difference in the comparator"
+  ],
+  "open": [
+    "Other scalar families, mixed string and numeric coercion, parameters, row or subquery membership, and comparison under other SQL modes remain separate obligations."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_in",
+    "https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_in",
+    "https://dev.mysql.com/doc/refman/8.0/en/expressions.html"
+  ],
+  "calibration": {
+    "generate.py": "6a8621665712dd807b06c8e9a1ac1fda89416038130fbd18cd3a15367861a183",
+    "observe.sql": "5b24999d19e9e9a087d8203beaba5ece995379c7ee6bc83b84527db2e3e9b003",
+    "expected.tsv": "b40a17b94a4c2e4927c9a2bb56a3fff7f8cc377c8cc5e91092bb4fd89e9012df",
+    "profiles.tsv": "2c2295197082c0c922c5f9289ad1e78b8432191f8804790b3343e8bb07856166",
+    "width/observe.sql": "1fb23cd2ae6f23c25b44d55b7d4018eb03992b4da60076d943734ae489441f6d",
+    "5.6.51.stdout": "bfb2a94a1fa881cc3e3fcada93ce3eebd891af93aef975dc6c7deca7aac4b01a",
+    "5.7.44.stdout": "ebdf61b8edc915ea7365440a30ae45a3fc4e48730f002541a25688e8e9220a81",
+    "8.0.44.stdout": "50a40a280b9fb279caeac296dfaf7c4edfe15e8b7e1831f1b033b6c681d02818",
+    "8.1.0.stdout": "34681a0fde70a47cd64eb4248ddb85001485ebba706b427398bcedc8020c8414",
+    "8.2.0.stdout": "fbec38fc5f6b625fdd9f76c8b3eab616f51f3cdcd1b321c8bc10e60e1e36ea13",
+    "8.3.0.stdout": "04b71226806765387d50bab83917aaa642e30006cc508f2eec5f96710e6dd841",
+    "8.4.7.stdout": "277874c3670e8045933b3ef20d9e4e2e3d64dfae97c4bcfe2e22af351eaee81f",
+    "9.0.1.stdout": "2dbe8010bc29288ff4d0432fd8fe74706a3ec5da48414357d43b89c394eb910e",
+    "9.1.0.stdout": "a21aff73f97153da22726b604e5323bae4aeeb6c5876efa7aaa3222fe19c623f"
+  }
+}

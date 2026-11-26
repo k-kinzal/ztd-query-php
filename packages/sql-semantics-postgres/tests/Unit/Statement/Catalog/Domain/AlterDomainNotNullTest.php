@@ -14,11 +14,11 @@ final class AlterDomainNotNullTest extends TestCase
 {
     public function testRenderWritesSet(): void
     {
-        self::assertSame('ALTER DOMAIN d SET NOT NULL', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d SET NOT NULL')->toString());
+        self::assertSame('ALTER DOMAIN d SET NOT NULL', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d SET NOT NULL')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d DROP NOT NULL')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d DROP NOT NULL')->facts->diagnostics);
     }
 }

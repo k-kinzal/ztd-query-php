@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  * PG-CONSTRAINT-ATTRIBUTES-001.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a check that is not validated
- *     $alter = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, CONSTRAINT positive CHECK (a > 0) NOT VALID)');
- *     [$alter->statement->definition->elements[1]->name->value, $alter->statement->definition->elements[1]->attributes] // => ['positive', [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::NotValid]]
+ * @visibility SqlSemantics
  */
 final class TableCheck implements Constraint
 {

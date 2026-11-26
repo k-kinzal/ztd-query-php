@@ -1,0 +1,224 @@
+{
+  "revision": "SemanticsIR/sqlite-scalars-2",
+  "approval": "pending-human-review",
+  "requiredScope": "The requirements of contract-v1.json remain in force. This record adds SQLite literal and scalar composition obligations.",
+  "profile": "SQLite 3.47.2 with UTF-8, short column names, numbered parameters and the pinned limits of the completed statement envelope.",
+  "constructors": {
+    "TextLiteral": {
+      "role": "A SQLite TEXT constant.",
+      "structure": "The decoded UTF-8 value, including quotes, whitespace and zero code points.",
+      "boundary": "Reject ill-formed UTF-8. Charge the whole encoded payload to the containing statement.",
+      "meaning": "Read the specified bytes with TEXT storage, no expression affinity and the literal default collation.",
+      "sql": "Quote and double embedded quotes. For a zero code point, convert the complete hex payload to TEXT and apply unary plus to remove the conversion affinity.",
+      "type": "Literal/TextLiteral"
+    },
+    "BlobLiteral": {
+      "role": "An exact SQLite BLOB constant.",
+      "structure": "One pair of upper-case hexadecimal digits per byte, including an empty byte vector.",
+      "boundary": "Reject odd length, lower-case or nonhexadecimal digits. Charge the literal payload to the containing statement.",
+      "meaning": "Read the specified bytes with BLOB storage.",
+      "sql": "Write X followed by the quoted hexadecimal pairs.",
+      "type": "Literal/BlobLiteral"
+    },
+    "RealLiteral": {
+      "role": "A SQLite REAL constant before engine conversion to binary64.",
+      "structure": "A sign choice and ordered digit strings for the whole part, optional fraction and optional decimal exponent.",
+      "boundary": "Require decimal digits, at least one significand digit and a well-formed exponent when present. Omit both fraction and exponent only for decimal magnitudes outside the signed integer range in the written direction.",
+      "meaning": "Interpret the signed decimal parts with the pinned SQLite conversion. Preserve signed zero, overflow to infinity and the distinction from an INTEGER literal.",
+      "sql": "Emit the decimal components in order with a point or exponent when present. Retain all digits used by SQLite conversion.",
+      "type": "Literal/RealLiteral"
+    },
+    "HexIntegerLiteral": {
+      "role": "A SQLite hexadecimal INTEGER constant or its directly signed negative form.",
+      "structure": "One to sixteen significant upper-case hexadecimal digits and a flag for unary negation.",
+      "boundary": "Require canonical digits, with a single zero for zero. Reject direct negation of hexadecimal 8000000000000000, which SQLite rejects during preparation.",
+      "meaning": "Interpret the unsigned hexadecimal spelling as signed two's complement before applying the stated unary sign.",
+      "sql": "Write 0x and the digits and prepend the optional negative sign.",
+      "type": "Literal/HexIntegerLiteral"
+    },
+    "Arithmetic": {
+      "role": "Addition, subtraction or multiplication of two checked scalar expressions.",
+      "structure": "Two ordered operands in the closed scalar union and a fixed operator.",
+      "boundary": "The containing statement checks operand scopes, expanded occurrence and encoded payload budgets.",
+      "meaning": "Apply the SQLite numeric operation to the recursively interpreted operands, including the INTEGER-to-REAL overflow rule and NULL propagation.",
+      "sql": "Parenthesize the binary expression and retain its operand order."
+    },
+    "Predicate/Comparison": {
+      "role": "A comparison permitted in any checked scalar position.",
+      "structure": "Two ordered scalar operands with an explicit equality, ordering or NULL-safe comparison operator.",
+      "boundary": "The containing statement checks both occurrences and their referenced slots.",
+      "meaning": "Use SQLite comparison and affinity rules. A truth value in a result or write is INTEGER 0 or 1, or NULL according to the operator.",
+      "sql": "Emit an explicit parenthesized comparison. The operation distinguishes ordinary and NULL-safe equality."
+    },
+    "Predicate/Logical": {
+      "role": "AND or OR in any checked scalar position.",
+      "structure": "Two ordered scalar operands and the selected Boolean operation.",
+      "boundary": "The containing statement checks both occurrences and their referenced slots.",
+      "meaning": "Apply SQLite three-valued truth conversion and produce the resulting INTEGER truth value or NULL.",
+      "sql": "Emit both operands with the selected operator inside parentheses."
+    }
+  },
+  "assurance": {
+    "P01": "Constructor tags distinguish the storage roles and operation choices, and column leaves retain only resolved scoped slots.",
+    "P02": "Check each payload and enforce the entire emitted payload budget in the containing statement, including expression-bearing rows, assignments and predicates.",
+    "P03": "The checked values retain text and digits as scalar parts and use no original SQL, analysis object or context.",
+    "P04": "Exercise mixed operands and recursively constructed operators in projections and VALUES, and compare the same scalar rules at the mutation boundary.",
+    "P05": "Check the final, readonly class shape and existing Snapshot paths and copy the VALUES input list.",
+    "P06": "Compare typed SQLite outputs, binding labels and effects with an independent evaluator. Compare representative analyzed inputs with their original execution."
+  },
+  "observations": [
+    "ordered result labels",
+    "storage-class-tagged row bag",
+    "parameter slots and labels",
+    "readonly and total-change observations",
+    "mutation state including storage classes and duplicate rows"
+  ],
+  "finite": {
+    "targets": [
+      "select",
+      "values"
+    ],
+    "atoms": [
+      [
+        "integer",
+        "0"
+      ],
+      [
+        "integer",
+        "2"
+      ],
+      [
+        "null"
+      ],
+      [
+        "parameter",
+        "02"
+      ],
+      [
+        "text",
+        ""
+      ],
+      [
+        "text",
+        "it's\n\u96ea"
+      ],
+      [
+        "text",
+        "42"
+      ],
+      [
+        "blob",
+        ""
+      ],
+      [
+        "blob",
+        "00FF"
+      ],
+      [
+        "blob",
+        "3432"
+      ],
+      [
+        "real",
+        "1",
+        "5",
+        null,
+        false
+      ],
+      [
+        "real",
+        "",
+        "0",
+        null,
+        true
+      ],
+      [
+        "real",
+        "9223372036854775809",
+        null,
+        null,
+        false
+      ],
+      [
+        "hex",
+        "FFFFFFFFFFFFFFFF",
+        false
+      ],
+      [
+        "hex",
+        "8000000000000001",
+        true
+      ]
+    ],
+    "operators": [
+      [
+        "comparison",
+        "="
+      ],
+      [
+        "comparison",
+        "IS"
+      ],
+      [
+        "logical",
+        "AND"
+      ],
+      [
+        "logical",
+        "OR"
+      ],
+      [
+        "arithmetic",
+        "+"
+      ]
+    ],
+    "rule": "Construct every single atom and every ordered pair under each operator through both target constructors. Compare the identities read from PHP with the Cartesian product computed independently."
+  },
+  "exploration": {
+    "seeds": [
+      1827,
+      3218,
+      4629
+    ],
+    "casesPerSeed": 64,
+    "height": 4,
+    "width": 4,
+    "timeoutSeconds": 240,
+    "allowedExclusions": []
+  },
+  "analysis": [
+    "projection with decoded literals and native aliases",
+    "signed overflow and signed zero boundaries",
+    "nested comparison, Boolean and arithmetic composition",
+    "VALUES with mixed storage and binary operators",
+    "INSERT, UPDATE and DELETE effects"
+  ],
+  "negative": [
+    "ill-formed UTF-8",
+    "odd BLOB length",
+    "nonhexadecimal BLOB digit",
+    "missing significand",
+    "integer in REAL role",
+    "malformed exponent",
+    "hexadecimal overflow",
+    "negation of minimum hexadecimal integer"
+  ],
+  "faults": [
+    "coerce TEXT to BLOB",
+    "erase signed zero",
+    "omit hexadecimal negation",
+    "give NUL TEXT an expression affinity"
+  ],
+  "trust": "The typed oracle covers the stated finite data, generated exact decimals and fixture states. Native lexical rules, rounding of other digit sequences, the runtime shape checker and external schema interpretation remain trust obligations. The general-catalogue completion requirements remain open.",
+  "sources": [
+    "https://www.sqlite.org/lang_expr.html#literal_values_constants_",
+    "https://sqlite.org/datatype3.html"
+  ],
+  "predecessorCheck": {
+    "contract": "sqlite-scalars-v1.json",
+    "previousWitness": "text NUL",
+    "replacementWitness": "ill-formed UTF-8",
+    "reason": "The previous value becomes a directly constructed positive case. The renderer preserves its exact TEXT bytes and zero affinity using checked syntax. Invalid UTF-8 remains rejected."
+  },
+  "additionalPositive": "One direct SELECT observes both TEXT bytes containing a zero code point and numeric comparison without TEXT affinity."
+}

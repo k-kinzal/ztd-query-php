@@ -1,0 +1,17 @@
+{
+  "revision": "SemanticsIR/mysql-generated-view-binding-1",
+  "approval": "pending-human-review",
+  "related": "mysql-generated-view-headings-v2.json",
+  "purpose": "Fix the generated and explicit column roles and their native allocation before publication.",
+  "artifacts": {
+    "src/Rules/TableDefinition/ViewColumns.php": {
+      "sha256": "af7e89e5530656a6467a3dd620eee732f454ff41db604b1026412e84abbcd67e"
+    },
+    "src/Rules/TableDefinition/ViewFacts.php": {
+      "sha256": "3698da21ddf76ff043828a473f998a8bb59a24a9bf423d79d0f222b7ab87ce34"
+    },
+    "src/Rules/TableDefinition/ColumnNameRule.php": {
+      "sha256": "da669a1fd3ad8d7a929e9e942663575147395e4d62e904d18c2603b619044171"
+    }
+  }
+}

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * cannot start a frame and UNBOUNDED PRECEDING cannot end one.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-frames.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading both ends of a frame
  *     $frame = new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::UnboundedPreceding), new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow));
  *     $frame->end?->kind // => \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
  * The facts follow MYSQL-DELETE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/delete.html.
  *
- * @visibility public
- * @example Reading a single-table DELETE
- *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5');
- *     [$delete->statement->options, $delete->toString()] // => [[\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::Quick], 'DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5']
+ * @visibility SqlSemantics
  */
 final class Delete implements Statement
 {

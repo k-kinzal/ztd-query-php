@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * looked up by name among the constraints of the database when the command runs.
  * Source: https://www.postgresql.org/docs/17/sql-set-constraints.html. Status: Implemented.
  *
- * @visibility public
- * @example Deferring every constraint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET CONSTRAINTS ALL DEFERRED');
- *     [$operation->statement->constraints, $operation->statement->deferred] // => [[], true]
+ * @visibility SqlSemantics
  */
 final class SetConstraints implements Statement
 {

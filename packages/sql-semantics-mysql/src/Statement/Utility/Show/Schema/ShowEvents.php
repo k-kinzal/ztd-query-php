@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-events.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW EVENTS FROM shop LIKE 'a%'");
- *     [$show->statement->database?->value, $show->toString()] // => ['shop', "SHOW EVENTS FROM shop LIKE 'a%'"]
+ * @visibility SqlSemantics
  */
 final class ShowEvents implements Statement, Relation
 {

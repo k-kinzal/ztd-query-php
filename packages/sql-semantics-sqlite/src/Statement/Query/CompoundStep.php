@@ -11,10 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * One further arm of a compound query with the operator before it.
  *
- * @visibility public
- * @example Reading a further arm
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 EXCEPT SELECT 2');
- *     $query->statement->steps[0]->query->columns[0]->expression->digits // => '2'
+ * @visibility SqlSemantics
  */
 final class CompoundStep implements Node
 {

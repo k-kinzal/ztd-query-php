@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * `xmlexists`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PREDICATES-XMLEXISTS. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     $exists = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlExists(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlPassing(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()));
  *     $exists->outputName()->value // => 'xmlexists'

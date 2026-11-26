@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CommonTable::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class CommonTableTest extends TestCase
 {
     public function testDefinitionIsTheCommonTableNodeOfTheStatement(): void
     {
-        $query = (new Semantics())->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
+        $query = (new Inspection())->inspect('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
         $statement = $query->statement;
 
         self::assertInstanceOf(WithQuery::class, $statement);
@@ -34,9 +34,9 @@ final class CommonTableTest extends TestCase
 
     public function testDefinitionShadowsADeclaredTableOfTheSameName(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE c (b INTEGER)');
-        $query = $semantics->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE c (b INTEGER)');
+        $query = $semantics->inspect('WITH c AS (SELECT 1 AS a) SELECT a FROM c', [$table]);
         $statement = $query->statement;
 
         self::assertInstanceOf(WithQuery::class, $statement);

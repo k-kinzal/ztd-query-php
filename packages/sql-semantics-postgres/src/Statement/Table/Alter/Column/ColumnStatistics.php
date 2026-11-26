@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * the target -1 of earlier releases.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Setting a statistics target
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER INDEX i ALTER COLUMN 1 SET STATISTICS 100');
- *     $statement->statement->commands[0]->column->digits // => '1'
+ * @visibility SqlSemantics
  */
 final class ColumnStatistics implements AlterCommand
 {

@@ -1,0 +1,29 @@
+{
+  "revision": "SemanticsIR/sqlite-launch-reconciliation-2",
+  "approval": "pending-human-review",
+  "scope": "Replay the complete fixed set of SQLite domain receipts for one exact candidate and one exact SQLite library, including receipts collected in explicitly recorded retries.",
+  "policy": {
+    "candidate": "Verify the candidate's committed source and distribution independently before and after replay.",
+    "attempts": "Validate each original launch plan, runner identity, schedule, journal, per-job logs and record digests with the existing protected launch checker. Reject attempts with a different candidate, distribution, tool set or SQLite library. Preserve the raw attempts and their omissions, exit codes and failures.",
+    "selection": "In the explicitly supplied attempt order, use the first successfully completed receipt for each domain of the existing fixed replay schedule. A structurally invalid, omitted, timed-out or failed domain cannot supply a receipt. Re-run every independent domain comparator and its recorded faults on the selected artifacts without changing the domains, inputs or budgets.",
+    "outputs": "Link the attempt manifests, the raw failures, every selected source, the unchanged complete replay and the result. The original launch outcomes remain recorded. The reconciliation is provisional evidence and cannot confer human approval or repository protection.",
+    "retryableFailure": "Retry only a recorded outer timeout or the exact, documented 60-second AST program startup timeout with no domain result. Correlate the typed timeout exception and the matching failed domain record with the checked launch log. A source, construction, semantic, unsupported, unclassified or infrastructure-launch failure needs separate resolution."
+  },
+  "faults": [
+    "Use different library bytes for one retry.",
+    "Drop a scheduled or attempted domain from the recorded receipts.",
+    "Present an incomplete retry set that never observed a required domain.",
+    "Replace a selected post-verification domain artifact.",
+    "Lose the provenance of an earlier failed attempt.",
+    "Relabel a semantic disagreement as an otherwise successful retry."
+  ],
+  "trust": [
+    "Archived fixed verifier checkout",
+    "Existing launcher and verifier validation",
+    "Read-only candidate execution and authentic evidence directories supplied by the operator"
+  ],
+  "extends": {
+    "path": "sqlite-launch-reconciliation-v1.json",
+    "sha256": "694ef2e6d175649559bc823b566951518ff7f72590b7ab84e121dbd4eb4e5216"
+  }
+}

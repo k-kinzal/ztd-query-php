@@ -12,10 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
  * The clauses are kept in written order; for one event the last action wins.
  * Source: https://sqlite.org/syntax/foreign-key-clause.html.
  *
- * @visibility public
- * @example Reading the clauses of a foreign key in written order
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent MATCH FULL ON DELETE CASCADE)');
- *     count($create->statement->columns[0]->constraints[0]->arguments) // => 2
+ * @visibility SqlSemantics
  */
 interface ReferenceArgument extends Node
 {

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an ordinality column
  *     (new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('n')))->name->value // => 'n'
  */

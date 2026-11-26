@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\TriggerReferences;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnStar;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(TriggerReferences::class)]
 #[Medium]
@@ -20,49 +20,49 @@ final class TriggerReferencesTest extends TestCase
 {
     public function testCheckReportsOldInAnInsertTrigger(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a int)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT OR UPDATE ON t FOR EACH ROW WHEN (old.a = 1) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a int)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT OR UPDATE ON t FOR EACH ROW WHEN (old.a = 1) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame(["INSERT trigger's WHEN condition cannot reference OLD values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
     }
 
     public function testCheckReportsNewInADeleteTrigger(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a int)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW WHEN (new IS NULL) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a int)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW WHEN (new IS NULL) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame(["DELETE trigger's WHEN condition cannot reference NEW values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
     }
 
     public function testCheckReportsANewSystemColumnInABeforeTrigger(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a int)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW WHEN (new.xmin IS NULL) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a int)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW WHEN (new.xmin IS NULL) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW system columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
     }
 
     public function testCheckReportsAnyColumnInAStatementTrigger(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a int)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH STATEMENT WHEN (old.a = new.a) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a int)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH STATEMENT WHEN (old.a = new.a) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame(["statement trigger's WHEN condition cannot reference column values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
     }
 
     public function testCheckAcceptsOldAndNewInAnAfterUpdateTrigger(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a int)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW WHEN (old.* IS DISTINCT FROM new.* AND new.ctid IS NOT NULL) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a int)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW WHEN (old.* IS DISTINCT FROM new.* AND new.ctid IS NOT NULL) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame([], $trigger->facts->diagnostics);
     }
 
     public function testReferenceTellsOldNewAndSystemColumns(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a int, old int)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW WHEN (true) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a int, old int)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW WHEN (true) EXECUTE FUNCTION f()', $table->declarations());
         self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
         $fact = $trigger->facts->relation($trigger->statement);
         $references = new TriggerReferences();
@@ -81,33 +81,33 @@ final class TriggerReferencesTest extends TestCase
 
     public function testCheckReportsANewGeneratedColumnInABeforeTrigger(): void
     {
-        $semantics = new Semantics('pg-16.6');
-        $table = $semantics->inspect('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.a > 0 AND new.b > 0) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection('pg-16.6');
+        $table = $semantics->diagnose('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.a > 0 AND new.b > 0) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
     }
 
     public function testCheckReportsTheWholeNewRowOfATableWithAGeneratedColumn(): void
     {
-        $semantics = new Semantics('pg-17.2');
-        $table = $semantics->inspect('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new IS DISTINCT FROM old) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection('pg-17.2');
+        $table = $semantics->diagnose('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new IS DISTINCT FROM old) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
     }
 
     public function testCheckAcceptsNewGeneratedColumnsInAnAfterTrigger(): void
     {
-        $semantics = new Semantics('pg-17.2');
-        $table = $semantics->inspect('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr AFTER UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND (new).b > 0) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection('pg-17.2');
+        $table = $semantics->diagnose('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr AFTER UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND (new).b > 0) EXECUTE FUNCTION f()', $table->declarations());
         self::assertSame([], $trigger->facts->diagnostics);
     }
 
     public function testReferencesAnswersTheReferencesInWrittenOrder(): void
     {
-        $semantics = new Semantics('pg-17.2');
-        $table = $semantics->inspect('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
-        $trigger = $semantics->inspect('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND new.ctid IS NOT NULL AND old.a = (new).a) EXECUTE FUNCTION f()', $table->declarations());
+        $semantics = new Inspection('pg-17.2');
+        $table = $semantics->diagnose('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND new.ctid IS NOT NULL AND old.a = (new).a) EXECUTE FUNCTION f()', $table->declarations());
         self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
         self::assertNotNull($trigger->statement->when);
         self::assertSame(

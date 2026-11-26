@@ -24,11 +24,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
  * or a sort order. The parent is not looked up when the table is defined.
  * Source: https://sqlite.org/foreignkeys.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a composite foreign key
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (a, b, FOREIGN KEY (a, b) REFERENCES parent (x, y) DEFERRABLE INITIALLY DEFERRED)');
- *     $key = $create->statement->constraints[0]->items[0];
- *     [count($key->columns), $key->clause->table->value, $key->deferrability?->deferred()] // => [2, 'parent', true]
+ * @visibility SqlSemantics
  */
 final class ForeignKey implements TableConstraint
 {

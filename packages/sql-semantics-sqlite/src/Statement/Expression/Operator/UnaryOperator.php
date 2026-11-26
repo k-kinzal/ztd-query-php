@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
  *
  * Source: https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes.
  *
- * @visibility public
- * @example Reading the operator of a negation
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT NOT 1');
- *     $query->statement->columns[0]->expression->operator // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Not
+ * @visibility SqlSemantics
  */
 enum UnaryOperator: string
 {

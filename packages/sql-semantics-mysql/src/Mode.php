@@ -20,9 +20,6 @@ use SqlParser\MySql\SqlMode;
  * @visibility public
  * @example Reading the mode a session reports
  *     \SqlSemantics\Platform\MySql\Mode::fromString('STRICT_TRANS_TABLES,ansi_quotes,NO_BACKSLASH_ESCAPES')->toString() // => 'ANSI_QUOTES,NO_BACKSLASH_ESCAPES'
- * @example Reading double quotes as identifiers
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics(null, \SqlSemantics\Platform\MySql\Mode::fromString('ANSI_QUOTES'));
- *     $semantics->analyze('SELECT "order" FROM t')->toString() // => 'SELECT `order` FROM t'
  */
 final class Mode implements \SqlSemantics\Contract\Mode
 {

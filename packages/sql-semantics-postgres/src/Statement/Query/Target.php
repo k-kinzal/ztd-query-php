@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar;
  * field, or as many as its star expands to.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-SELECT-LIST.
  *
- * @visibility public
- * @example Reading the alias of a select-list item
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS one');
- *     $query->statement->targets[0]->alias->value // => 'one'
+ * @visibility SqlSemantics
  */
 interface Target extends Node
 {

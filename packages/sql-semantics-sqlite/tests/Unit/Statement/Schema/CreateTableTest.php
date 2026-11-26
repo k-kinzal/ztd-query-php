@@ -10,11 +10,9 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
@@ -24,6 +22,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOption;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CreateTable::class)]
 #[Medium]
@@ -42,7 +42,7 @@ final class CreateTableTest extends TestCase
 
     public function testStrictIgnoresAnOptionSqliteRejects(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a) "strict"')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a) "strict"')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertFalse($statement->strict());
@@ -50,7 +50,7 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementDeclaresTheColumnsInOrderWithTheirDeclaredTypes(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (id INTEGER, name VARCHAR(10), raw)')->declarations()[0];
+        $table = (new Inspection())->diagnose('CREATE TABLE t (id INTEGER, name VARCHAR(10), raw)')->declarations()[0];
 
         self::assertSame(['id', 'name', 'raw'], array_map(static fn (object $column): string => $column->name->value, $table->columns));
         self::assertSame(['INTEGER', 'VARCHAR(10)', ''], array_map(static fn (object $column): string => $column->type->name(), $table->columns));
@@ -58,10 +58,10 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementBindsAQueryToTheVeryObjectsItDeclares(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)');
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)');
         $table = $create->declarations()[0];
-        $query = $semantics->inspect('SELECT name, rowid FROM t WHERE t.id > 1', [$create]);
+        $query = $semantics->diagnose('SELECT name, rowid FROM t WHERE t.id > 1', [$create]);
         $input = $query->facts->relation($query->singleNamedInput())->table;
 
         self::assertInstanceOf(DeclaredTable::class, $input);
@@ -79,7 +79,7 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementProvidesExactlyOneDeclaration(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE IF NOT EXISTS t (a TEXT NOT NULL, b)', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE IF NOT EXISTS t (a TEXT NOT NULL, b)', []);
         $table = $operation->declarations()[0];
 
         self::assertCount(1, $operation->declarations());
@@ -94,14 +94,14 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementDeclaresATemporaryTableInTheTempSchema(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TEMP TABLE t (a)');
+        $operation = (new Inspection())->diagnose('CREATE TEMP TABLE t (a)');
 
         self::assertSame('temp', $operation->declarations()[0]->name->schema?->value);
     }
 
     public function testDeriveStatementDeclaresAnImplicitRowIdentifier(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (a TEXT)')->declarations()[0];
+        $table = (new Inspection())->diagnose('CREATE TABLE t (a TEXT)')->declarations()[0];
 
         self::assertCount(1, $table->implicit);
         self::assertSame(['rowid', 'oid', '_rowid_'], array_map(static fn (object $name): string => $name->value, $table->implicit[0]->names));
@@ -113,7 +113,7 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementMakesAnIntegerPrimaryKeyTheRowIdentifier(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a)')->declarations()[0];
+        $table = (new Inspection())->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a)')->declarations()[0];
 
         self::assertSame($table->columns[0], $table->implicit[0]->column);
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
@@ -121,7 +121,7 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementDeclaresNoRowIdentifierWithoutRowid(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a) WITHOUT ROWID')->declarations()[0];
+        $table = (new Inspection())->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a) WITHOUT ROWID')->declarations()[0];
 
         self::assertSame([], $table->implicit);
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
@@ -129,7 +129,7 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementRecordsTheShapeOfTheNewTableForTheStatementNode(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, b)');
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a, b)');
         $fact = $operation->facts->relation($operation->statement);
 
         self::assertCount(2, $fact->shape->slots);
@@ -140,8 +140,8 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveRelationDeclaresTheTableAndAnswersItsShape(): void
     {
-        $semantics = new Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a, b PRIMARY KEY, c PRIMARY KEY)')->statement;
+        $semantics = new Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a, b PRIMARY KEY, c PRIMARY KEY)')->statement;
         $derivation = new Derivation($semantics->context());
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -156,7 +156,7 @@ final class CreateTableTest extends TestCase
 
     public function testRenderKeepsACommaWrittenBeforeTheFirstOption(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a PRIMARY KEY) , WITHOUT ROWID , WITHOUT ROWID');
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a PRIMARY KEY) , WITHOUT ROWID , WITHOUT ROWID');
 
         self::assertInstanceOf(CreateTable::class, $operation->statement);
         self::assertTrue($operation->statement->optionsComma);
@@ -172,15 +172,15 @@ final class CreateTableTest extends TestCase
 
     public function testRenderWritesEveryPartInGrammarOrder(): void
     {
-        $operation = (new Semantics())->inspect('create temp table if not exists temp.t (id integer primary key, a text, unique (a)) strict, without rowid');
+        $operation = (new Inspection())->diagnose('create temp table if not exists temp.t (id integer primary key, a text, unique (a)) strict, without rowid');
 
         self::assertSame('CREATE TEMP TABLE IF NOT EXISTS `temp`.t (id integer PRIMARY KEY, a text, UNIQUE (a)) strict, WITHOUT rowid', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltDefinition(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new CreateTable(new QualifiedName(new Name('t'), new Name('main')), [new ColumnDefinition(new Name('a')), new ColumnDefinition(new Name('b'))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new CreateTable(new QualifiedName(new Name('t'), new Name('main')), [new ColumnDefinition(new Name('a')), new ColumnDefinition(new Name('b'))]));
 
         self::assertSame('CREATE TABLE main.t (a, b)', $operation->toString());
         self::assertCount(2, $operation->declarations()[0]->columns);

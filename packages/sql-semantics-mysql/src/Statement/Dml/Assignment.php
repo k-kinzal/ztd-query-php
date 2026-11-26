@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
  * tables it writes and derives the value; `=` and `:=` are one operator here.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/update.html.
  *
- * @visibility public
- * @example Reading an assignment of UPDATE
- *     $update = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('UPDATE t SET a = a + 1');
- *     $update->statement->assignments[0]->column->name->value // => 'a'
+ * @visibility SqlSemantics
  */
 final class Assignment implements Node
 {

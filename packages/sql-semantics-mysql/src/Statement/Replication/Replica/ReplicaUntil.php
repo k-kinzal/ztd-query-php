@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
  * accepts is checked when the statement is derived (MYSQL-REPLICA-UNTIL-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a GTID condition
  *     $until = new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGtids, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('3E11FA47-71CA-11E1-9E33-C80AA9429562:1-5'));
  *     $until->positions // => []

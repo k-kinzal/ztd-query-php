@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/miscellaneous-functions.html#function_values.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the column
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE VALUES(a)');
- *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable
+ * @visibility SqlSemantics
  */
 final class InsertedColumn implements Scalar
 {

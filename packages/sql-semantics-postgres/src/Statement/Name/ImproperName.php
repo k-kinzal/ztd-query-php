@@ -12,9 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS.
  *
- * @visibility public
- * @example Reporting a type name with four parts
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT a.b.c.d '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Improper qualified name (too many dotted names): a.b.c.d.
+ * @visibility SqlSemantics
  */
 final class ImproperName implements Diagnostic
 {

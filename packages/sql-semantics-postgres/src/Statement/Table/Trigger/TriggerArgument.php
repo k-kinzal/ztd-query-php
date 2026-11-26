@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * as its value and a word as its name (`TriggerFuncArg` in gram.y).
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
- * @visibility public
- * @example Reading trigger arguments
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TRIGGER g BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION f(1, 2.5, 'x', word)");
- *     $statement->toString() // => "CREATE TRIGGER g BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION f(1, 2.5, 'x', word)"
+ * @visibility SqlSemantics
  */
 final class TriggerArgument implements Node
 {

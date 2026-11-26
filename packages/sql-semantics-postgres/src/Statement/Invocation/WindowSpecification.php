@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS,
  * https://www.postgresql.org/docs/17/sql-select.html#SQL-WINDOW.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an empty window specification
  *     $window = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification();
  *     [$window->existing, $window->partition, $window->order, $window->frame] // => [null, [], [], null]

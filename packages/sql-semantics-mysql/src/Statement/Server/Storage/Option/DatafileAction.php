@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-tablespace.html,
  * https://dev.mysql.com/doc/refman/5.7/en/alter-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction::Drop->value // => 'DROP'
  */

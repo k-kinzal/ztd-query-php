@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\MutationScope;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
@@ -29,6 +28,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(MutationScope::class)]
 #[Medium]
@@ -36,9 +36,9 @@ final class MutationScopeTest extends TestCase
 {
     public function testOpenBindsTheWithClauseAndMakesTheTargetVisible(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('WITH w AS (SELECT 1 AS q) UPDATE t AS x SET a = 1', [$t])->statement;
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $statement = $semantics->inspect('WITH w AS (SELECT 1 AS q) UPDATE t AS x SET a = 1', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
         $outer = $derivation->environment();
 
@@ -57,8 +57,8 @@ final class MutationScopeTest extends TestCase
 
     public function testNamesReportsColumnsAClosedTargetCertainlyLacks(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $closed = new Derivation($semantics->context([$t]));
         $open = new Derivation($semantics->context());
         $scope = new MutationScope();
@@ -76,8 +76,8 @@ final class MutationScopeTest extends TestCase
 
     public function testAssignChecksTheColumnsAndTheWidthOfEachAssignment(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $scope = new MutationScope();
         $target = $scope->open(new MutationTarget(new QualifiedName(new Name('t'))), null, $derivation, $derivation->environment())[1];
@@ -105,8 +105,8 @@ final class MutationScopeTest extends TestCase
 
     public function testReturningIsNullWithoutColumnsAndProjectsTheTargetOtherwise(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $scope = new MutationScope();
         $target = $scope->open(new MutationTarget(new QualifiedName(new Name('t'))), null, $derivation, $derivation->environment())[1];

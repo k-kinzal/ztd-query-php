@@ -14,10 +14,10 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Query\SelectFacts;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(SelectFacts::class)]
 #[Medium]
@@ -25,9 +25,9 @@ final class SelectFactsTest extends TestCase
 {
     public function testDeriveAnswersTheOutputAndRecordsEveryClause(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $select = $semantics->inspect('SELECT a AS x, b FROM t WHERE x > 1 GROUP BY b HAVING count(*) > 1 WINDOW w AS (PARTITION BY a) ORDER BY x LIMIT 1 OFFSET 2')->statement;
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $select = $semantics->diagnose('SELECT a AS x, b FROM t WHERE x > 1 GROUP BY b HAVING count(*) > 1 WINDOW w AS (PARTITION BY a) ORDER BY x LIMIT 1 OFFSET 2')->statement;
         self::assertInstanceOf(Select::class, $select);
         $derivation = new Derivation($semantics->context([$create]));
 
@@ -51,11 +51,11 @@ final class SelectFactsTest extends TestCase
 
     public function testDeriveMakesInputColumnsNullableInAnAggregateSelectionWithoutGroupBy(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $having = $semantics->inspect('SELECT a FROM t HAVING 1')->statement;
-        $ordered = $semantics->inspect('SELECT a FROM t ORDER BY max(b)')->statement;
-        $plain = $semantics->inspect('SELECT a FROM t WHERE max(b) > 1')->statement;
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $having = $semantics->diagnose('SELECT a FROM t HAVING 1')->statement;
+        $ordered = $semantics->diagnose('SELECT a FROM t ORDER BY max(b)')->statement;
+        $plain = $semantics->diagnose('SELECT a FROM t WHERE max(b) > 1')->statement;
         self::assertInstanceOf(Select::class, $having);
         self::assertInstanceOf(Select::class, $ordered);
         self::assertInstanceOf(Select::class, $plain);
@@ -68,9 +68,9 @@ final class SelectFactsTest extends TestCase
 
     public function testAliasesAnswersTheFieldsWithAnExplicitAliasInOutputOrder(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a, *, b AS x, 1 AS y, a + 1 FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a, *, b AS x, 1 AS y, a + 1 FROM t', [$create]);
         $select = $query->statement;
         $output = $query->facts->output;
         self::assertInstanceOf(Select::class, $select);
@@ -85,9 +85,9 @@ final class SelectFactsTest extends TestCase
 
     public function testLimitDerivesTheExpressionsWithoutTheColumnsOfTheSelection(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $select = $semantics->inspect('SELECT a FROM t LIMIT a OFFSET 2')->statement;
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $select = $semantics->diagnose('SELECT a FROM t LIMIT a OFFSET 2')->statement;
         self::assertInstanceOf(Select::class, $select);
         $limit = $select->limit;
         self::assertNotNull($limit);

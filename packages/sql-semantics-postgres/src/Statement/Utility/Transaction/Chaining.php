@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * that none is started. The value is the keyword spelling.
  * Source: https://www.postgresql.org/docs/17/sql-commit.html, https://www.postgresql.org/docs/17/sql-rollback.html.
  *
- * @visibility public
- * @example Reading the chaining of a COMMIT
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COMMIT AND NO CHAIN');
- *     $operation->statement->chaining // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::NoChain
+ * @visibility SqlSemantics
  */
 enum Chaining: string
 {

@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html.
  *
- * @visibility public
- * @example Reading the attribute of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT COMMENT \'x\')');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute // => true
+ * @visibility SqlSemantics
  */
 final class CommentAttribute implements ColumnAttribute
 {

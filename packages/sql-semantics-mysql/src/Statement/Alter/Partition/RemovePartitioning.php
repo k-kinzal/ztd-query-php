@@ -15,9 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Mirrors PT_alter_table_remove_partitioning.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table-partition-operations.html.
  *
- * @visibility public
- * @example Removing the partitioning
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REMOVE PARTITIONING')->toString() // => 'ALTER TABLE t REMOVE PARTITIONING'
+ * @visibility SqlSemantics
  */
 final class RemovePartitioning implements TrailingCommand
 {

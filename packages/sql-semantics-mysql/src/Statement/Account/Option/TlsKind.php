@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
  * with it removes an earlier requirement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-tls.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the X.509 requirement
  *     \SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind::X509->name // => 'X509'
  */

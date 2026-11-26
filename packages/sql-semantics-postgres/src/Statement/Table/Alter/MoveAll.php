@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * `new_tablespacename`, `nowait`).
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Moving the tables of some owners
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE ALL IN TABLESPACE a OWNED BY u1, u2 SET TABLESPACE b NOWAIT');
- *     $statement->toString() // => 'ALTER TABLE ALL IN TABLESPACE a OWNED BY u1, u2 SET TABLESPACE b NOWAIT'
+ * @visibility SqlSemantics
  */
 final class MoveAll implements Statement
 {

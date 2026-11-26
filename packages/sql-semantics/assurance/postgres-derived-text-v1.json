@@ -1,0 +1,78 @@
+{
+  "revision": "SemanticsIR/postgres-derived-text-1",
+  "approval": "pending-human-review",
+  "extends": ["server-derived-join-v2.json", "postgres-typed-columns-v2.json", "postgres-text-null-tests-v1.json"],
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "From/DerivedSource": {
+      "role": "An independent derived join operand exporting checked int4 and native text columns.",
+      "structure": "One complete SELECT definition without a joined source, row limit or ordering clause, with an ordered result layout including signed literals, signed column references and native text column references.",
+      "conditions": "The definition validates its own visible source and exact column roles. The enclosing join checks each used ordinal and kind in the derived heading. The owning SELECT checks the profile of each derived operand.",
+      "meaning": "The derived occurrence supplies the definition's rows, with its own filter, physical column choices, output order, native kinds and duplicate policy.",
+      "sql": "Render the checked definition in parentheses and provide generated physical aliases for each ordinal. Resolve outer field reads using the aliases at the same occurrence and position."
+    },
+    "From/TextColumnReference": {
+      "role": "Read a native text slot of an ordinary or independently derived occurrence.",
+      "structure": "An occurrence number and an ordinal in its checked heading.",
+      "conditions": "The consuming projection or predicate checks the heading actually exported by the owning occurrence and its native text kind.",
+      "meaning": "Read the exact text value or SQL NULL from the selected item in the referenced row.",
+      "sql": "Use the physical column name for an ordinary occurrence and the ordinal alias for a derived occurrence."
+    }
+  },
+  "externalInterpretation": "Use the same resolved table declarations, exact physical column kinds, inherited scans, and independently distinguishable input rows from the typed column domain.",
+  "observations": [
+    "Expose a native text result through an independent definition, with both qualified and unqualified references selecting the same output slot.",
+    "Export each field by ordered position even if the definition repeats an output label.",
+    "Join two independent mixed-kind headings, with correct nullable outer extension and retained duplicates.",
+    "Use IS NULL and IS NOT NULL on a derived text field respecting its actual occurrence and native kind."
+  ],
+  "finite": {
+    "join": ["cross", "left", "right"],
+    "derivedSide": ["left", "right"],
+    "definitionOrder": ["text-first", "integer-first"],
+    "filter": ["unfiltered", "only-nonnull"],
+    "identities": 24,
+    "completeness": "Recover join operation, defining input side, ordered native export kind and selected predicate from each observed public graph."
+  },
+  "exploration": {
+    "seeds": [2447, 21377, 63067],
+    "casesPerSeed": 22,
+    "timeoutSecondsPerRelease": 270,
+    "allowedExclusions": [],
+    "requiredForms": "Vary source ownership, one or two derived occurrences, output width and order, repeated reads, matching keys, NULL and distinct output rows."
+  },
+  "analysis": [
+    "Bind two references to the same derived native text slot.",
+    "Read mixed types from a separately filtered derived LEFT join operand.",
+    "Read a nullable native text field through outer extension and a presence filter.",
+    "Join two independently represented text-bearing SELECT definitions."
+  ],
+  "negative": [
+    "Use an integer reference for a derived text slot.",
+    "Use a text reference for a derived integer slot.",
+    "Read a nonexistent derived text slot inside a presence predicate.",
+    "Use a native integer comparison on a derived text position."
+  ],
+  "faults": [
+    "Emit a sibling physical alias for the checked derived field.",
+    "Read the wrong derived occurrence while leaving the exported position fixed.",
+    "Drop the nested definition's presence filter."
+  ],
+  "evidence": {
+    "P01": "Measure derived export ordinals, native kinds and exact external provenance.",
+    "P02": "Check native roles, sibling ownership, profiles and finite domain positives.",
+    "P03": "Retain only checked semantic definitions and coordinates.",
+    "P04": "Derive and use the heading by closed child roles and scoped references.",
+    "P05": "Use an immutable definition and immutable owned fields.",
+    "P06": "Compare native DB metadata, labels, duplicates and NULL values from the same checked definition.",
+    "Q01": "Reject wrong role, position, occurrence and incompatible profiles at their owning boundaries.",
+    "Q02": "Check every specified finite identity and positive analyzed form.",
+    "Q03": "Independently interpret the composed definitions, join conditions and projection.",
+    "Q04": "Compare both pinned PostgreSQL releases and detect deliberate position, source and filter differences.",
+    "Q05": "Record the exact runtime distribution, verifier and independently replayable observations."
+  },
+  "open": ["Correlated definitions, arbitrary expression types, and nested joined definitions retain their separate obligations."],
+  "trust": ["External relation declarations", "Audited native source and projection rules", "Independent typed row oracle"]
+}

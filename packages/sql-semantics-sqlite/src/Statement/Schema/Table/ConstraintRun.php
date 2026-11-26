@@ -20,12 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * Source: https://sqlite.org/syntax/create-table-stmt.html (grammar `tconscomma`).
  * Status: Implemented.
  *
- * @visibility public
- * @example Telling a named constraint from a name the comma cuts off
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $named = $semantics->analyze('CREATE TABLE t (a, CONSTRAINT c CHECK (a > 0))');
- *     $cut = $semantics->analyze('CREATE TABLE t (a, CONSTRAINT c, CHECK (a > 0))');
- *     [count($named->statement->constraints), count($cut->statement->constraints)] // => [1, 2]
+ * @visibility SqlSemantics
  */
 final class ConstraintRun implements Node
 {

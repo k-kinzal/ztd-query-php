@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * `indexspace`. NULLS DISTINCT is the default and is kept when written.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading how NULL values count
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int UNIQUE NULLS NOT DISTINCT)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->nullsDistinct // => false
+ * @visibility SqlSemantics
  */
 final class ColumnUnique implements Constraint
 {

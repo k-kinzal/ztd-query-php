@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Designation;
  *
  * Source: https://www.postgresql.org/docs/17/datatype-datetime.html#DATATYPE-INTERVAL-INPUT.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling whether a restriction keeps seconds
  *     \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields::DayToSecond->seconds() // => true
  */

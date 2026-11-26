@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference;
  * when written.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-PARMS-REFERENCES.
  *
- * @visibility public
- * @example Reading a referential action
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int REFERENCES u ON UPDATE SET NULL)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->actions[0]->action // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferenceAction::SetNull
+ * @visibility SqlSemantics
  */
 enum ReferenceAction: string
 {

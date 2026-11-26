@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * the state of a session.
  * Source: https://www.postgresql.org/docs/17/sql-rollback.html, https://www.postgresql.org/docs/17/sql-abort.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a chained end of a transaction
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ABORT AND CHAIN');
- *     [$operation->statement->chaining, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::Chain, 'ABORT AND CHAIN']
+ * @visibility SqlSemantics
  */
 final class Rollback implements Statement
 {

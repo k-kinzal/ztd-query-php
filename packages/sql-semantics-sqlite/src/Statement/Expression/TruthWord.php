@@ -28,10 +28,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * when the answer depends on missing inputs.
  * Source: https://sqlite.org/lang_expr.html#boolean_expressions. Status: Implemented.
  *
- * @visibility public
- * @example Reading TRUE as the integer constant
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT true AS t', []);
- *     [$query->statement->columns[0]->expression->value, $query->field(0)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, 'SELECT TRUE AS t']
+ * @visibility SqlSemantics
  */
 final class TruthWord implements Scalar
 {

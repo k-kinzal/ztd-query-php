@@ -7,8 +7,11 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -32,14 +35,12 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
  * declaration incomplete and its columns without types, as an open query
  * shape without a column list leaves it incomplete;
  * a name of the column list written with a collation or a sort order is a
- * diagnostic. A TEMP view belongs to the `temp` schema. The statement returns
+ * diagnostic. A TEMP view belongs to the `temp` schema. Persistent views
+ * resolve unqualified external relations within their own schema. The statement returns
  * no rows.
  * Source: https://sqlite.org/lang_createview.html. Status: Implemented.
  *
- * @visibility public
- * @example Declaring a view with a column list
- *     $view = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v (one, two) AS SELECT 1, 2');
- *     [$view->declarations()[0]->columns[1]->name->value, $view->declarations()[0]->implicit] // => ['two', []]
+ * @visibility SqlSemantics
  */
 final class CreateView implements Statement
 {
@@ -82,7 +83,13 @@ final class CreateView implements Statement
             }
         }
         $listed = $this->columns === null ? null : $names;
-        $fact = $derivation->query($this->query, $derivation->environment());
+        $name = (new TableDeclaration())->name($this->name, $this->temporary);
+        $schema = $name->schema ?? new Name('main');
+        $environment = $derivation->environment();
+        if (!Comparison::AsciiInsensitive->equal($schema->value, 'temp')) {
+            $environment = new Environment($derivation->context, $environment, relationSchema: $schema);
+        }
+        $fact = $derivation->query($this->query, $environment);
         $returned = count($fact->projection);
         $expected = $listed === null || !$fact->shape->complete() ? $returned : count($listed);
         if ($expected !== $returned) {
@@ -90,7 +97,7 @@ final class CreateView implements Statement
         }
         $columns = (new QueryColumns())->viewColumns($this->query, $fact, $derivation->facts(), $listed, $derivation->context->columnNames, $expected === $returned);
         $complete = $expected === $returned && count($columns) === ($listed === null ? $returned : count($listed)) && ($listed !== null || $fact->shape->complete());
-        $derivation->declare(new Table((new TableDeclaration())->name($this->name, $this->temporary), $derivation->context->profile, $columns, [], $complete, RelationKind::View));
+        $derivation->declare(new Table($name, $derivation->context->profile, $columns, [], $complete, RelationKind::View));
     }
 
     /**

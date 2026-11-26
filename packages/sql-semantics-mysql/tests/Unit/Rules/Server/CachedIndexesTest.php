@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rules\Server\CachedIndexes;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CachedIndexes::class)]
 #[Medium]
@@ -27,6 +27,6 @@ final class CachedIndexesTest extends TestCase
 
     public function testRenderWritesTablePartitionsAndIndexes(): void
     {
-        self::assertSame('CACHE INDEX db.t PARTITION (ALL) INDEX (PRIMARY, i) IN c', (new Semantics())->analyze('cache index db.t partition (all) index (primary, i) in c')->toString());
+        self::assertSame('CACHE INDEX db.t PARTITION (ALL) INDEX (PRIMARY, i) IN c', (new Inspection())->inspect('cache index db.t partition (all) index (primary, i) in c')->toString());
     }
 }

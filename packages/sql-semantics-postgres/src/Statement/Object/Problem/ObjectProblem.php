@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-comment.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem(\SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind::ConcurrentCascade))->message() // => 'DROP INDEX CONCURRENTLY does not support CASCADE'
  */

@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\TableConstraintRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ConstraintName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\ForeignKey;
@@ -16,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableConstraintRule::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class TableConstraintRuleTest extends TestCase
 {
     public function testRunsAreEmptyWithoutTableConstraints(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([], $statement->constraints);
@@ -31,7 +31,7 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testRunsSplitTheConstraintsAtTheWrittenCommas(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a, UNIQUE (a) CHECK (a > 0), CONSTRAINT n CONSTRAINT m, PRIMARY KEY (a))')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a, UNIQUE (a) CHECK (a > 0), CONSTRAINT n CONSTRAINT m, PRIMARY KEY (a))')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([2, 2, 1], array_map(static fn (object $run): int => count($run->items), $statement->constraints));
@@ -39,7 +39,7 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testConstraintLowersEveryKindOfTableConstraint(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a, CONSTRAINT n PRIMARY KEY (a) UNIQUE (a) CHECK (a > 0) FOREIGN KEY (a) REFERENCES p)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a, CONSTRAINT n PRIMARY KEY (a) UNIQUE (a) CHECK (a > 0) FOREIGN KEY (a) REFERENCES p)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([ConstraintName::class, TablePrimaryKey::class, TableUnique::class, TableCheck::class, ForeignKey::class], array_map(static fn (object $item): string => $item::class, $statement->constraints[0]->items));
@@ -47,9 +47,9 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testOptionsKeepTheirWrittenOrder(): void
     {
-        $semantics = new Semantics();
-        $none = $semantics->inspect('CREATE TABLE t (a)')->statement;
-        $two = $semantics->inspect('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT ROWID')->statement;
+        $semantics = new Inspection();
+        $none = $semantics->diagnose('CREATE TABLE t (a)')->statement;
+        $two = $semantics->diagnose('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT ROWID')->statement;
 
         self::assertInstanceOf(CreateTable::class, $none);
         self::assertInstanceOf(CreateTable::class, $two);
@@ -59,9 +59,9 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testLeadingCommaTellsACommaWrittenBeforeTheFirstOption(): void
     {
-        $semantics = new Semantics();
-        $written = $semantics->inspect('CREATE TABLE t (a PRIMARY KEY), WITHOUT ROWID')->statement;
-        $plain = $semantics->inspect('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID, STRICT')->statement;
+        $semantics = new Inspection();
+        $written = $semantics->diagnose('CREATE TABLE t (a PRIMARY KEY), WITHOUT ROWID')->statement;
+        $plain = $semantics->diagnose('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID, STRICT')->statement;
 
         self::assertInstanceOf(CreateTable::class, $written);
         self::assertInstanceOf(CreateTable::class, $plain);
@@ -71,7 +71,7 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testOptionTellsTheWithoutFormFromTheBareForm(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a) WITHOUT x, y')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a) WITHOUT x, y')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertTrue($statement->options[0]->without);

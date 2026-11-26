@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html,
  * https://dev.mysql.com/doc/refman/9.1/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading the language of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER FUNCTION f LANGUAGE SQL');
- *     $alter->statement->characteristics[0]->external // => null
+ * @visibility SqlSemantics
  */
 final class RoutineLanguage implements Characteristic
 {

@@ -1,0 +1,23 @@
+{
+  "revision": "SemanticsIR/sqlite-create-index-binding-1",
+  "approval": "pending-human-review",
+  "scope": "Explicit native source roles used to compile checked index keys and their predicates.",
+  "artifacts": {
+    "src/Statement/Schema/CreateIndex.php": {
+      "sha256": "1a13376f474f823f27f71f4b0fbf5a22b5557e74366ab528e36df5c21deb85f3",
+      "role": "Native table and scalar scope for both index operands and partial selection."
+    },
+    "src/Lowering/Definition/SchemaRule.php": {
+      "sha256": "92b74ef0fd5b1f49809957f7db728ec13ae672271b475e728b1b4adb96460e41",
+      "role": "Parser production for CREATE INDEX and name placement."
+    },
+    "src/Lowering/Definition/KeyTermRule.php": {
+      "sha256": "ad6ab8d8b692d79374178fea947dfcae47c102521280519db423d1ccbb6303bc",
+      "role": "Native interpretation of legacy string-like index terms as checked column references."
+    },
+    "src/Rules/Definition/ConstraintScope.php": {
+      "sha256": "2a7c7981d898ff9351b5d4a57e5c209f042894336dbf9fdf10f0b8705f45c500",
+      "role": "Distinguish declared keys from resolved rowid-visible partial predicates."
+    }
+  }
+}

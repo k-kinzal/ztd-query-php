@@ -1,0 +1,65 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-view-boundaries-3",
+  "approval": "pending-human-review",
+  "scope": "Keep table and view drops typed, require an absolute resolved identity or explicitly guarded absence, and preserve the view role in rendering.",
+  "rules": {
+    "Schema/DropView::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'A DROP VIEW needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($view->key(), 'sqlite_'), 'A DROP VIEW cannot target the reserved SQLite namespace.');"
+      ]
+    },
+    "Schema/DropView::toString": {
+      "common": [
+        "return 'DROP VIEW ' . ($this->ifExists ? 'IF EXISTS ' : '') . $this->schema->quoted() . '.' . $this->view->quoted();"
+      ]
+    },
+    "Schema/DropView::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/DropLowering::lower": {
+      "common": [
+        "if ($statement->object === SchemaObjectKind::Index) {",
+        "    return (new DropIndexLowering())->lower($operation, $statement);",
+        "}",
+        "if ($statement->object === SchemaObjectKind::Trigger) {",
+        "    return (new DropTriggerLowering())->lower($operation, $statement);",
+        "}",
+        "$kind = match ($statement->object) {",
+        "    SchemaObjectKind::Table => RelationKind::BaseTable,",
+        "    SchemaObjectKind::View => RelationKind::View,",
+        "};",
+        "$comparison = NameComparison::AsciiInsensitive;",
+        "$path = $operation->context->searchPath;",
+        "$verb = 'DROP ' . $statement->object->value;",
+        "Check::input($operation->context->relationNames === $comparison && isset($path[1]) && $comparison->equal($path[0]->value, 'temp') && $comparison->equal($path[1]->value, 'main'), $verb . ' requires SQLite relation comparison and schema search order.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "$schema = null;",
+        "$name = $statement->name->name;",
+        "if ($resolution instanceof DeclaredTable && $resolution->table->kind === $kind) {",
+        "    $target = $resolution->table->name;",
+        "    $schema = $target->schema ?? $operation->context->declarationSchema;",
+        "    $name = $target->name;",
+        "} elseif ($resolution instanceof AbsentRelation && $statement->ifExists) {",
+        "    $target = $resolution->name;",
+        "    Check::input($target->schema !== null, 'An absent ' . $verb . ' target requires an explicit schema.');",
+        "    foreach ($path as $known) {",
+        "        if ($comparison->equal($known->value, $target->schema->value)) {",
+        "            $schema = $known;",
+        "            break;",
+        "        }",
+        "    }",
+        "}",
+        "$expected = $kind === RelationKind::View ? 'view' : 'ordinary table';",
+        "Check::input($schema !== null, $verb . ' requires a resolved ' . $expected . ' or a known schema-qualified absence.');",
+        "$location = new Identifier($schema->value);",
+        "$object = new Identifier($name->value);",
+        "return $kind === RelationKind::View ? new DropView($location, $object, $statement->ifExists) : new DropTable($location, $object, $statement->ifExists);"
+      ]
+    }
+  },
+  "extends": "sqlite-drop-view-boundaries-v2.json",
+  "change": "Delegate the trigger removal alternative to its checked boundary. Keep all checked table, view and index removal conditions."
+}

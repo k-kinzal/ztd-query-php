@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
@@ -28,6 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ProgramStatement::class)]
 #[Medium]
@@ -35,7 +35,7 @@ final class ProgramStatementTest extends TestCase
 {
     public function testDeriveProgramIsNotImplementedByAQueryOfABody(): void
     {
-        $create = (new Semantics())->analyze('CREATE PROCEDURE p() BEGIN SELECT 1; END')->statement;
+        $create = (new Inspection())->inspect('CREATE PROCEDURE p() BEGIN SELECT 1; END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);

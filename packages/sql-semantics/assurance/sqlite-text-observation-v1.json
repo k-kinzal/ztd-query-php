@@ -1,0 +1,14 @@
+{
+  "revision": "SemanticsIR/sqlite-text-observation-1",
+  "approval": "pending-human-review",
+  "engine": "SQLite 3.47.2 and its UTF-8 C API",
+  "scope": "Retain every byte supplied as a value of SQLite storage class TEXT, including embedded zeros and byte sequences outside UTF-8.",
+  "observation": "Read sqlite3_column_type before extraction. Read length and bytes from sqlite3_column_text and sqlite3_column_bytes. Emit text with the decoded string when the bytes are valid UTF-8. Emit text-bytes with lowercase hexadecimal when UTF-8 decoding fails. Emit blob for a BLOB value even when its bytes equal those of a TEXT value.",
+  "controls": [
+    "An invalid UTF-8 text value retains all bytes and remains distinct from the identical BLOB bytes.",
+    "An embedded zero in valid UTF-8 text remains part of the value.",
+    "Replacing storage class or bytes fails the comparison."
+  ],
+  "trust": ["Pinned SQLite 3.47.2 C API and the controller ctypes signatures", "Lossless UTF-8 classification and hexadecimal transport"],
+  "sources": ["https://sqlite.org/c3ref/column_blob.html"]
+}

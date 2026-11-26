@@ -19,9 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * exists is not a fact of the model.
  * Source: https://sqlite.org/lang_savepoint.html. Status: Implemented.
  *
- * @visibility public
- * @example Writing a release without the optional keyword
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('RELEASE SAVEPOINT s1')->toString() // => 'RELEASE s1'
+ * @visibility SqlSemantics
  */
 final class Release implements Statement
 {

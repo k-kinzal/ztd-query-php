@@ -1,0 +1,386 @@
+{
+  "revision": "SemanticsIR/postgres-signed-write-widths-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect source-specific signed widths to owning native write and RETURNING scopes, the positional destination and exact renderer.",
+  "rules": {
+    "SourceBinding::writeReference": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$column = $this->writableColumn($name);",
+        "",
+        "return match ($column->type) {",
+        "    Builtin::Int8 => new WideIntegerColumnReference($this->allocate($column)),",
+        "    Builtin::Text => new TextColumnReference($this->allocate($column)),",
+        "    Builtin::Bool => new BooleanColumnReference($this->allocate($column)),",
+        "    default => $this->slotFor($column),",
+        "};"
+      ]
+    },
+    "SourceBinding::writableColumn": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($this->table !== null, 'A write requires a resolved base table.');",
+        "$matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);",
+        "Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');",
+        "$column = $matches[0];",
+        "Check::input(",
+        "    !$column->generated && !$column->identity && in_array($column->type, [Builtin::Int4, Builtin::Int8, Builtin::Text, Builtin::Bool], true),",
+        "    'A write column must be a writable signed integer or an admitted text or Boolean field.',",
+        ");",
+        "",
+        "return $column;"
+      ]
+    },
+    "Mutation/Insert/WriteSlot::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($slot >= 0, 'An INSERT write slot must be nonnegative.');",
+        "Check::input($occurrence === 0, 'An INSERT write slot must belong to the target.');"
+      ]
+    },
+    "Mutation/Insert/Destination::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($written) >= 1 && count($written) <= 1024, 'An INSERT needs between one and 1024 target columns.');",
+        "Check::input(!$relation->only, 'An INSERT target has no ONLY policy.');",
+        "$checked = Check::listOf($written, WriteSlot::class, 'An INSERT needs checked target slots.', 1);",
+        "$seen = [];",
+        "foreach ($checked as $column) {",
+        "    Check::input($relation->columnKind($column->slot) === $column->kind, 'An INSERT write slot must belong to the target.');",
+        "    Check::input(!isset($seen[$column->slot]), 'An INSERT cannot repeat a write slot.');",
+        "    $seen[$column->slot] = true;",
+        "}",
+        "$this->written = $checked;"
+      ]
+    },
+    "Mutation/Insert/Destination::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->written as $column) {",
+        "    $columns[] = $this->relation->columns[$column->slot]->quoted();",
+        "}",
+        "",
+        "return $this->relation->schema->quoted() . '.' . $this->relation->table->quoted() . ' (' . implode(', ', $columns) . ')';"
+      ]
+    },
+    "Mutation/InsertCell::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $this->value instanceof IntegerLiteral => 'CAST(' . $this->value->decimal . ' AS pg_catalog.int4)',",
+        "    $this->value instanceof WideIntegerLiteral => 'CAST(' . $this->value->decimal . ' AS pg_catalog.int8)',",
+        "    $this->value instanceof TextLiteral => $this->value->toString(),",
+        "    $this->value instanceof BooleanLiteral => $this->value->value ? 'TRUE' : 'FALSE',",
+        "    $this->value === null => 'NULL',",
+        "};"
+      ]
+    },
+    "Mutation/Insert::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$width = count($target->written);",
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "    foreach ($row->values as $index => $cell) {",
+        "        $value = $cell->value;",
+        "        $signed = $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral;",
+        "        $compatible = match ($target->written[$index]->kind) {",
+        "            ColumnKind::Int4, ColumnKind::Int8 => $signed,",
+        "            ColumnKind::Text => $value instanceof TextLiteral || $signed,",
+        "            ColumnKind::Boolean => $value instanceof BooleanLiteral,",
+        "        };",
+        "        Check::input($value === null || $compatible, 'An inserted cell must match its target native kind.');",
+        "    }",
+        "}",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target->relation, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/InsertTargetBinding::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($statement->columns !== [], 'An INSERT requires explicit target columns.');",
+        "$binding = new SourceBinding($operation, $statement->target);",
+        "$written = [];",
+        "foreach ($statement->columns as $column) {",
+        "    Check::input($column->steps === [], 'An INSERT column must name a declared target slot.');",
+        "    $slot = $binding->writeReference($column->column->value);",
+        "    $kind = match (true) {",
+        "        $slot instanceof ColumnReference => ColumnKind::Int4,",
+        "        $slot instanceof WideIntegerColumnReference => ColumnKind::Int8,",
+        "        $slot instanceof TextColumnReference => ColumnKind::Text,",
+        "        $slot instanceof BooleanColumnReference => ColumnKind::Boolean,",
+        "    };",
+        "    $written[] = new WriteSlot($slot->slot, $kind);",
+        "}",
+        "$returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);",
+        "$relation = $binding->source();",
+        "Check::input($relation !== null, 'An INSERT requires a resolved write target.');",
+        "",
+        "return [new Destination($relation, $written), $returning];"
+      ]
+    },
+    "Mutation/InsertLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The INSERT requires the native language profile.');",
+        "Check::input(",
+        "    $statement->with === null && $statement->overriding === null && $statement->conflict === null,",
+        "    'A complete INSERT requires the ordinary VALUES operation.'",
+        ");",
+        "[$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);",
+        "$searchPath = $operation->context->searchPath;",
+        "$catalogFirst = ($searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value) === 'pg_catalog';",
+        "$expression = new ExpressionLowering();",
+        "$empty = new SourceBinding($operation, null);",
+        "$rows = [];",
+        "foreach ($statement->rows->rows() as $row) {",
+        "    Check::input(count($row->values) === count($target->written), 'Every inserted row must match the target width.');",
+        "    $values = [];",
+        "    foreach ($row->values as $index => $value) {",
+        "        $item = $expression->result($value, $empty, $catalogFirst, $target->written[$index]->kind);",
+        "        Check::input(",
+        "            $item instanceof IntegerLiteral || $item instanceof WideIntegerLiteral || $item instanceof TextLiteral",
+        "                || $item instanceof BooleanLiteral || $item instanceof NullLiteral,",
+        "            'A supplied INSERT value requires an explicit native literal or NULL.',",
+        "        );",
+        "        $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);",
+        "    }",
+        "    $rows[] = new InsertRow($values);",
+        "}",
+        "",
+        "return new Insert($target, $rows, $profile->grammar, $returning);"
+      ]
+    },
+    "Mutation/InsertLowering::lowerQuery": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$source = $statement->source;",
+        "Check::input($source instanceof ParsedSelect, 'The INSERT query requires a simple SELECT.');",
+        "Check::input(",
+        "    $statement->with === null && $statement->overriding === null && $statement->conflict === null,",
+        "    'A query INSERT requires an ordinary write without conflict modifiers.'",
+        ");",
+        "[$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);",
+        "$query = (new SelectLowering())->lower($operation, $source, assignment: $target);",
+        "if ($query->distinct) {",
+        "    foreach ($query->columns as $position => $column) {",
+        "        Check::input(",
+        "            !$column->expression instanceof NullLiteral || ($target->written[$position]->kind ?? null) === ColumnKind::Text,",
+        "            'A DISTINCT insert projection cannot assign an untyped NULL to a non-text column.'",
+        "        );",
+        "    }",
+        "}",
+        "",
+        "return new InsertQuery($target, $query, $returning);"
+      ]
+    },
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$width = count($target->written);",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $position => $column) {",
+        "    $value = $column->expression;",
+        "    if ($target->written[$position]->kind === ColumnKind::Text) {",
+        "        Check::input(",
+        "            $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof NullLiteral",
+        "                || $value instanceof ColumnReference || $value instanceof IntegerLiteral",
+        "                || $value instanceof WideIntegerColumnReference || $value instanceof WideIntegerLiteral,",
+        "            'A query INSERT text target requires text, a checked signed leaf or NULL.',",
+        "        );",
+        "        continue;",
+        "    }",
+        "    if ($target->written[$position]->kind === ColumnKind::Boolean) {",
+        "        Check::input(",
+        "            (!$value instanceof Parameter && CompoundShape::type($query, $position) === ResultKind::Boolean)",
+        "                || ($value instanceof NullLiteral && !$query->distinct),",
+        "            'A query INSERT Boolean target requires a Boolean result or NULL resolved before DISTINCT.',",
+        "        );",
+        "        continue;",
+        "    }",
+        "    Check::input(!$query->distinct || !$value instanceof NullLiteral, 'A DISTINCT insert projection cannot assign an untyped NULL to a non-text column.');",
+        "    $signed = match (CompoundShape::type($query, $position)) {",
+        "        ResultKind::Integer, ResultKind::WideInteger, ResultKind::Unknown => true,",
+        "        ResultKind::Boolean, ResultKind::Text => false,",
+        "    };",
+        "    Check::input(!$value instanceof Parameter && $signed, 'Each query INSERT field requires a signed value or NULL.');",
+        "}",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'A query INSERT needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target->relation, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);",
+        "Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');",
+        "$written = [];",
+        "$scope = new OccurrenceScope();",
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    $scope->column($assignment->target, [$target], 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    if ($value instanceof ColumnReference || $value instanceof TextColumnReference",
+        "        || $value instanceof BooleanColumnReference || $value instanceof WideIntegerColumnReference) {",
+        "        $scope->column($value, [$target], 'An UPDATE read slot must belong to the target.');",
+        "    }",
+        "    Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');",
+        "    $written[$slot] = true;",
+        "}",
+        "$scope->predicate($where, [$target]);",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'An UPDATE needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/Update::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$sql = new SelectSql();",
+        "$parts = [];",
+        "foreach ($this->assignments as $assignment) {",
+        "    $column = $this->target->columns[$assignment->target->slot]->quoted();",
+        "    $parts[] = $column . ' = ' . $sql->expression($assignment->value, $this->target);",
+        "}",
+        "$statement = 'UPDATE ' . $sql->from($this->target) . ' SET ' . implode(', ', $parts);",
+        "if ($this->where !== null) {",
+        "    $statement .= ' WHERE ' . $sql->predicate($this->where, $this->target);",
+        "}",
+        "",
+        "return $statement . (new ReturningSql())->clause($this->target, $this->returning);"
+      ]
+    },
+    "Mutation/UpdateAssignment::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($target->occurrence === 0, 'An UPDATE target slot must belong to occurrence zero.');",
+        "$read = $value instanceof ColumnReference || $value instanceof TextColumnReference",
+        "    || $value instanceof BooleanColumnReference || $value instanceof WideIntegerColumnReference;",
+        "Check::input(!$read || $value->occurrence === 0, 'An UPDATE read slot must belong to occurrence zero.');",
+        "$signed = $value instanceof ColumnReference || $value instanceof IntegerLiteral",
+        "    || $value instanceof WideIntegerColumnReference || $value instanceof WideIntegerLiteral;",
+        "$compatible = match (true) {",
+        "    $target instanceof ColumnReference, $target instanceof WideIntegerColumnReference => $signed,",
+        "    $target instanceof TextColumnReference => $value instanceof TextColumnReference || $value instanceof TextLiteral || $signed,",
+        "    $target instanceof BooleanColumnReference => $value instanceof BooleanColumnReference || $value instanceof BooleanLiteral,",
+        "};",
+        "Check::input($value instanceof NullLiteral || $compatible, 'An UPDATE assignment value must match its target native kind.');"
+      ]
+    },
+    "Mutation/UpdateLowering::value": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($operand instanceof ParsedColumn) {",
+        "    return $binding->field($operand);",
+        "}",
+        "$kind = match (true) {",
+        "    $target instanceof ColumnReference => ColumnKind::Int4,",
+        "    $target instanceof WideIntegerColumnReference => ColumnKind::Int8,",
+        "    $target instanceof TextColumnReference => ColumnKind::Text,",
+        "    $target instanceof BooleanColumnReference => ColumnKind::Boolean,",
+        "};",
+        "$value = (new ExpressionLowering())->result($operand, $binding, $catalogFirst, $kind);",
+        "Check::input(",
+        "    $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral || $value instanceof NullLiteral",
+        "        || $value instanceof TextLiteral || $value instanceof BooleanLiteral,",
+        "    'An UPDATE assignee requires a checked native literal, NULL or a row reference.',",
+        ");",
+        "",
+        "return $value;"
+      ]
+    },
+    "Mutation/ReturningLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = $output?->fields();",
+        "Check::input($fields !== null, 'RETURNING needs a closed target result layout.');",
+        "$returning = [];",
+        "foreach ($fields as $field) {",
+        "    $operand = $field->expression;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    Check::input($operand === null || $operand instanceof ParsedReturnColumn, 'RETURNING requires a resolved target column.');",
+        "    $resolution = $field->resolution;",
+        "    Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');",
+        "    $reference = $binding->resolved($resolution);",
+        "    $returning[] = new ReturnedColumn($reference, new Identifier($field->name->value));",
+        "}",
+        "Check::input($returning !== [], 'RETURNING needs at least one resolved target field.');",
+        "",
+        "return $returning;"
+      ]
+    },
+    "Mutation/ReturnedColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($reference->occurrence === 0, 'A returned field must read the single target occurrence.');"
+      ]
+    },
+    "Mutation/ReturningSql::clause": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = [];",
+        "foreach ($returning as $field) {",
+        "    $fields[] = $target->columns[$field->reference->slot]->quoted() . ' AS ' . $field->name->quoted();",
+        "}",
+        "",
+        "return $fields === [] ? '' : ' RETURNING ' . implode(', ', $fields);"
+      ]
+    }
+  }
+}

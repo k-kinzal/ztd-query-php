@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show\Session;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrorCount;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ShowErrorCount::class)]
 #[Medium]
@@ -16,13 +16,13 @@ final class ShowErrorCountTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW COUNT(*) ERRORS');
+        $show = (new Inspection('mysql-5.6.51'))->inspect('SHOW COUNT(*) ERRORS');
         self::assertInstanceOf(ShowErrorCount::class, $show->statement);
         self::assertSame('@@session.error_count', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW COUNT(*) ERRORS', (new Semantics('mysql-5.6.51'))->analyze('SHOW COUNT(*) ERRORS')->toString());
+        self::assertSame('SHOW COUNT(*) ERRORS', (new Inspection('mysql-5.6.51'))->inspect('SHOW COUNT(*) ERRORS')->toString());
     }
 }

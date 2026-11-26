@@ -32,10 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
  * https://dev.mysql.com/doc/refman/8.4/en/insert.html,
  * https://dev.mysql.com/doc/refman/8.4/en/values.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the value DEFAULT of an INSERT
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a) VALUES (DEFAULT)');
- *     $insert->statement->rows[0]->values[0] instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest // => true
+ * @visibility SqlSemantics
  */
 final class DefaultRequest implements Scalar
 {

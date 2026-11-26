@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_extract.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing EXTRACT()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT EXTRACT(YEAR_MONTH FROM '2024-07-02')");
- *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
+ * @visibility SqlSemantics
  */
 final class Extract implements Scalar
 {

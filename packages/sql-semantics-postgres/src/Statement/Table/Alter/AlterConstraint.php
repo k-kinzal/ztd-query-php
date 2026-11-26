@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
  * attributes are checked by PG-CONSTRAINT-ATTRIBUTES-001.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Changing the deferral of a constraint
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER CONSTRAINT fk DEFERRABLE INITIALLY DEFERRED');
- *     $statement->toString() // => 'ALTER TABLE t ALTER CONSTRAINT fk DEFERRABLE INITIALLY DEFERRED'
+ * @visibility SqlSemantics
  */
 final class AlterConstraint implements AlterCommand
 {

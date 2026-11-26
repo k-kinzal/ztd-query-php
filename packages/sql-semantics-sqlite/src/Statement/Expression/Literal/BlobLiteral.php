@@ -22,10 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the bytes of a BLOB literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT x'0aff' AS b");
- *     [$query->statement->columns[0]->expression->hex, $query->toString()] // => ['0AFF', "SELECT x'0AFF' AS b"]
+ * @visibility SqlSemantics
  * @example Refusing half a byte
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral('ABC') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing lower case digits

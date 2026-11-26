@@ -35,11 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
  * https://dev.mysql.com/doc/refman/8.4/en/problems-with-alias.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a qualified column use
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT shop.t.a FROM shop.t');
- *     $use = $query->statement->items[0]->expression;
- *     [$use->qualifier?->schema?->value, $use->qualifier?->name->value, $use->name->value] // => ['shop', 't', 'a']
+ * @visibility SqlSemantics
  */
 final class ColumnUse implements Scalar
 {

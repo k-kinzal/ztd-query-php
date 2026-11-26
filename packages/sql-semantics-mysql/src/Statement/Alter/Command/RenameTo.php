@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
  * TO, AS, `=` and no word are the same request; TO is written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-rename.
  *
- * @visibility public
- * @example Moving a table to another database
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t RENAME AS archive.t');
- *     $alter->toString() // => 'ALTER TABLE t RENAME TO archive.t'
+ * @visibility SqlSemantics
  */
 final class RenameTo implements AlterCommand
 {

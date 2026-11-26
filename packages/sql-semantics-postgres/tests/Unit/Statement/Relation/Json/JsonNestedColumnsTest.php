@@ -14,8 +14,8 @@ final class JsonNestedColumnsTest extends TestCase
 {
     public function testRenderWritesNestedPath(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (NESTED '\$.b' AS q COLUMNS (b text)))");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (NESTED '\$.b' AS q COLUMNS (b text)))");
         self::assertSame("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (NESTED PATH '\$.b' AS q COLUMNS (b text)))", $query->toString());
     }
 }

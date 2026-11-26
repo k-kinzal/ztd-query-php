@@ -25,10 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
  * without a source of rows.
  * Source: https://sqlite.org/lang_insert.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading an INSERT of default values
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT INTO t DEFAULT VALUES RETURNING *');
- *     [$insert->statement->into->target->name->name->value, count($insert->statement->returning), $insert->toString()] // => ['t', 1, 'INSERT INTO t DEFAULT VALUES RETURNING *']
+ * @visibility SqlSemantics
  */
 final class InsertDefaults implements Statement
 {

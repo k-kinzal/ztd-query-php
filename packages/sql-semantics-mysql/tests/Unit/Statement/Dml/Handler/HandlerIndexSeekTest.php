@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(HandlerIndexSeek::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class HandlerIndexSeekTest extends TestCase
 {
     public function testDeriveStatementDerivesTheKeyValues(): void
     {
-        $operation = (new Semantics())->analyze('HANDLER h READ i >= (1, 2)');
+        $operation = (new Inspection())->inspect('HANDLER h READ i >= (1, 2)');
         self::assertInstanceOf(HandlerIndexSeek::class, $operation->statement);
 
         self::assertEquals(Nullability::NotNull, $operation->facts->scalar($operation->statement->values[0])->nullability);
@@ -28,7 +28,7 @@ final class HandlerIndexSeekTest extends TestCase
 
     public function testRenderWritesTheSeek(): void
     {
-        self::assertSame('HANDLER h READ i < (1) WHERE b = 2', (new Semantics('mysql-5.7.44'))->analyze('handler h read i < (1) where b = 2')->toString());
+        self::assertSame('HANDLER h READ i < (1) WHERE b = 2', (new Inspection('mysql-5.7.44'))->inspect('handler h read i < (1) where b = 2')->toString());
     }
 
     public function testRenderRejectsAnEmptyKey(): void

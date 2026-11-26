@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * twice (PG-XML-CHECKS-001). The result column is named `xmlelement`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML-XMLELEMENT. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an empty element
  *     $element = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlElement(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('br'));
  *     [$element->name->value, $element->attributes, $element->content] // => ['br', [], []]

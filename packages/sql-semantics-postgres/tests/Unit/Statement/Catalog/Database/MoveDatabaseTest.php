@@ -14,11 +14,11 @@ final class MoveDatabaseTest extends TestCase
 {
     public function testRenderWritesSetTablespace(): void
     {
-        self::assertSame('ALTER DATABASE d SET TABLESPACE fast', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d SET TABLESPACE fast')->toString());
+        self::assertSame('ALTER DATABASE d SET TABLESPACE fast', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DATABASE d SET TABLESPACE fast')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d SET TABLESPACE fast')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DATABASE d SET TABLESPACE fast')->facts->diagnostics);
     }
 }

@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * a materialized view is reported (PG-RELATION-KIND-001). Diagnostic: an option CLUSTER does not know.
  * Source: https://www.postgresql.org/docs/17/sql-cluster.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a CLUSTER in the old syntax
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CLUSTER i ON t');
- *     [$operation->statement->table->name->value, $operation->statement->index->value, $operation->statement->indexFirst] // => ['t', 'i', true]
+ * @visibility SqlSemantics
  * @example Refusing an index without a table
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Cluster([], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words, null, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('i')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

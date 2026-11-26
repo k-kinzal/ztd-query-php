@@ -6,8 +6,8 @@ namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
-use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Rules\Query\ItemNaming;
@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
@@ -31,8 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
  * a valid column name (empty, ending in a space character, or longer than
  * 64 characters) becomes `Name_exp_N`, N being the position of the field
  * (`make_valid_column_names`). Then, going through the fields in order, a
- * field whose name equals the name of an earlier field (without regard to
- * ASCII case) is renamed when its own name is generated, else the earlier
+ * field whose name equals the name of an earlier field after native lowercase is renamed when its own name is generated, else the earlier
  * field is when its name is generated; the new name is the original name
  * with the prefix `Name_exp_` (`My_exp_` in 5.6 and 5.7), and with the
  * prefix and a counter (`Name_exp_1_`, `Name_exp_2_`, …) when that name is
@@ -50,12 +48,14 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
  */
 final class ViewColumns
 {
+    private readonly bool $legacy;
+
     /**
      * @param LanguageProfile $profile The profile whose release the names follow
-     * @param Comparison $names The comparison of column names
      */
-    public function __construct(private readonly LanguageProfile $profile, private readonly Comparison $names)
+    public function __construct(private readonly LanguageProfile $profile)
     {
+        $this->legacy = $profile->grammar === GrammarRelease::MySql5651 || $profile->grammar === GrammarRelease::MySql5744;
     }
 
     /**
@@ -67,32 +67,57 @@ final class ViewColumns
     public function names(Query $query, array $fields): array
     {
         $generated = $this->generated($query, $fields);
+        $inputs = new ViewFieldNames();
+        $items = $inputs->items($this->block($query));
         $names = [];
-        $original = [];
-        foreach ($fields as $position => $field) {
-            $name = $field->name?->value;
-            if ($name !== null && $generated[$position] && !(new ColumnNameRule())->valid($name)) {
-                $original[$position] = $name;
-                $name = 'Name_exp_' . ($position + 1);
-            }
-            $names[] = $name;
+        foreach ($fields as $field) {
+            $item = $field->expression === null ? null : $items[spl_object_id($field->expression)] ?? null;
+            $names[] = $item?->alias === null ? $field->name?->value : $inputs->assignedAlias($item->alias->value);
         }
-        foreach (array_keys($names) as $current) {
-            foreach (array_keys($names) as $earlier) {
+
+        return array_map(static fn (?string $name): ?Name => $name === null ? null : new Name($name), $this->allocate($names, $generated));
+    }
+
+    /**
+     * Assigns valid generated names and resolves native duplicates in projection order.
+     * @param list<string|null> $names Native output names before column assignment
+     * @param list<bool> $generated Which positions can be renamed
+     * @return list<string|null>
+     */
+    public function allocate(array $names, array $generated): array
+    {
+        $original = [];
+        $validity = new ColumnNameRule();
+        $comparison = new NativeLocalNames();
+        foreach ($names as $position => $name) {
+            if ($name !== null && $generated[$position] && !$validity->valid($name)) {
+                $original[$position] = $name;
+                $names[$position] = 'Name_exp_' . ($position + 1);
+            }
+        }
+        $positions = array_keys($names);
+        $keys = array_map(static fn (?string $name): ?string => $name === null ? null : $comparison->key($name), $names);
+        if (count(array_unique($keys, SORT_STRING)) === count($positions)) {
+            return $names;
+        }
+        foreach ($positions as $current) {
+            foreach ($positions as $earlier) {
                 if ($earlier === $current) {
                     break;
                 }
-                if ($names[$current] === null || $names[$earlier] === null || !$this->names->equal($names[$current], $names[$earlier])) {
+                if ($keys[$current] === null || $keys[$current] !== $keys[$earlier]) {
                     continue;
                 }
                 $renamed = $generated[$current] ? $current : ($generated[$earlier] ? $earlier : null);
                 if ($renamed !== null) {
-                    $names[$renamed] = $this->unique($names, $renamed, $current, $original[$renamed] ?? (string) $names[$renamed]);
+                    $original[$renamed] ??= (string) $names[$renamed];
+                    $names[$renamed] = $this->unique($names, $renamed, $current, $original[$renamed]);
+                    $keys[$renamed] = $comparison->key($names[$renamed]);
                 }
             }
         }
 
-        return array_values(array_map(static fn (?string $name): ?Name => $name === null ? null : new Name($name), $names));
+        return array_values($names);
     }
 
     /**
@@ -103,12 +128,7 @@ final class ViewColumns
      */
     public function generated(Query $query, array $fields): array
     {
-        $items = [];
-        foreach ($this->block($query)->items ?? [] as $item) {
-            if ($item instanceof SelectExpression) {
-                $items[spl_object_id($item->expression)] = $item;
-            }
-        }
+        $items = (new ViewFieldNames())->items($this->block($query));
         $naming = new ItemNaming($this->profile);
         $generated = [];
         foreach ($fields as $field) {
@@ -117,6 +137,24 @@ final class ViewColumns
         }
 
         return $generated;
+    }
+
+    /**
+     * Gives the native installed names of a written view column list.
+     * @param list<Name> $written Exact decoded names before native assignment
+     * @return list<Name|null>
+     */
+    public function declared(array $written): array
+    {
+        $rule = new ColumnNameRule();
+        $inputs = new ViewFieldNames();
+        $names = [];
+        foreach ($written as $name) {
+            $value = $this->legacy ? $inputs->assignedAlias($name->value) : ($rule->valid($name->value) ? $name->value : null);
+            $names[] = $value === null ? null : new Name($value);
+        }
+
+        return $names;
     }
 
     /**
@@ -148,13 +186,14 @@ final class ViewColumns
      */
     public function unique(array $names, int $renamed, int $current, string $original): string
     {
-        $legacy = $this->profile->grammar === GrammarRelease::MySql5651 || $this->profile->grammar === GrammarRelease::MySql5744;
+        $legacy = $this->legacy;
         $prefix = $legacy ? 'My_exp_' : 'Name_exp_';
+        $comparison = new NativeLocalNames();
         for ($attempt = 0; ; $attempt++) {
             $candidate = $this->cut($prefix . ($attempt === 0 ? '' : $attempt . '_') . $original, $legacy);
             $taken = false;
             foreach ($names as $position => $name) {
-                $taken = $taken || ($position !== $renamed && $name !== null && $this->names->equal($name, $candidate));
+                $taken = $taken || ($position !== $renamed && $name !== null && $comparison->key($name) === $comparison->key($candidate));
                 if ($position === $current) {
                     break;
                 }

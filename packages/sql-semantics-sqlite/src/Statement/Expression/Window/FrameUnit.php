@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Window;
  *
  * Source: https://sqlite.org/windowfunctions.html#frame_specifications.
  *
- * @visibility public
- * @example Reading the unit of a frame
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT sum(a) OVER (ROWS 1 PRECEDING) FROM t');
- *     $query->statement->columns[0]->expression->over->frame->unit // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit::Rows
+ * @visibility SqlSemantics
  */
 enum FrameUnit: string
 {

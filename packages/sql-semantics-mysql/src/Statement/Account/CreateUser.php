@@ -28,9 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * relation: the statement provides no declaration.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html. Status: Implemented.
  *
- * @visibility public
- * @example Creating an account with a password and a lock
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create user if not exists app@'%' identified by 'pw' account lock")->toString() // => "CREATE USER IF NOT EXISTS app@`%` IDENTIFIED BY 'pw' ACCOUNT LOCK"
+ * @visibility SqlSemantics
  */
 final class CreateUser implements Statement
 {

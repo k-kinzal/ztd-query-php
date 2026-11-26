@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Rules\Routine\ConditionFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
@@ -28,6 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ConditionFacts::class)]
 #[Medium]
@@ -39,7 +39,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerValueChecksTheFormOfAnSqlState')]
     public function testValueChecksTheFormOfAnSqlState(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Inspection($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -64,7 +64,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerValueReportsAConditionNameDeclaredNowhereAround')]
     public function testValueReportsAConditionNameDeclaredNowhereAround(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -87,7 +87,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerSignalReportsTheBrokenRule')]
     public function testSignalReportsTheBrokenRule(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -108,7 +108,7 @@ final class ConditionFactsTest extends TestCase
 
     public function testSignalResolvesTheValueOfAnItemToAParameter(): void
     {
-        $operation = (new Semantics())->inspect("CREATE PROCEDURE p(z TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = z, MYSQL_ERRNO = 1");
+        $operation = (new Inspection())->diagnose("CREATE PROCEDURE p(z TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = z, MYSQL_ERRNO = 1");
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $signal = $create->body;
@@ -126,7 +126,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerTargetsReportsATargetThatIsNoVariable')]
     public function testTargetsReportsATargetThatIsNoVariable(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -149,7 +149,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerValueReportsTheErrorCodeZero')]
     public function testValueReportsTheErrorCodeZero(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Inspection($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -168,7 +168,7 @@ final class ConditionFactsTest extends TestCase
 
     public function testMeaningAnswersTheDeclaredValueOfAConditionName(): void
     {
-        $scope = new ProgramScope(new Environment(new AnalysisContext((new Semantics())->profile(), [new Name('db')])), ProgramKind::Procedure, conditions: [new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051')))]);
+        $scope = new ProgramScope(new Environment(new AnalysisContext((new Inspection())->profile(), [new Name('db')])), ProgramKind::Procedure, conditions: [new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051')))]);
         $code = new ErrorCode(new Numeral('1052'));
 
         self::assertEquals(new ErrorCode(new Numeral('1051')), (new ConditionFacts())->meaning(new ConditionName(new Name('C')), $scope));

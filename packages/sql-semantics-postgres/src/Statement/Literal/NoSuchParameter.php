@@ -14,9 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * its limit as undefined parameters.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-PARAMETERS-POSITIONAL.
  *
- * @visibility public
- * @example Reporting parameter zero
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $0') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: There is no parameter $0.
+ * @visibility SqlSemantics
  */
 final class NoSuchParameter implements Diagnostic
 {

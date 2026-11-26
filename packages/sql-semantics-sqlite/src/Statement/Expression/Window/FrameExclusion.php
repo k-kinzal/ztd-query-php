@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Window;
  *
  * Source: https://sqlite.org/windowfunctions.html#the_exclude_clause.
  *
- * @visibility public
- * @example Reading the exclusion of a frame
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES) FROM t');
- *     $query->statement->columns[0]->expression->over->frame->exclusion // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameExclusion::Ties
+ * @visibility SqlSemantics
  */
 enum FrameExclusion: string
 {

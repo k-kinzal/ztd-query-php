@@ -11,8 +11,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\DependentField;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(NameConversion::class)]
 #[Medium]
@@ -25,8 +25,8 @@ final class NameConversionTest extends TestCase
 
     public function testADerivedColumnNamedAfterNonAsciiTextIsNotFoundByName(): void
     {
-        $operation = (new Semantics())->inspect("SELECT x FROM (SELECT 'é') AS d", []);
-        $star = (new Semantics())->inspect("SELECT * FROM (SELECT 'é', _latin2'é') AS d", []);
+        $operation = (new Inspection())->diagnose("SELECT x FROM (SELECT 'é') AS d", []);
+        $star = (new Inspection())->diagnose("SELECT * FROM (SELECT 'é', _latin2'é') AS d", []);
 
         self::assertInstanceOf(Dependent::class, $operation->field('x')->type);
         self::assertEquals(new SessionState('character_set_client'), $operation->field('x')->type->missing[0]);
@@ -37,7 +37,7 @@ final class NameConversionTest extends TestCase
 
     public function testAnUnaliasedItemNamedAfterNonAsciiTextHasADependentName(): void
     {
-        $operation = (new Semantics())->inspect("SELECT 'ü', _utf16'ab'", []);
+        $operation = (new Inspection())->diagnose("SELECT 'ü', _utf16'ab'", []);
 
         self::assertNull($operation->field(0)->name);
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
@@ -47,9 +47,9 @@ final class NameConversionTest extends TestCase
 
     public function testADerivedColumnNamedAfterAsciiTextIsKnown(): void
     {
-        $operation = (new Semantics())->inspect('SELECT x FROM (SELECT 1+1) AS d', []);
+        $operation = (new Inspection())->diagnose('SELECT x FROM (SELECT 1+1) AS d', []);
 
         self::assertInstanceOf(MissingColumn::class, $operation->field('x')->resolution);
-        self::assertSame('1+1', (new Semantics())->inspect('SELECT * FROM (SELECT 1+1) AS d', [])->field(0)->name?->value);
+        self::assertSame('1+1', (new Inspection())->diagnose('SELECT * FROM (SELECT 1+1) AS d', [])->field(0)->name?->value);
     }
 }

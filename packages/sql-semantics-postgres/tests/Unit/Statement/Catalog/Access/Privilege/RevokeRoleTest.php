@@ -14,17 +14,17 @@ final class RevokeRoleTest extends TestCase
 {
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('REVOKE inherit OPTION FOR staff FROM joe GRANTED BY boss CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE "inherit" OPTION FOR staff FROM joe GRANTED BY boss CASCADE')->toString());
+        self::assertSame('REVOKE inherit OPTION FOR staff FROM joe GRANTED BY boss CASCADE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE "inherit" OPTION FOR staff FROM joe GRANTED BY boss CASCADE')->toString());
     }
 
     public function testRenderWithoutAnOption(): void
     {
-        self::assertSame('REVOKE staff, sales FROM joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE staff, sales FROM joe')->toString());
+        self::assertSame('REVOKE staff, sales FROM joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE staff, sales FROM joe')->toString());
     }
 
     public function testAnalysisKeepsTheOption(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE ADMIN OPTION FOR staff FROM joe')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE ADMIN OPTION FOR staff FROM joe')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\RevokeRole::class, $statement);
         self::assertSame('admin', $statement->option?->value);
         self::assertNull($statement->behavior);
@@ -32,7 +32,7 @@ final class RevokeRoleTest extends TestCase
 
     public function testDeriveStatementReportsTheProblems(): void
     {
-        self::assertSame(['column names cannot be included in GRANT/REVOKE ROLE', 'role "public" does not exist', 'unrecognized role option "foo"'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE foo OPTION FOR staff (a) FROM PUBLIC')->facts->diagnostics));
+        self::assertSame(['column names cannot be included in GRANT/REVOKE ROLE', 'role "public" does not exist', 'unrecognized role option "foo"'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REVOKE foo OPTION FOR staff (a) FROM PUBLIC')->facts->diagnostics));
     }
 
     public function testRejectsNoMember(): void

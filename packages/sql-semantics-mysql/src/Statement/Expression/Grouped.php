@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/operator-precedence.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Keeping a grouping that changes the association
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a AND (b OR c)');
- *     $query->statement->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped // => true
+ * @visibility SqlSemantics
  */
 final class Grouped implements Scalar
 {

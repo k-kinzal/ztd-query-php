@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Variable;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/using-system-variables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/set-variable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a scope
  *     \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::PersistOnly->value // => 'PERSIST_ONLY'
  */

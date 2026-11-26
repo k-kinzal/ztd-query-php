@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * clause that holds the expression binds it (PG-COMMON-TABLE-001).
  * Source: https://www.postgresql.org/docs/17/queries-with.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a common table expression
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]);
  *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), $one, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')], \SqlSemantics\Platform\PostgreSql\Statement\Query\With\Materialization::Materialized);

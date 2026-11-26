@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * Source: https://www.postgresql.org/docs/17/sql-savepoint.html, https://www.postgresql.org/docs/17/sql-release-savepoint.html,
  * https://www.postgresql.org/docs/17/sql-rollback-to.html.
  *
- * @visibility public
- * @example Reading the action of a ROLLBACK TO
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ROLLBACK TO s');
- *     $operation->statement->action // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointAction::RollbackTo
+ * @visibility SqlSemantics
  */
 enum SavepointAction
 {

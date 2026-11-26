@@ -1,0 +1,15 @@
+{
+  "revision": "SemanticsIR/server-create-table-temporary-admission-1",
+  "approval": "pending-human-review",
+  "extends": "server-create-table-v2.json",
+  "productionCandidate": "77edee0c80be5ab9a1cf4d2a584e4ec9203eee49",
+  "changedMySqlCase": {
+    "previousSql": "CREATE TEMPORARY TABLE ir_fixture.ir_create_target (c0 INTEGER)",
+    "previousExpectation": "Reject the unsupported declaration alternative.",
+    "newExpectation": "Publish a checked temporary table declaration and compare its native effect in mysql-session-create-table-v1.json.",
+    "replacementNegativeSql": "CREATE TEMPORARY TABLE ir_fixture.ir_create_target AS SELECT 1 AS c0",
+    "replacementNegativeSignal": "CREATE TABLE requires an ordinary table with explicit columns."
+  },
+  "observedFailure": "The shared permanent-table runner required rejection of the original temporary-table SQL. On the extended candidate the direct analyzer returned a temporary-table declaration, so the old negative expectation failed.",
+  "preserves": "All shared positive inputs, observations, finite identities, seeds, budgets and faults. The generic unsupported-definition obligation still has a negative MySQL case, and PostgreSQL keeps its original temporary-table negative."
+}

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * looked up when the cast is created, so the statement records no facts
  * beyond the type names. Source: https://www.postgresql.org/docs/17/sql-createcast.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a binary-coercible implicit cast
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE CAST (int4 AS myint) WITHOUT FUNCTION AS IMPLICIT');
- *     [$operation->statement->method, $operation->statement->context] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastConversion::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastContext::Implicit]
+ * @visibility SqlSemantics
  */
 final class CreateCast implements Statement
 {

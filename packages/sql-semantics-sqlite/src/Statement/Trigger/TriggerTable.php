@@ -22,10 +22,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
  * along the schema search path; the shape follows SQLITE-TABLE-SHAPE-001.
  * Source: https://sqlite.org/lang_createtrigger.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the table of a trigger
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TRIGGER r AFTER DELETE ON main.t BEGIN SELECT 1; END');
- *     [$trigger->statement->table->name()->schema->value, $trigger->statement->table->name()->name->value] // => ['main', 't']
+ * @visibility SqlSemantics
  */
 final class TriggerTable implements NamedRelation
 {

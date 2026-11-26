@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
  * and the high bound must keep its place (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-comparison.html#FUNCTIONS-COMPARISON-PRED-TABLE. Status: Implemented.
  *
- * @visibility public
- * @example Reading a symmetric range test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1');
- *     [$query->field(0)->expression->negated, $query->field(0)->expression->symmetric, $query->toString()] // => [true, true, 'SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1']
+ * @visibility SqlSemantics
  */
 final class Between implements Scalar
 {

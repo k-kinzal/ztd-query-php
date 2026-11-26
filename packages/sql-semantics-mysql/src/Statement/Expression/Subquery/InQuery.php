@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/any-in-some-subqueries.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Testing membership in a subquery
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a NOT IN (SELECT 1)');
- *     $query->statement->where->negated // => true
+ * @visibility SqlSemantics
  */
 final class InQuery implements Scalar
 {

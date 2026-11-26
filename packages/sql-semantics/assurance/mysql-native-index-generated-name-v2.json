@@ -1,0 +1,46 @@
+{
+  "revision": "SemanticsIR/mysql-native-index-generated-name-2",
+  "approval": "pending-human-review",
+  "supersedes": {
+    "contract": "mysql-drop-native-index-evidence-v1.json",
+    "field": "nameResolution.collision",
+    "reason": "A same-coordinate native replay retained the target key and returned error 1091 after the candidate used a 61-byte prefix on MySQL 8.1.0, 8.2.0, 8.3.0 and 9.0.1. The native catalog contains the 30-byte-prefix identity in those profiles.",
+    "counterexampleCandidate": "846cb0d5d8e808fc6cdd8eb8e294a684ac9b9c21",
+    "counterexampleCoordinate": "edge/ascii-suffix-capacity"
+  },
+  "scope": "Resolve the actual native identifier for an ordinary table key named implicitly by the first key field, when an earlier index or PRIMARY already occupies that name.",
+  "bytesByRelease": {
+    "5.6.51": 30,
+    "5.7.44": 30,
+    "8.0.44": 61,
+    "8.1.0": 30,
+    "8.2.0": 30,
+    "8.3.0": 30,
+    "8.4.7": 61,
+    "9.0.1": 30,
+    "9.1.0": 61
+  },
+  "rules": [
+    "When the declared first field name is available, use the complete field identifier.",
+    "When adding _2 through _99, use the release-specific byte prefix and pick the first available suffix using the native identifier case comparison.",
+    "A malformed byte prefix does not identify a complete IR identifier under this profile. Keep that boundary distinct from a valid UTF-8 prefix and from a guessed transliteration.",
+    "A candidate name that matches the other release family's prefix has no admissible lookup when the actual shorter or longer generated name is present instead."
+  ],
+  "observations": [
+    "Exact selected physical identifier in direct construction, parsed construction and emitted SQL.",
+    "Native initial and retained physical names, ordered key parts, uniqueness, rows, transaction marker and effective removal.",
+    "The bounded ASCII capacity, a boundary containing complete UTF-8 scalars and a subsequent free suffix.",
+    "Typed static rejection and native 1091 for an alias formed with the wrong release family's byte prefix."
+  ],
+  "sources": [
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.1.0/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.2.0/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.3.0/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.4.7/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-9.0.1/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-9.1.0/sql/sql_table.cc"
+  ]
+}

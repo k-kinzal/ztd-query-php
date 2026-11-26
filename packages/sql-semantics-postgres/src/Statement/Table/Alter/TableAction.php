@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * One `AlterTableCmd` without operands; see `TableActionKind`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading a relation action
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ENABLE ROW LEVEL SECURITY');
- *     $statement->statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind::EnableRowSecurity
+ * @visibility SqlSemantics
  */
 final class TableAction implements AlterCommand
 {

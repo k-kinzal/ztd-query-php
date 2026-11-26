@@ -32,10 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\OrdinalOutOfRange;
  * position beyond the known ones depends on the missing inputs.
  * Source: https://sqlite.org/lang_select.html#the_order_by_clause. Status: Implemented.
  *
- * @visibility public
- * @example Reading the result column an ordinal denotes
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT 'x' AS a, 2 AS b ORDER BY 2");
- *     $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution->field->name->value // => 'b'
+ * @visibility SqlSemantics
  * @example Refusing an expression that is no integer constant
  *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('1')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */

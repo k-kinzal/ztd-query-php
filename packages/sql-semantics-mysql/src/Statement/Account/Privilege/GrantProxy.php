@@ -21,9 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-proxy-privileges,
  * https://dev.mysql.com/doc/refman/8.4/en/proxy-users.html. Status: Implemented.
  *
- * @visibility public
- * @example Granting a proxy
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("grant proxy on 'root' to app with grant option")->toString() // => 'GRANT PROXY ON root TO app WITH GRANT OPTION'
+ * @visibility SqlSemantics
  */
 final class GrantProxy implements Statement
 {

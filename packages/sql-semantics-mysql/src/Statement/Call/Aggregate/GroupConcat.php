@@ -37,10 +37,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_group-concat.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing GROUP_CONCAT()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT GROUP_CONCAT(DISTINCT 'a' SEPARATOR ';')");
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['VARCHAR', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable]
+ * @visibility SqlSemantics
  */
 final class GroupConcat implements SetFunction
 {

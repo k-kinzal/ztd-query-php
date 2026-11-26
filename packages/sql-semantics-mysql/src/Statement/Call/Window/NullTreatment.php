@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Window;
  * does not support IGNORE NULLS.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-descriptions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment::Ignore->value // => 'IGNORE NULLS'
  */

@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\Sqlite\Ir\Predicate;
+
+use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+
+/**
+ * One ordered comparison in an ON or WHERE predicate.
+ *
+ * @visibility public
+ * @example Constructing a predicate
+ *     $predicate = new \SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison(\SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator::Equal, new \SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral('1'), new \SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral('1'));
+ *     $predicate->left->decimal // => '1'
+ */
+final class Comparison
+{
+    use Snapshot;
+
+    /**
+     * Holds the operator with its left and right operands.
+     */
+    public function __construct(
+        public readonly ComparisonOperator $operator,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|self|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $left,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|self|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $right,
+    ) {
+    }
+}

@@ -28,10 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * the fields are written after the string.
  * Source: https://www.postgresql.org/docs/17/datatype-datetime.html#DATATYPE-INTERVAL-INPUT. Status: Implemented.
  *
- * @visibility public
- * @example Reading the fields of an interval constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT interval '1 2' day to second(3)");
- *     [$query->toString(), $query->field(0)->type->descriptor->name()] // => ["SELECT INTERVAL '1 2' DAY TO SECOND (3)", 'interval day to second(3)']
+ * @visibility SqlSemantics
  * @example Rejecting a precision next to fields without seconds
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields::Year, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('3')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

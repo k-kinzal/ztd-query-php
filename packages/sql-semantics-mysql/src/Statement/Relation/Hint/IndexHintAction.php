@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation\Hint;
  * synonyms; the writer emits INDEX.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/index-hints.html.
  *
- * @visibility public
- * @example Reading the action of an index hint
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t FORCE INDEX (i)');
- *     $query->statement->from->indexHints[0]->action // => \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Force
+ * @visibility SqlSemantics
  */
 enum IndexHintAction: string
 {

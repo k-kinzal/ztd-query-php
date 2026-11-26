@@ -18,10 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * specified." Any name is accepted and kept.
  * Source: https://sqlite.org/foreignkeys.html#fk_unsupported. Status: Implemented.
  *
- * @visibility public
- * @example Reading a MATCH name
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent MATCH FULL)');
- *     $create->statement->columns[0]->constraints[0]->arguments[0]->name->value // => 'FULL'
+ * @visibility SqlSemantics
  */
 final class MatchName implements ReferenceArgument
 {

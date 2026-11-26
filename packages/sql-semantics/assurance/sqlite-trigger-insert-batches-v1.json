@@ -1,0 +1,157 @@
+{
+  "revision": "SemanticsIR/sqlite-trigger-insert-batches-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Stock SQLite 3.47.2, UTF-8, default recursive-triggers policy, native SQLite conflict handling and ordered known attachments.",
+  "scope": "Preserve one multi-row VALUES insertion as one action and retain a sequence of separate actions when written. Admit variable nonzero tuple count with a single checked heading.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Trigger/TriggerInsert": {
+      "role": "One SQLite trigger INSERT with a single native conflict boundary.",
+      "structure": "One resolved TriggerDestination, a nonempty ordered list of TriggerInsertRow, and one exact InsertConflict.",
+      "conditions": "Every row has the same ordered writable slot list. The selected destination is available in the enclosing trigger's native search scope. Every row image must be available in the activation and refer to an explicit column.",
+      "meaning": "Evaluate all ordered VALUES tuples in one native insertion. Preserve grouping, the native partial-update or rollback policy, row insertion order, and externally observable changes.",
+      "sql": "Emit INSERT, its policy, the local table and common explicit heading, followed by a comma-separated sequence of complete parenthesized tuples.",
+      "externalInterpretation": "Same native attached scope, checked destination layout and constraints, current trigger and supplied watched activation. Fixture-side witness triggers have their actual native effects.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerInsertRow": {
+      "role": "One VALUES tuple of an ordered trigger insertion.",
+      "structure": "A nonempty ordered sequence of final TriggerInsertField values.",
+      "conditions": "Each assigned ordinal is distinct. The whole insertion checks matching headings and destination writes. The trigger checks all row-image operands.",
+      "meaning": "Supply the represented values to the selected ordinals of one target row.",
+      "sql": "Emit one parenthesized tuple. A distinct tuple can contain equal values and must be retained.",
+      "externalInterpretation": "Same native attached scope, checked destination layout and constraints, current trigger and supplied watched activation. Fixture-side witness triggers have their actual native effects.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/Trigger/CreateTrigger",
+    "Schema/Trigger/TriggerDestination",
+    "Schema/Trigger/TriggerInsertField",
+    "Mutation/InsertConflict"
+  ],
+  "rules": [
+    "Read the target heading once from the originally bound destination. Validate exact writable associations and rectangular shape before creating the insertion.",
+    "Program order and VALUES order remain distinct. A tuple is a row in an insertion, while several insertions are several native statements. Do not lower one into the other.",
+    "Validate OLD and NEW at every tuple position. Preserve literal type, null, duplicates and omitted optional destination members.",
+    "Reuse native effect semantics under the outer activation's conflict policy. A constraint error can leave different states under ABORT, FAIL and ROLLBACK. An outer OR policy can take precedence. Preserve the observable total-change deltas of both groupings.",
+    "Additional INSERT SELECT, UPSERT, arbitrary row expressions and nonstandard recursive modes remain listed in the complete language scope."
+  ],
+  "observations": [
+    "Operation and tuple grouping, length and order, common heading, exact reference roles, native policy and temporariness.",
+    "Native installation, typed schema and row values, sibling destinations, ordered fixture effect journal, result metadata, change counters, constraint errors and transaction lifetime.",
+    "Observations at the failing row, after the outer operation and after a caller rollback. Distinguish retained earlier row effects under FAIL from rollback under ABORT and ROLLBACK."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp",
+      "archive"
+    ],
+    "groupings": [
+      "batch",
+      "separate"
+    ],
+    "policies": [
+      "inherit",
+      "ABORT",
+      "FAIL",
+      "IGNORE",
+      "REPLACE",
+      "ROLLBACK"
+    ],
+    "collisions": [
+      "none",
+      "first",
+      "middle",
+      "last"
+    ],
+    "transaction": [
+      false,
+      true
+    ],
+    "outer": [
+      "inherit",
+      "IGNORE"
+    ],
+    "identity": "Exhaust the 576 Cartesian coordinates in the listed order. Submit direct and analyzed construction for every coordinate. Recover grouping and slots from the immutable action structure and the effect, open transaction and typed collision positions from native observations."
+  },
+  "exploration": {
+    "seeds": [
+      1481,
+      13043,
+      74923
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 420,
+    "allowedExclusions": [],
+    "domain": "Vary nonzero tuple count, repeated keys, row order, multiple independent actions, NULL and integer or text values, literal and exact image selection, attached and temp targets, and inner and overriding outer flags."
+  },
+  "negative": [
+    "An empty VALUES tuple",
+    "A tuple with repeated destination positions",
+    "An empty insertion row list",
+    "A non-list tuple collection",
+    "An insertion containing a child of the wrong role",
+    "A tuple with a changed heading order",
+    "A tuple with insufficient width",
+    "A write position outside the destination layout",
+    "A last-tuple value using an unavailable row image",
+    "A last-tuple value outside the watched layout"
+  ],
+  "analysisNegative": [
+    "A multi-row insertion with a mismatched tuple width",
+    "A multi-row insertion with a late unresolved row-image column",
+    "A multi-row insertion using a parameter in its final tuple"
+  ],
+  "faults": [
+    "Split one multi-row insertion into native single-row statements",
+    "Combine independent insertion actions",
+    "Reverse the row tuple order",
+    "Omit the last tuple",
+    "Replace a later tuple field with an earlier one",
+    "Allow a subsequent tuple with a different heading",
+    "Bypass a last-tuple row-image check",
+    "Ignore the inner conflict policy",
+    "Move the insertion to a decoy schema"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "b5650ab38a1d531684a4739177f97fe9ccccc43def29b939e1eb76b023f6a988",
+    "observations": "07be0d44f0240b90bf44f036cca662f64b2734a58613a2ee2d94bc581b6825d6",
+    "groupingControl": "The six-policy calibration gives 48 paired, genuine change-count differences between one batch and multiple insertion statements."
+  },
+  "trust": [
+    "The pinned SQLite ABI and origin rules, checked array storage and bound value graph, independently known write fixture transitions and approved comparison scope."
+  ],
+  "open": [
+    "The bounded matrix studies primary-key duplication and native trigger change counters. Remaining trigger expressions, conflict side effects and engine profiles are recorded in the full inventory."
+  ]
+}

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * unnamed value takes the name of the column it references.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML-XMLELEMENT.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a named attribute
  *     $attribute = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlAttribute(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('id'));
  *     $attribute->name->value // => 'id'

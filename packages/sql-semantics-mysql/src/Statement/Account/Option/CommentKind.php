@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
  * `COMMENT '…'` sets the `comment` member.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-comments-attributes.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword
  *     \SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Attribute->value // => 'ATTRIBUTE'
  */

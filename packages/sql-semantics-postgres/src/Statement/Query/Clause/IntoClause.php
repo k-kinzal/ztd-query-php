@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * changes nothing and is not kept.
  * Source: https://www.postgresql.org/docs/17/sql-selectinto.html.
  *
- * @visibility public
- * @example Reading the target of SELECT INTO
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a INTO TEMP TABLE t');
- *     [$query->statement->into->table->name->value, $query->statement->into->persistence->value, $query->toString()] // => ['t', 'TEMP', 'SELECT 1 AS a INTO TEMP t']
+ * @visibility SqlSemantics
  */
 final class IntoClause implements Node
 {

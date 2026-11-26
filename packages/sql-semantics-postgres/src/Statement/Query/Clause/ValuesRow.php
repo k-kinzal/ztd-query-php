@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-values.html.
  *
- * @visibility public
- * @example Reading the values of a row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VALUES (1, 2)');
- *     count($query->statement->rows[0]->values) // => 2
+ * @visibility SqlSemantics
  * @example Refusing an empty row
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

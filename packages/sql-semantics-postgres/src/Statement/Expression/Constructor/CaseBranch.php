@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * a value compared with the operand.
  * Source: https://www.postgresql.org/docs/17/functions-conditional.html#FUNCTIONS-CASE.
  *
- * @visibility public
- * @example Reading a branch
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT CASE WHEN true THEN 1 END');
- *     $query->field(0)->expression->branches[0]->result->value->digits // => '1'
+ * @visibility SqlSemantics
  */
 final class CaseBranch implements Node
 {

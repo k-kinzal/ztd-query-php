@@ -1,0 +1,117 @@
+{
+  "revision": "SemanticsIR/postgres-mutation-returning-boundaries-1",
+  "rules": {
+    "Mutation/Delete::toString": {
+      "common": [
+        "$sql = 'DELETE FROM ' . ($this->target->only ? 'ONLY ' : '') . $this->target->schema->quoted() . '.' . $this->target->table->quoted();",
+        "$returning = (new ReturningSql())->clause($this->target, $this->returning);",
+        "if ($this->where === null) {",
+        "    return $sql . $returning;",
+        "}",
+        "return $sql . ' WHERE ' . (new SelectSql())->predicate($this->where, $this->target, qualify: false) . $returning;"
+      ]
+    },
+    "Mutation/DeleteLowering::lower": {
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The DELETE requires the native language profile.');",
+        "Check::input($statement->with === null && $statement->using === null",
+        "    && !$statement->where instanceof CurrentOf, 'Complete PostgreSQL DELETE requires one target without WITH, USING or a cursor.');",
+        "$path = $operation->context->searchPath;",
+        "$catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';",
+        "$binding = new SourceBinding($operation, $statement->target);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);",
+        "$target = $binding->source();",
+        "Check::input($target !== null, 'A complete DELETE requires a resolved target.');",
+        "",
+        "return new Delete($target, $where, $profile->grammar, $returning);"
+      ]
+    },
+    "Mutation/ReturnedColumn::__construct": {
+      "common": [
+        "Check::input($reference->occurrence === 0, 'A returned field must read the single target occurrence.');"
+      ]
+    },
+    "Mutation/ReturningLowering::lower": {
+      "common": [
+        "$fields = $output?->fields();",
+        "Check::input($fields !== null, 'RETURNING needs a closed target result layout.');",
+        "$returning = [];",
+        "foreach ($fields as $field) {",
+        "    $operand = $field->expression;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    Check::input($operand === null || $operand instanceof ParsedReturnColumn, 'RETURNING requires a resolved target column.');",
+        "    $resolution = $field->resolution;",
+        "    Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');",
+        "    $returning[] = new ReturnedColumn($binding->resolved($resolution), new Identifier($field->name->value));",
+        "}",
+        "Check::input($returning !== [], 'RETURNING needs at least one resolved target field.');",
+        "",
+        "return $returning;"
+      ]
+    },
+    "Mutation/ReturningSql::clause": {
+      "common": [
+        "$fields = [];",
+        "foreach ($returning as $field) {",
+        "    $fields[] = $target->columns[$field->reference->slot]->quoted() . ' AS ' . $field->name->quoted();",
+        "}",
+        "",
+        "return $fields === [] ? '' : ' RETURNING ' . implode(', ', $fields);"
+      ]
+    },
+    "Mutation/ReturningLayout::check": {
+      "common": [
+        "Check::input(count($fields) <= 1024, 'A mutation can return at most 1024 fields.');",
+        "foreach ($fields as $field) {",
+        "    Check::input(isset($target->columns[$field->reference->slot]), 'A returned slot must belong to its target.');",
+        "}"
+      ]
+    },
+    "Mutation/Update::toString": {
+      "common": [
+        "$sql = new SelectSql();",
+        "$parts = [];",
+        "foreach ($this->assignments as $assignment) {",
+        "    $column = $this->target->columns[$assignment->target->slot]->quoted();",
+        "    $parts[] = $column . ' = ' . $sql->expression($assignment->value, $this->target);",
+        "}",
+        "$statement = 'UPDATE ' . $sql->from($this->target) . ' SET ' . implode(', ', $parts);",
+        "if ($this->where !== null) {",
+        "    $statement .= ' WHERE ' . $sql->predicate($this->where, $this->target);",
+        "}",
+        "",
+        "return $statement . (new ReturningSql())->clause($this->target, $this->returning);"
+      ]
+    },
+    "Mutation/UpdateLowering::lower": {
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The UPDATE requires the native language profile.');",
+        "Check::input($statement->with === null && $statement->from === null",
+        "    && !$statement->where instanceof CurrentOf, 'A complete UPDATE requires one ordinary target.');",
+        "$binding = new SourceBinding($operation, $statement->target);",
+        "$path = $operation->context->searchPath;",
+        "$catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$expressions = new ExpressionLowering();",
+        "$assignments = [];",
+        "foreach ($statement->assignments as $assignment) {",
+        "    Check::input($assignment instanceof ParsedAssignment && $assignment->column->steps === [], 'An UPDATE requires scalar assignments to whole columns.');",
+        "    $slot = $binding->slotFor($binding->writableColumn($assignment->column->column->value));",
+        "    $value = $expressions->lower($assignment->value, $binding, $catalogFirst);",
+        "    Check::input($value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral, 'An UPDATE assignee requires a signed literal, NULL or a row reference.');",
+        "    $assignments[] = new UpdateAssignment($slot, $value);",
+        "}",
+        "$returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);",
+        "$target = $binding->source();",
+        "Check::input($target !== null, 'An UPDATE requires a resolved target.');",
+        "",
+        "return new Update($target, $assignments, $where, $profile->grammar, $returning);"
+      ]
+    }
+  }
+}

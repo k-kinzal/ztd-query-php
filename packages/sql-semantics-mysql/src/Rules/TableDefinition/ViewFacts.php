@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount;
+use SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\View\ViewDefinition;
 
 /**
@@ -37,11 +38,25 @@ final class ViewFacts
             $derivation->report(new ViewColumnCount(count($definition->columns), count($output->projection)));
         }
         $declaration = new TableDeclaration();
-        $names = $definition->columns ?? (new ViewColumns($derivation->context->profile, $derivation->context->columnNames))->names($definition->query, $declaration->settled($output));
-        $table = $declaration->view($definition->name, $output, $names, $definition->columns !== null, $derivation->context->profile);
+        $fields = $declaration->settled($output);
+        $heading = new ViewColumns($derivation->context->profile);
+        $names = $definition->columns === null ? $heading->names($definition->query, $fields) : $heading->declared($definition->columns);
+        $layout = new ViewReadLayout();
+        $sourceFree = $layout->noInput($definition->query);
+        $table = $declaration->view(
+            $definition->name,
+            $output,
+            $names,
+            $definition->columns !== null,
+            $derivation->context->profile,
+            $definition->algorithm === ViewAlgorithm::TempTable || $sourceFree || $layout->distinct($definition->query),
+            $sourceFree
+        );
         if ($definition->columns === null) {
-            foreach ($names as $name) {
-                if ($name !== null && !(new ColumnNameRule())->valid($name->value)) {
+            $generated = $heading->generated($definition->query, $fields);
+            foreach ($fields as $position => $field) {
+                $name = $field->name;
+                if (!$generated[$position] && $name !== null && !(new ColumnNameRule())->valid($name->value)) {
                     $derivation->report(new IncorrectColumnName($name));
                 }
             }

@@ -13,13 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * One further term of a join chain: the operator, the joined relation and its constraint.
  *
- * @visibility public
- * @example Reading a joined term
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t CROSS JOIN u');
- *     $query->statement->from->steps[0]->relation->name->name->value // => 'u'
- * @example Refusing a chain as a term, which must be written in parentheses
- *     $chain = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t JOIN u')->statement->from;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep(new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator(), $chain) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class JoinStep implements Node
 {

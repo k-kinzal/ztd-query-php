@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ObjectLevel::class)]
 #[Medium]
@@ -23,6 +23,6 @@ final class ObjectLevelTest extends TestCase
 
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('GRANT SELECT ON shop.t TO u', (new Semantics())->analyze('grant select on shop . t to u')->toString());
+        self::assertSame('GRANT SELECT ON shop.t TO u', (new Inspection())->inspect('grant select on shop . t to u')->toString());
     }
 }

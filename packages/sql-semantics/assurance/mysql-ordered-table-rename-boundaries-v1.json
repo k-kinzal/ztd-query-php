@@ -1,0 +1,103 @@
+{
+  "revision": "SemanticsIR/mysql-ordered-table-rename-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect the owned move graph, exact quoted identities, persistent binding and native ordered renderer to the shipped PHP.",
+  "rules": {
+    "Schema/Alter/TableRename::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($from->quoted() !== $to->quoted(), 'A table rename requires distinct current and destination identities.');"
+      ]
+    },
+    "Schema/Alter/TableRename::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->from->quoted() . ' TO ' . $this->to->quoted();"
+      ]
+    },
+    "Schema/Alter/RenameTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$checked = Check::listOf($moves, TableRename::class, 'RENAME TABLE needs a nonempty ordered sequence.', 1);",
+        "$visible = [];",
+        "foreach ($checked as $move) {",
+        "    $from = $move->from->quoted();",
+        "    $to = $move->to->quoted();",
+        "    $origin = array_key_exists($from, $visible) ? $visible[$from] : $move->from;",
+        "    Check::input($origin !== null, 'A vacated source must have been recreated by an earlier move.');",
+        "    Check::input($origin->quoted() === $move->origin->quoted(), 'A rename move must retain its originating table identity.');",
+        "    Check::input(!isset($visible[$to]), 'A rename destination cannot replace a table moved there by an earlier step.');",
+        "    $visible[$from] = null;",
+        "    $visible[$to] = $origin;",
+        "}",
+        "$this->moves = $checked;"
+      ]
+    },
+    "Schema/Alter/RenameTable::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native';"
+      ]
+    },
+    "Schema/Alter/RenameTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$moves = [];",
+        "foreach ($this->moves as $move) {",
+        "    $moves[] = $move->toString();",
+        "}",
+        "",
+        "return 'RENAME TABLE ' . implode(', ', $moves);"
+      ]
+    },
+    "Schema/Alter/TableRenameLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "    && $context->relationNames === Comparison::Sensitive, 'RENAME TABLE requires the default native profile.');",
+        "$fallback = (new SessionDatabase())->named($context);",
+        "$moves = [];",
+        "foreach ($statement->renamings as $move) {",
+        "    $resolution = $operation->facts->relation($move)->table;",
+        "    Check::input(",
+        "        $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable",
+        "        && !$resolution->table->temporary && $resolution->table->name->catalog === null,",
+        "        'RENAME TABLE requires a resolved persistent base-table origin.'",
+        "    );",
+        "    $initial = $resolution->table->name;",
+        "    $originSchema = ($initial->schema ?? $context->declarationSchema)->value;",
+        "    $fromSchema = ($move->from->schema ?? $fallback)?->value;",
+        "    $toSchema = ($move->to->schema ?? $fallback)?->value;",
+        "    Check::input(",
+        "        $fromSchema !== null && $toSchema !== null && $originSchema !== SessionDatabase::UNNAMED,",
+        "        'RENAME TABLE needs absolute current, origin and destination names.'",
+        "    );",
+        "    $from = new TableName(new Identifier($fromSchema), new Identifier($move->from->name->value));",
+        "    $to = new TableName(new Identifier($toSchema), new Identifier($move->to->name->value));",
+        "    $origin = new TableName(new Identifier($originSchema), new Identifier($initial->name->value));",
+        "    $moves[] = new TableRename($from, $to, $origin);",
+        "}",
+        "",
+        "return new RenameTable($moves, $profile->grammar);"
+      ]
+    }
+  }
+}

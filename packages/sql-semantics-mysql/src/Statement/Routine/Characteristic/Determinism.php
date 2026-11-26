@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * such characteristic in the grammar.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading whether a function is declared deterministic
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE FUNCTION f() RETURNS INT NOT DETERMINISTIC RETURN 1');
- *     $create->statement->characteristics[0]->deterministic // => false
+ * @visibility SqlSemantics
  */
 final class Determinism implements Characteristic
 {

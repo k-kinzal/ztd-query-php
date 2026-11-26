@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * PROCEDURAL noise word is not kept.
  * Source: https://www.postgresql.org/docs/17/sql-createlanguage.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the handler of a new language
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR');
- *     [$operation->statement->handler->last()->value, $operation->toString()] // => ['plsample_call_handler', 'CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR']
+ * @visibility SqlSemantics
  */
 final class CreateLanguage implements Statement
 {

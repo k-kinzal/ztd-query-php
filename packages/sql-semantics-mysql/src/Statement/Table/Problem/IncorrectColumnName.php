@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_wrong_column_name.
  *
- * @visibility public
- * @example Reading the problem of a selected column whose generated name ends in a space
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE TABLE t AS SELECT 'a '", []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect column name 'a '.
+ * @visibility SqlSemantics
  */
 final class IncorrectColumnName implements Diagnostic
 {

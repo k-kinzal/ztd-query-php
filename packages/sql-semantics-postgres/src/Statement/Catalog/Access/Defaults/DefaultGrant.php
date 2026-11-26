@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * the kind of object, the grantees and WITH GRANT OPTION.
  * Source: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html.
  *
- * @visibility public
- * @example Reading a default grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe WITH GRANT OPTION');
- *     [$operation->statement->action->objects->value, $operation->statement->action->grantOption] // => ['TABLES', true]
+ * @visibility SqlSemantics
  */
 final class DefaultGrant implements Node
 {

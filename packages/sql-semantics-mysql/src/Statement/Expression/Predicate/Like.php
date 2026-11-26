@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-comparison-functions.html#operator_like.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the escape character
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a LIKE 'x!%' ESCAPE '!'");
- *     $query->statement->where->escape->value() // => '!'
+ * @visibility SqlSemantics
  */
 final class Like implements Scalar
 {

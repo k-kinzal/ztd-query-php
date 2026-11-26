@@ -32,10 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-COLLATE-EXPRS,
  * https://www.postgresql.org/docs/17/collation.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a collation
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' COLLATE \"C\"");
- *     [$query->field(0)->expression->collation->last()->value, $query->toString()] // => ['C', "SELECT 'a' COLLATE \"C\""]
+ * @visibility SqlSemantics
  */
 final class Collation implements Scalar, OutputNaming
 {

@@ -1,0 +1,22 @@
+{
+  "revision": "SemanticsIR/mysql-create-primary-binding-1",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Rules/TableDefinition/ColumnFlags.php": {
+      "role": "Recognize the inline PRIMARY KEY marker while separating it from bare column options.",
+      "sha256": "23f959097c0ebb86fe49bf1e496b874e7995f4c026d49a11011ad560c7580fe0"
+    },
+    "src/Statement/Table/Key/IndexDefinition.php": {
+      "role": "Carry the checked parsed key category, operands and index options.",
+      "sha256": "67e90715f85e26c3f600923c1354d3f8e3fee61fd47f8057025377884ad2f072"
+    },
+    "src/Statement/Table/Key/ColumnPart.php": {
+      "role": "Keep an optional prefix and direction distinct from the named owning column.",
+      "sha256": "7c0f5f25532d4cc314f0c05392a6bcefc16d934212607e53b0d4bf6ac83eb05f"
+    },
+    "src/Statement/Query/Direction.php": {
+      "role": "Distinguish native ASC and DESC terms.",
+      "sha256": "f3330b9c80ee424fa8d8425b5ed5bc83c189bc5c11a9e11bf01cd41eaa67c7e6"
+    }
+  }
+}

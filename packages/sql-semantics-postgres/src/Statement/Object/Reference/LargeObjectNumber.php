@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  *
  * Source: https://www.postgresql.org/docs/17/sql-alterlargeobject.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the identifier
  *     $object = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\LargeObjectNumber(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('16400')));
  *     $object->identifier->magnitude->digits // => '16400'

@@ -14,12 +14,12 @@ final class AlterGroupMembersTest extends TestCase
 {
     public function testRenderWritesTheActionAndTheMembers(): void
     {
-        self::assertSame('ALTER GROUP staff ADD USER joe, ann', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER GROUP staff ADD USER joe, ann')->toString());
+        self::assertSame('ALTER GROUP staff ADD USER joe, ann', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER GROUP staff ADD USER joe, ann')->toString());
     }
 
     public function testAnalysisKeepsTheAction(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER GROUP staff DROP USER joe')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER GROUP staff DROP USER joe')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\AlterGroupMembers::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop::Drop, $statement->action);
         self::assertCount(1, $statement->members);
@@ -27,12 +27,12 @@ final class AlterGroupMembersTest extends TestCase
 
     public function testDeriveStatementReportsPublic(): void
     {
-        self::assertSame(['role "public" does not exist', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER GROUP public ADD USER public, pg_x')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER GROUP public ADD USER public, pg_x')->facts->diagnostics));
     }
 
     public function testDeriveStatementReportsAReservedGroup(): void
     {
-        self::assertSame(['role name "pg_x" is reserved'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER GROUP pg_x ADD USER a')->facts->diagnostics));
+        self::assertSame(['role name "pg_x" is reserved'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER GROUP pg_x ADD USER a')->facts->diagnostics));
     }
 
     public function testRejectsNoMember(): void

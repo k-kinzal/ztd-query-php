@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement\Declaration;
  * Statements such as SHOW CREATE TABLE or DROP VIEW behave differently for
  * a base table and a view; the declaration states which one it is.
  *
- * @visibility public
- * @example Reading the kind of a declared view
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0]->kind // => \SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind::BaseTable
+ * @visibility SqlSemantics
  */
 enum RelationKind
 {

@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_char.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing CHAR() with a character set
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT CHAR(77, 121 USING utf8mb4)');
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['VARCHAR', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  */
 final class CharCall implements Scalar
 {

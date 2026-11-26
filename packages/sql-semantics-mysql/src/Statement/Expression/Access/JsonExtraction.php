@@ -31,10 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
  * https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#operator_json-inline-path.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the path of an unquoting extraction
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a->>'$.b' = 'x'");
- *     [$query->statement->where->left->path->value, $query->statement->where->left->unquote] // => ['$.b', true]
+ * @visibility SqlSemantics
  */
 final class JsonExtraction implements Scalar
 {

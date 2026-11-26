@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * https://dev.mysql.com/doc/refman/8.4/en/alter-user.html,
  * https://dev.mysql.com/doc/refman/8.4/en/multifactor-authentication.html.
  *
- * @visibility public
- * @example Reading the password of an account
- *     $user = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER app IDENTIFIED BY 'secret'")->statement->users[0];
- *     $user->identification?->secret?->value // => 'secret'
+ * @visibility SqlSemantics
  */
 final class UserSpecification implements UserAlteration
 {

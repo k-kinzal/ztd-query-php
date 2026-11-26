@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * LIMIT ALL is the same as omitting the clause and is kept as a null count
  * because it is written. Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-LIMIT.
  *
- * @visibility public
- * @example Reading LIMIT ALL
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 LIMIT ALL');
- *     $query->statement->options->limit->count->count // => null
+ * @visibility SqlSemantics
  */
 final class LimitCount implements Node
 {

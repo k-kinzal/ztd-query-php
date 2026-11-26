@@ -16,9 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOption;
  * included, with "unknown table option".
  * Source: https://sqlite.org/syntax/table-options.html.
  *
- * @visibility public
- * @example Reporting an unknown option
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a) WITHOUT oid') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Table option oid is unknown.
+ * @visibility SqlSemantics
  */
 final class UnknownTableOption implements Diagnostic
 {

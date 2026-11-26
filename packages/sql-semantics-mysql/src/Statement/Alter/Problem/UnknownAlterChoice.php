@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * ER_UNKNOWN_ALTER_ALGORITHM or ER_UNKNOWN_ALTER_LOCK.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice(true, new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('FAST')))->message() // => 'FAST is not a LOCK the server knows.'
  */

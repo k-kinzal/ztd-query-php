@@ -10,10 +10,10 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\Attach;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(NameOperand::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class NameOperandTest extends TestCase
 {
     public function testDeriveScalarIsATextConstantAndNoColumnReference(): void
     {
-        $operation = (new Semantics())->analyze("ATTACH 'file.db' AS aux", []);
+        $operation = (new Inspection())->inspect("ATTACH 'file.db' AS aux", []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Attach::class, $statement);
@@ -34,10 +34,10 @@ final class NameOperandTest extends TestCase
 
     public function testRenderWritesTheNameAsAnIdentifier(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('DETACH aux', $semantics->analyze('DETACH aux')->toString());
-        self::assertSame('DETACH `my db`', $semantics->analyze('DETACH [my db]')->toString());
+        self::assertSame('DETACH aux', $semantics->inspect('DETACH aux')->toString());
+        self::assertSame('DETACH `my db`', $semantics->inspect('DETACH [my db]')->toString());
         self::assertSame('aux', (new NameOperand(new Name('aux')))->name->value);
     }
 }

@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
  * Each case holds the keyword it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/delete.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::Quick->value // => 'QUICK'
  */

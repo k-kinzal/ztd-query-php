@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * It is written alone in the privilege list. PRIVILEGES is an optional word.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/privileges-provided.html#priv_all.
  *
- * @visibility public
- * @example Granting every privilege of a database
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT ALL PRIVILEGES ON db.* TO u')->toString() // => 'GRANT ALL ON db.* TO u'
+ * @visibility SqlSemantics
  */
 final class AllPrivileges implements Grantable
 {

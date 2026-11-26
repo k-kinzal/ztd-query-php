@@ -113,7 +113,7 @@ final class FromScope
         $visible = [];
         foreach ($input->visible as $relation) {
             if ($single && ($node->alias !== null || !$leading)) {
-                $visible[] = new VisibleRelation($relation->relation, $relation->shape, $node->alias, $relation->name, $relation->hidden, $relation->implicit);
+                $visible[] = new VisibleRelation($relation->relation, $relation->shape, $node->alias, $relation->name, $relation->hidden, $relation->implicit, $relation->representatives);
             } elseif ($single || $leading || $node->alias !== null || !in_array(ColumnResolver::QUALIFIED_ONLY, $relation->hidden, true)) {
                 $visible[] = $relation;
             }
@@ -138,9 +138,9 @@ final class FromScope
             if (in_array(ColumnResolver::QUALIFIED_ONLY, $relation->hidden, true)) {
                 continue;
             }
-            foreach ($relation->shape->slots as $position => $slot) {
+            foreach (array_keys($relation->shape->slots) as $position) {
                 if (!in_array($position, $relation->hidden, true)) {
-                    $slots[] = $slot;
+                    $slots[] = $relation->starSlot($position);
                 }
             }
             array_push($missing, ...$relation->shape->missing);

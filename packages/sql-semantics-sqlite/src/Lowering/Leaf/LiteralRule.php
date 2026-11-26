@@ -88,9 +88,9 @@ final class LiteralRule
         if (preg_match('/\A[0-9]+\z/', $text) === 1) {
             return $this->lowering->leaves->record(new IntegerLiteral($text));
         }
-        $matched = preg_match('/\A([0-9]*)(?:\.([0-9]*))?(?:[eE]([+-]?[0-9]+))?\z/', $text, $parts, PREG_UNMATCHED_AS_NULL);
+        $matched = preg_match('/\A([0-9]*)(?:\.([0-9]*))?(?:([eE])([+-]?[0-9]+))?\z/', $text, $parts, PREG_UNMATCHED_AS_NULL);
         Check::invariant($matched === 1, 'The numeric token has no numeric spelling: ' . $token->text);
 
-        return $this->lowering->leaves->record(new RealLiteral($parts[1], $parts[2] ?? null, $parts[3] ?? null));
+        return $this->lowering->leaves->record(new RealLiteral($parts[1], $parts[2] ?? null, $parts[4] ?? null, ($parts[3] ?? null) === 'E'));
     }
 }

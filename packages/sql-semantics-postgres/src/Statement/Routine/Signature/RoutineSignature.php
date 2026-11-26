@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter;
  * do not take part in the lookup of a function.
  * Source: https://www.postgresql.org/docs/17/sql-dropfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling a name without an argument list
  *     $signature = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignature(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('f')]));
  *     $signature->arguments // => null

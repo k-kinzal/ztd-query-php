@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * or rule is looked up by the server; a version 1 context declares none of them.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading a named action
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t DISABLE TRIGGER audit');
- *     [$statement->statement->commands[0]->kind, $statement->statement->commands[0]->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\NamedActionKind::DisableTrigger, 'audit']
+ * @visibility SqlSemantics
  */
 final class NamedAction implements AlterCommand
 {

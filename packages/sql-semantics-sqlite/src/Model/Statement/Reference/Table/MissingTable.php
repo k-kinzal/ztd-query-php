@@ -11,9 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A relation name that a complete context does not declare.
  *
- * @visibility public
- * @example Establishing that a table does not exist
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t', []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Relation t does not exist.
+ * @visibility SqlSemantics
  */
 final class MissingTable implements TableResolution, Diagnostic
 {

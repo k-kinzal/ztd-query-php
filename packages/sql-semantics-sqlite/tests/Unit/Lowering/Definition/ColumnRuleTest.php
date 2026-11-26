@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\ColumnRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Collation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
@@ -24,6 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\Deferrability;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ColumnRule::class)]
 #[Medium]
@@ -31,7 +31,7 @@ final class ColumnRuleTest extends TestCase
 {
     public function testColumnLowersTheNameTheTypeAndTheConstraints(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (price DECIMAL(10, 2) NOT NULL, plain)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (price DECIMAL(10, 2) NOT NULL, plain)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame('price', $statement->columns[0]->name->value);
@@ -43,7 +43,7 @@ final class ColumnRuleTest extends TestCase
 
     public function testConstraintsKeepTheirWrittenOrder(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a UNIQUE NOT NULL CONSTRAINT c CHECK (a > 0) COLLATE nocase)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a UNIQUE NOT NULL CONSTRAINT c CHECK (a > 0) COLLATE nocase)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([ColumnUnique::class, NotNull::class, ConstraintName::class, ColumnCheck::class, Collation::class], array_map(static fn (object $constraint): string => $constraint::class, $statement->columns[0]->constraints));
@@ -51,7 +51,7 @@ final class ColumnRuleTest extends TestCase
 
     public function testConstraintLowersEveryKindOfConstraint(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a NULL PRIMARY KEY REFERENCES p DEFERRABLE, b GENERATED ALWAYS AS (a), c AS (a))')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a NULL PRIMARY KEY REFERENCES p DEFERRABLE, b GENERATED ALWAYS AS (a), c AS (a))')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([NullAllowed::class, ColumnPrimaryKey::class, ForeignKeyClause::class, Deferrability::class], array_map(static fn (object $constraint): string => $constraint::class, $statement->columns[0]->constraints));
@@ -60,7 +60,7 @@ final class ColumnRuleTest extends TestCase
 
     public function testDefaultLowersEveryFormOfDefault(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a DEFAULT 1, b DEFAULT +1, c DEFAULT -1, d DEFAULT (1), e DEFAULT word)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a DEFAULT 1, b DEFAULT +1, c DEFAULT -1, d DEFAULT (1), e DEFAULT word)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $defaults = array_map(static fn (object $column): object => $column->constraints[0], $statement->columns);
@@ -70,14 +70,14 @@ final class ColumnRuleTest extends TestCase
 
     public function testScannedAnswersWhatFollowsTheEmptyMarker(): void
     {
-        $operation = (new Semantics())->inspect("CREATE TABLE t (a DEFAULT 'x')");
+        $operation = (new Inspection())->diagnose("CREATE TABLE t (a DEFAULT 'x')");
 
         self::assertSame("CREATE TABLE t (a DEFAULT 'x')", $operation->toString());
     }
 
     public function testAutoincrementLowersTheOptionalKeyword(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a INTEGER PRIMARY KEY AUTOINCREMENT, b PRIMARY KEY)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a INTEGER PRIMARY KEY AUTOINCREMENT, b PRIMARY KEY)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertTrue($statement->columns[0]->primaryKey()?->autoincrement);
@@ -86,7 +86,7 @@ final class ColumnRuleTest extends TestCase
 
     public function testGeneratedLowersTheExpressionAndTheOptionalWord(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a, b AS (a), c AS (a) STORED)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a, b AS (a), c AS (a) STORED)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertNull($statement->columns[1]->generated()?->word);

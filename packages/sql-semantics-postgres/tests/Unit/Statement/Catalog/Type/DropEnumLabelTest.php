@@ -14,11 +14,11 @@ final class DropEnumLabelTest extends TestCase
 {
     public function testRenderWritesDropValue(): void
     {
-        self::assertSame('ALTER TYPE mood DROP VALUE \'sad\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE mood DROP VALUE \'sad\'')->toString());
+        self::assertSame('ALTER TYPE mood DROP VALUE \'sad\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE mood DROP VALUE \'sad\'')->toString());
     }
 
     public function testDeriveStatementReportsTheRejection(): void
     {
-        self::assertSame('dropping an enum value is not implemented', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE mood DROP VALUE \'sad\'')->facts->diagnostics[0]->message());
+        self::assertSame('dropping an enum value is not implemented', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE mood DROP VALUE \'sad\'')->facts->diagnostics[0]->message());
     }
 }

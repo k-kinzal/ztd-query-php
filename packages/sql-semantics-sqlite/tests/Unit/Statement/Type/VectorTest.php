@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Vector::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class VectorTest extends TestCase
 
     public function testNameDescribesARowValueAndAMultiColumnSubquery(): void
     {
-        $query = (new Semantics())->analyze('SELECT (1, 2) = (1, 2), (SELECT 1, 2, 3) = (1, 2, 3)', []);
+        $query = (new Inspection())->inspect('SELECT (1, 2) = (1, 2), (SELECT 1, 2, 3) = (1, 2, 3)', []);
         $pair = $query->field(0)->expression;
         $triple = $query->field(1)->expression;
 

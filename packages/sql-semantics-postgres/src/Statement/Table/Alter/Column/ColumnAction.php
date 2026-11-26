@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * `AT_DropIdentity` (with `missing_ok` for IF EXISTS). The optional COLUMN word is not kept.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading a column action
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER COLUMN a DROP NOT NULL');
- *     $statement->statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\ColumnActionKind::DropNotNull
+ * @visibility SqlSemantics
  */
 final class ColumnAction implements AlterCommand
 {

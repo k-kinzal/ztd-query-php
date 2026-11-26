@@ -14,16 +14,16 @@ final class OptionChecksTest extends TestCase
 {
     public function testRedundantReportsARepeatedName(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE FOREIGN DATA WRAPPER w VALIDATOR a VALIDATOR b')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE FOREIGN DATA WRAPPER w VALIDATOR a VALIDATOR b')->facts->diagnostics[0]->message());
     }
 
     public function testDatabaseAcceptsTheKnownOptions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d OWNER a TEMPLATE t ENCODING \'UTF8\' LOCATION \'x\' TABLESPACE s CONNECTION LIMIT 5 icu_rules = \'\' strategy = file_copy')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d OWNER a TEMPLATE t ENCODING \'UTF8\' LOCATION \'x\' TABLESPACE s CONNECTION LIMIT 5 icu_rules = \'\' strategy = file_copy')->facts->diagnostics);
     }
 
     public function testDatabaseReportsAnUnknownAlterOption(): void
     {
-        self::assertSame('option "encoding" not recognized', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DATABASE d WITH encoding x')->facts->diagnostics[0]->message());
+        self::assertSame('option "encoding" not recognized', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DATABASE d WITH encoding x')->facts->diagnostics[0]->message());
     }
 }

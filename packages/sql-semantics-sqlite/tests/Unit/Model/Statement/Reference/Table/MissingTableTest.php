@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(MissingTable::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class MissingTableTest extends TestCase
 {
     public function testMessageNamesTheRelationACompleteContextDoesNotDeclare(): void
     {
-        $query = (new Semantics())->inspect('SELECT a FROM t', []);
+        $query = (new Inspection())->diagnose('SELECT a FROM t', []);
 
         $resolution = $query->facts->relation($query->singleNamedInput())->table;
 
@@ -28,9 +28,9 @@ final class MissingTableTest extends TestCase
 
     public function testMessageOfAQualifiedNameSearchesThatSchemaOnly(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $query = $semantics->inspect('SELECT a FROM aux.t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $query = $semantics->diagnose('SELECT a FROM aux.t', [$table]);
 
         self::assertInstanceOf(MissingTable::class, $query->facts->relation($query->singleNamedInput())->table);
     }

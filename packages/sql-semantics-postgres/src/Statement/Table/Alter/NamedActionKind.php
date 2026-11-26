@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter;
  * Mirrors `AT_ClusterOn`, `AT_ValidateConstraint`, `AT_SetTableSpace` and the trigger and rule firing actions.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a named action
  *     \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\NamedActionKind::ClusterOn->keywords() // => ['CLUSTER', 'ON']
  */

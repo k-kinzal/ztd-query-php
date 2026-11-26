@@ -27,10 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the digits of a hexadecimal literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 0x1f AS h');
- *     [$query->statement->columns[0]->expression->digits, $query->toString()] // => ['1F', 'SELECT 0x1F AS h']
+ * @visibility SqlSemantics
  * @example Refusing lower-case digits, which are another spelling of the same value
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral('1f') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing an empty digit sequence

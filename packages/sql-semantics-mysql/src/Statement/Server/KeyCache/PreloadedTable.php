@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
  * (MYSQL-CACHED-INDEXES-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-index.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a table and its index list
  *     $table = new \SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), null, [new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex()], true);
  *     [count($table->indexes ?? []), $table->ignoreLeaves] // => [1, true]

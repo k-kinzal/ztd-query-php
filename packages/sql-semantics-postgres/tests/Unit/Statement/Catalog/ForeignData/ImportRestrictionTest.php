@@ -14,7 +14,7 @@ final class ImportRestrictionTest extends TestCase
 {
     public function testRenderKeepsOnly(): void
     {
-        self::assertSame('IMPORT FOREIGN SCHEMA r EXCEPT (a, ONLY b) FROM SERVER s INTO l', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('IMPORT FOREIGN SCHEMA r EXCEPT (a, ONLY b) FROM SERVER s INTO l')->toString());
+        self::assertSame('IMPORT FOREIGN SCHEMA r EXCEPT (a, ONLY b) FROM SERVER s INTO l', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('IMPORT FOREIGN SCHEMA r EXCEPT (a, ONLY b) FROM SERVER s INTO l')->toString());
     }
 
     public function testRejectsAnEmptyList(): void

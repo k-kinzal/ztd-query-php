@@ -1,0 +1,146 @@
+{
+  "revision": "SemanticsIR/mysql-create-btree-index-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "The checked native B-tree constructor, signed key slots, visibility and table binding.",
+  "rules": {
+    "Schema/Index/IndexColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($slot >= 0 && $slot < 1017, 'An index part needs a native column position from 0 through 1016.');"
+      ]
+    },
+    "Schema/Index/CreateIndex::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target->kind->isTable(), 'CREATE INDEX requires a resolved persistent or temporary InnoDB table.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($target->columns) <= 1017, 'An InnoDB index owner can declare at most 1017 fields.');",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $name->value) === 1 && $case->fold($name->value) !== 'primary', 'CREATE INDEX requires an index name of 1 to 64 characters other than PRIMARY and without a trailing space.');",
+        "$parts = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexColumn::class, 'CREATE INDEX needs a nonempty ordered list of index parts.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($parts) <= 16, 'An InnoDB secondary index can have at most 16 key parts.');",
+        "$legacy = $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($visible || !$legacy, 'This MySQL release has no invisible index role.');",
+        "$seen = [];",
+        "$allowsNull = false;",
+        "foreach ($parts as $part) {",
+        "    $type = $target->columnTypes[$part->slot] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'Each index part must select a declared signed column of its owning table.');",
+        "    $field = $case->fold($target->columns[$part->slot]->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$field]), 'CREATE INDEX cannot repeat a key column.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$part->descending || !$legacy, 'This MySQL release does not store descending index parts.');",
+        "    $seen[$field] = true;",
+        "    $allowsNull = $allowsNull || $type->nullable();",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($visible || !$unique || $ownerHasIdentityKey || $allowsNull, 'An implicit primary index must be visible.');",
+        "$this->columns = $parts;"
+      ]
+    },
+    "Schema/Index/CreateIndex::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$parts = [];",
+        "foreach ($this->columns as $column) {",
+        "    $parts[] = $this->target->columns[$column->slot]->quoted() . ($column->descending ? ' DESC' : '');",
+        "}",
+        "return 'CREATE ' . ($this->unique ? 'UNIQUE ' : '') . 'INDEX ' . $this->name->quoted() . ' ON ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted() . ' (' . implode(', ', $parts) . ')' . ($this->visible ? '' : ' INVISIBLE');"
+      ]
+    },
+    "Schema/Index/CreateIndex::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/btree-index';"
+      ]
+    },
+    "Schema/Index/CreateIndexLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native && $profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) && $context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive && $context->columnNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::AsciiInsensitive, 'CREATE INDEX requires the default native profile.');",
+        "$visible = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexOptionsLowering())->visible($statement);",
+        "[$target, $parts, $hasIdentity] = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexTableLowering())->resolve($operation, $statement);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\CreateIndex($target, new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($statement->name->value), $parts, $statement->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind::Unique, $visible, $profile->grammar, $hasIdentity);"
+      ]
+    },
+    "Schema/Index/IndexTableLowering::resolve": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolution->table->kind === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\RelationKind::BaseTable && $resolution->table->name->catalog === null && $resolution->table->storageEngine !== null && strcasecmp($resolution->table->storageEngine, 'InnoDB') === 0, 'CREATE INDEX requires a resolved ordinary InnoDB declaration.');",
+        "$table = $resolution->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($table->columns) <= 1017, 'An InnoDB index owner can declare at most 1017 fields.');",
+        "$schema = ($table->name->schema ?? $context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'CREATE INDEX requires an absolute owning table.');",
+        "$kind = $table->temporary ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable;",
+        "$legacy = $profile->grammar === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $profile->grammar === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744;",
+        "[$names, $types, $parts] = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexPartsLowering())->resolve($table, $statement->parts, $legacy);",
+        "$target = new \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($table->name->name->value), $names, $types, $kind);",
+        "return [$target, $parts, $table->hasIdentityKey];"
+      ]
+    },
+    "Schema/Index/IndexPartsLowering::resolve": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$fields = $directions = [];",
+        "foreach ($parts as $part) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($part instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ColumnPart && $part->length === null, 'CREATE INDEX requires whole declared column parts.');",
+        "    $matches = $table->matchingIndexColumns($part->column->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($matches) === 1, 'Each index field must resolve to one declared column.');",
+        "    $field = $matches[0];",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($field->type instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Integral && $field->type->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\IntegralKind::Int && !$field->type->unsigned() && !$field->generated && $field->nullability !== \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Type\\Nullability::Dependent, 'CREATE INDEX requires an ordinary signed INT field with known nullability.');",
+        "    $ordinal = array_search($field, $table->columns, true);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(is_int($ordinal), 'An index part requires a physically declared field.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($fields[$ordinal]), 'CREATE INDEX cannot repeat a key column.');",
+        "    $fields[$ordinal] = [new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($field->name->value), $field->nullability === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Type\\Nullability::NotNull ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind::RequiredSignedInt : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind::SignedInt];",
+        "    $directions[$ordinal] = !$legacy && $part->direction === \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction::Descending;",
+        "}",
+        "ksort($fields, SORT_NUMERIC);",
+        "$slots = array_flip(array_keys($fields));",
+        "$columns = [];",
+        "foreach ($directions as $ordinal => $descending) {",
+        "    $columns[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexColumn($slots[$ordinal], $descending);",
+        "}",
+        "return [array_column($fields, 0), array_column($fields, 1), $columns];"
+      ]
+    },
+    "Schema/Index/IndexOptionsLowering::visible": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind::Index || $statement->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind::Unique, 'CREATE INDEX requires an ordinary or unique native B-tree role.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(($statement->algorithm === null || $statement->algorithm === \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm::Btree) && $statement->alterOptions === [], 'CREATE INDEX requires the ordinary native B-tree storage and alteration policy.');",
+        "$visible = true;",
+        "foreach ($statement->options as $option) {",
+        "    if ($option instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexVisibility) {",
+        "        $visible = $option->visible;",
+        "    } else {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($option instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexUsing && $option->algorithm === \\SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm::Btree, 'CREATE INDEX requires checked B-tree and visibility options.');",
+        "    }",
+        "}",
+        "return $visible;"
+      ]
+    }
+  },
+  "revises": "mysql-create-btree-index-boundaries-v1.json"
+}

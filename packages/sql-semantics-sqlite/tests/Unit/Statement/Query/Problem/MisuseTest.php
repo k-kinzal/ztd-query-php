@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Query\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Misuse::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class MisuseTest extends TestCase
 
     public function testMessageIsReportedForAStarWithoutTables(): void
     {
-        $query = (new Semantics())->inspect('SELECT *');
+        $query = (new Inspection())->diagnose('SELECT *');
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame(MisuseRule::StarWithoutTables, $query->facts->diagnostics[0]->rule);

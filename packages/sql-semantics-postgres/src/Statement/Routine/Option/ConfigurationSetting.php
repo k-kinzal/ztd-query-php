@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * written several times.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html, https://www.postgresql.org/docs/17/sql-alterfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that a configuration setting may be repeated
  *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Drop(\SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Schema, [new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'))]);
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\ConfigurationSetting($clause))->setting() // => null

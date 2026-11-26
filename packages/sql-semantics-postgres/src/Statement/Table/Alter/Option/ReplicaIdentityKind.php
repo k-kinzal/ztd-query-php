@@ -10,9 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option;
  * Mirrors `REPLICA_IDENTITY_NOTHING`, `FULL`, `DEFAULT` and `INDEX`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading the replica identity kind
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t REPLICA IDENTITY FULL')->statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option\ReplicaIdentityKind::Full
+ * @visibility SqlSemantics
  */
 enum ReplicaIdentityKind: string
 {

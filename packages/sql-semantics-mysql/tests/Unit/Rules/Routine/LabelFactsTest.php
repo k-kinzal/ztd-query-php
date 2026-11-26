@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Rules\Routine\LabelFacts;
-use SqlSemantics\Platform\MySql\Semantics;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(LabelFacts::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class LabelFactsTest extends TestCase
     #[DataProvider('providerEnterReportsALabelAnEnclosingStatementUses')]
     public function testEnterReportsALabelAnEnclosingStatementUses(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Inspection($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -45,7 +45,7 @@ final class LabelFactsTest extends TestCase
     #[DataProvider('providerEnterReportsAnEndLabelWithoutMatch')]
     public function testEnterReportsAnEndLabelWithoutMatch(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Inspection($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(NullTestForm::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class NullTestFormTest extends TestCase
 {
     public function testEachFormIsReadFromItsSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t');
+        $query = (new Inspection())->inspect('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t');
         $forms = array_map(static fn (Field $field): ?NullTestForm => $field->expression instanceof NullTest ? $field->expression->form : null, $query->fields()->items ?? []);
 
         self::assertSame([NullTestForm::IsNull, NullTestForm::NotNull, NullTestForm::NotNullWords], $forms);

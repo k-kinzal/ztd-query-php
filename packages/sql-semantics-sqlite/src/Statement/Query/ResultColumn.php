@@ -28,10 +28,7 @@ use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
  * the canonical spelling and is named after it, which is the text the
  * database reads. An aliased column is named by its alias and keeps no layout.
  *
- * @visibility public
- * @example Reading a projected expression, its alias and its spelling
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS one, 1+1');
- *     [$query->statement->columns[0]->alias?->value, $query->statement->columns[1]->layout?->text(), $query->toString()] // => ['one', '1+1', 'SELECT 1 AS one, 1+1']
+ * @visibility SqlSemantics
  */
 final class ResultColumn implements Node
 {

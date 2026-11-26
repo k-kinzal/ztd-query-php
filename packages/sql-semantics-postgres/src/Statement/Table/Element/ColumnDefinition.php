@@ -29,11 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * identity column is checked by PG-IDENTITY-TYPE-001.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a column definition
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 COLLATE "C" NOT NULL)');
- *     $column = $create->statement->definition->elements[0];
- *     [$column->name->value, $column->storage->method->value, $column->compression->method->value, count($column->qualifiers)] // => ['a', 'external', 'lz4', 2]
+ * @visibility SqlSemantics
  */
 final class ColumnDefinition implements Clause
 {

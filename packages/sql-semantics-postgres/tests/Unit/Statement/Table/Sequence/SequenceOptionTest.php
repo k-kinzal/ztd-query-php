@@ -14,8 +14,8 @@ final class SequenceOptionTest extends TestCase
 {
     public function testOptionsAreSequenceOptions(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE SEQUENCE s CYCLE', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE SEQUENCE s CYCLE', []);
         self::assertSame('CREATE SEQUENCE s CYCLE', $statement->toString());
     }
 }

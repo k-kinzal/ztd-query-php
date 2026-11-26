@@ -15,11 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * it is not part of `*`. When it is another name for a declared column, the
  * reference resolves to that declared column.
  *
- * @visibility public
- * @example Reading a PostgreSQL system column
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a TEXT)')->declarations()[0];
- *     $table->implicit[0]->names[0]->value // => 'tableoid'
+ * @visibility SqlSemantics
  */
 final class ImplicitColumn
 {

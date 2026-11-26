@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-logfile-group.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding an undo file
  *     $file = new \SqlSemantics\Platform\MySql\Statement\Server\Storage\LogFile(\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Undo, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('u.log'));
  *     $file->file->value // => 'u.log'

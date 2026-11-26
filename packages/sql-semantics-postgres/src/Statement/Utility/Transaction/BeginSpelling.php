@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * SQL standard; both make the same request. The value is the keyword spelling.
  * Source: https://www.postgresql.org/docs/17/sql-begin.html, https://www.postgresql.org/docs/17/sql-start-transaction.html.
  *
- * @visibility public
- * @example Reading the spelling of a START TRANSACTION
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('START TRANSACTION');
- *     $operation->statement->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\BeginSpelling::StartTransaction
+ * @visibility SqlSemantics
  */
 enum BeginSpelling: string
 {

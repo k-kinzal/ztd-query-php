@@ -1,0 +1,128 @@
+{
+  "revision": "SemanticsIR/mysql-index-auto-increment-evidence-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-index-auto-increment-v1.json",
+    "mysql-drop-native-index-evidence-v3.json",
+    "mysql-alter-index-removal-evidence-v1.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "The nine pinned stock MySQL profiles, utf8mb4, exact table ownership and ordinary native InnoDB.",
+  "scope": "Single native key removal and the AUTO_INCREMENT field's backing indexes on its exact owner, including a copied declaration and a temporary shadow.",
+  "constructors": {
+    "IndexAutoIncrement": {
+      "type": "Schema/Index/IndexAutoIncrement",
+      "role": "Identifies the AUTO_INCREMENT field supported by the target index and the distinct other indexes that also support it under the same owning relation.",
+      "structure": "A resolved field identifier with an immutable list of 0 to 63 alternate native index names.",
+      "conditions": "All identifiers are valid native field or key names. Alternate physical names are distinct under native case comparison and cannot name the target itself. Null support on an IndexIdentity means the target is not a supporting index. A supported removal must leave at least one alternate. The owning relation and index names are interpreted in the same resolved catalog.",
+      "meaning": "Keep the field and native value generation intact when one supporting physical key is removed. A supporting key starts with the AUTO_INCREMENT field. Merely indexing it in a later key part does not support removal. Explicit primary, clustered unique, secondary unique and ordinary syntax retain the same leftmost condition.",
+      "sql": "The resolved index and policy determine the removal SQL. The bound owner catalog continues to supply the AUTO_INCREMENT field and each retained backing index."
+    },
+    "IndexIdentity": {
+      "type": "Schema/Index/IndexIdentity",
+      "role": "Carry the native identity and whether it supports the owner's generating field.",
+      "structure": "The exact owning relation, native physical name, key role and optional checked AUTO_INCREMENT field-and-alternates.",
+      "conditions": "Only distinct alternate key names may appear. Retain the native cluster role and field association in the selected owner.",
+      "meaning": "A supporting index is distinguishable from a nonleading occurrence on the same field and from an unrelated physical key.",
+      "sql": "The same dialect and owner interpretation resolve the emitted physical name."
+    }
+  },
+  "finite": {
+    "ownership": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "targetRoles": [
+      "primary",
+      "clustered-unique",
+      "unique",
+      "ordinary"
+    ],
+    "targetUse": [
+      "unrelated",
+      "sole-leading",
+      "leading-with-distinct-alternate"
+    ],
+    "declarationForms": [
+      "attribute",
+      "serial-type",
+      "serial-default-value"
+    ],
+    "entryPoints": [
+      "direct",
+      "standalone-drop-index",
+      "alter-table-drop-key"
+    ],
+    "observations": [
+      "physical names and ordered key parts",
+      "unchanged field metadata and rows",
+      "post-change generated row identity",
+      "typed refusal",
+      "native transaction marker"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteOrder": "Cross all four roles, three uses and three lifetimes for the explicit declaration. SERIAL and SERIAL DEFAULT VALUE always create an inline unique key on the generating field. Enumerate clustered and secondary inline removals with and without another key, and unrelated primary, unique and ordinary removals for each owning lifetime. Replay the same finite layouts through direct construction, standalone native syntax and ALTER TABLE key removal.",
+  "finiteLayouts": 78,
+  "admittedLayouts": 54,
+  "negativeCount": 76,
+  "negative": [
+    "Remove the sole leading support on every admitted declaration form and lifetime, with a retained key in which the field appears later.",
+    "Direct backing alternate names collide, repeat the removed identity, exceed the key count, or use an empty field name."
+  ],
+  "exploration": {
+    "seeds": [
+      1429,
+      2687,
+      7129
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare native initial, immediate after, and post-generated-row catalog states and exact SQLSTATE. Capture the transaction marker, allocated identity, typed rows, field metadata and physically retained indexes in both sessions."
+  ],
+  "evidence": {
+    "P01": "Compare field role and ordered native alternate identities with the returned value.",
+    "P02": "Verify required acceptance and typed refusal at the owning constructor under both bindings and direct publication.",
+    "P03": "Retain immutable resolved identifiers and no analyzer catalog state.",
+    "P04": "Compose the completed removal from its owner, physical identity and checked backing keys.",
+    "P05": "Check detached list storage and reference-free children.",
+    "P06": "Compare written and emitted native SQL and the next generated value."
+  },
+  "obligations": {
+    "Q01": "Require a retained leading key in all supporting-target cases.",
+    "Q02": "Enumerate the scoped accepted and refused coordinates independently.",
+    "Q03": "Distinguish an alternate from the removed key and a retained nonleading index.",
+    "Q04": "Compare physical keys, row identity and transaction effects with stock InnoDB.",
+    "Q05": "Link actual distributed bytes and independently replay the raw native comparisons."
+  },
+  "faults": [
+    "Ignore a changed generated identity.",
+    "Ignore the disappearance of an alternate physical key.",
+    "Remove the retained support instead of the selected physical key."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/drop-index.html"
+  ],
+  "trust": "Pinned stock server, settled physical declarations and native system identifier comparison, independent observer and protected release replay."
+}

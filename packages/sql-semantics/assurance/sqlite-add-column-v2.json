@@ -1,0 +1,227 @@
+{
+  "revision": "SemanticsIR/sqlite-add-column-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2, UTF-8, standard 2,000-column limit, foreign_keys enabled, legacy_alter_table and writable_schema disabled. Resolve table names under SQLite ASCII identifier comparison and the native schema search order.",
+  "scope": "A literal-default ordinary-column addition to an identified complete ordinary SQLite table, including row-dependent native failures.",
+  "constructors": {
+    "Schema/Alter/AddColumn": {
+      "role": "Append an ordinary column with a closed type, optional literal default, builtin collation and optional NOT NULL policy.",
+      "structure": "Quoted absolute schema and table identity, complete ordered prior declared heading, prior STRICT mode and one checked TableColumn without generation. Implicit rowid aliases are not prior declared members.",
+      "conditions": "The schema is nonempty. The target is outside the ASCII-insensitive sqlite_ namespace and was resolved as a complete ordinary table. The prior heading is an owned list of 1 through 1,999 distinct SQLite identifiers. The added identifier differs from all declared members under SQLite comparison. A strict table requires one of the standard type names. Every closed literal and absent default is admitted with any supported null conflict policy. Default-type and required-default refusals that depend on the presence of rows are native evaluation outcomes.",
+      "meaning": "Extend the declared heading at its end, preserving old slots, values, identity and physical table root. Derive reads of the appended slot on existing records and writes that omit it from the default and declared affinity. Apply the declared collation and NULL conflict behavior to subsequent operations. Failure while adding the column leaves its previous heading and rows in place.",
+      "externalInterpretation": "The absolute schema and table identify one live ordinary table with the recorded logical heading and STRICT mode. The native rules observe the actual rows, transactions and dependent objects. Same-named tables in other schemas are independent. The PHP value contains no source SQL, table declaration, connection, parser or analysis context.",
+      "sql": "Emit ALTER TABLE with separately quoted absolute identifiers and ADD COLUMN. Render the column from the shared closed declaration renderer with its exact declared type, null conflict policy, literal and collation. Preserve the distinct cases absent default and explicit DEFAULT NULL.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Alter/AddColumn"
+  ],
+  "existingRoles": [
+    "Identifier",
+    "Schema/TableColumn"
+  ],
+  "rules": [
+    "Append the ordinal only after all actual declared members. A name such as rowid can be added when it is not explicitly declared already.",
+    "The fixed standard STRICT mode rejects an omitted type. Ordinary ANY uses numeric affinity, while STRICT ANY keeps the default storage class unchanged.",
+    "SQLite 3.47.2 adds a NOT NULL column with a NULL or absent default to an empty table. A populated target rejects it with a step error. Incompatible typed defaults on STRICT tables have the same row dependence. Later writes into the new column apply ordinary column rules.",
+    "The five supported NOT NULL conflict policies apply to subsequent writes. A NULL under REPLACE falls back to the declared default and aborts when that default is absent or NULL.",
+    "Identifiers and values are decoded semantics. Native formatting of the stored CREATE TABLE text and default-expression spelling are outside the comparison. The existence of an explicit default, its typed evaluation, and the behavior of the relation remain observable.",
+    "For a REAL default on a TEXT column, reading an old record can expose the decoded decimal token, including the case of the exponent marker. Later writes use the normal numeric-to-text conversion. Preserve both observations. Exponent case is a closed scalar flag, and numeric separators are decoded away.",
+    "A direct TEXT default containing a zero byte is represented with a typed hexadecimal cast expression that SQLite can evaluate while adding the column. The read and insertion keep the full byte string."
+  ],
+  "observations": [
+    "Capture catalog membership and unchanged physical root, names and order, native declared types, NULL flags, default presence, hidden/key roles and typed rows before and after the operation for both same-named tables.",
+    "Measure old-row fallback, writes omitting the new slot, writes supplying explicit NULL between distinguishable rows, declared collation, transaction state and rollback. Observe the exact native phase, code and message of the two row-dependent ALTER refusals.",
+    "Independently compare original and rendered SQL for the authored inputs. Verify the native ALTER authorizer confines the projected operation to one absolute schema and relation. Compare ordered rows and exact multiplicity.",
+    "Include a positive boundary of 1,999 prior members and negatives for 0 and 2,000 prior members. Include quoting, empty and Unicode identifiers, newly declared rowid aliases, schema shadowing, ASCII duplicate rejection, and separately cataloged strict and non-strict relations.",
+    "Retain native mismatches for DEFAULT 1E2 and DEFAULT 1E+2, compare the original and rendered values before and after default insertion, and require a separate direct case with a zero byte in a TEXT literal."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "existingRows": [
+      "empty",
+      "populated"
+    ],
+    "layout": [
+      [
+        "",
+        "ordinary"
+      ],
+      [
+        "INT",
+        "ordinary"
+      ],
+      [
+        "INTEGER",
+        "ordinary"
+      ],
+      [
+        "REAL",
+        "ordinary"
+      ],
+      [
+        "TEXT",
+        "ordinary"
+      ],
+      [
+        "BLOB",
+        "ordinary"
+      ],
+      [
+        "ANY",
+        "ordinary"
+      ],
+      [
+        "INT",
+        "strict"
+      ],
+      [
+        "INTEGER",
+        "strict"
+      ],
+      [
+        "REAL",
+        "strict"
+      ],
+      [
+        "TEXT",
+        "strict"
+      ],
+      [
+        "BLOB",
+        "strict"
+      ],
+      [
+        "ANY",
+        "strict"
+      ]
+    ],
+    "default": [
+      null,
+      [
+        "null"
+      ],
+      [
+        "integer",
+        "-5"
+      ],
+      [
+        "real",
+        "2",
+        "75",
+        null,
+        false
+      ],
+      [
+        "text",
+        "0001"
+      ],
+      [
+        "text",
+        "x"
+      ],
+      [
+        "blob",
+        "00FF"
+      ],
+      [
+        "hex",
+        "FFFFFFFFFFFFFFFF",
+        false
+      ]
+    ],
+    "notNull": [
+      null,
+      "ABORT",
+      "FAIL",
+      "IGNORE",
+      "REPLACE",
+      "ROLLBACK"
+    ],
+    "identity": "All 2,496 tuples in the printed axis order, identified independently from the constructed type, target schema and default shape and from the before-catalog mode and observed row count."
+  },
+  "exploration": {
+    "seeds": [
+      31727,
+      51607,
+      73067
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 280,
+    "allowedExclusions": [],
+    "domain": "Vary ordered prior heading width from one through nine, quoted and empty decoded names, target schema, physical fixture population, declared type and STRICT mode, literal storage classes, null conflict policy, and builtin collation. Include ten hand-authored parser cases and separate maximum-width and zero-byte TEXT direct cases."
+  },
+  "negative": [
+    "Empty schema",
+    "Reserved SQLite table prefix",
+    "Empty complete heading",
+    "Too many prior columns",
+    "Unordered heading array",
+    "Unapproved heading element",
+    "Case-insensitive duplicate prior headings",
+    "New member colliding by ASCII case",
+    "Untyped STRICT addition",
+    "Generated column through the ordinary-column role"
+  ],
+  "analysisNegative": [
+    "Unresolved target",
+    "View target",
+    "Existing duplicate column",
+    "Untyped strict addition",
+    "Primary-key column",
+    "Unique column",
+    "CHECK constraint outside this ordinary-column contract",
+    "Nonliteral default outside this contract"
+  ],
+  "faults": [
+    "Publish a generated column through the ordinary-column role",
+    "Confuse the two absolute schemas",
+    "Drop the default operand",
+    "Drop the new NOT NULL conflict policy",
+    "Omit the new column collation",
+    "Change the capitalization of a REAL default's exponent when an older row reads the fallback value"
+  ],
+  "open": [
+    "Virtual generated additions, added CHECK and REFERENCES, named column constraints and arbitrary ordinary type names, nonliteral or dynamic defaults admitted on empty native targets, nonstandard limits or modes, and dependent layouts outside the registered comparisons remain required scope work."
+  ],
+  "trust": [
+    "Pinned SQLite C implementation and compile settings",
+    "Independent input, affinity, catalog, write and rollback model with separate native observation",
+    "Reviewed exact PHP boundary and dependency, independent distribution staging and replay"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_altertable.html#alter_table_add_column",
+    "https://sqlite.org/stricttables.html",
+    "https://sqlite.org/datatype3.html",
+    "https://sqlite.org/lang_conflict.html"
+  ],
+  "calibration": {
+    "sourceId": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "observationsDigest": "0be1521f769375f5140c88a9f7b2e7c29e8676433d3608c17482e34d1bfe75c2",
+    "driverDigest": "079d78c691c78f8e969f5178e2af9a395383ba06b4344666e023e23c8454a6cd"
+  },
+  "extends": "sqlite-add-column-v1.json",
+  "addedWitnesses": {
+    "nativeLexicalCounterexamplesDigest": "3a9803f4983a236801c6e15b864a23733d82742d56ef89409942bbf9cbac6242",
+    "reason": "The pinned engine makes exponent-marker case observable in old records of a TEXT column. The original parser-to-IR route erased that bit. Both original failures stay mandatory."
+  }
+}

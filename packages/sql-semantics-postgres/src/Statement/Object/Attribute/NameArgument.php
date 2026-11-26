@@ -34,11 +34,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * it is the type the command creates.
  * Source: https://www.postgresql.org/docs/17/sql-createoperator.html, `defGetQualifiedName` in `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading the function an operator calls
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (rightarg = int4, function = pg_catalog.int4eq)');
- *     $function = $operation->statement->definition[1]->value;
- *     [$function->kind->value, array_map(static fn ($part) => $part->value, $function->parts())] // => ['FUNCTION', ['pg_catalog', 'int4eq']]
+ * @visibility SqlSemantics
  * @example Rejecting a bare type name, which is written as a dotted name
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\NameArgument(\SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Function, new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('f')])))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

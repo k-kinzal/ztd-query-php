@@ -14,10 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem;
  * https://www.postgresql.org/docs/17/sql-alterpublication.html, https://www.postgresql.org/docs/17/sql-altertype.html,
  * https://www.postgresql.org/docs/17/sql-createtype.html.
  *
- * @visibility public
- * @example Reading which rule a command breaks
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER TYPE t DROP VALUE 'a'");
- *     $operation->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule::EnumValueDrop
+ * @visibility SqlSemantics
  */
 enum CatalogMisuseRule: string
 {

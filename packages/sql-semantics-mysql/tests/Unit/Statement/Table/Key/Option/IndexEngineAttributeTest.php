@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Table\Key\Option;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(IndexEngineAttribute::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class IndexEngineAttributeTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) ENGINE_ATTRIBUTE = \'{}\')');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT, KEY (a) ENGINE_ATTRIBUTE = \'{}\')');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

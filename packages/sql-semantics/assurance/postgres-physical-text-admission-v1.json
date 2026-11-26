@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/postgres-physical-text-admission-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "constructors": {},
+  "existingRoles": ["From/TextColumnReference", "Mutation/Delete", "Select"],
+  "extends": [
+    "server-projection-v1.json",
+    "wildcard-projection-v2.json",
+    "server-delete-v2.json",
+    "postgres-typed-columns-v2.json"
+  ],
+  "profiles": ["pg-16.6/utf8/standard-conforming-strings/native", "pg-17.2/utf8/standard-conforming-strings/native"],
+  "changes": {
+    "projection": {
+      "previous": "The direct projection of a resolved text field had to be rejected.",
+      "required": "Project the declared text field with both qualified and unqualified spellings. Observe the same resolved occurrence and position twice, text metadata for each result, and the exact UTF-8 rows including repeated values from descendants.",
+      "negative": {"type": "BOOLEAN", "message": "The bound column must have the signed 32-bit integer type."}
+    },
+    "wildcard": {
+      "previous": "A wildcard over a resolved text field had to be rejected.",
+      "required": "The ordinary and joined text stars in the typed-columns contract must expand to the exact typed slots with the original order and names.",
+      "negative": {"type": "BOOLEAN", "message": "The bound column must have the signed 32-bit integer type."}
+    },
+    "delete": {
+      "previous": "The target declaration rejected a text field before binding an int4 comparison.",
+      "required": "A resolved text field used by an int4 comparison in DELETE remains invalid at the operand boundary. Reject this use of the field with the typed construction exception.",
+      "negative": {"type": "TEXT", "message": "The operand requires an int4 input slot."}
+    }
+  },
+  "preserved": "Keep all existing numeric projection and wildcard finite identities, seeds, budgets, negatives and mutation faults. Each replaced witness still tests one negative in the same position. This supplement adds one positive native projection comparison per PostgreSQL release. MySQL and SQLite inputs are unchanged.",
+  "counterexamples": {
+    "candidate": "330962b3efc8",
+    "domains": ["projection", "wildcard", "delete"],
+    "outcome": "Both PostgreSQL releases exposed stale negative expectations after the physical text role was added. The original requests and actual outcomes are recorded in their per-release counterexample artifacts."
+  },
+  "externalInterpretation": "The analysis declarations and the actual engine fixture supply the same external table and field interpretation for positive cases. The Boolean negative is specific to the current published projection roles and is an open grammar obligation.",
+  "trust": ["Independent expected rows and ordered metadata", "Pinned database images", "Exact verifier and distribution identity during independent replay"]
+}

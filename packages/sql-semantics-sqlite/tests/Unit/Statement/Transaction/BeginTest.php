@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Begin::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class BeginTest extends TestCase
 
     public function testDeriveStatementRecordsNoFact(): void
     {
-        $operation = (new Semantics())->analyze('BEGIN IMMEDIATE', []);
+        $operation = (new Inspection())->inspect('BEGIN IMMEDIATE', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->declarations());
@@ -38,16 +38,16 @@ final class BeginTest extends TestCase
 
     public function testRenderKeepsTheBehaviorWordAndTheIgnoredName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('BEGIN', $semantics->analyze('begin transaction')->toString());
-        self::assertSame('BEGIN DEFERRED', $semantics->analyze('begin deferred')->toString());
-        self::assertSame('BEGIN IMMEDIATE TRANSACTION `my tx`', $semantics->analyze('BEGIN IMMEDIATE TRANSACTION "my tx"')->toString());
+        self::assertSame('BEGIN', $semantics->inspect('begin transaction')->toString());
+        self::assertSame('BEGIN DEFERRED', $semantics->inspect('begin deferred')->toString());
+        self::assertSame('BEGIN IMMEDIATE TRANSACTION `my tx`', $semantics->inspect('BEGIN IMMEDIATE TRANSACTION "my tx"')->toString());
     }
 
     public function testRenderWritesANewlyBuiltStart(): void
     {
-        $operation = new Operation((new Semantics())->context(), new Begin(TransactionBehavior::Exclusive, new Name('t1')));
+        $operation = new InspectedStatement((new Inspection())->context(), new Begin(TransactionBehavior::Exclusive, new Name('t1')));
 
         self::assertSame('BEGIN EXCLUSIVE TRANSACTION t1', $operation->toString());
     }

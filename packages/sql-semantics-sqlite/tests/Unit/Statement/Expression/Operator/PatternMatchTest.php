@@ -7,13 +7,11 @@ namespace Tests\Unit\Statement\Expression\Operator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -27,6 +25,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(PatternMatch::class)]
 #[Medium]
@@ -34,8 +34,8 @@ final class PatternMatchTest extends TestCase
 {
     public function testDeriveScalarLikeAndGlobAreIntegerAndNullWhenAnOperandCanBe(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect("SELECT a LIKE 'x', b GLOB 'x', NULL LIKE 'a', a LIKE 'x' ESCAPE b, 1 LIKE 2 ESCAPE NULL FROM t", [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose("SELECT a LIKE 'x', b GLOB 'x', NULL LIKE 'a', a LIKE 'x' ESCAPE b, 1 LIKE 2 ESCAPE NULL FROM t", [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -50,8 +50,8 @@ final class PatternMatchTest extends TestCase
 
     public function testDeriveScalarRegexpAndMatchDependOnTheUndeclaredRoutine(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect("SELECT a REGEXP 'x', a MATCH 'x' FROM t", [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose("SELECT a REGEXP 'x', a MATCH 'x' FROM t", [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Dependent::class, $query->field(0)->type);
         self::assertInstanceOf(UndeclaredRoutine::class, $query->field(0)->type->missing[0]);
@@ -64,8 +64,8 @@ final class PatternMatchTest extends TestCase
 
     public function testDeriveScalarRecordsTheFactsOfEveryOperand(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect("SELECT b LIKE 'x' ESCAPE '!' FROM t", [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose("SELECT b LIKE 'x' ESCAPE '!' FROM t", [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $match = $query->field(0)->expression;
 
         self::assertInstanceOf(PatternMatch::class, $match);
@@ -77,7 +77,7 @@ final class PatternMatchTest extends TestCase
 
     public function testDeriveScalarReportsARowValueOperand(): void
     {
-        $query = (new Semantics())->inspect('SELECT (1, 2) LIKE 1', []);
+        $query = (new Inspection())->diagnose('SELECT (1, 2) LIKE 1', []);
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
@@ -86,7 +86,7 @@ final class PatternMatchTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheEscape(): void
     {
-        $query = (new Semantics())->inspect('select a not like \'x!%\' escape \'!\' AS c1, a not glob \'x\' AS c2 from t');
+        $query = (new Inspection())->diagnose('select a not like \'x!%\' escape \'!\' AS c1, a not glob \'x\' AS c2 from t');
         $match = $query->field(0)->expression;
 
         self::assertInstanceOf(PatternMatch::class, $match);
@@ -99,7 +99,7 @@ final class PatternMatchTest extends TestCase
 
     public function testRenderGroupsToTheLeft(): void
     {
-        $query = (new Semantics())->inspect("SELECT 'a' LIKE 'b' LIKE 'c'");
+        $query = (new Inspection())->diagnose("SELECT 'a' LIKE 'b' LIKE 'c'");
         $outer = $query->field(0)->expression;
 
         self::assertInstanceOf(PatternMatch::class, $outer);
@@ -109,9 +109,9 @@ final class PatternMatchTest extends TestCase
 
     public function testRenderWritesANewlyBuiltMatch(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $match = new PatternMatch(PatternOperator::Glob, new TextLiteral('abc'), new TextLiteral('a*'));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($match)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn($match)]));
 
         self::assertSame("SELECT 'abc' GLOB 'a*'", $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

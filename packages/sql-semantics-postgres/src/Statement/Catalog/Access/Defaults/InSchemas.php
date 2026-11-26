@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html.
  *
- * @visibility public
- * @example Reading the schemas
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES IN SCHEMA app, audit GRANT SELECT ON TABLES TO joe');
- *     $operation->statement->scopes[0]->schemas[1]->value // => 'audit'
+ * @visibility SqlSemantics
  */
 final class InSchemas implements DefaultScope
 {

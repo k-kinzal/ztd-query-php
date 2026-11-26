@@ -1,0 +1,13 @@
+{
+  "revision": "SemanticsIR/mysql-btree-identity-visibility-1",
+  "approval": "pending-human-review",
+  "extends": "mysql-create-btree-index-v1.json",
+  "rule": "An invisible unique index must not become the owning table's implicit primary identity. Such an index can be invisible if an explicit or earlier eligible visible identity exists, or if any of its own fields admits NULL. A required-only unique index with no qualifying owner identity is rejected with native number 3522. A prior nullable unique index does not supply that identity.",
+  "binding": "The checked ordinary table declaration recognizes explicit primary keys, earlier ordinary visible unique keys on full required known fields, and known inline primary or required unique roles. Retain a single resolved owner fact in the complete IR. Mixed advanced, generated, and unresolved pre-existing key declarations remain separately recorded grammar obligations.",
+  "effects": "CREATE INDEX commits pending writes for persistent or temporary InnoDB targets in the pinned fixtures. This includes the measured occupied-name failure. Keep index metadata, table and row identity, data-dependent uniqueness errors and transaction effects in the independent observations.",
+  "negative": ["First required unique INVISIBLE has no identity", "Prior UNIQUE on a nullable field cannot supply the required identity", "Legacy release cannot directly construct an invisible index", "The owning table cannot exceed the native physical column count"],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/invisible-indexes.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_table.cc"
+  ]
+}

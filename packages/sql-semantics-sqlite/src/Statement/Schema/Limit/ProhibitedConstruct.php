@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Limit;
  * https://sqlite.org/partialindex.html, https://sqlite.org/expridx.html,
  * https://sqlite.org/gencol.html.
  *
- * @visibility public
- * @example Reading the construct of a prohibited expression
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b AS (random()))');
- *     $create->facts->diagnostics[0]->construct // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedConstruct::NonDeterministicFunction
+ * @visibility SqlSemantics
  */
 enum ProhibitedConstruct: string
 {

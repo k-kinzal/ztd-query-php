@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Defining a spatial reference system
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create or replace spatial reference system 4120 name 'Greek' organization 'EPSG' identified by 4120 definition 'GEOGCS[]'");
- *     [$create->toString(), $create->facts->diagnostics] // => ["CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4120 NAME 'Greek' ORGANIZATION 'EPSG' IDENTIFIED BY 4120 DEFINITION 'GEOGCS[]'", []]
+ * @visibility SqlSemantics
  */
 final class CreateSpatialReference implements Statement
 {

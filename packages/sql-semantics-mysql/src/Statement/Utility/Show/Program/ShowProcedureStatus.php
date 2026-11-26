@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-procedure-status.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW PROCEDURE STATUS WHERE Db = 'shop'");
- *     [$show->facts->scalar($show->statement->filter->condition->left)->resolution->slot->name?->value, $show->toString()] // => ['Db', "SHOW PROCEDURE STATUS WHERE Db = 'shop'"]
+ * @visibility SqlSemantics
  */
 final class ShowProcedureStatus implements Statement, Relation
 {

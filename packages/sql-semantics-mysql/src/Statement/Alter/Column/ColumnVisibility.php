@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  * always written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/invisible-columns.html.
  *
- * @visibility public
- * @example Hiding a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER a SET INVISIBLE');
- *     [$alter->statement->commands[0]->visible, $alter->toString()] // => [false, 'ALTER TABLE t ALTER COLUMN a SET INVISIBLE']
+ * @visibility SqlSemantics
  */
 final class ColumnVisibility implements AlterCommand
 {

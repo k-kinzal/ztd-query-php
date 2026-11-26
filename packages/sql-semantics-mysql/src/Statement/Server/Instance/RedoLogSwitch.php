@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * be constructed.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-instance.html.
  *
- * @visibility public
- * @example Disabling redo logging
- *     $switch = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER INSTANCE DISABLE innodb redo_log')->statement->action;
- *     [$switch->enable, $switch->engine->value] // => [false, 'innodb']
+ * @visibility SqlSemantics
  */
 final class RedoLogSwitch implements InstanceAction
 {

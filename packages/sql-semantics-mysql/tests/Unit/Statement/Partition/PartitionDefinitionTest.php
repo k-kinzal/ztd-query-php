@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Partition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(PartitionDefinition::class)]
 #[Medium]
@@ -16,11 +16,11 @@ final class PartitionDefinitionTest extends TestCase
 {
     public function testDerivePartitionDerivesTheValues(): void
     {
-        self::assertCount(1, (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (x))')->facts->diagnostics);
+        self::assertCount(1, (new Inspection())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (x))')->facts->diagnostics);
     }
 
     public function testRenderWritesEveryPart(): void
     {
-        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT = 'c' (SUBPARTITION s))", (new Semantics())->inspect("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))")->toString());
+        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT = 'c' (SUBPARTITION s))", (new Inspection())->diagnose("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))")->toString());
     }
 }

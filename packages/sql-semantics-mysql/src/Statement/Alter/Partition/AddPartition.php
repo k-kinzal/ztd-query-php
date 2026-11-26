@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
  * NO_WRITE_TO_BINLOG are synonyms. The partition values are constants.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table-partition-operations.html.
  *
- * @visibility public
- * @example Adding two hash partitions
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD PARTITION PARTITIONS 2');
- *     $alter->statement->commands[0]->count?->text // => '2'
+ * @visibility SqlSemantics
  */
 final class AddPartition implements StandaloneCommand
 {

@@ -14,7 +14,7 @@ final class CatalogsTest extends TestCase
 {
     public function testStatementDispatchesToTheGroup(): void
     {
-        self::assertSame('ALTER COLLATION c REFRESH VERSION', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER COLLATION c REFRESH VERSION')->toString());
+        self::assertSame('ALTER COLLATION c REFRESH VERSION', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER COLLATION c REFRESH VERSION')->toString());
     }
 
     public function testEnumValuesLowersTheLabels(): void

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * ALTER USER, and the server rejects this form there with a syntax error.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/alter-user.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash())->message() // => 'ALTER USER does not accept IDENTIFIED BY PASSWORD.'
  */

@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/explain.html. Status: Implemented.
  *
- * @visibility public
- * @example Inspecting a query and reading the report columns
- *     $explain = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('EXPLAIN FORMAT = TREE SELECT 1');
- *     [$explain->field(0)->name?->value, $explain->toString()] // => ['EXPLAIN', 'EXPLAIN FORMAT = TREE SELECT 1']
+ * @visibility SqlSemantics
  */
 final class Explain implements Statement
 {

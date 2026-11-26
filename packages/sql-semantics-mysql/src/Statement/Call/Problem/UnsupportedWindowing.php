@@ -12,9 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-restrictions.html.
  *
- * @visibility public
- * @example Reading the problem of an unsupported frame unit
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'GROUPS'
+ * @visibility SqlSemantics
  */
 final class UnsupportedWindowing implements Diagnostic
 {

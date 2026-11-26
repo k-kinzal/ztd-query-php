@@ -19,12 +19,12 @@ final class TypesTargetTest extends TestCase
 
     public function testDeriveTargetResolvesNothing(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT USAGE ON TYPE app.money TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT USAGE ON TYPE app.money TO joe', [])->facts->diagnostics));
     }
 
     public function testRenderWritesTheKindAndTheNames(): void
     {
-        self::assertSame('GRANT usage ON DOMAIN app.email, d TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT usage ON DOMAIN app.email, d TO joe')->toString());
+        self::assertSame('GRANT usage ON DOMAIN app.email, d TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT usage ON DOMAIN app.email, d TO joe')->toString());
     }
 
     public function testRejectsAnotherKind(): void

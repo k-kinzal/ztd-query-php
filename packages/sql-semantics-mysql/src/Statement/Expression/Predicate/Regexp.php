@@ -26,9 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/regexp.html#operator_regexp.
  * Status: Implemented.
  *
- * @visibility public
- * @example Writing RLIKE as REGEXP
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a NOT RLIKE '^x'")->toString() // => "SELECT a FROM t WHERE a NOT REGEXP '^x'"
+ * @visibility SqlSemantics
  */
 final class Regexp implements Scalar
 {

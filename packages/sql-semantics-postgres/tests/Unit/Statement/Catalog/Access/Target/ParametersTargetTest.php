@@ -19,12 +19,12 @@ final class ParametersTargetTest extends TestCase
 
     public function testDeriveTargetResolvesNothing(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SET, ALTER SYSTEM ON PARAMETER work_mem TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT SET, ALTER SYSTEM ON PARAMETER work_mem TO joe', [])->facts->diagnostics));
     }
 
     public function testRenderWritesTheParameters(): void
     {
-        self::assertSame('GRANT ALTER SYSTEM ON PARAMETER work_mem, a.b TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT ALTER SYSTEM ON PARAMETER work_mem, a.b TO joe')->toString());
+        self::assertSame('GRANT ALTER SYSTEM ON PARAMETER work_mem, a.b TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT ALTER SYSTEM ON PARAMETER work_mem, a.b TO joe')->toString());
     }
 
     public function testRejectsNoParameter(): void

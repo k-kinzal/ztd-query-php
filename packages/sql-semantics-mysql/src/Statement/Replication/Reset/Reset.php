@@ -20,9 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/reset.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resetting the replica and the binary logs
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('reset replica, binary logs and gtids')->toString() // => 'RESET REPLICA, BINARY LOGS AND GTIDS'
+ * @visibility SqlSemantics
  */
 final class Reset implements Statement
 {

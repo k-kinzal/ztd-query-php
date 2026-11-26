@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * count that differs from the number of columns.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select-into.html.
  *
- * @visibility public
- * @example Reading the targets
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a, b FROM t INTO @x, y');
- *     [$query->statement->into->targets[0]->name->value, $query->statement->into->targets[1]->name->value] // => ['x', 'y']
+ * @visibility SqlSemantics
  */
 final class IntoVariables implements IntoDestination
 {

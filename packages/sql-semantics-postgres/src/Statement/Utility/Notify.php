@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  * of 8192 bytes), counted in UTF-8.
  * Source: https://www.postgresql.org/docs/17/sql-notify.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a notification with a payload
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("NOTIFY jobs, 'ready'");
- *     [$operation->statement->channel->value, $operation->statement->payload->value] // => ['jobs', 'ready']
+ * @visibility SqlSemantics
  */
 final class Notify implements Statement
 {

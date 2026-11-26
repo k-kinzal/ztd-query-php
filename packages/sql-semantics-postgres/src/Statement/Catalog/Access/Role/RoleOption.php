@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  * rejected, so every option tells which one it fills.
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
- * @example Telling which option of the server a spelling fills
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe NOLOGIN');
- *     $operation->statement->options[0]->option() // => 'canlogin'
+ * @visibility SqlSemantics
  */
 interface RoleOption extends Node
 {

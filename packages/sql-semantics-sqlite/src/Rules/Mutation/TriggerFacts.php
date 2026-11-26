@@ -6,7 +6,9 @@ namespace SqlSemantics\Platform\Sqlite\Rules\Mutation;
 
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\TriggerNamespace;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
@@ -30,8 +32,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
  * WHEN condition and every statement of the program see, under the
  * qualifiers NEW and OLD only, a row of the watched table with its implicit
  * columns: NEW in INSERT and UPDATE triggers, OLD in UPDATE and DELETE
- * triggers. A column of UPDATE OF that the table certainly lacks is
- * reported. A BEFORE or AFTER trigger, BEFORE being the default, on a view
+ * triggers. An unknown UPDATE OF name is inactive until a matching column exists.
+ * A BEFORE or AFTER trigger, BEFORE being the default, on a view
  * and an INSTEAD OF trigger on a table are reported
  * (SQLITE-RELATION-KIND-001). In the program, a written table qualified with a schema, an
  * index choice and a bind parameter are reported, as SQLite rejects them
@@ -48,21 +50,25 @@ final class TriggerFacts
      */
     public function derive(CreateTrigger $trigger, Derivation $derivation): void
     {
-        $fact = $derivation->relation($trigger->table, $derivation->environment());
+        $names = new TriggerNamespace();
+        $owner = $names->owner($derivation->context, $trigger->name->schema, $trigger->temporary, $trigger->table->name);
+        $watched = $names->watched($trigger->table->name, $owner);
+        $tables = new TableShapes();
+        $fact = $derivation->target($trigger->table, $tables->fact($derivation, $watched, $derivation->environment()));
         (new RelationKinds())->refuse($fact, match ($trigger->timing) {
             TriggerTiming::InsteadOf => KindRefusal::InsteadOfTrigger,
             TriggerTiming::After => KindRefusal::AfterTrigger,
             TriggerTiming::Before, null => KindRefusal::BeforeTrigger,
         }, $derivation);
-        $implicit = (new TableShapes())->implicit($fact);
+        $implicit = $tables->implicit($fact);
         $rows = [];
         foreach (['new' => $trigger->event !== TriggerEvent::Delete, 'old' => $trigger->event !== TriggerEvent::Insert] as $qualifier => $available) {
             if ($available) {
                 $rows[] = new VisibleRelation($trigger->table, $fact->shape, new Name($qualifier), null, [ColumnResolver::QUALIFIED_ONLY], $implicit);
             }
         }
-        $environment = new Environment($derivation->context, null, $rows);
-        (new MutationScope())->names($trigger->columns, new VisibleRelation($trigger->table, $fact->shape, null, $trigger->table->name, [], $implicit), $derivation);
+        $schema = Comparison::AsciiInsensitive->equal($owner->value, 'temp') ? null : $owner;
+        $environment = new Environment($derivation->context, relations: $rows, relationSchema: $schema);
         (new ProgramOnly())->insideProgram([...($trigger->when === null ? [] : [$trigger->when]), ...$trigger->steps], $derivation);
         if ($trigger->when !== null) {
             $derivation->scalar($trigger->when, $environment);

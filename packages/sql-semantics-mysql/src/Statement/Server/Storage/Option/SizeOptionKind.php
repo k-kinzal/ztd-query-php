@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-logfile-group.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind::Extent->value // => 'EXTENT_SIZE'
  */

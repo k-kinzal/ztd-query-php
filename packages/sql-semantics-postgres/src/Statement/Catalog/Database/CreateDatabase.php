@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\OptionChecks;
  * A database is not a relation declaration: the statement provides none.
  * Source: https://www.postgresql.org/docs/17/sql-createdatabase.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the options of a new database
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE DATABASE d WITH OWNER = app ENCODING 'UTF8'");
- *     [$operation->statement->name->value, $operation->statement->options[1]->option(), $operation->toString()] // => ['d', 'encoding', "CREATE DATABASE d WITH OWNER = app ENCODING = 'UTF8'"]
+ * @visibility SqlSemantics
  */
 final class CreateDatabase implements Statement
 {

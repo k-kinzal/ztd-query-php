@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * sort order. A label longer than 63 bytes is a diagnostic.
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, https://www.postgresql.org/docs/17/datatype-enum.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the labels of an enum type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TYPE mood AS ENUM ('sad', 'happy')");
- *     $operation->statement->labels[1]->value // => 'happy'
+ * @visibility SqlSemantics
  */
 final class CreateEnum implements Statement
 {

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
  * their names. The facts follow PG-JOIN-001.
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-JOIN. Status: Implemented.
  *
- * @visibility public
- * @example Reading a renamed join
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM (a CROSS JOIN b) AS j');
- *     [$query->statement->from->alias->value, $query->toString()] // => ['j', 'SELECT 1 FROM (a CROSS JOIN b) AS j']
+ * @visibility SqlSemantics
  */
 final class ParenthesizedJoin implements Relation
 {

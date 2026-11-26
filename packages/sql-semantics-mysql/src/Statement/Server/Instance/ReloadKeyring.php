@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Mirrors RELOAD_KEYRING.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-instance.html.
  *
- * @visibility public
- * @example Reloading the keyring
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter instance reload keyring')->toString() // => 'ALTER INSTANCE RELOAD KEYRING'
+ * @visibility SqlSemantics
  */
 final class ReloadKeyring implements InstanceAction
 {

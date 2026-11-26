@@ -18,9 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
  * or a row constructor it expands to the fields, elsewhere it stands for the
  * whole composite value. Source: https://www.postgresql.org/docs/17/rowtypes.html#ROWTYPES-USAGE.
  *
- * @visibility public
- * @example Writing every field of a parameter
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ($1).*')->toString() // => 'SELECT ($1).*'
+ * @visibility SqlSemantics
  */
 final class AllFields implements IndirectionStep
 {

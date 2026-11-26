@@ -11,9 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A relation name that a complete context does not declare.
  *
- * @visibility public
- * @example Establishing that a table does not exist
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation t does not exist.
+ * @visibility SqlSemantics
  */
 final class MissingTable implements TableResolution, Diagnostic
 {

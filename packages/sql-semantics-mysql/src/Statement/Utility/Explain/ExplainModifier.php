@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Explain;
  * Source: https://dev.mysql.com/doc/refman/5.6/en/explain-extended.html,
  * https://dev.mysql.com/doc/refman/5.7/en/explain.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a modifier
  *     \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions->value // => 'PARTITIONS'
  */

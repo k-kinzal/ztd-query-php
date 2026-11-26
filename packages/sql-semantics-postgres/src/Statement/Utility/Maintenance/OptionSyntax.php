@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
  * a fixed order directly after the command. Both name the same options.
  * Source: https://www.postgresql.org/docs/17/sql-vacuum.html, https://www.postgresql.org/docs/17/sql-explain.html.
  *
- * @visibility public
- * @example Reading the syntax of a VACUUM written with words
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VACUUM FULL VERBOSE');
- *     $operation->statement->syntax // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words
+ * @visibility SqlSemantics
  */
 enum OptionSyntax
 {

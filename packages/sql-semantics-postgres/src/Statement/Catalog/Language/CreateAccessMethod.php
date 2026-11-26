@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * Rule: PG-ACCESS-METHOD-001. Mirrors `CreateAmStmt`: name, kind and handler.
  * Source: https://www.postgresql.org/docs/17/sql-create-access-method.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the kind of a new access method
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler');
- *     $operation->statement->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\AccessMethodKind::Table
+ * @visibility SqlSemantics
  */
 final class CreateAccessMethod implements Statement
 {

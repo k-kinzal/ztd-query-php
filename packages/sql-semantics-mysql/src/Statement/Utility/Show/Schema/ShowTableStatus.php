@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-table-status.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW TABLE STATUS FROM shop LIKE 'a%'");
- *     [$show->statement->database?->value, $show->toString()] // => ['shop', "SHOW TABLE STATUS FROM shop LIKE 'a%'"]
+ * @visibility SqlSemantics
  */
 final class ShowTableStatus implements Statement, Relation
 {

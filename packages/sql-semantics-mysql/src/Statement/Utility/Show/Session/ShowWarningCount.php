@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW COUNT(*) WARNINGS');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['@@session.warning_count', 'SHOW COUNT(*) WARNINGS']
+ * @visibility SqlSemantics
  */
 final class ShowWarningCount implements Statement
 {

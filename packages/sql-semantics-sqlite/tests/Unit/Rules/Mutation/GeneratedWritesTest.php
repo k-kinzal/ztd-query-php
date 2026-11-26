@@ -17,12 +17,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\GeneratedWrites;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\MutationScope;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\GeneratedColumnWrite;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\WriteKind;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Upsert;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(GeneratedWrites::class)]
 #[Medium]
@@ -30,13 +30,13 @@ final class GeneratedWritesTest extends TestCase
 {
     public function testWritableCountsTheColumnsThatAreNotGenerated(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $shapes = new TableShapes();
         $rules = new GeneratedWrites();
 
-        self::assertSame(1, $rules->writable($shapes->shape($semantics->inspect('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')->declarations()[0])));
-        self::assertSame(2, $rules->writable($shapes->shape($semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a)')->declarations()[0])));
-        self::assertSame(1, $rules->writable($shapes->shape($semantics->inspect('CREATE TABLE c AS SELECT 1 AS b')->declarations()[0])));
+        self::assertSame(1, $rules->writable($shapes->shape($semantics->diagnose('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')->declarations()[0])));
+        self::assertSame(2, $rules->writable($shapes->shape($semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a)')->declarations()[0])));
+        self::assertSame(1, $rules->writable($shapes->shape($semantics->diagnose('CREATE TABLE c AS SELECT 1 AS b')->declarations()[0])));
     }
 
     #[TestWith(['INSERT INTO t (b) VALUES (1)', 'cannot INSERT into generated column "b"'])]
@@ -45,8 +45,8 @@ final class GeneratedWritesTest extends TestCase
     #[TestWith(['INSERT INTO t (b) SELECT 1 WHERE 0', 'cannot INSERT into generated column "b"'])]
     public function testInsertedReportsTheGeneratedColumnsOfTheColumnList(string $sql, string $message): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
@@ -66,8 +66,8 @@ final class GeneratedWritesTest extends TestCase
     #[TestWith(['UPDATE t SET a = b + c, rowid = 2'])]
     public function testInsertedAndAssignedReportNothingForWritesOfOtherColumns(string $sql): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
@@ -81,8 +81,8 @@ final class GeneratedWritesTest extends TestCase
     #[TestWith(['INSERT INTO t (rowid, a) VALUES (1, 1) ON CONFLICT DO UPDATE SET b = 1', 'cannot UPDATE generated column "b"'])]
     public function testAssignedReportsWhatSqliteRejectsInAnAssignment(string $sql, string $message): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
@@ -96,9 +96,9 @@ final class GeneratedWritesTest extends TestCase
 
     public function testWrittenAnswersTheGeneratedColumnANameDenotes(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (a, b AS (a + 1), rowid AS (a))');
-        $statement = $semantics->inspect('UPDATE t SET a = 1', [$t])->statement;
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (a, b AS (a + 1), rowid AS (a))');
+        $statement = $semantics->diagnose('UPDATE t SET a = 1', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
         $rules = new GeneratedWrites();
 
@@ -120,9 +120,9 @@ final class GeneratedWritesTest extends TestCase
     #[TestWith(['INSERT INTO w (a) VALUES (1) ON CONFLICT DO UPDATE SET b = 1'])]
     public function testReachedReportsTheDoUpdateSqliteCompiles(string $sql): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $schema = 'CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1)); CREATE TABLE k (a UNIQUE, b AS (a)); CREATE TABLE w (a PRIMARY KEY, b AS (a)) WITHOUT ROWID';
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1))'), $semantics->inspect('CREATE TABLE k (a UNIQUE, b AS (a))'), $semantics->inspect('CREATE TABLE w (a PRIMARY KEY, b AS (a)) WITHOUT ROWID')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1))'), $semantics->diagnose('CREATE TABLE k (a UNIQUE, b AS (a))'), $semantics->diagnose('CREATE TABLE w (a PRIMARY KEY, b AS (a)) WITHOUT ROWID')]);
         $database = new PDO('sqlite::memory:');
         $database->exec($schema);
 
@@ -139,8 +139,8 @@ final class GeneratedWritesTest extends TestCase
     #[TestWith(['INSERT INTO u (a) VALUES (1) ON CONFLICT (rowid) DO UPDATE SET b = 1'])]
     public function testReachedLeavesTheDoUpdateSqliteNeverCompilesUnreported(string $sql): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1))'), $semantics->inspect('CREATE TABLE k (a UNIQUE, b AS (a))')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1))'), $semantics->diagnose('CREATE TABLE k (a UNIQUE, b AS (a))')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1)); CREATE TABLE k (a UNIQUE, b AS (a))');
 
@@ -150,9 +150,9 @@ final class GeneratedWritesTest extends TestCase
 
     public function testReachedLeavesADoUpdateThatDependsOnUniqueIndexesUnreported(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $sql = 'INSERT INTO t (a) VALUES (1) ON CONFLICT DO UPDATE SET b = 1';
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a, b AS (a))')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a, b AS (a))')]);
         $plain = new PDO('sqlite::memory:');
         $plain->exec('CREATE TABLE t (a, b AS (a))');
         $indexed = new PDO('sqlite::memory:');
@@ -167,9 +167,9 @@ final class GeneratedWritesTest extends TestCase
 
     public function testRowidTargetRecognisesASingleNameOfTheRowid(): void
     {
-        $semantics = new Semantics();
-        $u = $semantics->inspect('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1))');
-        $statement = $semantics->inspect('INSERT INTO u VALUES (1, 2) ON CONFLICT ((id)) DO NOTHING ON CONFLICT (oid) DO NOTHING ON CONFLICT (id COLLATE nocase) DO NOTHING ON CONFLICT (id, a) DO NOTHING ON CONFLICT (a) DO NOTHING', [$u])->statement;
+        $semantics = new Inspection();
+        $u = $semantics->diagnose('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1))');
+        $statement = $semantics->diagnose('INSERT INTO u VALUES (1, 2) ON CONFLICT ((id)) DO NOTHING ON CONFLICT (oid) DO NOTHING ON CONFLICT (id COLLATE nocase) DO NOTHING ON CONFLICT (id, a) DO NOTHING ON CONFLICT (a) DO NOTHING', [$u])->statement;
         $derivation = new Derivation($semantics->context([$u]));
         $rowid = $u->declarations()[0]->implicit[0]->column;
         $rules = new GeneratedWrites();
@@ -181,15 +181,15 @@ final class GeneratedWritesTest extends TestCase
 
     public function testSuppliedTellsWhetherTheInsertedRowSuppliesTheRowid(): void
     {
-        $semantics = new Semantics();
-        $u = $semantics->inspect('CREATE TABLE u (id INTEGER PRIMARY KEY, a)');
-        $t = $semantics->inspect('CREATE TABLE t (a, rowid)');
-        $w = $semantics->inspect('CREATE TABLE w (a PRIMARY KEY) WITHOUT ROWID');
+        $semantics = new Inspection();
+        $u = $semantics->diagnose('CREATE TABLE u (id INTEGER PRIMARY KEY, a)');
+        $t = $semantics->diagnose('CREATE TABLE t (a, rowid)');
+        $w = $semantics->diagnose('CREATE TABLE w (a PRIMARY KEY) WITHOUT ROWID');
         $derivation = new Derivation($semantics->context([$u, $t, $w]));
         $scope = new MutationScope();
-        $statement = $semantics->inspect('INSERT INTO u VALUES (1, 2)', [$u])->statement;
-        $other = $semantics->inspect('INSERT INTO t VALUES (1, 2)', [$t])->statement;
-        $keyed = $semantics->inspect('INSERT INTO w VALUES (1)', [$w])->statement;
+        $statement = $semantics->diagnose('INSERT INTO u VALUES (1, 2)', [$u])->statement;
+        $other = $semantics->diagnose('INSERT INTO t VALUES (1, 2)', [$t])->statement;
+        $keyed = $semantics->diagnose('INSERT INTO w VALUES (1)', [$w])->statement;
         $rules = new GeneratedWrites();
 
         self::assertInstanceOf(InsertRows::class, $statement);

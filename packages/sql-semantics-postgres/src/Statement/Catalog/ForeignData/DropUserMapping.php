@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * Rule: PG-USER-MAPPING-003. Mirrors `DropUserMappingStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-dropusermapping.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a user mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s');
- *     $operation->toString() // => 'DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s'
+ * @visibility SqlSemantics
  */
 final class DropUserMapping implements Statement
 {

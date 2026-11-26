@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
  *
  * Source: https://www.postgresql.org/docs/17/functions-string.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling a normalization form
  *     \SqlSemantics\Platform\PostgreSql\Statement\Option\NormalForm::Nfkc->value // => 'NFKC'
  */

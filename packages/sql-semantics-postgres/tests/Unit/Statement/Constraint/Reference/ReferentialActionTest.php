@@ -14,8 +14,8 @@ final class ReferentialActionTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, b int, FOREIGN KEY (a, b) REFERENCES u ON DELETE SET DEFAULT (b) ON UPDATE NO ACTION)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, b int, FOREIGN KEY (a, b) REFERENCES u ON DELETE SET DEFAULT (b) ON UPDATE NO ACTION)', []);
         self::assertSame('CREATE TABLE t (a INT, b INT, FOREIGN KEY (a, b) REFERENCES u ON DELETE SET DEFAULT (b) ON UPDATE NO ACTION)', $statement->toString());
     }
 

@@ -1,0 +1,130 @@
+{
+  "revision": "SemanticsIR/mysql-create-table-as-source-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-create-table-as-v1.json",
+    "mysql-create-table-as-integer-width-v1.json",
+    "mysql-session-table-sources-v1.json"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Retain the native InnoDB, exact table names, empty SQL mode, utf8mb4 and connection lifetime profile. The external interpretation supplies each resolved source coordinate and the same native signed column definitions, data, and session visibility.",
+  "structure": "The existing checked Select may own one physical TableSource in either table namespace. Its bare ColumnReference results identify the resolved signed INT field by occurrence and slot. Existing constant operands remain available. Source and destination can share an absolute name. The target still comes from its independent TableIdentity.",
+  "conditions": "Use a single resolved persistent or temporary table. Reject a joined, derived or view source at the CREATE TABLE AS boundary. The checked Select owns source references and positions. A table-backed filter may use a checked integer comparison or IS NULL / IS NOT NULL of a bare signed slot, alongside the prior constant filters. The existing heading, storage and column count conditions remain. No query parameter or text result belongs to this scope.",
+  "meaning": "Evaluate the selecting query against the bound table in its visible namespace before creating or populating the destination. Projected source fields retain their ordered output names and inherit their native signed storage and defaults under the evaluating release. A temporary target may shadow its same-named persistent source after reading it. The normal destination existence and transaction policy still applies.",
+  "sql": "Render the complete qualified Select with its native scope and output aliases after the existing creation prefix. Preserve repeated fields, NULL, projection order, predicate operands, duplicate policy and the row bound.",
+  "observations": [
+    "Record both source roles and both destination roles under the owning session and a separate catalog connection. Retain the sampled source's real heading, defaults, selected values and row multiplicity.",
+    "Observe each created signed field's exact position, native width, nullability and default. Collapse neither equal-valued fields nor distinct duplicate occurrences. Compare selected rows as a bag because the table itself has no row-order guarantee.",
+    "Where an incomplete ordering leaves ties at LIMIT or OFFSET, observe a bag consistent with the SQL ordering of peer groups. Entire admitted groups match exactly. At a boundary, only the required number of members may be selected from that peer group, and their counts cannot exceed the input multiplicities. An unordered query has one peer group. A deterministic ordered query must match exactly.",
+    "Observe selected row effects and affected-row counts, native existence diagnostics, surrounding marker state, rollback and disconnect. Separate original and canonical execution for authored SQL."
+  ],
+  "finite": {
+    "sourceSchema": [
+      "primary",
+      "decoy"
+    ],
+    "sourceTopology": [
+      "persistent",
+      "temporary-only",
+      "shadow"
+    ],
+    "destinationKind": [
+      "table",
+      "temporary-table"
+    ],
+    "projection": [
+      "normal",
+      "reversed"
+    ],
+    "distinct": [
+      false,
+      true
+    ],
+    "predicate": [
+      "all",
+      "positive"
+    ],
+    "identities": 96,
+    "completeness": "Observe source coordinates and kind, destination kind, result-slot order, distinctness and filter. Retain the actual prior source topology and match each identity exactly once."
+  },
+  "exploration": {
+    "seeds": [
+      4177,
+      6337,
+      97531
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary resolved source schema and lifetime, destination namespace and prior state, projection widths and order, NULL and signed predicates, repeated physical slots, ties, full-order selection and offset, unbounded results, and distinctness under duplicate source data."
+  },
+  "analysis": [
+    "Unqualified and fully qualified references resolve to the same external slot",
+    "Same-named tables in two databases produce observably different definitions and rows",
+    "Temporary source shadows the persistent table",
+    "Temporary destination can share the persistent source's exact coordinate",
+    "A source-free literal query with a physical source retains its complete role",
+    "Missing source cannot be published"
+  ],
+  "replacesPreviousNegative": {
+    "contract": "mysql-create-table-as-v1.json",
+    "condition": "Direct source operand",
+    "retained": "Construct the original direct case with a resolved base table at ir_fixture.known and a constant output. Compare its populated duplicates.",
+    "replacement": "Construct the equivalent SELECT over a known view source and require refusal at the published CREATE TABLE AS boundary. Keep the original selected profile, seeds, finite identities and all other negative cases."
+  },
+  "negative": [
+    "Direct view source",
+    "Direct joined source",
+    "Direct text projected slot",
+    "Direct unbound signed slot",
+    "Direct nested cast of a source field",
+    "Analyzed missing relation in a complete context"
+  ],
+  "faults": [
+    "Bind the same-named source in the other schema",
+    "Bind a temporary overlay as persistent",
+    "Render a different signed source slot",
+    "Omit the source-bound filter",
+    "Erase DISTINCT and thereby insert duplicates",
+    "Drop the selected positional order or its row bound"
+  ],
+  "guarantees": {
+    "P01": "The source and the two table lifetime roles are explicit and the checked query uses resolved ordinal slots.",
+    "P02": "Reuse the projection scope and own the source, heading and placement conditions at the declaration boundary.",
+    "P03": "No field values, original SQL, parser, declarations or connection retained.",
+    "P04": "Compose the selected rows and their inherited field definitions with native creation.",
+    "P05": "The same audited final readonly value graph owns the checked source.",
+    "P06": "Independently compare native inferred storage and effects with ordering-aware row bags."
+  },
+  "trust": [
+    "The checked Select performs the declared signed projection and predicate semantics",
+    "The native source provides the same field definitions and connection namespace",
+    "Independent observer fixtures and a comparator that validates all tie groups"
+  ],
+  "open": [
+    "Full VARCHAR and other inferred storage shapes, join and compound query operands, expression default options and full language coverage."
+  ],
+  "calibrationSha256": "effadd5e493c40288a8b42d47636090b87e8e5a809afa70a6e2c1e4df50ce02b",
+  "dialects": [
+    "MySql"
+  ],
+  "existingRoles": [
+    "Schema/Query/CreateTableAs",
+    "Select",
+    "TableSource",
+    "ColumnReference",
+    "Predicate/IntegerComparison",
+    "Predicate/NullTest"
+  ],
+  "constructors": {}
+}

@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
  * the statement is derived once.
  * Source: https://www.postgresql.org/docs/17/sql-explain.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the row EXPLAIN returns
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('EXPLAIN (ANALYZE, FORMAT JSON) SELECT 1');
- *     [$operation->field(0)->name->value, $operation->field(0)->type->descriptor->name(), $operation->toString()] // => ['QUERY PLAN', 'json', 'EXPLAIN (ANALYZE, FORMAT json) SELECT 1']
+ * @visibility SqlSemantics
  * @example Refusing words the old syntax does not have
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Explain(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Checkpoint(),

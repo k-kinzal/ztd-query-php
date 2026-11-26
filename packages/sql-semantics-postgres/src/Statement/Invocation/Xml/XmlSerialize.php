@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * `xmlserialize`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-SERIALIZE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a serialization
  *     $serialize = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlSerialize(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Option\XmlOption::Content,

@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * read only directly before the word `json`.
  * Source: https://www.postgresql.org/docs/17/sql-explain.html, https://www.postgresql.org/docs/17/sql-vacuum.html.
  *
- * @visibility public
- * @example Reading an option and its value
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VACUUM (PARALLEL 2, ANALYSE)');
- *     [$operation->statement->options[0]->option(), $operation->statement->options[0]->argument->magnitude->digits, $operation->statement->options[1]->option()] // => ['parallel', '2', 'analyze']
+ * @visibility SqlSemantics
  * @example Refusing the FORMAT keyword before another value than json
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Format) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

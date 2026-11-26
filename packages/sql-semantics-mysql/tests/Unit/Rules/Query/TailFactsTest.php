@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Rules\Query\TailFacts;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TailFacts::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class TailFactsTest extends TestCase
 {
     public function testDeriveReportsAnUnknownLockedTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context());
         $fact = new QueryFact([], $semantics->context()->columnNames);
         (new TailFacts())->derive($derivation, $derivation->environment(), $fact, null, [new LockingClause(LockStrength::Update, [new QualifiedName(new Name('t'))])], [new VisibleRelation(new Dual(), new RowShape([]), new Name('u'))]);
@@ -42,7 +42,7 @@ final class TailFactsTest extends TestCase
 
     public function testLimitDerivesTheOperands(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t LIMIT ?, ?');
+        $operation = (new Inspection())->inspect('SELECT a FROM t LIMIT ?, ?');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);

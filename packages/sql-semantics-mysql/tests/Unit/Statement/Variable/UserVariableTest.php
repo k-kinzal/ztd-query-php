@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(UserVariable::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class UserVariableTest extends TestCase
 {
     public function testDeriveScalarNamesTheVariableAsMissingSessionState(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @total');
+        $operation = (new Inspection())->inspect('SELECT @total');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -38,7 +38,7 @@ final class UserVariableTest extends TestCase
 
     public function testDeriveScalarKeepsTheNameAsWritten(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @Total');
+        $operation = (new Inspection())->inspect('SELECT @Total');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -52,26 +52,26 @@ final class UserVariableTest extends TestCase
 
     public function testRenderWritesTheAtSignGluedToTheName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('SELECT @Total', $semantics->analyze('select @Total')->toString());
-        self::assertSame('SELECT a FROM t WHERE a = @total', $semantics->analyze('SELECT a FROM t WHERE a = @total')->toString());
+        self::assertSame('SELECT @Total', $semantics->inspect('select @Total')->toString());
+        self::assertSame('SELECT a FROM t WHERE a = @total', $semantics->inspect('SELECT a FROM t WHERE a = @total')->toString());
     }
 
     public function testRenderQuotesANameThatNeedsIt(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('SELECT @`my var` AS v', $semantics->analyze("SELECT @'my var' AS v")->toString());
-        self::assertSame('SELECT @x AS v', $semantics->analyze('SELECT @`x` AS v')->toString());
-        self::assertSame("SELECT @'my var'", $semantics->analyze("SELECT @'my var'")->toString());
+        self::assertSame('SELECT @`my var` AS v', $semantics->inspect("SELECT @'my var' AS v")->toString());
+        self::assertSame('SELECT @x AS v', $semantics->inspect('SELECT @`x` AS v')->toString());
+        self::assertSame("SELECT @'my var'", $semantics->inspect("SELECT @'my var'")->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $variable = new UserVariable(new Name('my var'));
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression($variable)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([], [new SelectExpression($variable)]));
 
         self::assertSame('SELECT @`my var`', $operation->toString());
         self::assertSame(Nullability::Dependent, $operation->facts->scalar($variable)->nullability);

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * name is a syntax error of the server and cannot be constructed.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-instance.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Rotating the binary log master key
  *     $rotate = new \SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('binlog'));
  *     $rotate->binaryLog() // => true

@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
  * Mirrors `AT_AddConstraint`. The constraint is derived where the relation is visible.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Adding a constraint
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT VALID');
- *     $statement->toString() // => 'ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT VALID'
+ * @visibility SqlSemantics
  */
 final class AddConstraint implements AlterCommand
 {

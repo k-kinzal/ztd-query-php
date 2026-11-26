@@ -24,11 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
  * environment of the owner, where the indexed relation is visible.
  * Source: https://www.postgresql.org/docs/17/sql-createindex.html.
  *
- * @visibility public
- * @example Reading the options of an index key
- *     $index = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE INDEX ON t (a COLLATE "C" text_pattern_ops DESC NULLS LAST)');
- *     $key = $index->statement->elements[0];
- *     [$key->collation->last()->value, $key->operatorClass->last()->value, $key->direction, $key->nulls] // => ['C', 'text_pattern_ops', \SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection::Descending, \SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder::Last]
+ * @visibility SqlSemantics
  */
 final class IndexElement implements Clause
 {

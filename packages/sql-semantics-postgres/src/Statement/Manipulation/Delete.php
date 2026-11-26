@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  * `CurrentOfExpr`, returningList, withClause). The facts follow PG-CHANGE-001.
  * Source: https://www.postgresql.org/docs/17/sql-delete.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a DELETE
- *     $delete = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *');
- *     [$delete->statement->target->table->only, $delete->toString()] // => [true, 'DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *']
+ * @visibility SqlSemantics
  */
 final class Delete implements Modification
 {

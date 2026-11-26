@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * The result column is named `nullif`.
  * Source: https://www.postgresql.org/docs/17/functions-conditional.html#FUNCTIONS-NULLIF. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional\NullIf(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()))->outputName()->value // => 'nullif'
  */

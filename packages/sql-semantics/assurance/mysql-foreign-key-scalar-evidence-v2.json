@@ -1,0 +1,253 @@
+{
+  "revision": "SemanticsIR/mysql-foreign-key-scalar-evidence-2",
+  "approval": "pending-human-review",
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "law": {
+    "mysql-native-foreign-scalar-fields-v3.json": "ae27a6035d83b9f41606e208340253e3fb2d657006c5c337d23f0983801c2745"
+  },
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "finite": {
+    "fields": [
+      [
+        "scalar",
+        "DECIMAL",
+        9,
+        0,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DECIMAL",
+        10,
+        2,
+        true,
+        false
+      ],
+      [
+        "scalar",
+        "BIT",
+        8,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "BIT",
+        9,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "TIME",
+        2,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DATETIME",
+        0,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "TIMESTAMP",
+        0,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "FLOAT",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DOUBLE",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "DATE",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "scalar",
+        "YEAR",
+        null,
+        null,
+        false,
+        false
+      ],
+      [
+        "integer",
+        "TINYINT",
+        true
+      ],
+      [
+        "integer",
+        "MEDIUMINT",
+        false
+      ],
+      [
+        "string",
+        "VARBINARY",
+        4,
+        null
+      ]
+    ],
+    "domain": "All ordered pairs of effective fields with at least one scalar role.",
+    "order": "Lexicographic pair of source indices.",
+    "coordinates": 187,
+    "admitted": 71,
+    "positiveRoutes": [
+      "analysis",
+      "direct"
+    ],
+    "rejectedRoutes": [
+      "analysis",
+      "direct"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      163,
+      3961,
+      51409
+    ],
+    "casesPerSeed": 12,
+    "maxWidth": 3,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "authoredPositive": 13,
+  "directInvalidBoundaryCases": 6,
+  "limits": {
+    "secondsPerRelease": 480,
+    "preparationExceptions": [],
+    "excludedCases": []
+  },
+  "requiredRows": [
+    "admitted",
+    "refused",
+    "null",
+    "physical-match-across-kinds",
+    "physically-unequal-decimals"
+  ],
+  "observe": [
+    "Physical field roles and normalization",
+    "Exact ordered constraint and native support index",
+    "Native diagnostics and transaction outcome",
+    "Typed projected values, NULL and update/delete rows"
+  ],
+  "sourceFaults": [
+    "F01-incompatible-physical-encoding",
+    "F03-operand-effects",
+    "F07-drop-on-update",
+    "F09-always-match",
+    "F09-drop-time-precision"
+  ],
+  "extensions": {
+    "mysql-foreign-key-scalar-evidence-v1.json": "4eb50ab4477e70b6133fa0d9426157bf9c2e83c7474cadb55d722c8d379daba3"
+  },
+  "mode": "Stock InnoDB, empty sql_mode, foreign_key_checks=1, 16 KiB pages, UTC row probe time zone.",
+  "dialects": [
+    "MySql"
+  ],
+  "negativeCount": 238,
+  "constructors": {
+    "Schema/ForeignKey/Add/Domain/ForeignKeyScalarKind": {
+      "role": "Effective native scalar encoding",
+      "structure": "Closed decimal, bit, numeric and temporal cases with effective dimension policies",
+      "conditions": "Kind selects its dimension, range, sign, byte size and comparison family",
+      "meaning": "Select the native storage law for the role",
+      "sql": "The recorded external field layout governs the column name in the ordered foreign-key list."
+    },
+    "Schema/ForeignKey/Add/Domain/ForeignKeyScalarStorage": {
+      "role": "One declared native scalar field",
+      "structure": "A checked kind, dimensions and native attribute flags",
+      "conditions": "Kind-specific effective dimensions and native numeric attributes",
+      "meaning": "Preserve the exact physical term and compute its full index width",
+      "sql": "The recorded external field layout governs the column name in the ordered foreign-key list."
+    },
+    "Schema/ForeignKey/Add/Domain/ForeignKeyScalarDomain": {
+      "role": "A native comparison with at least one scalar field",
+      "structure": "Two closed field roles from scalar, integer and string storage",
+      "conditions": "Admit the fixed shared native comparison family across the two roles",
+      "meaning": "Compare native encoded fields while keeping both external types distinct",
+      "sql": "The recorded external field layout governs the column name in the ordered foreign-key list."
+    },
+    "Schema/ForeignKey/Add/ForeignKeyPair": {
+      "role": "Ordered resolved fields and scalar comparison",
+      "structure": "Checked child and parent coordinates, closed comparison and effective child roles",
+      "conditions": "Native column name and comparison boundary; root checks layout, order, namespace and referenced support",
+      "meaning": "Bind both physical columns to the exact field role",
+      "sql": "The recorded external field layout governs the column name in the ordered foreign-key list."
+    }
+  },
+  "evidence": {
+    "P01": "Record both effective native codecs and corresponding native external field coordinates.",
+    "P02": "Check the closed constructors and reject incompatible field families before root publication.",
+    "P03": "Store typed fields and references. Leave parsed declarations and the catalog outside the finished value.",
+    "P04": "Compose exact native ordered field compatibility, storage byte budgets and physical support.",
+    "P05": "Close both field roles over final readonly values and verify source and installed structure.",
+    "P06": "Emit exact ordered field references and compare native prepared and canonical SQL effects under identical declarations."
+  },
+  "obligationEvidence": {
+    "Q01": "Constructor/source checking and named incompatible and malformed-dimension refusals.",
+    "Q02": "Exact separate counts and sets for finite admission and refusal on both construction routes.",
+    "Q03": "Independent finite and seeded role structure observations, with compound index width and positions.",
+    "Q04": "Exact release diagnostic, metadata, row, NULL and update/delete effect comparison.",
+    "Q05": "Pinned source shapes, independently replayed native ledgers and isolated installed-layout checks."
+  },
+  "faults": [
+    "Erase the declared scalar update cascade.",
+    "Erase the declared scalar delete-null effect.",
+    "Treat unequal packed decimal storage as equal.",
+    "Erase the retained fractional precision of a time field."
+  ],
+  "trust": [
+    "Fixed server fixture, scalar role formulae, database projection and independent row comparator.",
+    "The supplied external catalog corresponds to the same physical native tables."
+  ]
+}

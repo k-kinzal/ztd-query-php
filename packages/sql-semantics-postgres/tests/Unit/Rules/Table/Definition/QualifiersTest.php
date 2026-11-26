@@ -20,8 +20,8 @@ final class QualifiersTest extends TestCase
 
     public function testDeriveReportsSeveralCollations(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a text COLLATE "C" COLLATE "POSIX")', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a text COLLATE "C" COLLATE "POSIX")', []);
         self::assertSame([
           0 => 'multiple COLLATE clauses not allowed',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -29,8 +29,8 @@ final class QualifiersTest extends TestCase
 
     public function testAttributesReportsMisplacedAndRepeatedAttributes(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a int DEFERRABLE, b int UNIQUE DEFERRABLE NOT DEFERRABLE INITIALLY DEFERRED INITIALLY IMMEDIATE)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a int DEFERRABLE, b int UNIQUE DEFERRABLE NOT DEFERRABLE INITIALLY DEFERRED INITIALLY IMMEDIATE)', []);
         self::assertSame([
           0 => 'misplaced DEFERRABLE clause',
           1 => 'multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed',
@@ -41,8 +41,8 @@ final class QualifiersTest extends TestCase
 
     public function testConflictsReportsCombinedValueSources(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a int DEFAULT 1 GENERATED ALWAYS AS (2) STORED GENERATED ALWAYS AS IDENTITY GENERATED ALWAYS AS (3) STORED)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a int DEFAULT 1 GENERATED ALWAYS AS (2) STORED GENERATED ALWAYS AS IDENTITY GENERATED ALWAYS AS (3) STORED)', []);
         self::assertSame([
           0 => 'multiple generation clauses specified for column "a"',
           1 => 'both default and identity specified for column "a"',

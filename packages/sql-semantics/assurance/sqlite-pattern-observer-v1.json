@@ -1,0 +1,11 @@
+{
+  "revision": "SemanticsIR/sqlite-pattern-observer-1",
+  "approval": "pending-human-review",
+  "extends": "sqlite-observer-v1.json",
+  "engine": "SQLite 3.47.2",
+  "allowedActions": {"SQLITE_READ": 20, "SQLITE_SELECT": 21},
+  "allowedFunction": {"action": 31, "names": ["like", "glob"], "origin": null},
+  "fixtureProfile": "The observer measures the default ASCII LIKE fold and GLOB case distinction. It requires the default BLOB coercion build and verifies scoped authorization and recovery after denial.",
+  "evaluation": "Record the step outcome with typed result and binding metadata. The independently known ESCAPE error is compared exactly.",
+  "trust": ["SQLite authorizer callback before preparation and through finalization", "Pinned engine and its compile options"]
+}

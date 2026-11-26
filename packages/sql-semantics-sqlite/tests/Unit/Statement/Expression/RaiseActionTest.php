@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Raise;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RaiseAction::class)]
 #[Medium]
@@ -33,7 +33,7 @@ final class RaiseActionTest extends TestCase
 
     public function testFromMatchesTheActionOfAnAnalyzedRaise(): void
     {
-        $statement = (new Semantics())->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(abort, 'no'); END")->statement;
+        $statement = (new Inspection())->inspect("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(abort, 'no'); END")->statement;
 
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertInstanceOf(Select::class, $statement->steps[0]);

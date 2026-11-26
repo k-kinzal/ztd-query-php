@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateTable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ShowCreateTable::class)]
 #[Medium]
@@ -16,25 +16,25 @@ final class ShowCreateTableTest extends TestCase
 {
     public function testDeriveStatementLeavesTheShapeOpen(): void
     {
-        $show = (new Semantics())->inspect('SHOW CREATE TABLE t');
+        $show = (new Inspection())->diagnose('SHOW CREATE TABLE t');
         self::assertInstanceOf(ShowCreateTable::class, $show->statement);
-        $missing = (new Semantics())->inspect('SHOW CREATE TABLE t', []);
+        $missing = (new Inspection())->diagnose('SHOW CREATE TABLE t', []);
         self::assertSame('Relation t does not exist.', $missing->facts->diagnostics[0]->message());
         self::assertFalse($show->shape()?->complete());
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CREATE TABLE t', (new Semantics())->inspect('SHOW CREATE TABLE t')->toString());
+        self::assertSame('SHOW CREATE TABLE t', (new Inspection())->diagnose('SHOW CREATE TABLE t')->toString());
     }
 
     public function testDeriveStatementAnswersTheColumnsOfTheDeclaredKind(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $view = $semantics->inspect('CREATE VIEW v AS SELECT a FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['Table', 'Create Table'], array_map(static fn ($slot): ?string => $slot->name?->value, $semantics->inspect('SHOW CREATE TABLE t', [$table, $view])->shape()->slots ?? []));
-        self::assertSame(['View', 'Create View', 'character_set_client', 'collation_connection'], array_map(static fn ($slot): ?string => $slot->name?->value, $semantics->inspect('SHOW CREATE TABLE v', [$table, $view])->shape()->slots ?? []));
+        self::assertSame(['Table', 'Create Table'], array_map(static fn ($slot): ?string => $slot->name?->value, $semantics->diagnose('SHOW CREATE TABLE t', [$table, $view])->shape()->slots ?? []));
+        self::assertSame(['View', 'Create View', 'character_set_client', 'collation_connection'], array_map(static fn ($slot): ?string => $slot->name?->value, $semantics->diagnose('SHOW CREATE TABLE v', [$table, $view])->shape()->slots ?? []));
     }
 }

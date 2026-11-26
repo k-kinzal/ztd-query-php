@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-role.html,
  * https://dev.mysql.com/doc/refman/8.4/en/set-default-role.html.
  *
- * @visibility public
- * @example Selecting all roles but one
- *     $selection = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET ROLE ALL EXCEPT r')->statement->roles;
- *     [$selection->set, $selection->roles[0]->user->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All, 'r']
+ * @visibility SqlSemantics
  */
 final class RoleSelection implements Node
 {

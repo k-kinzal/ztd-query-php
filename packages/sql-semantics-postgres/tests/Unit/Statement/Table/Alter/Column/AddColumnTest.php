@@ -14,10 +14,10 @@ final class AddColumnTest extends TestCase
 {
     public function testDeriveClauseSeesTheNewColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t ADD d int CHECK (d > a AND zz)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t ADD d int CHECK (d > a AND zz)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -25,8 +25,8 @@ final class AddColumnTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ADD COLUMN IF NOT EXISTS d int NOT NULL', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('ALTER TABLE t ADD COLUMN IF NOT EXISTS d int NOT NULL', []);
         self::assertSame('ALTER TABLE t ADD IF NOT EXISTS d INT NOT NULL', $statement->toString());
     }
 }

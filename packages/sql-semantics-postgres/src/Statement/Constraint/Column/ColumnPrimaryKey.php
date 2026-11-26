@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * Mirrors `CONSTR_PRIMARY` with `options` and `indexspace`.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example A primary key column is never NULL
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int PRIMARY KEY)');
- *     $create->declarations()[0]->columns[0]->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 final class ColumnPrimaryKey implements Constraint
 {

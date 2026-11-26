@@ -21,9 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\PublicationList;
  * removing a table with a row filter or column list is a diagnostic.
  * Source: https://www.postgresql.org/docs/17/sql-alterpublication.html. Status: Implemented.
  *
- * @visibility public
- * @example Removing a table with a row filter
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER PUBLICATION p DROP TABLE t WHERE (true)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: cannot use a WHERE clause when removing a table from a publication
+ * @visibility SqlSemantics
  */
 final class AlterPublicationMembers implements Statement
 {

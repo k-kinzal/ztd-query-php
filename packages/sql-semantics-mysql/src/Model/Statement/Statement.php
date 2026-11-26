@@ -9,10 +9,7 @@ use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 /**
  * The structure of one complete statement: the root operand of an operation.
  *
- * @visibility public
- * @example Telling the analyzed statement apart from the operation that binds it
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1');
- *     $operation->statement instanceof \SqlSemantics\Platform\MySql\Model\Statement\Statement // => true
+ * @visibility SqlSemantics
  */
 interface Statement extends Node
 {

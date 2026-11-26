@@ -11,9 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * An ORDER BY or GROUP BY integer that names no result column.
  *
- * @visibility public
- * @example Reading the problem of an ordinal beyond the result columns
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 ORDER BY 2') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Term 2 is out of range - should be between 1 and 1.
+ * @visibility SqlSemantics
  */
 final class OrdinalOutOfRange implements Resolution, Diagnostic
 {

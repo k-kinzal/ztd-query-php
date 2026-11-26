@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-privileges.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PRIVILEGES');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Privilege', 'SHOW PRIVILEGES']
+ * @visibility SqlSemantics
  */
 final class ShowPrivileges implements Statement
 {

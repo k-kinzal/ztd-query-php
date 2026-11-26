@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceAction;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceReaction;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ForeignKeyClause::class)]
 #[Medium]
@@ -39,14 +39,14 @@ final class ForeignKeyClauseTest extends TestCase
 
     public function testDeriveConstraintDoesNotLookTheParentUp(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (p REFERENCES missing (id))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE c (p REFERENCES missing (id))', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testDeriveConstraintReportsADecoratedParentColumn(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (p REFERENCES parent (id COLLATE nocase))');
+        $operation = (new Inspection())->diagnose('CREATE TABLE c (p REFERENCES parent (id COLLATE nocase))');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[0]);
@@ -54,7 +54,7 @@ final class ForeignKeyClauseTest extends TestCase
 
     public function testRenderWritesTheParentTheColumnsAndTheClauses(): void
     {
-        $operation = (new Semantics())->inspect('create table c (p references parent(a, b) on delete set default match full)');
+        $operation = (new Inspection())->diagnose('create table c (p references parent(a, b) on delete set default match full)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -67,7 +67,7 @@ final class ForeignKeyClauseTest extends TestCase
 
     public function testRenderKeepsAnAbsentColumnListAbsent(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE c (p REFERENCES parent)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE c (p REFERENCES parent)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];

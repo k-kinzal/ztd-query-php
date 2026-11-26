@@ -1,0 +1,155 @@
+{
+  "revision": "SemanticsIR/postgres-update-returning-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "PostgreSQL 16.6 and 17.2 under the pinned native UPDATE profile.",
+  "scope": "An ordinary single-target UPDATE can return named int4 fields of each updated row. The predicate and assignment reads see the old row. The output fields see the new row.",
+  "existingRoles": [
+    "Mutation/Update",
+    "Mutation/UpdateAssignment",
+    "Mutation/ReturnedColumn",
+    "TableSource"
+  ],
+  "composition": "Update owns an empty or ordered list of at most 1024 returned fields. The output fields reuse the checked single-target slot role and native rendering from DELETE RETURNING. Read, write and output slots all belong to the same resolved target. An output slot can read either a written or unchanged int4 field. Multiple new rows with equal projected values remain repeated.",
+  "observations": [
+    "Compare physical rows in the target, inherited child and independent control relation, affected count, trigger events with old and new fields, and restored state.",
+    "Compare exact item order in the output layout, resolved labels including duplicates, native int4 types, values, row multiplicity, and NULLs. The output row bag has no guaranteed order.",
+    "The fixture distinguishes the old row, the simultaneous assignment results and the affected row projected by RETURNING. Zero affected rows still expose the output layout.",
+    "The engine retains its normal runtime trigger and privilege behavior. The tested fixture instruments the native row values through an AFTER UPDATE trigger."
+  ],
+  "finite": {
+    "policies": [
+      "including descendants",
+      "ONLY"
+    ],
+    "assignments": [
+      "id=7",
+      "id=delta,delta=id",
+      "delta=NULL"
+    ],
+    "predicates": [
+      "omitted",
+      "false",
+      "null delta"
+    ],
+    "layouts": [
+      [
+        [
+          0,
+          "id"
+        ]
+      ],
+      [
+        [
+          1,
+          "delta"
+        ]
+      ],
+      [
+        [
+          0,
+          "left"
+        ],
+        [
+          1,
+          "right"
+        ]
+      ],
+      [
+        [
+          1,
+          "left"
+        ],
+        [
+          0,
+          "right"
+        ]
+      ],
+      [
+        [
+          1,
+          "old_name"
+        ],
+        [
+          1,
+          "alias"
+        ]
+      ],
+      [
+        [
+          1,
+          "repeat"
+        ],
+        [
+          0,
+          "repeat"
+        ]
+      ]
+    ],
+    "identities": 108,
+    "completeness": "Recover each identity of the four-way Cartesian product exactly once from the checked structure, independently of request order."
+  },
+  "exploration": {
+    "seeds": [
+      2843,
+      6131,
+      9829
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 155,
+    "allowedExclusions": [],
+    "structure": "Generate one or two simultaneous assignments with distinct writable slots and NULL, literal or old-column reads. Generate up to five returned fields in both orders with distinct and repeated names and slots. Vary target occurrence, predicate and inheritance policy."
+  },
+  "negative": [
+    "Missing target slot",
+    "Nonzero target occurrence",
+    "Oversized return layout",
+    "Missing analyzed column",
+    "Wrong column type",
+    "Computed return expression"
+  ],
+  "faults": [
+    "Omit RETURNING",
+    "Read the other target slot",
+    "Reverse the result positions",
+    "Replace an output label"
+  ],
+  "open": [
+    "General returning expressions and column types beyond int4, UPDATE FROM, modification CTEs and later release OLD/NEW aliases."
+  ],
+  "trust": [
+    "Native PDO positional metadata and physical state observer",
+    "Independent simultaneous assignment model and new-row projection",
+    "Exact PHP value and boundary checks"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/dml-returning.html",
+    "https://www.postgresql.org/docs/17/dml-returning.html",
+    "https://www.postgresql.org/docs/17/sql-update.html"
+  ],
+  "constructors": {
+    "Mutation/Update": {
+      "role": "Execute a checked single-target write and optionally project the updated fields.",
+      "structure": "One resolved TableSource, ordered assignments, predicate, release and an owned list of returned target positions.",
+      "conditions": "The Update constructor checks every write, old-row read, predicate reference and returned slot in its single target scope.",
+      "meaning": "Select old rows for which the predicate is true, apply all checked assignments from the old row, and read the specified fields from the updated row.",
+      "externalInterpretation": "Execute against the same relation and descendant policy including the native trigger and privilege rules.",
+      "sql": "Write one absolute target and its assignments and filter, followed by named RETURNING fields in their recorded order.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  }
+}

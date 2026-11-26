@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * The facts follow MYSQL-PROGRAM-FLOW-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/while.html.
  *
- * @visibility public
- * @example Reading a labeled loop
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p(a INT) again: WHILE a > 0 DO SELECT 1; END WHILE again');
- *     [$create->statement->body->label->value, count($create->statement->body->statements)] // => ['again', 1]
+ * @visibility SqlSemantics
  */
 final class WhileLoop implements ProgramStatement
 {

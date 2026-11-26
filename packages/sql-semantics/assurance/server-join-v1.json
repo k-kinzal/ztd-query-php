@@ -1,0 +1,51 @@
+{
+  "revision": "SemanticsIR/server-join-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "All native releases and settings pinned in server-projection-v1.json.",
+  "scope": "A SELECT projection over zero or one base table or a binary tree of ordinary base-table occurrences. Keep the tree and ordered projection. Cover CROSS, INNER, LEFT and RIGHT joins. PostgreSQL also covers FULL with equality between signed integer slots on opposite sides. Both ON and WHERE support native Boolean, NULL and the six closed signed integer comparisons.",
+  "open": ["NATURAL and USING, aliases on a whole join, derived relations, comma lists, STRAIGHT_JOIN, hints, and other join kinds or predicate types", "Aggregation, projection modifiers, parameters, ordering and row bounds", "Verified bounds beyond 61 input occurrences"],
+  "constructors": {
+    "Select": {
+      "fields": ["columns", "source", "release", "where"],
+      "invariants": ["The optional source is an ordinary input or a checked tree", "Project and filter slots belong to the full occurrence layout", "Existing projection budgets remain enforced"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "ColumnReference": {
+      "fields": ["slot", "occurrence"],
+      "role": "A slot within a lexically numbered table occurrence. Ordinals begin at zero within the scope of the owning SELECT or join predicate. A single-table DELETE admits occurrence zero only.",
+      "invariants": ["Both positions are nonnegative", "The boundary containing the expression checks the visible occurrence and column domains"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "Join": {
+      "type": "From/Join",
+      "fields": ["kind", "left", "right", "on"],
+      "invariants": ["A join owns two closed source operands and at most 61 table occurrences", "Only CROSS has no predicate", "A predicate refers only to the operands of its join", "PostgreSQL FULL requires cross-side equality between integer column slots"],
+      "sql": "Emit explicit parentheses around the operand tree and generate a distinct alias for each table occurrence. Offset join-local ordinals into the rendered statement aliases.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "JoinKind": {
+      "type": "From/JoinKind",
+      "roles": {"MySql": ["CROSS", "INNER", "LEFT", "RIGHT"], "PostgreSql": ["CROSS", "INNER", "LEFT", "RIGHT", "FULL"]},
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Identify each leaf by its resolved analysis occurrence, even when the leaves use the same physical table. Recognize transparent parentheses. Resolve signed integer column declarations and PostgreSQL comparison operators. Preserve each PostgreSQL table's ONLY flag. MySQL JOIN, INNER and CROSS without a condition denote the product, and their conditioned forms denote INNER.",
+  "meaning": "CROSS takes the product. INNER keeps only pairs satisfying ON. LEFT, RIGHT and FULL additionally retain the appropriate unmatched inputs with NULL extension. WHERE removes rows after the complete join, keeping only true. The projection preserves duplicates, ordered names and native scalar types. No row sequence is guaranteed.",
+  "observations": ["Native column names, order and types", "Bag of typed rows with duplicates and NULL", "Specific construction rejection boundaries"],
+  "finite": {
+    "rightInputs": ["independent", "empty", "same-table"],
+    "joinConditions": ["CROSS without ON", "INNER, LEFT and RIGHT with equal, less-than, FALSE, or NULL", "PostgreSQL FULL with equal"],
+    "filters": ["omitted", "signed predicate at the first occurrence", "FALSE"],
+    "onlyPolicies": {"mysql": ["native"], "postgres": ["include descendants", "ONLY on first input"]},
+    "identities": {"mysql": 117, "postgres": 252},
+    "completeness": "Encode response shape as the product of input identity, operator and predicate, output filter and descendant policy. Check every ID exactly once against a separately constructed set."
+  },
+  "exploration": {"seeds": [578, 4363, 8123], "casesPerSeed": 36, "timeoutSecondsPerRelease": 170, "allowedExclusions": [], "requiredForms": "Two and more than two input occurrences, a join on each side of a tree, both present and absent filters, source references on multiple occurrences and all registered join kinds."},
+  "negative": ["CROSS with ON", "Outer join without ON", "A projection slot outside its occurrence", "An ON slot outside its local subtree", "An occurrence with no input", "A WHERE slot outside its input", "A SELECT over more than 61 inputs", "PostgreSQL FULL with a comparison other than cross-side equality, or MySQL NATURAL without an explicit column merge model"],
+  "faults": ["Erase left null extension", "Render a right projection slot from the left occurrence", "Omit WHERE"],
+  "fixturePreparation": "Populate all registered tables, then collect PostgreSQL statistics for the fixture tables and inheritance tree. The database retains its native planner settings and the same per-statement timeout. The rows and observations are unchanged.",
+  "evidence": "Retain source and output structure, release and distribution digests, SQL, native metadata and row observations, raw case reconciliation, fault deltas and machine replay.",
+  "trust": ["Closed readonly runtime values, checks and emitter", "Resolved input bindings and declared type roles", "Pinned database instances, read-only observer and independent relational evaluator"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/join.html", "https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-JOIN"]
+}

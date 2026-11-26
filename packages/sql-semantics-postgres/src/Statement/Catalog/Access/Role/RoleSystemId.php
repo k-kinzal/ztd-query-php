@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
  * The server keeps no option for it, so writing it twice is no conflict.
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
- * @example Reading the ignored identifier
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe SYSID 100');
- *     [$operation->statement->options[0]->identifier->digits, $operation->statement->options[0]->option()] // => ['100', null]
+ * @visibility SqlSemantics
  */
 final class RoleSystemId implements RoleOption
 {

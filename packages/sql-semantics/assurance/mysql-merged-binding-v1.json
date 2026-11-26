@@ -1,0 +1,22 @@
+{
+  "revision": "SemanticsIR/mysql-merged-binding-1",
+  "approval": "pending-human-review",
+  "scope": "Pin the native MySQL merged heading, its order, the preserved column and the physical qualified field order.",
+  "artifacts": {
+    "src/Rules/Query/From/Joining.php": {
+      "methods": [
+        "join",
+        "names"
+      ],
+      "sha256": "2040693aefaad22311042f3e68d2fac7fdd9f1a9d7d23c322ec0f015562b27ed"
+    },
+    "src/Rules/Query/Projection.php": {
+      "methods": [
+        "star",
+        "qualified",
+        "field"
+      ],
+      "sha256": "8254e114fe831f811a713697914f4f0bff3abca730148288b0eb30e8bdc7f74e"
+    }
+  }
+}

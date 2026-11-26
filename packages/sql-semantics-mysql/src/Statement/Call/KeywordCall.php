@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/built-in-function-reference.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing a keyword function
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT LEFT('abc', 2)");
- *     $query->field(0)->type->descriptor->name() // => 'VARCHAR'
+ * @visibility SqlSemantics
  * @example Refusing an argument count the grammar does not accept
  *     new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Left, []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

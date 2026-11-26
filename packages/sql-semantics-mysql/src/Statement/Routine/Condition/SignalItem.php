@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The grammar accepts a literal, a variable or a name as the value.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/signal.html#signal-condition-information-items.
  *
- * @visibility public
- * @example Reading the items of a SIGNAL
- *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
- *     $signal->statement->items[1]->name // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno
+ * @visibility SqlSemantics
  */
 final class SignalItem implements \SqlSemantics\Platform\MySql\Model\Statement\Node
 {

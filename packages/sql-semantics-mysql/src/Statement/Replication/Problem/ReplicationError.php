@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Problem;
  * source_reset_options, filter_wild_db_table_string, dec_num_error and
  * group_replication_password), https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a check
  *     \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::PasswordTooLong->value // => 'A replication password is longer than 32 characters (ER_CHANGE_SOURCE_PASSWORD_LENGTH).'
  */

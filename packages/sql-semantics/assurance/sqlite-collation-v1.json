@@ -1,0 +1,48 @@
+{
+  "revision": "SemanticsIR/sqlite-collation-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 in UTF-8 with the builtin BINARY, NOCASE and RTRIM collations.",
+  "scope": "Explicit builtin COLLATE annotations on a checked scalar, shared with the registered grouping and DISTINCT count roles.",
+  "constructors": {
+    "Expression/CollatedExpression": {
+      "role": "A scalar with a fixed explicit SQLite collation identity.",
+      "structure": "One closed scalar operand and one Collation enum value.",
+      "conditions": "The operand must be an admitted scalar. Contextual scopes check its references, binding registrations and structural bounds. Registered user-defined collations require a different language profile.",
+      "meaning": "Preserve the operand value and affinity. The annotation supplies a collation to enclosing text comparisons. An outer annotation takes precedence over another annotation on the same nested scalar. An explicit choice on the left wins over an explicit choice on the right.",
+      "externalInterpretation": "Use the declared builtin collation identities in the pinned engine. Preserve references to the same physical column slots, their affinity and applicable implicit collation.",
+      "sql": "Render the scalar and the exact enum collation in a parenthesized postfix COLLATE expression.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Collation", "Aggregation/Count", "Aggregation/GroupKey", "Predicate/Comparison", "Predicate/BetweenTest", "Predicate/MembershipTest", "Select", "Rows/ValuesQuery"],
+  "meaning": [
+    "An explicit collation at a deciding node or a subexpression takes precedence over implicit column collations. The outer postfix assignment wins in an ordered postfix chain.",
+    "BINARY compares bytes. RTRIM ignores trailing ASCII spaces only. NOCASE folds ASCII case, stops the character comparison at NUL and retains the byte length tie-break where applicable. Non-text scalar values retain their ordinary comparison class.",
+    "Each BETWEEN comparison selects its collation independently. Under the pinned SQLite version, a singleton IN list can supply an explicit right-side collation while the multiple-member list uses the left collation. The right member's affinity remains suppressed."
+  ],
+  "observations": [
+    "Exact scalar value or integer/NULL comparison result with the original storage class, labels and numbered binding registrations.",
+    "Compare mutually different sequences against inputs where choosing the wrong sequence changes the outcome, including nested operands, case-sensitive Unicode, trailing spaces and bound NUL-containing text."
+  ],
+  "finite": {
+    "roots": ["select", "values"],
+    "collations": ["BINARY", "NOCASE", "RTRIM"],
+    "operators": ["=", "<", "<>", "IS"],
+    "positions": ["left", "right"],
+    "atoms": [["text", "a"], ["text", "A"], ["text", "a "], ["null"], ["integer", "2"]],
+    "identity": "Annotate one chosen operand of every ordered pair in both roots, crossing every collation and comparison operator. Exhaust all 1200 constructed identities."
+  },
+  "exploration": {
+    "seeds": [10939, 26003, 36643],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 180,
+    "allowedExclusions": [],
+    "structure": "Generate nested choices and competing builtin collations, compare typed values, and vary bindings, root roles, duplicate labels and the placement of explicit annotations. Fixed witnesses cover table affinity, ordering, BETWEEN and list membership."
+  },
+  "negative": ["Unknown collation", "A row-valued collated operand", "Left column outside the owning scope", "Expanded height above the checked limit"],
+  "faults": ["Replace NOCASE by BINARY", "Replace RTRIM by BINARY", "Ignore an outer annotation", "Drop the collation from a checked scalar"],
+  "open": ["Application-defined collation identities and declaration profiles."],
+  "trust": ["Pinned SQLite C observation", "Independent builtin comparison rules", "Unchanged grouping observations after sharing the collation enum"],
+  "sources": ["https://sqlite.org/datatype3.html#collating_sequences", "https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes"]
+}

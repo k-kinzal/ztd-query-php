@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-tablespace.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Adding a data file
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter tablespace ts add datafile 'b.dat' initial_size = 16M");
- *     [$statement->toString(), $statement->statement->action] // => ["ALTER TABLESPACE ts ADD DATAFILE 'b.dat' INITIAL_SIZE `16M`", \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction::Add]
+ * @visibility SqlSemantics
  */
 final class AlterTablespaceDatafile implements Statement
 {

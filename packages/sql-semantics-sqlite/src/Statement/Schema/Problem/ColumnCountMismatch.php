@@ -13,9 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * SQLite reports "expected N columns for 'view' but got M" when the view is used.
  * Source: https://sqlite.org/lang_createview.html.
  *
- * @visibility public
- * @example Reporting a column list that is too short
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v (a) AS SELECT 1, 2') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: The column list names 1 columns but the query returns 2.
+ * @visibility SqlSemantics
  */
 final class ColumnCountMismatch implements Diagnostic
 {

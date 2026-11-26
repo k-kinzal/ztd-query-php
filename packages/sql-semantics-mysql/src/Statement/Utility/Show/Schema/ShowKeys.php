@@ -32,10 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-index.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW KEYS FROM t WHERE Key_name = 'PRIMARY'");
- *     [$show->facts->scalar($show->statement->filter->condition->left)->resolution->slot->name?->value, $show->toString()] // => ['Key_name', "SHOW INDEXES FROM t WHERE Key_name = 'PRIMARY'"]
+ * @visibility SqlSemantics
  */
 final class ShowKeys implements Statement, Relation
 {

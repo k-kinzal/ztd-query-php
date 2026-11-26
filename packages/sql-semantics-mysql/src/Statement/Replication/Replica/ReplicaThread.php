@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Replica;
  * RELAY_THREAD as a synonym of IO_THREAD.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a thread
  *     \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread::Receiver->value // => 'IO_THREAD'
  */

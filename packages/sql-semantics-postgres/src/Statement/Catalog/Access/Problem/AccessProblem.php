@@ -11,9 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A role or privilege command that PostgreSQL rejects because it breaks a rule of the command.
  *
- * @visibility public
- * @example Reading the problem of a privilege that does not apply to the object
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT EXECUTE ON SCHEMA s TO joe') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: invalid privilege type EXECUTE for schema
+ * @visibility SqlSemantics
  */
 final class AccessProblem implements Diagnostic
 {

@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor;
  *
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-ROW-CONSTRUCTORS.
  *
- * @visibility public
- * @example Reading the spelling of an implicit row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (1, 2)');
- *     $query->field(0)->expression->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowSpelling::Implicit
+ * @visibility SqlSemantics
  */
 enum RowSpelling
 {

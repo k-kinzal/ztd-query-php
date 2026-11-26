@@ -12,6 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\SchemaContentsTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
@@ -29,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * Source: https://www.postgresql.org/docs/17/sql-grant.html, https://www.postgresql.org/docs/17/ddl-priv.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT ALL PRIVILEGES ON accounts TO GROUP staff WITH GRANT OPTION');
- *     [$operation->statement->privileges, $operation->statement->grantOption, $operation->toString()] // => [[], true, 'GRANT ALL ON TABLE accounts TO staff WITH GRANT OPTION']
+ * @visibility SqlSemantics
  */
 final class Grant implements Statement
 {
@@ -67,7 +65,8 @@ final class Grant implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new PrivilegeChecks())->privileges($derivation, $this->privileges, $this->target->object(), false);
-        if ($this->grantOption && !$this->target instanceof SchemaContentsTarget) {
+        $legacyOnly = $this->target->object() === PrivilegeObjectKind::Sequence && (new PrivilegeLists())->legacyOnly($this->privileges);
+        if ($this->grantOption && !$this->target instanceof SchemaContentsTarget && !$legacyOnly) {
             (new PrivilegeChecks())->grantOption($derivation, $this->grantees);
         }
         if ($this->grantor !== null) {

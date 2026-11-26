@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
  * The expression sees the columns of the indexed table. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-functional-key-parts.
  *
- * @visibility public
- * @example Reading a functional key part
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, KEY ((a + 1)))');
- *     $create->statement->elements[1]->parts[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart // => true
+ * @visibility SqlSemantics
  */
 final class ExpressionPart implements KeyPart
 {

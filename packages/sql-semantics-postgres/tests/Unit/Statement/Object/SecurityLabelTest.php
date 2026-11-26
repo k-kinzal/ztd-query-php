@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\SecurityLabel;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(SecurityLabel::class)]
 #[Medium]
@@ -19,13 +19,13 @@ final class SecurityLabelTest extends TestCase
 {
     public function testDeriveStatementResolvesALabelledTable(): void
     {
-        $operation = (new Semantics())->inspect('SECURITY LABEL ON TABLE t IS NULL', []);
+        $operation = (new Inspection())->diagnose('SECURITY LABEL ON TABLE t IS NULL', []);
         self::assertSame(['Relation t does not exist.'], [$operation->facts->diagnostics[0]->message()]);
     }
 
     public function testRenderWritesTheProvider(): void
     {
-        $operation = (new Semantics())->inspect("SECURITY LABEL FOR 'sepgsql' ON FUNCTION f(int4) IS 'l'");
+        $operation = (new Inspection())->diagnose("SECURITY LABEL FOR 'sepgsql' ON FUNCTION f(int4) IS 'l'");
         self::assertSame("SECURITY LABEL FOR 'sepgsql' ON FUNCTION f (int4) IS 'l'", $operation->toString());
     }
 

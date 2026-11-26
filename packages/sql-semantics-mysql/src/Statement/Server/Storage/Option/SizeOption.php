@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
  * equals sign is optional and not written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding an initial size written with a multiplier
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption(\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind::Initial, new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('16M')));
  *     [$option->keyword(), $option->size->word?->value] // => ['INITIAL_SIZE', '16M']

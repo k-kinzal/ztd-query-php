@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\MaintenanceRule;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
-use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(MaintenanceRule::class)]
 #[Medium]
@@ -24,22 +24,22 @@ final class MaintenanceRuleTest extends TestCase
 {
     public function testCommandLowersEachAdministrationCommandToItsOwnRequest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertInstanceOf(Vacuum::class, $semantics->analyze('VACUUM')->statement);
-        self::assertInstanceOf(Vacuum::class, $semantics->analyze('VACUUM main')->statement);
-        self::assertInstanceOf(Pragma::class, $semantics->analyze('PRAGMA a')->statement);
-        self::assertInstanceOf(Pragma::class, $semantics->analyze('PRAGMA a = 1')->statement);
-        self::assertInstanceOf(Pragma::class, $semantics->analyze('PRAGMA a(-1)')->statement);
-        self::assertInstanceOf(Reindex::class, $semantics->analyze('REINDEX')->statement);
-        self::assertInstanceOf(Reindex::class, $semantics->analyze('REINDEX a.b')->statement);
-        self::assertInstanceOf(Analyze::class, $semantics->analyze('ANALYZE')->statement);
-        self::assertInstanceOf(Analyze::class, $semantics->analyze('ANALYZE a')->statement);
+        self::assertInstanceOf(Vacuum::class, $semantics->inspect('VACUUM')->statement);
+        self::assertInstanceOf(Vacuum::class, $semantics->inspect('VACUUM main')->statement);
+        self::assertInstanceOf(Pragma::class, $semantics->inspect('PRAGMA a')->statement);
+        self::assertInstanceOf(Pragma::class, $semantics->inspect('PRAGMA a = 1')->statement);
+        self::assertInstanceOf(Pragma::class, $semantics->inspect('PRAGMA a(-1)')->statement);
+        self::assertInstanceOf(Reindex::class, $semantics->inspect('REINDEX')->statement);
+        self::assertInstanceOf(Reindex::class, $semantics->inspect('REINDEX a.b')->statement);
+        self::assertInstanceOf(Analyze::class, $semantics->inspect('ANALYZE')->statement);
+        self::assertInstanceOf(Analyze::class, $semantics->inspect('ANALYZE a')->statement);
     }
 
     public function testCommandReadsTheFirstNameOfAQualifiedPragmaAsItsSchema(): void
     {
-        $statement = (new Semantics())->analyze('PRAGMA aux.page_size')->statement;
+        $statement = (new Inspection())->inspect('PRAGMA aux.page_size')->statement;
 
         self::assertInstanceOf(Pragma::class, $statement);
         self::assertSame('aux', $statement->name->schema?->value);
@@ -49,9 +49,9 @@ final class MaintenanceRuleTest extends TestCase
 
     public function testIntoIsNullUnlessATargetIsWritten(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->analyze('VACUUM')->statement;
-        $into = $semantics->analyze("VACUUM INTO 'f'")->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->inspect('VACUUM')->statement;
+        $into = $semantics->inspect("VACUUM INTO 'f'")->statement;
 
         self::assertInstanceOf(Vacuum::class, $plain);
         self::assertInstanceOf(Vacuum::class, $into);
@@ -59,23 +59,32 @@ final class MaintenanceRuleTest extends TestCase
         self::assertNotNull($into->into);
     }
 
+    public function testNumberRetainsTheNativeIntegerPrefixEvenWhenItExceedsAnExpressionLiteral(): void
+    {
+        $statement = (new Inspection())->inspect('PRAGMA a = 0x80000000000000000')->statement;
+
+        self::assertInstanceOf(Pragma::class, $statement);
+        self::assertInstanceOf(PragmaNumber::class, $statement->value);
+        self::assertSame('0x80000000000000000', $statement->value->token);
+    }
+
     public function testValueKeepsEachOperandKindApart(): void
     {
-        $semantics = new Semantics();
-        $number = $semantics->analyze('PRAGMA a = +5')->statement;
-        $negative = $semantics->analyze('PRAGMA a = -5')->statement;
-        $name = $semantics->analyze('PRAGMA a = full')->statement;
-        $on = $semantics->analyze('PRAGMA a = ON')->statement;
-        $default = $semantics->analyze('PRAGMA a(default)')->statement;
+        $semantics = new Inspection();
+        $number = $semantics->inspect('PRAGMA a = +5')->statement;
+        $negative = $semantics->inspect('PRAGMA a = -5')->statement;
+        $name = $semantics->inspect('PRAGMA a = full')->statement;
+        $on = $semantics->inspect('PRAGMA a = ON')->statement;
+        $default = $semantics->inspect('PRAGMA a(default)')->statement;
 
         self::assertInstanceOf(Pragma::class, $number);
         self::assertInstanceOf(Pragma::class, $negative);
         self::assertInstanceOf(Pragma::class, $name);
         self::assertInstanceOf(Pragma::class, $on);
         self::assertInstanceOf(Pragma::class, $default);
-        self::assertInstanceOf(SignedNumber::class, $number->value);
+        self::assertInstanceOf(PragmaNumber::class, $number->value);
         self::assertSame(NumberSign::Plus, $number->value->sign);
-        self::assertInstanceOf(SignedNumber::class, $negative->value);
+        self::assertInstanceOf(PragmaNumber::class, $negative->value);
         self::assertSame(NumberSign::Minus, $negative->value->sign);
         self::assertInstanceOf(Name::class, $name->value);
         self::assertSame(PragmaKeyword::On, $on->value);

@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
  * always written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-redefine-column.
  *
- * @visibility public
- * @example Renaming and retyping a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t CHANGE a b BIGINT FIRST');
- *     [$alter->statement->commands[0]->column?->column->value, $alter->toString()] // => ['a', 'ALTER TABLE t CHANGE COLUMN a b BIGINT FIRST']
+ * @visibility SqlSemantics
  */
 final class ChangeColumn implements AlterCommand
 {

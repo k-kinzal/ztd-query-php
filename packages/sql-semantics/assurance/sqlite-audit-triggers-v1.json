@@ -1,0 +1,354 @@
+{
+  "revision": "SemanticsIR/sqlite-audit-triggers-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Stock SQLite 3.47.2, normal UTF-8 identifier comparison, ordinary persistent and temporary schema resolution, no custom trigger hooks.",
+  "scope": "Row-trigger declarations with checked INSERT VALUES actions, explicit watched columns and optional row-image NULL tests.",
+  "additionalPublicRoots": [
+    "Schema/Trigger/CreateTrigger"
+  ],
+  "constructors": {
+    "Schema/Trigger/CreateTrigger": {
+      "role": "Create one resolved SQLite row trigger.",
+      "structure": "An absolute trigger identity, storage placement, watched relation, timing, event, optional column selection, optional condition and nonempty ordered insertion program.",
+      "conditions": "Check trigger namespace, watched kind and matching timing, valid row-image slots, program destination scope and event filters, ordinal membership and bounded native graph depth. Stored triggers and their references belong to their native owning schema.",
+      "meaning": "Capture the exact declaration and repeated execution of the checked body on the corresponding row events. The existence guard protects an already installed definition.",
+      "sql": "Emit explicit trigger placement, resolved watched relation, exact timing and event, then the ordered native body.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerPlacement": {
+      "role": "The lifetime and creation route of a trigger identity.",
+      "structure": "Stored, NamedTemporary or TemporaryKeyword.",
+      "conditions": "A stored trigger names a non-temp owner. Both temporary routes use temp. Keyword TEMP has an unqualified trigger name.",
+      "meaning": "Distinguish native stored and connection-local declarations and the native authorization route for explicit TEMP.",
+      "sql": "Emit the resolved qualified name or TEMP with its unqualified name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerTiming": {
+      "role": "The point at which a valid watched event runs the trigger program.",
+      "structure": "Before, After or InsteadOf.",
+      "conditions": "INSTEAD OF applies to a view. BEFORE and AFTER apply to an ordinary table.",
+      "meaning": "Execute relative to the watched data modification or in place of the view modification. Omitted timing means BEFORE.",
+      "sql": "Emit the known native timing phrase.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerEvent": {
+      "role": "The watched mutation and its row-image environment.",
+      "structure": "Insert, Update or Delete.",
+      "conditions": "NEW is available on INSERT and UPDATE. OLD is available on UPDATE and DELETE.",
+      "meaning": "Select native per-row invocation for the represented mutation.",
+      "sql": "Emit the named native event.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/RowImage": {
+      "role": "The selected record in one native trigger activation.",
+      "structure": "Old or New.",
+      "conditions": "The enclosing event must supply the selected image.",
+      "meaning": "Refer to the pre-mutation or proposed record unambiguously.",
+      "sql": "Emit the native OLD or NEW qualifier.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerField": {
+      "role": "A reference to an explicit watched column in a trigger image.",
+      "structure": "A RowImage and zero-based physical column position.",
+      "conditions": "The position is nonnegative and confirmed against the complete watched declaration by the parent. Reject an unavailable row image.",
+      "meaning": "Read the selected row image slot with the watched declaration's storage and collation semantics.",
+      "sql": "Emit the image qualifier and canonical quoted column name from the watched layout.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerCondition": {
+      "role": "The optional Boolean NULL test applied before the insertion program runs.",
+      "structure": "A TriggerField and a closed NULL or NOT NULL mode.",
+      "conditions": "The field must be valid for the event.",
+      "meaning": "Choose whether to run the body using the native truth result of the checked NULL test.",
+      "sql": "Emit WHEN and the exact native null test.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerUpdateName": {
+      "role": "One written UPDATE OF selector classified against the watched layout.",
+      "structure": "A normalized named slot or an explicitly absent name, in native written order.",
+      "conditions": "Only UPDATE uses selectors. A selected slot must exist. An absent name must demonstrably have no explicit slot. The implicit rowid aliases are outside the first bounded domain.",
+      "meaning": "The named slot filters UPDATE assignments. SQLite treats an absent name as inactive until a later schema change adds that name. Preserve the precise absent name in SQL.",
+      "sql": "Emit the declared column name for resolved slots and the exact identifier for an absent selector.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerDestination": {
+      "role": "The absolute table and writable positions selected by an insertion step.",
+      "structure": "A TableSource for a complete ordinary table and an ordered subset of writable slot positions.",
+      "conditions": "Only checked ordinary table references with all positions in range. Every step's written slots must belong to this subset.",
+      "meaning": "Use the resolved native table and its exact layout. A temporary program depends on the same resolution of each emitted unqualified table name.",
+      "sql": "Within trigger steps, emit its unqualified quoted table name, using the enclosing native scope.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerInsertField": {
+      "role": "An ordered association between a writable destination slot and a supplied scalar.",
+      "structure": "A native slot position and one checked integer, text, NULL or TriggerField operand.",
+      "conditions": "Slots are nonnegative and must be writable in the step. Row-image references are checked in the trigger.",
+      "meaning": "The assigned cell is evaluated from its literal value or selected event row image and then stored by the external native table.",
+      "sql": "Emit the destination column in the target list and the corresponding scalar at the matching VALUES position.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerInsert": {
+      "role": "An ordered trigger-body insertion with a bound local write destination.",
+      "structure": "One TriggerDestination, a checked nonempty list of distinct TriggerInsertField associations and a closed native conflict policy.",
+      "conditions": "The destination table and slot identities are valid. Reject duplicates, count overflow and implicit unknown lists. Keep cross-step ordering.",
+      "meaning": "Evaluate the checked row and insert it using the native conflict policy. An explicit policy on the firing statement can govern body conflicts.",
+      "sql": "Emit the unqualified trigger INSERT with its exact policy, selected slot names and row values.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "rules": [
+    "Capture the declared timing, event and qualified watched identity. An omitted trigger schema normally places the trigger in main. An unqualified trigger name targeting an already resolved temporary relation installs in temp. An explicit non-temp trigger owner fixes resolution of an unqualified watched relation and references in the body to that database.",
+    "A temporary trigger can watch an ordinary table or view in another attached schema. Inside its body, SQLite uses normal name search for an unqualified mutation destination. Preserve the exact resolved binding of each same-named destination and reject incompatible bindings within one program.",
+    "Triggers on views require INSTEAD OF. Triggers on ordinary tables require BEFORE or AFTER. A system relation or reserved trigger name does not occupy these roles.",
+    "Per event, validate every supplied row-image slot and the watched explicit member of that slot. The optional nullable test is based on that one member. The two row images remain distinct even for the same watched column.",
+    "Only UPDATE has a column list. A currently absent name has a known inactive role and keeps its identifier for native behavior after a later compatible schema change. Order and repeats remain observable during recursive rename and reparse.",
+    "An insertion step uses a closed native conflict policy with one explicit VALUES tuple. Its unqualified target is a resolved ordinary table. Distinct written slots retain their correspondence to values. A fragment cannot silently change relation or row-image binding."
+  ],
+  "externalInterpretation": [
+    "The same schema and trigger namespaces, watched declarations and writable destination layouts.",
+    "For connection-local trigger programs, the same effective unqualified binding for the resolved destination throughout evaluation.",
+    "SQLite retains execution-time data, session conflict behavior, trigger dispatch and recursion under the fixed native profile."
+  ],
+  "observations": [
+    "Installed trigger name and watched relation, ownership schema and connection lifetime, authorization action and selected object identity.",
+    "Original and emitted trigger execution on selected and decoy schemas. Compare actual persistent and local rows, ordered body steps, OLD and NEW values, NULL conditions, column-filter behavior and the absence of normal view writes.",
+    "Exercise existing-definition conditions and retain catalog/report output including exact engine refusals. Reopen cold attachment fixtures for storage-lifetime witnesses. Exercise an initially absent UPDATE OF name with and without a later matching field."
+  ],
+  "finite": {
+    "placements": [
+      "main-table-after",
+      "archive-table-after",
+      "main-table-before",
+      "main-table-implicit-before",
+      "named-temp-on-main",
+      "keyword-temp-on-main",
+      "keyword-temp-on-archive",
+      "unqualified-on-temp",
+      "main-view-instead",
+      "archive-view-instead",
+      "keyword-temp-on-main-view"
+    ],
+    "events": [
+      "insert",
+      "update",
+      "delete"
+    ],
+    "selectors": {
+      "insert": [
+        "any"
+      ],
+      "update": [
+        "any",
+        "payload",
+        "marker",
+        "mixed",
+        "absent"
+      ],
+      "delete": [
+        "any"
+      ]
+    },
+    "conditions": [
+      "absent",
+      "is-null",
+      "is-not-null"
+    ],
+    "steps": [
+      1,
+      2,
+      3
+    ],
+    "guard": [
+      false,
+      true
+    ],
+    "identity": "All 1386 coordinates with their independent native installation and execution receipts, paired with directly constructed trigger values."
+  },
+  "exploration": {
+    "seeds": [
+      11443,
+      40993,
+      78887
+    ],
+    "casesPerSeed": 72,
+    "timeoutSeconds": 1200,
+    "allowedExclusions": [],
+    "domain": "Vary resolved names, aliases, relation layouts, selector sequences, operand order and duplicates, assignment values, body cardinality, conflict and existing-definition behavior."
+  },
+  "negative": [
+    "Unavailable OLD in INSERT or NEW in DELETE",
+    "Out-of-range row-image, destination or update slot",
+    "Mismatch between timing and watched table kind",
+    "Cross-schema stored trigger",
+    "Reserved trigger name or watched relation",
+    "Qualified temporary keyword name",
+    "Empty trigger body or insertion",
+    "Duplicate or non-writable insertion target slots",
+    "Applied a selector to a non-UPDATE event or marked an existing column absent",
+    "Conflicting temporary write targets with the same unqualified name",
+    "Unknown controlling declared table or destination",
+    "Parameter or otherwise unresolved member in trigger body"
+  ],
+  "faults": [
+    "Skip row-image event validation",
+    "Swap OLD and NEW operands",
+    "Move declaration to the wrong attached namespace",
+    "Render the selected program target by the wrong name",
+    "Erase UPDATE OF",
+    "Reverse program order",
+    "Treat a NULL test as unconditional",
+    "Drop a checked insertion field",
+    "Remove the guard of an existing name"
+  ],
+  "open": [
+    "Additional trigger-body statement forms, arbitrary WHEN expressions, implicit rowid and unresolved virtual/shadow catalogs remain separate obligations."
+  ],
+  "trust": [
+    "Pinned SQLite trigger binder and execution behavior",
+    "Independent modeled catalog and ordered mutations",
+    "Checked rule and distribution correspondence"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "4a1c4591f2e663cff431146307b39189df84fbfee14715d74ff1f057d750c856",
+    "cases": "332dd0b80e6fc19b4cc4739f10ca875d72cc616be8d0e9af8748792b42fc6b4a"
+  },
+  "sources": [
+    "https://www.sqlite.org/lang_createtrigger.html"
+  ]
+}

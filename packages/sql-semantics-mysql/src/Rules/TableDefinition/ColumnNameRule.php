@@ -26,7 +26,7 @@ final class ColumnNameRule
     {
         $name = explode("\0", $name)[0];
 
-        return $name !== '' && !ctype_space($name[-1]) && $this->length($name) <= 64;
+        return $name !== '' && !str_contains(" \t\n\v\f\r", $name[-1]) && $this->length($name) <= 64;
     }
 
     /**

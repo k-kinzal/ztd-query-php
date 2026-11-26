@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * a routine, a role, a database and ALTER SYSTEM. Facts: none.
  * Source: https://www.postgresql.org/docs/17/sql-reset.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a RESET of a keyword form
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET TIME ZONE');
- *     [$operation->statement->parameter->parameter(), $operation->toString()] // => ['timezone', 'RESET TIME ZONE']
+ * @visibility SqlSemantics
  */
 final class Reset implements Statement
 {

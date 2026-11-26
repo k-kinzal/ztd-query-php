@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * A version is written as a word or as a string; the server receives its
  * text either way. Source: https://www.postgresql.org/docs/17/sql-createextension.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the version to install
  *     $version = new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionVersion(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\VersionRole::Target, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('1.2'));
  *     $version->option() // => 'new_version'

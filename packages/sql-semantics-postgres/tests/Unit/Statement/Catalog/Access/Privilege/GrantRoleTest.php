@@ -14,12 +14,12 @@ final class GrantRoleTest extends TestCase
 {
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('GRANT staff, SELECT, x (c) TO joe, CURRENT_USER WITH admin OPTION GRANTED BY boss', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT staff, SELECT, x (c) TO joe, CURRENT_USER WITH ADMIN OPTION GRANTED BY boss')->toString());
+        self::assertSame('GRANT staff, SELECT, x (c) TO joe, CURRENT_USER WITH admin OPTION GRANTED BY boss', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('GRANT staff, SELECT, x (c) TO joe, CURRENT_USER WITH ADMIN OPTION GRANTED BY boss')->toString());
     }
 
     public function testAnalysisKeepsTheRolesAndMembers(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT staff TO joe, ann')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('GRANT staff TO joe, ann')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\GrantRole::class, $statement);
         self::assertSame('staff', $statement->roles[0]->privilege());
         self::assertCount(2, $statement->members);
@@ -28,12 +28,12 @@ final class GrantRoleTest extends TestCase
 
     public function testDeriveStatementReportsTheProblems(): void
     {
-        self::assertSame(['column names cannot be included in GRANT/REVOKE ROLE', 'role "public" does not exist', 'role "public" does not exist', 'role "public" does not exist', 'unrecognized role option "foo"'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT staff (a), public TO PUBLIC WITH foo TRUE GRANTED BY PUBLIC')->facts->diagnostics));
+        self::assertSame(['column names cannot be included in GRANT/REVOKE ROLE', 'role "public" does not exist', 'role "public" does not exist', 'role "public" does not exist', 'unrecognized role option "foo"'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('GRANT staff (a), public TO PUBLIC WITH foo TRUE GRANTED BY PUBLIC')->facts->diagnostics));
     }
 
     public function testDeriveStatementAcceptsTheKnownOptions(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT staff TO joe WITH ADMIN TRUE, INHERIT FALSE, SET OPTION')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('GRANT staff TO joe WITH ADMIN TRUE, INHERIT FALSE, SET OPTION')->facts->diagnostics));
     }
 
     public function testRejectsAllAsARole(): void

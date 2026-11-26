@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
  * written after it see its columns as a selection would.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-TABLE. Status: Implemented.
  *
- * @visibility public
- * @example Reading a TABLE query
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('TABLE ONLY s.t');
- *     [$query->singleNamedInput()->name()->name->value, $query->singleNamedInput()->table->only, $query->toString()] // => ['t', true, 'TABLE ONLY s.t']
+ * @visibility SqlSemantics
  * @example Refusing a table with an alias
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'))), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

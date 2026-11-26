@@ -7,11 +7,9 @@ namespace Tests\Unit\Statement\Expression\Operator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -21,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Between::class)]
 #[Medium]
@@ -28,8 +28,8 @@ final class BetweenTest extends TestCase
 {
     public function testDeriveScalarIsIntegerAndNullWhenADecidingOperandCanBe(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a BETWEEN 1 AND 2, b BETWEEN 1 AND 2, a BETWEEN NULL AND 2, NULL BETWEEN 0 AND 2 FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a BETWEEN 1 AND 2, b BETWEEN 1 AND 2, a BETWEEN NULL AND 2, NULL BETWEEN 0 AND 2 FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -43,7 +43,7 @@ final class BetweenTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredColumn(): void
     {
-        $query = (new Semantics())->inspect('SELECT c BETWEEN 1 AND 2 FROM x');
+        $query = (new Inspection())->diagnose('SELECT c BETWEEN 1 AND 2 FROM x');
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -52,7 +52,7 @@ final class BetweenTest extends TestCase
 
     public function testDeriveScalarAdmitsRowsOfOneWidth(): void
     {
-        $query = (new Semantics())->inspect('SELECT (1, 2) BETWEEN (0, 0) AND (3, 3)', []);
+        $query = (new Inspection())->diagnose('SELECT (1, 2) BETWEEN (0, 0) AND (3, 3)', []);
 
         self::assertSame([], $query->facts->diagnostics);
         self::assertInstanceOf(Known::class, $query->field(0)->type);
@@ -61,9 +61,9 @@ final class BetweenTest extends TestCase
 
     public function testDeriveScalarReportsARowValueBesideSingleValues(): void
     {
-        $semantics = new Semantics();
-        $operand = $semantics->inspect('SELECT (1, 2) BETWEEN 1 AND 3', []);
-        $bound = $semantics->inspect('SELECT 1 BETWEEN (0, 0) AND 3', []);
+        $semantics = new Inspection();
+        $operand = $semantics->diagnose('SELECT (1, 2) BETWEEN 1 AND 3', []);
+        $bound = $semantics->diagnose('SELECT 1 BETWEEN (0, 0) AND 3', []);
 
         self::assertCount(1, $operand->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operand->facts->diagnostics[0]);
@@ -75,7 +75,7 @@ final class BetweenTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheBounds(): void
     {
-        $query = (new Semantics())->inspect('select a not between 1 and 9 AS c1 from t');
+        $query = (new Inspection())->diagnose('select a not between 1 and 9 AS c1 from t');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(Between::class, $test);
@@ -89,9 +89,9 @@ final class BetweenTest extends TestCase
 
     public function testRenderBindsLikeTheEqualityGroupAndGroupsToTheLeft(): void
     {
-        $semantics = new Semantics();
-        $chained = $semantics->inspect('SELECT 1 BETWEEN 2 AND 3 BETWEEN 4 AND 5');
-        $conjoined = $semantics->inspect('SELECT 1 BETWEEN 2 AND 3 AND 4');
+        $semantics = new Inspection();
+        $chained = $semantics->diagnose('SELECT 1 BETWEEN 2 AND 3 BETWEEN 4 AND 5');
+        $conjoined = $semantics->diagnose('SELECT 1 BETWEEN 2 AND 3 AND 4');
         $outer = $chained->field(0)->expression;
         $conjunction = $conjoined->field(0)->expression;
 
@@ -106,9 +106,9 @@ final class BetweenTest extends TestCase
 
     public function testRenderWritesANewlyBuiltTest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $test = new Between(new IntegerLiteral('5'), new IntegerLiteral('1'), new IntegerLiteral('9'), true);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($test)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn($test)]));
 
         self::assertSame('SELECT 5 NOT BETWEEN 1 AND 9', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

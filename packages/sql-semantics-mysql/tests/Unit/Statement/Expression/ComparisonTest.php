@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
@@ -24,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Comparison::class)]
 #[Medium]
@@ -31,12 +31,12 @@ final class ComparisonTest extends TestCase
 {
     public function testDeriveScalarYieldsAnIntegerThatCanBeNullWhenAnOperandCan(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->analyze('SELECT a FROM t WHERE b = 1', [$table]);
+        $operation = $semantics->inspect('SELECT a FROM t WHERE b = 1', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -49,11 +49,11 @@ final class ComparisonTest extends TestCase
 
     public function testDeriveScalarNeverYieldsNullWhenBothOperandsCannot(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT a FROM t WHERE 1 < a', [$table]);
+        $operation = $semantics->inspect('SELECT a FROM t WHERE 1 < a', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -64,11 +64,11 @@ final class ComparisonTest extends TestCase
 
     public function testDeriveScalarNeverYieldsNullForTheNullSafeEquality(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->analyze('SELECT b FROM t WHERE b <=> NULL', [$table]);
+        $operation = $semantics->inspect('SELECT b FROM t WHERE b <=> NULL', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -79,7 +79,7 @@ final class ComparisonTest extends TestCase
 
     public function testDeriveScalarDependsOnTheOperandsOfAnUndeclaredTable(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a >= 10');
+        $operation = (new Inspection())->inspect('SELECT a FROM t WHERE a >= 10');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -93,7 +93,7 @@ final class ComparisonTest extends TestCase
 
     public function testRenderWritesTheOperandsAroundTheOperatorInTheOrderWritten(): void
     {
-        $operation = (new Semantics())->analyze('select a from t where 10 <= a');
+        $operation = (new Inspection())->inspect('select a from t where 10 <= a');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -104,7 +104,7 @@ final class ComparisonTest extends TestCase
 
     public function testRenderSpellsTheNotEqualOperatorInItsStandardForm(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a != 1');
+        $operation = (new Inspection())->inspect('SELECT a FROM t WHERE a != 1');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -114,7 +114,7 @@ final class ComparisonTest extends TestCase
 
     public function testRenderKeepsTheLeftAssociationOfAChain(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE 1 < a = 2');
+        $operation = (new Inspection())->inspect('SELECT a FROM t WHERE 1 < a = 2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -126,9 +126,9 @@ final class ComparisonTest extends TestCase
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics('mysql-5.6.51'))->analyze('select a from t where a <=> 1')->toString());
-        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics('mysql-5.7.44'))->analyze('select a from t where a <=> 1')->toString());
-        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics('mysql-8.0.44'))->analyze('select a from t where a <=> 1')->toString());
+        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Inspection('mysql-5.6.51'))->inspect('select a from t where a <=> 1')->toString());
+        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Inspection('mysql-5.7.44'))->inspect('select a from t where a <=> 1')->toString());
+        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Inspection('mysql-8.0.44'))->inspect('select a from t where a <=> 1')->toString());
     }
 
     public function testAComparisonAsRightOperandIsRejected(): void

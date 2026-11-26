@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select-into.html,
  * https://dev.mysql.com/doc/refman/8.4/en/load-data.html.
  *
- * @visibility public
- * @example Reading the format of INTO OUTFILE
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT 1 INTO OUTFILE 'f' CHARACTER SET utf8mb4 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY ';'");
- *     [$query->statement->into->format->charset->name->value, count($query->statement->into->format->fields), count($query->statement->into->format->lines)] // => ['utf8mb4', 2, 1]
+ * @visibility SqlSemantics
  */
 final class TextFileFormat implements FileFormat
 {

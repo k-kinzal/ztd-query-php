@@ -1,0 +1,41 @@
+{
+  "revision": "SemanticsIR/mysql-ordered-table-rename-binding-v6",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "5ffd53c23af59a3180d61e1250f0b0b5dabb835d33967b0c84db7c584254cfd4",
+      "role": "Keep the static declared relation kind and session-temporary provenance."
+    },
+    "src/Rules/TableChange/Renamings.php": {
+      "sha256": "22ca3de6dbf820304bdbc71f8230bec965fb55d3d5df6b0c7d5a09a5e948694f",
+      "role": "Resolve each origin through earlier moves and reject known occupied names."
+    },
+    "src/Rules/TableChange/Targets.php": {
+      "sha256": "637a3ef7310d87531211015e01e6f10b3cc9b274ec60ee9aec23e11b61a50dd5",
+      "role": "Match the exact current and declared relation identities."
+    },
+    "src/Rules/SessionDatabase.php": {
+      "sha256": "4d3cea3bcaf4b26f6f0d2fead984aa6da2edf36c26674f298d8f8b965a386597",
+      "role": "Supply a named current database for each unqualified spelling."
+    },
+    "src/Statement/Alter/RenameTable.php": {
+      "sha256": "2199f4eff4f0a3cc329b70549f39848a584ce18224493ffefc17f07e4c63644f",
+      "role": "Derive the ordered list of rename operations."
+    },
+    "src/Statement/Alter/TableRenaming.php": {
+      "sha256": "17c18ea5e10827badfcf133fa16def68a279b86cbc2e6e7c743793cb1c3ab19e",
+      "role": "Decode the current and destination coordinates and key the source fact."
+    },
+    "src/Statement/Table/CreateTable.php": {
+      "sha256": "0c8e603ee771c9db007e0d53d69da64255d7d0a7891de779baea3999443c847a",
+      "role": "Record explicit temporary creation through ordinary and derived declarations."
+    },
+    "src/Statement/Table/CreateTableLike.php": {
+      "sha256": "0d4fb4675916e38fc02c105a70f2ee61ec5cd785c3b6192bd4f3b71b0f29c038",
+      "role": "Record the temporary provenance of LIKE's created table separately from its template."
+    }
+  },
+  "extends": "mysql-ordered-table-rename-binding-v4.json",
+  "amendment": "The analysis-only table declaration retains engine and prior key identity facts for the typed native index. Existing collation and namespace decisions keep their defined rules.",
+  "revises": "mysql-ordered-table-rename-binding-v5.json"
+}

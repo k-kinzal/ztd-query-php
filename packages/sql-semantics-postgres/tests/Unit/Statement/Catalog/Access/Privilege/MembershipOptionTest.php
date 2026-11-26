@@ -20,6 +20,6 @@ final class MembershipOptionTest extends TestCase
 
     public function testRenderWritesTheNameAndTheValue(): void
     {
-        self::assertSame('GRANT a TO b WITH admin OPTION, inherit FALSE, set TRUE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT a TO b WITH ADMIN OPTION, inherit FALSE, "set" true')->toString());
+        self::assertSame('GRANT a TO b WITH admin OPTION, inherit FALSE, set TRUE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT a TO b WITH ADMIN OPTION, inherit FALSE, "set" true')->toString());
     }
 }

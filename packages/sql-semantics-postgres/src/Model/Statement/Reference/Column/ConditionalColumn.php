@@ -16,11 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * inputs are known. A known candidate in a farther scope is not chosen while a
  * nearer scope is incompletely known.
  *
- * @visibility public
- * @example Keeping the candidate occurrence of an undeclared table
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t');
- *     $resolution = $query->field('a')->resolution;
- *     [$resolution->relations[0] === $query->inputRelation(), $resolution->missing[0]->describe()] // => [true, 'the declaration of relation t']
+ * @visibility SqlSemantics
  */
 final class ConditionalColumn implements Resolution
 {

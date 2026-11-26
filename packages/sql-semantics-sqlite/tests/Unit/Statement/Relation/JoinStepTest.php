@@ -9,8 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
@@ -19,6 +17,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(JoinStep::class)]
 #[Medium]
@@ -26,10 +26,10 @@ final class JoinStepTest extends TestCase
 {
     public function testRenderWritesOperatorRelationAndConstraint(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $step = new JoinStep(new JoinOperator(false, [JoinKeyword::Left]), new TableInput(new QualifiedName(new Name('u')), new Name('x')), new JoinUsing([new Name('a')]));
-        $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step])));
-        $query = $semantics->analyze('select * from t left join u using (a) join u as u2');
+        $built = new InspectedStatement($semantics->context(), new Select([new Star()], new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step])));
+        $query = $semantics->inspect('select * from t left join u using (a) join u as u2');
 
         self::assertSame('SELECT * FROM t LEFT JOIN u AS x USING (a)', $built->toString());
         self::assertSame('SELECT * FROM t LEFT JOIN u USING (a) JOIN u AS u2', $query->toString());

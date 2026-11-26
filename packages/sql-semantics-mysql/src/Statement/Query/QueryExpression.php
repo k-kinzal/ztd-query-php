@@ -35,10 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
  * https://dev.mysql.com/doc/refman/8.4/en/union.html,
  * https://dev.mysql.com/doc/refman/8.4/en/with.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the ordering of a union
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2');
- *     [count($query->statement->orderBy), $query->statement->limit !== null] // => [1, true]
+ * @visibility SqlSemantics
  * @example Refusing a wrapper that adds nothing
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))])) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

@@ -1,0 +1,53 @@
+{
+  "revision": "SemanticsIR/mysql-index-auto-increment-1",
+  "approval": "pending-human-review",
+  "extends": ["mysql-drop-native-index-evidence-v3.json", "mysql-alter-index-removal-evidence-v1.json"],
+  "counterexample": {
+    "candidate": "90db2e930028ad0f3389302d14ec80993cdf48bb",
+    "declared": "CREATE TABLE app.idx_auto (a INT NOT NULL AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY(a), KEY wrong_position(b,a)) ENGINE=InnoDB",
+    "written": ["DROP INDEX PRIMARY with a quoted index name", "ALTER TABLE app.idx_auto DROP PRIMARY KEY"],
+    "observedProduct": "Both routes published DropIndex on the earliest and latest fixed PHP profiles.",
+    "expected": "Reject a known removal of the last native key that leads with the AUTO_INCREMENT field. The native DDL refuses it with SQLSTATE 42000 and error 1075."
+  },
+  "language": "The nine pinned stock MySQL profiles, utf8mb4, exact table ownership and ordinary native InnoDB.",
+  "constructor": {
+    "type": "Schema/Index/IndexAutoIncrement",
+    "role": "Identifies the AUTO_INCREMENT field supported by the target index and the distinct other indexes that also support it under the same owning relation.",
+    "structure": "A resolved field identifier with an immutable list of 0 to 63 alternate native index names.",
+    "conditions": "All identifiers are valid native field or key names. Alternate physical names are distinct under native case comparison and cannot name the target itself. Null support on an IndexIdentity means the target is not a supporting index. A supported removal must leave at least one alternate. The owning relation and index names are interpreted in the same resolved catalog.",
+    "meaning": "Keep the field and native value generation intact when one supporting physical key is removed. A supporting key starts with the AUTO_INCREMENT field. Merely indexing it in a later key part does not support removal. Explicit primary, clustered unique, secondary unique and ordinary syntax retain the same leftmost condition.",
+    "sql": "The resolved index and policy determine the removal SQL. The bound owner catalog continues to supply the AUTO_INCREMENT field and each retained backing index."
+  },
+  "analysis": [
+    "Recognize AUTO_INCREMENT, SERIAL and SERIAL DEFAULT VALUE from the effective typed column declaration.",
+    "Derive the support set from exact named native keys in the same absolute table. A session-temporary owner uses its own support set even if a permanent sibling has other backing keys.",
+    "Use the first complete ordinary B-tree key field. Retain effective descending and invisible indexes as backing indexes when the native release accepts that structure.",
+    "A required backing index survives CREATE TABLE LIKE in the copied table namespace.",
+    "Keep declarative errors and runtime state differences distinguishable in the result."
+  ],
+  "finite": {
+    "ownership": ["persistent", "temporary", "temporary-shadow"],
+    "targetRoles": ["primary", "clustered-unique", "unique", "ordinary"],
+    "targetUse": ["unrelated", "sole-leading", "leading-with-distinct-alternate"],
+    "declarationForms": ["attribute", "serial-type", "serial-default-value"],
+    "entryPoints": ["direct", "standalone-drop-index", "alter-table-drop-key"],
+    "observations": ["physical names and ordered key parts", "unchanged field metadata and rows", "post-change generated row identity", "typed refusal", "native transaction marker"],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "faults": [
+    "Delete the required alternate support check in the completed DropIndex constructor.",
+    "Treat a nonleading occurrence of the generated field as an alternate native backing key.",
+    "Use the persistent sibling's backing set for the selected temporary relation.",
+    "Treat a removed index as its own alternate.",
+    "Erase the independent next generated value or retained-key observation."
+  ],
+  "trackedBeyondThisSlice": [
+    "Tables with unresolved advanced key forms and cross-table foreign key dependencies remain separate required domains. Native table configurations outside the pinned ordinary InnoDB mode require independently calibrated rules."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/drop-index.html"
+  ]
+}

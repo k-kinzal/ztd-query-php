@@ -14,10 +14,10 @@ final class KeyClausesTest extends TestCase
 {
     public function testDeriveChecksTheColumns(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE TABLE n (a int, PRIMARY KEY (zz) INCLUDE (yy))', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE TABLE n (a int, PRIMARY KEY (zz) INCLUDE (yy))', $context);
         self::assertSame([
           0 => 'column "zz" named in key does not exist',
           1 => 'column "yy" named in key does not exist',
@@ -26,8 +26,8 @@ final class KeyClausesTest extends TestCase
 
     public function testWriteWritesTheColumnsAndParameters(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a int, b int, UNIQUE (a) INCLUDE (b) WITH (fillfactor = 70))', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a int, b int, UNIQUE (a) INCLUDE (b) WITH (fillfactor = 70))', []);
         self::assertSame('CREATE TABLE n (a INT, b INT, UNIQUE (a) INCLUDE (b) WITH (fillfactor = 70))', $statement->toString());
     }
 }

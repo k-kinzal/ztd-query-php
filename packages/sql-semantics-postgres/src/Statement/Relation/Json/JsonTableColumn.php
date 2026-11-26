@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  * each kind is its own class because the operands differ.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the contract of a JSON_TABLE column
  *     interface_exists(\SqlSemantics\Platform\PostgreSql\Statement\Relation\Json\JsonTableColumn::class) // => true
  */

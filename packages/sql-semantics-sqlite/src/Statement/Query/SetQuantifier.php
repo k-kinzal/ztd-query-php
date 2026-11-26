@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query;
  * Source: https://sqlite.org/lang_select.html#simple_select_processing,
  * https://sqlite.org/lang_aggfunc.html.
  *
- * @visibility public
- * @example Reading the quantifier of a selection
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT DISTINCT a FROM t');
- *     $query->statement->quantifier // => \SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier::Distinct
+ * @visibility SqlSemantics
  */
 enum SetQuantifier: string
 {

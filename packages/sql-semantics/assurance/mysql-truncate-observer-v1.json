@@ -1,0 +1,9 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-observer-1",
+  "approval": "pending-human-review",
+  "extends": "mysql-truncate-v1.json",
+  "previousWitness": "b2d0c604751640118f4291677e23ed7afd467589",
+  "change": "Admit the optional TABLE keyword in the bounded observer when evaluating authored native SQL.",
+  "preserves": "The exact fixture schemas, allowed identifier pattern, single parsed operation, finite points, authored inputs, allocation and other observed effects, and every existing fault.",
+  "failure": "The native observer rejected the authored TRUNCATE ir_mtr_a request before evaluating its effect. The same constructed value rendered as TRUNCATE TABLE and reached the comparison."
+}

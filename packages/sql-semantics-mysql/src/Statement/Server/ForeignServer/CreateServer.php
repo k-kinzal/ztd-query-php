@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-server.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Defining a server
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create server s foreign data wrapper mysql options (host 'db', port 3307)");
- *     [$create->toString(), $create->statement->options[1]->kind] // => ["CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'db', PORT 3307)", \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port]
+ * @visibility SqlSemantics
  */
 final class CreateServer implements Statement
 {

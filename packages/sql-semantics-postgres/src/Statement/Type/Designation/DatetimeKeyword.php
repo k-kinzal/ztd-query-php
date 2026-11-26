@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Designation;
  *
  * Source: https://www.postgresql.org/docs/17/datatype-datetime.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the time-of-day keyword
  *     \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\DatetimeKeyword::Time->value // => 'TIME'
  */

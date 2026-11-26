@@ -27,11 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  * uses another generated column (PG-GENERATED-COLUMN-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/ddl-generated-columns.html.
  *
- * @visibility public
- * @example A generated column refers to other columns
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)');
- *     $generated = $create->statement->definition->elements[1]->qualifiers[0];
- *     $create->facts->scalar($generated->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ * @visibility SqlSemantics
  */
 final class Generated implements Constraint
 {

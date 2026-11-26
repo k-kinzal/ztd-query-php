@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * the other FROM items.
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-JOIN.
  *
- * @visibility public
- * @example Reading a join condition
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM a JOIN b ON TRUE');
- *     $query->statement->from->condition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn // => true
+ * @visibility SqlSemantics
  */
 final class JoinOn implements Node
 {

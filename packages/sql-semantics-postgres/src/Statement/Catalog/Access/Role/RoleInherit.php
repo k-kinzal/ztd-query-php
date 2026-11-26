@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * such a word (`RoleAttribute`).
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the option INHERIT fills
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleInherit())->option() // => 'inherit'
  */

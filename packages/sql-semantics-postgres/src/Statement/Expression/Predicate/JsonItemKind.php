@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate;
  *
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-MISC.
  *
- * @visibility public
- * @example Reading the tested kind
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '[]' IS JSON ARRAY");
- *     $query->field(0)->expression->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonItemKind::JsonArray
+ * @visibility SqlSemantics
  */
 enum JsonItemKind: string
 {

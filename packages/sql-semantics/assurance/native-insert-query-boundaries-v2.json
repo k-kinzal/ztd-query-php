@@ -1,0 +1,116 @@
+{
+  "revision": "SemanticsIR/native-insert-query-boundaries-2",
+  "approval": "pending-human-review",
+  "extends": "native-boundaries-v13.json",
+  "scope": "Positional construction and integer assignment emission of the checked native query write.",
+  "rules": {
+    "Mutation/InsertQuery::__construct": {
+      "common": [],
+      "mysql": [
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->expression;",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,",
+        "        'Each query INSERT field requires a signed value or NULL.',",
+        "    );",
+        "}"
+      ],
+      "postgres": [
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');",
+        "Check::input(!$target->only, 'A query INSERT target cannot use ONLY.');",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->expression;",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,",
+        "        'Each query INSERT field requires a signed value or NULL.',",
+        "    );",
+        "}"
+      ]
+    },
+    "Mutation/InsertQuery::profileId": {
+      "common": [
+        "return $this->query->profileId();"
+      ]
+    },
+    "Mutation/InsertQuery::toString": {
+      "common": [],
+      "mysql": [
+        "$columns = [];",
+        "foreach ($this->target->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "",
+        "return 'INSERT INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') ' . $this->query->toString();"
+      ],
+      "postgres": [
+        "$columns = [];",
+        "foreach ($this->target->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "",
+        "return 'INSERT INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') ' . (new SelectSql())->render($this->query, integerAssignment: true);"
+      ]
+    },
+    "SelectSql::render": {
+      "common": [],
+      "mysql": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();",
+        "    $label = $column->name->value;",
+        "    $alias = $localNames || $label === ltrim($label, \" \\t\\r\\n\\v\\f\") ? ' AS ' . $name : '';",
+        "    $items[] = $this->expression($column->expression, $source) . $alias;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "} elseif (($select->release === GrammarRelease::MySql5651 || $select->release === GrammarRelease::MySql5744)",
+        "    && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {",
+        "    $sql .= ' FROM (SELECT 1) AS `__ztd_unit`';",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "",
+        "return $sql . (new ResultSql())->render($select);"
+      ],
+      "postgres": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();",
+        "    $expression = $column->expression;",
+        "    $value = $integerAssignment && $expression instanceof NullLiteral",
+        "        ? 'CAST(NULL AS pg_catalog.int4)'",
+        "        : $this->expression($expression, $source);",
+        "    $items[] = $value . ' AS ' . $name;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "",
+        "return $sql . (new ResultSql())->render($select);"
+      ]
+    }
+  }
+}

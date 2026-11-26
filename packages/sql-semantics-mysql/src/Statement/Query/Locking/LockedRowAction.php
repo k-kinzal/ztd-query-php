@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Locking;
  * Without an action the read waits for the lock.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html.
  *
- * @visibility public
- * @example Reading the action of a locking read
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t FOR UPDATE SKIP LOCKED');
- *     $query->statement->locking[0]->action // => \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction::SkipLocked
+ * @visibility SqlSemantics
  */
 enum LockedRowAction
 {

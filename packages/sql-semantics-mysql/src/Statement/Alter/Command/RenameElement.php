@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  * and INDEX are synonyms. 5.7 lets a table qualify an index name.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
- * @example Renaming a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t RENAME COLUMN a TO b');
- *     [$alter->statement->commands[0]->to->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t RENAME COLUMN a TO b']
+ * @visibility SqlSemantics
  */
 final class RenameElement implements AlterCommand
 {

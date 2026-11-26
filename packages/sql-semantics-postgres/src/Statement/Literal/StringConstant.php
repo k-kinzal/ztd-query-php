@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  * value. The value is written back as a plain quoted constant.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS.
  *
- * @visibility public
- * @example Reading the value of an escape string
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT E'a\\tb'");
- *     $query->statement->targets[0]->expression->value->value // => "a\tb"
+ * @visibility SqlSemantics
  * @example Rejecting a value the server cannot hold
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant("a\0b") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

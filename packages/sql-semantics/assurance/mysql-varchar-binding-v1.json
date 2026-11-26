@@ -1,0 +1,26 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-binding-1",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Column.php": {
+      "sha256": "b6c3d5a882aee107c7dd11edcf2e0251bcce689530167031dc666d71ed47c502",
+      "role": "Hold the explicit collation on the resolved declared identity."
+    },
+    "src/Rules/TableDefinition/TableDeclaration.php": {
+      "sha256": "c7d5266add2ee809f0e8a57099987e835b8fed744e0b8b01db871fb9204d03e8",
+      "role": "Retain the written collation during ordered ordinary table declaration and copies."
+    },
+    "src/Statement/Table/Column/CollateAttribute.php": {
+      "sha256": "39aa73934c51d2ffdba6984b1c7dc54540201c2d17b240864fdb31c2e0ce6abd",
+      "role": "Associate the parsed COLLATE clause with the exact column specification."
+    },
+    "src/Statement/Table/Column/OrdinaryColumn.php": {
+      "sha256": "c1cc51ee7b4d41904f64b2f574e4b9effe95201c0f42ed159b6c602b21fe3e97",
+      "role": "Supply the ordered checked attributes of each declared column."
+    },
+    "src/Statement/Name/CollationName.php": {
+      "sha256": "3367e0564b14162551e29c2635949bc9a9f700a3c7f9b0ae8bedf6790fb71fe1",
+      "role": "Distinguish a named collation from DEFAULT."
+    }
+  }
+}

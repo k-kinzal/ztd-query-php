@@ -14,17 +14,17 @@ final class AlterExtensionContentsTest extends TestCase
 {
     public function testRenderWritesTheKindAndObject(): void
     {
-        self::assertSame('ALTER EXTENSION e ADD OPERATOR CLASS c USING btree', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION e ADD OPERATOR CLASS c USING btree')->toString());
+        self::assertSame('ALTER EXTENSION e ADD OPERATOR CLASS c USING btree', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER EXTENSION e ADD OPERATOR CLASS c USING btree')->toString());
     }
 
     public function testRenderWritesACast(): void
     {
-        self::assertSame('ALTER EXTENSION e DROP CAST (int4 AS text)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION e DROP CAST (int4 AS text)')->toString());
+        self::assertSame('ALTER EXTENSION e DROP CAST (int4 AS text)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER EXTENSION e DROP CAST (int4 AS text)')->toString());
     }
 
     public function testDeriveStatementDerivesTheObject(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION e ADD TYPE numeric(4, 2)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER EXTENSION e ADD TYPE numeric(4, 2)')->facts->diagnostics);
     }
 
     public function testRejectsAKindAlterExtensionCannotAddress(): void
@@ -35,8 +35,8 @@ final class AlterExtensionContentsTest extends TestCase
 
     public function testDeriveStatementReportsAnotherKind(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['"m" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER EXTENSION e ADD VIEW m', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['"m" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER EXTENSION e ADD VIEW m', $context)->facts->diagnostics));
     }
 }

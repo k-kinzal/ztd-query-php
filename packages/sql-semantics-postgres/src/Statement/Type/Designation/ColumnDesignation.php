@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * diagnostic; an undeclared relation is the missing input.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the column a type is copied from
  *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]);
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignation($name))->catalogName()->value // => 'a'

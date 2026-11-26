@@ -27,9 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
  * without parentheses (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-comparison.html. Status: Implemented.
  *
- * @visibility public
- * @example A distinctness test is never NULL
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 IS DISTINCT FROM NULL')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 final class DistinctTest implements Scalar
 {

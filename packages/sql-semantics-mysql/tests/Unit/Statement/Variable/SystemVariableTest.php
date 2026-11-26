@@ -8,14 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SystemVariable::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class SystemVariableTest extends TestCase
 {
     public function testDeriveScalarNamesTheVariableAsMissingSessionState(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @@GLOBAL.sort_buffer_size');
+        $operation = (new Inspection())->inspect('SELECT @@GLOBAL.sort_buffer_size');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -39,7 +39,7 @@ final class SystemVariableTest extends TestCase
 
     public function testDeriveScalarNamesTheInstanceOfAStructuredVariable(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @@SESSION.innodb.x');
+        $operation = (new Inspection())->inspect('SELECT @@SESSION.innodb.x');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -55,7 +55,7 @@ final class SystemVariableTest extends TestCase
 
     public function testDeriveScalarNamesAnUnscopedVariableWithoutAScope(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @@autocommit');
+        $operation = (new Inspection())->inspect('SELECT @@autocommit');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -70,17 +70,17 @@ final class SystemVariableTest extends TestCase
 
     public function testRenderWritesTheScopeTheInstanceAndTheNameWithoutSpaces(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('SELECT @@GLOBAL.sort_buffer_size AS v', $semantics->analyze('select @@global.sort_buffer_size as v')->toString());
-        self::assertSame('SELECT @@SESSION.innodb.x AS v', $semantics->analyze('SELECT @@session.innodb.x AS v')->toString());
-        self::assertSame('SELECT @@innodb.x', $semantics->analyze('SELECT @@innodb.x')->toString());
-        self::assertSame('SELECT @@autocommit', $semantics->analyze('SELECT @@autocommit')->toString());
+        self::assertSame('SELECT @@GLOBAL.sort_buffer_size AS v', $semantics->inspect('select @@global.sort_buffer_size as v')->toString());
+        self::assertSame('SELECT @@SESSION.innodb.x AS v', $semantics->inspect('SELECT @@session.innodb.x AS v')->toString());
+        self::assertSame('SELECT @@innodb.x', $semantics->inspect('SELECT @@innodb.x')->toString());
+        self::assertSame('SELECT @@autocommit', $semantics->inspect('SELECT @@autocommit')->toString());
     }
 
     public function testRenderSpellsLocalAsSession(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @@LOCAL.x AS v');
+        $operation = (new Inspection())->inspect('SELECT @@LOCAL.x AS v');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -92,14 +92,14 @@ final class SystemVariableTest extends TestCase
 
     public function testRenderQuotesANameThatIsAReservedWord(): void
     {
-        self::assertSame('SELECT @@`select`', (new Semantics())->analyze('SELECT @@`select`')->toString());
+        self::assertSame('SELECT @@`select`', (new Inspection())->inspect('SELECT @@`select`')->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $variable = new SystemVariable(new Name('x'), VariableScope::Global, new Name('innodb'));
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression($variable)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([], [new SelectExpression($variable)]));
 
         self::assertSame('SELECT @@GLOBAL.innodb.x', $operation->toString());
         self::assertSame(Nullability::Dependent, $operation->facts->scalar($variable)->nullability);
@@ -107,7 +107,7 @@ final class SystemVariableTest extends TestCase
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics('mysql-5.6.51'))->analyze('select @@global.x as v')->toString());
-        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics('mysql-5.7.44'))->analyze('select @@global.x as v')->toString());
+        self::assertSame('SELECT @@GLOBAL.x AS v', (new Inspection('mysql-5.6.51'))->inspect('select @@global.x as v')->toString());
+        self::assertSame('SELECT @@GLOBAL.x AS v', (new Inspection('mysql-5.7.44'))->inspect('select @@global.x as v')->toString());
     }
 }

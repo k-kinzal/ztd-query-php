@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Option;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the row estimate
  *     \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\EstimateKind::Rows->value // => 'ROWS'
  */

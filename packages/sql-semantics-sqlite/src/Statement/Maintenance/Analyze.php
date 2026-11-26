@@ -23,10 +23,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
  * recorded. The statistics tables it writes are internal.
  * Source: https://sqlite.org/lang_analyze.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the target of an analysis request
- *     $analyze = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ANALYZE users');
- *     $analyze->statement->target?->name->value // => 'users'
+ * @visibility SqlSemantics
  */
 final class Analyze implements Statement
 {

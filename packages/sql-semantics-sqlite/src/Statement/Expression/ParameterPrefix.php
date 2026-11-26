@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
  *
  * Source: https://sqlite.org/lang_expr.html#parameters.
  *
- * @visibility public
- * @example Reading the prefix of a named parameter
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT :id');
- *     $query->statement->columns[0]->expression->prefix // => \SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix::Colon
+ * @visibility SqlSemantics
  */
 enum ParameterPrefix: string
 {

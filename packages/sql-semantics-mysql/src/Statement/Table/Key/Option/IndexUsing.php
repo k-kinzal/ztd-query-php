@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html.
  *
- * @visibility public
- * @example Reading an index option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) USING HASH)');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing // => true
+ * @visibility SqlSemantics
  */
 final class IndexUsing implements IndexOption
 {

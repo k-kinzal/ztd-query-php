@@ -9,10 +9,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * No output field has the looked-up name, and the shape is complete.
  *
- * @visibility public
- * @example Looking up an absent name
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS a');
- *     $operation->lookupField('b')->name // => 'b'
+ * @visibility SqlSemantics
  */
 final class AbsentField implements FieldLookup
 {

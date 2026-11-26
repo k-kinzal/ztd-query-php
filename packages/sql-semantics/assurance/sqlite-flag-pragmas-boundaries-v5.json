@@ -1,0 +1,99 @@
+{
+  "revision": "SemanticsIR/sqlite-flag-pragmas-boundaries-5",
+  "approval": "pending-human-review",
+  "scope": "Verify flag rules and the shared mandatory resolver for explicit native PRAGMA scopes. The PRAGMA family dispatch also recognizes the fixed connection inventory.",
+  "rules": {
+    "Maintenance/FlagPragma::__construct": {
+      "common": [
+        "Check::input($change !== FlagChange::Reset || $name === FlagName::WritableSchema, 'Only writable_schema can reload the schema cache.');"
+      ]
+    },
+    "Maintenance/FlagPragma::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/FlagPragma::toString": {
+      "common": [
+        "$qualifier = $this->schema === null ? '' : $this->schema->quoted() . '.';",
+        "$argument = $this->change === null ? '' : ' = ' . $this->change->value;",
+        "return 'PRAGMA ' . $qualifier . $this->name->value . $argument;"
+      ]
+    },
+    "Maintenance/FlagArgument::change": {
+      "common": [
+        "if ($value === null) {",
+        "    return null;",
+        "}",
+        "$text = NameComparison::AsciiInsensitive->fold($value instanceof PragmaNumber ? $value->nativeText() : $value->value);",
+        "if ($name === FlagName::WritableSchema && $text === 'reset') {",
+        "    return FlagChange::Reset;",
+        "}",
+        "if (preg_match('/\\A0x([0-9a-f]+)/', $text, $parts) === 1) {",
+        "    return $this->nonzero($parts[1], '7fffffff', 16) ? FlagChange::Enable : FlagChange::Disable;",
+        "}",
+        "if (preg_match('/\\A[0-9]+/', $text, $parts) === 1) {",
+        "    return $this->nonzero($parts[0], '2147483647', 10) ? FlagChange::Enable : FlagChange::Disable;",
+        "}",
+        "return in_array($text, ['on', 'yes', 'true'], true) ? FlagChange::Enable : FlagChange::Disable;"
+      ]
+    },
+    "Maintenance/FlagArgument::nonzero": {
+      "common": [
+        "$digits = ltrim($digits, '0');",
+        "$length = strlen($digits);",
+        "$width = strlen($maximum);",
+        "return ($length < $width || $length === $width && strcmp($digits, $maximum) <= 0) && (intval($digits, $base) & 255) !== 0;"
+      ]
+    },
+    "Maintenance/FlagPragmaLowering::lower": {
+      "common": [
+        "$qualified = $statement->name;",
+        "$name = FlagName::tryFrom(NameComparison::AsciiInsensitive->fold($qualified->name->value));",
+        "Check::input($name !== null, 'This SQLite PRAGMA name has no complete flag representation.');",
+        "$schema = (new PragmaScope())->resolve($operation->context, $qualified->schema);",
+        "return new FlagPragma($name, (new FlagArgument())->change($name, $statement->value), $schema);"
+      ]
+    },
+    "Maintenance/MaintenanceLowering::lower": {
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof ParsedAnalyze => (new AnalyzeLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedReindex => (new ReindexLowering())->lower($operation, $statement),",
+        "    $statement instanceof Pragma => (new PragmaLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    },
+    "Maintenance/PragmaLowering::lower": {
+      "common": [
+        "$name = NameComparison::AsciiInsensitive->fold($statement->name->name->value);",
+        "$kind = TableInspectionKind::tryFrom($name);",
+        "if ($kind !== null || $name === 'table_list') {",
+        "    return (new TableMetadataLowering())->lower($operation, $statement, $kind);",
+        "}",
+        "if ($name === 'foreign_key_check') {",
+        "    return (new ForeignKeyAuditLowering())->lower($operation, $statement);",
+        "}",
+        "$indexKind = IndexInspectionKind::tryFrom($name);",
+        "if ($indexKind !== null) {",
+        "    return (new IndexMetadataLowering())->lower($operation, $statement, $indexKind);",
+        "}",
+        "$inventory = InventoryKind::tryFrom($name);",
+        "if ($inventory !== null) {",
+        "    return new InventoryPragma($inventory, (new PragmaScope())->resolve($operation->context, $statement->name->schema));",
+        "}",
+        "return (new FlagPragmaLowering())->lower($operation, $statement);"
+      ]
+    },
+    "Maintenance/PragmaScope::resolve": {
+      "common": [
+        "if ($qualifier === null) {",
+        "    return null;",
+        "}",
+        "$schema = (new MaintenanceLookup())->scopes($context, $qualifier)[0];",
+        "return new Identifier($schema->value);"
+      ]
+    }
+  },
+  "revises": "sqlite-flag-pragmas-boundaries-v4.json"
+}

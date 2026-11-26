@@ -12,9 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * Source: https://sqlite.org/lang_createtable.html#the_primary_key.
  *
- * @visibility public
- * @example Reporting AUTOINCREMENT on a column that is no integer primary key
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a TEXT PRIMARY KEY AUTOINCREMENT)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY.
+ * @visibility SqlSemantics
  */
 final class PrimaryKeyProblem implements Diagnostic
 {

@@ -22,9 +22,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * name use; rules that look through groupings read it there.
  * Source: https://sqlite.org/lang_expr.html. Status: Implemented.
  *
- * @visibility public
- * @example Keeping a grouping
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT (1 + 2) * 3')->toString() // => 'SELECT (1 + 2) * 3'
+ * @visibility SqlSemantics
  */
 final class Grouped implements Scalar
 {

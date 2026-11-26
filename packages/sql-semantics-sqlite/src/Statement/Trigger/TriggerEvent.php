@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Trigger;
  *
  * Source: https://sqlite.org/lang_createtrigger.html.
  *
- * @visibility public
- * @example Reading the event of a trigger
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TRIGGER r AFTER UPDATE OF a ON t BEGIN SELECT 1; END');
- *     $trigger->statement->event // => \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent::Update
+ * @visibility SqlSemantics
  */
 enum TriggerEvent: string
 {

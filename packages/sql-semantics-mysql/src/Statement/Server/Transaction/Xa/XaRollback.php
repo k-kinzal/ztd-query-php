@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa rollback X'0f', 'b', 3");
- *     [$xa->toString(), $xa->statement->xid->format?->text === '3'] // => ["XA ROLLBACK x'0f', 'b', 3", true]
+ * @visibility SqlSemantics
  */
 final class XaRollback implements Statement
 {

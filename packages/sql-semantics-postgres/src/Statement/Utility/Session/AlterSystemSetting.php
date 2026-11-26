@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * parameter or ALL reset. The setting is derived as the request it is.
  * Source: https://www.postgresql.org/docs/17/sql-altersystem.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the setting of ALTER SYSTEM
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SYSTEM SET wal_level = replica');
- *     [$operation->statement->setting->parameter->text(), $operation->toString()] // => ['wal_level', 'ALTER SYSTEM SET wal_level TO replica']
+ * @visibility SqlSemantics
  * @example Refusing a transaction-local setting
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\AlterSystemSetting(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameterFrom(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]),

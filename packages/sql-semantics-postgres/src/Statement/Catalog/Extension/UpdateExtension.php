@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * and more than one is a diagnostic.
  * Source: https://www.postgresql.org/docs/17/sql-alterextension.html. Status: Implemented.
  *
- * @visibility public
- * @example Updating to a version
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER EXTENSION hstore UPDATE TO '2.0'");
- *     $operation->statement->versions[0]->value // => '2.0'
+ * @visibility SqlSemantics
  */
 final class UpdateExtension implements Statement
 {

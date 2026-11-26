@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * when it executes the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
  *
- * @visibility public
- * @example Reading the encryption
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE DATABASE d ENCRYPTION 'Y'");
- *     $create->statement->options[0]->encryption->value // => 'Y'
+ * @visibility SqlSemantics
  */
 final class DatabaseEncryption implements DatabaseOption
 {

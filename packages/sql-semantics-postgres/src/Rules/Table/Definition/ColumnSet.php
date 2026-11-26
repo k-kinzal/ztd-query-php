@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\DeclaredTextCollation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
@@ -24,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 final class ColumnSet
 {
     /**
-     * @var array<string, array{Name, TypeDescriptor, bool, bool}>
+     * @var array<string, array{Name, TypeDescriptor, bool, bool, bool, ?DeclaredTextCollation}>
      */
     private array $entries = [];
 
@@ -34,13 +35,20 @@ final class ColumnSet
      * Adds a column unless the set is closed or holds one of that name; answers whether it was added.
      *
      * @param bool $generated Whether the column is a generated column
+     * @param bool $identity Whether the column owns an identity sequence
      */
-    public function add(Name $name, TypeDescriptor $type, bool $notNull, bool $generated = false): bool
+    public function add(Name $name, TypeDescriptor $type, bool $notNull, bool $generated = false, bool $identity = false, ?DeclaredTextCollation $collation = null): bool
     {
-        if ($this->closed || isset($this->entries[$name->value])) {
+        if ($this->closed) {
             return false;
         }
-        $this->entries[$name->value] = [$name, $type, $notNull, $generated];
+        if (isset($this->entries[$name->value])) {
+            if ($this->entries[$name->value][5] !== $collation) {
+                $this->entries[$name->value][5] = null;
+            }
+            return false;
+        }
+        $this->entries[$name->value] = [$name, $type, $notNull, $generated, $identity, $collation];
 
         return true;
     }
@@ -48,10 +56,10 @@ final class ColumnSet
     /**
      * Adds an inherited column, merging it into a column of the same name.
      */
-    public function inherit(Column $column): void
+    public function inherit(Column $column, bool $copyIdentity = false): void
     {
         $notNull = $column->nullability === Nullability::NotNull;
-        if ($this->add($column->name, $column->type, $notNull, $column->generated) || $this->closed) {
+        if ($this->add($column->name, $column->type, $notNull, $column->generated, $copyIdentity && $column->identity, $column->collation) || $this->closed) {
             return;
         }
         if ($notNull) {
@@ -59,6 +67,9 @@ final class ColumnSet
         }
         if ($column->generated) {
             $this->entries[$column->name->value][3] = true;
+        }
+        if ($copyIdentity && $column->identity) {
+            $this->identify($column->name);
         }
     }
 
@@ -69,6 +80,16 @@ final class ColumnSet
     {
         if (isset($this->entries[$name->value])) {
             $this->entries[$name->value][2] = true;
+        }
+    }
+
+    /**
+     * Marks a declared slot as an identity column.
+     */
+    public function identify(Name $name): void
+    {
+        if (isset($this->entries[$name->value])) {
+            $this->entries[$name->value][4] = true;
         }
     }
 
@@ -96,8 +117,8 @@ final class ColumnSet
     public function columns(): array
     {
         $columns = [];
-        foreach ($this->entries as [$name, $type, $notNull, $generated]) {
-            $columns[] = new Column($name, $type, $notNull ? Nullability::NotNull : Nullability::Nullable, $generated);
+        foreach ($this->entries as [$name, $type, $notNull, $generated, $identity, $collation]) {
+            $columns[] = new Column($name, $type, $notNull ? Nullability::NotNull : Nullability::Nullable, $generated, $identity, $collation);
         }
 
         return $columns;

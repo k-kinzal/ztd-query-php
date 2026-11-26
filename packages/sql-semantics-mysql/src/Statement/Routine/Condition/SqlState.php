@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * still structured; the statement that holds it reports it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Checking the form of an SQLSTATE value
  *     $text = new \SqlSemantics\Platform\MySql\Statement\Literal\Text('00000');
  *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState($text))->valid() // => false

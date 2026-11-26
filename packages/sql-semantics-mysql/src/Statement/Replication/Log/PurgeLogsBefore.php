@@ -21,9 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/purge-binary-logs.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Purging the logs before a moment
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("purge binary logs before '2024-01-01 00:00:00'")->toString() // => "PURGE BINARY LOGS BEFORE '2024-01-01 00:00:00'"
+ * @visibility SqlSemantics
  */
 final class PurgeLogsBefore implements Statement
 {

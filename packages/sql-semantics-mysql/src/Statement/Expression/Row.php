@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Comparing two rows
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE ROW(a, b) = (1, 2)');
- *     [count($query->statement->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE ROW(a, b) = (1, 2)']
+ * @visibility SqlSemantics
  */
 final class Row implements Scalar
 {

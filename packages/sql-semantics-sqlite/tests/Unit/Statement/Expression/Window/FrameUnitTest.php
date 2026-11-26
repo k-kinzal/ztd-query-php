@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Expression\Window;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FrameUnit::class)]
 #[Medium]
@@ -32,7 +32,7 @@ final class FrameUnitTest extends TestCase
 
     public function testFromMatchesTheUnitOfAnAnalyzedFrame(): void
     {
-        $statement = (new Semantics())->analyze('SELECT sum(a) OVER (rows 1 PRECEDING), sum(a) OVER (RANGE 1 PRECEDING), sum(a) OVER (GROUPS 1 PRECEDING) FROM t')->statement;
+        $statement = (new Inspection())->inspect('SELECT sum(a) OVER (rows 1 PRECEDING), sum(a) OVER (RANGE 1 PRECEDING), sum(a) OVER (GROUPS 1 PRECEDING) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         $units = array_map(static function (object $column): ?FrameUnit {

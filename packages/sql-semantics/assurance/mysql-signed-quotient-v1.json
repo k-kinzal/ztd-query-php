@@ -1,0 +1,66 @@
+{
+  "revision": "SemanticsIR/mysql-signed-quotient-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "existingRoles": ["Arithmetic", "ArithmeticOperator", "ColumnReference", "IntegerLiteral", "Select", "TableSource"],
+  "profile": "All nine pinned MySQL releases under the native projection profile in server-projection-v1.json, with empty sql_mode.",
+  "constructors": {},
+  "scope": "Model the signed integral DIV and infix remainder operators in the shared ordered MySQL arithmetic role.",
+  "admission": [
+    "Both operands have resolved signed integral roles. Leaves are checked signed 32-bit literals or signed INT slots. Nested signed arithmetic results are signed 64-bit values.",
+    "A nullable signed INT slot remains eligible. An untyped NULL, an unsigned slot and a non-integer operand require separate type rules.",
+    "The parser normalizes the infix remainder spellings percent and MOD to the same operation. Preserve grouping and operand order."
+  ],
+  "meaning": [
+    "DIV truncates the signed quotient toward zero. Remainder follows the dividend sign.",
+    "A NULL operand or a zero divisor produces a typed NULL if no child evaluation fails. Under the fixed empty mode a zero divisor in the projection produces no division warning.",
+    "The signed 64-bit minimum divided by either positive or negative one raises SQLSTATE 22003 under the measured MySQL implementations. Its remainder by either one is zero. Evaluate each nested child under its own signed arithmetic rule. The multiplication witness whose mathematical result is the signed 64-bit minimum is accepted by the pinned 5.x versions and raises SQLSTATE 22003 on the pinned 8.x and 9.x versions. A second witness constructs the minimum by addition to isolate DIV from this multiplication boundary."
+  ],
+  "sql": "Render the two operands in order with the closed infix operator inside parentheses. Preserve names, positions and external source qualification.",
+  "observations": [
+    "Ordered field names, the native signed LONGLONG result type, exact values, duplicates, NULL, known evaluation errors and the absence of division warnings under the fixed profile.",
+    "The source fixture uses distinct operand columns, duplicate rows, positive and negative values, NULL and zero divisors."
+  ],
+  "finite": {
+    "sources": ["unit", "table"],
+    "operators": ["DIV", "%"],
+    "integers": [-2147483648, -11, -3, -1, 0, 1, 3, 2147483647],
+    "slots": [0, 1],
+    "identity": "Cross two orders of operand positions with both operator choices. The eight literal leaves are present in both sources, and the table source adds two signed INT slots. Exhaust all 328 ordered tuples."
+  },
+  "exploration": {
+    "seeds": [5737, 10391, 32309],
+    "casesPerSeed": 20,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Generate mixed nested arithmetic of depth up to three in multiple result positions and vary columns, signs, zeros and nullable references. Supplement with fixed nested witnesses for signed 64-bit boundaries and analyzed infix spellings."
+  },
+  "negative": [
+    "Missing left slot",
+    "Missing right slot",
+    "Decimal operand in signed DIV",
+    "Untyped NULL operand in signed remainder",
+    "Unsigned column operand"
+  ],
+  "faults": [
+    "Emit remainder for signed division",
+    "Use floor division for a negative signed quotient",
+    "Reverse the ordered remainder operands",
+    "Coalesce the typed NULL result to zero"
+  ],
+  "open": [
+    "Decimal division, MOD function calls, explicit type conversion, unsigned operands, parameter type inference, and contextual SQL modes."
+  ],
+  "trust": [
+    "Pinned MySQL and PDO observer with server type metadata",
+    "Independent exact integer rules and explicit evaluation outcomes",
+    "Disposable fixture whose declarations identify the same slots on both sides"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html",
+    "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/item_func.cc",
+    "https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/item_func.cc",
+    "https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/item_func.cc"
+  ]
+}

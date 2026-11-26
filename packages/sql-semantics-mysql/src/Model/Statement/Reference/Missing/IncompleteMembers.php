@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A declared relation whose member list the context marks as incomplete.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing an incomplete member list
  *     $profile = (new \SqlSemantics\Platform\MySql\Semantics())->profile();
  *     $table = new \SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), $profile, [], [], false);

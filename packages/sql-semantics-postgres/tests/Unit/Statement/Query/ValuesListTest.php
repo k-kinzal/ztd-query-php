@@ -14,8 +14,8 @@ final class ValuesListTest extends TestCase
 {
     public function testOutputNameIsColumn1(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('VALUES (1)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('VALUES (1)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList::class, $statement);
         self::assertSame('column1', $statement->outputName()->value);
@@ -23,22 +23,22 @@ final class ValuesListTest extends TestCase
 
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("VALUES (1, 'a')");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("VALUES (1, 'a')");
         self::assertSame('column2', $query->field(1)->name?->value);
     }
 
     public function testDeriveQueryReportsRowsOfDifferentLengths(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('VALUES (1), (1, 2)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('VALUES (1), (1, 2)');
         self::assertSame('VALUES lists must all be the same length', $query->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheRows(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('VALUES (1), (2)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('VALUES (1), (2)');
         self::assertSame('VALUES (1), (2)', $query->toString());
     }
 }

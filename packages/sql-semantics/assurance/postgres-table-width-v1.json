@@ -1,0 +1,55 @@
+{
+  "revision": "SemanticsIR/postgres-table-width-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "mode": "Stock UTF-8 PostgreSQL builds, native heap, 8192-byte blocks and MaxHeapAttributeNumber 1600. The stored tuple limit remains the engine's insertion-time policy.",
+  "extends": "server-create-table-v2.json",
+  "scope": "An ordinary persistent checked table can have zero through 1600 declared physical fields. The absent, guarded, occupied, composed and data-probe effects retain the declared shape. Key membership and other previously checked rules still apply.",
+  "constructors": {
+    "CreateTable": {
+      "type": "Schema/CreateTable",
+      "role": "The anchor and exact ordered physical field declaration for a native heap relation.",
+      "structure": "A detached ordered list of zero through 1600 typed fields, preserving exact names, types, default policy and constraint references.",
+      "conditions": "Reject a sparse list, foreign child, repeated or reserved field, a 1601st field or a key reference outside the resulting heading. Empty tables cannot satisfy a nonempty key.",
+      "meaning": "Create one relation with the native physical attributes in order or preserve a prior object on IF NOT EXISTS. A zero-attribute relation counts its rows and exposes a zero-column heading. Valid declarations can still fail to store an oversized row at insertion.",
+      "sql": "Emit an empty parenthesized list for a zero-column table and render each checked field exactly once up to the native boundary."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "predecessorAdmission": {
+    "previousDirectRefusal": {"dialect": "postgres", "create": {"target": ["public", "ir_create_target"], "columns": [], "ifNotExists": false}, "occupied": false},
+    "replacementDirectRefusal": {"dialect": "postgres", "create": {"target": ["public", "ir_create_target"], "columns": {"1": ["c1", "INTEGER", true, null]}, "ifNotExists": false}, "occupied": false},
+    "replacementMessage": "CREATE TABLE columns must form an ordered list of checked columns.",
+    "reason": "Both native releases create a zero-column table and store zero-column tuples. The exact earlier direct request must now be a positive witness. The sparse list fails the structural list contract. Preserve the MySQL refusal."
+  },
+  "finite": {
+    "widths": [0, 1, 127, 128, 129, 255, 1600],
+    "layouts": ["integer", "bigint", "mixed"],
+    "guard": [false, true],
+    "coordinates": "All 42 case coordinates per release and route, including exact end fields. Layout variants for an empty list use three independent fixture names. No finite coordinate is counted from a declared case counter alone.",
+    "requiredEdges": ["former-empty-refusal", "empty-schema-member", "guarded-empty-table", "zero-column-returning-rejected",
+                      "1600-non-null-integers", "1600-non-null-bigints", "1601-rejected"]
+  },
+  "exploration": {
+    "seeds": [5147, 12457, 88001],
+    "casesPerSeed": 8,
+    "directCasesPerSeed": 8,
+    "timeoutSecondsPerRelease": 310,
+    "allowedExclusions": [],
+    "structure": "Vary field counts approaching multiple byte and catalog boundaries, ordered types and labels, zero-field insert count, key coordinates where applicable, and explicit versus omitted defaults."
+  },
+  "observations": [
+    "Exact actual ordered metadata: schema and relation identity, registered storage, column slots, labels and native type OIDs, nullability and defaults.",
+    "Actual returned heading and row count and values after two default insertions. At width zero, count two empty tuples with no attributes and reject zero-column RETURNING before effects.",
+    "Preserve guarded prior objects, enforce the 1601-column limit and exercise the width-1600 physical storage difference between non-NULL signed 32-bit and 64-bit tuples. Track rollback after the creation and inserts."
+  ],
+  "negative": [
+    "1601 checked physical field declarations, direct or analyzed, with native 54011.",
+    "A sparse field list or a field not supplied as a checked dialect column.",
+    "An empty table with an admitted key referring to an absent column."
+  ],
+  "faults": ["Add a fabricated field to a zero-column declaration.", "Drop the last declared field from a wide layout.", "Change a wide slot's type or order."],
+  "trust": ["Pinned heap storage and PostgreSQL identifier profile", "Exact native libpq catalog and result observations", "Independent observer and structural source checks"],
+  "sources": ["https://www.postgresql.org/docs/16/sql-createtable.html", "https://www.postgresql.org/docs/17/limits.html"]
+}

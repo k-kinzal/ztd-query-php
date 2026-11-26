@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  * the move changes no declaration of the context.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html, https://www.postgresql.org/docs/17/sql-alterfunction.html.
  *
- * @visibility public
- * @example Reading the new schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EXTENSION hstore SET SCHEMA util');
- *     $operation->statement->schema->value // => 'util'
+ * @visibility SqlSemantics
  */
 final class SetSchema implements Statement
 {

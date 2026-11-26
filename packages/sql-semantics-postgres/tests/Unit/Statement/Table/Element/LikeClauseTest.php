@@ -14,10 +14,10 @@ final class LikeClauseTest extends TestCase
 {
     public function testDeriveClauseResolvesTheSourceTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE TABLE n (LIKE t)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE TABLE n (LIKE t)', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -31,16 +31,16 @@ final class LikeClauseTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (LIKE s.t INCLUDING ALL EXCLUDING STATISTICS)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (LIKE s.t INCLUDING ALL EXCLUDING STATISTICS)', []);
         self::assertSame('CREATE TABLE n (LIKE s.t INCLUDING ALL EXCLUDING STATISTICS)', $statement->toString());
     }
 
     public function testDeriveClauseReportsASequence(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE SEQUENCE s'), $semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['relation "s" is invalid in LIKE clause'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE TABLE c (LIKE s)', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE TABLE c (LIKE v)', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE SEQUENCE s'), $semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['relation "s" is invalid in LIKE clause'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE TABLE c (LIKE s)', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE TABLE c (LIKE v)', $context)->facts->diagnostics));
     }
 }

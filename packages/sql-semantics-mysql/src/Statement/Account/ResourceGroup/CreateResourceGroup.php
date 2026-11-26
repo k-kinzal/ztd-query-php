@@ -22,9 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange;
  * is PriorityOutOfRange. The `=` signs are optional words.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-resource-group.html. Status: Implemented.
  *
- * @visibility public
- * @example Creating a group bound to two CPUs
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('create resource group batch type user vcpu 2-3 thread_priority 10 disable')->toString() // => 'CREATE RESOURCE GROUP batch TYPE = USER VCPU = 2 - 3 THREAD_PRIORITY = 10 DISABLE'
+ * @visibility SqlSemantics
  */
 final class CreateResourceGroup implements Statement
 {

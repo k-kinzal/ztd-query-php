@@ -17,8 +17,8 @@ final class ModificationScopeTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('WITH w AS (SELECT 1 AS k) UPDATE t SET a = w.k FROM w RETURNING w.k', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('WITH w AS (SELECT 1 AS k) UPDATE t SET a = w.k FROM w RETURNING w.k', [$t, $u]);
         $fields = $query->fields();
         self::assertNotNull($fields);
         self::assertSame([['k', 'integer', 'NotNull']], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field $field): array => [$field->name?->value, $field->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known ? $field->type->descriptor->name() : null, $field->nullability->name], iterator_to_array($fields)));
@@ -29,8 +29,8 @@ final class ModificationScopeTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('DELETE FROM t USING (SELECT t.a) AS s', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('DELETE FROM t USING (SELECT t.a) AS s', [$t, $u]);
         self::assertSame(['Column t.a does not exist.'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
 
@@ -39,8 +39,8 @@ final class ModificationScopeTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('DELETE FROM t USING u AS t', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('DELETE FROM t USING u AS t', [$t, $u]);
         self::assertSame(['table name "t" specified more than once'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
 
@@ -49,8 +49,8 @@ final class ModificationScopeTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('DELETE FROM t USING other.t', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('DELETE FROM t USING other.t', [$t, $u]);
         self::assertSame(['Relation t does not exist.'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
 
@@ -59,8 +59,8 @@ final class ModificationScopeTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('DELETE FROM t USING u WHERE t.a = u.a RETURNING t.b, u.c', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('DELETE FROM t USING u WHERE t.a = u.a RETURNING t.b, u.c', [$t, $u]);
         $fields = $query->fields();
         self::assertNotNull($fields);
         self::assertSame([['b', 'text', 'Nullable'], ['c', 'boolean', 'NotNull']], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field $field): array => [$field->name?->value, $field->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known ? $field->type->descriptor->name() : null, $field->nullability->name], iterator_to_array($fields)));
@@ -68,16 +68,16 @@ final class ModificationScopeTest extends TestCase
 
     public function testOpenReportsATargetThatCannotChange(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE SEQUENCE s')];
-        self::assertSame(['cannot change sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('INSERT INTO s VALUES (1, 0, false)', $context)->facts->diagnostics));
-        self::assertSame(['cannot execute MERGE on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('MERGE INTO s USING (SELECT 1 AS b) x ON true WHEN MATCHED THEN DELETE', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE SEQUENCE s')];
+        self::assertSame(['cannot change sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('INSERT INTO s VALUES (1, 0, false)', $context)->facts->diagnostics));
+        self::assertSame(['cannot execute MERGE on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('MERGE INTO s USING (SELECT 1 AS b) x ON true WHEN MATCHED THEN DELETE', $context)->facts->diagnostics));
     }
 
     public function testInputsReportsASequenceInFrom(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE TABLE t (a int)'), $semantics->inspect('CREATE SEQUENCE s')];
-        self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('DELETE FROM t USING s', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE TABLE t (a int)'), $semantics->diagnose('CREATE SEQUENCE s')];
+        self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('DELETE FROM t USING s', $context)->facts->diagnostics));
     }
 }

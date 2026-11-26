@@ -14,9 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/delete.html,
  * https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html (ER_UNKNOWN_TABLE).
  *
- * @visibility public
- * @example Reading the unknown table
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE u FROM t') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown table 'u' in MULTI DELETE
+ * @visibility SqlSemantics
  */
 final class UnknownDeleteTable implements Diagnostic
 {

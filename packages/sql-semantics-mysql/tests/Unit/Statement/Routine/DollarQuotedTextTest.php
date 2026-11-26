@@ -11,10 +11,10 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DollarQuotedText::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class DollarQuotedTextTest extends TestCase
 {
     public function testRenderKeepsTheTextBetweenTheDelimiters(): void
     {
-        $create = (new Semantics())->analyze('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
+        $create = (new Inspection())->inspect('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(ExternalBody::class, $statement->body);
@@ -53,12 +53,12 @@ final class DollarQuotedTextTest extends TestCase
     #[DataProvider('providerRenderWritesTheDelimiters')]
     public function testRenderWritesTheDelimiters(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedText(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new DollarQuotedText("it's 'quoted'", 'q'))->render($out);
 
@@ -67,7 +67,7 @@ final class DollarQuotedTextTest extends TestCase
 
     public function testRenderWritesAnEmptyTag(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new DollarQuotedText('return 1'))->render($out);
 

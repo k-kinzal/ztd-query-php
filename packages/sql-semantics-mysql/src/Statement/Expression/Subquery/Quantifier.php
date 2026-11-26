@@ -11,9 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Subquery;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/any-in-some-subqueries.html,
  * https://dev.mysql.com/doc/refman/8.4/en/all-subqueries.html.
  *
- * @visibility public
- * @example Writing SOME as ANY
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a > SOME (SELECT 1)')->statement->where->quantifier // => \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any
+ * @visibility SqlSemantics
  */
 enum Quantifier: string
 {

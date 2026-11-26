@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * it writable. The equals sign is optional and not written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-database.html.
  *
- * @visibility public
- * @example Making a database read-only
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER DATABASE d READ ONLY = 1');
- *     [$alter->toString(), $alter->statement->options[0]->readOnly()] // => ['ALTER DATABASE d READ ONLY 1', true]
+ * @visibility SqlSemantics
  */
 final class DatabaseReadOnly implements DatabaseOption
 {

@@ -19,7 +19,7 @@ final class ForRolesTest extends TestCase
 
     public function testRenderKeepsTheWord(): void
     {
-        self::assertSame('ALTER DEFAULT PRIVILEGES FOR USER a, CURRENT_USER GRANT SELECT ON TABLES TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES FOR USER a, CURRENT_USER GRANT SELECT ON TABLES TO joe')->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES FOR USER a, CURRENT_USER GRANT SELECT ON TABLES TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DEFAULT PRIVILEGES FOR USER a, CURRENT_USER GRANT SELECT ON TABLES TO joe')->toString());
     }
 
     public function testRejectsTheGroupWord(): void

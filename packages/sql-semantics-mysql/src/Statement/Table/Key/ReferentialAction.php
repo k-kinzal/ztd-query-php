@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html#foreign-key-referential-actions.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a referential action
  *     $action = new \SqlSemantics\Platform\MySql\Statement\Table\Key\ReferentialAction(\SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceEvent::Delete, \SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceOption::Cascade);
  *     [$action->event->value, $action->option->value] // => ['DELETE', 'CASCADE']

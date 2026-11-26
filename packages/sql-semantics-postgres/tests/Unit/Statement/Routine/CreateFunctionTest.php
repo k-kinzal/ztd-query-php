@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
@@ -34,6 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\RoutineParameters;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(CreateFunction::class)]
 #[Medium]
@@ -41,7 +41,7 @@ final class CreateFunctionTest extends TestCase
 {
     public function testDeriveStatementResolvesParametersInTheBody(): void
     {
-        $operation = (new Semantics())->inspect('CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN add.a + b', []);
+        $operation = (new Inspection())->diagnose('CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN add.a + b', []);
         $statement = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(ReturnStatement::class, $statement->body);
@@ -57,7 +57,7 @@ final class CreateFunctionTest extends TestCase
     public function testDeriveStatementLetColumnsShadowParameters(): void
     {
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Text)]);
-        $operation = (new Semantics())->inspect('CREATE FUNCTION f(a int4) RETURNS text BEGIN ATOMIC SELECT a FROM t; END', [$table]);
+        $operation = (new Inspection())->diagnose('CREATE FUNCTION f(a int4) RETURNS text BEGIN ATOMIC SELECT a FROM t; END', [$table]);
         $statement = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(AtomicBody::class, $statement->body);
@@ -72,7 +72,7 @@ final class CreateFunctionTest extends TestCase
 
     public function testDeriveStatementReportsProblems(): void
     {
-        $operation = (new Semantics())->inspect('CREATE FUNCTION f(a int4 DEFAULT 1, b int4) STRICT STRICT AS $$x$$', []);
+        $operation = (new Inspection())->diagnose('CREATE FUNCTION f(a int4 DEFAULT 1, b int4) STRICT STRICT AS $$x$$', []);
         self::assertEquals([
             new RoutineProblem(RoutineProblemKind::ConflictingOptions),
             new RoutineProblem(RoutineProblemKind::MissingLanguage),
@@ -83,7 +83,7 @@ final class CreateFunctionTest extends TestCase
 
     public function testRenderWritesProcedures(): void
     {
-        $operation = (new Semantics())->inspect("create or replace procedure p(inout x int4 = 1) security definer language sql as 'select 1'");
+        $operation = (new Inspection())->diagnose("create or replace procedure p(inout x int4 = 1) security definer language sql as 'select 1'");
         self::assertSame("CREATE OR REPLACE PROCEDURE p (INOUT x int4 = 1) SECURITY DEFINER LANGUAGE sql AS 'select 1'", $operation->toString());
     }
 

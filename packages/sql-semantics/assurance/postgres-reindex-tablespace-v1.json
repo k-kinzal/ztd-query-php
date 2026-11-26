@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-tablespace-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "scope": "The explicit effective TABLESPACE option of resolved REINDEX INDEX, TABLE, SCHEMA and DATABASE operations. Also retain the table space selected by a SYSTEM request, which preserves the native no-move policy for pinned catalogs.",
+  "profile": "UTF-8, standard-conforming strings, native markers, the selected current database, the stock built-in tablespaces and the explicitly provided external table-space declarations.",
+  "existingRoles": [
+    "Schema/Index/ReindexIndex",
+    "Schema/Index/ReindexTable",
+    "Schema/Index/Partition/ReindexPartitionTable",
+    "Schema/Index/Scope/ReindexSchema",
+    "Schema/Index/Scope/ReindexDatabase",
+    "Schema/Index/Scope/ReindexSystemCatalogs"
+  ],
+  "constructors": {
+    "IndexTablespace": {
+      "type": "Schema/Index/Placement/IndexTablespace",
+      "role": "A reproducible, resolved cluster table-space coordinate for a rebuild operation.",
+      "fields": ["name"],
+      "structure": "One immutable Identifier. A rebuild retains either its resolved table-space coordinate or absence when no destination was written.",
+      "invariants": [
+        "Every identifier satisfies the checked PostgreSQL UTF-8 restrictions.",
+        "The coordinate is pg_default or one application name. The reserved pg_global destination has separate shared-relation behavior.",
+        "An analyzed nonbuiltin name must match an explicit CREATE TABLESPACE declaration in the supplied context. The value keeps the identity independently of the declaration's filesystem location."
+      ],
+      "meaning": "Rebuild the indexes selected by the existing role and place the eligible physical index generations in the selected table space. Native selection still governs partition parents, pinned catalogs, TOAST and concurrent exclusions. A SYSTEM request with a destination leaves the physical catalog files in place.",
+      "sql": "Emit a TABLESPACE option with the safely delimited decoded name. Compose it with the effective Boolean VERBOSE option and concurrency policy.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "binding": [
+    "The last syntactically valid TABLESPACE option supplies the decoded name. Both delimited identifiers and string literals resolve the same identity. An earlier valid but unselected name is not looked up.",
+    "Require an exact case-sensitive match for application declarations. Reject missing, ambiguous and reserved application names.",
+    "Treat physical location and access privileges as properties of the shared external reference environment. Store only the resolved coordinate in the completed value."
+  ],
+  "finite": {
+    "roles": ["ordinary-index", "ordinary-table", "partition-index", "partition-table", "schema", "database", "system"],
+    "destinations": ["pg_default", "application"],
+    "reporting": [false, true],
+    "instructionForms": ["identifier", "string", "repeated"],
+    "bound": "Check all 84 analyzed coordinates per release. Directly construct one value per role, destination and reporting coordinate, totaling 28 per release. Compare the unchanged catalog, table space and physical identities for every relevant object."
+  },
+  "exploration": {
+    "seeds": [13807, 27259, 44273],
+    "casesPerSeed": 14,
+    "timeoutSecondsPerRelease": 330,
+    "allowedExclusions": [],
+    "structure": "Vary external index and owner names, VERBOSE and concurrency flags, placement, table scope, partition relations and decoys. Vary the second active table space and round-trip preserved result and failure observations."
+  },
+  "observations": [
+    "Native effect of issued command, SQLSTATE and notices under registered pins, including the pinned catalog warning.",
+    "Logical ownership, attachment edges and user row values. Exact owner and index coordinate selection, persisted table space, filenode replacement and physical identity mode.",
+    "The same independent prediction for authored and emitted SQL. Use physical source placements distinct from destination choices."
+  ],
+  "negative": [
+    "An undeclared effective application table space",
+    "A quoted case-distinct tablespace name",
+    "The same storage coordinate supplied twice as separate declarations",
+    "A syntactically invalid TABLESPACE option, even when a later option is valid",
+    "The shared-only pg_global destination in the application domain",
+    "A reserved pg_ application name in direct construction"
+  ],
+  "faults": [
+    "Ignore the effective table-space flag in a rebuild header",
+    "Resolve the first option rather than the last",
+    "Reuse the wrong declaration identity from the cluster namespace",
+    "Admit an undefined storage coordinate"
+  ],
+  "preserves": "Keep the evidence and canonical spelling theorem for every operation without a destination. Move earlier admitted-form witness changes into this domain and retain independent invalid-destination refusals in the earlier domains.",
+  "open": [
+    "The explicit shared pg_global destination and its role-specific refusal or no-move behavior.",
+    "Different privileges and a concurrent change of the external table-space declaration."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/indexcmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/indexcmds.c"
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "revision": "SemanticsIR/mysql-signed-literal-projection-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-5.7.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.0.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.2.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.3.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.0.1/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native"
+  ],
+  "scope": "Pure signed 64-bit exact integer projection terms with exact decimal digit extent and ordinary output labels. Accept bare integer lexemes and one unary sign. Native result value, heading label, type, nullability and wire display extent are observable.",
+  "constructors": {
+    "Literal/ProjectedIntegerLiteral": {
+      "role": "An exact integral result atom with all observable numeric token digits.",
+      "structure": "A closed string value consisting of an optional leading minus and one or more ASCII decimal digits. The exact mathematical value is derived from these digits.",
+      "conditions": "Validate the complete token and its exact signed64 range. Preserve issued leading zeroes and negative zero. Unary plus can be removed because the calibrated integer role has the same value and heading.",
+      "meaning": "Project the exact signed value as a nonnull native LONGLONG. Native wire width includes all digits plus one for a negative sign in 5.6 and 5.7. Modern profiles reserve a signed position for every value.",
+      "externalInterpretation": "Pinned PHP mysqlnd and the native database profile. No external relations are needed for pure numeric output.",
+      "sql": "Emit all checked digits and the exact signed polarity. The result column separately controls the heading.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Literal/IntrinsicIntegerName": {
+      "role": "An intrinsic positive numeric heading longer than the ordinary alias limit.",
+      "structure": "The exact nonempty ASCII digit heading.",
+      "conditions": "The heading exceeds 256 characters and matches the complete owned numeric atom. The parent verifies this identity before publication.",
+      "meaning": "The server derives the exact label from the positive numeric token. It can expose its full length even when explicitly naming that many characters would truncate.",
+      "externalInterpretation": "Native positive integer heading in the listed releases.",
+      "sql": "At the native result boundary emit the matching numeric token in its result position. If an enclosing rendering owns local labels, emit its checked local name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "IntegerLiteral",
+    "ResultColumn",
+    "Select",
+    "Identifier",
+    "Rows/Compound"
+  ],
+  "observations": [
+    "Compare the exact ordered heading sequence, including every native field label, signed integer type, nullability and display extent.",
+    "Compare original and generated native statements and the exact type and value of every observed scalar. Preserve independently predicted negative zero display extent and all effective leading digits.",
+    "The unsigned spelling of a nonnegative unaliased literal is its native heading even at long extent. A bare negative heading can use the native 255-character prefix of the signed source spelling. The numeric token retains every digit separately.",
+    "Same-length or same-value errors remain visible via independent native labels, exact signed values, or the extent observation."
+  ],
+  "finite": {
+    "spellingValues": [
+      "-9223372036854775808",
+      "-9223372036854775807",
+      "-2147483649",
+      "-2147483648",
+      "-2147483647",
+      "-1",
+      "-0",
+      "0",
+      "1",
+      "2147483647",
+      "2147483648",
+      "9223372036854775807"
+    ],
+    "padding": [
+      0,
+      1,
+      31,
+      32,
+      33,
+      68,
+      255,
+      256,
+      512,
+      4096
+    ],
+    "headings": [
+      "literal_value",
+      "intrinsic"
+    ],
+    "routes": [
+      "direct",
+      "analyze"
+    ],
+    "coordinatesPerRoute": 240,
+    "complete": "Compare all coordinates as a Cartesian product and independently recover the signed value, token extent and heading from the constructed result atom and its owning result column.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      27803,
+      39821,
+      62597
+    ],
+    "casesPerSeed": 32,
+    "directCasesPerSeed": 32,
+    "timeoutSecondsPerRelease": 480,
+    "shape": "Compose one to four ordered independently signed atoms in each projection, with wide values, repeated values, wide extent and distinguishable or repeated labels. Use size boundaries from the finite grid and intervening lengths.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Construct an exact integer token with a decimal separator",
+    "Construct a positive token above signed64",
+    "Construct a negative token below signed64",
+    "Construct a long intrinsic heading that differs from its owned token",
+    "Construct a long intrinsic heading around an ordinary narrow atom",
+    "Analyze an exact integral token outside the admitted signed64 role"
+  ],
+  "faults": [
+    "Drop padding while preserving the mathematical value",
+    "Replace a wide result atom with a different signed value",
+    "Force an ordinary alias for an intrinsic long numeric heading",
+    "Ignore a changed visible width with an unchanged integer value"
+  ],
+  "trust": [
+    "Exact native pinned release and stock session profile",
+    "Named PHP native observer with sufficient 65536-byte mysqlnd metadata command buffer",
+    "Fixed lexical integer grammar, source-linked PHP shape and exact out-of-domain guards",
+    "Independently checked result observations and human review pending"
+  ],
+  "unmetAdjacentAreas": [
+    "Long explicit aliases require a separate requested-label role and the observed diagnostic behavior for truncated aliases.",
+    "Declarations, INSERT, derived materialization and arbitrary composed arithmetic or inferred headings over general expressions require their own literal-width composition evidence.",
+    "Unsigned and exact DECIMAL beyond signed64, approximate, hex and bit-value input are distinct semantic domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/number-literals.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/integer-types.html"
+  ],
+  "calibration": {
+    "purePerRelease": 912,
+    "largePurePerRelease": 140,
+    "adjacentAliasPerRelease": 6,
+    "pure": {
+      "5.6.51": "b83c2e2f176a6a1095bafaec10473f807995253b508745d47b2b3311521d7161",
+      "5.7.44": "38c011949ab242e150bf6cc164776c5fcaf401a02ee4842a13c2082222e2a518",
+      "8.0.44": "d7f9f9ee3b922172ef519935e84f4dbe540db7de932ca13463b7248c3ca20573",
+      "8.1.0": "161aacceb3d117d4a4af11f7ff4124a7c20ee472faa8c690eb1ac39f73542d2f",
+      "8.2.0": "6530c2011ec0263ae2d42a906686a85775b9f96c00abd845e4906bb8c1fbfa31",
+      "8.3.0": "9cf959bb588881b9daf8d3cdee18b27d82f9cf176728af97fb756435b4eb6d37",
+      "8.4.7": "41ce4c0f6bd19e805a8fdd897fca9c2c4f231eb0c2e16c59cf6071d6092f4e24",
+      "9.0.1": "d079acd0a19576690c07174f9518ea2a217315f8ddaa3984fc72bdcca1724621",
+      "9.1.0": "bdd53650b7ff2651a4aef0d395b40d24367734ba1947335292014b67b0661ca7"
+    },
+    "largeAndAdjacent": {
+      "5.6.51": "1716686029bf98191252645f7ee16e87b98c9e3c9e2bd77348cbbce72bb03b28",
+      "5.7.44": "4bbaa9e82235d4836f51cd88dff259b9050d5e9c84a619bfc5dce3292bb9fa84",
+      "8.0.44": "d0f9019694d9604ec0182bbeb59d9fa8fa1e799367875ac204c1195e8e395ec8",
+      "8.1.0": "e9796ff69349e6a3fe81ab405270283fb86d7a46f1dc24db9de3a119407cb77d",
+      "8.2.0": "a879a9425aa0c89c813be6983d259e4087aff5174161a798a92a4f382b976fe3",
+      "8.3.0": "0da1b5b98c0de3461c78279f3b6b5faced98662db913ccec274a606febbe9f35",
+      "8.4.7": "cc127b794ed12d563755eaacbb1f104623506215dc2b25b40158502713f7b6aa",
+      "9.0.1": "63f56217e6dbc28c259e98d17fdc8723fa2c06c5d9694e299aa38f84a7ec79b0",
+      "9.1.0": "245c861afc1553f8c79aa84b6ca154721b7bb9f4d267dcfdea17bcb6358f726a"
+    },
+    "priorLostExtent": "798f9981f4456de81e7e070549598f6ad4fd3a8d69c8d4a7643b2799d79d0edf"
+  }
+}

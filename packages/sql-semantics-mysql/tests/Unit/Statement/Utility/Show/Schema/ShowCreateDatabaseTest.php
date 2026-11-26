@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ShowCreateDatabase::class)]
 #[Medium]
@@ -16,13 +16,13 @@ final class ShowCreateDatabaseTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW CREATE DATABASE db');
+        $show = (new Inspection('mysql-5.6.51'))->inspect('SHOW CREATE DATABASE db');
         self::assertInstanceOf(ShowCreateDatabase::class, $show->statement);
         self::assertSame('Database', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CREATE DATABASE db', (new Semantics('mysql-5.6.51'))->analyze('SHOW CREATE DATABASE db')->toString());
+        self::assertSame('SHOW CREATE DATABASE db', (new Inspection('mysql-5.6.51'))->inspect('SHOW CREATE DATABASE db')->toString());
     }
 }

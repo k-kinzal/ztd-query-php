@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
  * Each case holds the keyword. No side means BOTH.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_trim.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\TrimSide::Leading->value // => 'LEADING'
  */

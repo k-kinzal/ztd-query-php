@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
  *
  * Source: https://www.postgresql.org/docs/17/datatype-xml.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the document choice
  *     \SqlSemantics\Platform\PostgreSql\Statement\Option\XmlOption::Document->value // => 'DOCUMENT'
  */

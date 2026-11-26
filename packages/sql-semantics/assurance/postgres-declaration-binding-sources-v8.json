@@ -1,0 +1,96 @@
+{
+  "revision": "SemanticsIR/postgres-declaration-binding-sources-8",
+  "approval": "pending-human-review",
+  "related": "postgres-text-declarations-v2.json",
+  "artifacts": {
+    "src/Catalog.php": {
+      "sha256": "dbc581594b1fa4c9541a4e97a7ae077f41aeade07c6e945543413b7b48a112ff",
+      "role": "Propagate complete versus open declarations while preserving their order."
+    },
+    "src/Platform.php": {
+      "sha256": "f0b4babdbc1e6163a77d5c6a4b324f620a6f61e6df495dfcf9a1277dc67e3969",
+      "role": "Resolve the implicit temporary and catalog namespaces and preserve the ordered search path."
+    },
+    "src/Rules/Table/Definition/ColumnTyping.php": {
+      "sha256": "815c39d2de3ae7fb83a7c88b16f42e508a4dbefc87067e16d871dff0365a3ed6",
+      "role": "Keep the type resolved by each declaration at its original position."
+    },
+    "src/Statement/Type/Designation/NamedDesignation.php": {
+      "sha256": "af507dac7740b51e4aa8598682a07b53074bd7f4309194320773ee1a6537483a",
+      "role": "Resolve a name before a native physical column is published."
+    },
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "30ed5d65653648acc08bdd50bc334a98fc59b93654ac3e4d7f77ac692b60eccd",
+      "role": "Store the checked namespace as part of the transient dialect context."
+    },
+    "src/Model/Contract/Index/IndexDeclaration.php": {
+      "sha256": "a1fc776a61ce32c2befbfe7c27062b8560bd3f9ce5bcf5dd608cb45bcb50b9ba",
+      "role": "Retain the nominal declared physical index and its typed ownership."
+    },
+    "src/Model/Contract/Index/IndexNamespace.php": {
+      "sha256": "e5ddda9e2a736f727c6f12febfda9da67cb9668038f2d90d3d81ed2a08e6e70c",
+      "role": "Copy the declared, opaque and partitioned namespace coordinates."
+    },
+    "src/Model/Contract/Index/IndexSchemas.php": {
+      "sha256": "2de75d9a2c43a0d525ef62abb280d4660f26733e2f1e6124ee22aad450b0d6eb",
+      "role": "Distinguish stock and session-internal namespace names."
+    },
+    "src/Model/Contract/Index/StockIndexNames.php": {
+      "sha256": "c077403df9c7e92165509f2f29e75c6c69de41c8950f8eee5f12033538e6bea2",
+      "role": "Fix exact stock relation names for both releases."
+    },
+    "src/Lowering/Catalog/CatalogIndexes.php": {
+      "sha256": "de9e3116b532efa896e4fff9b87da13ea07e4b4189d047de2c08ec53b0ccc04b",
+      "role": "Collect explicitly known ordinary, partitioned and named constraint index identities."
+    },
+    "src/Model/Facade/Index/CatalogRelationCoordinates.php": {
+      "sha256": "8e1b24f7f44624b96b71de26bdb5aff062bbb9dfeabe9774b8eaffa06feefcd8",
+      "role": "Preserve absolute relation names at their declaration position."
+    },
+    "src/Model/Facade/Index/IndexCreationVisibility.php": {
+      "sha256": "5b4afc81440eb39ff62852b015011b1625d0281a2f636da524b03371037269bf",
+      "role": "Check exact index namespace and creation owner."
+    },
+    "src/Model/Facade/Index/IndexBinding.php": {
+      "sha256": "e082e08384c0e0e3c899e10e4d7e1833f9a40cc691395b88b9ce02052cd954c5",
+      "role": "Find a definite physical index coordinate and verify its declared owner before selecting an operation-specific role."
+    },
+    "src/Lowering/Catalog/TableIndexFacts.php": {
+      "sha256": "66377a676ac95c12911c5843f7942100db74116549dd32ee0ea741369d1d2672",
+      "role": "Distinguish a definite explicit key from exclusion, consolidation and opaque generated index names."
+    },
+    "src/Statement/Object/Drop.php": {
+      "sha256": "c69667f9f7f290816d3c4a818c7a1eb3efe2a4f98092f0002f771d772eb04bc0",
+      "role": "Keep parsed DROP INDEX binding and concurrent diagnostics on their designated route."
+    },
+    "src/Model/Contract/Index/InformationSchemaNames.php": {
+      "sha256": "af10d11c7117742aa125b3d6d4906fa1bfa7ed508b1c2285c9f4f91c55bbb317",
+      "role": "Fix the shared information schema relation names."
+    },
+    "src/Rules/Table/Definition/Indexes.php": {
+      "sha256": "02a8926dbe13026d1ed68b95f309a059214b2197278e50a6357ae4e3de15c213",
+      "role": "Bind index operands to the already resolved absolute table, including predicates written with qualifiers."
+    },
+    "src/Statement/Utility/Maintenance/Reindex.php": {
+      "sha256": "8667ccdcec72c79964ebbdff52726e20531fb4beca428f1def44e351dd8dd007",
+      "role": "Retain the effective requested rebuild mode independently of the stored index."
+    },
+    "src/Rules/Utility/OptionArguments.php": {
+      "sha256": "2b8cd4fe40458d53caec707a289549f0fcaabfa3b7cfc197c7d0d591f73216fc",
+      "role": "Read typed native Boolean values and select the last exact occurrence."
+    },
+    "src/Rules/Utility/OptionRules.php": {
+      "sha256": "61d82e0c6fd09356a1e99fcb203e42ae61d8268c43eb872ed3a6be5cea507083",
+      "role": "Validate the native REINDEX option alphabet and Boolean values before publication."
+    },
+    "src/Model/Contract/Index/IndexDeclarationKind.php": {
+      "sha256": "61220f732ca7b28c4949c49d3ed380594ae0ca5311bbc1a93f42ccfd2f86654b",
+      "role": "Separate ordinary, named key, exclusion and partitioned ownership."
+    },
+    "src/Lowering/Catalog/TableGeneratedNames.php": {
+      "sha256": "47f88017debf88bf45f5fc9c82666d822382129c37f88f6db9355786aaece1a7",
+      "role": "Identify LIKE and serial declarations that introduce additional relation names."
+    }
+  },
+  "revises": "postgres-declaration-binding-sources-v7.json"
+}

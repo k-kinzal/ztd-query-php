@@ -31,10 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  * https://dev.mysql.com/doc/refman/8.4/en/delete.html,
  * https://dev.mysql.com/doc/refman/8.4/en/partitioning-selection.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the table a DELETE writes
- *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE FROM shop.t AS x PARTITION (p0) WHERE x.a = 1');
- *     [$delete->statement->table->name()->schema?->value, $delete->statement->table->alias()?->value, count($delete->statement->table->partitions)] // => ['shop', 'x', 1]
+ * @visibility SqlSemantics
  */
 final class WriteTarget implements NamedRelation
 {

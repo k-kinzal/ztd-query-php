@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition;
 
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
@@ -41,9 +42,9 @@ final class TypeRecording
     /**
      * Answers the declared type of a column with an optional written type name.
      */
-    public function domain(?TypeName $type, bool $strict): ColumnDomain
+    public function domain(?TypeName $type, bool $strict, ?Layout $layout = null): ColumnDomain
     {
-        $text = $type === null ? '' : $this->stripped($this->written($type));
+        $text = $type === null ? '' : $this->stripped($layout?->text() ?? $this->written($type));
         if ($text === '') {
             return new ColumnDomain('', $strict);
         }

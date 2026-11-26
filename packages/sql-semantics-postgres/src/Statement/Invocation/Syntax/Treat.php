@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * result column is named after the function.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-TYPE-CASTS. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column after the type's function
  *     $treat = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\Treat(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(),

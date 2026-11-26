@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-modifiers.html,
  * https://dev.mysql.com/doc/refman/5.7/en/select.html.
  *
- * @visibility public
- * @example Reading the grouping expressions
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a, b FROM t GROUP BY a, b');
- *     count($query->statement->groupBy->items) // => 2
+ * @visibility SqlSemantics
  * @example Refusing an empty grouping
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

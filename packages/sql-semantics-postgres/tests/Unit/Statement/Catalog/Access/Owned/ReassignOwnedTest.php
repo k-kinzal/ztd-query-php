@@ -14,12 +14,12 @@ final class ReassignOwnedTest extends TestCase
 {
     public function testRenderWritesTheOwners(): void
     {
-        self::assertSame('REASSIGN OWNED BY joe, SESSION_USER TO boss', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REASSIGN OWNED BY joe, SESSION_USER TO boss')->toString());
+        self::assertSame('REASSIGN OWNED BY joe, SESSION_USER TO boss', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REASSIGN OWNED BY joe, SESSION_USER TO boss')->toString());
     }
 
     public function testDeriveStatementReportsPublic(): void
     {
-        self::assertSame(['role "public" does not exist', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REASSIGN OWNED BY PUBLIC TO PUBLIC')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('REASSIGN OWNED BY PUBLIC TO PUBLIC')->facts->diagnostics));
     }
 
     public function testRejectsNoOwner(): void

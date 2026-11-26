@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  * (PG-TRIGGER-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
- * @visibility public
- * @example Reading a constraint trigger
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()');
- *     $statement->toString() // => 'CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()'
+ * @visibility SqlSemantics
  */
 final class CreateConstraintTrigger implements SchemaElement, Relation
 {

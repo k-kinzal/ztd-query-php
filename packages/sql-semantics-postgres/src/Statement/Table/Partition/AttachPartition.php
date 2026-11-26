@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
  * its node; the bound values see no column.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Attaching a partition
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES IN (1)');
- *     $statement->toString() // => 'ALTER TABLE p ATTACH PARTITION p1 FOR VALUES IN (1)'
+ * @visibility SqlSemantics
  */
 final class AttachPartition implements AlterCommand
 {

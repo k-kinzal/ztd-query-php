@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * is registered for in the family.
  * Source: https://www.postgresql.org/docs/17/sql-createopclass.html, https://www.postgresql.org/docs/17/sql-alteropfamily.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the support number
  *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Operator\FunctionMember(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'), new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignature(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('btint4cmp')])));
  *     [$member->support->digits, $member->operandTypes] // => ['1', null]

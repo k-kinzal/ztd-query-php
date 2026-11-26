@@ -1,0 +1,38 @@
+{
+  "revision": "SemanticsIR/mysql-signed-membership-evidence-1",
+  "approval": "pending-human-review",
+  "reference": {
+    "file": "mysql-signed-membership-v2.json",
+    "sha256": "bbef029acbce1b20be90aff24c796fc395b4ee13ccd1b5d2e58a9e1334aac7bf"
+  },
+  "negativeCount": 10,
+  "faults": [
+    "Skip the empty-list condition",
+    "Drop the final alternative",
+    "Remove the NOT modifier",
+    "Substitute a different signed-width physical slot",
+    "Ignore a known output type difference in the comparator"
+  ],
+  "sourceFaults": [
+    "mysql-membership-use-caller-alternative-array"
+  ],
+  "boundaryWitnesses": [
+    "Test both a final matching operand and a nullable result with 8190 alternatives on each route."
+  ],
+  "observations": [
+    "Check native integer metadata and exact signed integral physical declarations, with no warnings.",
+    "Check SELECT output labels, values, NULLs, duplicate counts and asserted order. Check full affected and restored relations for writes.",
+    "Allocate local consumed slots independently in deterministic host order and compare exact graph references against those types."
+  ],
+  "calibration": {
+    "5.6.51.stdout": "9e162303706acee1993d9ffba1d4100412fdd00664c03a44b6311d8d2dbeedc5",
+    "5.7.44.stdout": "8d958fc13c5b7fc79f46e679e6da6aee0e34ad0b6ecce77474a6d6970f9c68e1",
+    "8.0.44.stdout": "0480b438e219d18a7b8097643daf526dcac0a856f3e0822b7d4e989e97f53633",
+    "8.1.0.stdout": "219ada08c5396d8e9e3018a5907c3a31c85886497e43e358e22fdf0729a4d722",
+    "8.2.0.stdout": "b7f8b3f8564e7fb3af157aad632755da7a16a7ced7c2451f7c1edf8e1f421045",
+    "8.3.0.stdout": "21501157fd0953311e0bbf743f3300e763ff31d615d3646e775b89128a8c6d48",
+    "8.4.7.stdout": "ecb5091416d6e0fb31adee138e9547fc015f9887991e017dcb5648f2ff0b151c",
+    "9.0.1.stdout": "3e293ca0268b6a37e988fb4770fe0e43e226b1d6937c7f2a6b93a37f99d0fc06",
+    "9.1.0.stdout": "b015d4fabd6e721f631e2b42600e81e0adc333b8286ead109b0bddf08b4fa502"
+  }
+}

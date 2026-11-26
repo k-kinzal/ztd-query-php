@@ -15,13 +15,13 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(NameRule::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class NameRuleTest extends TestCase
 {
     public function testIdentifierDecodesEverySpellingOfAName(): void
     {
-        $operation = (new Semantics('mysql-8.4.7'))->analyze('SELECT a, `b c`, `d``e`, action, 猫 FROM t');
+        $operation = (new Inspection('mysql-8.4.7'))->inspect('SELECT a, `b c`, `d``e`, action, 猫 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame('SELECT a, `b c`, `d``e`, `action`, `猫` FROM t', $operation->toString());
@@ -41,7 +41,7 @@ final class NameRuleTest extends TestCase
 
     public function testIdentifierReadsAStringAtANamePosition(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze("SELECT a AS 'it''s' FROM t");
+        $operation = (new Inspection('mysql-5.7.44'))->inspect("SELECT a AS 'it''s' FROM t");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame("it's", $operation->statement->items[0]->alias?->value);
@@ -50,7 +50,7 @@ final class NameRuleTest extends TestCase
 
     public function testIdentifierLowersALegacyKeywordAsTheNameItSpells(): void
     {
-        self::assertSame('SELECT `ascii`, `action` FROM t', (new Semantics('mysql-5.6.51'))->analyze('SELECT ascii, action FROM t')->toString());
+        self::assertSame('SELECT `ascii`, `action` FROM t', (new Inspection('mysql-5.6.51'))->inspect('SELECT ascii, action FROM t')->toString());
     }
 
     public function testKeywordTellsTheKeywordAsIdentifierProductions(): void
@@ -69,7 +69,7 @@ final class NameRuleTest extends TestCase
 
     public function testOptionalLowersTheComponentOfALegacySystemVariable(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT @@innodb.x, @@y');
+        $operation = (new Inspection('mysql-5.7.44'))->inspect('SELECT @@innodb.x, @@y');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -85,7 +85,7 @@ final class NameRuleTest extends TestCase
 
     public function testQualifiedLowersATableNameWithItsDatabase(): void
     {
-        $operation = (new Semantics('mysql-8.4.7'))->analyze('SELECT a FROM `my db`.t');
+        $operation = (new Inspection('mysql-8.4.7'))->inspect('SELECT a FROM `my db`.t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $from = $operation->statement->from;
@@ -127,8 +127,8 @@ final class NameRuleTest extends TestCase
 
     public function testColumnLowersEveryQualification(): void
     {
-        $operation = (new Semantics('mysql-8.4.7'))->analyze('SELECT a, t.b, db.t.c FROM t');
-        $legacy = (new Semantics('mysql-5.7.44'))->analyze('SELECT .t.d FROM t');
+        $operation = (new Inspection('mysql-8.4.7'))->inspect('SELECT a, t.b, db.t.c FROM t');
+        $legacy = (new Inspection('mysql-5.7.44'))->inspect('SELECT .t.d FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item2 = $operation->statement->items[2];
@@ -217,7 +217,7 @@ final class NameRuleTest extends TestCase
 
     public function testDottedTellsATableNameWrittenAfterALeadingDot(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT 1 FROM .t');
+        $operation = (new Inspection('mysql-5.7.44'))->inspect('SELECT 1 FROM .t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);

@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * writes `IDENTIFIED BY PASSWORD 'hash'`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-authentication.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a plugin and its authentication string
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('caching_sha2_password'), \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Hash, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('$A$005$x'));
  *     [$method->plugin?->value, $method->secret?->value] // => ['caching_sha2_password', '$A$005$x']

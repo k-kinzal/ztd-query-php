@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
@@ -32,11 +33,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
  * https://sqlite.org/lang_createtable.html#the_default_clause,
  * https://sqlite.org/gencol.html#limitations. Status: Implemented.
  *
- * @visibility public
- * @example Reading a column definition
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (price DECIMAL(10, 2) NOT NULL DEFAULT 0)');
- *     $column = $create->statement->columns[0];
- *     [$column->name->value, $column->type?->text(), count($column->constraints), $column->notNull()] // => ['price', 'DECIMAL', 2, true]
+ * @visibility SqlSemantics
  */
 final class ColumnDefinition implements Node
 {
@@ -51,9 +48,15 @@ final class ColumnDefinition implements Node
      * @param Name $name The column name
      * @param TypeName|null $type The declared type
      * @param list<ColumnConstraint> $constraints The constraints in written order
+     * @param Layout|null $typeLayout The type spelling when a generation suffix is part of its token list
      */
-    public function __construct(public readonly Name $name, public readonly ?TypeName $type = null, array $constraints = [])
-    {
+    public function __construct(
+        public readonly Name $name,
+        public readonly ?TypeName $type = null,
+        array $constraints = [],
+        public readonly ?Layout $typeLayout = null,
+    ) {
+        Check::input($typeLayout === null || $type !== null, 'A type layout requires a declared type.');
         $this->constraints = Check::listOf($constraints, ColumnConstraint::class, 'Column constraints are an ordered list of column constraints.');
     }
 
@@ -100,6 +103,21 @@ final class ColumnDefinition implements Node
     }
 
     /**
+     * Answers the declared default collation, taking the last COLLATE constraint.
+     */
+    public function collation(): ?Name
+    {
+        $name = null;
+        foreach ($this->constraints as $constraint) {
+            if ($constraint instanceof Collation) {
+                $name = $constraint->name;
+            }
+        }
+
+        return $name;
+    }
+
+    /**
      * Derives the type arguments and the operands of the constraints inside the table definition, and reports a default SQLite rejects.
      */
     public function deriveColumn(Derivation $derivation, ConstraintScope $scope): void
@@ -125,7 +143,10 @@ final class ColumnDefinition implements Node
      */
     public function render(Output $out): void
     {
-        $out->name($this->name, NameUse::Column)->node($this->type);
+        $out->name($this->name, NameUse::Column);
+        if ($this->type !== null) {
+            $out->layout($this->typeLayout, $this->type);
+        }
         foreach ($this->constraints as $constraint) {
             $out->node($constraint);
         }

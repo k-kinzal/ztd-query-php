@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#function_json-value.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing JSON_VALUE() with RETURNING
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT JSON_VALUE('{\"a\": 1}', '$.a' RETURNING SIGNED NULL ON EMPTY)");
- *     $query->field(0)->type->descriptor->name() // => 'SIGNED'
+ * @visibility SqlSemantics
  */
 final class JsonValueCall implements Scalar
 {

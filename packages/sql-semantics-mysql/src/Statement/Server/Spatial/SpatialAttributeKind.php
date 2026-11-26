@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Spatial;
  * mandatory; each attribute is written at most once.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization->value // => 'ORGANIZATION'
  */

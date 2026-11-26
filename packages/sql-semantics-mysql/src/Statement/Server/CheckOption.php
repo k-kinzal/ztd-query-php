@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server;
  * Each case holds the keywords it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/check-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\CheckOption::ForUpgrade->value // => 'FOR UPGRADE'
  */

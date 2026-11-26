@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * no rows. The facts follow MYSQL-PROGRAM-CONDITIONS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
  *
- * @visibility public
- * @example Reading the area and the kind of information
- *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT');
- *     [$get->statement->area->value, $get->toString()] // => ['STACKED', 'GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT']
+ * @visibility SqlSemantics
  */
 final class GetDiagnostics implements Statement, ProgramStatement
 {

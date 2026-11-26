@@ -11,8 +11,8 @@ use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ViewFacts::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class ViewFactsTest extends TestCase
 {
     public function testDeriveAnswersTheDeclarationOfTheView(): void
     {
-        $create = (new Semantics())->analyze('CREATE VIEW v AS SELECT 1 AS a');
+        $create = (new Inspection())->inspect('CREATE VIEW v AS SELECT 1 AS a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateView::class, $statement);
         $platform = new Platform();

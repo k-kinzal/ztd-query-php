@@ -10,10 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * Several output fields have the looked-up name; none is chosen.
  *
- * @visibility public
- * @example Finding every field that shares a name
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS a, 2 AS a');
- *     count($operation->lookupField('a')->fields) // => 2
+ * @visibility SqlSemantics
  */
 final class AmbiguousFields implements FieldLookup
 {

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(SearchPath::class)]
 #[Medium]
@@ -22,23 +22,23 @@ final class SearchPathTest extends TestCase
         self::assertSame(['main', 'aux'], $path->schemas);
     }
 
-    public function testSchemasRefuseAnEmptyName(): void
+    public function testSchemasKeepAnEmptyAttachedName(): void
     {
-        $this->expectExceptionMessage('A search path names at least one schema and no empty name.');
+        $path = new SearchPath('main', '');
 
-        new SearchPath('main', '');
+        self::assertSame(['main', ''], $path->schemas);
     }
 
     public function testSchemasRefuseAnEmptyPath(): void
     {
-        $this->expectExceptionMessage('A search path names at least one schema and no empty name.');
+        $this->expectExceptionMessage('A search path names at least one schema.');
 
         new SearchPath();
     }
 
     public function testSchemasBecomeTheSearchedSchemasOfTheContext(): void
     {
-        $semantics = new Semantics(null, null, searchPath: new SearchPath('main', 'aux'));
+        $semantics = new Inspection(null, null, searchPath: new SearchPath('main', 'aux'));
 
         self::assertSame(['temp', 'main', 'aux'], array_map(static fn (Name $name): string => $name->value, $semantics->context()->searchPath));
     }

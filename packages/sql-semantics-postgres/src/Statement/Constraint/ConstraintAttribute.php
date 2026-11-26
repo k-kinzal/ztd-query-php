@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * IMMEDIATE are the defaults; a written default is kept as written.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the attributes of a table constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, UNIQUE (a) DEFERRABLE INITIALLY DEFERRED)');
- *     $create->statement->definition->elements[1]->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::Deferrable, \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::InitiallyDeferred]
+ * @visibility SqlSemantics
  */
 enum ConstraintAttribute: string implements Clause
 {

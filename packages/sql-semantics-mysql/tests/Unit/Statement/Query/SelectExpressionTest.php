@@ -9,13 +9,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\MySql\Model\Statement\Spelling\Spelled;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
@@ -23,6 +21,8 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SelectExpression::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class SelectExpressionTest extends TestCase
 {
     public function testRenderWritesTheExpressionAndTheAlias(): void
     {
-        $operation = (new Semantics())->inspect('select a total from t');
+        $operation = (new Inspection())->diagnose('select a total from t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
@@ -42,7 +42,7 @@ final class SelectExpressionTest extends TestCase
 
     public function testRenderOmitsTheAliasWhenNoneWasWritten(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a, 1 FROM t');
+        $operation = (new Inspection())->diagnose('SELECT a, 1 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
@@ -54,7 +54,7 @@ final class SelectExpressionTest extends TestCase
 
     public function testRenderQuotesAnAliasThatIsAReservedWord(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a AS `select` FROM t');
+        $operation = (new Inspection())->diagnose('SELECT a AS `select` FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame('select', $operation->statement->items[0]->alias?->value);
@@ -76,7 +76,7 @@ final class SelectExpressionTest extends TestCase
     #[DataProvider('providerReleases')]
     public function testRenderKeepsTheTextTheServerNamesAnUnaliasedItemAfter(string $release): void
     {
-        $operation = (new Semantics($release))->inspect('SELECT 1+1, 5 MOD 2, 1 && 1, CONVERT(1, CHAR), ROW(1, 2) = (1, 2), 0x0a, x\'0a\', NOW( ), CURRENT_DATE, 1 /* c */ + 2', []);
+        $operation = (new Inspection($release))->diagnose('SELECT 1+1, 5 MOD 2, 1 && 1, CONVERT(1, CHAR), ROW(1, 2) = (1, 2), 0x0a, x\'0a\', NOW( ), CURRENT_DATE, 1 /* c */ + 2', []);
 
         self::assertSame(
             ['1+1', '5 MOD 2', '1 && 1', 'CONVERT(1, CHAR)', 'ROW(1, 2) = (1, 2)', '0x0a', "x'0a'", 'NOW( )', 'CURRENT_DATE', '1 /* c */ + 2'],
@@ -88,44 +88,44 @@ final class SelectExpressionTest extends TestCase
     #[DataProvider('providerReleases')]
     public function testDeriveNamesTheColumnsOfADerivedTableAfterTheirText(string $release): void
     {
-        $semantics = new Semantics($release);
-        $missing = $semantics->inspect('SELECT x FROM (SELECT 1+1) AS d', []);
-        $found = $semantics->inspect('SELECT `1+1` FROM (SELECT 1+1) AS d', []);
+        $semantics = new Inspection($release);
+        $missing = $semantics->diagnose('SELECT x FROM (SELECT 1+1) AS d', []);
+        $found = $semantics->diagnose('SELECT `1+1` FROM (SELECT 1+1) AS d', []);
 
         self::assertInstanceOf(MissingColumn::class, $missing->field('x')->resolution);
         self::assertInstanceOf(ResolvedColumn::class, $found->field('1+1')->resolution);
         self::assertSame('SELECT `1+1` FROM (SELECT 1+1) AS d', $found->toString());
-        self::assertSame('SELECT `1+1` FROM (SELECT 1+1) AS d', $semantics->inspect($found->toString(), [])->toString());
+        self::assertSame('SELECT `1+1` FROM (SELECT 1+1) AS d', $semantics->diagnose($found->toString(), [])->toString());
     }
 
     #[DataProvider('providerReleases')]
     public function testDeriveNamesSelfNamedItemsByTheirOwnNames(string $release): void
     {
-        $operation = (new Semantics($release))->inspect("SELECT (1), +a, null, '  x' 'y', ? FROM t");
+        $operation = (new Inspection($release))->diagnose("SELECT (1), +a, null, '  x' 'y', ? FROM t");
 
         self::assertSame(['1', 'a', 'NULL', 'x', '?'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
     }
 
     public function testDeriveNamesBooleansByTheirWordsIn5xAndByTheirTextLater(): void
     {
-        self::assertSame('TRUE', (new Semantics('mysql-5.7.44'))->inspect('SELECT true')->field(0)->name?->value);
-        self::assertSame('true', (new Semantics('mysql-8.0.44'))->inspect('SELECT true')->field(0)->name?->value);
+        self::assertSame('TRUE', (new Inspection('mysql-5.7.44'))->diagnose('SELECT true')->field(0)->name?->value);
+        self::assertSame('true', (new Inspection('mysql-8.0.44'))->diagnose('SELECT true')->field(0)->name?->value);
     }
 
     public function testDeriveNamesTheColumnsOfACommonTableAndOfAUnionAfterTheFirstOperand(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertInstanceOf(ResolvedColumn::class, $semantics->inspect('WITH c AS (SELECT 1+1) SELECT `1+1` FROM c', [])->field(0)->resolution);
-        self::assertSame(['1+1'], array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->inspect('SELECT * FROM (SELECT 1+1 UNION SELECT 2) AS d', [])->fields()->items ?? []));
+        self::assertInstanceOf(ResolvedColumn::class, $semantics->diagnose('WITH c AS (SELECT 1+1) SELECT `1+1` FROM c', [])->field(0)->resolution);
+        self::assertSame(['1+1'], array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->diagnose('SELECT * FROM (SELECT 1+1 UNION SELECT 2) AS d', [])->fields()->items ?? []));
     }
 
     public function testDeriveNamesTheColumnsOfACreatedTable(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect("CREATE TABLE t2 AS SELECT 1+1, 'b'", []);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose("CREATE TABLE t2 AS SELECT 1+1, 'b'", []);
 
-        self::assertSame(['1+1', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->inspect('SELECT * FROM t2', [$create])->fields()->items ?? []));
+        self::assertSame(['1+1', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->diagnose('SELECT * FROM t2', [$create])->fields()->items ?? []));
     }
 
     public function testAnAliasedItemWithALayoutIsRejected(): void
@@ -144,7 +144,7 @@ final class SelectExpressionTest extends TestCase
 
     public function testDeriveNamesAnItemWithoutTheTriviaAfterIt(): void
     {
-        $operation = (new Semantics())->inspect("SELECT 1+1 /* c */, 2 -- d\n, 1 /*e*/ + 1 /*f*/ FROM dual");
+        $operation = (new Inspection())->diagnose("SELECT 1+1 /* c */, 2 -- d\n, 1 /*e*/ + 1 /*f*/ FROM dual");
 
         self::assertSame(['1+1', '2', '1 /*e*/ + 1'], [$operation->field(0)->name?->value, $operation->field(1)->name?->value, $operation->field(2)->name?->value]);
     }
@@ -158,8 +158,8 @@ final class SelectExpressionTest extends TestCase
 
     public function testRenderWritesAnItemBuiltWithoutLayoutCanonically(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1')))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([], [new SelectExpression(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1')))]));
 
         self::assertSame('SELECT 1 + 1', $operation->toString());
         self::assertSame('1 + 1', $operation->field(0)->name?->value);

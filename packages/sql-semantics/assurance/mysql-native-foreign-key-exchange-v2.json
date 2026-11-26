@@ -1,0 +1,179 @@
+{
+  "revision": "SemanticsIR/mysql-native-foreign-key-exchange-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Native MySQL InnoDB with active referential checks, default parent-key restriction, empty SQL mode, utf8mb4 and exact schema and table name comparison.",
+  "scope": "One native atomic ALTER TABLE with foreign-key additions and removals on a resolved persistent table. The physical index declarations are unchanged inputs to this group. Implicit backing index creation and replacement are part of the effects.",
+  "constructors": {
+    "Schema/ForeignKey/Exchange/AlterForeignKeys": {
+      "role": "Apply one ordered group of native foreign-key removals and additions at the absolute physical owner.",
+      "structure": "Persistent table identity, nonempty detached ordered actions with removed or introduced edges, resolved physical replacement names, immutable policy, release and legacy ignore role.",
+      "conditions": "Require both action kinds; close every original removal against a single exact declared original constraint on the owning table and reject temporaries in this group. Permit repeated removals only on MySQL 5.6 and 5.7. Check the addition group against all original symbols and keys, including the symbols scheduled for removal. Enforce native foreign-key compatibility, parent support, capacity and COPY-compatible algorithms and locks.",
+      "meaning": "Apply all edits in one statement, preserving referential actions and fields, original owner, unrelated constraints and the prior physical keys that remain after native supporting-index replacement. Native name allocation includes the original symbol set. Newly added edges use their independently resolved child and parent field encodings and effective key allocation.",
+      "externalInterpretation": "Use the same complete native schema and parent catalogs with referential checks on and native InnoDB policy. Existing data can refuse the copy and tables may conflict with other transactions. The finished value contains only the checked effects and references.",
+      "sql": "Render a single qualified ALTER TABLE with exact recorded DROP FOREIGN KEY and ADD foreign key clauses in order. Give all resolved endpoints their qualified names. Preserve generated symbol and backing key allocation by using the checked native spelling choice. Append each effective requested policy clause once.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/ForeignKey/Exchange/AlterForeignKeys"
+  ],
+  "existingRoles": [
+    "Schema/ForeignKey/ForeignKeyRemoval",
+    "Schema/ForeignKey/Add/ForeignKeyAddition",
+    "Schema/ForeignKey/Add/Catalog/ForeignKeyConstraintIdentity"
+  ],
+  "priorContracts": {
+    "mysql-drop-foreign-keys-evidence-v1.json": "85c7a4092c281ed0920a9b69a84c8f4c647758e4d1266142002e1f2ed7f08c39",
+    "mysql-add-foreign-keys-evidence-v1.json": "659cd9ce9f952ed3441f741523524502145168af7d0edb5ecb1a1cb585d8a308"
+  },
+  "finite": {
+    "originalSymbol": [
+      "explicit",
+      "ordinal-one",
+      "ordinal-nine"
+    ],
+    "additionSymbol": [
+      "allocated",
+      "distinct-explicit",
+      "same-folded-name"
+    ],
+    "actionOrder": [
+      "drop-before-add",
+      "add-before-drop"
+    ],
+    "repeatRemoval": [
+      false,
+      true
+    ],
+    "retainedConstraint": [
+      false,
+      true
+    ],
+    "algorithm": [
+      "DEFAULT",
+      "COPY"
+    ],
+    "coordinates": 144,
+    "routes": [
+      "direct",
+      "analysis"
+    ],
+    "enumeration": "Lexicographic Cartesian product in the declared axis order."
+  },
+  "exploration": {
+    "seeds": [
+      1823,
+      7523,
+      12953
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 360,
+    "allowedExclusions": [],
+    "structure": "Vary the number of constraint changes, ordered positions, generated and explicit symbols, case, composite key field pairs, actions, supporting index layouts and absolute parent names."
+  },
+  "rules": [
+    "Resolve removal targets in the starting schema. A copy cannot reuse an original symbol even when the same instruction removes that constraint.",
+    "Generated labels continue from the maximum prior ordinal on the owner, including a label removed by the same statement. Unrelated constraints retain their original relationships.",
+    "The legacy dictionary permits repeated removals, while MySQL 8 and 9 reject them.",
+    "Check all policies of the native additive group. In-place or no-lock addition with referential checks active cannot become a completed exchange.",
+    "Retain original physical key names and support input only for validation. Absolute owner, ordered bound operations and exact effect roles stay in the finished value."
+  ],
+  "observations": [
+    "Record ordered action roles and native exact symbol and endpoint field metadata, original and final constraints and keys, and distinguish the retained decoy.",
+    "Measure the native affected count and diagnostics and transaction state. Exercise parent updates and deletes on old and new coordinates. Compare CASCADE, SET NULL, original relationship removal, nullable values, native holds and rollback.",
+    "Replay original and canonical SQL on independent restores of the same populated fixture. Preserve all named and positional observations.",
+    "Include explicit controls, old implicit keys, copied keys, same-name replacements with new width, and final 64-key admission. Keep all existing finite axes and exploration requirements."
+  ],
+  "negative": [
+    "Repeat a removal under modern MySQL. Reuse an original native symbol under every fixed release.",
+    "Supply an unknown or case-mismatched direct removal, another owning relation, ignored temporary role, unordered action storage, an action of the wrong type and groups missing either action kind.",
+    "Use a disallowed algorithm or lock, missing supporting parent key, unsupported field role or incompatible nullable action."
+  ],
+  "faults": [
+    "Fail to verify absolute ownership of a removed original symbol.",
+    "Exclude planned removals from the original constraint namespace before allocating names.",
+    "Omit a removal, change an added reference, or weaken a checked policy during construction.",
+    "Change one native constraint or key name and require the observer and transcript replay to reject."
+  ],
+  "calibration": {
+    "initialRecipesSha256": "0d0e94e3c5e54b3225c7aba426e14a341cf2622d32c59df45bcb3b802d72b95f",
+    "initialCasesPerRelease": 75,
+    "initialReceipts": {
+      "5.6.51.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "5.6.51.stderr": "934b26ef065d510e07c108d220b5dab272f80c6484146809430b93a9b850e91e",
+      "5.6.51.stdout": "528b665ca901cb24cac94b63955710bb5f316bd134455a8b646a548d03a3aa59",
+      "5.7.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "5.7.44.stderr": "1f6cedea8f3f71c9f8bff5cc3a82b780c3d7d8afe1f0ae4b8fb643a75b6af574",
+      "5.7.44.stdout": "38816e3179680d492c0feac44096d4ef63d3a590d205a114cc70c62b75cdce01",
+      "8.0.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "8.0.44.stderr": "e351e02822d6b41dae3c88994b43f065b34929334f63f0d40fc51addb7f182e8",
+      "8.0.44.stdout": "a63f16a7a5e8bfc61f0b44adba052c3346932ac08571d97c6f901a3902846f8d",
+      "8.4.7.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "8.4.7.stderr": "56bfadb7143c556de684c65bf3e3ca98eb8d2383be3680a55b7d5465fcb4a7d4",
+      "8.4.7.stdout": "5f2a831e249c0f6de45c9f230b227c88c9b68db67c48c9cd7daa7e4284a51d43",
+      "9.1.0.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "9.1.0.stderr": "fca055c50bcd15c44493a551f21ad78158f434d8f662d1d4ee730c3a467be8a2",
+      "9.1.0.stdout": "f0deb5856c19ee802aecd5cf1aa8860b7d2ed8cbb4867ee3c490d51473c3cae4"
+    },
+    "exchangeRecipesSha256": "b8aa864f8fdabf73328db3e5e10a107ae3b03900927a41f7b84379f9e76f1059",
+    "exchangeCasesPerRelease": 72,
+    "exchangeReceipts": {
+      "5.6.51.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "5.6.51.stderr": "b35e27cd3d077c38a7ee9d7fdc3f3a32b7b66d80a8331e464fb9101cf7da8eb4",
+      "5.6.51.stdout": "4c80eccd582c6a23f85a92a25db59631e90097334ed793f3e8db798ecdaead3f",
+      "5.7.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "5.7.44.stderr": "a2ce232a9a0970b87a0d3a97e680cfc51522303176fda5d250f6ced828314e69",
+      "5.7.44.stdout": "29b463e44a33478dcfa8cfca8c221cd317a05aee240f7ae7d1c0005276efacf0",
+      "8.0.44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "8.0.44.stderr": "7d1dbf167dddf7ecdf6257e25947559ffb564b8633a1de8ced16ed83cf4901df",
+      "8.0.44.stdout": "99c146e6129cf92ae28bf02f96f1bb2a245c2f2ab4bb90e9c1f4752fe242c106",
+      "8.4.7.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "8.4.7.stderr": "7d1dbf167dddf7ecdf6257e25947559ffb564b8633a1de8ced16ed83cf4901df",
+      "8.4.7.stdout": "71043713441d05a763aed5e33f11146e37930697ceca9de23404ba51d61087aa",
+      "9.1.0.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "9.1.0.stderr": "7f711797cd3fc4567a177002cebed2e3ceb25971d84fd87d21df103b346cee0a",
+      "9.1.0.stdout": "170ded82d6613f20d3009ab7dd48ff8383c2858424bd6cdf751f96141924fd3b"
+    }
+  },
+  "trust": [
+    "Fixed native executable profiles",
+    "Complete prior catalog interpreted against the same table identities",
+    "Shape guard and installed constructor linkage",
+    "The independent original/canonical observer and copy of the fixture"
+  ],
+  "open": [
+    "Compositions that also change declared indexes, ownership, fields or other kinds of constraints.",
+    "Non-stock SQL mode, storage engines or parent-key policy and native mount histories."
+  ],
+  "supersedes": {
+    "mysql-native-foreign-key-exchange-v1.json": "cb64bc9bbb9ae56a867ec7dabf540d49d91d5fa418ee79e5ad21c06b50c942c6",
+    "mysql-native-foreign-key-index-replacement-v1.json": "ddc4c85156b7b9f1cbf9bd4023755ccfefce565e73cfb10e099677be1f3a2ab6"
+  }
+}

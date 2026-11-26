@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SearchedCase;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SearchedCase::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class SearchedCaseTest extends TestCase
 {
     public function testDeriveProgramDerivesEveryBranch(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(a INT) CASE WHEN b THEN SELECT d; WHEN a THEN SELECT a; ELSE SELECT e; END CASE');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p(a INT) CASE WHEN b THEN SELECT d; WHEN a THEN SELECT a; ELSE SELECT e; END CASE');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $case = $create->body;
@@ -32,7 +32,7 @@ final class SearchedCaseTest extends TestCase
 
     public function testDeriveProgramChecksTheLabelsInTheBranches(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(a INT) l: LOOP CASE WHEN a > 0 THEN LEAVE l; ELSE LEAVE m; END CASE; END LOOP');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p(a INT) l: LOOP CASE WHEN a > 0 THEN LEAVE l; ELSE LEAVE m; END CASE; END LOOP');
 
         self::assertSame(['LEAVE with no matching label: m'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -40,7 +40,7 @@ final class SearchedCaseTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     /**

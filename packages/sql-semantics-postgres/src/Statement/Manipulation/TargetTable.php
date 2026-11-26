@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  * PG-TARGET-TABLE-001.
  * Source: https://www.postgresql.org/docs/17/sql-update.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the table a statement writes to
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE ONLY app.t AS x SET a = 1');
- *     [$update->statement->target->name()->schema?->value, $update->statement->target->table->only, $update->statement->target->alias()?->value] // => ['app', true, 'x']
+ * @visibility SqlSemantics
  */
 final class TargetTable implements NamedRelation
 {

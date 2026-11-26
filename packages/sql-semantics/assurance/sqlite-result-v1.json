@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/sqlite-result-1",
+  "extends": "SemanticsIR/sqlite-relational-1",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "Earlier obligations and the remaining grammar and language profiles stay in scope.",
+  "constructors": {
+    "Select": {
+      "role": "Complete SQLite result query with multiplicity, ordering and optional row bounds.",
+      "structure": "The existing ordered projection, scoped inputs and filter, plus a distinct flag and optional limit after ordering.",
+      "boundary": "The established scope, expansion and SQL size checks include the row-bound operands. Quantifier defaults to ALL.",
+      "meaning": "Project and then optionally remove duplicate rows by SQLite's DISTINCT equivalence. Ordering is applied before the row bounds. One actual representative of each duplicate class remains, including its storage classes.",
+      "sql": "Emit DISTINCT when set. Preserve the ordered projection and use the existing qualified operands, aliases and ordinal ordering."
+    },
+    "Ordering/Limit": {
+      "role": "An upper row count and optional initial row skip.",
+      "structure": "Count and optional offset, each an exact signed decimal integer or a numbered parameter. Offset-first records the lexical operand order.",
+      "boundary": "Offset-first requires an offset. The SELECT boundary counts the operands and their parameter label bytes.",
+      "meaning": "Skip max(offset, 0) rows and then return at most count rows. Negative count is unbounded. SQLite applies lossless integer conversion at evaluation to bound parameters.",
+      "sql": "Render LIMIT count, LIMIT count OFFSET offset, or LIMIT offset, count. Operand order preserves the first binding label for a shared parameter slot."
+    }
+  },
+  "analysis": "Accept SELECT ALL or DISTINCT with the existing supported clauses. LIMIT and OFFSET accept decimal signed integer tokens supported by expression lowering, including unary plus, or numbered parameters. Grouped operands are accepted. Other scalar bounds, grouping, windows and other query families remain open.",
+  "observations": [
+    "Ordered output names, exact parameter slot count and first labels, and read-only effect",
+    "BINARY DISTINCT distinguishes TEXT and BLOB, collapses NULLs and compares equal numeric values across INTEGER and REAL",
+    "Every output row is a complete typed representative from its input duplicate class",
+    "The selected length and ordered bands are fixed. A boundary can cut through a band of tied rows. Without ordering there is one band"
+  ],
+  "independence": "A bounded fixture oracle uses BLOB affinity and BINARY collation. An independent analyzed SQL probe checks NOCASE on SQLite. Runtime binding failure probes expect SQLITE_MISMATCH for known invalid limits.",
+  "finite": {
+    "quantifiers": [false, true],
+    "limits": ["no limit", "zero", "count only", "unbounded with negative offset", "count and offset", "offset before count"],
+    "orders": ["unordered", "first ascending with NULLS LAST", "first descending with NULLS FIRST and second ascending"],
+    "projections": ["key and value", "duplicate key positions", "value and key"],
+    "completeness": "Count observed structural identities and compare them to every tuple of the fixed ordinal sets"
+  },
+  "exploration": {"seeds": [1429, 9991, 32653], "casesPerSeed": 48, "timeoutSeconds": 240, "allowedExclusions": []},
+  "negative": ["Offset-first without offset", "A non-integer expression in LIMIT", "A non-integer expression in OFFSET"],
+  "faults": ["Switch DISTINCT to ALL", "Switch OFFSET and LIMIT roles", "Reorder the first binding label of a shared slot"],
+  "revisionNotes": "The initial unsupported SELECT DISTINCT rejection becomes positive evidence. Use a grouped projection as the retained unsupported-clause rejection. Keep the original observation plans and budgets.",
+  "coverage": {
+    "Q01": ["closed operand shape", "offset boundary rejection"],
+    "Q02": ["direct finite and structural exploration", "analyzed positives"],
+    "Q03": ["existing select scope and byte budget", "result and row-bound composition"],
+    "Q04": ["typed representative and ordering band oracle", "SQLite comparison", "parameter binding and datatype failure probes"],
+    "Q05": ["source audit", "distribution digest", "independent worker"]
+  },
+  "sources": ["https://sqlite.org/lang_select.html#removal_of_duplicate_rows_distinct_processing", "https://sqlite.org/lang_select.html#the_order_by_clause", "https://sqlite.org/lang_select.html#the_limit_clause"]
+}

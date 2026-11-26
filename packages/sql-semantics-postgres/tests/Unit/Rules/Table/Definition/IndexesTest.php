@@ -14,10 +14,10 @@ final class IndexesTest extends TestCase
 {
     public function testDeriveDerivesTheKeysAndThePredicate(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE INDEX ON t (zz) INCLUDE (yy) WHERE c', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE INDEX ON t (zz) INCLUDE (yy) WHERE c', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
           1 => 'Column yy does not exist.',
@@ -31,16 +31,16 @@ final class IndexesTest extends TestCase
 
     public function testWriteWritesTheIndex(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE INDEX i ON t USING gist (a) WITH (fillfactor = 70) TABLESPACE s WHERE a > 0', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE INDEX i ON t USING gist (a) WITH (fillfactor = 70) TABLESPACE s WHERE a > 0', []);
         self::assertSame('CREATE INDEX i ON t USING gist (a) WITH (fillfactor = 70) TABLESPACE s WHERE a > 0', $statement->toString());
     }
 
     public function testDeriveReportsAView(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a'), $semantics->inspect('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['cannot create index on relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE INDEX i ON v (a)', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE INDEX i ON m (a)', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a'), $semantics->diagnose('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['cannot create index on relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE INDEX i ON v (a)', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE INDEX i ON m (a)', $context)->facts->diagnostics));
     }
 }

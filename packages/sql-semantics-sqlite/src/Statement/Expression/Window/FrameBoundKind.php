@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Window;
  *
  * Source: https://sqlite.org/windowfunctions.html#frame_boundaries.
  *
- * @visibility public
- * @example Reading the kind of a frame boundary
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT sum(a) OVER (ROWS UNBOUNDED PRECEDING) FROM t');
- *     $query->statement->columns[0]->expression->over->frame->start->kind // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::UnboundedPreceding
+ * @visibility SqlSemantics
  */
 enum FrameBoundKind
 {

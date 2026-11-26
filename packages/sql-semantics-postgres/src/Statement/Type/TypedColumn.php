@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a typed column
  *     $column = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn(
  *         new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'),

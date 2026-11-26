@@ -12,10 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * The reference stays a reference: the aliased expression is not copied to the use position.
  *
- * @visibility public
- * @example Resolving an ORDER BY name to an output alias
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS x ORDER BY x');
- *     $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution->field === $query->field('x') // => true
+ * @visibility SqlSemantics
  */
 final class AliasTarget implements Resolution
 {

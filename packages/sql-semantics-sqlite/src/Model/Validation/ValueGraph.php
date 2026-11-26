@@ -37,12 +37,13 @@ final class ValueGraph
     }
 
     /**
-     * Answers every object reachable from a root, the root included, after auditing each.
+     * Answers reachable objects, including the root, after auditing each value.
+     * @param array<int, string> $discarded Already audited edges to omit from the binding walk
      *
      * @return list<object>
      * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When a reachable value is outside the closed immutable domain
      */
-    public function objects(object $root): array
+    public function objects(object $root, array $discarded = []): array
     {
         $objects = [];
         $seen = [];
@@ -60,13 +61,17 @@ final class ValueGraph
                 Check::input($value === null || is_bool($value) || is_int($value) || is_string($value), 'A semantic value holds null, booleans, integers, strings, lists and closed values only.');
                 continue;
             }
-            if (isset($seen[spl_object_id($value)])) {
+            $identity = spl_object_id($value);
+            if (isset($seen[$identity])) {
                 continue;
             }
-            $seen[spl_object_id($value)] = true;
+            $seen[$identity] = true;
             $objects[] = $value;
             foreach ($this->members($value) as $property) {
                 Check::input($property->isInitialized($value), 'A semantic value has no uninitialised property.');
+                if ($property->getName() === ($discarded[$identity] ?? null)) {
+                    continue;
+                }
                 $pending[] = $property->getValue($value);
             }
         }

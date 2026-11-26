@@ -1,0 +1,75 @@
+{
+  "revision": "SemanticsIR/postgres-collated-table-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "postgres-create-collated-text-v1.json",
+  "rules": {
+    "Schema/TableColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($collation === null || $storage === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CharacterStorage::Text, 'A text collation requires native text storage.');",
+        "$systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral || $storage === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CharacterStorage::Text, 'A text default requires native text storage.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral || $storage === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\BooleanStorage::Boolean, 'A Boolean default requires native Boolean storage.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($storage !== \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\BooleanStorage::Boolean || $default === null || $default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral || $default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral, 'The Boolean column requires a Boolean or NULL default.');"
+      ]
+    },
+    "Schema/TableColumn::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$definition = $this->name->quoted() . ' ' . $this->storage->value . ($this->collation === null ? '' : ' COLLATE pg_catalog.\"' . $this->collation->value . '\"') . ($this->nullable ? ' NULL' : ' NOT NULL');",
+        "return $definition . match (true) {",
+        "    $this->default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\IntegerLiteral => ' DEFAULT ' . $this->default->decimal,",
+        "    $this->default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral => ' DEFAULT CAST(' . $this->default->decimal . ' AS pg_catalog.int8)',",
+        "    $this->default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextLiteral => ' DEFAULT ' . $this->default->toString(),",
+        "    $this->default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral => $this->default->value ? ' DEFAULT TRUE' : ' DEFAULT FALSE',",
+        "    $this->default instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\NullLiteral => ' DEFAULT NULL',",
+        "    $this->default === null => '',",
+        "};"
+      ]
+    },
+    "Schema/CreateColumnLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input([$column->storage, $column->compression, $column->options] === [null, null, []], 'CREATE TABLE requires an ordinary column definition.');",
+        "$type = $column->type->typeFact($operation->context);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Type\\Known && !$column->type->setOf, 'The column requires a supported builtin storage kind.');",
+        "$kind = match ($type->descriptor) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int2 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int4 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int8 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Text => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CharacterStorage::Text,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Bool => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\BooleanStorage::Boolean,",
+        "    default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The column requires a supported builtin storage kind.'),",
+        "};",
+        "$nullable = null;",
+        "$default = null;",
+        "$collation = null;",
+        "$literals = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\LiteralDefaultLowering();",
+        "foreach ($column->qualifiers as $qualifier) {",
+        "    if ($qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\DefaultExpression && $qualifier->name === null && $default === null) {",
+        "        $default = $literals->lower($operation, $qualifier, $kind);",
+        "    } elseif (($qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NotNull || $qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NullAllowed) && $qualifier->name === null && $nullable === null) {",
+        "        $nullable = $qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NullAllowed;",
+        "    } elseif ($qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ColumnCollation && $collation === null) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\DeclaredTextCollation::resolve($qualifier->collation->qualified()) === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\DeclaredTextCollation::StockC, 'The column requires a resolved stock PostgreSQL collation.');",
+        "        $collation = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextCollation::C;",
+        "    } else {",
+        "        throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The column attribute is outside the native declaration domain.');",
+        "    }",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableColumn(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($column->name->value), $kind, $nullable ?? true, $default, $collation);"
+      ]
+    }
+  }
+}

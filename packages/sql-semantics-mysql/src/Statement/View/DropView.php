@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
@@ -22,7 +23,8 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
  * A request to drop views.
  *
  * Rule: MYSQL-DROP-VIEW-001. Each name resolves by CORE-TABLE-LOOKUP-001 in
- * the current database or the database written. A name a complete context
+ * the persistent catalog of the current database or the database written.
+ * A name a complete context
  * does not declare, or that conflicts, is a diagnostic, except that IF
  * EXISTS allows an absent view (the server only adds a note). A declared
  * base table is refused by MYSQL-RELATION-KIND-001: always in 8.1, 8.2, 8.3,
@@ -31,10 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
  * by the server; they are kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-view.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the views to drop
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP VIEW IF EXISTS v, shop.w');
- *     [count($drop->statement->views), $drop->statement->ifExists] // => [2, true]
+ * @visibility SqlSemantics
  */
 final class DropView implements Statement
 {
@@ -66,7 +65,7 @@ final class DropView implements Statement
         $kinds = new RelationKinds();
         $refused = !$this->ifExists || !in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql847], true);
         foreach ($this->views as $view) {
-            $resolution = $derivation->table($view, $derivation->environment());
+            $resolution = $derivation->table($view, $derivation->environment(), TableNamespace::Persistent);
             if ($resolution instanceof Diagnostic && !($this->ifExists && $resolution instanceof MissingTable)) {
                 $derivation->report($resolution);
             }

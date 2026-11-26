@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Choice::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class ChoiceTest extends TestCase
 
     public function testAlternativesOfAnExpressionTheRulesCannotDecideStatically(): void
     {
-        $type = (new Semantics())->analyze("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
+        $type = (new Inspection())->inspect("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
 
         self::assertInstanceOf(Choice::class, $type);
         self::assertSame(['INTEGER', 'TEXT'], array_map(static fn (TypeDescriptor $descriptor): string => $descriptor->name(), $type->alternatives));

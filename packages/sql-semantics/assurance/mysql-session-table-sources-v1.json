@@ -1,0 +1,142 @@
+{
+  "revision": "SemanticsIR/mysql-session-table-sources-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL, exact relation case, utf8mb4, empty sql_mode and external session ownership of InnoDB temporary tables.",
+  "extends": [
+    "mysql-external-views-v1.json",
+    "mysql-ordered-table-rename-v2.json",
+    "mysql-truncate-v1.json"
+  ],
+  "additionalPublicRoots": [],
+  "constructors": {
+    "ExternalRelationKind.TemporaryTable": {
+      "type": "From/ExternalRelationKind",
+      "role": "The table addressed within the evaluating session at an absolute schema and relation name.",
+      "structure": "A closed enum case paired with the readonly table schema, relation and projected native slots of TableSource.",
+      "conditions": "A native read or write resolves to a known temporary table declared at the same absolute identity. A matching temporary declaration wins over the known permanent declaration in its schema. Multiple matching declarations in the winning namespace are a binding conflict. Regular roots retain the admitted operand and slot conditions.",
+      "meaning": "The resolved source denotes the session-owned table, including when a distinct persistent table has the same absolute name.",
+      "sql": "Quote the exact schema and relation names with the native source or destination spelling. Under the fixed session interpretation the native resolver opens the temporary table."
+    }
+  },
+  "existingRoles": [
+    "TableSource",
+    "From/ExternalRelationKind",
+    "Select",
+    "Mutation/Insert",
+    "Mutation/InsertQuery",
+    "Mutation/Update",
+    "Mutation/Delete"
+  ],
+  "structure": "A named source denotes either the existing persistent table, a session-local table or a view. All root constructors keep that distinction on every source and target occurrence.",
+  "conditions": "For session-visible lookup, CTE scope is handled by the enclosing query. Among native objects of a schema, matching temporary tables shadow persistent objects for reads and writes. For RENAME TABLE, a bound persistent declaration wins even with a temporary overlay. A temporary-only declaration cannot pass RENAME TABLE publication. Published persistent view bodies retain their permanent-source condition.",
+  "meaning": "Apply the existing row-operation rules to the exact resolved namespace. Writes to a session table change that session’s rows and leave the simultaneously existing global table unchanged. The same external interpretation supplies temporary objects in the evaluating connection and ordinary objects in the permanent catalog.",
+  "sql": "Emit the existing native row statements using the explicit schema and name. A persistent-only rename is dispatched through its existing native RENAME TABLE form.",
+  "observations": [
+    "Exact table kind and coordinate in the complete PHP value through direct construction and analysis",
+    "Projection order, names, signed type and duplicate or NULL values",
+    "Affected row count, exact temporary and persistent row states, decoy schema, a transaction marker and state after rollback",
+    "Qualified reference and current database binding agree in the same session catalog",
+    "Declared persistent tables rename through a known temporary overlay without changing the temporary table"
+  ],
+  "finite": {
+    "fixture": [
+      "persistent",
+      "temporary-only",
+      "shadowed",
+      "cross-schema-shadowed"
+    ],
+    "operation": [
+      "query",
+      "insert-values",
+      "insert-query",
+      "update",
+      "delete"
+    ],
+    "value": [
+      -1,
+      2,
+      5
+    ],
+    "identities": 60,
+    "completeness": "Reconstruct the operation, source role, value and absolute target from the constructed PHP response, and check both namespaces independently. Require one receipt for every fixed fixture, operation and operand point."
+  },
+  "analysis": [
+    "An unqualified persistent table resolves in the current database",
+    "Qualified access to a temporary-only table",
+    "Bare and qualified columns of a shadowing temporary table bind to the same occurrence and slot",
+    "An INSERT VALUES preserves the session-local destination role",
+    "An INSERT SELECT preserves the session-local destination role",
+    "An UPDATE uses the same session-local target for its assignment and predicate",
+    "A DELETE uses the session-local target and filtered slots",
+    "A second schema can have a distinct overlay for the same relation spelling"
+  ],
+  "negative": [
+    "Two different declarations for the same session table",
+    "Absent table under the complete catalog",
+    "Unresolved table in the incomplete catalog",
+    "A persistent view definition that reads a temporary table",
+    "A view in the single-table mutation role",
+    "A resolved column slot outside the table source",
+    "A temporary-only name supplied to RENAME TABLE"
+  ],
+  "exploration": {
+    "seeds": [
+      829,
+      3911,
+      7121
+    ],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary both source namespaces, absolute schema, top-level operations, signed inputs, duplicated values and NULL witnesses."
+  },
+  "faults": [
+    "Prefer the permanent table for a read or write under an overlay",
+    "Drop the temporary role when copying explicit INSERT destination slots",
+    "Classify the valid temporary target as a view",
+    "Redirect a rendered write to a same-named table in the other database",
+    "Erase the predicate from a temporary mutation",
+    "Open a persistent view definition over the session table"
+  ],
+  "evidence": {
+    "P01": "The native source role, absolute name, selected namespace and slot are explicit.",
+    "P02": "The checked role prevents using a view as a table or a session table in a persistent view.",
+    "P03": "The complete value retains only the relation kind, absolute coordinates and selected native slots.",
+    "P04": "The existing row-operation rules apply to an externally interpreted exact table, including when visible names overlap.",
+    "P05": "Readonly fields own their checked slot arrays and retain a closed enum singleton.",
+    "P06": "The evaluating connection supplies the same session-owned table. Compare native typed rows, result shape and write effects.",
+    "Q01": "Check role propagation and the closed table/view guard in the deployed constructors and binding code.",
+    "Q02": "Require all independent direct finite points and the fixed authored positives, negatives and seeded cases.",
+    "Q03": "Predict result and write effects on the selected namespace and the unchanged decoy and rollback state.",
+    "Q04": "Compare typed native results and persistent and session-local row effects.",
+    "Q05": "Recover the exact role through both installed Composer layouts and link all source, fault and native evidence to the candidate."
+  },
+  "open": [
+    "Temporary declaration, removal and truncation roots have separate DDL semantics and pending effect obligations.",
+    "This finite band observes signed scalar single-target operations. Arbitrary join, multiple reference reopening, lock, privilege and replication behavior require their own evidence."
+  ],
+  "trust": [
+    "Truthful catalog declarations and the same session ownership at evaluation",
+    "Pinned MySQL servers and observed case and lexical profile",
+    "Exact supplied PHP and native observation of both relational namespaces"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/create-temporary-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/rename-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/temporary-table-problems.html"
+  ]
+}

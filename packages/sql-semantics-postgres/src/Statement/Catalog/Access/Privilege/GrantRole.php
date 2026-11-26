@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * (PG-MEMBERSHIP-CHECK-001).
  * Source: https://www.postgresql.org/docs/17/sql-grant.html#SQL-GRANT-DESCRIPTION-ROLES. Status: Implemented.
  *
- * @visibility public
- * @example Reading a membership grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT staff TO joe WITH ADMIN OPTION GRANTED BY boss');
- *     [$operation->statement->roles[0]->privilege(), $operation->statement->options[0]->setting->value, $operation->statement->grantor?->name?->value] // => ['staff', 'OPTION', 'boss']
+ * @visibility SqlSemantics
  */
 final class GrantRole implements Statement
 {

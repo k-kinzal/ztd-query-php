@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/sqlite-case-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "The pinned SQLite 3.47.2 UTF-8, short column name and numbered parameter profile.",
+  "scope": "A scalar CASE can have a base or use searched conditions. It composes with the checked scalar roles at projection, filter, join, VALUES, recursive and mutation boundaries.",
+  "constructors": {
+    "case": {
+      "type": "Expression/CaseExpression",
+      "role": "An ordered choice of typed scalar results",
+      "structure": "An optional scalar base, a list of one to 32 CaseBranch values, and an optional scalar fallback. Host null represents an absent operand and a NullLiteral represents the SQL value.",
+      "conditions": "Copy the checked list into readonly storage. The owning statement checks the scope of the base, every WHEN and THEN, and the fallback, including inactive branches. Include these operands in the existing expression height, occurrence and payload limits.",
+      "meaning": "For a searched CASE, select the first true condition under SQLite truth conversion. For a simple CASE, evaluate the base once and select the first true comparison using native equality with the original operand roles. A null base selects the fallback. Evaluate only the chosen result. If no condition matches, evaluate the fallback or yield SQL NULL.",
+      "externalInterpretation": "A slot compares with the SQLite affinity and collation of the same external column. Each numbered parameter has the fixed slot interpretation even if evaluation never reads its value.",
+      "sql": "Emit a parenthesized CASE followed by its optional base, ordered branch clauses, optional ELSE, and END. Do not desugar a base into repeated evaluations.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "branch": {
+      "type": "Expression/CaseBranch",
+      "role": "One conditional input and its selected result",
+      "structure": "Two immutable scalar children. The WHEN child is the condition or equality operand, and the THEN child is the result.",
+      "conditions": "The containing CASE fixes the WHEN interpretation and lexical position. The owning statement verifies both children in the same visible scope regardless of runtime reachability.",
+      "meaning": "Contribute one decision and one result to the containing choice.",
+      "sql": "Emit WHEN followed by the decision operand and THEN followed by the corresponding result operand.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "Rows/ValueRow", "Rows/ValuesQuery", "Arithmetic", "Predicate/Logical", "Predicate/Comparison"],
+  "observations": [
+    "Exact result names, order, typed values, NULL and duplicate rows",
+    "First match and lexical order, fallback, absent operands, comparison storage classes, native slot collation and affinity",
+    "Lexical parameter registration even for later and inactive branches",
+    "Admitted rows under CASE filters, and read-only effects"
+  ],
+  "finite": {
+    "targets": ["select", "values"],
+    "bases": [null, ["null"], ["integer", "1"], ["text", "1"]],
+    "decisions": [["null"], ["integer", "0"], ["integer", "1"], ["text", "1"], ["real", "1", "0", null, false]],
+    "fallbacks": [null, ["text", "default"]],
+    "complete": "Observe each target, base, ordered decision pair and fallback exactly once. Branch results are fixed distinct integer and BLOB values."
+  },
+  "exploration": {
+    "seeds": [4517, 9377, 13921],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 130,
+    "allowedExclusions": [],
+    "structure": "Vary base presence, nesting, number and order of the branches, fallback presence, storage class, parameter slots and selected or skipped branches."
+  },
+  "negative": ["Empty branch list", "More than 32 branches", "An out-of-scope slot in an otherwise unreachable result", "An expanded expression height greater than 32", "A row value in a scalar CASE role"],
+  "faults": ["Reverse branch precedence", "Emit THEN from the wrong child", "Remove the fallback", "Suppress the base role and evaluate cases as conditions"],
+  "open": ["Full mixed-domain exploration of CASE in mutation effects, joined and recursive evaluation and other SQLite expression roles."],
+  "trust": ["Pinned SQLite comparison and truth rules", "Independent lazy case evaluator, finite identity checker and fixture definitions", "Checked source identity supplies the matching external declaration"],
+  "sources": ["https://sqlite.org/lang_expr.html#the_case_expression", "https://sqlite.org/datatype3.html#type_conversions_prior_to_comparison"]
+}

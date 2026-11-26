@@ -14,8 +14,8 @@ final class ColumnOptionsTest extends TestCase
 {
     public function testDeriveClauseReportsTheProblemsOfTheQualifiers(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p (a NULL NOT NULL) DEFAULT', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p (a NULL NOT NULL) DEFAULT', []);
         self::assertSame([
           0 => 'Relation p does not exist.',
           1 => 'conflicting NULL/NOT NULL declarations for column "a"',
@@ -24,8 +24,8 @@ final class ColumnOptionsTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t OF ty (a WITH OPTIONS DEFAULT 1, b NOT NULL)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t OF ty (a WITH OPTIONS DEFAULT 1, b NOT NULL)', []);
         self::assertSame('CREATE TABLE t OF ty (a DEFAULT 1, b NOT NULL)', $statement->toString());
     }
 }

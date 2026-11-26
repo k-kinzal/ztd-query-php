@@ -14,16 +14,16 @@ final class ReplaceTextSearchDictionaryTest extends TestCase
 {
     public function testRenderWithoutTokens(): void
     {
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish')->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish')->toString());
     }
 
     public function testRenderWithTokens(): void
     {
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a, b REPLACE english WITH swedish', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a, b REPLACE english WITH swedish')->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a, b REPLACE english WITH swedish', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR a, b REPLACE english WITH swedish')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE a WITH b')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE a WITH b')->facts->diagnostics);
     }
 }

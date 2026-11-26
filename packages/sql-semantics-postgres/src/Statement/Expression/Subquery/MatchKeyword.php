@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery;
  * Source: https://www.postgresql.org/docs/17/functions-matching.html#FUNCTIONS-LIKE,
  * https://www.postgresql.org/docs/17/functions-comparisons.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the operator a keyword stands for
  *     \SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\MatchKeyword::NotILike->operator() // => '!~~*'
  */

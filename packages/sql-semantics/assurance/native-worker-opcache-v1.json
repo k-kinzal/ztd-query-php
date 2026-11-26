@@ -1,0 +1,35 @@
+{
+  "revision": "SemanticsIR/native-worker-opcache-1",
+  "approval": "pending-human-review",
+  "runtime": {
+    "image": "php@sha256:f1ef73e865793418aac8cf6d8dbb44b33b527cdac62dbcf2e47061ed8f40b81a",
+    "args": [
+      "-d",
+      "opcache.enable_cli=1",
+      "-d",
+      "opcache.memory_consumption=64",
+      "-d",
+      "opcache.lockfile_path=/dev/shm"
+    ]
+  },
+  "scope": "The isolated verifier's PHP candidate process. The native database connections and the target SQL language profiles use their independently pinned settings.",
+  "conditions": [
+    "Use a read-only container with candidate source and each individual fault overlay mounted read-only. The worker has no network, no inherited host credentials, and no filesystem mount for evidence.",
+    "The compilation cache is private to the container. No persistent file cache is configured. Its lock files use native container shared memory.",
+    "Retain the same PHP version, installed source bytes, observer, case bounds, seed schedules, native outcomes, fault mutations and session limits.",
+    "Report a timeout as incomplete. A cached process cannot import any previous process's opcode or evidence state."
+  ],
+  "calibration": {
+    "postgres": {
+      "profile": "16.6",
+      "requests": 1125,
+      "inputSha256": "9d788f2e4e377bc3c62fe152ccc00d3b421275ec8fa4ce98edb974c2713f5a3e"
+    },
+    "mysql": {
+      "profile": "8.0.44",
+      "requests": 734,
+      "inputSha256": "a7d2db73a28fa30084b3677b648eeb4f36dc8cd1a39861ab2fbeeaf43bfd3699"
+    },
+    "criterion": "Run the exact active worker in both configurations against the same read-only distribution and full recorded request streams. Require byte-for-byte identical responses, including typed positive and negative results. Record timings separately."
+  }
+}

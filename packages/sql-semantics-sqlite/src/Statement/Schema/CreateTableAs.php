@@ -30,12 +30,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\TableProblems;
  * Source: https://sqlite.org/lang_createtable.html#create_table_as_select_statements.
  * Status: Implemented.
  *
- * @visibility public
- * @example Declaring a table from a query
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $source = $semantics->analyze('CREATE TABLE s (a INTEGER, b TEXT)');
- *     $table = $semantics->analyze('CREATE TABLE t AS SELECT a, b AS label FROM s', [$source])->declarations()[0];
- *     [$table->columns[0]->type->name(), $table->columns[1]->name->value, $table->complete] // => ['INT', 'label', true]
+ * @visibility SqlSemantics
  */
 final class CreateTableAs implements Statement
 {

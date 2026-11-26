@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\SchemaRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
@@ -17,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(SchemaRule::class)]
 #[Medium]
@@ -24,29 +24,29 @@ final class SchemaRuleTest extends TestCase
 {
     public function testCommandLowersEachSchemaCommandToItsOwnRequest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertInstanceOf(CreateView::class, $semantics->analyze('CREATE VIEW v AS SELECT 1')->statement);
-        self::assertInstanceOf(CreateIndex::class, $semantics->analyze('CREATE INDEX i ON t (a)')->statement);
-        self::assertInstanceOf(AlterRenameTable::class, $semantics->analyze('ALTER TABLE t RENAME TO u')->statement);
-        self::assertInstanceOf(AlterAddColumn::class, $semantics->analyze('ALTER TABLE t ADD a')->statement);
-        self::assertInstanceOf(AlterDropColumn::class, $semantics->analyze('ALTER TABLE t DROP a')->statement);
-        self::assertInstanceOf(AlterRenameColumn::class, $semantics->analyze('ALTER TABLE t RENAME a TO b')->statement);
+        self::assertInstanceOf(CreateView::class, $semantics->inspect('CREATE VIEW v AS SELECT 1')->statement);
+        self::assertInstanceOf(CreateIndex::class, $semantics->inspect('CREATE INDEX i ON t (a)')->statement);
+        self::assertInstanceOf(AlterRenameTable::class, $semantics->inspect('ALTER TABLE t RENAME TO u')->statement);
+        self::assertInstanceOf(AlterAddColumn::class, $semantics->inspect('ALTER TABLE t ADD a')->statement);
+        self::assertInstanceOf(AlterDropColumn::class, $semantics->inspect('ALTER TABLE t DROP a')->statement);
+        self::assertInstanceOf(AlterRenameColumn::class, $semantics->inspect('ALTER TABLE t RENAME a TO b')->statement);
     }
 
     public function testCommandLowersEachDropToItsObjectKind(): void
     {
-        $semantics = new Semantics();
-        $kinds = array_map(static fn (string $sql): ?SchemaObjectKind => $semantics->analyze($sql)->statement instanceof Drop ? $semantics->analyze($sql)->statement->object : null, ['DROP TABLE a', 'DROP VIEW a', 'DROP INDEX a', 'DROP TRIGGER a']);
+        $semantics = new Inspection();
+        $kinds = array_map(static fn (string $sql): ?SchemaObjectKind => $semantics->inspect($sql)->statement instanceof Drop ? $semantics->inspect($sql)->statement->object : null, ['DROP TABLE a', 'DROP VIEW a', 'DROP INDEX a', 'DROP TRIGGER a']);
 
         self::assertSame([SchemaObjectKind::Table, SchemaObjectKind::View, SchemaObjectKind::Index, SchemaObjectKind::Trigger], $kinds);
     }
 
     public function testViewKeepsTheHeaderFlagsAndTheOptionalColumnList(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->analyze('CREATE VIEW v AS SELECT 1')->statement;
-        $full = $semantics->analyze('CREATE TEMP VIEW IF NOT EXISTS v (a) AS SELECT 1')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->inspect('CREATE VIEW v AS SELECT 1')->statement;
+        $full = $semantics->inspect('CREATE TEMP VIEW IF NOT EXISTS v (a) AS SELECT 1')->statement;
 
         self::assertInstanceOf(CreateView::class, $plain);
         self::assertInstanceOf(CreateView::class, $full);
@@ -59,9 +59,9 @@ final class SchemaRuleTest extends TestCase
 
     public function testIndexKeepsTheFlagsTheTermsAndTheCondition(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->analyze('CREATE INDEX i ON t (a)')->statement;
-        $full = $semantics->analyze('CREATE UNIQUE INDEX IF NOT EXISTS aux.i ON t (a, b DESC) WHERE a > 0')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->inspect('CREATE INDEX i ON t (a)')->statement;
+        $full = $semantics->inspect('CREATE UNIQUE INDEX IF NOT EXISTS aux.i ON t (a, b DESC) WHERE a > 0')->statement;
 
         self::assertInstanceOf(CreateIndex::class, $plain);
         self::assertInstanceOf(CreateIndex::class, $full);
@@ -76,9 +76,9 @@ final class SchemaRuleTest extends TestCase
 
     public function testIfExistsLowersTheOptionalClause(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->analyze('DROP TABLE t')->statement;
-        $tolerant = $semantics->analyze('DROP TABLE IF EXISTS t')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->inspect('DROP TABLE t')->statement;
+        $tolerant = $semantics->inspect('DROP TABLE IF EXISTS t')->statement;
 
         self::assertInstanceOf(Drop::class, $plain);
         self::assertInstanceOf(Drop::class, $tolerant);
@@ -88,7 +88,7 @@ final class SchemaRuleTest extends TestCase
 
     public function testAddedLowersTheQualifiedTableName(): void
     {
-        $statement = (new Semantics())->analyze('ALTER TABLE aux.t ADD a')->statement;
+        $statement = (new Inspection())->inspect('ALTER TABLE aux.t ADD a')->statement;
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
         self::assertSame('aux', $statement->table->schema?->value);
@@ -97,9 +97,9 @@ final class SchemaRuleTest extends TestCase
 
     public function testKeywordIsOptionalBeforeTheColumn(): void
     {
-        $semantics = new Semantics();
-        $short = $semantics->analyze('ALTER TABLE t DROP a')->statement;
-        $long = $semantics->analyze('ALTER TABLE t DROP COLUMN a')->statement;
+        $semantics = new Inspection();
+        $short = $semantics->inspect('ALTER TABLE t DROP a')->statement;
+        $long = $semantics->inspect('ALTER TABLE t DROP COLUMN a')->statement;
 
         self::assertInstanceOf(AlterDropColumn::class, $short);
         self::assertInstanceOf(AlterDropColumn::class, $long);

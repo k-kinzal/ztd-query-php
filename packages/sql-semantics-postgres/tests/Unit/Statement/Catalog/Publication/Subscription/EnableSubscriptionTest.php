@@ -14,11 +14,11 @@ final class EnableSubscriptionTest extends TestCase
 {
     public function testRenderWritesEnable(): void
     {
-        self::assertSame('ALTER SUBSCRIPTION s ENABLE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s ENABLE')->toString());
+        self::assertSame('ALTER SUBSCRIPTION s ENABLE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s ENABLE')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s DISABLE')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s DISABLE')->facts->diagnostics);
     }
 }

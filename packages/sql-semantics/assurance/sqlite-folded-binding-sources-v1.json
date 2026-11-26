@@ -1,0 +1,33 @@
+{
+  "revision": "SemanticsIR/sqlite-folded-binding-sources-1",
+  "scope": "Audit the whole syntax graph, then derive coverage only over the occurrence edges SQLite binds.",
+  "artifacts": {
+    "src/Platform.php": {
+      "methods": [
+        "discardedBindings",
+        "syntaxOutput"
+      ],
+      "sha256": "b1a60c5463b052ef52902b157edf75ba2cd2a7566ce06191b1ae175faf46e4f9"
+    },
+    "src/Model/Validation/Publication.php": {
+      "methods": [
+        "facts"
+      ],
+      "sha256": "a6d9d099bb2128da3cb5673f7946e27dc164988e74097ac4c0feaca14ebb3e58"
+    },
+    "src/Model/Validation/ValueGraph.php": {
+      "methods": [
+        "objects",
+        "members"
+      ],
+      "sha256": "6d0bb350b464b16e6309311e043cfe13393fc5e4b6665f54d0d1af80fa88899f"
+    },
+    "src/Statement/Expression/Subquery/InList.php": {
+      "methods": [
+        "deriveScalar",
+        "render"
+      ],
+      "sha256": "bf7df45c9a9ab74cc16ad9142ec109b241966f07dd1233b212d5d35870a58430"
+    }
+  }
+}

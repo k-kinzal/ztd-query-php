@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  * accepts this form only in ALTER TABLE ... ADD.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading a constraint on an existing index
- *     $alter = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD CONSTRAINT k PRIMARY KEY USING INDEX i');
- *     [$alter->statement->commands[0]->constraint->primary, $alter->statement->commands[0]->constraint->index->value] // => [true, 'i']
+ * @visibility SqlSemantics
  */
 final class IndexConstraint implements Constraint
 {

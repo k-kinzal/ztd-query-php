@@ -11,12 +11,12 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineComment;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RoutineComment::class)]
 #[Medium]
@@ -35,7 +35,7 @@ final class RoutineCommentTest extends TestCase
     #[DataProvider('providerRenderWritesTheCommentText')]
     public function testRenderWritesTheCommentText(string $release, string $sql, string $expected, string $text): void
     {
-        $alter = (new Semantics($release))->analyze($sql);
+        $alter = (new Inspection($release))->inspect($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -47,7 +47,7 @@ final class RoutineCommentTest extends TestCase
 
     public function testRenderWritesAConstructedCharacteristic(): void
     {
-        $out = new Output(new Codec((new Semantics())->profile()->grammar));
+        $out = new Output(new Codec((new Inspection())->profile()->grammar));
         (new RoutineComment(new Text('adds')))->render($out);
 
         self::assertSame("COMMENT 'adds'", (new Lexical())->join($out->pieces()));

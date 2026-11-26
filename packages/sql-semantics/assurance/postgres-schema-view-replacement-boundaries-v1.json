@@ -1,0 +1,179 @@
+{
+  "revision": "SemanticsIR/postgres-schema-view-replacement-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-schema-view-dependencies-boundaries-v1.json",
+  "scope": "Check physical view heading compatibility, current typed local bindings, source collation identity and native text output resolution.",
+  "rules": {
+    "Schema/Namespace/View/SchemaViewOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($views === []) {",
+        "    return $occupied;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && !$guard, 'Schema views require an unguarded, statically named namespace.');",
+        "$earlier = [];",
+        "$fields = [];",
+        "foreach ($views as $view) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($view->name->schema->value === $name->value && $view->query->release === $release, 'A schema view must belong to its namespace and release.');",
+        "    $coordinate = $view->name->view->value;",
+        "    $previous = $earlier[$coordinate] ?? null;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($occupied[$coordinate]) || $view->replace && $previous !== null, 'A schema view requires an unused relation name.');",
+        "    $source = $view->query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Select ? $view->query->source : null;",
+        "    if ($source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource && $source->schema->value === $name->value) {",
+        "        $local = $occupied[$source->table->value] ?? null;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewInputs::check($source, $local instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable ? $local : null, $fields[$source->table->value] ?? null);",
+        "    }",
+        "    $definition = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewFields::of($view, $fields);",
+        "    if ($previous !== null) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewReplacement::check($previous, $view, $fields[$coordinate], $definition);",
+        "    }",
+        "    $earlier[$coordinate] = $view;",
+        "    $fields[$coordinate] = $definition;",
+        "    $occupied[$coordinate] = true;",
+        "}",
+        "return $occupied;"
+      ]
+    },
+    "Schema/Namespace/View/SchemaViewInputs::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = [];",
+        "if ($source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::View) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($view !== null, 'A schema view must resolve its local view input to a preceding ordinary view.');",
+        "    foreach ($view as $name => [$kind]) {",
+        "        $fields[$name] = $kind;",
+        "    }",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::BaseTable && $local !== null, 'A schema view must resolve its local input to a preceding base table.');",
+        "    foreach ($local->columns as $column) {",
+        "        $fields[$column->name->value] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::columnKind($column);",
+        "    }",
+        "}",
+        "foreach ($source->columns as $slot => $column) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($fields[$column->value]) && $fields[$column->value] === $source->columnKind($slot), 'A schema view requires each local input field in the checked native kind.');",
+        "}"
+      ]
+    },
+    "Schema/Namespace/View/SchemaViewFields::of": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$query = $view->query;",
+        "$fields = [];",
+        "foreach ($view->columns as $position => $column) {",
+        "    $kind = match (\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\CompoundShape::type($query, $position)) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Integer => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::WideInteger => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Boolean => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Text, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\ResultKind::Unknown => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Text,",
+        "    };",
+        "    $collation = null;",
+        "    if ($kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Text && $query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Select) {",
+        "        $expression = $query->columns[$position]->expression;",
+        "        while ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\BuiltinCast) {",
+        "            $expression = $expression->operand;",
+        "        }",
+        "        if ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\CollatedText) {",
+        "            $collation = $expression->collation;",
+        "        } elseif ($expression instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\TextColumnReference) {",
+        "            $source = $query->source;",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource, 'A view field requires its checked source.');",
+        "            $field = $source->columns[$expression->slot]->value;",
+        "            if ($source->schema->value !== $view->name->schema->value) {",
+        "                $collation = [$source->kind->value, $source->schema->value, $source->table->value, $field];",
+        "            } elseif ($source->kind === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ExternalRelationKind::View) {",
+        "                $collation = $earlier[$source->table->value][$field][1];",
+        "            }",
+        "        }",
+        "    }",
+        "    $fields[$column->value] = [$kind, $collation];",
+        "}",
+        "return $fields;"
+      ]
+    },
+    "Schema/Namespace/View/SchemaViewReplacement::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(count($replacement->columns) >= count($original->columns), 'A schema view replacement cannot remove established fields.');",
+        "foreach ($original->columns as $position => $name) {",
+        "    $field = $name->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($replacement->columns[$position]->value === $field, 'A schema view replacement cannot rename established fields.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($established[$field][0] === $updated[$field][0], 'A schema view replacement cannot change established native types.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($established[$field][1] === $updated[$field][1], 'A schema view replacement requires the same established collations.');",
+        "}"
+      ]
+    },
+    "SelectLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native, 'The projection requires the native language profile.');",
+        "$statement = $operand ?? $operation->statement;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Select, 'Complete PostgreSQL IR currently supports a single projection SELECT.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->groupBy === [] && $statement->having === null && $statement->windows === [] && ($statement->distinct->on ?? []) === [] && $statement->into === null && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false), 'Complete PostgreSQL IR currently supports projections with positional result selection.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');",
+        "$searchPath = $operation->context->searchPath;",
+        "$operators = $searchPath[0]->value === 'pg_temp' ? $searchPath[1]->value ?? null : $searchPath[0]->value;",
+        "$catalogFirst = $operators === 'pg_catalog';",
+        "$binding = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\JoinBinding::bind($operation, $statement->from, $catalogFirst);",
+        "$where = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Predicate\\PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$results = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ProjectionLowering())->lower($operation, $statement, $binding, $catalogFirst, $inputTypes, $assignment, $operand === null || $resolvedTextOutput);",
+        "$result = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Ordering\\ResultLowering();",
+        "$order = $result->orders($operation, $statement, $binding, $results, $catalogFirst);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));"
+      ]
+    },
+    "Schema/DefinitionQueryLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "$body = match (true) {",
+        "    $query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Select => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\SelectLowering())->lower($operation, $query, resolvedTextOutput: $resolvedTextOutput),",
+        "    $query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\ValuesList => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesLowering())->lower($operation, $query),",
+        "    default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A persistent relation needs a checked SELECT or standalone VALUES definition.'),",
+        "};",
+        "$fields = $operation->facts->query($query)->fields();",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($fields !== null && count($aliases) <= count($fields), 'The relation needs a complete resolved heading.');",
+        "$columns = [];",
+        "foreach ($fields as $position => $field) {",
+        "    $column = $aliases[$position] ?? $field->name;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($column !== null, 'Each field needs a resolved catalog name.');",
+        "    $columns[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($column->value);",
+        "}",
+        "return [$body, $columns];"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native, 'CREATE VIEW requires the native language profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$statement->recursive && $statement->persistence === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Permanent && $statement->name->catalog === null, 'CREATE VIEW requires a persistent ordinary view in an absolute schema.');",
+        "$schema = $statement->name->schema->value ?? $memberNamespace->value ?? $context->declarationSchema->value;",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewName(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->name->value));",
+        "[$barrier, $invoker, $check] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewOptionsLowering())->lower($statement);",
+        "[$body, $columns] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns, resolvedTextOutput: true);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateView($name, $body, $columns, $statement->replace, $barrier, $invoker, $check);"
+      ]
+    }
+  }
+}

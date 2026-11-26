@@ -7,14 +7,14 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(IntegerLiteral::class)]
 #[Medium]
@@ -36,7 +36,7 @@ final class IntegerLiteralTest extends TestCase
 
     public function testDeriveScalarGivesIntegerWhenTheValueFits(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1_000, 9223372036854775807', []);
+        $operation = (new Inspection())->inspect('SELECT 1_000, 9223372036854775807', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -53,7 +53,7 @@ final class IntegerLiteralTest extends TestCase
 
     public function testDeriveScalarGivesRealForALargerValue(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 9223372036854775808', []);
+        $operation = (new Inspection())->inspect('SELECT 9223372036854775808', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -66,13 +66,13 @@ final class IntegerLiteralTest extends TestCase
 
     public function testRenderWritesTheDigitsWithoutSeparators(): void
     {
-        self::assertSame('SELECT 1000 AS c1, 007 AS c2, 9223372036854775808 AS c3', (new Semantics())->analyze('select 1_000 AS c1, 007 AS c2, 9223372036854775808 AS c3')->toString());
+        self::assertSame('SELECT 1000 AS c1, 007 AS c2, 9223372036854775808 AS c3', (new Inspection())->inspect('select 1_000 AS c1, 007 AS c2, 9223372036854775808 AS c3')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('42')), new ResultColumn(new IntegerLiteral('0'))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('42')), new ResultColumn(new IntegerLiteral('0'))]));
 
         self::assertSame('SELECT 42, 0', $operation->toString());
     }

@@ -10,10 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
 /**
  * One assignment of a SET statement: a variable, the connection character sets, or a password.
  *
- * @visibility public
- * @example Reading the items of a SET statement
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET @a = 1, NAMES utf8mb4');
- *     array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem $item): string => $item::class, $set->statement->items) // => [\SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment::class, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames::class]
+ * @visibility SqlSemantics
  */
 interface SetItem extends Node
 {

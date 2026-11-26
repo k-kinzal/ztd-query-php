@@ -21,6 +21,6 @@ final class CastConversionTest extends TestCase
 
     public function testDeriveClauseRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE CAST (a AS b) WITHOUT FUNCTION')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE CAST (a AS b) WITHOUT FUNCTION')->facts->diagnostics);
     }
 }

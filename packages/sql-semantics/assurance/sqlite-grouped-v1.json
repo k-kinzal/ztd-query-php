@@ -1,0 +1,77 @@
+{
+  "revision": "SemanticsIR/sqlite-grouped-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "additionalPublicRoots": ["Aggregation/GroupedSelect"],
+  "profile": "SQLite 3.47.2 with builtin count and the builtin BINARY, NOCASE and RTRIM collations, and the regular complete-query profile.",
+  "scope": "Global COUNT or keyed grouping over one absolute ordinary table, using declared fields and resolved builtin collations. A global query also admits the implicit single empty row without FROM. A row filter can be a constant integer or NULL.",
+  "open": ["Other aggregates, joined or local grouped inputs, HAVING, windows, ordering, bounds, grouped compound arms, nonconstant row filters and custom collations"],
+  "constructors": {
+    "GroupedSelect": {
+      "type": "Aggregation/GroupedSelect",
+      "role": "Checked complete grouping scope with one table input or the singleton unit row",
+      "structure": ["source", "keys", "columns", "where"],
+      "invariants": [
+        "The owned key list has zero to sixteen entries. The owned output list has one to 1024 entries.",
+        "All key references and count arguments refer to existing slots of the single table input. A projected plain field must appear in the grouping key list.",
+        "The optional constant filter is evaluated before grouping."
+      ],
+      "externalInterpretation": "The same named table and ordered declared field identities denote the same SQLite storage-class-tagged rows.",
+      "meaning": "Partition admitted rows by the key tuple using the recorded collation for each text key. NULL equals NULL for grouping, INTEGER and REAL compare numerically, and BLOB values use byte equality. Other cross-class values stay distinct. No affinity is applied. Without keys, form one global group even if no rows are admitted.",
+      "sql": "Emit each absolute source and explicit group collation. Preserve the ordered result aliases. Keys and count arguments are qualified by the same occurrence.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "GroupKey": {
+      "type": "Aggregation/GroupKey",
+      "role": "Resolved input slot with the effective builtin text collation",
+      "structure": ["column", "collation"],
+      "invariants": ["The column reads the sole input occurrence."],
+      "meaning": "Read the retained input value and compare text through the selected collation.",
+      "sql": "Qualified column followed by COLLATE and the fixed builtin identifier.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "GroupCollation": {
+      "type": "Aggregation/GroupCollation",
+      "role": "Closed SQLite builtin collation",
+      "values": ["BINARY", "NOCASE", "RTRIM"],
+      "meaning": "Compare bytes under BINARY, use SQLite ASCII folding and NUL treatment under NOCASE, or compare bytes excluding trailing ASCII spaces under RTRIM.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "Count": {
+      "type": "Aggregation/Count",
+      "role": "COUNT of admitted rows or nonnull field values, optionally distinct",
+      "structure": ["argument", "distinctCollation"],
+      "invariants": ["Only a field argument can have a distinct collation.", "An argument refers to the one input occurrence."],
+      "meaning": "COUNT returns the integer number of rows or qualifying nonnull field values. A distinct argument counts each class of equal values once under the given collation.",
+      "sql": "Emit COUNT(*) for the row count, COUNT(qualified slot) for a field count, or COUNT(DISTINCT qualified slot COLLATE builtin) for the distinct count.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "GroupColumn": {
+      "type": "Aggregation/GroupColumn",
+      "role": "One named projected count or key",
+      "structure": ["value", "name"],
+      "meaning": "A count is fixed within each group. Plain keys are drawn from a single representative of that group and retain the representative's storage classes and values.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Use the exact bound base-table declaration to determine an implicit column collation. An explicit collation overrides that fact. A three-valued constant filter is admitted. An unrecognized collation on a group key or distinct argument prevents publication.",
+  "observations": ["Exact result names and positions, typed cells, row multiplicity, no guaranteed result order", "All projected key cells on a row must agree with one representative of the same group", "COUNT distinctions for NULL, empty keyed and global groups, and integer-versus-real and collation equalities", "No database writes and exact parameter observation"],
+  "finite": {
+    "relations": ["typed bag", "empty"],
+    "keys": ["global", "BINARY", "NOCASE", "RTRIM"],
+    "counts": ["row count", "field count", "BINARY", "NOCASE", "RTRIM"],
+    "filters": ["all", "false"],
+    "completeness": "The actual structures must supply each member of the 2 × 4 × 5 × 2 cross product once."
+  },
+  "exploration": {
+    "seeds": [3797, 7901, 11273],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 90,
+    "allowedExclusions": [],
+    "structure": "Vary result width, key length, grouping slot, effective collations, argument and projection roles, repeated uses and three-valued constant filters."
+  },
+  "negative": ["Distinct count star", "Count field outside the owning layout", "Column outside the grouping list", "Key without an input", "Key in another occurrence", "Custom collation", "Filtered aggregate", "Seventeen keys", "1,025 results"],
+  "faults": ["Select another input slot in a count", "Substitute BINARY for a distinguishing builtin collation", "Drop DISTINCT from the argument", "Drop the constant WHERE"],
+  "trust": ["Builtin functions and collation registry are fixed in the profile", "Qualified identifiers and independently held external field interpretation", "Pinned SQLite and typed C transport"],
+  "sources": ["https://sqlite.org/lang_select.html", "https://sqlite.org/datatype3.html", "https://sqlite.org/lang_aggfunc.html"]
+}

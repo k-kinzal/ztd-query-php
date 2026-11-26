@@ -7,14 +7,14 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(BlobLiteral::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class BlobLiteralTest extends TestCase
 
     public function testDeriveScalarGivesBlob(): void
     {
-        $operation = (new Semantics())->analyze("SELECT x'0aff'", []);
+        $operation = (new Inspection())->inspect("SELECT x'0aff'", []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -43,13 +43,13 @@ final class BlobLiteralTest extends TestCase
 
     public function testRenderWritesTheDigitsInUpperCase(): void
     {
-        self::assertSame('SELECT x\'0AFF\' AS c1, x\'\' AS c2', (new Semantics())->analyze('select X\'0aFf\' AS c1, x\'\' AS c2')->toString());
+        self::assertSame('SELECT x\'0AFF\' AS c1, x\'\' AS c2', (new Inspection())->inspect('select X\'0aFf\' AS c1, x\'\' AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltBlob(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new BlobLiteral('00FF')), new ResultColumn(new BlobLiteral(''))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new BlobLiteral('00FF')), new ResultColumn(new BlobLiteral(''))]));
 
         self::assertSame("SELECT x'00FF', x''", $operation->toString());
     }

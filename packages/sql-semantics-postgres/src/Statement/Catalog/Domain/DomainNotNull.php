@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
  * builds. Deferral and NOT VALID are diagnostics (PG-DOMAIN-CHECK-001).
  * Source: https://www.postgresql.org/docs/17/sql-alterdomain.html.
  *
- * @visibility public
- * @example Adding a named not-null constraint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL');
- *     $operation->statement->constraint->name?->value // => 'nn'
+ * @visibility SqlSemantics
  */
 final class DomainNotNull implements Clause
 {

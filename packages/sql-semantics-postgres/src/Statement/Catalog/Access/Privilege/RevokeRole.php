@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  * (PG-MEMBERSHIP-CHECK-001).
  * Source: https://www.postgresql.org/docs/17/sql-revoke.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the option a revoke turns off
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE ADMIN OPTION FOR staff FROM joe');
- *     [$operation->statement->option?->value, $operation->statement->roles[0]->privilege()] // => ['admin', 'staff']
+ * @visibility SqlSemantics
  */
 final class RevokeRole implements Statement
 {

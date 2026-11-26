@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/rename-user.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a renaming
  *     $pair = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('b')));
  *     $pair->to instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName // => true

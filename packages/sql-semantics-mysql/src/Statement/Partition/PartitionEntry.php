@@ -22,9 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
  * Source: https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_yacc.yy (rule partition_entry).
  * Status: Implemented.
  *
- * @visibility public
- * @example Reporting a partitioning clause sent as a statement
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('PARTITION BY KEY () PARTITIONS 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A partitioning clause is not a statement a client can send.
+ * @visibility SqlSemantics
  */
 final class PartitionEntry implements Statement
 {

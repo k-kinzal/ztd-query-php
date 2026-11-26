@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  * `RangeTableSample`. The facts follow PG-TABLE-SHAPE-001.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM. Status: Implemented.
  *
- * @visibility public
- * @example Reading a named input
- *     $input = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM app.t AS x')->singleNamedInput();
- *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['app', 't', 'x']
+ * @visibility SqlSemantics
  * @example Refusing column names without a correlation name
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'))), null, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

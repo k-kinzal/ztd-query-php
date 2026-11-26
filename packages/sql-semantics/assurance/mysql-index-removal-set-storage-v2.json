@@ -1,0 +1,9 @@
+{
+  "revision": "SemanticsIR/mysql-index-removal-set-storage-2",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/DropIndexes",
+  "storage": {
+    "targets": "native-index-removal-target-copy"
+  },
+  "extends": "mysql-index-removal-set-storage-v1.json"
+}

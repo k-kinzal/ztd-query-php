@@ -10,7 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * An SQL/XML constructor the server rejects.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a repeated attribute name
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\XmlProblem(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\XmlProblemKind::RepeatedAttribute, 'a'))->message() // => 'XML attribute name "a" appears more than once'
  */

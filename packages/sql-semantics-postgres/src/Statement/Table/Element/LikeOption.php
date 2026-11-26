@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * one for the properties they share.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading whether an option includes or excludes
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (LIKE u EXCLUDING DEFAULTS)');
- *     $create->statement->definition->elements[0]->options[0]->including // => false
+ * @visibility SqlSemantics
  */
 final class LikeOption implements Node
 {

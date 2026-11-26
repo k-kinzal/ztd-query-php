@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
  * Source: https://sqlite.org/lang_droptable.html, https://sqlite.org/lang_dropview.html,
  * https://sqlite.org/lang_dropindex.html, https://sqlite.org/lang_droptrigger.html.
  *
- * @visibility public
- * @example Reading what a DROP statement removes
- *     $drop = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DROP VIEW v');
- *     $drop->statement->object // => \SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind::View
+ * @visibility SqlSemantics
  */
 enum SchemaObjectKind: string
 {

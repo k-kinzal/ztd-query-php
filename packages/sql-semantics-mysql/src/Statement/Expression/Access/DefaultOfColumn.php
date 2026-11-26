@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/miscellaneous-functions.html#function_default.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the column
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = DEFAULT(a)');
- *     $query->statement->where->right->column->name->value // => 'a'
+ * @visibility SqlSemantics
  */
 final class DefaultOfColumn implements Scalar
 {

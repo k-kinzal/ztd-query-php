@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
  * first selection of a query statement only (PG-PLACEMENT-001).
  * Source: https://www.postgresql.org/docs/17/sql-prepare.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a prepared statement
- *     $prepare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('PREPARE p (integer) AS SELECT $1');
- *     [$prepare->statement->name->value, count($prepare->statement->parameters->types), $prepare->toString()] // => ['p', 1, 'PREPARE p (INTEGER) AS SELECT $1']
+ * @visibility SqlSemantics
  */
 final class Prepare implements Statement
 {

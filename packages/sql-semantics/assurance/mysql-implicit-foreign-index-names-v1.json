@@ -1,0 +1,100 @@
+{
+  "revision": "SemanticsIR/mysql-implicit-foreign-index-names-1",
+  "approval": "pending-human-review",
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Ordinary persistent InnoDB, native parameter and name comparison settings, default foreign_key_checks=1. No user partitioning or SQL-generated invisible primary keys.",
+  "constructors": {},
+  "rules": {
+    "candidates": "For every enforced table-level or effective inline foreign key, the child definition proposes an ordinary physical B-tree with its full ordered child fields. Before allocating any names, discard proposals covered by a declared compatible key anywhere in the original table definition.",
+    "prefix": "Declared support is an explicit leading sequence of full child fields with matching ordered direction. A truncated part, expression, FULLTEXT or spatial key does not cover that position. Ignore descending syntax on declared ordinary key parts on MySQL 5.6 and 5.7. Explicit direction on the foreign-key parts is rejected by those native InnoDB releases. MySQL 8.0 and later uses observable explicit directions on both key types. Hidden clustered suffix fields do not suppress a proposed declaration.",
+    "redundant": "For two remaining generated proposals, an ordered strictly longer compatible prefix wins. With identical full sequences, including directions, the later proposal supplies the physical index. Discarded proposals consume no index name.",
+    "name": "A proposed retained key uses the explicitly written foreign constraint symbol if present, then the written FOREIGN KEY index name if present, then the canonical declared spelling of its leading field and the native occupied-name allocation algorithm.",
+    "order": "Visit retained explicit and generated candidates in original declaration order. Unnamed physical candidates can take the native available suffix. Explicit physical name collisions cannot silently choose a different spelling. A separate explicit key may occupy a name that an eliminated generated proposal would otherwise request.",
+    "inline": "MySQL before 9 ignores inline REFERENCES for InnoDB constraints. MySQL 9 observes inline constraints as part of column declaration order, with the same native support and name checks.",
+    "generating": "A retained generated physical index beginning with the native AUTO_INCREMENT field can serve as its physical backing key.",
+    "like": "CREATE TABLE LIKE copies the settled physical key names and definitions. The copied keys do not supply foreign-key edges in the new table.",
+    "boundaries": "The native read-only declaration resolves keys internally. Complete removal, renaming, creation and visibility values keep resolved identities only as required by their statement roles. Surviving foreign-key constraints continue to constrain admitted removals."
+  },
+  "observations": [
+    "Native qualified relation and lifetime",
+    "Exact names and named policy families",
+    "Physical ordered fields, direction and duplicate name refusal",
+    "Generated reference identity and ordered field pairings",
+    "Resolved drop, create and visibility effects under independent fixture replay",
+    "Preserved rows and native constraints or declared copying effects"
+  ],
+  "finite": {
+    "names": [
+      "first field",
+      "written key",
+      "constraint symbol",
+      "both"
+    ],
+    "coverage": [
+      "absent",
+      "explicit former",
+      "explicit latter",
+      "wrong direction",
+      "wrong order",
+      "whole longer"
+    ],
+    "requiredIndependentExamples": [
+      "Repeated equal signatures",
+      "Strictly longer signature both orders",
+      "Canonical name case",
+      "Both collision orders",
+      "Visible and invisible eligible explicit key",
+      "Implicit backing with AUTO_INCREMENT",
+      "Legacy ignored inline versus active MySQL 9",
+      "Physical copy through LIKE"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      181,
+      1217,
+      1553
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "faults": [
+    "Ignore generated declarations",
+    "Use any matching column in a key",
+    "Retain the earlier equivalent proposal",
+    "Allocate all explicit names before generated names",
+    "Use the foreign key's written index name over its explicit constraint symbol",
+    "Drop native protection of a generated physical key"
+  ],
+  "remaining": [
+    "User partitioning and non-InnoDB foreign-key engines",
+    "Dynamic ALTER declarations and configuration profiles",
+    "Generated physical names in external table snapshots not represented by supported declaration inputs"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/create-table-like.html"
+  ],
+  "calibrationTsvSha256": {
+    "5.6.51": "621880dccc795209bce1fe5954a6caa2f71b14b8a0b13d8ab8f87db7bed628ff",
+    "5.7.44": "e5f0bc43e6db87ada08d38929ea09ab556b38b1c846b2301de23ed4f6bc34bb5",
+    "8.0.44": "06c738969f5bb60a72d3a4a248eed1f1afb015b6f6cd1617fc9afe83c00b2eca",
+    "8.4.7": "bdc416d232ece824e9518534b8fbdcaf8d7392d6eb70b4646ad7bda2fb49cd34",
+    "9.1.0": "81688a7918987401ab7410a1722c2bb165d87275120a341363b08e21a3a4d374"
+  }
+}

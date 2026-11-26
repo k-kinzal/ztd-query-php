@@ -14,6 +14,6 @@ final class DropDatabaseOptionTest extends TestCase
 {
     public function testForceIsKept(): void
     {
-        self::assertSame('DROP DATABASE d WITH (FORCE, FORCE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP DATABASE d WITH (FORCE, FORCE)')->toString());
+        self::assertSame('DROP DATABASE d WITH (FORCE, FORCE)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP DATABASE d WITH (FORCE, FORCE)')->toString());
     }
 }

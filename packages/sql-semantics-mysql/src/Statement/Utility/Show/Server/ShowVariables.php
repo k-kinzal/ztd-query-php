@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-variables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW LOCAL VARIABLES LIKE 'a%'");
- *     [$show->statement->scope, $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, "SHOW SESSION VARIABLES LIKE 'a%'"]
+ * @visibility SqlSemantics
  */
 final class ShowVariables implements Statement, Relation
 {

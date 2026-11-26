@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-tls.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a property
  *     \SqlSemantics\Platform\MySql\Statement\Account\Option\TlsAttribute::Issuer->value // => 'ISSUER'
  */

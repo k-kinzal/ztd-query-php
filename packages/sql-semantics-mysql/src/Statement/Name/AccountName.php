@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/account-names.html,
  * https://dev.mysql.com/doc/refman/8.4/en/role-names.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the parts of an account name
  *     $account = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('app'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('10.0.%'));
  *     [$account->user->value, $account->host?->value] // => ['app', '10.0.%']

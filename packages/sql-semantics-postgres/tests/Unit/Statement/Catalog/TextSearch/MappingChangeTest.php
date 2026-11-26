@@ -14,6 +14,6 @@ final class MappingChangeTest extends TestCase
 {
     public function testAlterIsSpelledAlter(): void
     {
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR word WITH simple', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR word WITH simple')->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR word WITH simple', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING FOR word WITH simple')->toString());
     }
 }

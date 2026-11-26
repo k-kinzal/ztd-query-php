@@ -14,8 +14,8 @@ final class CreateSequenceTest extends TestCase
 {
     public function testCreatedSchemaIsTheWrittenSchema(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE SEQUENCE x.s', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE SEQUENCE x.s', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\CreateSequence::class, $n1);
         self::assertSame('x', $n1->createdSchema()?->value);
@@ -23,8 +23,8 @@ final class CreateSequenceTest extends TestCase
 
     public function testDeriveStatementDeclaresTheSequence(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE SEQUENCE s', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE SEQUENCE s', []);
         self::assertSame([
           0 => 'last_value bigint NotNull',
           1 => 'log_cnt bigint NotNull',
@@ -34,7 +34,7 @@ final class CreateSequenceTest extends TestCase
 
     public function testDeriveElementDeclaresTheSequenceInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE q');
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE SEQUENCE q');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
         $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         $statement->statement->deriveElement($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'));
@@ -43,8 +43,8 @@ final class CreateSequenceTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE UNLOGGED SEQUENCE IF NOT EXISTS s AS integer START WITH 1 CACHE 10 NO MINVALUE OWNED BY NONE', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE UNLOGGED SEQUENCE IF NOT EXISTS s AS integer START WITH 1 CACHE 10 NO MINVALUE OWNED BY NONE', []);
         self::assertSame('CREATE UNLOGGED SEQUENCE IF NOT EXISTS s AS INTEGER START 1 CACHE 10 NO MINVALUE OWNED BY "none"', $statement->toString());
     }
 }

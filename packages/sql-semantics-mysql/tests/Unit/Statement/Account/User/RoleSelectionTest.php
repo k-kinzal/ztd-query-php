@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Account\User;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RoleSelection::class)]
 #[Medium]
@@ -16,8 +16,8 @@ final class RoleSelectionTest extends TestCase
 {
     public function testRenderWritesEverySelection(): void
     {
-        self::assertSame('SET ROLE ALL', (new Semantics())->analyze('set role all')->toString());
-        self::assertSame('SET ROLE ALL EXCEPT r1, r2', (new Semantics())->analyze('set role all except r1, r2')->toString());
-        self::assertSame('SET ROLE DEFAULT', (new Semantics())->analyze('set role default')->toString());
+        self::assertSame('SET ROLE ALL', (new Inspection())->inspect('set role all')->toString());
+        self::assertSame('SET ROLE ALL EXCEPT r1, r2', (new Inspection())->inspect('set role all except r1, r2')->toString());
+        self::assertSame('SET ROLE DEFAULT', (new Inspection())->inspect('set role default')->toString());
     }
 }

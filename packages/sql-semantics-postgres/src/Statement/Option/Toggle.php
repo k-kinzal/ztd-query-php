@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
  * word or a string, and passes them on as the texts `true`, `false` and `on`.
  * Source: https://www.postgresql.org/docs/17/sql-set.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the text a keyword value stands for
  *     \SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle::On->text() // => 'on'
  */

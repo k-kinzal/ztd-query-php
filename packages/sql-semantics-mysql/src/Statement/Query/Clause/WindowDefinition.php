@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
  * The selection that holds the definition derives its specification.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-named-windows.html.
  *
- * @visibility public
- * @example Reading the name of a window
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WINDOW w AS (ORDER BY a)');
- *     $query->statement->windows[0]->name->value // => 'w'
+ * @visibility SqlSemantics
  */
 final class WindowDefinition implements Node
 {

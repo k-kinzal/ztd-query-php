@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\TransactionRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Commit;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Release;
@@ -16,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Transaction\Rollback;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\RollbackTo;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Savepoint;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TransactionRule::class)]
 #[Medium]
@@ -23,24 +23,24 @@ final class TransactionRuleTest extends TestCase
 {
     public function testCommandLowersEachTransactionCommandToItsOwnRequest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertInstanceOf(Begin::class, $semantics->analyze('BEGIN')->statement);
-        self::assertInstanceOf(Commit::class, $semantics->analyze('COMMIT')->statement);
-        self::assertInstanceOf(Commit::class, $semantics->analyze('END')->statement);
-        self::assertInstanceOf(Rollback::class, $semantics->analyze('ROLLBACK')->statement);
-        self::assertInstanceOf(Savepoint::class, $semantics->analyze('SAVEPOINT s')->statement);
-        self::assertInstanceOf(Release::class, $semantics->analyze('RELEASE s')->statement);
-        self::assertInstanceOf(RollbackTo::class, $semantics->analyze('ROLLBACK TO s')->statement);
+        self::assertInstanceOf(Begin::class, $semantics->inspect('BEGIN')->statement);
+        self::assertInstanceOf(Commit::class, $semantics->inspect('COMMIT')->statement);
+        self::assertInstanceOf(Commit::class, $semantics->inspect('END')->statement);
+        self::assertInstanceOf(Rollback::class, $semantics->inspect('ROLLBACK')->statement);
+        self::assertInstanceOf(Savepoint::class, $semantics->inspect('SAVEPOINT s')->statement);
+        self::assertInstanceOf(Release::class, $semantics->inspect('RELEASE s')->statement);
+        self::assertInstanceOf(RollbackTo::class, $semantics->inspect('ROLLBACK TO s')->statement);
     }
 
     public function testBehaviorKeepsTheWrittenWordAndItsAbsence(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->analyze('BEGIN')->statement;
-        $deferred = $semantics->analyze('BEGIN DEFERRED')->statement;
-        $immediate = $semantics->analyze('BEGIN IMMEDIATE')->statement;
-        $exclusive = $semantics->analyze('BEGIN EXCLUSIVE')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->inspect('BEGIN')->statement;
+        $deferred = $semantics->inspect('BEGIN DEFERRED')->statement;
+        $immediate = $semantics->inspect('BEGIN IMMEDIATE')->statement;
+        $exclusive = $semantics->inspect('BEGIN EXCLUSIVE')->statement;
 
         self::assertInstanceOf(Begin::class, $plain);
         self::assertInstanceOf(Begin::class, $deferred);
@@ -54,9 +54,9 @@ final class TransactionRuleTest extends TestCase
 
     public function testNameIsNullUnlessANameFollowsTheKeyword(): void
     {
-        $semantics = new Semantics();
-        $bare = $semantics->analyze('ROLLBACK TRANSACTION')->statement;
-        $named = $semantics->analyze('ROLLBACK TRANSACTION t1')->statement;
+        $semantics = new Inspection();
+        $bare = $semantics->inspect('ROLLBACK TRANSACTION')->statement;
+        $named = $semantics->inspect('ROLLBACK TRANSACTION t1')->statement;
 
         self::assertInstanceOf(Rollback::class, $bare);
         self::assertInstanceOf(Rollback::class, $named);
@@ -66,9 +66,9 @@ final class TransactionRuleTest extends TestCase
 
     public function testSavepointReadsTheNameWithOrWithoutTheKeyword(): void
     {
-        $semantics = new Semantics();
-        $short = $semantics->analyze('RELEASE s1')->statement;
-        $long = $semantics->analyze('RELEASE SAVEPOINT s1')->statement;
+        $semantics = new Inspection();
+        $short = $semantics->inspect('RELEASE s1')->statement;
+        $long = $semantics->inspect('RELEASE SAVEPOINT s1')->statement;
 
         self::assertInstanceOf(Release::class, $short);
         self::assertInstanceOf(Release::class, $long);

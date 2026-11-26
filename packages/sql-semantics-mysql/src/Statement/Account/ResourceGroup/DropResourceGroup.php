@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Mirrors PT_drop_resource_group. Rule: MYSQL-RESOURCE-GROUP-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-resource-group.html. Status: Implemented.
  *
- * @visibility public
- * @example Dropping a group
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('drop resource group batch force')->statement->force // => true
+ * @visibility SqlSemantics
  */
 final class DropResourceGroup implements Statement
 {

@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * a searched CASE it is a truth value. The CASE expression derives both parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flow-control-functions.html#operator_case.
  *
- * @visibility public
- * @example Reading a branch
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE CASE WHEN a THEN 1 END');
- *     $query->statement->where->branches[0]->result->text // => '1'
+ * @visibility SqlSemantics
  */
 final class CaseBranch implements Node
 {

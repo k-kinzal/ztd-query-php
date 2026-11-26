@@ -1,0 +1,110 @@
+{
+  "revision": "SemanticsIR/sqlite-mutation-returning-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Guard returned slots and emit the ordered output of the owning SQLite mutation through its native target scope.",
+  "rules": {
+    "Mutation/Delete::__construct": {
+      "common": [
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');",
+        "Check::input(count($checked) <= 2000, 'A DELETE can return at most 2000 fields in this profile.');",
+        "foreach ($checked as $column) {",
+        "    Check::input(isset($target->columns[$column->reference->slot]), 'A returned slot must belong to the DELETE target.');",
+        "}",
+        "(new ExpressionScope())->check([count($target->columns)], $where === null ? [] : [[$where, 0, 1]]);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/Delete::toString": {
+      "common": [
+        "$renderer = new SelectSql();",
+        "$target = $renderer->source($this->target, 0);",
+        "$where = $this->where === null ? '' : ' WHERE ' . $renderer->expression($this->where, $this->target);",
+        "",
+        "$returning = (new ReturningSql())->clause($this->target, $this->returning);",
+        "",
+        "return 'DELETE FROM ' . $target . $where . $returning;"
+      ]
+    },
+    "Mutation/ReturnedColumn::__construct": {
+      "common": [
+        "Check::input($reference->source === 0, 'A returned column must read the single target occurrence.');"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "common": [
+        "$checked = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty ordered assignment list.', 1);",
+        "Check::input(count($checked) <= 2000, 'An UPDATE can have at most 2000 assignments in this profile.');",
+        "$pending = $where === null ? [] : [[$where, 0, 1]];",
+        "foreach ($checked as $assignment) {",
+        "    Check::input(isset($target->columns[$assignment->targetSlot]), 'An assignment slot must belong to the UPDATE target.');",
+        "    $pending[] = [$assignment->value, 0, 1];",
+        "}",
+        "(new ExpressionScope())->check([count($target->columns)], $pending);",
+        "$output = Check::listOf($returning, ReturnedColumn::class, 'An UPDATE needs checked RETURNING fields.');",
+        "Check::input(count($output) <= 2000, 'An UPDATE can return at most 2000 fields in this profile.');",
+        "foreach ($output as $column) {",
+        "    Check::input(isset($target->columns[$column->reference->slot]), 'A returned slot must belong to the UPDATE target.');",
+        "}",
+        "$this->assignments = $checked;",
+        "$this->returning = $output;"
+      ]
+    },
+    "Mutation/Update::toString": {
+      "common": [
+        "$renderer = new SelectSql();",
+        "$target = $renderer->source($this->target, 0);",
+        "$conflict = match ($this->conflict) {",
+        "    UpdateConflict::Inherit => '',",
+        "    UpdateConflict::Abort => ' OR ABORT',",
+        "    UpdateConflict::Ignore => ' OR IGNORE',",
+        "};",
+        "$assignments = [];",
+        "foreach ($this->assignments as $assignment) {",
+        "    $column = $this->target->columns[$assignment->targetSlot]->quoted();",
+        "    $assignments[] = $column . ' = ' . $renderer->expression($assignment->value, $this->target);",
+        "}",
+        "$where = $this->where === null ? '' : ' WHERE ' . $renderer->expression($this->where, $this->target);",
+        "$returning = (new ReturningSql())->clause($this->target, $this->returning);",
+        "",
+        "return 'UPDATE' . $conflict . ' ' . $target . ' SET ' . implode(', ', $assignments) . $where . $returning;"
+      ]
+    },
+    "Mutation/ReturningLowering::lower": {
+      "common": [
+        "if ($returning === []) {",
+        "    return [];",
+        "}",
+        "foreach ($returning as $operand) {",
+        "    Check::input(!$operand instanceof TableStar, 'RETURNING requires an unqualified wildcard.');",
+        "}",
+        "$fields = $operation->facts->output?->fields();",
+        "Check::input($fields !== null, 'RETURNING needs a closed target result layout.');",
+        "$result = [];",
+        "foreach ($fields as $field) {",
+        "    $operand = $field->expression;",
+        "    Check::input(",
+        "        $operand === null || ($operand instanceof ColumnUse && $operand->qualifier === null) || $operand instanceof DoubleQuotedWord,",
+        "        'RETURNING requires an unqualified target column.',",
+        "    );",
+        "    $resolution = $operand === null ? $field->resolution : $operation->facts->scalar($operand)->resolution;",
+        "    Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');",
+        "    $result[] = new ReturnedColumn($binding->resolved($resolution), new Identifier($field->name->value));",
+        "}",
+        "Check::input($result !== [], 'RETURNING needs at least one resolved result field.');",
+        "",
+        "return $result;"
+      ]
+    },
+    "Mutation/ReturningSql::clause": {
+      "common": [
+        "$fields = [];",
+        "foreach ($returning as $column) {",
+        "    $fields[] = $target->columns[$column->reference->slot]->quoted() . ' AS ' . $column->name->quoted();",
+        "}",
+        "",
+        "return $fields === [] ? '' : ' RETURNING ' . implode(', ', $fields);"
+      ]
+    }
+  },
+  "extends": "SemanticsIR/sqlite-delete-returning-boundaries-1"
+}

@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice;
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, https://www.postgresql.org/docs/17/sql-createaggregate.html,
  * https://www.postgresql.org/docs/17/sql-createcollation.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the word an alignment is written with
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Alignment::read('float8')?->name // => 'Double'
  */

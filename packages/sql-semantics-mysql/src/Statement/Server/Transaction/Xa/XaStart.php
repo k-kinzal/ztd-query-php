@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa begin 'g', 'b' resume");
- *     [$xa->toString(), $xa->statement->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption::Resume] // => ["XA START 'g', 'b' RESUME", true]
+ * @visibility SqlSemantics
  */
 final class XaStart implements Statement
 {

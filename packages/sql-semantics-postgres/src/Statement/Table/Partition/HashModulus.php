@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
  * once each and reports any other word.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a hash bound item
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (MODULUS 4, REMAINDER 1)');
- *     [$create->statement->definition->bound->items[1]->name->value, $create->statement->definition->bound->items[1]->value->digits] // => ['remainder', '1']
+ * @visibility SqlSemantics
  */
 final class HashModulus implements Node
 {

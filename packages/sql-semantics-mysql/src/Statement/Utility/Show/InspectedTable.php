@@ -17,12 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The node is the table use: its resolution is the relation fact the
  * operation records for it (MYSQL-SHOW-TARGET-001).
  *
- * @visibility public
- * @example Resolving the inspected table
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INT)');
- *     $show = $semantics->analyze('SHOW CREATE TABLE t', [$table]);
- *     $show->facts->relation($show->statement->table)->table->table === $table->declarations()[0] // => true
+ * @visibility SqlSemantics
  */
 final class InspectedTable implements Node
 {

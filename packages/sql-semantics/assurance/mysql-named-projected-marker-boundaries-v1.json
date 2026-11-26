@@ -1,0 +1,82 @@
+{
+  "revision": "SemanticsIR/mysql-named-projected-marker-boundaries/1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-named-projected-markers-v2.json",
+  "rules": {
+    "Binding/Parameter::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($position >= 1 && $position <= 1024, 'A parameter position must be between 1 and 1024.');"
+      ]
+    },
+    "Binding/Parameter::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'CAST(? AS ' . $this->target->value . ')';"
+      ]
+    },
+    "Binding/ParameterLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if (!$expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\Cast || $expression->array) {",
+        "    return null;",
+        "}",
+        "$kind = $expression->target->kind;",
+        "if ($kind !== \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Signed && $kind !== \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Unsigned) {",
+        "    return null;",
+        "}",
+        "$target = $kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Signed ? \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ParameterTarget::Signed : \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ParameterTarget::Unsigned;",
+        "$operand = $expression->operand;",
+        "while ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if (!$operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter) {",
+        "    return null;",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter($position, $target, $operand->marker === '?' ? null : new \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ParameterName(substr($operand->marker, 1)));"
+      ]
+    },
+    "Binding/ParameterName::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[A-Za-z0-9_]+\\z/D', $value) === 1, 'A parameter name requires ASCII letters, digits or underscores.');"
+      ]
+    },
+    "SelectLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "$mode = $this->mode($profile->lexical);",
+        "$statement = $operand ?? $operation->statement;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'Complete MySQL IR currently supports a single projection SELECT.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement->groupBy === null && $statement->having === null && $statement->windows === [] && $statement->qualify === null && $statement->procedure === null && $statement->locking === [] && $statement->into === null && $statement->late === null && ($statement->options === [] || $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::All] || $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::Distinct]), 'Complete MySQL IR currently supports projections with positional result selection.');",
+        "$binding = \\SqlSemantics\\Platform\\MySql\\Ir\\From\\JoinBinding::bind($operation, $statement->from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual ? null : $statement->from);",
+        "$where = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\PredicateLowering())->lower($statement->where, $binding);",
+        "$results = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ProjectionColumns())->lower($operation, $statement, $binding);",
+        "$result = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultLowering();",
+        "$order = [];",
+        "foreach ($statement->orderBy as $key) {",
+        "    $order[] = $result->order($key);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Select($results, $binding->source(), $profile->grammar, $where, $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::Distinct], $order, $result->limit($statement->limit), $mode);"
+      ]
+    }
+  }
+}

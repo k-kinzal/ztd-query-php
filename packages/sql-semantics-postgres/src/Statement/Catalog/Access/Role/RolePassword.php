@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * kept so that the statement reports the problem and is written back as it was.
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
- * @example Removing the password of a role
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER ROLE joe PASSWORD NULL');
- *     $operation->statement->options[0]->password // => null
+ * @visibility SqlSemantics
  */
 final class RolePassword implements RoleOption
 {

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\BareWords;
  * each embedded closing delimiter doubled; a bracketed word cannot contain
  * `]`. Source: https://sqlite.org/lang_keywords.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling a quoted word
  *     $word = new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('big "int"'), \SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote::Double);
  *     $word->spelling() // => '"big ""int"""'

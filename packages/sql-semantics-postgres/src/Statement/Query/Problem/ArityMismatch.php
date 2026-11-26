@@ -11,9 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * Two column counts that PostgreSQL requires to agree differ.
  *
- * @visibility public
- * @example Reporting arms of different widths
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 UNION SELECT 1, 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: each UNION query must have the same number of columns
+ * @visibility SqlSemantics
  * @example Refusing equal counts
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch(\SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule::ValuesRows, 'VALUES', 2, 2) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

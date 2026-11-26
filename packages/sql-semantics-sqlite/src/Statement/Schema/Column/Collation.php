@@ -19,10 +19,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  * context, so an unknown name is not a diagnostic of the model.
  * Source: https://sqlite.org/datatype3.html#collation. Status: Implemented.
  *
- * @visibility public
- * @example Reading the collation of a column
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a TEXT COLLATE NOCASE)');
- *     $create->statement->columns[0]->constraints[0]->name->value // => 'NOCASE'
+ * @visibility SqlSemantics
  */
 final class Collation implements ColumnConstraint
 {

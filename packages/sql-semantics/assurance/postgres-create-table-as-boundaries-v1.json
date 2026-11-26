@@ -1,0 +1,119 @@
+{
+  "revision": "SemanticsIR/postgres-create-table-as-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect the absolute persistent table identity, complete query boundary, immutable heading and the native storage and copy choices to the loaded PHP.",
+  "rules": {
+    "Schema/TableName::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $schema->value !== 'pg_temp' && preg_match('/\\Apg_(?:toast_)?temp_[0-9]+\\z/D', $schema->value) === 0,",
+        "    'A persistent PostgreSQL relation requires an absolute schema.',",
+        ");"
+      ]
+    },
+    "Schema/Query/CreateAsBounds::width": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesQuery) {",
+        "    return count($query->rows[0]->cells);",
+        "}",
+        "$source = $query->source;",
+        "Check::input(",
+        "    $source === null || ($source instanceof TableSource && $source->kind === ExternalRelationKind::BaseTable),",
+        "    'CREATE TABLE AS requires no source or one persistent base table.'",
+        ");",
+        "if ($source !== null) {",
+        "    Check::input(",
+        "        $source->schema->value !== 'pg_temp' && preg_match('/\\Apg_(?:toast_)?temp_[0-9]+\\z/D', $source->schema->value) === 0,",
+        "        'CREATE TABLE AS requires a persistent source schema.',",
+        "    );",
+        "}",
+        "$expressions = [];",
+        "foreach ($query->columns as $column) {",
+        "    $expressions[] = $column->expression;",
+        "}",
+        "foreach ($query->orderBy as $order) {",
+        "    $expressions[] = $order->target;",
+        "}",
+        "foreach ($expressions as $expression) {",
+        "    while ($expression instanceof BuiltinCast) {",
+        "        $expression = $expression->operand;",
+        "    }",
+        "    Check::input(!$expression instanceof Parameter, 'CREATE TABLE AS requires a parameter-free defining query.');",
+        "}",
+        "",
+        "return count($query->columns);"
+      ]
+    },
+    "Schema/Query/CreateTableAs::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$heading = Check::listOf($columns, Identifier::class, 'CREATE TABLE AS needs a nonempty ordered heading.', 1);",
+        "$width = (new CreateAsBounds())->width($query);",
+        "Check::input(count($heading) === $width && $width <= 1600, 'The new table heading must match its query within 1600 columns.');",
+        "$seen = [];",
+        "foreach ($heading as $column) {",
+        "    Check::input(!isset($seen[$column->value]), 'CREATE TABLE AS cannot repeat a column name.');",
+        "    $seen[$column->value] = true;",
+        "}",
+        "$this->columns = $heading;"
+      ]
+    },
+    "Schema/Query/CreateTableAs::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->query->profileId();"
+      ]
+    },
+    "Schema/Query/CreateTableAs::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "",
+        "return 'CREATE ' . ($this->unlogged ? 'UNLOGGED ' : '') . 'TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '')",
+        "    . $this->target->quoted() . ' (' . implode(', ', $columns) . ') USING heap AS ' . $this->query->toString()",
+        "    . ($this->withData ? ' WITH DATA' : ' WITH NO DATA');"
+      ]
+    },
+    "Schema/Query/CreateTableAsLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$target = $statement->target;",
+        "$policy = $statement->persistence;",
+        "Check::input($context->profile->parameters === ParameterStyle::Native, 'CREATE TABLE AS requires the native profile.');",
+        "Check::input($policy === Persistence::Permanent || $policy === Persistence::Unlogged, 'CREATE TABLE AS requires a persistent table.');",
+        "Check::input(",
+        "    ($target->method === null || $target->method->value === 'heap') && $target->options === []",
+        "        && $target->tablespace === null && $target->onCommit === null && $target->name->catalog === null,",
+        "    'CREATE TABLE AS requires native heap storage, the default tablespace and no commit action.',",
+        ");",
+        "$schema = ($target->name->schema ?? $context->declarationSchema)->value;",
+        "$name = new TableName(new Identifier($schema), new Identifier($target->name->name->value));",
+        "[$query, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $target->columns);",
+        "",
+        "return new CreateTableAs($name, $query, $columns, $policy === Persistence::Unlogged, $statement->ifNotExists, $statement->withData ?? true);"
+      ]
+    }
+  }
+}

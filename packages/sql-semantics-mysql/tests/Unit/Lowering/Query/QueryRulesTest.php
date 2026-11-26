@@ -14,13 +14,13 @@ use SqlSemantics\Platform\MySql\Lowering\Query\QueryRules;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(QueryRules::class)]
 #[Medium]
@@ -28,15 +28,15 @@ final class QueryRulesTest extends TestCase
 {
     public function testStatementLowersASelectOfEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Semantics('mysql-9.1.0'))->inspect('select a x from db.t u where a=1')->toString());
-        self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Semantics('mysql-5.7.44'))->inspect('select a x from db.t u where a=1')->toString());
-        self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Semantics('mysql-5.6.51'))->inspect('select a x from db.t u where a=1')->toString());
+        self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Inspection('mysql-9.1.0'))->diagnose('select a x from db.t u where a=1')->toString());
+        self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Inspection('mysql-5.7.44'))->diagnose('select a x from db.t u where a=1')->toString());
+        self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Inspection('mysql-5.6.51'))->diagnose('select a x from db.t u where a=1')->toString());
     }
 
     public function testQueryLowersTheQueriesOfOtherStatements(): void
     {
-        self::assertSame('SELECT (SELECT 1) AS v, a IN (SELECT 2) AS w FROM (SELECT 3) d WHERE EXISTS (SELECT 4)', (new Semantics('mysql-8.4.7'))->inspect('select (select 1) as v, a in (select 2) as w from (select 3) d where exists (select 4)')->toString());
-        self::assertSame('SELECT (SELECT 1) AS v FROM t WHERE EXISTS (SELECT 2)', (new Semantics('mysql-5.6.51'))->inspect('select (select 1) as v from t where exists (select 2)')->toString());
+        self::assertSame('SELECT (SELECT 1) AS v, a IN (SELECT 2) AS w FROM (SELECT 3) d WHERE EXISTS (SELECT 4)', (new Inspection('mysql-8.4.7'))->diagnose('select (select 1) as v, a in (select 2) as w from (select 3) d where exists (select 4)')->toString());
+        self::assertSame('SELECT (SELECT 1) AS v FROM t WHERE EXISTS (SELECT 2)', (new Inspection('mysql-5.6.51'))->diagnose('select (select 1) as v from t where exists (select 2)')->toString());
     }
 
     public function testLegacyQueryLowersCreateSelectWithItsUnion(): void
@@ -110,7 +110,7 @@ final class QueryRulesTest extends TestCase
 
     public function testOrderItemLowersAnOrderingItemOfGroupConcat(): void
     {
-        self::assertSame('SELECT GROUP_CONCAT(a ORDER BY a DESC) AS g FROM t', (new Semantics('mysql-5.6.51'))->inspect('select group_concat(a order by a desc) as g from t')->toString());
+        self::assertSame('SELECT GROUP_CONCAT(a ORDER BY a DESC) AS g FROM t', (new Inspection('mysql-5.6.51'))->diagnose('select group_concat(a order by a desc) as g from t')->toString());
     }
 
     public function testDirectionAnswersNullForNoDirection(): void
@@ -174,7 +174,7 @@ final class QueryRulesTest extends TestCase
 
     public function testAliasLowersColumnAndTableAliases(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->inspect("SELECT a AS `x y`, b 'z' FROM t AS u");
+        $operation = (new Inspection('mysql-5.7.44'))->diagnose("SELECT a AS `x y`, b 'z' FROM t AS u");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
@@ -227,7 +227,7 @@ final class QueryRulesTest extends TestCase
 
     public function testMarkAnswersWhatIsWrittenBeforeAColumnOrTableAlias(): void
     {
-        self::assertSame('SELECT a x, b AS y FROM t u', (new Semantics())->inspect('select a x, b as y from t u')->toString());
-        self::assertSame('SELECT f(a b, c AS d) AS e FROM t', (new Semantics())->inspect('select f(a b, c as d) as e from t')->toString());
+        self::assertSame('SELECT a x, b AS y FROM t u', (new Inspection())->diagnose('select a x, b as y from t u')->toString());
+        self::assertSame('SELECT f(a b, c AS d) AS e FROM t', (new Inspection())->diagnose('select f(a b, c as d) as e from t')->toString());
     }
 }

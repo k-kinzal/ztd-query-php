@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
  *
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-TABLEFUNCTIONS.
  *
- * @visibility public
- * @example Reading the function of a FROM item
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM ROWS FROM (f() AS (a integer))');
- *     $query->statement->from->functions[0]->definitions[0]->name->value // => 'a'
+ * @visibility SqlSemantics
  */
 final class TableFunction implements Node
 {

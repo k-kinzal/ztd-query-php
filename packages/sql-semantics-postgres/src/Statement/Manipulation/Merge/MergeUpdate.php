@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssign
  * Mirrors a `MergeWhenClause` with `CMD_UPDATE` and its target list.
  * Source: https://www.postgresql.org/docs/17/sql-merge.html.
  *
- * @visibility public
- * @example Reading an update action
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN UPDATE SET b = DEFAULT');
- *     count($merge->statement->clauses[0]->action->assignments) // => 1
+ * @visibility SqlSemantics
  * @example Refusing an update without assignment
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeUpdate([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

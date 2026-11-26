@@ -1,0 +1,36 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-count-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["server-grouped-v3.json", "mysql-varchar-slots-v2.json", "mysql-varchar-comparison-v1.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native/grouped",
+  "scope": "Native COUNT over one physical utf8mb4_bin VARCHAR field, optionally DISTINCT, under global or signed-key grouping and checked WHERE predicates.",
+  "constructors": {
+    "Aggregation/Aggregate": {
+      "role": "A builtin aggregate with an exact native argument role.",
+      "structure": "An operator, an optional signed or VARCHAR slot, and the DISTINCT flag.",
+      "conditions": "A native VARCHAR slot is admitted for COUNT. Its occurrence is zero and its column belongs to the native text layout of the owning grouped scope. The other aggregate rules retain their declared operand roles.",
+      "meaning": "COUNT counts non-NULL field values. COUNT DISTINCT counts the equivalence classes under the selected PAD SPACE collation of that field. The result is a native BIGINT, including zero for an empty global group.",
+      "sql": "Render COUNT or COUNT DISTINCT with the qualified resolved text slot and the ordered result name."
+    }
+  },
+  "existingRoles": ["Aggregation/GroupedSelect", "Aggregation/GroupColumn", "Aggregation/AggregateOperator", "From/TextColumnReference", "TableSource"],
+  "structure": "One physical grouped source, zero or more signed grouping keys, a closed list of result fields, and the optional scoped predicate.",
+  "conditions": "Filter rows before partitioning. An empty input produces one global aggregate row and no rows with a nonempty partition key tuple. The observer checks the declared slot and collation before execution.",
+  "meaning": "Count native text values with exact NULL and duplicate behavior, preserving position and label. Compare 5.6.51 and 5.7.44's implicit key ordering in the fixed single-source grouped fixture. Compare row multiplicity for unguaranteed order on the remaining releases.",
+  "sql": "Keep the native aggregate operand, DISTINCT flag, source and WHERE before the exact grouping keys.",
+  "observations": ["Ordered column labels, including repeated names, and native BIGINT COUNT metadata", "Case-sensitive text equality, PAD SPACE, embedded NUL, Unicode and empty versus NULL", "Global zero, empty grouped results, every group's cardinality and required legacy key order"],
+  "finite": {"fields": ["label", "alternate", "empty_value"], "distinct": [false, true], "grouping": ["global", "by-bucket"], "filtered": ["all", "present", "empty"], "identities": 36, "completeness": "Recover the exact source argument, quantifier, grouping and filter from each directly constructed result."},
+  "exploration": {"seeds": [4663, 13649, 35911], "casesPerSeed": 20, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Vary ordered result fields, repeated labels, nullable signed keys, duplicate group keys, mixed row and VARCHAR counts, filter truth, and groups with zero matching inputs."},
+  "analysis": ["COUNT of a qualified field", "COUNT DISTINCT under binary padding", "Signed-key group with present text", "Filter under native text comparison", "Empty global aggregate returns zero", "Empty keyed aggregate has no groups"],
+  "negative": ["A VARCHAR aggregate argument reads a signed field", "A signed aggregate argument reads a VARCHAR field", "A VARCHAR aggregate argument uses another occurrence", "A numeric aggregate is given a bare VARCHAR field", "VARCHAR collation is unavailable or differs"],
+  "faults": ["Drop DISTINCT", "Replace the field argument with COUNT(*)", "Use the wrong VARCHAR field", "Change to case-insensitive DISTINCT", "Drop the text filter"],
+  "evidence": {
+    "P01": "Keep the builtin operation, exact native argument and projection roles.", "P02": "Check the argument role before and after source composition.", "P03": "Keep only resolved typed references and semantic scalar values.", "P04": "Compose WHERE and GROUP BY over the same input.", "P05": "Audit the complete immutable value graph.", "P06": "Compare exact typed aggregate results with independently partitioned real fixtures.",
+    "Q01": "Reject wrong input kinds, occurrences and operators.", "Q02": "Exhaust all 36 finite identities and record seeded constructions.", "Q03": "Verify argument scope, partition composition and filter semantics.", "Q04": "Measure result type, shape, counts, multiplicity and legacy ordering.", "Q05": "Bind the observations to the delivered PHP and pinned verification snapshot."
+  },
+  "open": ["Grouping on text keys, computed text arguments, multi-expression COUNT DISTINCT and text MIN or MAX", "Other collations and profiles"],
+  "trust": ["Native COUNT semantics and stock utf8mb4_bin PAD SPACE", "The independent fixture interprets each physical reference with the same table definition", "The bounded grouping oracle and actual server transport"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html", "https://dev.mysql.com/doc/refman/8.0/en/order-by-optimization.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html"]
+}

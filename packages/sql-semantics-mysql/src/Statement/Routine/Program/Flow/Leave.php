@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * The facts follow MYSQL-PROGRAM-FLOW-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/leave.html.
  *
- * @visibility public
- * @example Reading the label of the statement
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() again: LOOP LEAVE again; END LOOP');
- *     [$create->statement->body->statements[0]->label->value, $create->facts->diagnostics] // => ['again', []]
+ * @visibility SqlSemantics
  */
 final class Leave implements ProgramStatement
 {

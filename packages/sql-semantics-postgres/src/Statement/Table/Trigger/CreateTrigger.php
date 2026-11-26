@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  * optional — and PROCEDURE for FUNCTION are not kept.
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
- * @visibility public
- * @example Resolving a row trigger condition
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE TRIGGER g BEFORE UPDATE OR DELETE ON t FOR ROW WHEN (old.a <> new.a) EXECUTE PROCEDURE f()');
- *     $statement->toString() // => 'CREATE OR REPLACE TRIGGER g BEFORE UPDATE OR DELETE ON t FOR EACH ROW WHEN (old.a <> new.a) EXECUTE FUNCTION f()'
+ * @visibility SqlSemantics
  */
 final class CreateTrigger implements SchemaElement, Relation
 {

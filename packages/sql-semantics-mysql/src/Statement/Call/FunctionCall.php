@@ -27,13 +27,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\RoutineCalls;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/function-resolution.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing a call of a native function reached by name
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT concat('a', 'b')");
- *     $query->field(0)->type->descriptor->name() // => 'VARCHAR'
- * @example Depending on the signature of a stored function
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT db.score(1)');
- *     $query->field(0)->type->missing[0]->describe() // => 'the signature of routine score'
+ * @visibility SqlSemantics
  * @example Refusing an alias on a qualified call
  *     new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('f'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('x'))], new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('db')) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

@@ -19,17 +19,17 @@ final class NamedObjectsTargetTest extends TestCase
 
     public function testDeriveTargetResolvesNothing(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT USAGE ON LANGUAGE plpgsql TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT USAGE ON LANGUAGE plpgsql TO joe', [])->facts->diagnostics));
     }
 
     public function testRenderWritesTheKindAndTheNames(): void
     {
-        self::assertSame('GRANT usage ON FOREIGN DATA WRAPPER w, "select" TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT usage ON FOREIGN DATA WRAPPER w, "select" TO joe')->toString());
+        self::assertSame('GRANT usage ON FOREIGN DATA WRAPPER w, "select" TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT usage ON FOREIGN DATA WRAPPER w, "select" TO joe')->toString());
     }
 
     public function testRenderWritesAForeignServer(): void
     {
-        self::assertSame('GRANT usage ON FOREIGN SERVER srv TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT usage ON FOREIGN SERVER srv TO joe')->toString());
+        self::assertSame('GRANT usage ON FOREIGN SERVER srv TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT usage ON FOREIGN SERVER srv TO joe')->toString());
     }
 
     public function testRejectsAKindWithQualifiedNames(): void

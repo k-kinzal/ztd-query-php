@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Operator;
  *
  * Source: https://www.postgresql.org/docs/17/sql-alteropfamily.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the function kind
  *     \SqlSemantics\Platform\PostgreSql\Statement\Operator\MemberKind::Function->value // => 'FUNCTION'
  */

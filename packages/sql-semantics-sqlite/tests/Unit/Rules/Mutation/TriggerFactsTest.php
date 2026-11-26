@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\TriggerFacts;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
@@ -31,6 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TriggerFacts::class)]
 #[Medium]
@@ -38,8 +38,8 @@ final class TriggerFactsTest extends TestCase
 {
     public function testDeriveMakesTheRowsOfTheEventVisibleByQualifierOnly(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $new = new ColumnUse(new Name('a'), new QualifiedName(new Name('new')));
         $old = new ColumnUse(new Name('rowid'), new QualifiedName(new Name('old')));
@@ -65,8 +65,8 @@ final class TriggerFactsTest extends TestCase
 
     public function testDeriveHidesTheRowThatTheEventDoesNotProvide(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $new = new ColumnUse(new Name('a'), new QualifiedName(new Name('new')));
         $old = new ColumnUse(new Name('a'), new QualifiedName(new Name('old')));
@@ -81,11 +81,11 @@ final class TriggerFactsTest extends TestCase
         self::assertCount(1, $facts->diagnostics);
     }
 
-    public function testDeriveReportsTriggerOnlyMisusesAndTheColumnsOfUpdateOf(): void
+    public function testDeriveReportsTriggerOnlyMisusesAndIgnoresAnAbsentSelector(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $qualified = new Update(new MutationTarget(new QualifiedName(new Name('u'), new Name('main'))), [new Assignment(new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('new'))))]);
         $indexed = new Delete(new MutationTarget(new QualifiedName(new Name('u')), null, new IndexChoice()));
@@ -94,7 +94,7 @@ final class TriggerFactsTest extends TestCase
         $facts = $derivation->facts();
         $rules = array_map(static fn (object $diagnostic): string => $diagnostic instanceof Misuse ? $diagnostic->rule->name : $diagnostic::class, $facts->diagnostics);
 
-        self::assertSame([MissingColumn::class, MisuseRule::QualifiedTriggerTarget->name, MisuseRule::IndexedTriggerTarget->name], $rules);
+        self::assertSame([MisuseRule::QualifiedTriggerTarget->name, MisuseRule::IndexedTriggerTarget->name], $rules);
         self::assertInstanceOf(ResolvedColumn::class, $facts->scalar($qualified->assignments[0]->value)->resolution);
         self::assertTrue($facts->covers($qualified->target));
         self::assertTrue($facts->covers($indexed->target));
@@ -102,9 +102,9 @@ final class TriggerFactsTest extends TestCase
 
     public function testDeriveReportsAParameterAnywhereInTheProgram(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; UPDATE t SET a = :x; END', [$t])->statement;
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $statement = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; UPDATE t SET a = :x; END', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(CreateTrigger::class, $statement);
@@ -119,10 +119,10 @@ final class TriggerFactsTest extends TestCase
 
     public function testDeriveReportsWritesOfGeneratedColumnsInTheProgramThatFailWhenItRuns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $schema = 'CREATE TABLE t (a, b AS (a + 1)); CREATE TABLE s (x)';
         $trigger = 'CREATE TRIGGER tr AFTER INSERT ON s BEGIN UPDATE t SET b = new.x; INSERT INTO t (b) VALUES (new.x); INSERT INTO t VALUES (new.x); END';
-        $operation = $semantics->inspect($trigger, [$semantics->inspect('CREATE TABLE t (a, b AS (a + 1))'), $semantics->inspect('CREATE TABLE s (x)')]);
+        $operation = $semantics->diagnose($trigger, [$semantics->diagnose('CREATE TABLE t (a, b AS (a + 1))'), $semantics->diagnose('CREATE TABLE s (x)')]);
         $database = new PDO('sqlite::memory:');
         $database->exec($schema);
 

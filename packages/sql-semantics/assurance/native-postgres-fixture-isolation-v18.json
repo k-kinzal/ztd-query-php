@@ -1,0 +1,100 @@
+{
+  "revision": "SemanticsIR/native-postgres-fixture-isolation-18",
+  "approval": "pending-human-review",
+  "predecessor": "native-postgres-fixture-isolation-v17.json",
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "domains": [
+    "postgres_reindex_schema",
+    "postgres_reindex_partition_table",
+    "postgres_reindex_partition_index",
+    "postgres_reindex_database",
+    "postgres_reindex_verbose",
+    "postgres_reindex_tablespace",
+    "postgres_create_schema",
+    "postgres_schema_tables",
+    "postgres_alter_schema",
+    "postgres_create_sequence",
+    "postgres_schema_sequences",
+    "postgres_drop_sequence",
+    "postgres_sequence_owner",
+    "postgres_rename_sequence",
+    "postgres_move_sequence",
+    "postgres_reconfigure_sequence",
+    "postgres_sequence_logging",
+    "postgres_sequence_authorization",
+    "postgres_sequence_access",
+    "postgres_sequence_default_access",
+    "postgres_schema_views",
+    "postgres_schema_indexes"
+  ],
+  "reason": "These native oracles observe database-wide attachment or index state. Earlier suite jobs in the same PostgreSQL service can leave physical objects that are outside each oracle's declared fixture.",
+  "setup": {
+    "authority": "The trusted Docker matrix launcher or the trusted GitHub Actions job supplies the full ID of its disposable PostgreSQL service. Require the selected pinned image, the fixture environment and the DSN port of that service before executing any SQL.",
+    "database": "ir_fixture",
+    "template": "template0",
+    "timeoutSeconds": 45,
+    "commands": [
+      "DROP DATABASE ir_fixture",
+      "CREATE DATABASE ir_fixture TEMPLATE template0"
+    ],
+    "verification": "Use trusted psql within the designated service. Require the new database OID to differ from the prior OID, the observed native release to match, and the new database to have no user schemas, user relations or inheritance edges. Record stdout and stderr for each command. Failure prevents a passing replay.",
+    "standalone": "Point focused observations at a freshly launched pinned fixture. An aggregate receipt requires evidence of each scheduled reset."
+  },
+  "diagnostics": {
+    "predecessors": [
+      "server-projection-v1.json",
+      "server-delete-v2.json",
+      "server-parameter-v6.json",
+      "postgres-typed-parameters-v2.json"
+    ],
+    "openCatalog": "Use declarations: null or omit declarations for the four registered open-catalog rejections. An explicit empty list declares a complete catalog.",
+    "completeCatalog": "Add known-absent SELECT and DELETE cases with their specific semantic diagnostics in a complete empty catalog. Keep the unqualified text binding as a positive in the typed PostgreSQL lane with a complete empty catalog. An explicitly declared temporary relation named text must still shadow the native text type and prevent publication in both parameter lanes.",
+    "textTypeObservation": "An actual PREPARE without a supplied signature in both native releases must observe OID 25 and preserve result names, values and NULL. The stock calibration for the shadowed form must observe the temporary relation's composite type OID."
+  },
+  "control": "Plant a user table with both an index and an inheritance edge, renew the disposable fixture, then replay the same command receipt and show that all three are absent. Reject an invalid container or endpoint before any fixture write.",
+  "preserved": "Maintain the predecessor finite cells, seeds, budgets, fault witnesses, tested observations and exclusions. Require no changes to the product PHP for this harness correction.",
+  "tablespaceSetup": {
+    "domain": "postgres_reindex_tablespace",
+    "applicationNames": [
+      "ir_reindex_left",
+      "置き場.\"右\""
+    ],
+    "authority": "Only the already checked disposable service. Create distinct new directories owned by its PostgreSQL user, and issue the exact two CREATE TABLESPACE commands.",
+    "verification": "Preserve native command replies and their effective paths. Require the names and paths to be distinct and exactly present in the native catalog before starting comparisons."
+  },
+  "ownershipSetup": {
+    "domain": "postgres_create_schema",
+    "authority": "Require a verified disposable PostgreSQL service before the observer creates its cluster fixture roles.",
+    "roles": "Use distinct fixture effective and session authorizations and two non-superuser application names.",
+    "verification": "Record the exact role names and fixture privileges before comparisons. Exercise authorizations on the observer connection only.",
+    "compositionDomain": "postgres_schema_tables",
+    "changeDomain": "postgres_alter_schema",
+    "sequenceCompositionDomain": "postgres_schema_sequences"
+  },
+  "sequenceSetup": {
+    "domain": "postgres_create_sequence",
+    "authority": "Verify the stock pinned service and freshly renew the fixture database before creating persistent, unlogged or temporary sequence test objects.",
+    "verification": "Keep the predecessor census, timeout, isolated connection and no-exclusion conditions.",
+    "dependencyDomain": "postgres_sequence_owner"
+  },
+  "replaces": "native-postgres-fixture-isolation-v13.json",
+  "sequenceAccessSetup": {
+    "domain": "postgres_sequence_access",
+    "scope": "Create distinct controlled authorization identities in the qualified disposable cluster only. Capture current and authenticated role and privilege dependencies. Leave the set of selected schemas and their native sequence population independently observable."
+  },
+  "sequenceDefaultAccessSetup": {
+    "domain": "postgres_sequence_default_access",
+    "scope": "Observe default ACL catalog objects, roles and schemas in a disposable cluster. Before each trial, restore the known global creator policies and verify their baseline. Use probe transactions for subsequent creation by distinct roles."
+  },
+  "schemaViewSetup": {
+    "domain": "postgres_schema_views",
+    "scope": "Install role identities, a decoy source and transaction-protected distinct input rows. Observe nested view names, rewrite dependencies, result metadata and source effects independently under the exact fixture profile."
+  },
+  "schemaIndexSetup": {
+    "domain": "postgres_schema_indexes",
+    "scope": "In the pinned disposable service, observe the preceding member names and exact indexed table. Run discriminating duplicate, NULL, and predicate writes inside isolated savepoints, and recheck the decoy."
+  }
+}

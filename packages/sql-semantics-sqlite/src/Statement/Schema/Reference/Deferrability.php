@@ -21,12 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnConstraint;
  * no effect when there is none.
  * Source: https://sqlite.org/foreignkeys.html#fk_deferred. Status: Implemented.
  *
- * @visibility public
- * @example Telling a deferred foreign key from an immediate one
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $deferred = $semantics->analyze('CREATE TABLE c (p REFERENCES parent DEFERRABLE INITIALLY DEFERRED)')->statement->columns[0]->constraints[1];
- *     $immediate = $semantics->analyze('CREATE TABLE c (p REFERENCES parent NOT DEFERRABLE INITIALLY DEFERRED)')->statement->columns[0]->constraints[1];
- *     [$deferred->deferred(), $immediate->deferred()] // => [true, false]
+ * @visibility SqlSemantics
  */
 final class Deferrability implements ColumnConstraint
 {

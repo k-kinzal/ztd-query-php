@@ -29,10 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * options is kept twice.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html, https://dev.mysql.com/doc/refman/8.4/en/load-xml.html.
  *
- * @visibility public
- * @example Reading a LOAD DATA
- *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("LOAD DATA INFILE 'f' REPLACE INTO TABLE t FIELDS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2");
- *     [$load->statement->duplicates, count($load->statement->columns), $load->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Replace, 2, "LOAD DATA INFILE 'f' REPLACE INTO TABLE t COLUMNS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2"]
+ * @visibility SqlSemantics
  */
 final class LoadTable implements Statement
 {

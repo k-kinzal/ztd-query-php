@@ -18,10 +18,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
  * Source: https://sqlite.org/lang_createtable.html#not_null_constraints.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the conflict resolution of a NOT NULL constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a INT NOT NULL ON CONFLICT IGNORE)');
- *     $create->statement->columns[0]->constraints[0]->conflict // => \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore
+ * @visibility SqlSemantics
  */
 final class NotNull implements ColumnConstraint
 {

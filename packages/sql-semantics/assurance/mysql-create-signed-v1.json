@@ -1,0 +1,51 @@
+{
+  "revision": "SemanticsIR/mysql-create-signed-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native utf8mb4, empty SQL mode, lower_case_table_names=0, ordinary InnoDB and the pinned fixture's storage settings.",
+  "extends": ["server-create-table-v1.json", "mysql-create-varchar-v1.json", "mysql-signed-range-v3.json"],
+  "existingRoles": ["Schema/IntegerStorage", "Schema/TableColumn", "Schema/CreateTable", "IntegerLiteral", "Predicate/RangeIntegerLiteral", "NullLiteral"],
+  "storage": {
+    "TINYINT": {"bytes": 1, "lower": "-128", "upper": "127"},
+    "SMALLINT": {"bytes": 2, "lower": "-32768", "upper": "32767"},
+    "MEDIUMINT": {"bytes": 3, "lower": "-8388608", "upper": "8388607"},
+    "INTEGER": {"bytes": 4, "lower": "-2147483648", "upper": "2147483647"},
+    "BIGINT": {"bytes": 8, "lower": "-9223372036854775808", "upper": "9223372036854775807"}
+  },
+  "structure": "An absolute table identity, order of signed columns, their native integer storage widths, nullability, optional explicit signed or NULL defaults and existence policy. Accept mixed layouts with the checked VARCHAR role without changing its rules.",
+  "conditions": "Accept a normalized decimal literal within the exact signed native bounds of its storage. Check bounds without float or platform-dependent integer conversion. Reject explicit NULL defaults in required fields, omitted binding, incompatible text defaults, display widths, unsigned storage and operations as literal defaults.",
+  "meaning": "Creation installs the specified native signed column and its literal default. Negative zero and leading zeroes in a signed default do not change the stored signed value. On occupied targets preserve the native creation policy and diagnostics. Under the fixed mode an absent default in a required signed field assigns zero and raises warning 1364 at default insertion.",
+  "sql": "Emit the native width spelling and the normalized signed decimal value, explicit NULL, or omitted DEFAULT. Emit exact ordered field identities and required flags before the validated table options.",
+  "observations": ["Ordered catalog name, type, nullability and native default; table collation and row format", "Exact signed value and type after native default insertion, preserving BIGINT endpoints as integers", "Native warning and error lists and total count from declaration and default insertion", "Occupied-target behavior and retention of durable catalog, values and the transaction marker"],
+  "finite": {
+    "storage": ["TINYINT", "SMALLINT", "MEDIUMINT", "INTEGER", "BIGINT"],
+    "forms": ["nullable-absent", "required-absent", "explicit-null", "lower", "upper", "zero"],
+    "ifNotExists": [false, true],
+    "occupied": [false, true],
+    "mixed": [false, true],
+    "identities": 240,
+    "completeness": "Recover type, optional default role and value, nullability, mixed layout, existence policy and independent fixture occupancy from the constructed requests. Compare all 240 distinct identities in each pinned release."
+  },
+  "analysis": ["Tiny signed lower bound", "Medium signed upper bound", "BIGINT minimum bound", "BIGINT maximum bound and a checked VARCHAR adjacent to it", "INTEGER negative zero padded to multiple digits", "SMALLINT required with no default"],
+  "exploration": {"seeds": [5827, 32027, 44263], "casesPerSeed": 24, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Vary exact widths, endpoint distances, values beyond signed int32, nullable and required defaults, mixtures with VARCHAR, and both target occupancy and existence policy."},
+  "negative": ["TINYINT below minimum", "TINYINT above maximum", "SMALLINT below minimum", "SMALLINT above maximum", "MEDIUMINT below minimum", "MEDIUMINT above maximum", "INTEGER below minimum", "INTEGER above maximum", "BIGINT below minimum", "BIGINT above maximum", "Required column with NULL default", "Unsigned type in the signed storage role"],
+  "nativeNegative": "Probe both adjacent out-of-range values at each width independently. Require SQLSTATE 42000, conditions 1264 and 1067, absent target and durable transaction marker.",
+  "faults": ["Replace a BIGINT default with zero", "Narrow a tiny column to a different physical width that accepts the witness", "Erase a required flag", "Reverse mixed column order"],
+  "evidence": {
+    "P01": "Keep the bound target, order, exact signed storage and typed default.",
+    "P02": "Enforce each admitted signed value range and column's NULL policy.",
+    "P03": "Only immutable semantic storage values remain in the declaration.",
+    "P04": "Build the ordered definition and effect from validated parts.",
+    "P05": "Use the finalized class and enum graph with value-owned lists.",
+    "P06": "Observe exact native field types, endpoint defaults, errors and transaction effects.",
+    "Q01": "Reject the specified invalid roles and both adjacent out-of-range values in their owner.",
+    "Q02": "Exhaust the specified full finite region, including both BIGINT endpoints in each release.",
+    "Q03": "Compare the combined signed and VARCHAR schema in requested order.",
+    "Q04": "Replay exact database catalog, stored bytes or integers and diagnostics against an independent rule.",
+    "Q05": "Measure the construction boundary, audited source form, native SQL observations and packaged values against the same digest."
+  },
+  "open": ["Unsigned variants and explicit display widths", "Native literal coercion from strings or fractional numbers", "Additional storage engines and layout attributes"],
+  "trust": ["The server release and InnoDB fixture", "Signed decimal length and lexicographic magnitude comparison", "The native default assignment observer and independent exact-integer comparator"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/integer-types.html", "https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html"]
+}

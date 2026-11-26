@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DropIndex::class)]
 #[Medium]
@@ -17,13 +17,13 @@ final class DropIndexTest extends TestCase
 {
     public function testDeriveStatementResolvesTheTableAndChecksTheOptions(): void
     {
-        $drop = (new Semantics())->inspect('DROP INDEX i ON t ALGORITHM = FAST', []);
+        $drop = (new Inspection())->diagnose('DROP INDEX i ON t ALGORITHM = FAST', []);
 
         self::assertSame(['Relation t does not exist.', 'FAST is not an ALGORITHM the server knows.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $drop->facts->diagnostics));
     }
 
     public function testRenderWritesTheOptionsInOrder(): void
     {
-        self::assertSame('DROP INDEX `PRIMARY` ON db.t LOCK = shared ALGORITHM = DEFAULT', (new Semantics())->inspect('drop index `PRIMARY` on db.t lock shared algorithm default')->toString());
+        self::assertSame('DROP INDEX `PRIMARY` ON db.t LOCK = shared ALGORITHM = DEFAULT', (new Inspection())->diagnose('drop index `PRIMARY` on db.t lock shared algorithm default')->toString());
     }
 }

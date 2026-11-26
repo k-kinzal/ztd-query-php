@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  * number of dimensions are documentation and do not make a different type.
  * Source: https://www.postgresql.org/docs/17/arrays.html#ARRAYS-DECLARATION.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming an array type
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4))->name() // => 'integer[]'
  */

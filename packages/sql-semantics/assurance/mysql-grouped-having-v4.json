@@ -1,0 +1,245 @@
+{
+  "revision": "SemanticsIR/mysql-grouped-having-4",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL, lower_case_table_names=0, empty sql_mode, utf8mb4 connection and resolved signed INT group keys.",
+  "extends": [
+    "mysql-grouped-having-v3.json",
+    "mysql-grouped-having-v2.json",
+    "mysql-grouped-having-v1.json",
+    "server-grouped-v3.json",
+    "mysql-varchar-count-v1.json",
+    "mysql-varchar-extrema-v2.json"
+  ],
+  "constructors": {
+    "GroupedComparison": {
+      "type": "Aggregation/GroupedComparison",
+      "role": "An ordered native numeric comparison evaluated over the owning group.",
+      "structure": "A seven-way native numeric comparison operator and two ordered operands. Operands are group keys, native aggregates with numeric results, signed integer literals or explicit SQL NULL.",
+      "conditions": "The group owns referenced signed keys and exact argument positions. A COUNT can read checked VARCHAR while MIN or MAX of VARCHAR cannot enter this numeric comparison. Each aggregate is subject to its own arity and duplicate rules.",
+      "meaning": "Compare group values after grouping, preserving exact signed and native scale-zero decimal values. The six ordinary forms yield unknown when either operand is NULL. The NULL-safe form returns true on two NULLs, false on exactly one NULL, and exact equality on two present values.",
+      "sql": "Render the exact operator, builtin aggregation, argument DISTINCT and fully resolved operand positions. Emit the comparison in HAVING."
+    },
+    "GroupNameReference": {
+      "type": "Aggregation/GroupNameReference",
+      "role": "A resolved group key whose bare name can also name a different projected value.",
+      "structure": "One group input occurrence and slot, and the exact decoded bare identifier spelling.",
+      "conditions": "The containing group owns the physical slot. Its physical name matches the spelling under stock ASCII-insensitive column comparison. At least one projection with that name denotes a different value. A HAVING occurrence must refer to a key in the completed grouping layout.",
+      "meaning": "Read the same resolved column as the qualified reference. Preserve the native collision warning for the relevant release and clause.",
+      "sql": "Emit the checked bare identifier in its exact ordered GROUP BY or HAVING position. Quote the identifier without changing its decoded spelling."
+    }
+  },
+  "existingRoles": [
+    "Aggregation/GroupedSelect",
+    "Aggregation/Aggregate",
+    "Aggregation/GroupColumn",
+    "From/TextColumnReference",
+    "ColumnReference",
+    "IntegerLiteral",
+    "Predicate/IntegerOperator",
+    "BooleanLiteral",
+    "NullLiteral",
+    "Predicate/RangeIntegerLiteral"
+  ],
+  "structure": "An optional group predicate separate from the input row predicate. Preserve the resolved reference itself for an admitted grouped query alias or a grouping key that shares its name.",
+  "conditions": "Require the admitted global or keyed SELECT shape, native signed or exact numeric aggregate operands or SQL NULL, known aggregate argument scope and resolution of all aliases. A plain field is a resolved grouping key. Reject floating or textual comparison inputs and unowned fields.",
+  "meaning": "Apply WHERE before grouping, evaluate HAVING per group, and keep exactly the TRUE groups. COUNT over an empty global group is zero. SUM, MIN and MAX over empty inputs are NULL. A group can be rejected without changing another group's output or evaluated fields. Preserve duplicates and exact DECIMAL sums. Retain the grouped key sequence that supplies legacy native implicit ordering where the profile determines it.",
+  "sql": "Emit HAVING after the optional GROUP BY. Render the resolved key or aggregate used by the condition, preserving GROUP BY precedence when a field and output alias share the same name.",
+  "observations": [
+    "Exact grouped labels, positions and native output tags, including DECIMAL sums as exact values",
+    "Difference between WHERE at input and HAVING at output, with global empty and NULL control groups",
+    "Aggregate multiplicity, DISTINCT and NULL arguments, and separately resolved projected aliases and same-named grouping fields",
+    "Exact ordered comparison and rejection of unscoped fields and textual extremum operands",
+    "For the pinned simple single-table fixture with grouped signed keys on MySQL 5.6 and 5.7, check the native implicit ascending key order, with NULL first. Later releases observe the bag for the same statements without ORDER BY.",
+    "Preserve all seven operations beside explicit NULL in either operand position, including the empty global group. Check typed headings, values, duplicates, observed group membership and native warning count.",
+    "Compare native warning severity, code, spelling, clause, order and multiplicity as well as the existing result observations. A dropped or additional warning fails on the listed stock SQL forms."
+  ],
+  "finite": {
+    "source": [
+      "accounts",
+      "empty"
+    ],
+    "aggregate": [
+      "count",
+      "sum",
+      "min",
+      "max"
+    ],
+    "operator": [
+      "=",
+      "<>",
+      "<",
+      "<=",
+      ">",
+      ">=",
+      "<=>"
+    ],
+    "layout": [
+      "aggregate-literal",
+      "literal-aggregate",
+      "key-aggregate",
+      "aggregate-key",
+      "aggregate-null",
+      "null-aggregate"
+    ],
+    "identities": 470,
+    "completeness": "Reconstruct all five finite axes from every constructed value, retain each prior direct keyed coordinate, and require the exact identity set independently on both routes. Also reconstruct every distinct diagnostic-sensitive role and the two canonical controls on both routes.",
+    "group": [
+      "keyed",
+      "global"
+    ],
+    "dependentDomains": {
+      "keyed": "All six layouts on both sources and across all four aggregates and seven operations.",
+      "global": "Only the two explicit-NULL layouts on both sources and across all four aggregates and seven operations."
+    },
+    "routes": [
+      "direct",
+      "analyze"
+    ]
+  },
+  "analysis": [
+    "A hidden COUNT in keyed HAVING",
+    "Separate WHERE and HAVING filters",
+    "A projected aggregate alias",
+    "Grouping field shadows a same-named aggregate output alias",
+    "An explicit qualified grouping reference",
+    "A global empty COUNT",
+    "A global NULL comparison",
+    "A Boolean constant HAVING",
+    "A DISTINCT VARCHAR COUNT threshold",
+    "A large signed literal beside a decimal SUM",
+    "A native NULL-safe HAVING comparison over a global COUNT",
+    "Qualified controls for the formerly bare alias-collision subject"
+  ],
+  "exploration": {
+    "seeds": [
+      1901,
+      12049,
+      43613
+    ],
+    "casesPerSeed": 20,
+    "timeoutSecondsPerRelease": 720,
+    "allowedExclusions": [],
+    "requiredForms": "Vary keyed and global groups, dedicated row filters, both operand orders, empty sources, aggregate operators, distinctness, signed boundaries and numeric use of VARCHAR COUNT. Add seeded direct numeric and NULL-safe comparisons with explicit NULL on either side, different signed values and NULL-producing aggregate inputs.",
+    "directCasesPerSeed": 20
+  },
+  "negative": [
+    "Plain non-key field",
+    "Key uses another occurrence",
+    "Aggregate argument slot outside the input",
+    "Textual MIN or MAX operand",
+    "Analyzed unbound group value",
+    "Unsupported arithmetic in a group operand",
+    "NULL-safe HAVING with a text-valued MIN aggregate",
+    "Bare group key references a different name",
+    "Bare HAVING field does not own a projected collision"
+  ],
+  "faults": [
+    "Omit HAVING",
+    "Swap the compared operands",
+    "Erase DISTINCT from a group predicate aggregate",
+    "Bypass the resolved grouped key condition",
+    "Use a result alias in place of a same-named group field",
+    "Replace NULL-safe HAVING with ordinary equality",
+    "Erase native legacy group order",
+    "Erase exact DECIMAL group heading",
+    "Ignore a NULL-producing accepted global group",
+    "Ignore one occurrence in the known MySQL 5.7 diagnostic sequence"
+  ],
+  "evidence": {
+    "P01": "Preserve the resolved key or aggregate, exact operator and operand order.",
+    "P02": "Check grouped fields and all aggregate arguments against a single owned input.",
+    "P03": "Retain only the complete checked numeric predicate and projection structure.",
+    "P04": "Compose the group predicate with row selection, grouping, aggregation and result projection.",
+    "P05": "Use closed immutable operand roles and detached ordered input and result lists.",
+    "P06": "Emit the predicate at its checked evaluation stage and preserve observed labels and exact native values.",
+    "Q01": "Run the invalid grouped key, operand, argument and operator cases through their boundaries.",
+    "Q02": "Run all 470 finite identities on both routes, the retained seeded structures and the independently authored analysis cases on every pin.",
+    "Q03": "Compare the grouped bag and exact decimal semantics to an independent evaluator.",
+    "Q04": "Observe actual native SQL type tags, values, qualified resolution and group-filtering effects. Measure native warning counts. Compare each registered ordered collision diagnostic.",
+    "Q05": "Connect grouped value construction, lowering and exact rendering to the split package PHP."
+  },
+  "open": [
+    "Grouped ordering and bounds, rollup, grouping modifiers, window clauses and non-grouped HAVING",
+    "HAVING trees, numeric conversion of text operands, correlated group values and floating aggregates"
+  ],
+  "trust": [
+    "Documented MySQL grouping and result name resolution under the pinned profile",
+    "Native DECIMAL and integer comparison semantics",
+    "Exact distributed PHP and the independent ledger and row model"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/select.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/order-by-optimization.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_equal-to"
+  ],
+  "priorContract": {
+    "file": "mysql-grouped-having-v3.json",
+    "sha256": "9869fea2af06cafc1c0cc04246324eafcf77c47be01c1d25bd12bff5fbc45895"
+  },
+  "change": {
+    "reason": "A positive v3 observation caught Warning 1052 disappearing from the emitted SQL even though the resolved field and result rows were correct.",
+    "preserves": "All v3 finite identities, admitted operands, normal cases, negative reasons, seeds, comparison data and release budgets.",
+    "adds": "A typed resolved name variant with owner checks, a separate finite grid, full native diagnostics, a scoped comparator fault and deliberate source mutation at its renderer."
+  },
+  "calibration": {
+    "5.6.51": "8e52b37e04417b94e555bd54003fd9ad052ba9afa406326c021e7f234045f848",
+    "5.7.44": "135257e3c2c00203c414c5f644e2c338b08787c278f71ce4854d14de80f8dac2",
+    "8.0.44": "89432919f5f8826c53bbfa9cc0e213ab6f29f917d9da6d961448fd0d72395f8d",
+    "8.1.0": "9a2e11d7baeec6682d26049c3db66d835b3731ab4305ad689c36e1dfbe35240d",
+    "8.2.0": "3bab59a2d094323e59a0b0f9ef1d4ea5a34d7ab3f81caf6f1a4468fe45962b8b",
+    "8.3.0": "9a8593e35c9891e57ecd5dbfd3bffda5d36d9fa901b51e678f827e89bbd6a612",
+    "8.4.7": "f8c6a92cb809e3155797401e630def3a1f052dd917e8da9e448221df79db142e",
+    "9.0.1": "39ded0476eda97daae3129efa21f5cc195c0a9987f4430c40b78240cc5c676a9",
+    "9.1.0": "36c5f2f0e0c7e331eaeb005d4098d6aecbaa12d4aeae5723a114a952367b5f80"
+  },
+  "collision": {
+    "originalCounterexampleSha256": "4c224745873c439da3c842469d7fee32742caa6e0e4253dd17e9d68649c461f5",
+    "nativeBaseline": {
+      "5.6.51": "02062053e4b0a88a963a39f85209505b6857568d88e618d3b601767d9b462be8",
+      "5.7.44": "5d94808969bcda0803e2513718bfcaae82e8f00c27b8c9a0a46b6facbeb48363"
+    },
+    "source": "https://dev.mysql.com/doc/refman/8.4/en/select.html",
+    "rule": [
+      "MySQL 5.6.51 and 5.7.44 each emit Warning 1052 for every colliding bare key in GROUP BY, in key order, with the exact decoded spelling followed by the native group-statement context.",
+      "MySQL 5.7.44 also emits Warning 1052 for each colliding bare operand in HAVING, in operand order, with the exact spelling and having-clause context.",
+      "The remaining registered releases complete these fixed stock cases with no warning.",
+      "A qualified key and a same-name projection exposing the very same physical column do not emit these collision warnings."
+    ],
+    "finite": {
+      "collidingOutput": "COUNT(*) with output label id",
+      "groupKeys": [
+        "qualified",
+        "bare-lower",
+        "bare-upper",
+        "repeated"
+      ],
+      "having": [
+        "qualified",
+        "bare-lower",
+        "bare-upper",
+        "two-bare",
+        "aggregate"
+      ],
+      "canonicalControls": [
+        "same-field",
+        "different-label"
+      ],
+      "identitiesPerRoute": 22
+    }
+  }
+}

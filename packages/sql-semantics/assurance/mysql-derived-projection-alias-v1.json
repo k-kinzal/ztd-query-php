@@ -1,0 +1,131 @@
+{
+  "revision": "SemanticsIR/mysql-derived-projection-alias-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "rejectedReleases": [
+    "mysql-5.6.51",
+    "mysql-5.7.44"
+  ],
+  "scope": "MySQL 8.0 and later independent derived table projections with explicit column lists, including nested local reads, WITH definitions at a derived table boundary and crossed joined derived occurrences. Pure signed integer results retain requested aliases and their exact diagnostics.",
+  "constructors": {
+    "Rows/LocalProjection": {
+      "role": "A resolved local projection that can expose a child with effective aliases and separate explicit output positions.",
+      "structure": "A complete SELECT, local projection or ordinary WITH definition, and an ordered list of exact local result positions and headings.",
+      "conditions": "The child supplies the checked ordered output and its language profile. Matching aliases require the modern derived table column list syntax. Analysis uses explicit column declarations for normalized child aliases and binds every consumer to the positions in that list.",
+      "meaning": "The clause exposes its own names through positional bindings. Child aliases retain their diagnostics without changing the values or physical types read by the parent.",
+      "externalInterpretation": "The pinned MySQL release and stock utf8mb4 session, with the same explicit derived column list in scope. Both native prepared and text execution are observed.",
+      "sql": "When required, render the child aliases intact and declare the generated output names in the derived table column list. The parent references those positions. Other definitions continue with ordinary ordinal aliases.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/DerivedSource": {
+      "role": "An independent named SELECT source of a join with explicit ordered output columns.",
+      "structure": "A checked Select with native admissible ordered fields whose occurrence and slots are resolved by the owning joined projection.",
+      "conditions": "The child supplies the checked ordered output and its language profile. Matching aliases require the modern derived table column list syntax. Analysis uses explicit column declarations for normalized child aliases and binds every consumer to the positions in that list.",
+      "meaning": "The clause exposes its own names through positional bindings. Child aliases retain their diagnostics without changing the values or physical types read by the parent.",
+      "externalInterpretation": "The pinned MySQL release and stock utf8mb4 session, with the same explicit derived column list in scope. Both native prepared and text execution are observed.",
+      "sql": "When required, render the child aliases intact and declare the generated output names in the derived table column list. The parent references those positions. Other definitions continue with ordinary ordinal aliases.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "Compare value, ordinal, native data type, wire extent, nullability and exact output names on every placement.",
+    "Observe optional nesting, consumption through WITH and distinguishable crossed inputs, so an incorrect occurrence, column order or repeated position changes the compared row.",
+    "Compare exact warning severity, code, message, phase, order and multiplicity in native prepared and text execution.",
+    "Independent child and source-free top-level constants have different native metadata. Crossed and nested consumers use the derived field metadata."
+  ],
+  "finite": {
+    "aliasShapes": [
+      "wide",
+      "trim",
+      "empty",
+      "duplicate",
+      "unmodified"
+    ],
+    "placement": [
+      "local",
+      "nested",
+      "with-local",
+      "join"
+    ],
+    "layout": [
+      "in-order",
+      "reverse",
+      "repeat"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "coordinatesPerRoute": 60,
+    "complete": "Use the fixed product for both routes and recover each placement, label vector, occurrence and selected ordinal layout from the actual graph.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      19949,
+      43261,
+      60887
+    ],
+    "casesPerSeed": 24,
+    "directCasesPerSeed": 24,
+    "timeoutSecondsPerRelease": 480,
+    "shape": "Vary requested labels and exact numeric atoms in two to four positions, repeated reads, occurrence identity and nested local and WITH placements.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Reject a derived projection that reads an output slot that does not exist.",
+    "Reject a native explicit derived column list of the wrong width.",
+    "Reject a requested alias child through the legacy derived column list role."
+  ],
+  "faults": [
+    "Suppress the requested aliases of an independent derived definition when deriving its exported positions.",
+    "Reverse the explicit derived table column list and read different physical values.",
+    "Compare only values and drop the derived table's prepare diagnostics."
+  ],
+  "trust": [
+    "MySQL derived table column lists and fixed optimizer mode.",
+    "Native protocol observer, typed closed binding, and exact independent operand observations."
+  ],
+  "open": [
+    "Legacy derived syntax and inherited aliases under the native collation have separate unresolved requirements.",
+    "Join fields still follow the supported physical value roles. Wider direct derived field types, groups and view effects remain scoped separately."
+  ],
+  "referenceSources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html"
+  ]
+}

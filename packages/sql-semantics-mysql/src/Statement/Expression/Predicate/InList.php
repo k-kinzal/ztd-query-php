@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_in.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the elements of a list
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a NOT IN (1, 2)');
- *     [$query->statement->where->negated, count($query->statement->where->elements)] // => [true, 2]
+ * @visibility SqlSemantics
  */
 final class InList implements Scalar
 {

@@ -16,9 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
  * Mirrors PT_set_role. Rule: MYSQL-SET-ROLE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-role.html. Status: Implemented.
  *
- * @visibility public
- * @example Activating named roles
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('set role r1, r2')->toString() // => 'SET ROLE r1, r2'
+ * @visibility SqlSemantics
  */
 final class SetRole implements Statement
 {

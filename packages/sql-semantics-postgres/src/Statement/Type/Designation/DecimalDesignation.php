@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * the type takes one or two integer constants. Facts: PG-TYPE-MODIFIER-001.
  * Source: https://www.postgresql.org/docs/17/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL. Status: Implemented.
  *
- * @visibility public
- * @example Reading precision and scale
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT decimal(10, 2) '1.5'");
- *     $query->field(0)->type->descriptor->modifiers // => [10, 2]
+ * @visibility SqlSemantics
  */
 final class DecimalDesignation implements TypeDesignation
 {

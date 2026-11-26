@@ -29,10 +29,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\StringResult;
  * https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_concat.
  * Status: Implemented.
  *
- * @visibility public
- * @example Concatenating under PIPES_AS_CONCAT
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics(null, \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'));
- *     $semantics->analyze("SELECT a FROM t WHERE a || 'x'")->statement->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
+ * @visibility SqlSemantics
  */
 final class Concatenation implements Scalar
 {

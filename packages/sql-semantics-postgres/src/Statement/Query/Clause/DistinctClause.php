@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * holds the clause derives them.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-DISTINCT.
  *
- * @visibility public
- * @example Reading a DISTINCT ON clause
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT DISTINCT ON (1) 1, 2');
- *     count($query->statement->distinct->on) // => 1
+ * @visibility SqlSemantics
  */
 final class DistinctClause implements Node
 {

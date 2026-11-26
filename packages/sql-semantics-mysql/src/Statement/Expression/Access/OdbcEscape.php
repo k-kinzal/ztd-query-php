@@ -31,10 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing an ODBC date
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a = { d '2024-01-31' }");
- *     $query->facts->scalar($query->statement->where->right)->type->descriptor->name() // => 'DATE'
+ * @visibility SqlSemantics
  */
 final class OdbcEscape implements Scalar
 {

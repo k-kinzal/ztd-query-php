@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  * and derives it there with deriveWindow().
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-usage.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a specification as the window of a call
  *     $call = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
  *     $call->over instanceof \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification // => true

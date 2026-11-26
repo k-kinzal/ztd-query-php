@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a quotes clause
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonQuoting(false))->keep // => false
  */

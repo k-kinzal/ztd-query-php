@@ -23,9 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  * implemented", which is reported. The condition is derived where no relation is visible.
  * Source: https://www.postgresql.org/docs/17/unsupported-features-sql-standard.html.
  *
- * @visibility public
- * @example Reading an assertion
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ASSERTION a CHECK (1 = 1)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: CREATE ASSERTION is not yet implemented
+ * @visibility SqlSemantics
  */
 final class CreateAssertion implements Statement
 {

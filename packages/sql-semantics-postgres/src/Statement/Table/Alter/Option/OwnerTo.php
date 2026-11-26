@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * Mirrors `AT_ChangeOwner` with `newowner`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Changing the owner
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t OWNER TO CURRENT_USER');
- *     $statement->toString() // => 'ALTER TABLE t OWNER TO CURRENT_USER'
+ * @visibility SqlSemantics
  */
 final class OwnerTo implements AlterCommand
 {

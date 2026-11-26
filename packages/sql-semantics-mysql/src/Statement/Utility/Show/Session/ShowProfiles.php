@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-profiles.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PROFILES');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Query_ID', 'SHOW PROFILES']
+ * @visibility SqlSemantics
  */
 final class ShowProfiles implements Statement
 {

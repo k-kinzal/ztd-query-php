@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Schema\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnUnique;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ColumnUnique::class)]
 #[Medium]
@@ -18,14 +18,14 @@ final class ColumnUniqueTest extends TestCase
 {
     public function testDeriveConstraintRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a UNIQUE)', []);
+        $operation = (new Inspection())->inspect('CREATE TABLE t (a UNIQUE)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheConflictResolution(): void
     {
-        $operation = (new Semantics())->analyze('create table t (a unique on conflict rollback)');
+        $operation = (new Inspection())->inspect('create table t (a unique on conflict rollback)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

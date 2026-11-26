@@ -1,0 +1,25 @@
+{
+  "revision": "SemanticsIR/publication-2",
+  "replaces": "The opt-in analysis publication routes in the initial and server projection criteria.",
+  "unchanged": "All constructor meanings, acceptance domains, observations, faults and execution budgets in the fixed semantic criteria.",
+  "analyzerInterface": "SqlSemantics\\Analyzer::analyze",
+  "interfaceResult": "SqlSemantics\\SemanticsIR",
+  "dialects": ["MySql", "PostgreSql", "Sqlite"],
+  "single": {
+    "method": "Semantics::analyze",
+    "result": "Ir\\Select",
+    "boundary": "Check the input and diagnostics, resolve names and construct the dialect value before publishing. Reject unresolved or unsupported statements."
+  },
+  "batch": {
+    "method": "Semantics::analyzeAll",
+    "result": "list<Ir\\Select>",
+    "boundary": "Apply analyze to each split statement against the same checked context. A rejection prevents publication of the batch."
+  },
+  "inspection": {
+    "method": "Semantics::inspect",
+    "result": "Model\\Statement\\Operation",
+    "boundary": "Preserve the checked operation model for diagnostics and declaration extraction, including facts that depend on missing declarations."
+  },
+  "construction": "The dialect value constructors remain public. Projection lowering is an internal collaborator with no public analysis contract.",
+  "acceptance": ["Compare analyzer signatures and batch dispatch against the static inventory.", "Run independent analyzed-SQL comparisons through Semantics::analyze.", "Check rejection and successful batching through the public façade."]
+}

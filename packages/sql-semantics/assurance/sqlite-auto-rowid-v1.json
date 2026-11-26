@@ -1,0 +1,57 @@
+{
+  "revision": "SemanticsIR/sqlite-auto-rowid-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with builtin stored rowid tables, the resolved declaration schema, and matching insertion and transaction history.",
+  "scope": "The AUTOINCREMENT choice on an INTEGER rowid alias in an ordinary or STRICT table, in column-level and table-level primary key declarations.",
+  "constructors": {},
+  "existingRoles": ["Schema/CreateTable", "Schema/Key/PrimaryKey", "Schema/Key/KeyTerm", "Schema/Key/KeyConflict", "Schema/TableColumn", "Schema/DeclaredDatatypeName"],
+  "structure": "The checked key explicitly records whether its alias uses the persistent sequence. It retains its term, direction, placement and conflict policy.",
+  "conditions": [
+    "AUTOINCREMENT requires a single key term. A descending inline term cannot use it.",
+    "The owning table must be a rowid table, with a resolved key slot of declared type INTEGER. A descending table constraint over that slot still aliases the rowid.",
+    "Analysis accepts both native placement forms and exports the same alias rule as direct construction."
+  ],
+  "meaning": "Omitted or NULL alias values receive the SQLite rowid allocator. With AUTOINCREMENT the allocator keeps the insertion high-water mark in the owning schema's sqlite_sequence, including committed rows later deleted and excluding rolled back writes. Sequence exhaustion causes SQLITE_FULL. Without AUTOINCREMENT the native ordinary allocator remains active.",
+  "externalInterpretation": "Use the same catalog, clock-independent fixture history, SQLite release, transaction state and existing sqlite_sequence values. The declaration needs no enclosing analysis context to render.",
+  "sql": "In the inline form follow PRIMARY KEY, direction and conflict policy with AUTOINCREMENT. In the table form place AUTOINCREMENT after the key terms inside the closing parenthesis, before any constraint policy. The absence of the allocation choice emits no extra tokens.",
+  "observations": [
+    "Declared and alias positions, table mode, key placement and direction, and exact schema ownership.",
+    "Native storage of rowids and the chosen key alias before and after deleting known high values, committing or rolling back deliberately larger insertions, and supplying NULL or omitting the key.",
+    "Presence and contents of the owning sqlite_sequence record, actual write change counts, and the exact SQLITE_FULL error after exhausting the signed range.",
+    "Inspect the complete fixed sequence on the original and emitted SQL in independently initialized fixture connections."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "strict": [false, true],
+    "placement": ["inline", "table-ascending", "table-descending"],
+    "automatic": [false, true],
+    "transactionRollback": [false, true],
+    "historicalHigh": [40, 200, 9223372036854775807],
+    "input": ["omitted", "null"],
+    "identity": "Check each of the 288 declaration and write history products and preserve the exact error and allocation observations. Removing a maximum row first makes the ordinary allocator deterministic."
+  },
+  "exploration": {
+    "seeds": [42451, 57163, 69061],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary the declared width, alias position, selection and spelling of independent columns, key direction, constraint conflict policy, historical maximum, write roles, schema and transaction outcome."
+  },
+  "negative": [
+    "Direct AUTOINCREMENT on a key with multiple terms",
+    "Direct AUTOINCREMENT on a descending inline key",
+    "Direct AUTOINCREMENT on an INT declaration",
+    "Direct AUTOINCREMENT on WITHOUT ROWID",
+    "Analyze an INT or descending inline attachment refused by SQLite's alias rules"
+  ],
+  "faults": [
+    "Drop AUTOINCREMENT in the inline clause",
+    "Drop AUTOINCREMENT in the table constraint",
+    "Force AUTOINCREMENT on an ordinary alias",
+    "Write an automatic key in another schema"
+  ],
+  "open": ["Direct user writes to sqlite_sequence and nondeterministic ordinary allocation while a maximum rowid is still present."],
+  "trust": ["Independent arithmetic and transaction state models for pinned histories.", "SQLite C API observers preserving signed integers, exact failure codes and catalog effects.", "Closed key role, parent alias checks and installed PHP linkage."],
+  "sources": ["https://sqlite.org/autoinc.html", "https://sqlite.org/lang_createtable.html#rowid"]
+}

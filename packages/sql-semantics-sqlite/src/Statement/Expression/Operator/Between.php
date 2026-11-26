@@ -27,14 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * (SQLITE-PRECEDENCE-001).
  * Source: https://sqlite.org/lang_expr.html#the_between_operator. Status: Implemented.
  *
- * @visibility public
- * @example Reading the bounds of a range test
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a NOT BETWEEN 1 AND 9 FROM t');
- *     $test = $query->statement->columns[0]->expression;
- *     [$test->negated, $test->low->digits, $test->high->digits] // => [true, '1', '9']
- * @example Refusing a bound that the rendered SQL would associate differently
- *     $or = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral(), $or, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class Between implements Scalar
 {

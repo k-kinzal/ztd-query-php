@@ -20,7 +20,7 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySql\MySqlProvider;
-use SqlSemantics\Platform\MySql\Semantics;
+use SqlSemantics\Testing\MySql\Inspection;
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.4.7';
 
@@ -49,7 +49,7 @@ if (!isset($roots[$mysqlVersion])) {
 $grammarVersion = "mysql-{$mysqlVersion}";
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/mysql');
 $provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new RoundTripTarget(new Semantics($grammarVersion), $grammarVersion);
+$target = new RoundTripTarget(new Inspection($grammarVersion), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule($roots[$mysqlVersion])->requiringNonEmpty();
 

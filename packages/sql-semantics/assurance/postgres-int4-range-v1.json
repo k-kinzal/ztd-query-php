@@ -1,0 +1,69 @@
+{
+  "revision": "SemanticsIR/postgres-int4-range-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "PostgreSQL 16.6 and 17.2, with native parameters and pg_catalog first for analysis of implicit comparison operators.",
+  "scope": "Inclusive signed int4 BETWEEN, including NOT, explicit ASYMMETRIC and SYMMETRIC, with three pure operands.",
+  "constructors": {
+    "Predicate/IntegerRange": {
+      "role": "Boolean range test usable in a result position or in a Boolean predicate position.",
+      "structure": "Three ordered int4 column, signed literal or NULL operands and independent negated and symmetric flags.",
+      "conditions": "At the enclosing scope validate all three reference coordinates and count all three operands toward the depth and node limits. Accepted SQL has leaf int4 values and NULL. For each implicit comparison, at least one operand must have a known int4 type before inference. A directly constructed NULL in any of the three positions has the int4 type.",
+      "meaning": "Compute subject >= lower AND subject <= upper. For SYMMETRIC, disjoin this value with the conjunction after exchanging lower and upper. NOT negates the final three-valued result. Only TRUE admits a row in a filter. A projection exposes bool even when the result is NULL.",
+      "externalInterpretation": "Use the exact same int4 columns of the identified occurrences. Rendering uses the built-in pg_catalog int4 comparison operators even if a runtime search path provides a competing operator. Repeated reads of leaf operands within a row have the same value.",
+      "sql": "Parenthesize each comparison and compound predicate, use OPERATOR(pg_catalog.>=) and OPERATOR(pg_catalog.<=), and write each NULL as pg_catalog.int4. Keep the two bounds in operand order for the primary interval.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "ResultColumn", "ColumnReference", "NullLiteral", "Predicate/LogicalPredicate", "Predicate/NullTest", "Expression/IntegerCaseArm"],
+  "observations": [
+    "Compare exact bool result metadata and names, signed inclusive boundaries, reversed and equal bounds, independently nullable operands, referenced column slots, duplicate rows, and the admission of only TRUE by WHERE.",
+    "A dedicated native probe places operators with the same signatures in an earlier schema, measures the different result of an unqualified comparison, and measures a generated projection under that path."
+  ],
+  "finite": {
+    "sources": ["unit", "only", "inherited"],
+    "placements": ["projection", "where"],
+    "negated": [false, true],
+    "symmetric": [false, true],
+    "literalValues": [-2, 2, null],
+    "slots": [0, 1],
+    "identity": "Every ordered triple of available operand identities for each source, both placements and all four flag pairs. Units omit slots. All 2216 observed identities must occur exactly once per release."
+  },
+  "exploration": {
+    "seeds": [17431, 29527, 44819],
+    "casesPerSeed": 48,
+    "timeoutSecondsPerRelease": 160,
+    "allowedExclusions": [],
+    "structure": "Vary pure leaves, nearby signed boundaries, references and both flags. Embed range decisions in generated Boolean trees, NULL tests, CASE decisions and row filters. Vary column names, distinct placements, inheritance, and result width."
+  },
+  "negative": [
+    "Invisible subject slot",
+    "Invisible lower slot",
+    "Invisible upper slot",
+    "Invisible filter occurrence",
+    "Computed int4 operand",
+    "Non-int4 operand",
+    "Unknown pair in ascribed int4 comparison"
+  ],
+  "faults": [
+    "Exclude equality at the lower endpoint",
+    "Remove the alternate comparison from SYMMETRIC",
+    "Read the lower operand in place of the upper operand",
+    "Replace an unknown comparison result with false"
+  ],
+  "open": [
+    "BETWEEN in the other PostgreSQL comparison families.",
+    "Operands whose evaluation has effects or can fail, implicit casts outside int4, and resolved user-defined operators.",
+    "Write, join, grouping, and compound placements beyond the single-source projection and filter comparison domain."
+  ],
+  "trust": [
+    "Exact typed worker observation and scope traversal checks.",
+    "Independent three-valued truth tables, signed comparisons and result shape observer.",
+    "Pinned native PostgreSQL and its statement-local int4 semantics."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/typeconv-oper.html"
+  ]
+}

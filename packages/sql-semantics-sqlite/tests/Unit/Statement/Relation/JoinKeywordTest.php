@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(JoinKeyword::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class JoinKeywordTest extends TestCase
 
     public function testCasesAreReadFromTheWordsBeforeJoinWhateverTheirSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT * FROM t natural Left outer JOIN u');
+        $query = (new Inspection())->inspect('SELECT * FROM t natural Left outer JOIN u');
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(JoinChain::class, $query->statement->from);

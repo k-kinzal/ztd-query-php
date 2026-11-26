@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_high_not_precedence.
  * Status: Implemented.
  *
- * @visibility public
- * @example Negating a comparison
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE NOT a = 1');
- *     $query->statement->where->operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Comparison // => true
+ * @visibility SqlSemantics
  */
 final class Not implements Scalar
 {

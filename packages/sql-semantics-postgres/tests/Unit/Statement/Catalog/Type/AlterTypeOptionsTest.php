@@ -14,17 +14,17 @@ final class AlterTypeOptionsTest extends TestCase
 {
     public function testRenderWritesNone(): void
     {
-        self::assertSame('ALTER TYPE t SET (storage = plain, send = NONE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE t SET (storage = plain, send = NONE)')->toString());
+        self::assertSame('ALTER TYPE t SET (storage = plain, send = NONE)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE t SET (storage = plain, send = NONE)')->toString());
     }
 
     public function testDeriveStatementDerivesTheValues(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE t SET (receive = r)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE t SET (receive = r)')->facts->diagnostics);
     }
 
     public function testDeriveStatementReportsThePropertiesTheCommandRefuses(): void
     {
-        $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE t SET (analyse = f, input = g, storage = bogus, storage, receive)');
+        $operation = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE t SET (analyse = f, input = g, storage = bogus, storage, receive)');
         self::assertSame([
             'type attribute "analyse" not recognized',
             'type attribute "input" cannot be changed',

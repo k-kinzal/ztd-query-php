@@ -1,0 +1,34 @@
+{
+  "revision": "SemanticsIR/sqlite-observer-1",
+  "approval": "pending-human-review",
+  "engine": "SQLite 3.47.2",
+  "policy": "Authorize every SQL observation before preparation and through finalization. Candidate SQL may act only on the disposable fixture with registered operations. Establish fixture state separately. A denial is a failed observation, including a denial during evaluation or automatic recompilation.",
+  "allowedActions": {
+    "SQLITE_CREATE_TABLE": 2,
+    "SQLITE_CREATE_TEMP_TABLE": 4,
+    "SQLITE_DELETE": 9,
+    "SQLITE_DROP_INDEX": 10,
+    "SQLITE_DROP_TABLE": 11,
+    "SQLITE_DROP_TEMP_INDEX": 12,
+    "SQLITE_DROP_TEMP_TABLE": 13,
+    "SQLITE_DROP_TEMP_TRIGGER": 14,
+    "SQLITE_DROP_TRIGGER": 16,
+    "SQLITE_INSERT": 18,
+    "SQLITE_READ": 20,
+    "SQLITE_SELECT": 21,
+    "SQLITE_TRANSACTION": 22,
+    "SQLITE_UPDATE": 23,
+    "SQLITE_SAVEPOINT": 32
+  },
+  "trustedFixtureMetadata": "The fixture runner alone reads compile_options, foreign_keys, table_xinfo and journal_mode using its metadata entry point. A supplied candidate statement cannot select that entry point.",
+  "controls": {
+    "ordinary-select": "authorized SQLite observation succeeds",
+    "attach-file": "external fixture attachment denied without creating a file",
+    "vacuum-into-file": "file output denied through execution without creating a file",
+    "unregistered-pragma": "authorization denial before modifying observer connection settings",
+    "unregistered-function": "authorization denial for an unregistered function"
+  },
+  "accounting": "These controls supplement F01 through F12. They introduce no semantic exclusion and change neither the finite domains nor their budgets.",
+  "trust": "SQLite authorization callback coverage, ctypes invocation and fixed engine build. This policy supplements worker and database process isolation. It does not attest the host, protect external server workflows, or guarantee availability.",
+  "sources": ["https://sqlite.org/c3ref/set_authorizer.html", "https://sqlite.org/c3ref/c_alter_table.html"]
+}

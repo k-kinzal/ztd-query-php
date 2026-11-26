@@ -1,0 +1,126 @@
+{
+  "revision": "SemanticsIR/postgres-schema-sequences-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "extends": "postgres-schema-sequences-v2.json",
+  "scope": "Statically named CREATE SCHEMA containing ordinary table declarations and independently checked unowned CREATE SEQUENCE declarations.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-createschema.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/parser/parse_utilcmd.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_utilcmd.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/schemacmds.c"
+  ],
+  "constructors": {
+    "CreateSchema": {
+      "type": "Schema/Namespace/CreateSchema",
+      "role": "A schema declaration with a fixed sequence phase and table phase.",
+      "structure": "Namespace and authorization; guarded creation policy; ordered immutable lists of unowned sequence declarations and ordinary table declarations; exact release.",
+      "conditions": "A composition has an unguarded statically resolved namespace. All members are of their declared exact role, release and namespace. Only persistent and unlogged member storage qualify. Subsequent occurrences of a relation name across either phase require a guard.",
+      "meaning": "Create the namespace under its chosen owner. Apply the sequence phase ahead of the table phase. Preserve written order within each phase, the first occupant for a guarded collision, and atomicity on parent failure.",
+      "sql": "Quote the namespace and resolved child coordinates. Render the native fixed phase order and the child's checked statement representation.",
+      "evidence": [
+        "shape",
+        "direct",
+        "native",
+        "finite",
+        "search",
+        "negative",
+        "mutations",
+        "staged"
+      ]
+    }
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ],
+  "finite": {
+    "authorization": [
+      "effective",
+      "named"
+    ],
+    "writtenOrder": [
+      "sequence-first",
+      "table-first"
+    ],
+    "layouts": [
+      "independent",
+      "repeated-sequence",
+      "shared-name"
+    ],
+    "sequenceStorage": [
+      "permanent",
+      "unlogged"
+    ],
+    "transactional": [
+      false,
+      true
+    ],
+    "bound": "48 analyzed coordinates and 48 directly constructed coordinates per release. The direct requests construct the native phase order for each coordinate."
+  },
+  "exploration": {
+    "seeds": [
+      3001,
+      25789,
+      62529
+    ],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Vary list sizes between one and five, sequence integer storage and signed generator options, table default values, names and quoting, interleaving, guards and overlaps, owner policy and transaction state."
+  },
+  "observations": [
+    "Namespace owner and new child owner, absolute identities, order within native phases, typed table and sequence catalogs, serialized effective child operands and precise guards.",
+    "Native sequence state and values, exact table names, position, storage, default effects, occupancy, rollback and unrelated objects.",
+    "Native SQLSTATE, status, notices and transaction state."
+  ],
+  "negative": [
+    "A sequence outside the containing schema.",
+    "A temporary sequence member in a persistent schema.",
+    "A sequence from another release in the direct API.",
+    "An unguarded second sequence with the same name.",
+    "A table without a guard colliding with a sequence from the earlier phase.",
+    "A dynamic owner-derived namespace with children.",
+    "A guarded parent with children.",
+    "A temporary view member in a persistent schema."
+  ],
+  "negativePolicy": "Retain the table-only finite, seeded, native and fault obligations. Observe the sequence and ordinary-view promotions as required positive witnesses. Use a native temporary-view conflict for the separate composition rejection.",
+  "edgeWitnesses": [
+    "The exact previously refused standalone sequence member.",
+    "Quoted named owner-derived namespace with sequences.",
+    "A child table written before a sequence but guarded after the native sequence phase.",
+    "An occupied containing namespace returns native 42P06 and leaves occupants unchanged."
+  ],
+  "faults": [
+    "Erase all sequence declarations.",
+    "Erase a repeated sequence's guard in the emitted child.",
+    "Bind an emitted sequence to a fixed decoy schema."
+  ],
+  "open": [
+    "Schema-owned indexes, views, triggers and grants.",
+    "Table defaults depending on sequences and column-owned sequences."
+  ],
+  "trust": [
+    "PostgreSQL native phase ordering, ownership and atomicity.",
+    "Exact PHP structural and lowering rules, with independent native comparator."
+  ],
+  "requiredFormerRefusal": {
+    "sql": "CREATE SCHEMA owning_schema CREATE SEQUENCE unimplemented_member",
+    "role": "A valid subordinate sequence with native default generator parameters.",
+    "expect": "Construct, render, compare the original and emitted effects, and replay both."
+  },
+  "transition": "Preserve all predecessor finite coordinates, seeds, budgets, refusals, observations and faults. Add the formerly refused input from the standalone creation lane as a required positive.",
+  "viewPromotion": "The exact CREATE VIEW feed AS SELECT 1 refusal becomes a positive in postgres-schema-views-v1.json. Retain the refusal totals with a native temporary view that targets a persistent containing namespace. Preserve predecessor coordinates, budgets and observations."
+}

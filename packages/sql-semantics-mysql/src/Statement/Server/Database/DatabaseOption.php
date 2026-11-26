@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-database.html.
  *
- * @visibility public
- * @example Reading the options of CREATE DATABASE
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE DATABASE d CHARACTER SET utf8mb4');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption // => true
+ * @visibility SqlSemantics
  */
 interface DatabaseOption extends Node
 {

@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * relation, so the statement provides no declaration.
  * Source: https://www.postgresql.org/docs/17/sql-createdomain.html. Status: Implemented.
  *
- * @visibility public
- * @example Resolving VALUE in a domain constraint to the base type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DOMAIN posint AS int4 CHECK (VALUE > 0)');
- *     [$operation->facts->diagnostics, $operation->toString()] // => [[], 'CREATE DOMAIN posint int4 CHECK (value > 0)']
+ * @visibility SqlSemantics
  */
 final class CreateDomain implements Statement, Relation
 {

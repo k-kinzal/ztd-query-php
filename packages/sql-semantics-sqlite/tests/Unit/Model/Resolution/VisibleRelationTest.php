@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Resolution\ImplicitSlot;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
@@ -47,5 +48,34 @@ final class VisibleRelationTest extends TestCase
         self::assertSame('t', $visible->name?->name->value);
         self::assertSame([1], $visible->hidden);
         self::assertSame([$implicit], $visible->implicit);
+    }
+
+    public function testResolvedKeepsTheOriginalForQualifiedLookup(): void
+    {
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $original = new OutputSlot(new Name('Key'), new Known(Storage::Text), Nullability::Nullable);
+        $representative = new OutputSlot(new Name('key'), new Known(Storage::Integer), Nullability::NotNull);
+        $visible = new VisibleRelation($left, new RowShape([$original]), representatives: [new ResolvedColumn($right, $representative)]);
+
+        self::assertSame($original, $visible->resolved(0, false)->slot);
+        $reached = $visible->resolved(0, true, 2);
+        self::assertSame($right, $reached->relation);
+        self::assertSame($representative, $reached->slot);
+        self::assertSame(2, $reached->depth);
+    }
+
+    public function testStarSlotKeepsTheHeadingAndUsesTheRightValueFacts(): void
+    {
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $heading = new OutputSlot(new Name('Key'), new Known(Storage::Text), Nullability::Nullable);
+        $value = new OutputSlot(new Name('key'), new Known(Storage::Integer), Nullability::NotNull);
+        $visible = new VisibleRelation($left, new RowShape([$heading, $heading]), representatives: [new ResolvedColumn($right, $value)]);
+
+        self::assertSame('Key', $visible->starSlot(0)->name?->value);
+        self::assertSame($value, $visible->starSlot(0)->origin);
+        self::assertSame(Nullability::NotNull, $visible->starSlot(0)->nullability);
+        self::assertSame($heading, $visible->starSlot(1));
     }
 }

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * The equals sign is optional and not written. NDB only.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the option
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\NodegroupOption(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2')))->group->text // => '2'
  */

@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
  * Each case holds the keywords after ISOLATION LEVEL.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a level
  *     \SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel::RepeatableRead->value // => 'REPEATABLE READ'
  */

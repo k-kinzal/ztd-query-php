@@ -28,10 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * dependent on its use.
  * Source: https://www.postgresql.org/docs/17/sql-prepare.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the declared parameter types
- *     $prepare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('PREPARE p (integer, text) AS SELECT $2', []);
- *     [count($prepare->statement->parameters->types), $prepare->facts->query($prepare->statement->statement)->projection[0]->type->descriptor->name()] // => [2, 'text']
+ * @visibility SqlSemantics
  */
 final class PreparedParameters implements ParameterDeclarations
 {

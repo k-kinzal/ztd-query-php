@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignatio
  * the array type over it; SETOF does not change the element type.
  * Source: https://www.postgresql.org/docs/17/datatype.html, https://www.postgresql.org/docs/17/arrays.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the type a type name denotes
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword::Integer),

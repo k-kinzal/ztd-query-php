@@ -22,10 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * the expression. The result is the INTEGER 0 or 1 and never NULL.
  * Source: https://sqlite.org/lang_expr.html#the_exists_operator. Status: Implemented.
  *
- * @visibility public
- * @example Reading the facts of EXISTS
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT EXISTS (SELECT 1 FROM t)');
- *     [$query->field(0)->type->descriptor, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  */
 final class Exists implements Scalar
 {

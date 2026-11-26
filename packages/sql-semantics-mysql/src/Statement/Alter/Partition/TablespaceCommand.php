@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
  * …_discard_partition_tablespace and …_import_partition_tablespace.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-table-import.html.
  *
- * @visibility public
- * @example Discarding the tablespace of a table
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t DISCARD TABLESPACE');
- *     [$alter->statement->commands[0]->import, $alter->toString()] // => [false, 'ALTER TABLE t DISCARD TABLESPACE']
+ * @visibility SqlSemantics
  */
 final class TablespaceCommand implements StandaloneCommand
 {

@@ -66,7 +66,7 @@ final class Declarations
         if ($form instanceof ListedColumns) {
             $this->listed($form, $derivation, $set);
         } elseif ($form instanceof PartitionOf) {
-            $this->copy($form->parent->name, $derivation, $set, null);
+            $this->copy($form->parent->name, $derivation, $set, null, true);
         } else {
             $set->close();
         }
@@ -95,8 +95,16 @@ final class Declarations
                     $set->close();
                 }
                 $notNull = $types->serial($element->type) !== null || $this->notNull($element->qualifiers);
-                if ($type !== null && !$set->add($element->name, $type, $notNull, $this->generated($element->qualifiers)) && $notNull) {
-                    $set->require($element->name);
+                $identity = $this->identity($element->qualifiers);
+                $collation = $type === \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text
+                    ? $types->collation($element->qualifiers, $derivation->context) : null;
+                if ($type !== null && !$set->add($element->name, $type, $notNull, $this->generated($element->qualifiers), $identity, $collation)) {
+                    if ($notNull) {
+                        $set->require($element->name);
+                    }
+                    if ($identity) {
+                        $set->identify($element->name);
+                    }
                 }
             }
         }
@@ -107,7 +115,7 @@ final class Declarations
      *
      * @param LikeClause|null $like The LIKE clause that copies the columns, or null for a parent
      */
-    public function copy(QualifiedName $source, Derivation $derivation, ColumnSet $set, ?LikeClause $like): void
+    public function copy(QualifiedName $source, Derivation $derivation, ColumnSet $set, ?LikeClause $like, bool $partition = false): void
     {
         $resolution = $derivation->table($source, $derivation->environment());
         if (!$resolution instanceof DeclaredTable || !$resolution->table->complete) {
@@ -115,24 +123,25 @@ final class Declarations
 
             return;
         }
-        $generation = $like !== null && $this->includesGenerated($like);
+        $generation = $like !== null && $this->includes($like, LikeOptionKind::Generated);
+        $identity = $like !== null && $this->includes($like, LikeOptionKind::Identity);
         foreach ($resolution->table->columns as $column) {
             if ($like === null) {
-                $set->inherit($column);
+                $set->inherit($column, $partition);
             } else {
-                $set->add($column->name, $column->type, $column->nullability === \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, $generation && $column->generated);
+                $set->add($column->name, $column->type, $column->nullability === \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, $generation && $column->generated, $identity && $column->identity, $column->collation);
             }
         }
     }
 
     /**
-     * Tells whether the options of a LIKE clause, applied in order, include the generation expressions.
+     * Tells whether the ordered options of a LIKE clause copy a kind of fact.
      */
-    public function includesGenerated(LikeClause $like): bool
+    public function includes(LikeClause $like, LikeOptionKind $kind): bool
     {
         $included = false;
         foreach ($like->options as $option) {
-            if ($option->kind === LikeOptionKind::Generated || $option->kind === LikeOptionKind::All) {
+            if ($option->kind === $kind || $option->kind === LikeOptionKind::All) {
                 $included = $option->including;
             }
         }
@@ -149,6 +158,22 @@ final class Declarations
     {
         foreach ($qualifiers as $qualifier) {
             if ($qualifier instanceof Generated) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Tells whether column qualifiers include an identity sequence.
+     *
+     * @param list<Clause> $qualifiers
+     */
+    public function identity(array $qualifiers): bool
+    {
+        foreach ($qualifiers as $qualifier) {
+            if ($qualifier instanceof Identity) {
                 return true;
             }
         }

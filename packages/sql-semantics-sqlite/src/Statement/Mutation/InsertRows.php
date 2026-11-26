@@ -27,10 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
  * VALUES clause as the source of the rows.
  * Source: https://sqlite.org/lang_insert.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the rows of an INSERT
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a");
- *     [count($insert->statement->rows->rows), count($insert->statement->returning), $insert->toString()] // => [2, 1, "INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a"]
+ * @visibility SqlSemantics
  */
 final class InsertRows implements Statement
 {

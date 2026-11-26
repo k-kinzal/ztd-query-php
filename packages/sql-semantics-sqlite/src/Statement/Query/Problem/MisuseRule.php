@@ -7,10 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
 /**
  * The rules of SQLite a grammatical statement can break without naming a missing object.
  *
- * @visibility public
- * @example Reading which rule a statement breaks
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule::StarWithoutTables
+ * @visibility SqlSemantics
  */
 enum MisuseRule: string
 {

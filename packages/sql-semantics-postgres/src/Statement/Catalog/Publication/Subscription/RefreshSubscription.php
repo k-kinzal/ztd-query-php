@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * Rule: PG-SUBSCRIPTION-004. Mirrors `AlterSubscriptionStmt` of kind ALTER_SUBSCRIPTION_REFRESH.
  * Source: https://www.postgresql.org/docs/17/sql-altersubscription.html. Status: Implemented.
  *
- * @visibility public
- * @example Refreshing without copying data
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = false)');
- *     $operation->toString() // => 'ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = FALSE)'
+ * @visibility SqlSemantics
  */
 final class RefreshSubscription implements Statement
 {

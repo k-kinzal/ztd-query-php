@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * diagnostics (PG-DOMAIN-CHECK-001).
  * Source: https://www.postgresql.org/docs/17/sql-alterdomain.html. Status: Implemented.
  *
- * @visibility public
- * @example Adding a check that depends on the domain's type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN posint ADD CONSTRAINT positive CHECK (VALUE > 0) NOT VALID');
- *     $operation->toString() // => 'ALTER DOMAIN posint ADD CONSTRAINT positive CHECK (value > 0) NOT VALID'
+ * @visibility SqlSemantics
  */
 final class AlterDomainConstraint implements Statement, Relation
 {

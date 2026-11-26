@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery;
  * ANY and SOME request the same test; the grammar keeps the word.
  * Source: https://www.postgresql.org/docs/17/functions-subquery.html.
  *
- * @visibility public
- * @example Reading the quantifier
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 = SOME (SELECT 1)');
- *     $query->field(0)->expression->quantifier // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\Quantifier::Some
+ * @visibility SqlSemantics
  */
 enum Quantifier: string
 {

@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
  * is written with. READ ONLY and READ WRITE exclude each other.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly->value // => 'READ ONLY'
  */

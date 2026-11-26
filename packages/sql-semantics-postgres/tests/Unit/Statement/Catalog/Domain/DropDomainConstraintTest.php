@@ -14,11 +14,11 @@ final class DropDomainConstraintTest extends TestCase
 {
     public function testRenderWritesTheBehavior(): void
     {
-        self::assertSame('ALTER DOMAIN d DROP CONSTRAINT IF EXISTS c CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d DROP CONSTRAINT IF EXISTS c CASCADE')->toString());
+        self::assertSame('ALTER DOMAIN d DROP CONSTRAINT IF EXISTS c CASCADE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d DROP CONSTRAINT IF EXISTS c CASCADE')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d DROP CONSTRAINT c')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DOMAIN d DROP CONSTRAINT c')->facts->diagnostics);
     }
 }

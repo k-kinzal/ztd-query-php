@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ShowParseTree::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class ShowParseTreeTest extends TestCase
 {
     public function testDeriveStatementInspectsTheStatement(): void
     {
-        $show = (new Semantics())->inspect('SHOW PARSE_TREE SELECT a FROM t');
+        $show = (new Inspection())->diagnose('SHOW PARSE_TREE SELECT a FROM t');
         self::assertInstanceOf(ShowParseTree::class, $show->statement);
         self::assertNull($show->shape());
         self::assertCount(1, $show->facts->diagnostics);
@@ -24,6 +24,6 @@ final class ShowParseTreeTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW PARSE_TREE SELECT a FROM t', (new Semantics())->inspect('SHOW PARSE_TREE SELECT a FROM t')->toString());
+        self::assertSame('SHOW PARSE_TREE SELECT a FROM t', (new Inspection())->diagnose('SHOW PARSE_TREE SELECT a FROM t')->toString());
     }
 }

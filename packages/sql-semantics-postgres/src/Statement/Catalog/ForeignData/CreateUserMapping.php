@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
  * role specification or the keyword USER, which designates the current user.
  * Source: https://www.postgresql.org/docs/17/sql-createusermapping.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a user mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE USER MAPPING FOR USER SERVER s OPTIONS (user 'bob')");
- *     [$operation->statement->user, $operation->statement->options[0]->value->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser::User, 'bob']
+ * @visibility SqlSemantics
  */
 final class CreateUserMapping implements Statement
 {

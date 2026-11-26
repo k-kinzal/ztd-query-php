@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/mysql-native-foreign-string-fields-3",
+  "approval": "pending-human-review",
+  "extends": {
+    "mysql-add-foreign-key-groups-v1.json": "214b04864ac045b8ee9b10e5291a5d59c5f34d893df871dd3de791d7ed6bb09a"
+  },
+  "language": {
+    "dialect": "MySql",
+    "mode": "Stock InnoDB storage, utf8mb4, empty sql_mode, foreign_key_checks=1, native markers, 16 KiB pages.",
+    "releases": [
+      "5.6.51",
+      "5.7.44",
+      "8.0.44",
+      "8.1.0",
+      "8.2.0",
+      "8.3.0",
+      "8.4.7",
+      "9.0.1",
+      "9.1.0"
+    ]
+  },
+  "rules": {
+    "character": "CHAR and VARCHAR are eligible in either ordered child and parent role, with matching explicitly resolved native utf8mb4 collations. Compare according to the native collation even with different lengths or fixed and varying storage. Keep both storage families and lengths. The scoped collations are utf8mb4_bin, utf8mb4_general_ci and utf8mb4_unicode_ci.",
+    "binary": "BINARY and VARBINARY are eligible in either ordered child/parent role, regardless of equal declared lengths. Compare stored bytes without text collation or removal of trailing zeroes. Fixed BINARY storage contributes its native zero padding.",
+    "compatibility": "A text pair has matching native collation identities. A binary pair has two binary string storage fields. A mixed character and binary pair is outside the checked comparison. Preserve the checked native integer pair domain, including exact width and sign.",
+    "width": "A referenced physical field must have nonzero width. Reused and generated full index terms count the native maximum bytes of the storage. A utf8mb4 field contributes four times its declared length, a binary field its byte length, and an integer field its physical width.",
+    "capacity": "The stock COMPACT and REDUNDANT limit is 767 bytes for one field. Stock DYNAMIC and COMPRESSED with large-prefix support allow 3072 per field at the fixed page size. The combined bound is 3072 bytes in both regimes. Default MySQL 5.6 uses COMPACT and falls back to COMPACT from DYNAMIC under the observed stock Antelope settings. The observed 5.7 and newer profile defaults to DYNAMIC. Observe explicit COMPACT separately. This is a static boundary for actual created physical keys.",
+    "runtime": "An update or delete is still governed by the checked native action. Existing row values and the storage conversion can cause defined native failures. Preserve each result, byte sequence and NULL exactly.",
+    "measuredProbeValues": "The scoped native utf8mb4_unicode_ci probe treats trailing U+0000 in the selected ASCII word as ignorable for referential comparison. Keep the complete stored bytes. The measured utf8mb4_bin and utf8mb4_general_ci probes distinguish that word from the corresponding value without U+0000. The oracle uses this finite probe law, together with observed ASCII case and PAD SPACE behavior.",
+    "diagnosticTransport": "Fetch setup and row-write diagnostics through an explicit text-protocol SHOW WARNINGS. Native prepared execution of SHOW WARNINGS can return 1295 on newer lanes. Preserve the original calibration records and distinguish diagnostic observation failures from native semantic refusals.",
+    "observedCascadeStorage": "For the bounded ASCII string probes, a fixed CHAR parent passes its declared physical space padding to an updating cascade. A varying child retains those spaces, while CHAR child projection removes trailing padding under the fixed SQL mode. If an exact propagated field would exceed the declared child width, the update fails with native 1451 and both stored rows remain unchanged. Keep this data-dependent refusal and the stored bytes as separate observations."
+  },
+  "observations": [
+    "Absolute parent/child identities, exact native data types and per-field selected collation",
+    "Original and resulting field and total physical key sizes and observed row formats",
+    "Declared primary/secondary index shape, true foreign constraints and event effects",
+    "Exact stored values, whitespace, byte padding, native text equality and reference rejections"
+  ],
+  "faults": [
+    "Treat case variants as equal in the utf8mb4 binary collation",
+    "Erase stored zero bytes or native string length",
+    "Treat a compact term limit as a total index bound",
+    "Compare different collations as one space",
+    "Fail to propagate the previous row format through a physical table copy"
+  ],
+  "authorCalibrationSha256": {
+    "native-v1": {
+      "5.6.51": "15384db040868d88cda2aecb80727b44505af6cd673da4476624ea7f408a5a0f",
+      "5.7.44": "41a47ae1975d8b757e0ac04b00704d11879cde49d9bfa598be81497aec186fb1",
+      "8.0.44": "8396eccd9659c3895e44fe0acc3e1648d06d8199b29a3305f30d481771e3b1da",
+      "8.4.7": "8396eccd9659c3895e44fe0acc3e1648d06d8199b29a3305f30d481771e3b1da",
+      "9.1.0": "8396eccd9659c3895e44fe0acc3e1648d06d8199b29a3305f30d481771e3b1da"
+    },
+    "limits-v1": {
+      "5.6.51": "b93a572332c11530ae7d37f517e20851e95d5674839a7aa1766a44c79bdabdf0",
+      "5.7.44": "f7e7cf06239fdf8398de141cda13cc139f9f233d95c3c37f855dd3c498573da3",
+      "8.0.44": "84fe7d25a4c2c527b02a39a3e1c11aef97c636281756063b0606769d77e3fae8",
+      "8.4.7": "467171f18ca0b458d04838ae1db8bd01d1fc3a002d26a772bb42a8272776d06a",
+      "9.1.0": "f3b045a4d276e6f5b3a5cf8208fd0e9729dc4d319e14f2a29bd2f85c47d0403a"
+    }
+  },
+  "remaining": [
+    "Storage with nondefault page sizes, nonstock legacy global mode, compression block size, other text collations and default charset inference.",
+    "Decimal, floating, temporal, enumeration and generated field types and other SQL family proof obligations."
+  ],
+  "revises": {
+    "mysql-native-foreign-string-fields-v1.json": "f44773e2c8d4a8920f63318b30b68f7fbb4721a58750f29f77f9c90532948bed",
+    "mysql-native-foreign-string-fields-v2.json": "7279ad81f88d00308c305e1c402ce18fd7fdff60b057894e7b8c7fb464b4d06a"
+  },
+  "additionalRawPdoSha256": {
+    "5.6.51": "feaa66e11858d519fcda20badecfd85b06e13de7210526ef4345d4894205d5ce",
+    "5.7.44": "54677c930dbeea33c573d3cbf1349dae2c5de11f150d4b493557ffdedb860ea5",
+    "8.0.44": "3a0670815f2a86794ebef28ecf1cd59c731582f6585721150b2bbbce81d92ff0",
+    "8.4.7": "4497201f1e59d41c7ae7fe1a3c874b489c2e981eef3217c18ba4fa8106927f6a",
+    "9.1.0": "e9a3a922930755bb4998c09176aced9865d188a1c3386612c525d4f8879d29c1"
+  },
+  "nativeCascadeCounterexamples": {
+    "5.6.51": "27084ecd88194ca9f00e32a096e50383a6134d7425f5650c2568bd672f8d9fbc",
+    "5.7.44": "5e7bdd1d5ce0ad87356fa8113850bd3a5a8ce5219b98096635d701901f97f295"
+  }
+}

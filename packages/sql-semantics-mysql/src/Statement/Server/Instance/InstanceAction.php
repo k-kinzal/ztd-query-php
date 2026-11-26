@@ -14,9 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  * written; the server compares them case-insensitively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-instance.html.
  *
- * @visibility public
- * @example Reading the action of ALTER INSTANCE
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER INSTANCE RELOAD KEYRING')->statement->action instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring // => true
+ * @visibility SqlSemantics
  */
 interface InstanceAction extends Node
 {

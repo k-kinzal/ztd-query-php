@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
  * Mirrors `VAR_SET_DEFAULT` and `VAR_SET_CURRENT` of PostgreSQL's `VariableSetKind`.
  * Source: https://www.postgresql.org/docs/17/sql-set.html, https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
- * @example Reading the source of a SET ... FROM CURRENT
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET search_path FROM CURRENT');
- *     $operation->statement->source // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Current
+ * @visibility SqlSemantics
  */
 enum ParameterSource
 {

@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference;
  * server.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-PARMS-REFERENCES.
  *
- * @visibility public
- * @example Reading the match type of a foreign key
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int REFERENCES u MATCH FULL)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->match // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\KeyMatch::Full
+ * @visibility SqlSemantics
  */
 enum KeyMatch: string
 {

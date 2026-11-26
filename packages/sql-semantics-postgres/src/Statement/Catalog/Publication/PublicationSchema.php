@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * TABLES_IN_CUR_SCHEMA. The schema is not part of a declaration context.
  * Source: https://www.postgresql.org/docs/17/sql-createpublication.html.
  *
- * @visibility public
- * @example Publishing the tables of the current schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s');
- *     [$operation->statement->objects[0]->schema, $operation->statement->objects[1]->schema?->value] // => [null, 's']
+ * @visibility SqlSemantics
  */
 final class PublicationSchema implements PublicationMember
 {

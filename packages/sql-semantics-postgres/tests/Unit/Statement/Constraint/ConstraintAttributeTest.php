@@ -22,15 +22,15 @@ final class ConstraintAttributeTest extends TestCase
 
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int REFERENCES u DEFERRABLE)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int REFERENCES u DEFERRABLE)', []);
         self::assertSame(1, count($statement->facts->diagnostics));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, CHECK (a > 0) NOT VALID NO INHERIT, UNIQUE (a) NOT DEFERRABLE INITIALLY IMMEDIATE)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, CHECK (a > 0) NOT VALID NO INHERIT, UNIQUE (a) NOT DEFERRABLE INITIALLY IMMEDIATE)', []);
         self::assertSame('CREATE TABLE t (a INT, CHECK (a > 0) NOT VALID NO INHERIT, UNIQUE (a) NOT DEFERRABLE INITIALLY IMMEDIATE)', $statement->toString());
     }
 }

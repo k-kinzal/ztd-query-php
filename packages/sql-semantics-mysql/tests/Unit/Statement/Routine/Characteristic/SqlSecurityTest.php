@@ -11,10 +11,10 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SqlSecurity::class)]
 #[Medium]
@@ -33,7 +33,7 @@ final class SqlSecurityTest extends TestCase
     #[DataProvider('providerRenderWritesTheContextKeyword')]
     public function testRenderWritesTheContextKeyword(string $release, string $sql, string $expected, SecurityContext $context): void
     {
-        $alter = (new Semantics($release))->analyze($sql);
+        $alter = (new Inspection($release))->inspect($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -45,7 +45,7 @@ final class SqlSecurityTest extends TestCase
 
     public function testRenderWritesAConstructedCharacteristic(): void
     {
-        $out = new Output(new Codec((new Semantics())->profile()->grammar));
+        $out = new Output(new Codec((new Inspection())->profile()->grammar));
         (new SqlSecurity(SecurityContext::Definer))->render($out);
 
         self::assertSame('SQL SECURITY DEFINER', (new Lexical())->join($out->pieces()));

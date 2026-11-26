@@ -13,10 +13,12 @@ use SqlParser\Parser\SqlParser;
 use SqlParser\Resource\VersionRegistry;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Contract\ForeignKeyEdge;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Model\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
@@ -24,6 +26,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\LeafKeys;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\ForeignKeyDeclarations;
 
 /**
  * Wires the MySQL grammar releases, lowering rules and spelling rules into the analysis.
@@ -147,15 +150,25 @@ final class Platform
      *
      * @param list<string>|null $searchPath
      * @param list<Model\Statement\Declaration\Table> $tables
+     * @param list<ForeignKeyEdge> $foreignKeys
      * @throws InvalidArgumentException When the path names more than the current database
      */
-    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete, array $foreignKeys = []): AnalysisContext
     {
         if ($searchPath !== null && count($searchPath) !== 1) {
             throw new InvalidArgumentException('MySQL searches an unqualified table name in the current database only.');
         }
 
-        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive);
+        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive, foreignKeys: $foreignKeys);
+    }
+
+    /**
+     * Collects the effective foreign-key facts of one relation declaration.
+     * @return list<ForeignKeyEdge>
+     */
+    public function foreignKeys(BoundStatement $definition): array
+    {
+        return (new ForeignKeyDeclarations())->collect($definition);
     }
 
     /**

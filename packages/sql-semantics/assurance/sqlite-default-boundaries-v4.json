@@ -1,0 +1,234 @@
+{
+  "revision": "SemanticsIR/sqlite-default-boundaries-4",
+  "approval": "pending-human-review",
+  "scope": "Resolve and render SQLite table storage, declared types, owned column constraints and primary-key terms.",
+  "rules": {
+    "Schema/CreateTable::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'A CREATE TABLE needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A CREATE TABLE cannot use the reserved SQLite namespace.');",
+        "$checked = Check::listOf($columns, TableColumn::class, 'A CREATE TABLE needs a nonempty ordered column list.', 1);",
+        "Check::input(count($checked) <= 2000, 'A CREATE TABLE can have at most 2000 columns in this profile.');",
+        "Check::input(!$withoutRowid || $primaryKey !== null, 'A WITHOUT ROWID table needs a primary key.');",
+        "foreach ($primaryKey->terms ?? [] as $term) {",
+        "    Check::input($term->slot < count($checked), 'A primary key term belongs to the declared column layout.');",
+        "}",
+        "$seen = [];",
+        "$defaults = [];",
+        "foreach ($checked as $column) {",
+        "    Check::input(!$strict || $column->type !== DeclaredDatatypeName::Untyped, 'A STRICT table requires every column to declare a datatype.');",
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'A CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "    if ($column->default !== null) {",
+        "        $defaults[] = [$column->default, 0, 0];",
+        "    }",
+        "}",
+        "(new ExpressionScope())->check([], $defaults);",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Schema/TableColumn::toString": {
+      "common": [
+        "$type = $this->type === DeclaredDatatypeName::Untyped ? '' : ' ' . $this->type->value;",
+        "",
+        "$default = $this->default === null ? '' : ' DEFAULT ' . (new SelectSql())->expression($this->default, null);",
+        "",
+        "$constraint = match ($this->notNull) {",
+        "    null => '',",
+        "    NotNullConflict::Abort => ' NOT NULL',",
+        "    NotNullConflict::Fail => ' NOT NULL ON CONFLICT FAIL',",
+        "    NotNullConflict::Ignore => ' NOT NULL ON CONFLICT IGNORE',",
+        "    NotNullConflict::Replace => ' NOT NULL ON CONFLICT REPLACE',",
+        "    NotNullConflict::Rollback => ' NOT NULL ON CONFLICT ROLLBACK',",
+        "};",
+        "",
+        "return $this->name->quoted() . $type . $constraint . $default;"
+      ]
+    },
+    "Schema/CreateColumnLowering::lower": {
+      "common": [
+        "$notNull = null;",
+        "$default = null;",
+        "foreach ($column->constraints as $constraint) {",
+        "    if ($constraint instanceof ColumnPrimaryKey) {",
+        "        continue;",
+        "    }",
+        "    if ($constraint instanceof NotNull) {",
+        "        Check::input($notNull === null, 'A checked CREATE TABLE column can declare one NOT NULL constraint.');",
+        "        $notNull = $constraint->conflict === null ? NotNullConflict::Abort : NotNullConflict::from($constraint->conflict->value);",
+        "        continue;",
+        "    }",
+        "    if ($constraint instanceof DefaultLiteral || $constraint instanceof DefaultExpression || $constraint instanceof DefaultWord) {",
+        "        Check::input($default === null, 'A checked CREATE TABLE column can declare one default.');",
+        "        $default = (new DefaultLowering())->lower($constraint, $operation);",
+        "        continue;",
+        "    }",
+        "",
+        "    throw new InvalidConstruction('This column constraint has no complete CREATE TABLE representation.');",
+        "}",
+        "$type = DeclaredDatatypeName::Untyped;",
+        "if ($column->type !== null) {",
+        "    Check::input(count($column->type->words) === 1 && $column->type->arguments === [], 'The declared type must be one supported type name.');",
+        "    $spelling = strtr($column->type->text(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');",
+        "    $type = DeclaredDatatypeName::tryFrom($spelling);",
+        "    Check::input($type !== null && $type !== DeclaredDatatypeName::Untyped, 'This declared type has no complete CREATE TABLE representation.');",
+        "}",
+        "",
+        "return new TableColumn(new Identifier($column->name->value), $type, $notNull, $default);"
+      ]
+    },
+    "Schema/CreateTable::toString": {
+      "common": [
+        "$columns = [];",
+        "$key = $this->primaryKey;",
+        "$keySql = new PrimaryKeySql();",
+        "foreach ($this->columns as $slot => $column) {",
+        "    $inline = $key !== null && $key->inline && $key->terms[0]->slot === $slot ? $keySql->inline($key) : '';",
+        "    $columns[] = $column->toString() . $inline;",
+        "}",
+        "if ($key !== null && !$key->inline) {",
+        "    $columns[] = $keySql->table($key, $this->columns);",
+        "}",
+        "$options = $this->withoutRowid ? ($this->strict ? ' WITHOUT ROWID, STRICT' : ' WITHOUT ROWID')",
+        "    : ($this->strict ? ' STRICT' : '');",
+        "",
+        "return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '')",
+        "    . $this->schema->quoted() . '.' . $this->table->quoted() . ' (' . implode(', ', $columns) . ')'",
+        "    . $options;"
+      ]
+    },
+    "Schema/CreateTableLowering::lower": {
+      "common": [
+        "foreach ($statement->options as $option) {",
+        "    Check::input($option->kind() === TableOptionKind::Strict || $option->kind() === TableOptionKind::WithoutRowid, 'This table option has no complete CREATE TABLE representation.');",
+        "}",
+        "$schemaName = $statement->name->schema->value ?? ($statement->temporary ? 'temp' : 'main');",
+        "$comparison = NameComparison::AsciiInsensitive;",
+        "Check::input(!$statement->temporary || $comparison->equal($schemaName, 'temp'), 'A temporary table must be in the temp schema.');",
+        "$columns = [];",
+        "$lowering = new CreateColumnLowering();",
+        "foreach ($statement->columns as $column) {",
+        "    $columns[] = $lowering->lower($column, $operation);",
+        "}",
+        "foreach ($operation->context->searchPath as $schema) {",
+        "    if ($comparison->equal($schemaName, $schema->value)) {",
+        "        return new CreateTable(",
+        "            new Identifier($schema->value),",
+        "            new Identifier($statement->name->name->value),",
+        "            $columns,",
+        "            $statement->ifNotExists,",
+        "            $statement->strict(),",
+        "            $statement->withoutRowid(),",
+        "            (new PrimaryKeyLowering())->lower($statement)",
+        "        );",
+        "    }",
+        "}",
+        "",
+        "throw new InvalidConstruction('CREATE TABLE requires a known schema.');"
+      ]
+    },
+    "Schema/Key/KeyTerm::__construct": {
+      "common": [
+        "Check::input($slot >= 0, 'A key term requires a nonnegative column slot.');"
+      ]
+    },
+    "Schema/Key/PrimaryKey::__construct": {
+      "common": [
+        "$checked = Check::listOf($terms, KeyTerm::class, 'A primary key needs a nonempty ordered term list.', 1);",
+        "Check::input(count($checked) <= 2000, 'A primary key can have at most 2000 terms in this profile.');",
+        "Check::input(!$inline || count($checked) === 1, 'An inline primary key needs exactly one term.');",
+        "Check::input(!$inline || $checked[0]->collation === Collation::Binary, 'An inline primary key uses the default column collation.');",
+        "$this->terms = $checked;"
+      ]
+    },
+    "Schema/Key/KeyTermLowering::lower": {
+      "common": [
+        "Check::input($term->nulls === null, 'A primary key term does not have an explicit NULL order.');",
+        "$expression = $term->expression;",
+        "$collation = null;",
+        "while ($expression instanceof Grouped || $expression instanceof Collate) {",
+        "    if ($expression instanceof Collate) {",
+        "        $explicit = Collation::tryFrom(strtoupper($expression->collation->value));",
+        "        Check::input($explicit !== null, 'A primary key term needs a builtin collation.');",
+        "        $collation ??= $explicit;",
+        "    }",
+        "    $expression = $expression->operand;",
+        "}",
+        "$name = match (true) {",
+        "    $expression instanceof ColumnUse && $expression->qualifier === null => $expression->name,",
+        "    $expression instanceof DoubleQuotedWord => $expression->word,",
+        "    $expression instanceof LiteralColumn => $expression->name(),",
+        "    default => null,",
+        "};",
+        "Check::input($name !== null, 'A primary key term needs one unqualified declared column.');",
+        "foreach ($columns as $slot => $column) {",
+        "    if (NameComparison::AsciiInsensitive->equal($column->name->value, $name->value)) {",
+        "        return new KeyTerm($slot, $term->direction === SortDirection::Descending, $collation ?? Collation::Binary);",
+        "    }",
+        "}",
+        "",
+        "throw new InvalidConstruction('A primary key term has no owning column.');"
+      ]
+    },
+    "Schema/Key/PrimaryKeyLowering::lower": {
+      "common": [
+        "$key = $this->inline($definition);",
+        "foreach ($definition->constraints as $run) {",
+        "    foreach ($run->items as $constraint) {",
+        "        Check::input($constraint instanceof TablePrimaryKey, 'This table constraint has no complete CREATE TABLE representation.');",
+        "        Check::input($key === null, 'A table declaration can have one primary key.');",
+        "        Check::input(!$constraint->autoincrement, 'AUTOINCREMENT has no complete PRIMARY KEY representation.');",
+        "        $terms = [];",
+        "        $lowering = new KeyTermLowering();",
+        "        foreach ($constraint->terms as $term) {",
+        "            $terms[] = $lowering->lower($term, $definition->columns);",
+        "        }",
+        "        $key = new PrimaryKey($terms, false, KeyConflict::from($constraint->conflict->value ?? 'ABORT'));",
+        "    }",
+        "}",
+        "",
+        "return $key;"
+      ]
+    },
+    "Schema/Key/PrimaryKeyLowering::inline": {
+      "common": [
+        "$key = null;",
+        "foreach ($definition->columns as $slot => $column) {",
+        "    foreach ($column->constraints as $constraint) {",
+        "        if (!$constraint instanceof ColumnPrimaryKey) {",
+        "            continue;",
+        "        }",
+        "        Check::input($key === null, 'A table declaration can have one primary key.');",
+        "        Check::input(!$constraint->autoincrement, 'AUTOINCREMENT has no complete PRIMARY KEY representation.');",
+        "        $term = new KeyTerm($slot, $constraint->direction === SortDirection::Descending);",
+        "        $key = new PrimaryKey([$term], true, KeyConflict::from($constraint->conflict->value ?? 'ABORT'));",
+        "    }",
+        "}",
+        "",
+        "return $key;"
+      ]
+    },
+    "Schema/Key/PrimaryKeySql::inline": {
+      "common": [
+        "return ' PRIMARY KEY' . ($key->terms[0]->descending ? ' DESC' : '') . $this->conflict($key->conflict);"
+      ]
+    },
+    "Schema/Key/PrimaryKeySql::table": {
+      "common": [
+        "$terms = [];",
+        "foreach ($key->terms as $term) {",
+        "    $collation = $term->collation === Collation::Binary ? '' : ' COLLATE ' . $term->collation->value;",
+        "    $terms[] = $columns[$term->slot]->name->quoted() . $collation . ($term->descending ? ' DESC' : '');",
+        "}",
+        "",
+        "return 'PRIMARY KEY (' . implode(', ', $terms) . ')' . $this->conflict($key->conflict);"
+      ]
+    },
+    "Schema/Key/PrimaryKeySql::conflict": {
+      "common": [
+        "return $conflict === KeyConflict::Abort ? '' : ' ON CONFLICT ' . $conflict->value;"
+      ]
+    }
+  }
+}

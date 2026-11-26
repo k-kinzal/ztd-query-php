@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * listed values.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-list.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the values of a list partition
  *     $bound = new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\ValuesIn(new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]));
  *     count($bound->row->items) // => 2

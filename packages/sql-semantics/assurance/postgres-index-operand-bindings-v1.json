@@ -1,0 +1,80 @@
+{
+  "revision": "SemanticsIR/postgres-index-operand-bindings-1",
+  "approval": "pending-human-review",
+  "profile": {
+    "dialect": "PostgreSQL",
+    "releases": [
+      "16.6",
+      "17.2"
+    ],
+    "encoding": "UTF8",
+    "standard_conforming_strings": true,
+    "parameters": "native"
+  },
+  "source": "https://www.postgresql.org/docs/17/sql-createindex.html",
+  "references": {
+    "postgres-create-btree-v1.json": "cd677c222925381961521d7cfa47864d52a316eb023fd3d13cc34b0537057629",
+    "postgres-create-btree-boundaries-v6.json": "07fedd537da3c81d4e66f375be586f3b869fadad4463d05d89f2d66b33f711c2",
+    "postgres-boolean-index-predicate-v1.json": "b9f964d7e2d8b0102584a0ee0322140340942beea0efe9ddf97ef168da0474e5"
+  },
+  "scope": "Resolved ordinary PostgreSQL B-tree indexes with integer and Boolean column keys, covering operands and closed partial conditions, including their placement as a schema member.",
+  "rules": [
+    "The completed B-tree retains an absolute native table coordinate, the ONLY role, ordered keys and included fields, predicate and physical flags. It retains the exact name and native type of only the referenced physical column slots.",
+    "The declaration supplies the ordinal and canonical name and native type for each consumed field. Construction resolves and checks all three roles, including nested condition leaves, against this heading. The retained bindings are a detached sparse map in increasing native physical slot order.",
+    "Fields that are unused by keys, INCLUDE and condition leaves may have unrelated types and names. They do not affect whether a supported key and predicate construction is admitted. Unknown or unsupported types in a consumed position are rejected at that position.",
+    "A containing CREATE SCHEMA verifies the indexed table declaration and all referenced slot identities and native kinds against the table published earlier in that schema. The verification need not retain unrelated fields twice.",
+    "Rendering uses the resolved binding of each key, included field and condition leaf. It preserves order, native default operator class of the bound key kind, NULL semantics, Boolean grouping, physical options, and application or session table identity."
+  ],
+  "finite": {
+    "coordinates": 135,
+    "axes": {
+      "position": [
+        "first",
+        "middle",
+        "last"
+      ],
+      "unrelatedType": [
+        "integer",
+        "text",
+        "text-c-collation",
+        "jsonb",
+        "numeric-8-2",
+        "date",
+        "bytea",
+        "uuid",
+        "integer-array"
+      ],
+      "operands": [
+        "ordered-keys",
+        "covering",
+        "truth-test",
+        "nested-logical",
+        "unique"
+      ]
+    },
+    "nativeInitialScriptSha256": "df0dc5503a47abd10aa63af08ede6fbf407b03ecbc6cc3bb6228740e9668dd5b",
+    "route": "Require both direct construction and analyzed publication against unchanged finite and seeded schedules. Preserve existing distinguishing faults and add an injected wrong field binding."
+  },
+  "observations": [
+    "Measure complete native key and included attnum sequences, exact names and types, sort flags, default operator classes and the declared partial predicate.",
+    "Measure ordinary table and index constraints with discriminating duplicate and NULL values, an admitted row outside the condition and a named duplicate error inside it.",
+    "Observe equal completed IR when two full headings have the same owner and required slots but different unused names or types. Compare the original and rendered statements against the same fixed external catalog."
+  ],
+  "boundaries": [
+    "Unsupported consumed operand types and unregistered index methods remain visible in the wider grammar ledger.",
+    "Temporary names resolve as session identities; table contents, privileges and runtime index-size failures belong to evaluation."
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ]
+}

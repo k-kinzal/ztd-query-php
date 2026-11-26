@@ -14,6 +14,6 @@ final class SubscriptionOptionActionTest extends TestCase
 {
     public function testSkipIsSpelledSkip(): void
     {
-        self::assertSame('ALTER SUBSCRIPTION s SKIP (lsn = \'0/14C0378\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s SKIP (lsn = \'0/14C0378\')')->toString());
+        self::assertSame('ALTER SUBSCRIPTION s SKIP (lsn = \'0/14C0378\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s SKIP (lsn = \'0/14C0378\')')->toString());
     }
 }

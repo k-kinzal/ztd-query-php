@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Server\Storage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateUndoTablespace::class)]
 #[Medium]
@@ -17,12 +17,12 @@ final class CreateUndoTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE innodb", (new Semantics())->inspect("create undo tablespace u add datafile 'u.ibu' engine innodb")->toString());
+        self::assertSame("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE innodb", (new Inspection())->diagnose("create undo tablespace u add datafile 'u.ibu' engine innodb")->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE a ENGINE b");
+        $operation = (new Inspection())->diagnose("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE a ENGINE b");
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

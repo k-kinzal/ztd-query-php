@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Flushing tables for export
- *     $flush = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('flush tables t, u for export');
- *     [$flush->toString(), $flush->statement->lock] // => ['FLUSH TABLE t, u FOR EXPORT', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport]
+ * @visibility SqlSemantics
  */
 final class FlushTables implements Statement
 {

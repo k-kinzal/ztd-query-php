@@ -1,0 +1,12 @@
+{
+  "revision": "SemanticsIR/sqlite-view-binding-sources-1",
+  "approval": "pending-human-review",
+  "claims": "The verified analyzer uses the owning schema and native effective names before constructing a view.",
+  "artifacts": {
+    "src/Model/Construction/Derivation.php": "e1d01aafc2255ceff8cfb30db3682b80b6d5ab9ecb99f4caed752b57cb3e407f",
+    "src/Model/Resolution/Environment.php": "205c290831fc0b117cf86ff70757f2b0e062feb222a4623a8f5ec60265e42c5f",
+    "src/Rules/Definition/Query/QueryColumns.php": "276105a9ad795d3f05115f0065b5b447fda94fabdf6fa4ef0aae8049aa11fe87",
+    "src/Rules/Query/ResultNames.php": "24d0adcb50a9df64a1d172395bd7cf72f10862e31b9b612f933c4696194ffb83",
+    "src/Statement/Schema/CreateView.php": "7e8cbd2821d6462a81f693eca3d004e06f8f7c894fd3ab2e6bf2e69cf32520c3"
+  }
+}

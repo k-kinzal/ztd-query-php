@@ -33,9 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
  * https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_convert.
  * Status: Implemented.
  *
- * @visibility public
- * @example Writing CONVERT with a type as CAST
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE CONVERT(a, SIGNED)')->toString() // => 'SELECT a FROM t WHERE CAST(a AS SIGNED)'
+ * @visibility SqlSemantics
  */
 final class Cast implements Scalar
 {

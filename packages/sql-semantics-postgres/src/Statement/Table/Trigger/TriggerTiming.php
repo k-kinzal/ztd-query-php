@@ -10,9 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
  * Mirrors `TRIGGER_TYPE_BEFORE`, `TRIGGER_TYPE_AFTER` and `TRIGGER_TYPE_INSTEAD`.
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
- * @visibility public
- * @example Reading the timing of a trigger
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRIGGER g INSTEAD OF INSERT ON v FOR EACH ROW EXECUTE FUNCTION f()')->statement->timing // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTiming::InsteadOf
+ * @visibility SqlSemantics
  */
 enum TriggerTiming: string
 {

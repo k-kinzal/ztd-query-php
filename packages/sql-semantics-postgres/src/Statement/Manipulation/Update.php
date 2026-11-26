@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  * follow PG-CHANGE-001.
  * Source: https://www.postgresql.org/docs/17/sql-update.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of an UPDATE
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a');
- *     [count($update->statement->assignments), $update->statement->from instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput, $update->toString()] // => [1, true, 'UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a']
+ * @visibility SqlSemantics
  * @example Refusing UPDATE without an assignment
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')))), []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

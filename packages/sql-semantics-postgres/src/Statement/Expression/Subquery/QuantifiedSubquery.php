@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
  * must keep its place before the operator (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-subquery.html#FUNCTIONS-SUBQUERY-ANY-SOME. Status: Implemented.
  *
- * @visibility public
- * @example Comparing with every row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 < ALL (SELECT 2)');
- *     [$query->field(0)->expression->comparator->name->value, $query->field(0)->type->descriptor->name()] // => ['<', 'boolean']
+ * @visibility SqlSemantics
  */
 final class QuantifiedSubquery implements Scalar
 {

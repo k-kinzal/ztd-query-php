@@ -14,12 +14,12 @@ final class DefaultGrantTest extends TestCase
 {
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('ALTER DEFAULT PRIVILEGES GRANT ALL ON TYPES TO joe, public WITH GRANT OPTION', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES GRANT ALL PRIVILEGES ON TYPES TO GROUP joe, PUBLIC WITH GRANT OPTION')->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES GRANT ALL ON TYPES TO joe, public WITH GRANT OPTION', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DEFAULT PRIVILEGES GRANT ALL PRIVILEGES ON TYPES TO GROUP joe, PUBLIC WITH GRANT OPTION')->toString());
     }
 
     public function testAnalysisKeepsTheKind(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\AlterDefaultPrivileges::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\DefaultGrant::class, $statement->action);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\DefaultObjectKind::Tables, $statement->action->objects);

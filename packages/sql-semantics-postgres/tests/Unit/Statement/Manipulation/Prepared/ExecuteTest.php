@@ -14,29 +14,29 @@ final class ExecuteTest extends TestCase
 {
     public function testDeriveStatementRecordsRowsThatDependOnTheSession(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('EXECUTE p (1)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('EXECUTE p (1)');
         self::assertSame('the session state: the prepared statement p', $query->facts->output?->shape->missing[0]->describe());
     }
 
     public function testDeriveParametersReportsDefault(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('EXECUTE p (DEFAULT)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('EXECUTE p (DEFAULT)');
         self::assertSame(['DEFAULT is not allowed in this context'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
 
     public function testRowsIsAnOpenShape(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect('EXECUTE p');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose('EXECUTE p');
         self::assertFalse($query->facts->output?->shape->complete());
     }
 
     public function testRenderWritesTheParameters(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->inspect("EXECUTE p (1, 'x')");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->diagnose("EXECUTE p (1, 'x')");
         self::assertSame("EXECUTE p (1, 'x')", $query->toString());
     }
 }

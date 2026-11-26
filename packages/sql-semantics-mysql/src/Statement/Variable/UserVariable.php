@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  * names the variable as missing session state. Diagnostics: none.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html. Status: Implemented.
  *
- * @visibility public
- * @example Naming the session state a variable depends on
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = @total');
- *     [$query->statement->where->right->name->value, $query->facts->scalar($query->statement->where->right)->type->missing[0]->describe()] // => ['total', 'the session state: user variable @total']
+ * @visibility SqlSemantics
  */
 final class UserVariable implements Scalar
 {

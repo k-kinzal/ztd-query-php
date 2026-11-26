@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
  * twice is a diagnostic (PG-FOREIGN-OPTION-001).
  * Source: https://www.postgresql.org/docs/17/sql-createforeigndatawrapper.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the handler of a wrapper
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')");
- *     [$operation->statement->functions[0]->function?->last()->value, $operation->toString()] // => ['h', "CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')"]
+ * @visibility SqlSemantics
  */
 final class CreateFdw implements Statement
 {

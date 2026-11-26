@@ -1,0 +1,99 @@
+{
+  "revision": "SemanticsIR/mysql-native-local-column-name-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-native-local-column-names-v1.json",
+  "rules": {
+    "Ordering/AliasHeading::normalize": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[^\\x00\\x{10000}-\\x{10FFFF}]*\\z/u', $requested) === 1, 'A requested MySQL result alias needs BMP characters without NUL.');",
+        "$prefix = (new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames())->prefix($requested);",
+        "while (preg_match('//u', $prefix) !== 1) {",
+        "    $prefix = substr($prefix, 0, -1);",
+        "}",
+        "return $prefix;"
+      ]
+    },
+    "Ordering/LocalProjectionAliases::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$output = $child instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $child->body : $child;",
+        "if (!$output instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || !$this->requiresRequested($output)) {",
+        "    return;",
+        "}",
+        "$seen = [];",
+        "$names = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "foreach ($output->columns as $column) {",
+        "    $name = $column->name;",
+        "    $operand = $column->expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(($operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $operand instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral) && ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier || $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias), 'Inherited requested aliases need exact signed literal fields.');",
+        "    $prefix = $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias ? $names->prefix($name->requested) : $name->value;",
+        "    $key = $names->key($prefix);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'Inherited requested aliases must resolve to distinct names.');",
+        "    $seen[$key] = true;",
+        "}"
+      ]
+    },
+    "From/DerivedSource::columnType": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$field = $this->definition->columns[$slot] ?? null;",
+        "if ($field === null || $this->inheritsRequestedAliases && $field->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias && !(new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames())->readable($field->name->requested)) {",
+        "    return null;",
+        "}",
+        "$expression = $field->expression;",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference) {",
+        "    $source = $this->definition->source;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource, 'A derived VARCHAR read has an independent physical source.');",
+        "    $type = $source->columnTypes[$expression->slot] ?? null;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar, 'A checked derived VARCHAR field has its declared type.');",
+        "    return $type;",
+        "}",
+        "if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral) {",
+        "    return \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind::RequiredSignedInt;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference, 'A derived signed field has a checked expression.');",
+        "$source = $this->definition->source;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource, 'A derived signed read has an independent physical source.');",
+        "$type = $source->columnTypes[$expression->slot] ?? null;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::invariant($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'A checked derived signed field has its declared role.');",
+        "return $type;"
+      ]
+    },
+    "Rows/LocalProjection::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases())->checkDerived($definition, $inheritsRequestedAliases);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$definition instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select || $definition->orderBy === [] && $definition->limit === null, 'The local definition requires an unbounded projection without ordering.');",
+        "$layers = 1;",
+        "for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(++$layers <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "}",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');",
+        "$width = $definition instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection ? $definition->width() : count($definition->columns);",
+        "foreach ($checked as $column) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->slot < $width, 'The local slot must belong to the definition.');",
+        "    if ($inheritsRequestedAliases && $definition instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Select) {",
+        "        $name = $definition->columns[$column->slot]->name;",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias || (new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames())->readable($name->requested), 'An inherited local field needs a complete UTF-8 name.');",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    }
+  }
+}

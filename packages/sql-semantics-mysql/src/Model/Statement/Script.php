@@ -17,12 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
  * are those of the script; the rows of a member are not, since a script has
  * no single row set.
  *
- * @visibility public
- * @example Collecting statements from a script
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $operations = $semantics->analyzeAll('SELECT 1; SELECT 2');
- *     $script = new \SqlSemantics\Platform\MySql\Model\Statement\Script([$operations[0]->statement, $operations[1]->statement]);
- *     count($script->statements) // => 2
+ * @visibility SqlSemantics
  */
 final class Script implements Statement
 {

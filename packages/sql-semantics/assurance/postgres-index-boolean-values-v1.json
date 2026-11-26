@@ -1,0 +1,171 @@
+{
+  "revision": "SemanticsIR/postgres-index-boolean-values-1",
+  "approval": "pending-human-review",
+  "extends": "postgres-index-truth-tests-v1.json",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings, native parameters, with the represented local B-tree and matching relation definitions and rows.",
+  "scope": "Allow a resolved Boolean column as a nullable value within a partial B-tree condition. Preserve its difference from an explicit truth test and the exact logical tree under three-valued SQL logic.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Index/Btree/IndexBooleanColumn": {
+      "role": "A physical Boolean column used as a nullable predicate value in a partial B-tree.",
+      "structure": "A nonnegative zero-based physical column slot.",
+      "conditions": "The completed index owns a column at the slot with native Boolean kind. Parsed column spellings resolve to the same declared physical occurrence. The value can be used alone or under a checked logical parent.",
+      "meaning": "Read the exact Boolean field, which can be true, false or unknown. The root admits only true. Negation preserves unknown and the logical binary operators use the native three-valued truth tables.",
+      "sql": "Emit the resolved quoted column as a bare Boolean value in the grouped condition. Preserve the tree's native keywords and operand order.",
+      "externalInterpretation": "The same declared physical Boolean heading and rows, the same native release and SQL settings, and the same key layout and transaction state.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "amendedConstructors": {
+    "Schema/Index/Btree/IndexBooleanPredicate": "Admit a nullable Boolean field among ordered operands and use the full native truth tables. Retain the operator and arity.",
+    "Schema/Index/Btree/CreateIndex": "Accept a nullable Boolean value as a complete predicate and check every such leaf's owner slot and native type."
+  },
+  "existingRoles": [
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Index/Btree/IndexBooleanPredicate",
+    "Schema/Index/Btree/IndexTruthTest",
+    "Schema/Index/Btree/NullIndexPredicate",
+    "Predicate/LogicalOperator"
+  ],
+  "rules": [
+    "NOT maps true to false, false to true and unknown to unknown.",
+    "AND is false if at least one child is false, true if both are true, and unknown otherwise.",
+    "OR is true if at least one child is true, false if both are false, and unknown otherwise.",
+    "Only true admits a row to the index. Retain a bare field separately from IS TRUE and other truth tests. Native conflict arbiter inference can distinguish these forms even though their membership is equal."
+  ],
+  "observations": [
+    "The ordered IR graph, physical leaf identity, bare Boolean access versus explicit truth tests, exact two-valued and three-valued results, native ordinal layout, and release.",
+    "Each of the nine true, false and unknown assignments, unmodified typed rows, repeated key effects, exact native SQLSTATE and affected row count, and rollback.",
+    "For the fixed index-inference examples, probe ON CONFLICT with the original fixed index use predicate and verify SQLSTATE and inserted row count under the same caller state. Retain native rejection when there is no suitable arbiter.",
+    "Use a disposable native nonunique index to recover the actual stored condition and its full truth vector when the unique build refuses."
+  ],
+  "finite": {
+    "unaryForms": [
+      "bare",
+      "not"
+    ],
+    "binaryForms": [
+      "and",
+      "or",
+      "not-and",
+      "not-or",
+      "and-null-leaf",
+      "or-truth-leaf"
+    ],
+    "slots": [
+      2,
+      3
+    ],
+    "qualifiers": [
+      "local",
+      "relation",
+      "schema"
+    ],
+    "valueIdentity": "Enumerate the 84 ordered expression coordinates: 12 unary and 72 binary. Use [label:int4, state:int4, p:bool, q:bool], nine ordered truth states and label state modulo four. Repeat label zero from a distinct NULL and false prospective row.",
+    "inferenceForms": [
+      "p",
+      "NOT p",
+      "p IS TRUE",
+      "p IS FALSE",
+      "p OR q",
+      "p AND q",
+      "NOT (p OR q)",
+      "NOT (p AND q)",
+      "p AND q IS NOT FALSE"
+    ],
+    "inferenceProbes": [
+      "p",
+      "NOT p",
+      "p IS TRUE",
+      "p IS FALSE",
+      "p OR q",
+      "p AND q",
+      "q AND p",
+      "p AND q IS NOT FALSE"
+    ],
+    "inferenceIdentity": "Enumerate all 72 ordered index and conflict target predicate coordinates. File the 16 admitted conflict targets and the 56 exact 42P10 results. The test has only one partial unique index and a prospective duplicate of a true and true row. These are native observations for a fixed syntactic corpus.",
+    "execution": "Consume all 156 coordinates through direct and analyzed construction separately on both pinned releases. Independently record actual construction and rendered effects."
+  },
+  "exploration": {
+    "seeds": [
+      11279,
+      65731,
+      95369
+    ],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 540,
+    "allowedExclusions": [],
+    "domain": "Vary ordered three-valued trees, mixed physical leaf roles, variable NULL assignments and repeated labels, native storage type, association and grouping, quoted and qualified fields, key shape and policies, local scope and transaction state."
+  },
+  "negative": [
+    "Negative Boolean value slot",
+    "Boolean value slot outside its owner heading",
+    "Integer field used as a direct Boolean column value",
+    "Integer field in a nested Boolean value role",
+    "Unrelated qualified Boolean value",
+    "Missing parsed Boolean column",
+    "Parsed integer in a Boolean predicate",
+    "Parsed negation of a non-Boolean field"
+  ],
+  "faults": [
+    "Omit a Boolean value's physical type condition",
+    "Resolve the other Boolean field",
+    "Replace a bare Boolean operand with IS TRUE",
+    "Interpret UNKNOWN as false underneath a negation"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/functions-logical.html",
+    "https://www.postgresql.org/docs/16/sql-insert.html",
+    "https://www.postgresql.org/docs/17/indexes-partial.html"
+  ],
+  "trust": [
+    "Reviewed native three-valued Boolean truth tables and exact scope and renderer source rules, the independently generated bounded model and PostgreSQL observer, and the pinned database and libpq environment.",
+    "The inference schedule records stock template outcomes for the selected formulas. Improvements to other uses of inference or SQL-engine planning need separate evidence."
+  ],
+  "open": [
+    "Other Boolean expressions, operator calls, expression keys and wider PostgreSQL index grammar remain in the fixed whole-language inventory."
+  ],
+  "calibration": {
+    "driver": "efaca67d0c91dcf28d873b220667a7f2f66973608fa057c98800f0c5615b69e6",
+    "referenceComparison": "4774552d2325e14a4438acec0e54a23538d96c9c624e47e8eee499e32b47b632",
+    "queryPack": "10336dd0863c7b45a40b9401ecc5f6b01ead9fbfccb6aed58331db37eb03feef",
+    "nativeTruthAndWrites": "5fa355861c6bc05f4e1ff94d550714d97a6426105e465633d43932f93b1a80cd",
+    "inferenceDriver": "da2f7107edb74637fbe977f84145e4da391e99f813223e648c1c46e9dbcb3a03",
+    "independentInferenceComparison": "6a8d3f7aed3e67d8e2a3e71b705923a2584cf0864ab3fc5fbf9155aebaf549c8",
+    "inferenceQueryPack": "41de1911c8a74b2bfd19df1562d51b4bc74ef050e47ef051f6b463b0ef8a9b87",
+    "nativeConflictInference": "9a8021a59a012ebb7f58376d8fbb2eabfecd7abebd76133715933fd5508c986a",
+    "nativeTruthProfiles": 15,
+    "uniqueBuildAccepted": 60,
+    "duplicateBuildRefused": 24,
+    "subsequentDuplicateRefused": 9,
+    "inferenceAccepted": 16,
+    "inferenceRefused": 56,
+    "16.6": {
+      "truth.stdout": "3c6d17c6ce64989ba19df429029234607efd84d5e1a2fb75c7670ba56d50be7b",
+      "truth.stderr": "77e331553722e193ab8cb1d34fbc95ab36c60a84360f4d1eb2a84bbf7ce90540",
+      "inference.stdout": "0214375a20b75e99aa054aae0fe2fe2e5810614c0fe5a983999183ab7ee6327c",
+      "inference.stderr": "b7d05cca3d5f8d2ad79d054fb0c7756655eef8c56b0ef42cf23fc3e92e1b8a9a"
+    },
+    "17.2": {
+      "truth.stdout": "8a526968b17dda23a70a25e2fa3af156967e50c14386a4ac311d522b1735b23a",
+      "truth.stderr": "4f5defcc25c9f72f0e22c9a4fc074b54bab9559c47187c05d3e5352f84337186",
+      "inference.stdout": "d2ff0561495270121e8a41dfee7769e2fd12514d0f33860edeaf6610b8616eac",
+      "inference.stderr": "5a7cf7d2e3be577de0195382ec8f7864a6ac4dbbe25da98aabb24874c65f237a"
+    }
+  }
+}

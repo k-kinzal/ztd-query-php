@@ -10,9 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * An output column position that the select list does not have.
  *
- * @visibility public
- * @example Reporting a position past the select list
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 ORDER BY 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: ORDER BY position 2 is not in select list
+ * @visibility SqlSemantics
  */
 final class PositionOutOfRange implements Diagnostic
 {

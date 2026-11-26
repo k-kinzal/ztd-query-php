@@ -14,22 +14,22 @@ final class CreatePublicationTest extends TestCase
 {
     public function testRenderWritesAllTables(): void
     {
-        self::assertSame('CREATE PUBLICATION p FOR ALL TABLES WITH (publish = \'insert\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR ALL TABLES WITH (publish = \'insert\')')->toString());
+        self::assertSame('CREATE PUBLICATION p FOR ALL TABLES WITH (publish = \'insert\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p FOR ALL TABLES WITH (publish = \'insert\')')->toString());
     }
 
     public function testRenderWithoutObjects(): void
     {
-        self::assertSame('CREATE PUBLICATION p', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p')->toString());
+        self::assertSame('CREATE PUBLICATION p', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p')->toString());
     }
 
     public function testDeriveStatementReportsAListWithoutKeywords(): void
     {
-        self::assertSame('invalid publication object list', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR t')->facts->diagnostics[0]->message());
+        self::assertSame('invalid publication object list', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p FOR t')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementReportsCurrentSchemaAfterATable(): void
     {
-        self::assertSame('invalid table name', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA')->facts->diagnostics[0]->message());
+        self::assertSame('invalid table name', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA')->facts->diagnostics[0]->message());
     }
 
     public function testRejectsObjectsWithAllTables(): void

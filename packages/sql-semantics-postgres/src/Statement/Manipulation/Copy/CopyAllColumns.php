@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  * Mirrors the `A_Star` argument of a COPY `DefElem`.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html.
  *
- * @visibility public
- * @example Reading the star argument
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT (force_quote *)');
- *     $copy->statement->options[0]->argument instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyAllColumns // => true
+ * @visibility SqlSemantics
  */
 final class CopyAllColumns implements OptionArgument
 {

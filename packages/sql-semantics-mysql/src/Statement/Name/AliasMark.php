@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
  * sql/sql_yacc.yy of MySQL 5.7 (`table_alias`).
  *
- * @visibility public
- * @example Reading how an alias is written
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a total FROM t');
- *     $query->statement->items[0]->mark // => \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::Bare
+ * @visibility SqlSemantics
  */
 enum AliasMark
 {

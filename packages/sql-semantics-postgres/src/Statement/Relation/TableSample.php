@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * evaluated once and see no column of the sampled table.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM.
  *
- * @visibility public
- * @example Reading a table sample
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM t TABLESAMPLE bernoulli (10) REPEATABLE (1)');
- *     [$query->statement->from->sample->method->parts[0]->value, $query->statement->from->sample->seed !== null] // => ['bernoulli', true]
+ * @visibility SqlSemantics
  */
 final class TableSample implements Clause
 {

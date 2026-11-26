@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
  * constraint of a table or domain; an attribute of a composite type.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html, https://www.postgresql.org/docs/17/sql-altertype.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the attribute part
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedPart::Attribute->value // => 'ATTRIBUTE'
  */

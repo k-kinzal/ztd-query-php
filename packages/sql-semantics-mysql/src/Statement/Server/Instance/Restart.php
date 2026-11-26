@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/restart.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('restart')->toString() // => 'RESTART'
+ * @visibility SqlSemantics
  */
 final class Restart implements Statement
 {

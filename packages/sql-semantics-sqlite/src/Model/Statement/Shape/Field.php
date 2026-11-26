@@ -18,12 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeFact;
  * A field belongs to the operation that derived it. It is a reading result,
  * not an input for building another query.
  *
- * @visibility public
- * @example Reading a field
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $field = $semantics->analyze('SELECT a AS x FROM t', [$table])->field('x');
- *     [$field->position, $field->name?->value, $field->column()?->name->value] // => [0, 'x', 'a']
+ * @visibility SqlSemantics
  */
 final class Field
 {

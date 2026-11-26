@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * Mirrors PostgreSQL's `CreateOpFamilyStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-createopfamily.html.
  *
- * @visibility public
- * @example Reading the family name
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR FAMILY f USING btree');
- *     $operation->statement->name->last()->value // => 'f'
+ * @visibility SqlSemantics
  */
 final class CreateOperatorFamily implements Statement
 {

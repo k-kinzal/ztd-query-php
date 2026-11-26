@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-syntax-calling-funcs.html#SQL-SYNTAX-CALLING-FUNCS-POSITIONAL.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a positional argument
  *     $argument = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\PositionalArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     [$argument->name(), $argument->value() instanceof \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral] // => [null, true]

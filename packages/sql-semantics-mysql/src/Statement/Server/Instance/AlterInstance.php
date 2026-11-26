@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-instance.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Rotating the InnoDB master key
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter instance rotate innodb master key');
- *     [$alter->toString(), $alter->statement->action->binaryLog()] // => ['ALTER INSTANCE ROTATE innodb MASTER KEY', false]
+ * @visibility SqlSemantics
  */
 final class AlterInstance implements Statement
 {

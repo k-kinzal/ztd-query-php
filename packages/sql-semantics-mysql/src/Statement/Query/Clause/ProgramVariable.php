@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  * https://dev.mysql.com/doc/refman/8.4/en/select-into.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a program variable used as a row count
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t LIMIT n');
- *     $query->statement->limit->count->name->value // => 'n'
+ * @visibility SqlSemantics
  */
 final class ProgramVariable implements Scalar
 {

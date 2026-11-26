@@ -1,0 +1,82 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-foreign-dependencies-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-truncate-v2.json",
+    "mysql-truncate-observer-v1.json"
+  ],
+  "scope": "Checked existing MySQL table truncation with Schema context declaring native persistent InnoDB foreign keys. Preserve all previous finite coordinate and seed obligations with typed rejection and separate native observation for statically unavailable or blocked targets.",
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "language": "Stock InnoDB, lower_case_table_names=0, sql_mode empty, utf8mb4, foreign_key_checks=1, native parameters.",
+  "acceptedBoundary": {
+    "externalInterpretation": "The supplied absolute TableIdentity denotes the actual selected initial table in its native lifetime, and explicit referrer inputs faithfully enumerate each persistent table referring to it. Direct construction requires a present absolute target and an explicit checked list of those referrers. Analysis obtains them from the declared catalog.",
+    "persistent": "Require a complete declared relation catalog for analysis of a persistent truncation. A persistent target may have no incoming foreign key or only references from itself. A distinct persistent child blocks truncation even when empty or configured with cascading delete.",
+    "temporary": "The session-local target has no native foreign-key relations. A same-named permanent target or temporary child shadow cannot reassign a constraint.",
+    "qualification": "An unqualified foreign-key parent name belongs to the owning persistent child's schema. An explicit parent schema is exact. Resolve the reference in the persistent namespace. MySQL keeps names case sensitive in this profile.",
+    "nativeEffective": "Use table-level FOREIGN KEY clauses on native InnoDB CREATE TABLE declarations. The server ignores inline REFERENCES and MyISAM foreign keys in these profiles. CREATE TABLE LIKE does not copy foreign keys.",
+    "missing": "A missing native target cannot produce a completed value. A known partial persistent namespace is insufficient to settle inbound references. A known temporary target can be published with a partial persistent catalog.",
+    "composition": "Reject an external child or a temporary reference role during every regular construction before returning the now complete operation. Only the resolved table and immutable release need to be stored after checking the dependency inputs."
+  },
+  "observations": [
+    "Compare exact native resolved information-schema child and referenced parent coordinates under explicit and default naming.",
+    "Observe native 1701 and 1146 in the independent observer after the required construction refusal, including original rows and implicit commit. A native observation of a refused input uses the independent statement witness.",
+    "Compare absence and self-reference success, unqualified child schema, a child or parent temporary shadow, LIKE copies, inline references and ignored non-enforcing engine clauses.",
+    "Keep earlier full-state comparison of concrete data, metadata, next identity, transactional marker, and unaffected sibling."
+  ],
+  "assurance": {
+    "P01": "Resolve one known target and the complete native static dependency boundary.",
+    "P02": "Reject an absent target, incomplete persistent catalog, and distinct native child before publishing the value.",
+    "P03": "Keep no relation declarations or binding artifacts in the completed value.",
+    "P04": "Compose the exact target namespace with complete incoming persistent references before construction.",
+    "P05": "Close direct inputs to TableIdentity through checked list traversal and store immutable target and release.",
+    "P06": "Compare the admitted native operation and separately observe native effects of blocked statements.",
+    "Q01": "Audit the input check, typed condition and binding path, and test an explicit known blocking reference in direct construction.",
+    "Q02": "Require admitted self-references, complete unrelated catalogs and both lifetimes, including temporary shadows and ignored definition forms.",
+    "Q03": "Verify physical namespace selection and exact owning schema for each foreign-key edge.",
+    "Q04": "Observe resulting native rows, keys, transaction, allocation, and deterministic error for statically refused statements.",
+    "Q05": "Compare installed constructors, independent native witnesses and normalized checked runtime boundaries on the exact distribution."
+  },
+  "initialCounterexample": {
+    "candidate": "454db196f3db69d1882647889b8b8c3ed659838d",
+    "input": "TRUNCATE TABLE ir_fixture.p",
+    "declarations": [
+      "CREATE TABLE ir_fixture.p (id INT PRIMARY KEY)",
+      "CREATE TABLE ir_fixture.c (id INT PRIMARY KEY, pid INT, FOREIGN KEY (pid) REFERENCES ir_fixture.p(id))"
+    ],
+    "published": "Schema/Truncate/TruncateTable",
+    "native": "42000/1701"
+  },
+  "rawCalibration": {
+    "script": "c2dc8eff5d6224c6fdb0b405d698a2be2b2f16efeb672490a9ab52b8a3afc346",
+    "transcripts": {
+      "5.6.51": "4d4e099bdc596328c348d495040994bf336ffbabfec846b9a414fc95045616fc",
+      "8.0.44": "a59ec046e30d83e57ebede192e80d2bc1e60e71b4222ff605651758afc5dd7a0",
+      "9.1.0": "e0b41af16d4655c5a6835030a4b3ad463ab9fdaa77ea301bfcc8b7b05175e1db"
+    }
+  },
+  "faults": [
+    "Publish TruncateTable when an exact permanent child names its parent.",
+    "Bind an unqualified parent in the session's current database instead of the child database.",
+    "Treat an ignored inline or MyISAM reference as a native foreign key.",
+    "Treat a separate permanent child's constraint as absent after a temporary name shadows the child."
+  ],
+  "remainingDomains": [
+    "A lexical mode that disables native foreign-key checks and additional native storage engines require their separately tracked semantics.",
+    "Resolved root constraints beyond this truncation role do not inherit this evidence."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/ansi-diff-foreign-keys.html"
+  ]
+}

@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column;
  *
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a column action
  *     \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\ColumnActionKind::DropIdentityIfExists->value // => 'DROP IDENTITY IF EXISTS'
  */

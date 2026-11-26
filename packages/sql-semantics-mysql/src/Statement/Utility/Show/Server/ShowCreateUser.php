@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-user.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the column named after the account
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE USER u');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['CREATE USER for u@%', 'SHOW CREATE USER u']
+ * @visibility SqlSemantics
  */
 final class ShowCreateUser implements Statement
 {

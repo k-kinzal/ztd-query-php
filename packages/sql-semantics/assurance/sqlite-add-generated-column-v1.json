@@ -1,0 +1,147 @@
+{
+  "revision": "SemanticsIR/sqlite-add-generated-column-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2, UTF-8, standard column and parser limits, foreign_keys enabled, legacy_alter_table and writable_schema disabled, native identifier folding and schema search order.",
+  "scope": "An immutable append operation for a generated column over already declared slots of a resolved ordinary table. It admits both native storage modes.",
+  "constructors": {
+    "Schema/Alter/AddGeneratedColumn": {
+      "role": "Append one VIRTUAL or STORED generated column whose expression is bound to the table's prior heading.",
+      "structure": "Absolute table identity, owned ordered prior declared identifiers, strictness, and a checked TableColumn carrying one ColumnGeneration. Its expression refers to integer slots of the prior heading. The rowid pseudonyms occupy no implicit slot.",
+      "conditions": "The native SQLite table resolution and heading checks are the same as for ordinary column addition. The column has a generation expression without a declared default. Every expression column reference is in the single prior relation and inside the prior heading. In particular the new slot cannot be an input. STRICT requires a standard declared type. The role closes the scalar and storage choices and admits parameter markers only inside checked compile-time folded membership registrations.",
+      "meaning": "Append the declared column as VIRTUAL or STORED without modifying existing columns. Compute the new value from the bound inputs, apply its affinity and constraints, and recompute on writes to dependencies. A direct write to its slot is refused by the engine. Check native row-dependent refusals when adding into a populated table. The append atomically preserves the original table when refused.",
+      "externalInterpretation": "The same absolute ordinary table has the prior heading, strictness, and a valid existing catalog. SQLite supplies actual rows, prior generated values, transaction and catalog state. The structure contains no schema objects, parser values, raw SQL, or analysis context.",
+      "sql": "Emit an absolute ALTER TABLE ADD COLUMN. Use the closed declaration renderer, the prior heading as the binding, native GENERATED ALWAYS AS parentheses, and an explicit storage kind. Preserve parameter registrations in discarded operands.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Alter/AddGeneratedColumn"
+  ],
+  "existingRoles": [
+    "Identifier",
+    "Schema/TableColumn",
+    "Schema/Generation/ColumnGeneration"
+  ],
+  "rules": [
+    "The existing concrete ordinary AddColumn still refuses a generated column on its direct constructor path. Analysis selects the concrete role according to the parsed and checked column.",
+    "A generated input may refer to a prior generated field. A prior field resolves by its declared ordinal, including a named INTEGER PRIMARY KEY. The implicit rowid, oid and _rowid_ aliases provide no new scope.",
+    "SQLite can append a STORED generated field to an empty table. On a populated table the native step fails before changing the schema and rows. SQLite can append a VIRTUAL generated field to a populated table, with native checks for NOT NULL and type constraints.",
+    "Self-reference can yield a successful native append with a subsequent unusable table. This completed IR rejects it at construction, and also rejects an unavailable input ordinal and live markers.",
+    "SQLite keeps parameter registration names and slots from folded membership expressions, even though the generated expression needs no supplied parameter value."
+  ],
+  "observations": [
+    "Compare both same-named schema targets, the prior and current ordered declared heading, catalog storage and primary-key metadata, computed row values, collation and transaction rollback.",
+    "Exercise insertion followed by update of a dependency and an explicitly attempted write to the generated column. Compare rows, exact change counts, and the scoped phase and reason of native refusal. Use NULL and non-NULL values in distinguishable positions.",
+    "Compare original and rendered SQL independently. Observe a prior generated input and references to both physical and WITHOUT ROWID table fields. For the folded expression, observe exact parameter count and the first name bound to each numbered slot.",
+    "Retain native samples where unchecked self-reference leaves a column that cannot be used. Assert rejection at the construction or analysis boundary rather than counting the native evaluation failure as a typed rejection."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "storage": [
+      "VIRTUAL",
+      "STORED"
+    ],
+    "strict": [
+      false,
+      true
+    ],
+    "topologies": [
+      "rowid",
+      "without-rowid",
+      "prior-generated"
+    ],
+    "populations": [
+      "empty",
+      "non-null",
+      "with-null"
+    ],
+    "expressions": [
+      "key-reference",
+      "nullable-reference",
+      "coalesced",
+      "nested"
+    ],
+    "resultTypes": [
+      "INTEGER",
+      "TEXT"
+    ],
+    "nullPolicy": [
+      null,
+      "FAIL"
+    ],
+    "identity": "All 1,152 tuples. Recover expression shape and declared mode from the actual value and topology, row presence and NULL positions from native before snapshots."
+  },
+  "exploration": {
+    "seeds": [
+      32401,
+      52937,
+      71999
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 280,
+    "allowedExclusions": [],
+    "domain": "Vary input scope width, prior slot, prior generated input, nested arithmetic and null substitution, decoded identifier spelling, storage mode, affinity, collation, and conflict policy. Include at least six independently authored analysis inputs and a retained folded marker case."
+  },
+  "negative": [
+    "No generation operand",
+    "Unsupported child",
+    "Generated column with a default",
+    "Duplicate name in the target heading",
+    "Reference to the just-added slot",
+    "Reference beyond the table heading",
+    "Live parameter in the generated expression",
+    "Untyped STRICT addition"
+  ],
+  "analysisNegative": [
+    "Implicit rowid",
+    "References to the added column itself",
+    "Unresolved table",
+    "A view",
+    "Unrepresented column CHECK or REFERENCES"
+  ],
+  "faults": [
+    "Remove prior-slot binding validation",
+    "Resolve the ALTER in the other schema",
+    "Confuse VIRTUAL and STORED",
+    "Render a different declared operand",
+    "Drop the NULL constraint",
+    "Erase registered parameter spellings"
+  ],
+  "open": [
+    "Additional scalar combinations beyond the finite and seeded runs remain untested. Adding CHECK, REFERENCES, names for constraints and arbitrary ordinary type names and additional connection modes remains open."
+  ],
+  "trust": [
+    "Pinned SQLite compile settings and native schema alteration and generated-expression evaluation",
+    "Independent data, catalog, row transition, and parameter observation rules",
+    "Checked scalar storage, exact PHP constructor and scoped emission, isolated worker and independent replay"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_altertable.html#alter_table_add_column",
+    "https://sqlite.org/gencol.html",
+    "https://www.sqlite.org/src/file/src/alter.c?ci=version-3.47.2"
+  ],
+  "calibration": {
+    "sourceId": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "observationsDigest": "311f49c7c1a8571981c4a90bba0f4c95ff7786f3f1849ac837cdaf4f97a1f96a",
+    "driverDigest": "59629cd32ce5e99e07410a75a4978475ba3d7144827d0c94285607cc9e8d354c",
+    "foldedMarkersDigest": "54175a786a93c9a2aabc98063ecad50b8967a08b1dd2299d7f858d939647ef21"
+  }
+}

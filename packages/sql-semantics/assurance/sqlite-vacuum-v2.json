@@ -1,0 +1,165 @@
+{
+  "revision": "SemanticsIR/sqlite-vacuum-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with UTF-8, numbered bind markers and the stock pager, VFS and VACUUM implementation. Filename interpretation, current transaction, storage and access are supplied by the execution state.",
+  "scope": "VACUUM and VACUUM INTO with one resolved database, the closed source-free scalar profile and the distinct temporary-database behavior.",
+  "additionalPublicRoots": [
+    "Maintenance/Vacuum/Vacuum"
+  ],
+  "constructors": {
+    "Maintenance/Vacuum/Vacuum": {
+      "role": "Rebuild one resolved database in place, copy the rebuilt database, or perform SQLite's temporary-database no-op.",
+      "structure": "An exact database Identifier and an optional VacuumDestination or VacuumRegistrations.",
+      "conditions": "A temporary source has either no operand or inert marker registrations. Other sources may have an evaluated VacuumDestination or no operand. Analysis binds an omitted scope to main and rejects an unknown explicit database.",
+      "meaning": "Perform the selected native rebuild or copy for the resolved database, preserving its documented metadata and transactional failure behavior. Temp performs no rebuild, file access or filename evaluation and retains the native parameter registrations.",
+      "externalInterpretation": "Use the same connection and attached source identity, execution flags, transaction state, numbered bindings, VFS and destination file state.",
+      "sql": "Emit VACUUM with the resolved quoted database. Emit an INTO operand only for an evaluated filename or inert parameter registration.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Vacuum/VacuumDestination": {
+      "role": "Exactly one independently evaluated scalar filename expression.",
+      "structure": "A checked ValueRow with exactly one operand. The row identifies a closed source-free expression graph and its typing and parameter roles.",
+      "conditions": "There is exactly one operand and no resolved table column in the graph. The existing expression size and depth budgets apply.",
+      "meaning": "Evaluate the scalar. SQLite requires a TEXT result for the filename and reports an evaluation error for other storage classes.",
+      "sql": "Emit the one scalar in parentheses in the INTO position, preserving literal types, operator association and binding names.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Maintenance/Vacuum/VacuumRegistrations": {
+      "role": "The native numbered binding footprint of a skipped temporary filename expression.",
+      "structure": "A detached, nonempty, ordered list of checked Parameter values.",
+      "conditions": "The list admits only concrete numbered parameters, within the fixed occurrence and payload budget. Duplicate lexical registrations retain the first binding name for a shared slot.",
+      "meaning": "Preserve parameter count, labels and slot correspondence without reading any bound value.",
+      "sql": "Emit the ordered parameter markers as expressions in a parser-visible INTO operand that temp discards.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "rules": [
+    "An omitted qualifier resolves to main. An explicit qualifier selects the exact native database. Only the temporary schema suppresses evaluation and code generation for the complete VACUUM operation. Its ignored expression does not resolve column names. Native parsing still registers numbered bindings, including leading zero labels and slots shared by different spellings.",
+    "A non-temp VACUUM checks transaction state before evaluating the effect of the filename. An evaluated filename must be TEXT. The empty TEXT filename rebuilds transient storage without creating a persistent output file. A nonempty preexisting output file is refused, while a pre-created empty file is accepted.",
+    "In-place rebuild compacts the selected database and adds one to its schema cookie on the finite fixture. VACUUM INTO writes a compact independent copy with the same incremented schema cookie and leaves the input database unchanged. Both preserve the modeled application and user cookies and logical rows. The name and type of the operation, exact source and destination, and empty result heading are observable.",
+    "The ordinary fixed fixtures use integer primary keys, with distinguishing rows and header values across main and the attachment. The guarantee permits native rowid changes for tables without an explicit integer primary key. Runtime locking, path failures and native limits are evaluated under the same external interpretation."
+  ],
+  "observations": [
+    "Compare typed result shape, read-only classification, parameter count and names, native database slot and whether a filename register is evaluated.",
+    "Compare exact fixture rows, database-header metadata, rollback and refusal effects, whether a file appeared and its independently read schema and rows. Keep both a nonempty existing file and an empty existing file witness.",
+    "Constrain the observer to known disposable paths and to the native VACUUM authorization coordinates. Unexpected SQL or external path access fails observation."
+  ],
+  "finite": {
+    "scopes": [
+      "implicit",
+      "main",
+      "temporary",
+      "attachment"
+    ],
+    "operands": [
+      "rewrite",
+      "literal",
+      "numbered",
+      "joined-path",
+      "typed-null",
+      "typed-integer",
+      "empty-text",
+      "masked-numbered-pair"
+    ],
+    "transaction": [
+      false,
+      true
+    ],
+    "output": [
+      "missing",
+      "empty",
+      "populated"
+    ],
+    "temp": [
+      "unopened",
+      "warm"
+    ],
+    "identity": "All 384 coordinates. Recover the source form from the independently authored original SQL and the exact native opcode, marker metadata, and fixture state. Require paired direct observations."
+  },
+  "exploration": {
+    "seeds": [
+      86843,
+      12487,
+      32801
+    ],
+    "casesPerSeed": 48,
+    "timeoutSeconds": 720,
+    "allowedExclusions": [],
+    "domain": "Vary filenames with quotes and Unicode, scalar concatenation shape and typed constants, label spelling and aliases, attachment names, row contents, preexisting files and transaction context."
+  },
+  "negative": [
+    "Wrong destination arity",
+    "Evaluated destination assigned to temp",
+    "Inert registrations placed on an evaluated schema",
+    "Empty numbered registrations",
+    "A wrongly typed child in the numbered registration list"
+  ],
+  "faults": [
+    "Skip the destination arity guard",
+    "Redirect the source to main",
+    "Remove the INTO filename operand",
+    "Produce a nonempty inert marker list without registering its last slot",
+    "Use a normal rebuild for temp",
+    "Admit a cross-role operand during direct construction",
+    "Publish an unknown qualified source as main"
+  ],
+  "open": [
+    "The finite observation assumes ordinary file access and known fixture storage. Alternate VFS modes, additional scalar constructors and unnumbered or named bindings remain inventoried outside this contract.",
+    "Connected view and trigger copying and external lock patterns require separate witnesses. Native file access is never performed by the IR."
+  ],
+  "trust": [
+    "Pinned SQLite pager, schema and parameter interpreter.",
+    "The closed graph and budget of the fixed VALUES scalar profile.",
+    "Isolated SQLite fixture, observer filesystem boundary and exact package distribution."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "304239aa5f9d9f3ed9ae33c15e6ca7df25de69e7e0823b52c64b81d2611966bd",
+    "cases": "7c07b4aa2baea8d4843059d20f06ebc3b7b1253595e6308f2741735b4442fbf8"
+  },
+  "revises": "sqlite-vacuum-v1.json",
+  "assuranceRevision": "Enumerate the separately executed direct and analyzed refusals individually. Retain all original refusals, inputs, observations, budgets and faults.",
+  "analysisNegative": [
+    "Unknown explicit source database",
+    "Unresolved column in an evaluated filename"
+  ]
+}

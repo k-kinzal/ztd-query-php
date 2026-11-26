@@ -24,11 +24,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
  * https://sqlite.org/lang_createtable.html#rowid, https://sqlite.org/autoinc.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a primary key column constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY ASC ON CONFLICT FAIL AUTOINCREMENT)');
- *     $key = $create->statement->columns[0]->constraints[0];
- *     [$key->direction?->value, $key->conflict?->value, $key->autoincrement] // => ['ASC', 'FAIL', true]
+ * @visibility SqlSemantics
  */
 final class ColumnPrimaryKey implements ColumnConstraint
 {

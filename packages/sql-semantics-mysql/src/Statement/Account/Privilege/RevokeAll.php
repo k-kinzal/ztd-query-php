@@ -20,9 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  * an optional word.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html. Status: Implemented.
  *
- * @visibility public
- * @example Revoking everything
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL, GRANT OPTION FROM u'
+ * @visibility SqlSemantics
  */
 final class RevokeAll implements Statement
 {

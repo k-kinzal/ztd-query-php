@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  * kept.
  * Source: https://www.postgresql.org/docs/17/sql-createsequence.html, https://www.postgresql.org/docs/17/sql-altersequence.html.
  *
- * @visibility public
- * @example Reading a numeric option
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s START WITH -5');
- *     [$create->statement->options[0]->kind, $create->statement->options[0]->value->negative, $create->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceNumberKind::Start, true, 'CREATE SEQUENCE s START - 5']
+ * @visibility SqlSemantics
  */
 final class SequenceNumber implements SequenceOption
 {

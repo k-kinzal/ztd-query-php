@@ -29,13 +29,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
  * Terminates: the terms are a finite list walked in a loop.
  * Source: https://sqlite.org/lang_select.html#the_from_clause. Status: Implemented.
  *
- * @visibility public
- * @example Reading the terms of a join chain
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t JOIN u ON t.a = u.a, v');
- *     [$query->statement->from->first->name->name->value, count($query->statement->from->steps), $query->statement->from->steps[1]->operator->comma] // => ['t', 2, true]
- * @example Refusing a chain that joins nothing and constrains nothing
- *     $table = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t')->statement->from;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain($table, []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class JoinChain implements Relation
 {

@@ -14,11 +14,11 @@ final class AlterPublicationOptionsTest extends TestCase
 {
     public function testRenderWritesSet(): void
     {
-        self::assertSame('ALTER PUBLICATION p SET (publish = \'update\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER PUBLICATION p SET (publish = \'update\')')->toString());
+        self::assertSame('ALTER PUBLICATION p SET (publish = \'update\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER PUBLICATION p SET (publish = \'update\')')->toString());
     }
 
     public function testDeriveStatementDerivesTheValues(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER PUBLICATION p SET (publish_via_partition_root)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER PUBLICATION p SET (publish_via_partition_root)')->facts->diagnostics);
     }
 }

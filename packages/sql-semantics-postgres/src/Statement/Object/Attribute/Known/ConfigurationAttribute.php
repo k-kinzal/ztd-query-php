@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * error.
  * Source: https://www.postgresql.org/docs/17/sql-createtsconfig.html, `DefineTSConfiguration` in `src/backend/commands/tsearchcmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\ConfigurationAttribute::from('copy')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::TextSearchConfiguration
  */

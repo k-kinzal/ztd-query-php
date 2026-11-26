@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/sqlite-numeric-operators-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 UTF-8 with the scalar envelope defined by sqlite-scalars-v1.json and IEEE binary64.",
+  "constructors": {},
+  "existingRoles": ["Arithmetic", "ArithmeticOperator", "IntegerLiteral", "NullLiteral", "Literal/RealLiteral", "Literal/TextLiteral", "Literal/BlobLiteral", "Parameter", "Select", "Rows/ValuesQuery"],
+  "scope": "The division, remainder, bitwise AND and OR, and signed shifts of two checked scalar operands in their written order.",
+  "admission": "Every closed scalar operand already admitted in an arithmetic role. The owning scope applies the existing bounds, reference validation and parameter-registration rules.",
+  "meaning": [
+    "Propagate NULL for each operator when either operand is NULL.",
+    "Division uses truncated signed integer division for two integer numeric operands. A zero divisor returns NULL. Use a binary64 quotient when either numeric operand is REAL or MIN divided by minus one overflows.",
+    "Remainder uses INTEGER conversion of both operands and truncation toward zero to determine the integer remainder. A zero converted divisor returns NULL. The remainder is returned with REAL storage if either operand is treated as REAL under arithmetic numeric coercion.",
+    "Bitwise operators apply INTEGER conversion and 64-bit two's-complement operations. A negative shift distance reverses direction. A right shift preserves the sign bit. A shift of at least 64 positions yields the value determined by the direction and sign.",
+    "Arithmetic coercion distinguishes stored numbers, embedded decimal prefixes in TEXT and BLOB, and the numeric result of each nested operand."
+  ],
+  "sql": "Emit the explicit binary operator inside the existing paired parentheses, preserving both sides and their association at every depth.",
+  "observations": ["Exact INTEGER and REAL storage, signed zero, finite and infinite REAL results, NULLs, column identities and names, and numbered binding registration."],
+  "finite": {
+    "roots": ["select", "values"],
+    "operators": ["/", "%", "&", "|", "<<", ">>"],
+    "atoms": [
+      ["null"], ["integer", "-7"], ["integer", "0"], ["integer", "3"], ["integer", "9223372036854775807"], ["integer", "-9223372036854775808"],
+      ["real", "3", "75", null, false], ["real", "0", "5", null, false], ["text", "9.0x"], ["text", "2tail"], ["blob", "FE"], ["parameter", "02"]
+    ],
+    "identity": "Read root, operator and both operand IDs from the returned IR and exhaust the 2 × 6 × 12² Cartesian product."
+  },
+  "exploration": {
+    "seeds": [3389, 21491, 29633],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 180,
+    "allowedExclusions": [],
+    "structure": "Generate nested numeric trees in both root families. Change operand types, shift boundaries, aliases, repeated bindings and negative divisors. Cover every operator through constructed structures."
+  },
+  "negative": ["Absent left slot", "Absent right slot", "Wrong source occurrence", "Expanded height above the checked envelope"],
+  "faults": ["Replace a quotient with a remainder", "Replace bitwise OR with AND", "Reverse the shift direction", "Swap the division operands"],
+  "trust": ["Independent numeric coercion and integer rules", "Pinned native SQLite C observation and exact binary64 transport"],
+  "sources": ["https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes", "https://sqlite.org/2024/sqlite-amalgamation-3470200.zip"]
+}

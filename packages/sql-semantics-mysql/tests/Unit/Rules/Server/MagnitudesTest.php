@@ -9,13 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Magnitudes::class)]
 #[Medium]
@@ -36,7 +36,7 @@ final class MagnitudesTest extends TestCase
 
     public function testIntegerReportsAFractionalNumber(): void
     {
-        $operation = (new Semantics())->inspect('DROP SPATIAL REFERENCE SYSTEM 1e2');
+        $operation = (new Inspection())->diagnose('DROP SPATIAL REFERENCE SYSTEM 1e2');
 
         self::assertInstanceOf(FractionalNumber::class, $operation->facts->diagnostics[0]);
     }

@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * a column name resolves to a column of the rows SHOW returns.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/extended-show.html.
  *
- * @visibility public
- * @example Resolving a condition against the result columns
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW VARIABLES WHERE Variable_name = 'port'");
- *     $show->facts->scalar($show->statement->filter->condition->left)->resolution->slot->name?->value // => 'Variable_name'
+ * @visibility SqlSemantics
  */
 final class ShowWhere implements Node
 {

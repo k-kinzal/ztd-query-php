@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData;
  *
  * Source: https://www.postgresql.org/docs/17/sql-importforeignschema.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the restriction to listed tables
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\ImportRestrictionKind::LimitTo->value // => 'LIMIT TO'
  */

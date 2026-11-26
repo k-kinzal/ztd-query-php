@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the support function
  *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\SupportFunction(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('helper')]));
  *     $option->function->last()->value // => 'helper'

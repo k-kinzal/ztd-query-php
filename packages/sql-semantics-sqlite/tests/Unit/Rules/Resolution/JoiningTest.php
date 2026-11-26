@@ -9,9 +9,11 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
@@ -20,13 +22,13 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\Joining;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Joining::class)]
 #[Medium]
@@ -34,9 +36,9 @@ final class JoiningTest extends TestCase
 {
     public function testJoinHidesTheRightUsingColumnAndKeepsTheLeftSide(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -56,8 +58,8 @@ final class JoiningTest extends TestCase
 
     public function testJoinMergesEveryCommonNameOfANaturalJoin(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -72,9 +74,9 @@ final class JoiningTest extends TestCase
 
     public function testJoinExtendsTheRightSideOfALeftJoin(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -92,11 +94,11 @@ final class JoiningTest extends TestCase
         self::assertSame(Nullability::Nullable, $joined[1]->implicit[0]->slot->nullability);
     }
 
-    public function testJoinCoalescesTheMergedColumnAndExtendsTheLeftSideOfARightJoin(): void
+    public function testJoinResolvesTheRightRepresentativeAndExtendsTheLeftSide(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -106,18 +108,35 @@ final class JoiningTest extends TestCase
         $step = new JoinStep(new JoinOperator(false, [JoinKeyword::Right]), $right, new JoinUsing([new Name('a')]));
         $joined = (new Joining())->join($derivation, [new VisibleRelation($left, $leftShape, null, $left->name)], [new VisibleRelation($right, $rightShape, null, $right->name)], $step);
 
-        self::assertInstanceOf(Choice::class, $joined[0]->shape->slots[1]->type);
-        self::assertSame($t->declarations()[0]->columns[1], $joined[0]->shape->slots[1]->declaration());
+        self::assertSame($t->declarations()[0]->columns[1], $joined[0]->resolved(1, false)->declaration());
+        self::assertSame($u->declarations()[0]->columns[0], $joined[0]->resolved(1, true)->declaration());
+        self::assertSame($right, $joined[0]->resolved(1, true)->relation);
         self::assertSame(Nullability::Nullable, $joined[0]->shape->slots[0]->nullability);
         self::assertSame($rightShape, $joined[1]->shape);
         self::assertSame([0], $joined[1]->hidden);
         self::assertSame(Nullability::NotNull, $joined[1]->shape->slots[0]->nullability);
     }
 
+    public function testWithRepresentativeKeepsNonAdjacentKeysInTheirExactPositions(): void
+    {
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $slot = new OutputSlot(new Name('key'), new Known(Storage::Integer), Nullability::NotNull);
+        $visible = new VisibleRelation($left, new RowShape([$slot, $slot, $slot]));
+        $value = new ResolvedColumn($right, $slot);
+        $joining = new Joining();
+        $visible = $joining->withRepresentative($visible, 2, $value);
+        $visible = $joining->withRepresentative($visible, 0, $value);
+
+        self::assertSame([2, 0], array_keys($visible->representatives));
+        self::assertSame($right, $visible->resolved(2, true)->relation);
+        self::assertSame($left, $visible->resolved(1, true)->relation);
+    }
+
     public function testJoinReportsAUsingColumnThatAClosedSideLacks(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
@@ -134,6 +153,17 @@ final class JoiningTest extends TestCase
         self::assertSame('zz', $diagnostics[0]->name->value);
     }
 
+    public function testUniqueNamesKeepsTheFirstSpellingUnderTheSelectedComparison(): void
+    {
+        $upper = new Name('KEY');
+        $lower = new Name('key');
+        $other = new Name('lane');
+        $names = [$upper, $lower, $other, $upper];
+
+        self::assertSame([$upper, $other], (new Joining())->uniqueNames($names, Comparison::AsciiInsensitive));
+        self::assertSame([$upper, $lower, $other], (new Joining())->uniqueNames($names, Comparison::Sensitive));
+    }
+
     public function testReplacedSwapsOneRelationByPosition(): void
     {
         $input = new TableInput(new QualifiedName(new Name('t')));
@@ -146,30 +176,42 @@ final class JoiningTest extends TestCase
         self::assertSame([$third, $second], (new Joining())->replaced([$first, $second], 0, $third));
     }
 
-    public function testCoalescedWidensOneSlotAndLinksItsOrigin(): void
+    public function testCoalescedKeepsBothInputsAndHasNoPhysicalDeclaration(): void
     {
-        $input = new TableInput(new QualifiedName(new Name('t')));
-        $kept = new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull);
-        $other = new OutputSlot(new Name('b'), new Known(Storage::Text), Nullability::NotNull);
-        $relation = new VisibleRelation($input, new RowShape([$kept, $other]), new Name('x'), $input->name, [1]);
-        $coalesced = (new Joining())->coalesced($relation, 0, new OutputSlot(new Name('a'), new Known(Storage::Text), Nullability::Nullable));
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $leftRef = new ResolvedColumn($left, new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull));
+        $rightRef = new ResolvedColumn($right, new OutputSlot(new Name('A'), new Known(Storage::Text), Nullability::Nullable));
 
-        self::assertSame($input, $coalesced->relation);
-        self::assertSame('x', $coalesced->alias?->value);
-        self::assertSame([1], $coalesced->hidden);
-        self::assertSame('a', $coalesced->shape->slots[0]->name?->value);
-        self::assertInstanceOf(Choice::class, $coalesced->shape->slots[0]->type);
-        self::assertSame([Storage::Integer, Storage::Text], $coalesced->shape->slots[0]->type->alternatives);
-        self::assertSame(Nullability::Nullable, $coalesced->shape->slots[0]->nullability);
-        self::assertSame($kept, $coalesced->shape->slots[0]->origin);
-        self::assertSame($other, $coalesced->shape->slots[1]);
+        $value = (new Joining())->coalesced($leftRef, $rightRef);
+
+        self::assertInstanceOf(Choice::class, $value->slot->type);
+        self::assertSame([Storage::Integer, Storage::Text], $value->slot->type->alternatives);
+        self::assertSame(Nullability::Nullable, $value->slot->nullability);
+        self::assertNull($value->declaration());
+        self::assertNotNull($value->merge);
+        self::assertSame($leftRef, $value->merge->left);
+        self::assertSame($rightRef, $value->merge->right);
+    }
+
+    public function testExtendsRepresentativeRequiresBothCandidatesToBeAbsent(): void
+    {
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $slot = new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull);
+        $joining = new Joining();
+        $value = $joining->coalesced(new ResolvedColumn($left, $slot), new ResolvedColumn($right, $slot));
+
+        self::assertFalse($joining->extendsRepresentative($value, [$left]));
+        self::assertFalse($joining->extendsRepresentative($value, [$right]));
+        self::assertTrue($joining->extendsRepresentative($value, [$left, $right]));
     }
 
     public function testLocateFindsTheFirstVisibleSlotByName(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -188,8 +230,8 @@ final class JoiningTest extends TestCase
 
     public function testClosedIsTrueOnlyForCompleteFullyNamedShapes(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
         $input = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
@@ -206,8 +248,8 @@ final class JoiningTest extends TestCase
 
     public function testExtendMakesEverySlotAndImplicitNullableAndKeepsOrigins(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $shapes = new TableShapes();
         $input = new TableInput(new QualifiedName(new Name('t')), new Name('x'));

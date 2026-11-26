@@ -1,0 +1,93 @@
+{
+  "revision": "SemanticsIR/sqlite-integrity-audit-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with UTF-8, stock integrity opcodes and a default limit of 100 reports. Database attachments, schemas, collation definitions and storage are external state.",
+  "scope": "PRAGMA integrity_check and PRAGMA quick_check across the native connection scope, one explicit database or one resolved table, view or builtin schema catalog.",
+  "additionalPublicRoots": ["Maintenance/Integrity/IntegrityAudit"],
+  "constructors": {
+    "Maintenance/Integrity/IntegrityAudit": {
+      "role": "A native structural integrity audit with an exact operation, database access and target.",
+      "structure": "IntegrityKind, optional resolved database qualifier, and either IntegrityLimit, RelationTarget or CatalogTable. A limit selects all eligible relations in scope. A named target selects one resolved identity within that access scope.",
+      "conditions": "The resolved target schema must match any explicit qualifier. Builtin catalog names use the catalog role. An implicit builtin scope can resolve only main or temp. Analysis rejects a missing name or a target whose identity or kind cannot be established.",
+      "meaning": "Run the selected SQLite algorithm. Its typed text rows describe the anomalies reported in the audit budget, or a single typed ok for a clean selection. The selected databases are checked without changing data. Preparing an implicit or explicit temp audit may open the temporary database.",
+      "externalInterpretation": "Use the same schema and relation definitions, attachment order, collation implementations, storage state and integrity flags.",
+      "sql": "Emit the exact native mode and the optional explicit qualifier, followed by the decimal report count or an exact quoted relation or catalog name. The default limit may omit its argument. A resolved unqualified table keeps implicit database access.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Integrity/IntegrityLimit": {
+      "role": "A positive native maximum number of reports.",
+      "structure": "One integer.",
+      "conditions": "The accepted closed interval is 1 through 2147483647.",
+      "meaning": "Set the report budget for the complete audit and retain native database order for its use.",
+      "externalInterpretation": "None.",
+      "sql": "Emit an unsigned decimal integer or omit the default argument of 100.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "The two pragma names select different engines. Both check applicable CHECK constraints unless ignore_check_constraints is set. Full integrity checking additionally detects non-unique entries under the current index collation. Preserve the exact one-column result name.",
+    "Only an unsigned numeric grammar token is inspected for a positive 32-bit integer prefix. The separate unary signs do not affect that prefix. Decimal punctuation or exponent terminates the prefix. Hexadecimal digits follow 0x or 0X. Strip leading zeros before checking the upper bound. Omitted input and zero select 100.",
+    "Quoted numeric-looking identifiers are names. A numeric token with no acceptable prefix refers to its decoded native name, preserving minus and ignoring plus. Bind these names to an ordinary table, view or builtin catalog before publication. SQLite's separate underscore number token is outside the pragma grammar.",
+    "An explicit database qualifier restricts schema verification to that database. An implicit audit verifies all attached databases and opens temp when necessary. With a named relation, the B-tree check is limited to its physical database. Native implicit name precedence is temp, then main, then attachments in attachment order.",
+    "A builtin catalog cannot be modeled as an ordinary table and retains its own native name rules. The approved fixture observes the selected opcodes and slot numbers, including catalog and view selectors.",
+    "An audit reports read-only typed rows in the fixture. In a database with one violating guard, repeated equal reports retain their count up to the budget. For the fixed fixtures with several databases, compare the exact consumption of that budget in database order. Candidate SQL must retain the same access and cutoff for external databases."
+  ],
+  "observations": [
+    "Compare exact column name and typed rows, duplicates, budget consumption, parameter shape, read-only classification and zero changes.",
+    "Compare the engine's actual schema verification slots, B-tree audit slots and initial report budget. Compare temporary opening, attached database identities, current flags and unchanged fixture rows.",
+    "Distinguish quick_check from integrity_check using a stale native unique index under a changed collation. Independent expectations model CHECK and uniqueness witnesses from known constrained fixture rows."
+  ],
+  "finite": {
+    "kinds": ["integrity_check", "quick_check"],
+    "selectors": ["implicit-default", "main-default", "temp-default", "attachment-default", "numeric-one", "signed-one", "explicit-plus", "decimal-prefix", "exponent-prefix", "zero-budget", "bounded-max", "hex-two", "hex-zero", "decimal-overflow-name", "hex-overflow-name", "signed-overflow-name", "dot-name", "quoted-numeric-name", "implicit-guard", "main-guard", "attachment-guard", "named-view", "implicit-main-catalog", "implicit-temp-catalog", "qualified-temp-catalog", "qualified-attachment-catalog", "stale-relation"],
+    "temp": ["unopened", "shadowed"],
+    "data": ["clean", "check-violations", "stale-unique-index"],
+    "ignoreCheck": [false, true],
+    "identity": "All 648 coordinates. Confirm each distinct operation and selector form against its independently fixed raw SQL, and both construction routes against checked fixture properties."
+  },
+  "exploration": {
+    "seeds": [17299, 89449, 46301],
+    "casesPerSeed": 60,
+    "timeoutSeconds": 480,
+    "allowedExclusions": [],
+    "domain": "Vary numeric budget, sign, radix, prefix boundary, case, quoted relation keys, source populations, both check flags, explicit and implicit database scopes, and direct and analyzed construction."
+  },
+  "negative": [
+    "A direct zero budget",
+    "A direct negative budget",
+    "A direct budget above the native maximum",
+    "Unmatched direct scope and ordinary relation",
+    "Unmatched direct scope and builtin catalog",
+    "Direct implicit access to an attached catalog",
+    "Direct ordinary relation role for a builtin catalog",
+    "Unknown schema",
+    "Unknown relation",
+    "Implicit lookup crossing a preceding open namespace"
+  ],
+  "faults": [
+    "Allow a zero direct budget",
+    "Always use full integrity checking even for a quick check",
+    "Suppress a resolved table selector",
+    "Qualify an implicit named audit with the target schema",
+    "Treat a negative unary token sign as a table locator when a numeric prefix exists",
+    "Publish a missing target as a default audit",
+    "Drop the selected finite budget from the SQL"
+  ],
+  "open": [
+    "The finite model does not describe arbitrary corrupt pages, every native error, external collations, module tables or additional engine build profiles. Native database behavior remains an external interpretation assumption.",
+    "Additional attachment permutations and relation layouts outside the fixed finite domain are not implied by this evidence."
+  ],
+  "trust": [
+    "The pinned SQLite 3.47.2 implementation, opcode program and stock compile-time default.",
+    "The independent typed fixture expectation, program observation and bounded schedule checks.",
+    "Candidate binding, guarded operands and the exact distribution linkage."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "scopeDriver": "b227d1b7dbc6ccb213c678331e5cf86bfff00bd0c83a16e93e2278907c02d96a",
+    "scopeCases": "874b7f038f868a9d7dde5da291180f2e5ac1ede2ac9f9e3b206f2c9fefb9df41",
+    "staleDriver": "c0e20813941eb94dfd90a2cbd734e370efb3f0200bd4182db965e8521f419605",
+    "staleCases": "750bff514bca8accabebbf61625e2063819d3357b50fb1c2c96940521f16fa59"
+  }
+}

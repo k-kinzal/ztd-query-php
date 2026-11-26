@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Reindex::class)]
 #[Medium]
@@ -18,42 +18,78 @@ final class ReindexTest extends TestCase
 {
     public function testDeriveStatementResolvesTheTableOfReindexTable(): void
     {
-        $operation = (new Semantics())->inspect('REINDEX TABLE s.t');
+        $operation = (new Inspection())->diagnose('REINDEX TABLE s.t');
         self::assertInstanceOf(Reindex::class, $operation->statement);
         self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
     }
 
     public function testDeriveStatementReportsSystemCatalogsRebuiltConcurrently(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             [['cannot reindex system catalogs concurrently'], ['cannot reindex system catalogs concurrently'], []],
             [
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('REINDEX SYSTEM CONCURRENTLY')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('REINDEX (CONCURRENTLY) SYSTEM d')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('REINDEX (CONCURRENTLY false) SYSTEM')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('REINDEX SYSTEM CONCURRENTLY')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('REINDEX (CONCURRENTLY) SYSTEM d')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('REINDEX (CONCURRENTLY false) SYSTEM')->facts->diagnostics),
             ],
         );
     }
 
     public function testDeriveStatementReportsATablespaceWithoutAName(): void
     {
-        self::assertSame(['tablespace requires a parameter'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect('REINDEX (TABLESPACE) INDEX i')->facts->diagnostics));
+        self::assertSame(['tablespace requires a parameter'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Inspection())->diagnose('REINDEX (TABLESPACE) INDEX i')->facts->diagnostics));
     }
 
     public function testRenderWritesEachTarget(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             ['REINDEX INDEX CONCURRENTLY s.i', 'REINDEX (verbose, tablespace x) SCHEMA "S"', 'REINDEX DATABASE', 'REINDEX SYSTEM d'],
-            [$semantics->inspect('REINDEX INDEX CONCURRENTLY s.i')->toString(), $semantics->inspect('REINDEX (VERBOSE, TABLESPACE x) SCHEMA "S"')->toString(), $semantics->inspect('REINDEX DATABASE')->toString(), $semantics->inspect('REINDEX SYSTEM d')->toString()],
+            [$semantics->diagnose('REINDEX INDEX CONCURRENTLY s.i')->toString(), $semantics->diagnose('REINDEX (VERBOSE, TABLESPACE x) SCHEMA "S"')->toString(), $semantics->diagnose('REINDEX DATABASE')->toString(), $semantics->diagnose('REINDEX SYSTEM d')->toString()],
         );
+    }
+
+    public function testRequestsConcurrentBuildUsesOrderedOptionsAndKeywordPrecedence(): void
+    {
+        $semantics = new Inspection();
+        $standard = $semantics->diagnose('REINDEX (CONCURRENTLY TRUE, CONCURRENTLY FALSE) INDEX app.lookup')->statement;
+        $concurrent = $semantics->diagnose('REINDEX (CONCURRENTLY OFF) INDEX CONCURRENTLY app.lookup')->statement;
+
+        self::assertInstanceOf(Reindex::class, $standard);
+        self::assertInstanceOf(Reindex::class, $concurrent);
+        self::assertFalse($standard->requestsConcurrentBuild());
+        self::assertTrue($concurrent->requestsConcurrentBuild());
+    }
+
+    public function testReportsProgressUsesTheLastVerboseOption(): void
+    {
+        $inspection = new Inspection();
+        $enabled = $inspection->diagnose('REINDEX (VERBOSE 0, VERBOSE ON) INDEX app.lookup')->statement;
+        $disabled = $inspection->diagnose('REINDEX (VERBOSE, VERBOSE OFF) INDEX app.lookup')->statement;
+
+        self::assertInstanceOf(Reindex::class, $enabled);
+        self::assertInstanceOf(Reindex::class, $disabled);
+        self::assertTrue($enabled->reportsProgress());
+        self::assertFalse($disabled->reportsProgress());
+    }
+
+    public function testTablespaceSelectsTheLastDecodedDestination(): void
+    {
+        $inspection = new Inspection();
+        $move = $inspection->diagnose('REINDEX (TABLESPACE earlier, VERBOSE, TABLESPACE "two words") INDEX app.lookup')->statement;
+        $rebuild = $inspection->diagnose('REINDEX (VERBOSE) INDEX app.lookup')->statement;
+
+        self::assertInstanceOf(Reindex::class, $move);
+        self::assertInstanceOf(Reindex::class, $rebuild);
+        self::assertSame('two words', $move->tablespace());
+        self::assertNull($rebuild->tablespace());
     }
 
     public function testDeriveStatementReportsASequence(): void
     {
-        $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE SEQUENCE s')];
-        self::assertSame(['"s" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('REINDEX TABLE s', $context)->facts->diagnostics));
+        $semantics = new Inspection();
+        $context = [$semantics->diagnose('CREATE SEQUENCE s')];
+        self::assertSame(['"s" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('REINDEX TABLE s', $context)->facts->diagnostics));
     }
 }

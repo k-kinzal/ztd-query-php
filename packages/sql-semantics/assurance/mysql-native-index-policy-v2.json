@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/mysql-native-index-policy-2",
+  "approval": "pending-human-review",
+  "extends": ["mysql-native-index-policy-v1.json", "mysql-native-index-generated-name-v2.json"],
+  "reason": "The same written unique index can supply the InnoDB clustered identity or be a secondary unique key. Native PDO comparison on 5.6.51 and 9.1.0 rejected persistent INPLACE or NONE when the resolved unique key supplied the clustered identity. The 9.1.0 receipt also committed the transaction marker before reporting INSTANT with a nondefault lock.",
+  "roleRules": {
+    "explicit-primary": "The physical PRIMARY key has the clustered removal policy.",
+    "clustered-unique": "If there is no physical PRIMARY, the first ordinary unique key over all required full fields with no virtual generated field supplies the clustered role. It retains the native unique index name.",
+    "secondary-unique": "A unique key that does not supply the clustered identity permits the persistent secondary removal policy.",
+    "temporary": "All removal roles share the same temporary table compatibility boundary."
+  },
+  "diagnostics": {
+    "legacy-unknown-algorithm": "Observe the pre-execution INSTANT error and the uncommitted transaction marker on MySQL 5.6 and 5.7.",
+    "admitted-grammar-but-invalid-pair": "Observe the native error classification, transaction state and marker for rejected operations. Keep the committed marker in the modern INSTANT and nondefault lock coordinate."
+  },
+  "namespace": {
+    "roles": "An ordinary CREATE INDEX value closes against the names of all keys in its selected external table. Count named keys including PRIMARY. A new name must be distinct from every occupied name under native system identifier comparison.",
+    "boundaryCases": "Keep all previously frozen key-count coordinates. Add direct and parsed rejection for an explicitly or implicitly occupied name and a positive accent-distinct name using the same catalog."
+  },
+  "finite": {
+    "addOperationRoles": ["drop-clustered-unique"],
+    "oldCoordinatePreservation": "Replay the previous drop-unique fixture, which has one eligible clustered unique key, under drop-clustered-unique. Use a unique key with a nullable part for the additional secondary role.",
+    "layoutEdges": ["explicit-primary-overrides-an-earlier-unique", "earlier-required-unique-is-clustered", "later-required-unique-is-secondary"],
+    "sameBudgetSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "faults": [
+    "Treat an implicitly clustered unique index as an ordinary secondary removal.",
+    "Promote a unique index with a nullable part to the clustered role.",
+    "Discard the first eligible unique identity or let it override an explicit primary key.",
+    "Compare names without the native system identifier case mapping or skip checking the intended name against the occupied namespace."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.4.7/sql/sql_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.4.7/storage/innobase/handler/handler0alter.cc"
+  ]
+}

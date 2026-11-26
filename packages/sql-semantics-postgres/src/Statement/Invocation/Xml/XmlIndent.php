@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml;
  *
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-SERIALIZE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the indenting option
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlIndent::NoIndent->value // => 'NO INDENT'
  */

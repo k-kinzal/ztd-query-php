@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * the statement derives nothing and returns no rows. Terminates: no child.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/deallocate-prepare.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a DEALLOCATE PREPARE
- *     $deallocate = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP PREPARE stmt');
- *     [$deallocate->statement->name->value, $deallocate->toString()] // => ['stmt', 'DEALLOCATE PREPARE stmt']
+ * @visibility SqlSemantics
  */
 final class Deallocate implements Statement
 {

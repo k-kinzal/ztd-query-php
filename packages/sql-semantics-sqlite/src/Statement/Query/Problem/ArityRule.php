@@ -7,10 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
 /**
  * The places where SQLite requires two column counts to agree.
  *
- * @visibility public
- * @example Reading which counts disagree
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 UNION SELECT 2, 3');
- *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule::CompoundArms
+ * @visibility SqlSemantics
  */
 enum ArityRule
 {

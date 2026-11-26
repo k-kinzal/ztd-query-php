@@ -14,11 +14,11 @@ final class RefreshDatabaseCollationTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('ALTER DATABASE d REFRESH COLLATION VERSION', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d REFRESH COLLATION VERSION')->toString());
+        self::assertSame('ALTER DATABASE d REFRESH COLLATION VERSION', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DATABASE d REFRESH COLLATION VERSION')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d REFRESH COLLATION VERSION')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER DATABASE d REFRESH COLLATION VERSION')->facts->diagnostics);
     }
 }

@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * Rule: PG-SUBSCRIPTION-003. Mirrors `AlterSubscriptionStmt` of kind ALTER_SUBSCRIPTION_CONNECTION.
  * Source: https://www.postgresql.org/docs/17/sql-altersubscription.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the new connection string
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER SUBSCRIPTION s CONNECTION 'host=b'");
- *     $operation->statement->connection->value // => 'host=b'
+ * @visibility SqlSemantics
  */
 final class AlterSubscriptionConnection implements Statement
 {

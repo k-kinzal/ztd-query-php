@@ -1,0 +1,34 @@
+{
+  "revision": "SemanticsIR/mysql-btree-index-binding-1",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "8a018890b7347c0743b60479c9826f26aaba02eeb47a3a3845341327afe664b7",
+      "role": "Carries known table engine, namespace and the prior eligible identity."
+    },
+    "src/Rules/TableDefinition/TableDeclaration.php": {
+      "sha256": "3acac2c7da7010fbfd49547880ca20dd25d606281e971c8fa4c5bc409af5c3fd",
+      "role": "Derives the native engine and identity from the originating checked table declaration."
+    },
+    "src/Rules/TableDefinition/TableIdentityKeys.php": {
+      "sha256": "92b7645af5ace3caaeab686fd53343720aa39cfb92e788debae9bd9a0a49933a",
+      "role": "Recognizes explicit primary identity and the earlier eligible visible unique roles."
+    },
+    "src/Rules/TableDefinition/ColumnFlags.php": {
+      "sha256": "23f959097c0ebb86fe49bf1e496b874e7995f4c026d49a11011ad560c7580fe0",
+      "role": "Resolves the effective declared nullability and inline primary field markers."
+    },
+    "src/Statement/Table/CreateIndex.php": {
+      "sha256": "8724f6979645310c4446f33ef6d7e355c113cce499e3ffd74367cd50cb020f4e",
+      "role": "Binds the indexed relation and complete visible column facts before lowering."
+    },
+    "src/Rules/TableDefinition/InlineIdentityKey.php": {
+      "role": "Recognize inline required identities before building a completed native index.",
+      "sha256": "b61639758a77e3b25ff57e53be01d51111730e6b3733a3fec0f7dd7c45bcde13"
+    },
+    "src/Rules/TableDefinition/DeclaredTableStorage.php": {
+      "role": "Resolve the declared engine and the fixed default.",
+      "sha256": "fc8e78652b57ff919efb40a8f7901cfdd4036200401a41105ed2be88bd38233b"
+    }
+  }
+}

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption;
  * node. The validation option exists from 5.7 on.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-management-exchange.html.
  *
- * @visibility public
- * @example Swapping a partition with a table
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t EXCHANGE PARTITION p0 WITH TABLE u WITHOUT VALIDATION');
- *     [$alter->statement->commands[0]->table->name->value, $alter->statement->commands[0]->validation?->validate] // => ['u', false]
+ * @visibility SqlSemantics
  */
 final class ExchangePartition implements StandaloneCommand
 {

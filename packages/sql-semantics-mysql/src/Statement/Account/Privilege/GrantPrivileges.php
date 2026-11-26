@@ -34,9 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html,
  * https://dev.mysql.com/doc/refman/5.7/en/grant.html. Status: Implemented.
  *
- * @visibility public
- * @example Granting table privileges with the grant option
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('grant select, insert on table shop.t to app@localhost with grant option')->toString() // => 'GRANT SELECT, INSERT ON shop.t TO app@localhost WITH GRANT OPTION'
+ * @visibility SqlSemantics
  */
 final class GrantPrivileges implements Statement
 {

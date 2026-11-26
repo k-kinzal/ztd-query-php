@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
  * statement checks them (MYSQL-HISTOGRAM-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.
  *
- * @visibility public
- * @example Reading the histogram request
- *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ANALYZE TABLE t DROP HISTOGRAM ON a");
- *     [$analyze->toString(), $analyze->statement->histogram->columns[0]->value === 'a'] // => ["ANALYZE TABLE t DROP HISTOGRAM ON a", true]
+ * @visibility SqlSemantics
  */
 final class DropHistogram implements Histogram
 {

@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * STORAGE before ENGINE are optional words.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a partition comment
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind::Comment, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('old rows'));
  *     $option->text?->value // => 'old rows'

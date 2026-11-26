@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * The facts follow MYSQL-PROGRAM-FLOW-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/case.html.
  *
- * @visibility public
- * @example Reading a searched CASE statement
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p(a INT) CASE WHEN a > 1 THEN SELECT 1; WHEN a < 0 THEN SELECT 2; END CASE');
- *     [count($create->statement->body->branches), $create->statement->body->otherwise] // => [2, []]
+ * @visibility SqlSemantics
  */
 final class SearchedCase implements ProgramStatement
 {

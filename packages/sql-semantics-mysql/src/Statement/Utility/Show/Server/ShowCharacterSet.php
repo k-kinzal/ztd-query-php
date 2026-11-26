@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-character-set.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW CHARACTER SET WHERE Maxlen > 1");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Charset', "SHOW CHARSET WHERE Maxlen > 1"]
+ * @visibility SqlSemantics
  */
 final class ShowCharacterSet implements Statement, Relation
 {

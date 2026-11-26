@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics;
  * the model keeps whether the keyword is written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of an area
  *     \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\DiagnosticsArea::Stacked->value // => 'STACKED'
  */

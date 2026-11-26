@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
@@ -29,6 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ParameterList::class)]
 #[Medium]
@@ -52,7 +52,7 @@ final class ParameterListTest extends TestCase
 
     public function testDeriveRelationAnswersTheRowOfAnAnalyzedRoutine(): void
     {
-        $create = (new Semantics())->inspect('CREATE PROCEDURE p(INOUT x INT, y BIGINT) SELECT x');
+        $create = (new Inspection())->diagnose('CREATE PROCEDURE p(INOUT x INT, y BIGINT) SELECT x');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
@@ -64,14 +64,14 @@ final class ParameterListTest extends TestCase
 
     public function testDeriveRelationResolvesEveryDirectionInTheBody(): void
     {
-        $create = (new Semantics())->inspect('CREATE PROCEDURE p(IN a INT, OUT b INT, INOUT c INT, d INT) SELECT a, b, c, d, z', []);
+        $create = (new Inspection())->diagnose('CREATE PROCEDURE p(IN a INT, OUT b INT, INOUT c INT, d INT) SELECT a, b, c, d, z', []);
 
         self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
     public function testDeriveRelationLetsALocalVariableHideAParameter(): void
     {
-        self::assertSame([], (new Semantics())->inspect('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->facts->diagnostics);
+        self::assertSame([], (new Inspection())->diagnose('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->facts->diagnostics);
     }
 
     /**
@@ -88,12 +88,12 @@ final class ParameterListTest extends TestCase
     #[DataProvider('providerRenderWritesTheParentheses')]
     public function testRenderWritesTheParentheses(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     public function testRenderWritesAConstructedList(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $empty = new Output(new Codec($semantics->profile()->grammar));
         (new ParameterList([]))->render($empty);
         $two = new Output(new Codec($semantics->profile()->grammar));

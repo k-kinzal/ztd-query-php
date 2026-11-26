@@ -1,0 +1,246 @@
+{
+  "revision": "SemanticsIR/postgres-builtin-casts-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "PostgreSQL 16.6 and 17.2 with native output metadata, signed int4 input slots, and the registered pg_catalog search-path profile.",
+  "scope": "The built-in int4, int8 and bool scalar projection types, their admitted explicit conversions, and the int4 to int8 promotion in checked native set operations.",
+  "constructors": {
+    "Expression/CastDestination": {
+      "role": "The fixed pg_catalog target of a scalar conversion.",
+      "structure": "One of int4, int8 and bool, each with its catalog identity fixed.",
+      "conditions": "The closed target choices have no modifiers, array dimensions, domains, or set-returning roles.",
+      "meaning": "The target resolves the cast and the result type statically. No application schema or search path can change its identity.",
+      "externalInterpretation": "Evaluate against the built-in catalog for the specified native engine release.",
+      "sql": "Emit the canonical pg_catalog-qualified type name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Expression/BuiltinCast": {
+      "role": "An explicit checked conversion from one admitted scalar to a catalog type.",
+      "structure": "One closed catalog target and one int4 literal, int8 literal, Boolean literal, untyped NULL, resolved int4 reference or nested admitted cast.",
+      "conditions": "A direct Boolean to int8 or int8 to Boolean edge is invalid, even when its operand is a typed NULL. Same-type edges, untyped NULL into any target, int4 to or from bool, and int4 to or from int8 are admitted. Projection completion owns visibility and expanded graph limits. Analysis rejects operands with unsupported types or semantic roles.",
+      "meaning": "An untyped NULL or a valid conversion of a typed NULL yields the target’s NULL. Identity preserves the value. Int4 to bool tests nonzero and bool to int4 returns zero or one. Int4 promotion to int8 preserves the integer. Explicit int8 narrowing to int4 preserves an in-range integer and raises SQLSTATE 22003 for an out-of-range integer when PostgreSQL evaluates the conversion. Nested conversions apply in structural order.",
+      "externalInterpretation": "Use the same relation, column, occurrence, row values, profile and built-in cast functions. All admitted reference slots supply int4.",
+      "sql": "Render CAST with the explicit child and a catalog-qualified target. The owning result keeps its resolved name and position.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Expression/WideIntegerLiteral": {
+      "role": "An explicitly typed signed 64-bit integer scalar.",
+      "structure": "A canonical decimal value independent of PHP integer width.",
+      "conditions": "Accept zero and the signed interval from -9223372036854775808 to 9223372036854775807, with no leading zeroes on nonzero values and no negative zero. The analyzed literal must have a resolved PostgreSQL int8 type.",
+      "meaning": "Evaluate the exact signed integer with the built-in int8 type, including values that also fit int4 when directly constructed.",
+      "externalInterpretation": "Use the pinned native integer type and representation. No table or catalog state is retained by the value.",
+      "sql": "Emit the validated decimal inside a pg_catalog.int8 cast so the native type is explicit even at small values.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Select",
+    "ResultColumn",
+    "ColumnReference",
+    "Rows/Compound",
+    "Rows/ResultKind"
+  ],
+  "predecessorCheck": {
+    "supersedes": "postgres-builtin-casts-v2.json",
+    "preserved": "Retain the 112 predecessor finite inputs, the three seeds at 48 inputs each, the five analyzed positives, the two bounds negatives, the textual input negative and all four predecessor renderer faults. Retain the rejection of a wide operand cast directly to bool with the now-specific static edge diagnostic.",
+    "previousNegativeNowPositive": "Execute SELECT CAST(1 AS BIGINT) as an analyzed positive with int8 output. Substitute SELECT CAST(1 AS SMALLINT) to continue observing the unsupported target boundary.",
+    "observationsAdded": "Observably widen both set-arm orders to int8, including NULL, duplicates and endpoint values. Compare exact native result types and signed integer values. Capture only the model-predicted 22003 narrowing outcome as a semantic observation."
+  },
+  "observations": [
+    "Compare result names, positions, PostgreSQL types, values and NULL independently of the emitted SQL.",
+    "Preserve multiplicity in the unordered projection or use the observable DISTINCT result when requested.",
+    "Observe different values per input slot and inheritance scope. Compare direct and native interpretations of the original SQL for analyzed inputs.",
+    "The existing set-operation type composition uses the target type even for NULL.",
+    "An arithmetic range failure of the admitted narrowing conversion has exact SQLSTATE 22003. A missing conversion between bool and int8 is a construction error and never a native successful projection.",
+    "Int4 and int8 promote to int8 in either arm order. Other incompatible type categories remain incompatible even with a typed NULL. Under UNION ALL retain duplicates without asserting an output order."
+  ],
+  "finite": {
+    "sources": [
+      "unit",
+      "only",
+      "inherited"
+    ],
+    "targets": [
+      "int4",
+      "bool"
+    ],
+    "literalOperands": [
+      -2147483648,
+      -1,
+      0,
+      1,
+      2147483647,
+      false,
+      true,
+      null
+    ],
+    "referenceSlots": [
+      0,
+      1
+    ],
+    "distinct": [
+      false,
+      true
+    ],
+    "identity": "Check all 96 source, target, literal and DISTINCT combinations plus all 16 table-source, target, reference slot and DISTINCT combinations per release. Reconstruct the witness from constructed values."
+  },
+  "exploration": {
+    "seeds": [
+      37511,
+      40507,
+      58241
+    ],
+    "casesPerSeed": 48,
+    "timeoutSecondsPerRelease": 220,
+    "allowedExclusions": [],
+    "structure": "Generate casts of varying depth whose targets alternate or repeat. Vary result widths, names, operand roles and visibility of nullable and distinct source slots, SELECT DISTINCT and inheritance."
+  },
+  "negative": [
+    "A direct column reference outside its owning scope",
+    "A nested cast tree beyond the shared projection envelope",
+    "An analyzed cast to an unsupported builtin such as int2",
+    "A static cast of a wide input directly to bool",
+    "A cast of a textual value whose input conversion is outside this domain",
+    "Direct bigint value one above the signed maximum",
+    "Direct bigint value one below the signed minimum",
+    "Direct bigint value with negative zero spelling",
+    "Direct bigint value with a leading zero",
+    "Direct Boolean to bigint edge",
+    "Direct bigint to Boolean edge",
+    "Direct bigint-typed NULL to Boolean edge",
+    "Direct Boolean-typed NULL to bigint edge",
+    "Analyzed Boolean to bigint edge",
+    "Analyzed bigint-typed NULL to Boolean edge",
+    "An analyzed bare constant larger than int8, with native numeric type",
+    "A completed set node joining a Boolean arm and a bigint-typed NULL arm"
+  ],
+  "faults": [
+    "Change the target type",
+    "Replace the operand with NULL",
+    "Swap distinct reference slots",
+    "Lose the inner conversion of a nested cast",
+    "Use int4 for an int8 literal",
+    "Replace an int8 target with int4",
+    "Remove the child’s narrowing cast before an outer int8 conversion"
+  ],
+  "open": [
+    "Int8 relation and derived-source slots, parameter placement in casts, other scalar operand and target types and placements, including functions and operator coercion, domains, arrays, assignment and cast-based predicate or arithmetic composition."
+  ],
+  "trust": [
+    "Pinned native catalog and conversion sources",
+    "Independent integer and Boolean conversion rules with PostgreSQL type and name observation",
+    "Exact PHP constructor, source-boundary, emission and type-dispatch checks"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-expressions.html#SQL-SYNTAX-TYPE-CASTS",
+    "https://www.postgresql.org/docs/17/datatype-boolean.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/include/catalog/pg_cast.dat",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/include/catalog/pg_cast.dat",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/utils/adt/int.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/utils/adt/int8.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/utils/adt/int8.c",
+    "https://www.postgresql.org/docs/17/typeconv-union-case.html",
+    "https://www.postgresql.org/docs/16/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC"
+  ],
+  "wideFinite": {
+    "wideOperands": [
+      "-9223372036854775808",
+      "-2147483649",
+      "-2147483648",
+      "-1",
+      "0",
+      "1",
+      "2147483647",
+      "2147483648",
+      "9223372036854775807"
+    ],
+    "typedNarrowOperands": [
+      -2147483648,
+      -1,
+      0,
+      1,
+      2147483647,
+      null
+    ],
+    "sources": [
+      "unit",
+      "only",
+      "inherited"
+    ],
+    "targetsForWide": [
+      "int4",
+      "int8"
+    ],
+    "distinct": [
+      false,
+      true
+    ],
+    "referenceSlots": [
+      0,
+      1
+    ],
+    "pairedTypes": [
+      "int4",
+      "unknown",
+      "int8"
+    ],
+    "pairArmOrders": [
+      "existing-first",
+      "wide-first"
+    ],
+    "identity": "Reconstruct every positive from the value graph, including native errors. Check all 108 source/target/wide/option cells, all 36 source/int4-or-untyped-null/option promotions, eight reference promotions, 18 standalone wide values and 18 combinations of three wide boundary operands, three paired types and two arm orders. Preserve all 112 predecessor cells.",
+    "pairWideOperands": [
+      "-9223372036854775808",
+      "2147483648",
+      "9223372036854775807"
+    ]
+  },
+  "wideExploration": {
+    "seeds": [
+      11719,
+      43517,
+      61031
+    ],
+    "casesPerSeed": 48,
+    "allowedExclusions": [],
+    "structure": "Build varying-width projections with exact 64-bit signed endpoints, small values in both integer types, NULL and referenced int4 slots. Recursively choose an edge permitted for the previous type, then combine selected leaves in independent UNION ALL arms."
+  }
+}

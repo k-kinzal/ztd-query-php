@@ -9,11 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Model\Statement\Type;
  *
  * Each database package provides its closed set of descriptor classes.
  *
- * @visibility public
- * @example Reading the type of a declared column
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0];
- *     $table->columns[0]->type->name() // => 'INTEGER'
+ * @visibility SqlSemantics
  */
 interface TypeDescriptor
 {

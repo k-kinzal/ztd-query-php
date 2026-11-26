@@ -14,10 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * Source: https://sqlite.org/lang_with.html.
  *
- * @visibility public
- * @example Reading a WITH clause
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT x FROM c');
- *     [$query->statement->with->recursive, count($query->statement->with->tables)] // => [true, 1]
+ * @visibility SqlSemantics
  */
 final class WithClause implements Node
 {

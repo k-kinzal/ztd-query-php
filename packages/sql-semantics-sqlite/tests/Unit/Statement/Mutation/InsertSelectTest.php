@@ -11,7 +11,6 @@ use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto;
@@ -25,6 +24,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(InsertSelect::class)]
 #[Medium]
@@ -32,13 +32,13 @@ final class InsertSelectTest extends TestCase
 {
     public function testDeriveStatementComparesTheQueryWidthWithTheColumns(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $narrow = $semantics->inspect('INSERT INTO t SELECT a, c FROM u', [$t, $u]);
-        $wide = $semantics->inspect('INSERT INTO t (a) SELECT * FROM u', [$t, $u]);
-        $exact = $semantics->inspect('INSERT INTO t (a, b) SELECT a, c FROM u', [$t, $u]);
-        $open = $semantics->inspect('INSERT INTO t SELECT * FROM u');
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $narrow = $semantics->diagnose('INSERT INTO t SELECT a, c FROM u', [$t, $u]);
+        $wide = $semantics->diagnose('INSERT INTO t (a) SELECT * FROM u', [$t, $u]);
+        $exact = $semantics->diagnose('INSERT INTO t (a, b) SELECT a, c FROM u', [$t, $u]);
+        $open = $semantics->diagnose('INSERT INTO t SELECT * FROM u');
 
         self::assertInstanceOf(ArityMismatch::class, $narrow->facts->diagnostics[0]);
         self::assertSame(ArityRule::InsertedValues, $narrow->facts->diagnostics[0]->rule);
@@ -51,9 +51,9 @@ final class InsertSelectTest extends TestCase
 
     public function testDeriveWithinBindsTheWithClauseForTheQueryAndReturnsTheTargetRow(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w RETURNING id, b', [$t]);
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w RETURNING id, b', [$t]);
         $fields = $query->fields();
 
         self::assertInstanceOf(InsertSelect::class, $query->statement);
@@ -67,9 +67,9 @@ final class InsertSelectTest extends TestCase
 
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->inspect('INSERT INTO t (a) SELECT 1', [$t])->statement;
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $statement = $semantics->diagnose('INSERT INTO t (a) SELECT 1', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(InsertSelect::class, $statement);
@@ -79,7 +79,7 @@ final class InsertSelectTest extends TestCase
 
     public function testRenderWritesIntoQueryUpsertsAndReturning(): void
     {
-        $query = (new Semantics())->inspect('insert into t (id) select 1 union select 2 on conflict (id) do nothing returning *');
+        $query = (new Inspection())->diagnose('insert into t (id) select 1 union select 2 on conflict (id) do nothing returning *');
 
         self::assertSame('INSERT INTO t (id) SELECT 1 UNION SELECT 2 ON CONFLICT (id) DO NOTHING RETURNING *', $query->toString());
         self::assertInstanceOf(InsertSelect::class, $query->statement);

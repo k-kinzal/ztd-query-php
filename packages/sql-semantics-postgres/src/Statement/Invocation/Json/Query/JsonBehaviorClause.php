@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an ON ERROR behavior
  *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorClause(null, new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehavior(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorKind::Error));
  *     [$clause->onEmpty, $clause->onError->kind->value] // => [null, 'ERROR']

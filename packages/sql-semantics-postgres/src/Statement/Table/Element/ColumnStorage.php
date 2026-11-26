@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * `AT_SetStorage`). The method name is checked by the server.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the storage of a column
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text STORAGE DEFAULT)');
- *     $create->statement->definition->elements[0]->storage->method // => null
+ * @visibility SqlSemantics
  */
 final class ColumnStorage implements Node
 {

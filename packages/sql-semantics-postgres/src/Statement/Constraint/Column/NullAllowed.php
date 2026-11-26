@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int NULL)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->name?->value // => null
+ * @visibility SqlSemantics
  */
 final class NullAllowed implements Constraint
 {

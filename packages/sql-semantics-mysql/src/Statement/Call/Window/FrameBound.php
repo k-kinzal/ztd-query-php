@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
  * derives the offset.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-frames.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the offset of a frame boundary
  *     $bound = new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::Preceding, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'));
  *     $bound->offset->text // => '2'

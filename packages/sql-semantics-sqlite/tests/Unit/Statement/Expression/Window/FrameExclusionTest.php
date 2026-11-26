@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Expression\Window;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameExclusion;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FrameExclusion::class)]
 #[Medium]
@@ -33,7 +33,7 @@ final class FrameExclusionTest extends TestCase
 
     public function testFromMatchesTheExclusionOfAnAnalyzedFrame(): void
     {
-        $statement = (new Semantics())->analyze('SELECT sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE NO OTHERS), sum(a) OVER (ROWS 1 PRECEDING) FROM t')->statement;
+        $statement = (new Inspection())->inspect('SELECT sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE NO OTHERS), sum(a) OVER (ROWS 1 PRECEDING) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         $frames = array_map(static function (object $column): ?FrameExclusion {

@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-column-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Exact DropColumn construction and native publication from the declaration-local removal projection.",
+  "rules": {
+    "Schema/Alter/DropColumn::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'An ALTER TABLE target needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A column removal cannot target the reserved SQLite namespace.');",
+        "$members = Check::listOf($heading, DropMember::class, 'A column removal requires an ordered heading with at least two declared members.', 2);",
+        "Check::input(count($members) <= 2000, 'A column removal cannot exceed the 2,000-column profile.');",
+        "Check::input(isset($members[$slot]), 'A column removal must select a declared member.');",
+        "Check::input(!$members[$slot]->protected, 'The selected member has a declaration-local removal restriction.');",
+        "$names = [];",
+        "$ordinary = false;",
+        "foreach ($members as $ordinal => $member) {",
+        "    $key = $member->name->key();",
+        "    Check::input(!isset($names[$key]), 'A column removal needs distinct declared names.');",
+        "    $names[$key] = true;",
+        "    $ordinary = $ordinary || ($ordinal !== $slot && !$member->generated);",
+        "}",
+        "Check::input($ordinary, 'A column removal must retain an ordinary column.');",
+        "$this->heading = $members;"
+      ]
+    },
+    "Schema/Alter/DropColumn::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Alter/DropColumn::toString": {
+      "common": [
+        "return 'ALTER TABLE ' . $this->schema->quoted() . '.' . $this->table->quoted()",
+        "    . ' DROP COLUMN ' . $this->heading[$this->slot]->name->quoted();"
+      ]
+    },
+    "Schema/Alter/DropColumnLowering::lower": {
+      "common": [
+        "[$schema, $name, $table] = (new AlterTargetLowering())->resolve($operation, $statement);",
+        "$restrictions = $table->columnRemoval;",
+        "Check::input($restrictions !== null, 'A column removal requires resolved declaration-local restrictions.');",
+        "$wanted = new Identifier($statement->column->value);",
+        "$heading = [];",
+        "$selected = null;",
+        "foreach ($table->columns as $ordinal => $column) {",
+        "    $identity = new Identifier($column->name->value);",
+        "    $heading[] = new DropMember($identity, $column->generated, isset($restrictions->protected[$ordinal]));",
+        "    if ($identity->key() === $wanted->key()) {",
+        "        $selected = $ordinal;",
+        "    }",
+        "}",
+        "Check::input($selected !== null, 'A column removal must select a declared member.');",
+        "",
+        "return new DropColumn($schema, $name, $heading, $selected);"
+      ]
+    }
+  }
+}

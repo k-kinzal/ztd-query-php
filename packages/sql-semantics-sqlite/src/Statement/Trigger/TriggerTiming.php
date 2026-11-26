@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Trigger;
  *
  * Source: https://sqlite.org/lang_createtrigger.html.
  *
- * @visibility public
- * @example Reading the timing of a trigger
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TRIGGER r INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
- *     $trigger->statement->timing // => \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming::InsteadOf
+ * @visibility SqlSemantics
  */
 enum TriggerTiming: string
 {

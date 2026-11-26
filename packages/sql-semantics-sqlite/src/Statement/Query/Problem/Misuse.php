@@ -10,9 +10,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A request SQLite rejects because it breaks a rule of the language.
  *
- * @visibility public
- * @example Reading the problem of a star without input
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: no tables specified
+ * @visibility SqlSemantics
  */
 final class Misuse implements Diagnostic
 {

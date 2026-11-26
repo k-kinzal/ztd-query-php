@@ -14,8 +14,8 @@ final class CursorRuleTest extends TestCase
 {
     public function testDeclareLowersTheHoldability(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('DECLARE c CURSOR WITHOUT HOLD FOR SELECT 1');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('DECLARE c CURSOR WITHOUT HOLD FOR SELECT 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Holdability::Without, $statement->hold);
@@ -23,8 +23,8 @@ final class CursorRuleTest extends TestCase
 
     public function testOptionsKeepsTheWrittenOrder(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('DECLARE c SCROLL BINARY INSENSITIVE CURSOR FOR SELECT 1');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('DECLARE c SCROLL BINARY INSENSITIVE CURSOR FOR SELECT 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor::class, $statement);
         self::assertSame([\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Scroll, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Insensitive], $statement->options);
@@ -32,8 +32,8 @@ final class CursorRuleTest extends TestCase
 
     public function testFetchLowersTheMovementAndTheCount(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('MOVE BACKWARD -2 IN c');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('MOVE BACKWARD -2 IN c');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch::class, $statement);
         self::assertSame([\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::BackwardCount, true, true], [$statement->movement, $statement->move, $statement->count?->negative]);
@@ -41,15 +41,15 @@ final class CursorRuleTest extends TestCase
 
     public function testFromAcceptsTheNoiseWords(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('FETCH ALL IN c');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('FETCH ALL IN c');
         self::assertSame('FETCH ALL c', $query->toString());
     }
 
     public function testCloseLowersTheCursor(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('CLOSE c');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('CLOSE c');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Close::class, $statement);
         self::assertSame('c', $statement->cursor?->value);

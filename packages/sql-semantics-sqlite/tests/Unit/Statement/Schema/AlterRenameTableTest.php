@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameTable;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AlterRenameTable::class)]
 #[Medium]
@@ -18,9 +18,9 @@ final class AlterRenameTableTest extends TestCase
 {
     public function testDeriveStatementResolvesTheTableAndProvidesNoDeclaration(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a)');
-        $operation = $semantics->inspect('ALTER TABLE t RENAME TO u', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a)');
+        $operation = $semantics->diagnose('ALTER TABLE t RENAME TO u', [$table]);
         $resolution = $operation->facts->relation($operation->statement)->table;
 
         self::assertInstanceOf(DeclaredTable::class, $resolution);
@@ -31,14 +31,14 @@ final class AlterRenameTableTest extends TestCase
 
     public function testDeriveStatementReportsAMissingTable(): void
     {
-        $operation = (new Semantics())->inspect('ALTER TABLE t RENAME TO u', []);
+        $operation = (new Inspection())->diagnose('ALTER TABLE t RENAME TO u', []);
 
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
     }
 
     public function testRenderWritesTheOldAndTheNewName(): void
     {
-        $operation = (new Semantics())->inspect('alter table main.t rename to "new name"');
+        $operation = (new Inspection())->diagnose('alter table main.t rename to "new name"');
 
         self::assertInstanceOf(AlterRenameTable::class, $operation->statement);
         self::assertSame('new name', $operation->statement->newName->value);

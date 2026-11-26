@@ -8,8 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
@@ -21,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FrameBound::class)]
 #[Medium]
@@ -28,9 +28,9 @@ final class FrameBoundTest extends TestCase
 {
     public function testReadsTheOffsetOfAnAnalyzedBoundary(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT sum(a) OVER (ROWS BETWEEN 2 PRECEDING AND ? FOLLOWING) FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT sum(a) OVER (ROWS BETWEEN 2 PRECEDING AND ? FOLLOWING) FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -49,16 +49,16 @@ final class FrameBoundTest extends TestCase
 
     public function testRenderWritesEveryKindOfBoundary(): void
     {
-        $operation = (new Semantics())->analyze('select sum(a) over (rows between unbounded preceding and 1 preceding) AS c1, sum(a) over (rows between current row and 1 following) AS c2, sum(a) over (rows between 1 following and unbounded following) AS c3 from t');
+        $operation = (new Inspection())->inspect('select sum(a) over (rows between unbounded preceding and 1 preceding) AS c1, sum(a) over (rows between current row and 1 following) AS c2, sum(a) over (rows between 1 following and unbounded following) AS c3 from t');
 
         self::assertSame('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) AS c1, sum(a) OVER (ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) AS c2, sum(a) OVER (ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING) AS c3 FROM t', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltBoundary(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $frame = new Frame(FrameUnit::Rows, new FrameBound(FrameBoundKind::Preceding, new BindParameter(ParameterPrefix::Colon, 'n')), new FrameBound(FrameBoundKind::UnboundedFollowing));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame)))]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame)))]));
 
         self::assertSame('SELECT sum(1) OVER (ROWS BETWEEN :n PRECEDING AND UNBOUNDED FOLLOWING)', $operation->toString());
     }

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * optional and always written back.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the renamed column
  *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedMember(\SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedPart::Column, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'));
  *     [$member->part->value, $member->name->value] // => ['COLUMN', 'a']

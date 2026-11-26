@@ -14,9 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * Mirrors PT_role_or_dynamic_privilege read as a role and PT_role_at_host.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-roles.
  *
- * @visibility public
- * @example Reading a granted role
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT reader TO u')->statement->roles[0]->role->user->value // => 'reader'
+ * @visibility SqlSemantics
  */
 final class GrantedRole implements Grantable
 {

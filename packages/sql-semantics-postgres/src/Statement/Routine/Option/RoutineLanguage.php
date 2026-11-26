@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * in language `sql`.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the language name
  *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage(new \SqlSemantics\Platform\PostgreSql\Statement\Option\Word(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('plpgsql')));
  *     $option->name() // => 'plpgsql'

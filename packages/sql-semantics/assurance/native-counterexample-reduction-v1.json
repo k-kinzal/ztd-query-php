@@ -1,0 +1,14 @@
+{
+  "revision": "SemanticsIR/native-counterexample-reduction-1",
+  "approval": "pending-human-review",
+  "scope": "Known independent comparison failures of direct native SELECT projections in the shared join runner. Require an unchanged direct oracle request, a resolved independent source or closed join source, and no DISTINCT, result ordering, bounds or bound parameters. Require at least two explicitly labelled output positions.",
+  "original": "Write the original input, comparison failure, case identifier, attempted batch and execution accounting before any reduction. Keep that artifact unchanged.",
+  "admittedSignals": ["meaning-mismatch"],
+  "maximumReductionProbes": 9,
+  "maximumProposals": 4,
+  "proposals": "Remove one output position at a time in original position order. Keep the original input sources, filter, remaining operand identities and labels. Only consider strictly smaller requests.",
+  "confirmation": "Reconstruct through the normal direct constructor and confirm all original oracle premises. Independently observe SQL on the same fixture. Repeat the original failure once. A candidate must reproduce the same metadata, row or combined comparison failure twice, with the same exact response per replay.",
+  "time": "Use the original worker and observer deadlines. A transport, construction, infrastructure or timeout failure does not count as a reduction.",
+  "retention": "Record all classifications in a separate artifact linked to the original by digest. A reducer failure or unmet premise cannot remove or replace the original counterexample. Negative inputs, analyzed SQL and unclassified observations keep their original request.",
+  "controls": ["A stable comparable smaller construction", "A different failure family", "An invalid construction or failed fixture premise", "A flaky reduction", "Bounded proposals and explicit rejection of ineligible cases"]
+}

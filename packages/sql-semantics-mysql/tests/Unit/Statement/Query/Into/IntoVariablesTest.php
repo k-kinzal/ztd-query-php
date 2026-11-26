@@ -7,13 +7,13 @@ namespace Tests\Unit\Statement\Query\Into;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(IntoVariables::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class IntoVariablesTest extends TestCase
 {
     public function testRenderWritesTheTargets(): void
     {
-        $operation = (new Semantics())->inspect('select a, b from t into @x, y');
+        $operation = (new Inspection())->diagnose('select a, b from t into @x, y');
 
         self::assertSame('SELECT a, b FROM t INTO @x, y', $operation->toString());
         self::assertInstanceOf(Select::class, $operation->statement);
@@ -32,7 +32,7 @@ final class IntoVariablesTest extends TestCase
 
     public function testADifferentNumberOfColumnsIsReported(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1, 2 INTO @x');
+        $operation = (new Inspection())->diagnose('SELECT 1, 2 INTO @x');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);

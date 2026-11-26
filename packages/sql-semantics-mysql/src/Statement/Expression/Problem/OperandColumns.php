@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html,
  * https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_operand_columns.
  *
- * @visibility public
- * @example Reporting a row where a single value is required
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE (a, b) + 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Operand should contain 1 column(s), not 2.
+ * @visibility SqlSemantics
  */
 final class OperandColumns implements Diagnostic
 {

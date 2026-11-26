@@ -15,9 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * definition, the added column or the new column name with "duplicate column name".
  * Source: https://sqlite.org/lang_createtable.html, https://sqlite.org/lang_altertable.html.
  *
- * @visibility public
- * @example Reporting a repeated column name
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, A)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column A is defined more than once.
+ * @visibility SqlSemantics
  */
 final class DuplicateColumn implements Diagnostic
 {

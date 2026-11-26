@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  * word ON.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/install-component.html.
  *
- * @visibility public
- * @example Persisting a component variable
- *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("INSTALL COMPONENT 'file://c' SET PERSIST c.v = 4");
- *     [$install->statement->settings[0]->variable->scope, $install->statement->settings[0]->variable->instance?->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'c']
+ * @visibility SqlSemantics
  */
 final class ComponentSetting implements Node
 {

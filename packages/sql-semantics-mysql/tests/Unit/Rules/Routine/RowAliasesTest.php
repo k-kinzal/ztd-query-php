@@ -13,11 +13,11 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Rules\Routine\RowAliases;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RowAliases::class)]
 #[Medium]
@@ -25,9 +25,9 @@ final class RowAliasesTest extends TestCase
 {
     public function testVisibleResolvesTheOldRowToTheTriggerTable(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $operation = $semantics->inspect('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET NEW.a = OLD.a + 1', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $operation = $semantics->diagnose('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET NEW.a = OLD.a + 1', [$table]);
         $trigger = $operation->statement;
         self::assertInstanceOf(CreateTrigger::class, $trigger);
         $set = $trigger->body;
@@ -46,49 +46,49 @@ final class RowAliasesTest extends TestCase
 
     public function testVisibleMakesBothRowsVisibleInAnUpdateTriggerUnderAnySpelling(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
 
-        self::assertSame([], $semantics->inspect('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW SET @x = OLD.a + New.a + nEw.a + old.a', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW SET @x = OLD.a + New.a + nEw.a + old.a', [$table])->facts->diagnostics);
     }
 
     public function testVisibleHasNoOldRowInAnInsertTrigger(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $operation = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET @x = NEW.a + OLD.a', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $operation = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET @x = NEW.a + OLD.a', [$table]);
 
         self::assertSame(['Column OLD.a does not exist.'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $operation->facts->diagnostics));
     }
 
     public function testVisibleHasNoNewRowInADeleteTrigger(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $operation = $semantics->inspect('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW SET @x = OLD.a + NEW.a', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $operation = $semantics->diagnose('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW SET @x = OLD.a + NEW.a', [$table]);
 
         self::assertSame(['Column NEW.a does not exist.'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $operation->facts->diagnostics));
     }
 
     public function testVisibleReachesNoColumnWithoutTheQualifier(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $operation = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET @x = a + 1', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $operation = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET @x = a + 1', [$table]);
 
         self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $operation->facts->diagnostics));
     }
 
     public function testSpellingsListsEveryLetterCaseUnderCaseSensitiveNames(): void
     {
-        $context = new AnalysisContext((new Semantics())->profile(), [new Name('db')]);
+        $context = new AnalysisContext((new Inspection())->profile(), [new Name('db')]);
 
         self::assertSame(['NEW', 'nEW', 'NeW', 'neW', 'NEw', 'nEw', 'New', 'new'], (new RowAliases())->spellings('NEW', $context));
     }
 
     public function testSpellingsKeepsOneSpellingUnderCaseInsensitiveNames(): void
     {
-        $context = new AnalysisContext((new Semantics())->profile(), [new Name('db')], [], true, Comparison::AsciiInsensitive);
+        $context = new AnalysisContext((new Inspection())->profile(), [new Name('db')], [], true, Comparison::AsciiInsensitive);
 
         self::assertSame(['OLD'], (new RowAliases())->spellings('OLD', $context));
     }

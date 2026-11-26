@@ -1,0 +1,617 @@
+{
+  "revision": "SemanticsIR/sqlite-scalar-boundaries-22",
+  "approval": "pending-human-review",
+  "scope": "Scalar scope walking, conditional and cast rules, typed prefix operands, numeric signs, and SQL emission. Enforce checked native CAST type names and cast affinity agreement, exact builtin selection for binary IFNULL, ordered scalar traversal and statement payload accounting.",
+  "rules": {
+    "Expression/CaseExpression::__construct": {
+      "common": [
+        "Check::input(count($branches) <= 32, 'A CASE expression can have at most 32 branches.');",
+        "$this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression needs at least one checked branch.', 1);"
+      ]
+    },
+    "Predicate/ExpressionScope::check": {
+      "common": [
+        "$references = [];",
+        "$nodes = 0;",
+        "$payloadBytes = 0;",
+        "while ($pending !== []) {",
+        "    $frame = array_pop($pending);",
+        "    [$expression, $height, $visibility] = $frame;",
+        "    Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "    if ($expression instanceof CaseExpression || $expression instanceof MembershipTest || $expression instanceof FoldedMembership || $expression instanceof PatternTest || $expression instanceof Coalesce) {",
+        "        foreach ($this->branches($expression, $height + 1, $visibility) as $operand) {",
+        "            $pending[] = $operand;",
+        "        }",
+        "        continue;",
+        "    }",
+        "    match (true) {",
+        "        $expression instanceof ColumnReference => $references[] = $this->checkReference($expression, $widths, $visibility),",
+        "        $expression instanceof Parameter => $payloadBytes += $this->parameterBytes($expression, $allowLiveParameters, isset($frame[3]), $allowRegistrations),",
+        "        $expression instanceof CastExpression, $expression instanceof CollatedExpression, $expression instanceof TruthTest, $expression instanceof UnaryExpression => $pending[] = [$expression->operand, $height + 1, $visibility],",
+        "        $expression instanceof BetweenTest => array_push($pending, [$expression->upper, $height + 1, $visibility], [$expression->lower, $height + 1, $visibility], [$expression->operand, $height + 1, $visibility]),",
+        "        $expression instanceof TextLiteral => $payloadBytes += $expression->payloadBytes(),",
+        "        $expression instanceof BlobLiteral => $payloadBytes += strlen($expression->hex),",
+        "        $expression instanceof RealLiteral => $payloadBytes += $expression->payloadBytes(),",
+        "        $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Concatenation, $expression instanceof Logical => array_push($pending, [$expression->right, $height + 1, $visibility], [$expression->left, $height + 1, $visibility]),",
+        "        $expression instanceof HexIntegerLiteral, $expression instanceof IntegerLiteral, $expression instanceof NullLiteral => null,",
+        "    };",
+        "    if ($expression instanceof CastExpression && $expression->typeName !== null) {",
+        "        $payloadBytes += $expression->typeName->payloadBytes();",
+        "    }",
+        "    Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');",
+        "}",
+        "return $references;"
+      ]
+    },
+    "Predicate/ExpressionScope::parameterBytes": {
+      "common": [
+        "Check::input($allowLiveParameters || ($allowRegistrations && $registration), 'A schema expression cannot contain a parameter.');",
+        "return strlen($parameter->label);"
+      ]
+    },
+    "Predicate/ExpressionScope::choice": {
+      "common": [
+        "$operands = [];",
+        "if ($expression->base !== null) {",
+        "    $operands[] = [$expression->base, $height, $visibility];",
+        "}",
+        "foreach ($expression->branches as $branch) {",
+        "    $operands[] = [$branch->when, $height, $visibility];",
+        "    $operands[] = [$branch->then, $height, $visibility];",
+        "}",
+        "if ($expression->otherwise !== null) {",
+        "    $operands[] = [$expression->otherwise, $height, $visibility];",
+        "}",
+        "",
+        "return $operands;"
+      ]
+    },
+    "SelectSql::choice": {
+      "common": [
+        "$sql = '(CASE';",
+        "if ($expression->base !== null) {",
+        "    $sql .= ' ' . $this->expression($expression->base, $source, $joins);",
+        "}",
+        "foreach ($expression->branches as $branch) {",
+        "    $sql .= ' WHEN ' . $this->expression($branch->when, $source, $joins)",
+        "        . ' THEN ' . $this->expression($branch->then, $source, $joins);",
+        "}",
+        "if ($expression->otherwise !== null) {",
+        "    $sql .= ' ELSE ' . $this->expression($expression->otherwise, $source, $joins);",
+        "}",
+        "",
+        "return $sql . ' END)';"
+      ]
+    },
+    "ExpressionLowering::choice": {
+      "common": [
+        "$branches = [];",
+        "foreach ($expression->branches as $branch) {",
+        "    $branches[] = new CaseBranch($this->lower($branch->when, $binding), $this->lower($branch->then, $binding));",
+        "}",
+        "",
+        "return new CaseExpression(",
+        "    $expression->base === null ? null : $this->lower($expression->base, $binding),",
+        "    $branches,",
+        "    $expression->otherwise === null ? null : $this->lower($expression->otherwise, $binding),",
+        ");"
+      ]
+    },
+    "SelectSql::expression": {
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof ColumnReference => $this->column($expression, $source, $joins),",
+        "    $expression instanceof Coalesce => $this->coalesce($expression, $source, $joins),",
+        "    $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',",
+        "    $expression instanceof BetweenTest => $this->between($expression, $source, $joins),",
+        "    $expression instanceof FoldedMembership => $this->foldedMembership($expression),",
+        "    $expression instanceof MembershipTest => $this->membership($expression, $source, $joins),",
+        "    $expression instanceof PatternTest => $this->pattern($expression, $source, $joins),",
+        "    $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),",
+        "    $expression instanceof Concatenation => '(' . $this->expression($expression->left, $source, $joins) . ' || ' . $this->expression($expression->right, $source, $joins) . ')',",
+        "    $expression instanceof CollatedExpression => '(' . $this->expression($expression->operand, $source, $joins) . ' COLLATE ' . $expression->collation->value . ')',",
+        "    $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . ($expression->typeName?->quoted() ?? $expression->target->value) . '))',",
+        "    $expression instanceof TruthTest => $this->truth($expression, $source, $joins),",
+        "    $expression instanceof UnaryExpression => '(' . $expression->kind->value . ' ' . $this->expression($expression->operand, $source, $joins) . ')',",
+        "    $expression instanceof IntegerLiteral => $expression->decimal,",
+        "    $expression instanceof HexIntegerLiteral, $expression instanceof RealLiteral, $expression instanceof TextLiteral => $expression->toString(),",
+        "    $expression instanceof BlobLiteral => \"X'\" . $expression->hex . \"'\",",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => '?' . $expression->label,",
+        "};"
+      ]
+    },
+    "ExpressionLowering::cast": {
+      "common": [
+        "$native = $expression->nativeType();",
+        "$target = CastTarget::from((new TypeNameAffinity())->conversion($native));",
+        "$name = $this->indexSyntax && $native !== $target->value ? new CastTypeName($native) : null;",
+        "return new CastExpression($target, $this->lower($expression->operand, $binding), $name);"
+      ]
+    },
+    "ExpressionLowering::prefix": {
+      "common": [
+        "$literal = (new NumericLiteralLowering())->signed($expression);",
+        "if ($literal !== null) {",
+        "    return $literal;",
+        "}",
+        "$operand = $this->lower($expression->operand, $binding);",
+        "",
+        "return match ($expression->operator) {",
+        "    UnaryOperator::Plus => new UnaryExpression(UnaryKind::Plus, $operand),",
+        "    UnaryOperator::Not => new UnaryExpression(UnaryKind::Not, $operand),",
+        "    UnaryOperator::BitNot => new UnaryExpression(UnaryKind::Complement, $operand),",
+        "    UnaryOperator::Minus => new UnaryExpression(UnaryKind::Minus, $operand),",
+        "};"
+      ]
+    },
+    "Literal/NumericLiteralLowering::signed": {
+      "common": [
+        "if ($expression->operator !== UnaryOperator::Plus && $expression->operator !== UnaryOperator::Minus) {",
+        "    return null;",
+        "}",
+        "$operand = $expression->operand;",
+        "while ($operand instanceof Grouped || ($operand instanceof Unary && $operand->operator === UnaryOperator::Plus)) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "",
+        "return $operand instanceof ParsedInteger || $operand instanceof ParsedHex || $operand instanceof ParsedReal",
+        "    ? $this->lower($operand, $expression->operator === UnaryOperator::Minus)",
+        "    : null;"
+      ]
+    },
+    "SelectSql::truth": {
+      "common": [
+        "$value = $this->expression($expression->operand, $source, $joins);",
+        "$condition = $expression->desired ? $value : '(NOT ' . $value . ')';",
+        "[$matched, $unmatched] = $expression->negated ? ['0', '1'] : ['1', '0'];",
+        "",
+        "return '(CASE WHEN ' . $condition . ' THEN ' . $matched . ' ELSE ' . $unmatched . ' END)';"
+      ]
+    },
+    "ExpressionLowering::binary": {
+      "common": [
+        "if ($expression->operator === BinaryOperator::Concat) {",
+        "    $left = $this->lower($expression->left, $binding);",
+        "    $right = $this->lower($expression->right, $binding);",
+        "",
+        "    return new Concatenation($left, $right);",
+        "}",
+        "$operator = (new BinaryOperatorLowering())->lower($expression->operator);",
+        "$left = $this->lower($expression->left, $binding);",
+        "$writtenRight = $expression->right;",
+        "while ($writtenRight instanceof Grouped) {",
+        "    $writtenRight = $writtenRight->operand;",
+        "}",
+        "if (($operator === ComparisonOperator::Is || $operator === ComparisonOperator::IsNot)",
+        "    && $writtenRight instanceof TruthWord && ($desired = $binding->constantTruth($writtenRight)) !== null) {",
+        "    return new TruthTest($left, $desired, $operator === ComparisonOperator::IsNot);",
+        "}",
+        "$right = $this->lower($writtenRight, $binding);",
+        "",
+        "return match (true) {",
+        "    $operator instanceof ArithmeticOperator => new Arithmetic($operator, $left, $right),",
+        "    $operator instanceof ComparisonOperator => new Comparison($operator, $left, $right),",
+        "    $operator instanceof LogicalOperator => new Logical($operator, $left, $right),",
+        "};"
+      ]
+    },
+    "ExpressionLowering::truthWord": {
+      "common": [
+        "$truth = $binding->constantTruth($expression);",
+        "",
+        "return $truth === null ? $binding->scalarValue($expression) : new IntegerLiteral($truth ? '1' : '0');"
+      ]
+    },
+    "SourceBinding::constantTruth": {
+      "common": [
+        "return $this->operation->facts->scalar($word)->resolution === null ? $word->value : null;"
+      ]
+    },
+    "SelectSql::between": {
+      "common": [
+        "return '(' . $this->expression($expression->operand, $source, $joins)",
+        "    . ($expression->negated ? ' NOT BETWEEN ' : ' BETWEEN ')",
+        "    . $this->expression($expression->lower, $source, $joins) . ' AND '",
+        "    . $this->expression($expression->upper, $source, $joins) . ')';"
+      ]
+    },
+    "Literal/RealLiteral::toString": {
+      "common": [
+        "return ($this->negative ? '-' : '') . $this->whole",
+        "    . ($this->fraction === null ? '' : '.' . $this->fraction)",
+        "    . ($this->exponent === null ? '' : ($this->uppercaseExponent ? 'E' : 'e') . $this->exponent);"
+      ]
+    },
+    "Predicate/MembershipTest::__construct": {
+      "common": [
+        "Check::input(count($items) <= 8190, 'A membership list exceeds the expanded expression envelope.');",
+        "$this->items = Check::listOf($items, MembershipItem::class, 'Expected an ordered list of scalar membership items.');"
+      ]
+    },
+    "Predicate/ExpressionScope::members": {
+      "common": [
+        "$operands = [[$expression->operand, $height, $visibility]];",
+        "foreach ($expression->items as $item) {",
+        "    $operands[] = [$item->expression, $height, $visibility];",
+        "}",
+        "",
+        "return $operands;"
+      ]
+    },
+    "SelectSql::membership": {
+      "common": [
+        "$operand = $this->expression($expression->operand, $source, $joins);",
+        "$members = [];",
+        "foreach ($expression->items as $item) {",
+        "    $members[] = $this->expression($item->expression, $source, $joins);",
+        "}",
+        "",
+        "return '(' . $operand . ($expression->negated ? ' NOT IN (' : ' IN (') . implode(', ', $members) . '))';"
+      ]
+    },
+    "ExpressionLowering::membership": {
+      "common": [
+        "if ($expression->items === []) {",
+        "    return (new FoldedMembershipLowering())->lower($expression->operand, $expression->negated);",
+        "}",
+        "$operand = $this->lower($expression->operand, $binding);",
+        "$members = [];",
+        "foreach ($expression->items as $item) {",
+        "    $members[] = new MembershipItem($this->lower($item, $binding));",
+        "}",
+        "",
+        "return new MembershipTest($operand, $members, $expression->negated);"
+      ]
+    },
+    "Predicate/FoldedMembership::__construct": {
+      "common": [
+        "Check::input(count($bindings) <= 8192, 'An empty membership footprint exceeds the expanded expression envelope.');",
+        "$this->bindings = Check::listOf($bindings, Parameter::class, 'Expected an ordered list of numbered registrations.');"
+      ]
+    },
+    "Predicate/FoldedMembershipLowering::lower": {
+      "common": [
+        "$output = Platform::shared()->syntaxOutput();",
+        "$output->node($expression);",
+        "$bindings = [];",
+        "foreach ($output->canonical() as $piece) {",
+        "    if ($piece->kind !== PieceKind::Literal || !str_contains('?:@$', $piece->text[0])) {",
+        "        continue;",
+        "    }",
+        "    Check::input($piece->text[0] === '?', 'An empty membership requires numbered bindings.');",
+        "    $bindings[] = new Parameter(substr($piece->text, 1));",
+        "}",
+        "",
+        "return new FoldedMembership($matches, $bindings);"
+      ]
+    },
+    "SelectSql::foldedMembership": {
+      "common": [
+        "if ($expression->bindings === []) {",
+        "    if ($this->preserveEmptyMembership) {",
+        "        return $expression->matches ? '(0 NOT IN ())' : '(0 IN ())';",
+        "    }",
+        "",
+        "    return $expression->matches ? '1' : '0';",
+        "}",
+        "$branches = [];",
+        "foreach ($expression->bindings as $binding) {",
+        "    $branches[] = ' WHEN ?' . $binding->label . ' THEN 0';",
+        "}",
+        "",
+        "return '((CASE' . implode('', $branches) . ' END)' . ($expression->matches ? ' NOT IN ())' : ' IN ())');"
+      ]
+    },
+    "Predicate/ExpressionScope::branches": {
+      "common": [
+        "if ($expression instanceof CaseExpression) {",
+        "    return $this->choice($expression, $height, $visibility);",
+        "}",
+        "if ($expression instanceof Coalesce) {",
+        "    return $this->coalesce($expression, $height, $visibility);",
+        "}",
+        "if ($expression instanceof MembershipTest) {",
+        "    return $this->members($expression, $height, $visibility);",
+        "}",
+        "if ($expression instanceof PatternTest) {",
+        "    return $this->pattern($expression, $height, $visibility);",
+        "}",
+        "",
+        "$operands = [];",
+        "foreach ($expression->bindings as $binding) {",
+        "    $operands[] = [$binding, $height, $visibility, true];",
+        "}",
+        "",
+        "return $operands;"
+      ]
+    },
+    "ExpressionLowering::collated": {
+      "common": [
+        "$collation = Collation::tryFrom(strtoupper($expression->collation->value));",
+        "Check::input($collation !== null, 'An explicit collation requires a known SQLite builtin.');",
+        "",
+        "return new CollatedExpression($this->lower($expression->operand, $binding), $collation);"
+      ]
+    },
+    "ExpressionLowering::nullTest": {
+      "common": [
+        "$operator = match ($expression->form) {",
+        "    NullTestForm::IsNull => ComparisonOperator::Is,",
+        "    NullTestForm::NotNull, NullTestForm::NotNullWords => ComparisonOperator::IsNot,",
+        "};",
+        "",
+        "return new Comparison($operator, $this->lower($expression->operand, $binding), new NullLiteral());"
+      ]
+    },
+    "Literal/HexIntegerLiteral::toString": {
+      "common": [
+        "return ($this->negated ? '-' : '') . '0x' . $this->digits;"
+      ]
+    },
+    "Rows/ValueRowOperand::checked": {
+      "common": [
+        "if ($value instanceof Arithmetic || $value instanceof BetweenTest || $value instanceof CaseExpression",
+        "    || $value instanceof CastExpression || $value instanceof Coalesce || $value instanceof CollatedExpression",
+        "    || $value instanceof Comparison || $value instanceof Concatenation || $value instanceof FoldedMembership",
+        "    || $value instanceof Logical || $value instanceof MembershipTest || $value instanceof PatternTest",
+        "    || $value instanceof TruthTest || $value instanceof UnaryExpression) {",
+        "    return $value;",
+        "}",
+        "",
+        "return $this->atom($value);"
+      ]
+    },
+    "SelectSql::column": {
+      "common": [
+        "$source = $expression->source === 0 ? $source : ($joins[$expression->source - 1]->source ?? null);",
+        "Check::invariant(isset($source->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "",
+        "$name = $source->columns[$expression->slot]->quoted();",
+        "",
+        "return $source instanceof DefinitionSource ? $name : $this->alias($expression->source) . '.' . $name;"
+      ]
+    },
+    "SelectSql::pattern": {
+      "common": [
+        "$subject = $this->expression($expression->subject, $source, $joins);",
+        "$pattern = $this->expression($expression->pattern, $source, $joins);",
+        "$escape = $expression->escape === null ? '' : ' ESCAPE ' . $this->expression($expression->escape, $source, $joins);",
+        "",
+        "return '(' . $subject . ($expression->negated ? ' NOT ' : ' ') . $expression->kind->value . ' ' . $pattern . $escape . ')';"
+      ]
+    },
+    "ExpressionLowering::pattern": {
+      "common": [
+        "$kind = match ($expression->operator) {",
+        "    PatternOperator::Like => PatternKind::AsciiLike,",
+        "    PatternOperator::Glob => PatternKind::Glob,",
+        "    PatternOperator::Regexp, PatternOperator::Match => throw new InvalidConstruction('This pattern routine has no resolved SQLite profile.'),",
+        "};",
+        "$subject = $this->lower($expression->left, $binding);",
+        "$pattern = $this->lower($expression->right, $binding);",
+        "$escape = $expression->escape === null ? null : $this->lower($expression->escape, $binding);",
+        "",
+        "return new PatternTest($kind, $subject, $pattern, $expression->negated, $escape);"
+      ]
+    },
+    "Predicate/ExpressionScope::pattern": {
+      "common": [
+        "$operands = [[$expression->subject, $height, $visibility], [$expression->pattern, $height, $visibility]];",
+        "if ($expression->escape !== null) {",
+        "    $operands[] = [$expression->escape, $height, $visibility];",
+        "}",
+        "",
+        "return $operands;"
+      ]
+    },
+    "Predicate/Pattern/PatternTest::__construct": {
+      "common": [
+        "Check::input($kind !== PatternKind::Glob || $escape === null, 'GLOB does not accept an ESCAPE operand.');"
+      ]
+    },
+    "Literal/TextLiteral::__construct": {
+      "common": [
+        "Check::input(preg_match('//u', $value) === 1, 'TEXT literal requires valid UTF-8.');"
+      ]
+    },
+    "Literal/TextLiteral::toString": {
+      "common": [
+        "return str_contains($this->value, \"\\0\")",
+        "    ? \"(+CAST(X'\" . bin2hex($this->value) . \"' AS TEXT))\"",
+        "    : \"'\" . str_replace(\"'\", \"''\", $this->value) . \"'\";"
+      ]
+    },
+    "Literal/TextLiteral::payloadBytes": {
+      "common": [
+        "$length = strlen($this->value);",
+        "",
+        "return str_contains($this->value, \"\\0\") ? 2 * $length : $length + substr_count($this->value, \"'\");"
+      ]
+    },
+    "Predicate/ExpressionScope::checkReference": {
+      "common": [
+        "Check::input(",
+        "    $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),",
+        "    'Column slot must belong to the statement source at a visible occurrence.',",
+        ");",
+        "",
+        "return $expression;"
+      ]
+    },
+    "SelectSql::coalesce": {
+      "common": [
+        "$arguments = [];",
+        "foreach ($expression->arguments as $argument) {",
+        "    $arguments[] = $this->expression($argument->expression, $source, $joins);",
+        "}",
+        "return ($expression->ifNull ? 'IFNULL(' : 'COALESCE(') . implode(', ', $arguments) . ')';"
+      ]
+    },
+    "Predicate/ExpressionScope::coalesce": {
+      "common": [
+        "$operands = [];",
+        "foreach ($expression->arguments as $argument) {",
+        "    $operands[] = [$argument->expression, $height, $visibility];",
+        "}",
+        "",
+        "return $operands;"
+      ]
+    },
+    "Rows/ValueRowOperand::atom": {
+      "common": [
+        "Check::input(",
+        "    $value instanceof BlobLiteral || $value instanceof HexIntegerLiteral || $value instanceof IntegerLiteral",
+        "        || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral || $value instanceof TextLiteral,",
+        "    'A VALUES row needs a scalar operand independent of tables.',",
+        ");",
+        "",
+        "return $value;"
+      ]
+    },
+    "ExpressionLowering::lower": {
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "",
+        "if ($expression instanceof Binary) {",
+        "    return $this->binary($expression, $binding);",
+        "}",
+        "if ($expression instanceof Unary) {",
+        "    return $this->prefix($expression, $binding);",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof OperatorNullTest => $this->nullTest($expression, $binding),",
+        "    $expression instanceof ParsedBetween => new BetweenTest(",
+        "        $this->lower($expression->operand, $binding),",
+        "        $this->lower($expression->low, $binding),",
+        "        $this->lower($expression->high, $binding),",
+        "        $expression->negated,",
+        "    ),",
+        "    $expression instanceof ParsedMembership => $this->membership($expression, $binding),",
+        "    $expression instanceof ParsedPattern => $this->pattern($expression, $binding),",
+        "    $expression instanceof ParsedCollate => $this->collated($expression, $binding),",
+        "    $expression instanceof ParsedCase, $expression instanceof FunctionCall => $this->conditional($expression, $binding),",
+        "    $expression instanceof ParsedCast => $this->cast($expression, $binding),",
+        "    $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => (new NumericLiteralLowering())->lower($expression, false),",
+        "    $expression instanceof ParsedText => new TextLiteral($expression->value),",
+        "    $expression instanceof ParsedBlob => new BlobLiteral($expression->hex),",
+        "    $expression instanceof ParsedNull => new NullLiteral(),",
+        "    $expression instanceof BindParameter && $expression->prefix === ParameterPrefix::Question => new Parameter($expression->label),",
+        "    $expression instanceof TruthWord => $this->truthWord($expression, $binding),",
+        "    $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord, $expression instanceof LiteralColumn => $binding->scalarValue($expression),",
+        "    default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),",
+        "};"
+      ]
+    },
+    "ExpressionLowering::conditional": {
+      "common": [
+        "return $expression instanceof ParsedCase ? $this->choice($expression, $binding) : (new CoalesceLowering())->lower($expression, $binding, $this, $this->indexSyntax);"
+      ]
+    },
+    "Expression/Nulls/Coalesce::__construct": {
+      "common": [
+        "Check::input(!$ifNull || count($arguments) === 2, 'SQLite IFNULL requires exactly two arguments.');",
+        "Check::input(count($arguments) <= 127, 'SQLite COALESCE allows at most 127 arguments.');",
+        "$this->arguments = Check::listOf($arguments, CoalesceArgument::class, 'COALESCE requires at least two checked scalar arguments in order.', 2);"
+      ]
+    },
+    "Expression/Nulls/CoalesceLowering::lower": {
+      "common": [
+        "$name = strtr($call->name->value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');",
+        "Check::input($name === 'coalesce' || $name === 'ifnull' && count($call->arguments) === 2, 'This expression has no complete SQLite scalar representation.');",
+        "Check::input(!$call->star && $call->order === [] && $call->filter === null && $call->over === null, 'COALESCE requires ordinary scalar arguments.');",
+        "$arguments = [];",
+        "foreach ($call->arguments as $argument) {",
+        "    $arguments[] = new CoalesceArgument($lowering->lower($argument, $binding));",
+        "}",
+        "return new Coalesce($arguments, $preserveBuiltin && $name === 'ifnull');"
+      ]
+    },
+    "Literal/RealLiteral::__construct": {
+      "common": [
+        "Check::input(preg_match('/\\A[0-9]*\\z/', $whole) === 1 && preg_match('/\\A[0-9]*\\z/', $fraction ?? '') === 1, 'REAL significand parts must be decimal digits.');",
+        "Check::input($whole !== '' || ($fraction !== null && $fraction !== ''), 'REAL literal requires at least one significand digit.');",
+        "Check::input($exponent === null || preg_match('/\\A[+-]?[0-9]+\\z/', $exponent) === 1, 'REAL exponent must contain optionally signed decimal digits.');",
+        "Check::input(!$uppercaseExponent || $exponent !== null, 'An uppercase REAL exponent marker needs exponent digits.');",
+        "if ($fraction === null && $exponent === null) {",
+        "    $digits = ltrim($whole, '0');",
+        "    $boundary = $negative ? '9223372036854775808' : '9223372036854775807';",
+        "    Check::input(strlen($digits) > 19 || (strlen($digits) === 19 && strcmp($digits, $boundary) > 0), 'A point-free, exponent-free REAL must exceed its signed INTEGER boundary.');",
+        "}"
+      ]
+    },
+    "Literal/NumericLiteralLowering::lower": {
+      "common": [
+        "if ($scalar instanceof ParsedHex) {",
+        "    $digits = ltrim($scalar->digits, '0');",
+        "",
+        "    return new HexIntegerLiteral($digits === '' ? '0' : $digits, $negative);",
+        "}",
+        "if ($scalar instanceof ParsedReal) {",
+        "    return new RealLiteral($scalar->whole, $scalar->fraction, $scalar->exponent, $negative, $scalar->uppercaseExponent);",
+        "}",
+        "",
+        "$digits = ltrim($scalar->digits, '0');",
+        "$boundary = $negative ? '9223372036854775808' : '9223372036854775807';",
+        "if (strlen($digits) > 19 || (strlen($digits) === 19 && strcmp($digits, $boundary) > 0)) {",
+        "    return new RealLiteral($scalar->digits, null, null, $negative);",
+        "}",
+        "",
+        "return new IntegerLiteral($digits === '' ? '0' : ($negative ? '-' : '') . $digits);"
+      ]
+    },
+    "Expression/UnaryExpression::__construct": {
+      "common": [
+        "if ($kind === UnaryKind::Minus) {",
+        "    $literal = $operand;",
+        "    while ($literal instanceof self && $literal->kind === UnaryKind::Plus) {",
+        "        $literal = $literal->operand;",
+        "    }",
+        "    Check::input(!$literal instanceof HexIntegerLiteral || $literal->digits !== '8000000000000000', 'The minimum hexadecimal INTEGER cannot be negated.');",
+        "}"
+      ]
+    },
+    "ExpressionLowering::__construct": {
+      "common": []
+    },
+    "SelectSql::__construct": {
+      "common": []
+    },
+    "Expression/CastExpression::__construct": {
+      "common": [
+        "Check::input($typeName === null || $typeName->target() === $target, 'The native type name must select the effective CAST target.');"
+      ]
+    },
+    "Expression/CastTypeName::__construct": {
+      "common": [
+        "Check::input(!str_contains($value, \"\\x00\") && preg_match('//u', $value) === 1, 'A native CAST type name must be UTF-8 without NUL.');",
+        "Check::input($this->payloadBytes() <= 990000000, 'A native CAST type name exceeds the SQLite statement size budget.');"
+      ]
+    },
+    "Expression/CastTypeName::target": {
+      "common": [
+        "return CastTarget::from((new TypeNameAffinity())->conversion($this->value));"
+      ]
+    },
+    "Expression/CastTypeName::quoted": {
+      "common": [
+        "return '\"' . str_replace('\"', '\"\"', $this->value) . '\"';"
+      ]
+    },
+    "Expression/CastTypeName::payloadBytes": {
+      "common": [
+        "return strlen($this->value) + substr_count($this->value, '\"') + 2;"
+      ]
+    },
+    "Literal/RealLiteral::payloadBytes": {
+      "common": [
+        "return strlen($this->whole) + strlen($this->fraction ?? '') + strlen($this->exponent ?? '');"
+      ]
+    }
+  },
+  "extends": "sqlite-scalar-boundaries-v21.json",
+  "change": "Preserve the same native spelling and expression obligations while moving the REAL digit byte count into its immutable literal role."
+}

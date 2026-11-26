@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(SetQuantifier::class)]
 #[Medium]
@@ -17,10 +17,10 @@ final class SetQuantifierTest extends TestCase
 {
     public function testCasesAreReadFromASelectionAndWrittenBack(): void
     {
-        $semantics = new Semantics();
-        $distinct = $semantics->analyze('select distinct a from t');
-        $all = $semantics->analyze('select all a from t');
-        $plain = $semantics->analyze('select a from t');
+        $semantics = new Inspection();
+        $distinct = $semantics->inspect('select distinct a from t');
+        $all = $semantics->inspect('select all a from t');
+        $plain = $semantics->inspect('select a from t');
 
         self::assertInstanceOf(Select::class, $distinct->statement);
         self::assertSame(SetQuantifier::Distinct, $distinct->statement->quantifier);

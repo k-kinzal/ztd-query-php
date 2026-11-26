@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * Mirrors PT_create_role. Rule: MYSQL-CREATE-ROLE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-role.html. Status: Implemented.
  *
- * @visibility public
- * @example Creating roles
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create role if not exists reader, 'writer'@'%'")->toString() // => 'CREATE ROLE IF NOT EXISTS reader, writer@`%`'
+ * @visibility SqlSemantics
  */
 final class CreateRole implements Statement
 {

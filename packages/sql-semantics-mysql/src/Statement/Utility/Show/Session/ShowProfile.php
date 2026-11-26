@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-profile.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the columns of the sections
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PROFILE SWAPS, CPU FOR QUERY 2');
- *     [array_map(static fn (\SqlSemantics\Platform\MySql\Model\Statement\Shape\Field $field): ?string => $field->name?->value, iterator_to_array($show->fields())), $show->toString()] // => [['Status', 'Duration', 'CPU_user', 'CPU_system', 'Swaps'], 'SHOW PROFILE SWAPS, CPU FOR QUERY 2']
+ * @visibility SqlSemantics
  */
 final class ShowProfile implements Statement
 {

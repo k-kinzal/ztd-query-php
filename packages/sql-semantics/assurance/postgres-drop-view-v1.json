@@ -1,0 +1,114 @@
+{
+  "revision": "SemanticsIR/postgres-drop-view-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL persistent view removal with UTF-8 identifiers, standard-conforming strings, case-sensitive names and explicit schemas.",
+  "extends": ["server-drop-table-v1.json", "postgres-external-source-kinds-v1.json"],
+  "additionalPublicRoots": ["Schema/View/DropView"],
+  "constructors": {
+    "DropView": {
+      "type": "Schema/View/DropView",
+      "role": "A complete removal of one or more persistent views of one explicitly specified kind.",
+      "structure": "One view kind, an ordered nonempty owned list of absolute names, an absence policy, a dependency policy and the native release.",
+      "conditions": "Accept distinct checked view identities. Resolve known targets to the requested kind in analysis. A known absence with IF EXISTS requires an explicit known schema and a complete catalog.",
+      "meaning": "Delete exact ordinary or materialized views. RESTRICT rejects an unlisted dependent object. CASCADE removes the transitive dependent closure. The operation is transactional.",
+      "sql": "Print DROP and the exact view kind, the optional existence clause, ordered qualified names and an explicit dependency policy."
+    },
+    "ViewName": {
+      "type": "Schema/View/ViewName",
+      "role": "The exact persistent catalog identity of a view removal target.",
+      "structure": "One decoded schema identifier and one decoded view identifier.",
+      "conditions": "Both identifiers obey the existing PostgreSQL identifier domain. A temporary namespace is outside this persistent role.",
+      "meaning": "Identify this single catalog coordinate within the selected database and profile.",
+      "sql": "Quote both identifier components in schema and view order."
+    },
+    "ViewRemovalKind": {
+      "type": "Schema/View/ViewRemovalKind",
+      "role": "The native kind required of every target in a view removal.",
+      "structure": "Ordinary view or materialized view.",
+      "conditions": "The same single closed kind applies to each target.",
+      "meaning": "Select the native object-kind checks and removal rules for the named view population.",
+      "sql": "Write the exact VIEW or MATERIALIZED VIEW clause."
+    }
+  },
+  "existingRoles": ["Identifier"],
+  "structure": "Separate the catalog kind, absence behavior, dependency behavior and absolute ordered target identities.",
+  "conditions": "Support ordinary and materialized persistent views with names resolved in the same database and language profile. Reject missing required identities, wrong kinds, unknown schema absence and repeat targets at construction.",
+  "meaning": "Remove the named views and, only under CASCADE, their dependent views. An error aborts the current transaction. IF EXISTS tolerates a known absence. Native rollback restores changed catalog contents.",
+  "sql": "Emit the selected view kind, existence policy, fully qualified distinct targets and CASCADE or RESTRICT from the immutable value.",
+  "observations": [
+    "Loaded target identity, declared view kind, order, absence and dependency policy",
+    "Exact native status and SQLSTATE for missing targets and dependency failures",
+    "Remaining catalog objects and relkind after successful removal",
+    "Typed rows of surviving ordinary and materialized views, unrelated base data and a same-name decoy",
+    "Transaction activity, in-transaction marker and post-rollback restoration"
+  ],
+  "finite": {
+    "kind": ["VIEW", "MATERIALIZED VIEW"],
+    "targets": ["first", "second", "both", "first-missing", "missing-first", "missing", "cross-schema"],
+    "ifExists": [false, true],
+    "cascade": [false, true],
+    "dependent": [false, true],
+    "identities": 112,
+    "completeness": "Recover each clause and ordered target selection from the loaded graph and verify fixture dependencies independently before each statement. Exhaust the full Cartesian product on each pin."
+  },
+  "analysis": [
+    "Ordinary view using a search-path name and default dependency policy",
+    "Materialized view using a search-path name and default dependency policy",
+    "Ordinary view and same-spelled view in a second schema with RESTRICT",
+    "Ordered materialized view list with CASCADE and dependent views",
+    "Ordinary view with IF EXISTS and a known qualified absence",
+    "Materialized view with IF EXISTS and a known qualified absence",
+    "Ordinary view with CASCADE and two levels of dependent views",
+    "Two ordinary views named together with RESTRICT"
+  ],
+  "negative": [
+    "Empty ordered target list",
+    "Repeat of the same absolute target",
+    "Alias of a session-dependent temporary schema",
+    "Known ordinary view named as materialized",
+    "Known materialized view named as ordinary",
+    "Undeclared required view in a complete catalog",
+    "Optional absence outside the known schemas",
+    "Optional absence with an incomplete catalog"
+  ],
+  "exploration": {
+    "seeds": [2017, 12203, 43633],
+    "casesPerSeed": 20,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary target permutations and length, exact across-schema positions, both kinds, missing target position, dependency presence and both policy flags."
+  },
+  "faults": [
+    "Change the required catalog kind",
+    "Remove a same-name object from the other schema",
+    "Discard all targets after the first",
+    "Ignore the dependency policy",
+    "Ignore the existence policy",
+    "Accept a repeated absolute identity"
+  ],
+  "evidence": {
+    "P01": "Record the exact target identities, kind, clause policies and native profile.",
+    "P02": "Check role, distinction, scope and known-name resolution before publication.",
+    "P03": "Retain only immutable semantic identities and clause choices.",
+    "P04": "Combine kind, absence, dependency and the exact target sequence under native DDL rules.",
+    "P05": "Own the detached targets and use final immutable identifiers and a closed enum.",
+    "P06": "Render the operation from the exact structured value.",
+    "Q01": "Check the fixed independent invalid constructions and guarded code shapes.",
+    "Q02": "Accept all required finite direct and analyzed inputs for each release.",
+    "Q03": "Compare independent predictions for catalog deletion, dependency closure and transaction rollback.",
+    "Q04": "Compare native observations from both authored and emitted SQL.",
+    "Q05": "Link production construction and rendering to the two installed package layouts and exact artifacts."
+  },
+  "open": [
+    "Authorization and owner failures depend on the executing session.",
+    "The native test fixtures use ordinary and materialized view dependency chains with stable object contents. They do not exhaust PostgreSQL catalog dependency graph kinds.",
+    "The PDO observer records success and error SQLSTATE. Informational notices, including the textual reports of CASCADE or a skipped absence, are outside the effect observation in this domain."
+  ],
+  "trust": ["A truthful explicit catalog and the fixed PostgreSQL profile", "Independently populated catalog and typed native observer", "Trusted runtime and versioned verification tools"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-dropview.html",
+    "https://www.postgresql.org/docs/17/sql-dropmaterializedview.html"
+  ]
+}

@@ -13,9 +13,9 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableDeclaration;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableKey;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableDeclaration::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class TableDeclarationTest extends TestCase
 {
     public function testDomainsRecordTheDeclaredTypeOfEachColumn(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a integer, b, c ANY) STRICT')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a integer, b, c ANY) STRICT')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $domains = (new TableDeclaration())->domains($statement);
@@ -42,10 +42,10 @@ final class TableDeclarationTest extends TestCase
 
     public function testTableAllowsNullInAPrimaryKeyColumnOfAnOrdinaryTable(): void
     {
-        $semantics = new Semantics();
-        $single = $semantics->inspect('CREATE TABLE t (a TEXT PRIMARY KEY, b)')->declarations()[0];
-        $composite = $semantics->inspect('CREATE TABLE t (a INTEGER, b, PRIMARY KEY (a, b))')->declarations()[0];
-        $descending = $semantics->inspect('CREATE TABLE t (a INTEGER PRIMARY KEY DESC)')->declarations()[0];
+        $semantics = new Inspection();
+        $single = $semantics->diagnose('CREATE TABLE t (a TEXT PRIMARY KEY, b)')->declarations()[0];
+        $composite = $semantics->diagnose('CREATE TABLE t (a INTEGER, b, PRIMARY KEY (a, b))')->declarations()[0];
+        $descending = $semantics->diagnose('CREATE TABLE t (a INTEGER PRIMARY KEY DESC)')->declarations()[0];
 
         self::assertSame(Nullability::Nullable, $single->columns[0]->nullability);
         self::assertSame(Nullability::Nullable, $composite->columns[0]->nullability);
@@ -55,9 +55,9 @@ final class TableDeclarationTest extends TestCase
 
     public function testTableForbidsNullInPrimaryKeyColumnsOfWithoutRowidAndStrictTables(): void
     {
-        $semantics = new Semantics();
-        $withoutRowid = $semantics->inspect('CREATE TABLE t (a TEXT, b, c, PRIMARY KEY (a, b)) WITHOUT ROWID')->declarations()[0];
-        $strict = $semantics->inspect('CREATE TABLE t (a TEXT PRIMARY KEY, b TEXT) STRICT')->declarations()[0];
+        $semantics = new Inspection();
+        $withoutRowid = $semantics->diagnose('CREATE TABLE t (a TEXT, b, c, PRIMARY KEY (a, b)) WITHOUT ROWID')->declarations()[0];
+        $strict = $semantics->diagnose('CREATE TABLE t (a TEXT PRIMARY KEY, b TEXT) STRICT')->declarations()[0];
 
         self::assertSame([Nullability::NotNull, Nullability::NotNull, Nullability::Nullable], array_map(static fn (Column $column): Nullability => $column->nullability, $withoutRowid->columns));
         self::assertSame([], $withoutRowid->implicit);
@@ -68,7 +68,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testTableMakesTheIntegerPrimaryKeyOfATableConstraintTheRowid(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (a, id INTEGER, PRIMARY KEY (id DESC))')->declarations()[0];
+        $table = (new Inspection())->diagnose('CREATE TABLE t (a, id INTEGER, PRIMARY KEY (id DESC))')->declarations()[0];
 
         self::assertSame($table->columns[1], $table->implicit[0]->column);
         self::assertSame(Nullability::NotNull, $table->columns[1]->nullability);
@@ -76,7 +76,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testTableDeclaresGeneratedColumnsAsGeneratedNullableColumns(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT AS (a + 1) STORED, c AS (a) NOT NULL, d GENERATED ALWAYS AS (a) VIRTUAL)')->declarations()[0];
+        $table = (new Inspection())->diagnose('CREATE TABLE t (a INT, b INT AS (a + 1) STORED, c AS (a) NOT NULL, d GENERATED ALWAYS AS (a) VIRTUAL)')->declarations()[0];
 
         self::assertCount(4, $table->columns);
         self::assertSame([false, true, true, true], array_map(static fn (Column $column): bool => $column->generated, $table->columns));
@@ -87,8 +87,8 @@ final class TableDeclarationTest extends TestCase
 
     public function testTableBuildsTheDeclarationFromAnEstablishedKey(): void
     {
-        $semantics = new Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a, b)')->statement;
+        $semantics = new Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a, b)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $rule = new TableDeclaration();

@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
  * null by the commands that hold this choice.
  * Source: https://www.postgresql.org/docs/17/sql-droptable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the cascading behavior
  *     \SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior::Cascade->value // => 'CASCADE'
  */

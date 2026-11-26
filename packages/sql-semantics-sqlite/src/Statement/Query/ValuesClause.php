@@ -31,10 +31,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
  * and it can be NULL when one of its values can.
  * Source: https://sqlite.org/lang_select.html#the_values_clause. Status: Implemented.
  *
- * @visibility public
- * @example Reading the output of a VALUES clause
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VALUES (1, 'a'), (2, NULL)");
- *     [count($query->statement->rows), $query->field(1)->name->value, $query->field(1)->nullability] // => [2, 'column2', \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
+ * @visibility SqlSemantics
  */
 final class ValuesClause implements Statement, Query
 {

@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_get-format.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing GET_FORMAT()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT GET_FORMAT(DATE, 'EUR')");
- *     $query->field(0)->type->descriptor->name() // => 'VARCHAR'
+ * @visibility SqlSemantics
  */
 final class GetFormat implements Scalar
 {

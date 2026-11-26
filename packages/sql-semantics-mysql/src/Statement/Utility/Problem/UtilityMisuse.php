@@ -10,9 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A rule of SET, SHOW or EXPLAIN the statement breaks, which the server would refuse.
  *
- * @visibility public
- * @example Reading the message of a refused format
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('EXPLAIN FORMAT = yaml SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown EXPLAIN format name
+ * @visibility SqlSemantics
  */
 final class UtilityMisuse implements Diagnostic
 {

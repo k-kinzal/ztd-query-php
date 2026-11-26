@@ -21,11 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * written. Up to three parts read as a relation-style name.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS.
  *
- * @visibility public
- * @example Reading a schema-qualified type name
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT pg_catalog.int4 '1'");
- *     $name = $query->statement->targets[0]->expression->type->designation->name;
- *     [$name->qualified()?->schema?->value, $name->last()->value] // => ['pg_catalog', 'int4']
+ * @visibility SqlSemantics
  */
 final class DottedName implements ObjectReference
 {

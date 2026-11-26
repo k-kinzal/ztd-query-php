@@ -12,10 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-objects-security.html.
  *
- * @visibility public
- * @example Reading the security context of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER PROCEDURE p SQL SECURITY INVOKER');
- *     $alter->statement->characteristics[0]->context->value // => 'INVOKER'
+ * @visibility SqlSemantics
  */
 final class SqlSecurity implements Characteristic
 {

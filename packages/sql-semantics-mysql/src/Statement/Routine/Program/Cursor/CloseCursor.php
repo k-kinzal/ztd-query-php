@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * The facts follow MYSQL-PROGRAM-CURSORS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/close.html.
  *
- * @visibility public
- * @example Reading the cursor a CLOSE names
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; CLOSE c; END');
- *     [$create->statement->body->statements[0]->cursor->value, $create->facts->diagnostics] // => ['c', []]
+ * @visibility SqlSemantics
  */
 final class CloseCursor implements ProgramStatement
 {

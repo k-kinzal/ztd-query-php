@@ -1,0 +1,72 @@
+{
+  "revision": "SemanticsIR/sqlite-unique-keys-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2, UTF-8, numbered parameters and the pinned builtin collation registry.",
+  "scope": "Ordered inline and table UNIQUE declarations in CREATE TABLE, with explicit builtin collation and conflict rules, including composition with a primary key.",
+  "constructors": {
+    "Schema/Key/UniqueKey": {
+      "role": "An inline or table-scoped uniqueness constraint in its declaration order.",
+      "structure": "One or more ordered KeyTerm values, an inline decision, and an optional explicit KeyConflict. Each term owns its slot, resolved builtin collation and sort direction.",
+      "conditions": "The owning table checks the slot layout, key placement, inheritance of inline collations, and conflict-policy compatibility of equivalent native indexes. An inline uniqueness constraint has one ascending term. A table key term denotes an unqualified declared column. An absent conflict algorithm remains distinct from explicit ABORT when equivalent indexes are combined.",
+      "meaning": "An applicable constraint rejects or resolves duplicate keys. Any NULL key part bypasses the uniqueness collision. Equivalent native autoindexes use the same ordered column slots and collations even when their sort directions differ. The first declaration provides index ordering and an explicit conflict clause takes precedence over an omitted one. Distinct explicit policies on the same index are invalid.",
+      "externalInterpretation": "Use the same SQLite storage affinity, builtin collations, ordered declaration and write-time conflict override. Interpret effects against the same initial rows and transaction.",
+      "sql": "Emit an inline UNIQUE or a table UNIQUE with the bound columns and any effective collation that differs from the column default. Preserve declaration order and any explicit conflict policy.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Schema/CreateTable", "Schema/TableColumn", "Schema/Key/PrimaryKey", "Schema/Key/KeyTerm", "Schema/Key/KeyConflict", "Collation"],
+  "rules": [
+    "An ordinary CREATE TABLE owns its complete ordered list of inline key occurrences followed by table key occurrences. Inline keys (including an inline primary key) are in owning column order. Statement SQL preserves ordering within a column and among table constraints.",
+    "Each column has one effective builtin default collation, BINARY when omitted. A term is resolved against that collation unless the SQL specifies its own. An explicitly BINARY term on a NOCASE column is distinct from an inherited NOCASE term.",
+    "Constraint placement, rowid aliasing and WITHOUT ROWID determine which declared keys create native indexes. An INTEGER primary key that aliases the rowid does not coalesce with a uniqueness autoindex. Equivalent native keys do not compare their sort direction. Two explicit different conflict algorithms on an equivalent native index fail at the declaration boundary, including explicit ABORT.",
+    "For writes, the rowid check precedes the unique indexes. Indexes with REPLACE are checked after other automatically created unique indexes. Among ordinary distinct indexes, declaration order and the native reverse registration order affect which conflicting policy is observed. The preserved fixtures distinguish those outcomes."
+  ],
+  "observations": [
+    "Compare catalog column positions, primary roles, native autoindex names and precedence, index origins, exact indexed slot, collation and direction, and implicit suffix roles.",
+    "Compare row multiplicity, all NULL key combinations, collided and non-collided values, default and explicit conflict policy behavior, exact constraint result and transaction changes.",
+    "Check the input SQL and emitted SQL independently for analyzed inputs, including originally unsupported inline UNIQUE and the two known conflicting-order witnesses."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "strict": [false, true],
+    "policies": [null, "ROLLBACK", "ABORT", "FAIL", "IGNORE", "REPLACE"],
+    "layouts": ["inline", "inline-nocase", "table-binary-override", "composite", "two-separate", "equivalent-sort", "rowid-alias", "without-rowid", "ordered-conflicts"],
+    "identity": "Observe all 216 schema, strictness, conflict declaration and layout combinations. Measure their effects in both explicit and implicit transactions."
+  },
+  "exploration": {
+    "seeds": [44257, 52901, 61319],
+    "casesPerSeed": 36,
+    "timeoutSeconds": 260,
+    "allowedExclusions": [],
+    "structure": "Vary unique key count, ordering and placement, width, reference slots, builtin collations, sort direction, policy, and primary-key and rowid roles. Generate equivalent keys only with compatible explicit policies."
+  },
+  "negative": [
+    "An invisible direct uniqueness slot",
+    "A descending or multi-term inline uniqueness constraint",
+    "An inline key outside the checked column ordering",
+    "A direct table with equivalent indexed keys and different explicit policies",
+    "An analyzed table with equivalent UNIQUE clauses and conflicting explicit policies",
+    "An analyzed UNIQUE term that does not name a declared column",
+    "An analyzed UNIQUE term with a custom collation"
+  ],
+  "faults": [
+    "Drop the unique declaration",
+    "Reverse two observable constraint placements",
+    "Replace an explicitly BINARY key collation by its column's nonbinary collation",
+    "Replace explicit conflict behavior by a distinct algorithm",
+    "Subtract the indexed term in a composite constraint"
+  ],
+  "predecessorCheck": {
+    "admittedInput": "CREATE TABLE t (a INTEGER UNIQUE)",
+    "change": "Run the exact previously unsupported declaration as an analyzed positive. Keep the earlier rejection boundary by exercising another unsupported constraint there and keep its earlier finite and seeded domains."
+  },
+  "open": ["User-defined collation functions, explicit named constraint identities, generated columns, CHECK and FOREIGN KEY composition, and other SQLite release profiles."],
+  "trust": ["Pinned SQLite index equivalence and constraint ordering source", "Independent native catalog and write transition evaluator", "Checked PHP key layouts and source linkage"],
+  "sources": [
+    "https://sqlite.org/lang_createtable.html#uniqueconst",
+    "https://sqlite.org/lang_conflict.html",
+    "https://sqlite.org/src/file/src/build.c?ci=version-3.47.2",
+    "https://sqlite.org/src/file/src/insert.c?ci=version-3.47.2"
+  ]
+}

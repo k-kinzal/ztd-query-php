@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * (ER_NO_DB_ERROR).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-database-privileges.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the level
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel())->describe() // => 'the current database'
  */

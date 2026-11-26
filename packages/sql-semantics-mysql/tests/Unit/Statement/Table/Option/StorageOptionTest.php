@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Table\Option;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\StorageOption;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StorageOption::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class StorageOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) STORAGE DISK');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT) STORAGE DISK');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

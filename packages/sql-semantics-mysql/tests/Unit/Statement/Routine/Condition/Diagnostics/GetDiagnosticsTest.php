@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\DiagnosticsArea;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
@@ -19,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(GetDiagnostics::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class GetDiagnosticsTest extends TestCase
 {
     public function testDeriveStatementReadsStatementInformationIntoUserVariables(): void
     {
-        $get = (new Semantics())->inspect('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
+        $get = (new Inspection())->diagnose('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
@@ -38,7 +38,7 @@ final class GetDiagnosticsTest extends TestCase
 
     public function testDeriveStatementReadsConditionInformationOfAVariableNumber(): void
     {
-        $get = (new Semantics())->inspect('GET CURRENT DIAGNOSTICS CONDITION @i @m = MESSAGE_TEXT, @e = MYSQL_ERRNO, @s = RETURNED_SQLSTATE');
+        $get = (new Inspection())->diagnose('GET CURRENT DIAGNOSTICS CONDITION @i @m = MESSAGE_TEXT, @e = MYSQL_ERRNO, @s = RETURNED_SQLSTATE');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
@@ -50,7 +50,7 @@ final class GetDiagnosticsTest extends TestCase
 
     public function testDeriveStatementReportsANameTargetOutsideAProgram(): void
     {
-        $get = (new Semantics())->inspect('GET DIAGNOSTICS n = NUMBER');
+        $get = (new Inspection())->diagnose('GET DIAGNOSTICS n = NUMBER');
         $problem = $get->facts->diagnostics[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
@@ -61,7 +61,7 @@ final class GetDiagnosticsTest extends TestCase
 
     public function testDeriveStatementDerivesTheConditionNumber(): void
     {
-        $get = (new Semantics())->inspect('GET DIAGNOSTICS CONDITION k @m = MESSAGE_TEXT');
+        $get = (new Inspection())->diagnose('GET DIAGNOSTICS CONDITION k @m = MESSAGE_TEXT');
 
         self::assertSame(['Column k does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $get->facts->diagnostics));
     }
@@ -70,12 +70,12 @@ final class GetDiagnosticsTest extends TestCase
     {
         $this->expectExceptionMessage("Unexpected 'STACKED' at line 1, column 5, expected DIAGNOSTICS_SYM");
 
-        (new Semantics('mysql-5.6.51'))->inspect('GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT');
+        (new Inspection('mysql-5.6.51'))->diagnose('GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT');
     }
 
     public function testDeriveProgramResolvesParametersAndLocalVariables(): void
     {
-        $create = (new Semantics())->inspect('CREATE PROCEDURE p(i INT) BEGIN DECLARE m TEXT; DECLARE EXIT HANDLER FOR SQLEXCEPTION GET STACKED DIAGNOSTICS CONDITION i m = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
+        $create = (new Inspection())->diagnose('CREATE PROCEDURE p(i INT) BEGIN DECLARE m TEXT; DECLARE EXIT HANDLER FOR SQLEXCEPTION GET STACKED DIAGNOSTICS CONDITION i m = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
@@ -115,7 +115,7 @@ final class GetDiagnosticsTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsAnUndeclaredTarget')]
     public function testDeriveProgramReportsAnUndeclaredTarget(string $sql, array $messages): void
     {
-        $create = (new Semantics())->inspect($sql);
+        $create = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
@@ -135,7 +135,7 @@ final class GetDiagnosticsTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        $get = (new Semantics($release))->inspect($sql);
+        $get = (new Inspection($release))->diagnose($sql);
 
         self::assertInstanceOf(GetDiagnostics::class, $get->statement);
         self::assertSame($expected, $get->toString());

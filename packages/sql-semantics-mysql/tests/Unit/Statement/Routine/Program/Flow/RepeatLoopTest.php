@@ -10,10 +10,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Leave;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\RepeatLoop;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RepeatLoop::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class RepeatLoopTest extends TestCase
     #[DataProvider('providerDeriveProgramDerivesTheLabelsTheConditionAndTheStatements')]
     public function testDeriveProgramDerivesTheLabelsTheConditionAndTheStatements(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -45,7 +45,7 @@ final class RepeatLoopTest extends TestCase
     #[DataProvider('providerRenderWritesTheLoop')]
     public function testRenderWritesTheLoop(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     /**

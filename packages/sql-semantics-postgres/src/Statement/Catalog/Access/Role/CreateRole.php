@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html, https://www.postgresql.org/docs/17/sql-createuser.html,
  * https://www.postgresql.org/docs/17/sql-creategroup.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the options of a new role
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE USER joe WITH LOGIN ENCRYPTED PASSWORD 'secret'");
- *     [$operation->statement->name->value, $operation->statement->options[0]->option(), $operation->toString()] // => ['joe', 'canlogin', "CREATE USER joe login PASSWORD 'secret'"]
+ * @visibility SqlSemantics
  */
 final class CreateRole implements Statement
 {

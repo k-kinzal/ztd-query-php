@@ -25,9 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/reset-replica.html,
  * https://dev.mysql.com/doc/refman/8.0/en/reset-slave.html.
  *
- * @visibility public
- * @example Reading RESET SLAVE as its synonym
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44'))->analyze('reset slave all')->toString() // => 'RESET REPLICA ALL'
+ * @visibility SqlSemantics
  */
 final class ResetReplica implements ResetTarget
 {

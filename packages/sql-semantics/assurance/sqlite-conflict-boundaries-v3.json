@@ -1,0 +1,98 @@
+{
+  "revision": "SemanticsIR/sqlite-conflict-boundaries-v3",
+  "approval": "pending-human-review",
+  "scope": "Require exhaustive statement conflict lowering and normalize the REPLACE verb. The admitted joined VALUES scope uses one shared definition and ordered references.",
+  "rules": {
+    "Mutation/InsertLowering::lower": {
+      "common": [
+        "$into = $statement->into;",
+        "Check::input($into->with === null, 'Complete SQLite INSERT does not support WITH.');",
+        "$policy = match ($into->replace ? ConflictResolution::Replace : $into->resolution) {",
+        "    null => InsertConflict::Inherit,",
+        "    ConflictResolution::Abort => InsertConflict::Abort,",
+        "    ConflictResolution::Ignore => InsertConflict::Ignore,",
+        "    ConflictResolution::Fail => InsertConflict::Fail,",
+        "    ConflictResolution::Rollback => InsertConflict::Rollback,",
+        "    ConflictResolution::Replace => InsertConflict::Replace,",
+        "};",
+        "$binding = new SourceBinding($operation, $into->target);",
+        "$writes = (new InsertTargetLowering())->lower($binding, $into, $statement instanceof InsertDefaults);",
+        "$returning = (new ReturningLowering())->lower($operation, $statement->returning, $binding);",
+        "$target = $binding->source();",
+        "Check::invariant($target instanceof TableSource, 'A resolved INSERT has one external target.');",
+        "",
+        "return new Insert($target, $writes, $this->input($operation, $statement), $policy, $returning, $this->handler($statement));"
+      ]
+    },
+    "Mutation/UpdateLowering::lower": {
+      "common": [
+        "Check::input(",
+        "    $statement->with === null && $statement->from === null,",
+        "    'Complete SQLite UPDATE requires one table without WITH or FROM.',",
+        ");",
+        "$conflict = match ($statement->resolution) {",
+        "    null => UpdateConflict::Inherit,",
+        "    ConflictResolution::Abort => UpdateConflict::Abort,",
+        "    ConflictResolution::Ignore => UpdateConflict::Ignore,",
+        "    ConflictResolution::Fail => UpdateConflict::Fail,",
+        "    ConflictResolution::Rollback => UpdateConflict::Rollback,",
+        "    ConflictResolution::Replace => UpdateConflict::Replace,",
+        "};",
+        "$binding = new SourceBinding($operation, $statement->target);",
+        "$lowering = new ExpressionLowering();",
+        "$assignments = [];",
+        "foreach ($statement->assignments as $assignment) {",
+        "    Check::input($assignment instanceof Assignment, 'Complete SQLite UPDATE currently requires scalar assignments.');",
+        "    $assignments[] = new UpdateAssignment($binding->write($assignment->column), $lowering->lower($assignment->value, $binding));",
+        "}",
+        "$where = (new QueryClauses())->predicate($statement->where, $binding);",
+        "$returning = (new ReturningLowering())->lower($operation, $statement->returning, $binding);",
+        "$target = $binding->source();",
+        "Check::invariant($target instanceof TableSource, 'A resolved UPDATE has one external target.');",
+        "",
+        "return new Update($target, $assignments, $where, $conflict, $returning);"
+      ]
+    },
+    "Mutation/InsertLowering::handler": {
+      "common": [
+        "if ($statement instanceof InsertDefaults || $statement->upserts === []) {",
+        "    return InsertConflictHandler::None;",
+        "}",
+        "$clause = $statement->upserts[0];",
+        "Check::input(",
+        "    count($statement->upserts) === 1 && $clause->target === null && $clause->assignments === [] && $clause->where === null,",
+        "    'A complete INSERT requires a single targetless DO NOTHING clause.',",
+        ");",
+        "",
+        "return InsertConflictHandler::DoNothing;"
+      ]
+    },
+    "SelectSql::render": {
+      "common": [
+        "$source = $select->source;",
+        "$local = (new LocalInputs())->occurrences($source, $select->joins)[0] ?? null;",
+        "$sql = $local === null ? '' : $this->localPrefix($local);",
+        "$items = [];",
+        "foreach ($select->columns as $column) {",
+        "    $items[] = $this->expression($column->expression, $source, $select->joins) . ' AS ' . $column->name->quoted();",
+        "}",
+        "$sql .= 'SELECT ' . ($select->distinct ? 'DISTINCT ' : '') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->source($source, 0);",
+        "}",
+        "foreach ($select->joins as $index => $join) {",
+        "    $sql .= ' ' . $join->kind->value . ' JOIN ' . $this->source($join->source, $index + 1);",
+        "    if ($join->on !== null) {",
+        "        $sql .= ' ON ' . $this->expression($join->on, $source, $select->joins);",
+        "    }",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->expression($select->where, $source, $select->joins);",
+        "} elseif ($requireWhere) {",
+        "    $sql .= ' WHERE 1';",
+        "}",
+        "return $sql . $this->ordering($select->orderBy) . ($select->limit === null ? '' : ' ' . $this->limit($select->limit));"
+      ]
+    }
+  }
+}

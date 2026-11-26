@@ -19,6 +19,6 @@ final class RoleInheritTest extends TestCase
 
     public function testRenderWritesTheKeyword(): void
     {
-        self::assertSame('CREATE ROLE r INHERIT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('create role r inherit')->toString());
+        self::assertSame('CREATE ROLE r INHERIT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('create role r inherit')->toString());
     }
 }

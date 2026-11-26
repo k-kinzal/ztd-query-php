@@ -14,6 +14,6 @@ final class PublicationActionTest extends TestCase
 {
     public function testDropIsSpelledDrop(): void
     {
-        self::assertSame('ALTER PUBLICATION p DROP TABLES IN SCHEMA s', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER PUBLICATION p DROP TABLES IN SCHEMA s')->toString());
+        self::assertSame('ALTER PUBLICATION p DROP TABLES IN SCHEMA s', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER PUBLICATION p DROP TABLES IN SCHEMA s')->toString());
     }
 }

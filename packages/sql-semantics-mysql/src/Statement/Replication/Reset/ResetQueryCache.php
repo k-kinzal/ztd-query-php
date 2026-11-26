@@ -16,9 +16,7 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
  * Mirrors the REFRESH_QUERY_CACHE flag of SQLCOM_RESET.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/query-cache-status-and-maintenance.html.
  *
- * @visibility public
- * @example Resetting the query cache
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('reset query cache')->toString() // => 'RESET QUERY CACHE'
+ * @visibility SqlSemantics
  */
 final class ResetQueryCache implements ResetTarget
 {

@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause;
  * PG-QUERY-EXPRESSION-001.
  * Source: https://www.postgresql.org/docs/17/sql-select.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading ORDER BY after a set operation
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a UNION SELECT 2 ORDER BY a');
- *     [$query->statement->body instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation, count($query->statement->options->order)] // => [true, 1]
+ * @visibility SqlSemantics
  * @example Refusing clauses that belong to a selection
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([]), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions(readOnly: true)) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

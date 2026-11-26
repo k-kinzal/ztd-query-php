@@ -1,0 +1,38 @@
+{
+  "revision": "SemanticsIR/native-fixture-port-recovery-1",
+  "approval": "pending-human-review",
+  "scope": "The protected native controller opens one disposable pinned server for a release. The same release, fixture, image identity, schedule, and measured verification budgets apply across a narrowly defined launch retry.",
+  "observations": [
+    {
+      "candidate": "740c34e01ad617df31c36c9652385105ebb985f0",
+      "profile": "mysql-8.1.0",
+      "archiveSha256": "d0a58daaadff0b75d6a84a77a0edc6e74bed5f3398347d41e599f765d0b0445d",
+      "outcome": "RootlessKit could not bind the daemon-selected loopback port. The isolated retry ran the promised schedule."
+    },
+    {
+      "candidate": "d87b6bd5698e6158fad4f6efed8ea282de816f72",
+      "profile": "mysql-8.0.44",
+      "outcome": "Exit 125 from Docker during container launch. No test executed."
+    },
+    {
+      "candidate": "60269bc6456dd2b150c8b254bd24be867888586c",
+      "profile": "mysql-5.6.51",
+      "outcome": "Exit 125 from Docker during container launch. The receipt records the exact loopback bind diagnostic and zero domain executions."
+    }
+  ],
+  "conditions": {
+    "phase": "container-launch",
+    "commandExit": 125,
+    "diagnostic": "RootlessKit PortManager.AddPort(): listen tcp4 127.0.0.1:<port>: bind: address already in use",
+    "containerState": "A native Docker inspect of the specific failed attempt confirms it no longer exists.",
+    "maximumRetries": 1,
+    "setupTimeoutSeconds": 900
+  },
+  "preserves": "Retain the original unaltered launch failure, named fixture, command output, and inspect diagnostic. Execute the full domain schedule only after the exact release and image are independently observed. Any second failure, retained container, unrecognized setup error, timeout or domain failure leaves the original status incomplete.",
+  "controls": [
+    "An exact recoverable launch error with an absent container starts the same image once more. The domain schedule runs once after a good profile probe.",
+    "Two matching launch failures leave the release incomplete with no executed domains.",
+    "An active residual container, other Docker error, or setup timeout cannot reach the retry branch.",
+    "A domain failure after connection setup remains a measured failure without rerunning the domain."
+  ]
+}

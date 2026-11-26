@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  * DEFAULT. The facts follow PG-INSERT-001.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the rows of an INSERT
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("INSERT INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) RETURNING a");
- *     [count($insert->statement->rows->rows()), count($insert->statement->returning), $insert->toString()] // => [2, 1, "INSERT INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) RETURNING a"]
+ * @visibility SqlSemantics
  * @example Refusing ONLY on the table of an INSERT
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), true)), [], null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\ValueRows([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])])) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

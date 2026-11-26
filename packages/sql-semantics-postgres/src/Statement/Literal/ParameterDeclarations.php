@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
  * Source: https://www.postgresql.org/docs/17/xfunc-sql.html#XFUNC-SQL-FUNCTION-ARGUMENTS,
  * https://www.postgresql.org/docs/17/sql-prepare.html.
  *
- * @visibility public
- * @example Typing a parameter of a prepared statement from its declared type
- *     $prepare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('PREPARE p (integer) AS SELECT $1');
- *     $prepare->statement->parameters?->infersUndeclared() // => true
+ * @visibility SqlSemantics
  */
 interface ParameterDeclarations extends Relation
 {

@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-maintenance.html,
  * https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_yacc.yy (OPTIMIZE PARTITION_SYM).
  *
- * @visibility public
- * @example Rebuilding every partition
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REBUILD PARTITION ALL');
- *     [$alter->statement->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild, 'ALTER TABLE t REBUILD PARTITION ALL']
+ * @visibility SqlSemantics
  */
 final class MaintainPartitions implements StandaloneCommand
 {

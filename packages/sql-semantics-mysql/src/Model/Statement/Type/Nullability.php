@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement\Type;
  * `Dependent` means the answer needs information missing from the context;
  * consumers must then treat the value as possibly NULL.
  *
- * @visibility public
- * @example Reading the NULL fact of a literal
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1');
- *     $operation->field(0)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 enum Nullability
 {

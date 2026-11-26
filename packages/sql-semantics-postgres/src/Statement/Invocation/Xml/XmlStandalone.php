@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml;
  *
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML-XMLROOT.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the declaration that removes the standalone setting
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlStandalone::NoValue->value // => 'NO VALUE'
  */

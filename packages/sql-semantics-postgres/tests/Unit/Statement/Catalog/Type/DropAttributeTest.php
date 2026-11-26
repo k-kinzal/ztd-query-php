@@ -14,11 +14,11 @@ final class DropAttributeTest extends TestCase
 {
     public function testRenderWritesIfExists(): void
     {
-        self::assertSame('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b RESTRICT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b RESTRICT')->toString());
+        self::assertSame('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b RESTRICT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b RESTRICT')->toString());
     }
 
     public function testDeriveClauseRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair DROP ATTRIBUTE b')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair DROP ATTRIBUTE b')->facts->diagnostics);
     }
 }

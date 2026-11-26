@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
  * https://dev.mysql.com/doc/refman/8.4/en/join.html ("The { OJ ... } syntax
  * ... exists only for compatibility with ODBC"). Status: Implemented.
  *
- * @visibility public
- * @example Reading an ODBC escape
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM { OJ t LEFT JOIN u ON t.a = u.a }');
- *     $query->statement->from->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable // => true
+ * @visibility SqlSemantics
  */
 final class OdbcJoin implements Relation
 {

@@ -29,9 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#operator_member-of.
  * Status: Implemented.
  *
- * @visibility public
- * @example Keeping the optional OF as written
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE 1 MEMBER (a)')->toString() // => 'SELECT a FROM t WHERE 1 MEMBER (a)'
+ * @visibility SqlSemantics
  */
 final class MemberOf implements Scalar
 {

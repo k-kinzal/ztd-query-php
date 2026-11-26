@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * cannot hold. Modifiers follow PG-TYPE-MODIFIER-001.
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, https://www.postgresql.org/docs/17/datatype.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a user type as a missing declaration
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT app.money_amount '1'", []);
- *     $query->field(0)->type->missing[0]->describe() // => 'the definition of data type money_amount'
+ * @visibility SqlSemantics
  */
 final class NamedDesignation implements TypeDesignation
 {

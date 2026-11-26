@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createcast.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the I/O conversion
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastConversion::InOut->value // => 'WITH INOUT'
  */

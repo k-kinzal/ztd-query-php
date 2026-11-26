@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-binary-log-status.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW BINARY LOG STATUS');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['File', 'SHOW BINARY LOG STATUS']
+ * @visibility SqlSemantics
  */
 final class ShowBinaryLogStatus implements Statement
 {

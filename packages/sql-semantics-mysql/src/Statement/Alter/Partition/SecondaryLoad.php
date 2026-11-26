@@ -18,9 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Mirrors PT_alter_table_secondary_load and PT_alter_table_secondary_unload.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
- * @example Loading a table into the secondary engine
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t SECONDARY_LOAD')->statement->commands[0]->load // => true
+ * @visibility SqlSemantics
  */
 final class SecondaryLoad implements StandaloneCommand
 {

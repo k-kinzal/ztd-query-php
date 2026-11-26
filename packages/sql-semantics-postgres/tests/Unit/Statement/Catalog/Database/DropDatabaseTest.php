@@ -14,11 +14,11 @@ final class DropDatabaseTest extends TestCase
 {
     public function testRenderWritesWithBeforeTheOptions(): void
     {
-        self::assertSame('DROP DATABASE IF EXISTS d WITH (FORCE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP DATABASE IF EXISTS d (FORCE)')->toString());
+        self::assertSame('DROP DATABASE IF EXISTS d WITH (FORCE)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP DATABASE IF EXISTS d (FORCE)')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP DATABASE d')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP DATABASE d')->facts->diagnostics);
     }
 }

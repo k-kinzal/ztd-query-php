@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * DEFAULT, which is the target -1 of earlier releases.
  * Source: https://www.postgresql.org/docs/17/sql-alterstatistics.html.
  *
- * @visibility public
- * @example Changing a statistics target
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER STATISTICS IF EXISTS s SET STATISTICS 100');
- *     $statement->toString() // => 'ALTER STATISTICS IF EXISTS s SET STATISTICS 100'
+ * @visibility SqlSemantics
  */
 final class AlterStatistics implements Statement
 {

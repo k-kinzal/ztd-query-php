@@ -14,12 +14,12 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TableList::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class TableListTest extends TestCase
 {
     public function testDeriveRelationJoinsTheMembersLeftToRight(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -36,7 +36,7 @@ final class TableListTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT * FROM t, u', [$t, $u]);
+        $operation = $semantics->diagnose('SELECT * FROM t, u', [$t, $u]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableList::class, $operation->statement->from);
@@ -46,7 +46,7 @@ final class TableListTest extends TestCase
 
     public function testDeriveRelationKeepsTheJoinConditionToItsOperands(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -55,7 +55,7 @@ final class TableListTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT 1 FROM t, u JOIN u AS v ON t.a = v.a', [$t, $u]);
+        $operation = $semantics->diagnose('SELECT 1 FROM t, u JOIN u AS v ON t.a = v.a', [$t, $u]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -63,7 +63,7 @@ final class TableListTest extends TestCase
 
     public function testRenderWritesTheMembers(): void
     {
-        self::assertSame('SELECT 1 FROM t, u, v', (new Semantics())->inspect('select 1 from t,u,v')->toString());
+        self::assertSame('SELECT 1 FROM t, u, v', (new Inspection())->diagnose('select 1 from t,u,v')->toString());
     }
 
     public function testAListOfOneMemberIsRejected(): void

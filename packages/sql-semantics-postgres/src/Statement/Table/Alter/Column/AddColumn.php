@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition;
  * not kept. The expressions of the new column are derived where the relation and the new column are visible.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading an added column
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD COLUMN IF NOT EXISTS c int NOT NULL');
- *     [$statement->statement->commands[0]->column->name->value, $statement->toString()] // => ['c', 'ALTER TABLE t ADD IF NOT EXISTS c INT NOT NULL']
+ * @visibility SqlSemantics
  */
 final class AddColumn implements AlterCommand
 {

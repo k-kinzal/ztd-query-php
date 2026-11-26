@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/using-system-variables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/structured-system-variables.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a scoped system variable
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = @@GLOBAL.sort_buffer_size');
- *     [$query->statement->where->right->scope, $query->statement->where->right->name->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'sort_buffer_size']
+ * @visibility SqlSemantics
  */
 final class SystemVariable implements Scalar
 {

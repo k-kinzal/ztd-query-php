@@ -1,0 +1,79 @@
+{
+  "revision": "SemanticsIR/postgres-drop-schema-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": ["Schema/Namespace/DropSchema"],
+  "profile": "Native markers, UTF-8, standard-conforming strings, sensitive decoded namespace names.",
+  "scope": "An ordered DROP SCHEMA selector over exact declared local namespaces. Preserve existence and dependency policies and repeated selectors.",
+  "constructors": {
+    "SchemaDropTarget": {
+      "type": "Schema/Namespace/SchemaDropTarget",
+      "role": "One absolute local namespace selector with its resolved presence.",
+      "structure": "A checked PostgreSQL Identifier and a readonly presence Boolean.",
+      "invariants": [
+        "A native application or known stock namespace has one decoded name.",
+        "The session alias pg_temp and backend-numbered temporary namespaces need explicit session-specific interpretation.",
+        "An absent selector is admitted only in the owning guarded operation."
+      ],
+      "meaning": "Resolve the selected namespace in the same external database. An absent guarded selector still contributes its native skip notice."
+    },
+    "DropSchema": {
+      "type": "Schema/Namespace/DropSchema",
+      "role": "An atomic namespace removal request.",
+      "structure": "A nonempty detached ordered list of SchemaDropTarget values, both independent policy bits and the fixed grammar release.",
+      "invariants": [
+        "All entries are completed typed namespace selectors.",
+        "Absent selectors require IF EXISTS.",
+        "Retain the supplied sequence, including repeated selectors."
+      ],
+      "meaning": "Drop the resolved namespaces with RESTRICT or CASCADE. Native dependency edges determine whether removal fails or propagates to other objects.",
+      "sql": "Safely delimit every namespace, preserve its position, and emit both policy choices.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "binding": [
+    "A known namespace can be introduced by an explicit schema or by a checked relation declaration. Resolve names independently of the relation search path.",
+    "Retain exact case and spelling. A schema selector has one component even when its decoded identifier contains dots.",
+    "Require a complete namespace catalog before inferring absence. Require IF EXISTS when a selector is absent.",
+    "Relation dependency graph, privilege and transaction effects are interpreted in the same external catalog."
+  ],
+  "finite": {
+    "targetLists": [["selected"], ["other"], ["selected", "other"], ["other", "selected"], ["selected", "selected"], ["missing"], ["missing", "selected", "missing"]],
+    "guarded": [false, true],
+    "cascade": [false, true],
+    "transactional": [false, true],
+    "bound": "Every one of the 48 admissible ordered selector and policy coordinates per release. Compare both direct and analyzed routes. The 8 unguarded absent coordinates are checked as typed rejections."
+  },
+  "exploration": {
+    "seeds": [1571, 23159, 60509],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Vary selector list length, repeats, present and absent operands, quoted names, foreign-key and view dependents, and transaction mode."
+  },
+  "observations": [
+    "Exact typed namespace selector order, decoded names and guard bits.",
+    "Native command status, SQLSTATE and ordered missing namespace notices, including repeated notices for repeated missing names.",
+    "Namespace presence, contained relations and row values, surviving views, surviving foreign keys, and rollback or atomic failure effects."
+  ],
+  "negative": [
+    "An empty direct selector list",
+    "One absent selector without IF EXISTS in each of the eight unguarded absent finite coordinates",
+    "An inferred absent selector in an incomplete context",
+    "A session alias without a declared numbered physical namespace",
+    "A qualified multi-part schema selector"
+  ],
+  "faults": [
+    "Resolve or render a different namespace with a similarly shaped relation",
+    "Replace the dependency mode with RESTRICT",
+    "Lose a guardable missing selector occurrence"
+  ],
+  "trust": [
+    "Exact constructor, context visibility and rendering path checks",
+    "Native dependency, transactional rollback and warning behavior under the pinned releases",
+    "Independent fixture and expectation model"
+  ],
+  "open": ["Declared backend-specific temporary schema roles and permission-changing execution environments."]
+}

@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * statement checks them (MYSQL-HISTOGRAM-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.
  *
- * @visibility public
- * @example Reading the histogram request
- *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'");
- *     [$analyze->toString(), $analyze->statement->histogram->data->value === '{}'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'", true]
+ * @visibility SqlSemantics
  */
 final class LoadHistogram implements Histogram
 {

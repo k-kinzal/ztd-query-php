@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Account\User;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversNothing]
 #[Medium]
@@ -19,7 +19,7 @@ final class UserAlterationTest extends TestCase
 {
     public function testBothKindsOfEntryImplementTheInterface(): void
     {
-        $alter = (new Semantics())->analyze('ALTER USER u, v DROP 2 FACTOR');
+        $alter = (new Inspection())->inspect('ALTER USER u, v DROP 2 FACTOR');
 
         self::assertInstanceOf(AlterUser::class, $alter->statement);
         self::assertContainsOnlyInstancesOf(UserAlteration::class, $alter->statement->users);

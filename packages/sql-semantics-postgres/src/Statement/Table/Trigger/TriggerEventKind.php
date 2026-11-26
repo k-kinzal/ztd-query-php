@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
  * Mirrors the `TRIGGER_TYPE_*` event bits.
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the event of a trigger
  *     \SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEventKind::Truncate->value // => 'TRUNCATE'
  */

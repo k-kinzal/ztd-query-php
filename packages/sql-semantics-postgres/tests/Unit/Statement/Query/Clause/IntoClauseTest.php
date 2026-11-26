@@ -14,8 +14,8 @@ final class IntoClauseTest extends TestCase
 {
     public function testRenderWritesThePersistenceAndTheName(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT 1 AS a INTO GLOBAL TEMPORARY TABLE s.n');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect('SELECT 1 AS a INTO GLOBAL TEMPORARY TABLE s.n');
         self::assertSame('SELECT 1 AS a INTO GLOBAL TEMPORARY s.n', $query->toString());
     }
 }

@@ -14,8 +14,8 @@ final class SequencesTest extends TestCase
 {
     public function testCreateDeclaresTheSequenceColumns(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE SEQUENCE s', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE SEQUENCE s', []);
         self::assertSame([
           0 => 'last_value bigint NotNull',
           1 => 'log_cnt bigint NotNull',
@@ -25,8 +25,8 @@ final class SequencesTest extends TestCase
 
     public function testOptionsReportsSequenceName(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE SEQUENCE s SEQUENCE NAME x', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE SEQUENCE s SEQUENCE NAME x', []);
         self::assertSame([
           0 => 'invalid sequence option SEQUENCE NAME',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));

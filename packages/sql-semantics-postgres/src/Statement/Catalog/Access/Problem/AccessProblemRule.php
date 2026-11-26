@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem;
  * https://www.postgresql.org/docs/17/sql-revoke.html, https://www.postgresql.org/docs/17/ddl-priv.html,
  * https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html, https://www.postgresql.org/docs/17/datatype-oid.html.
  *
- * @visibility public
- * @example Reading which rule a command breaks
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP ROLE CURRENT_USER');
- *     $operation->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule::SpecialRoleDrop
+ * @visibility SqlSemantics
  */
 enum AccessProblemRule: string
 {

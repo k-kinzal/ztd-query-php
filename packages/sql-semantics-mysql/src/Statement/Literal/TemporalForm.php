@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Literal;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp->value // => 'TIMESTAMP'
  */

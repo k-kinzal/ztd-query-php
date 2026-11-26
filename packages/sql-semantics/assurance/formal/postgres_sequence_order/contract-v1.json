@@ -1,0 +1,68 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-order-proof-1",
+  "approval": "pending-human-review",
+  "dialect": "PostgreSql",
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "scope": "The sign of the canonical signed-decimal comparator used for static sequence bounds and position checks.",
+  "claim": "For canonical unsigned digit lists and coherent signs, the PHP width/ASCII-lexicographic comparison induces exactly the mathematical strict signed integer order. The direct constructor admits a subset of these canonical forms.",
+  "assumptions": [
+    "The checked signed decimal operand is the canonical ASCII PHP spelling of the Lean magnitude and sign.",
+    "Same-sign operands have equal sign-prefix width. PHP strlen reports byte length and strcmp orders equal-length ASCII digit strings lexicographically.",
+    "An operand whose sign is negative has nonzero magnitude. The proof covers all canonical widths. The pinned PHP constructor limits those widths to the native signed 64-bit domain."
+  ],
+  "limits": "The proof covers the comparison rule. Native sequence generation, storage width selection, type-change transitions and rendered SQL have separate obligations.",
+  "contractArtifacts": {
+    "SignedDecimalSpec.lean": "dc37befcff393f186ed33ac5d0fad691c6480604fea42209de9ee05f0834ac48",
+    "Challenge.lean": "ffd52d36b36559fc0c54668c88aa4103283fa52d92f3b9eeb8bc64e572cbfb4f",
+    "Solution.lean": "1700e1678871d6ba48299964be2beb18b5e23d029447aa743a27adc105f8384a",
+    "comparator.json": "ba3f7d0a0c6014755e2573424b992366b037ebea39e57e4303084c942edf3348"
+  },
+  "bindings": {
+    "Expression/WideIntegerLiteral::__construct": {
+      "source": "packages/sql-semantics-postgres/src/Ir/Expression/WideIntegerLiteral.php",
+      "sourceDigest": "17bb7a2cd64fa931a95ad0dd78f479a85a495baedc2bc79ab0aa98c04f471cdc",
+      "template": "native-boundaries-v31.json",
+      "templateDigest": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55",
+      "body": [
+        "Check::input(preg_match('/\\A(?:0|-?[1-9][0-9]{0,18})\\z/', $decimal) === 1, 'Expected a normalized signed decimal bigint.');",
+        "$magnitude = ltrim($decimal, '-');",
+        "$maximum = $decimal[0] === '-' ? '9223372036854775808' : '9223372036854775807';",
+        "Check::input(strlen($magnitude) < 19 || strcmp($magnitude, $maximum) <= 0, 'Integer is outside the signed 64-bit range.');"
+      ]
+    },
+    "Schema/Sequence/SequenceIntegerOrder::compare": {
+      "source": "packages/sql-semantics-postgres/src/Ir/Schema/Sequence/SequenceIntegerOrder.php",
+      "sourceDigest": "68dcdf9c506ba3fd6036a86ae0eb656168d1ece1023b9407c46ecb9113cacf1a",
+      "template": "postgres-create-sequence-boundaries-v1.json",
+      "templateDigest": "53adfda39156a8515e0ffa91d8560d90d9b2dd0c39b905f26cef0e640903ba0f",
+      "body": [
+        "$negative = str_starts_with($left->decimal, '-');",
+        "if ($negative !== str_starts_with($right->decimal, '-')) {",
+        "    return $negative ? -1 : 1;",
+        "}",
+        "$width = strlen($left->decimal) <=> strlen($right->decimal);",
+        "$magnitude = $width === 0 ? strcmp($left->decimal, $right->decimal) : $width;",
+        "return $negative ? -$magnitude : $magnitude;"
+      ]
+    }
+  },
+  "toolchain": {
+    "version": "4.36.0",
+    "commit": "611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9",
+    "linuxAarch64": {
+      "name": "lean-4.36.0-linux_aarch64.tar.zst",
+      "sha256": "35471998152191ef809418ce5bf61f8fc5f209e5e3be05b48bdc4949fdb3e726"
+    }
+  },
+  "axioms": {
+    "propext": "Lean core integer comparison lemmas use propositional extensionality."
+  },
+  "controls": {
+    "weakened-theorem": "theorem statement do not match",
+    "unfinished-proof": "sorryAx",
+    "reversed-negative-order": "Native boundary differs in Schema/Sequence/SequenceIntegerOrder::compare"
+  }
+}

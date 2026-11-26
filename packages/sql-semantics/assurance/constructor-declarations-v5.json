@@ -1,0 +1,297 @@
+{
+  "revision": "SemanticsIR/constructor-declarations-5",
+  "approval": "pending-human-review",
+  "scope": "The registered constructors in scope.py. Domain ledgers retain their individual profiles, admission rules, observations, execution budgets and fault sets.",
+  "routes": "Each value constructor or enum case is direct. The current publication contract governs analyze and analyzeAll. The dialect Snapshot primitive controls native restoration and dynamic properties.",
+  "obligations": {
+    "P01": {
+      "criterion": "The operand, operation or binding identity is determined within its declared role and language profile. Any external slots have the documented declaration precondition.",
+      "checks": [
+        "Resolve references at the owning boundary",
+        "Check negative lookup cases",
+        "Compare independent role-sensitive observations"
+      ]
+    },
+    "P02": {
+      "criterion": "Every successful public construction satisfies the role's local conditions. The owning composition checks cross-operand conditions before publication.",
+      "checks": [
+        "Audit closed operand types and the actual constructor and factory paths",
+        "Reject the specified invalid cases at the recorded boundary",
+        "Detect an omitted or bypassed guard"
+      ]
+    },
+    "P03": {
+      "criterion": "The value graph and its interpretation use the recorded semantic roles and declared external identity. Original SQL, intermediate analysis and mutable context are absent from the graph.",
+      "checks": [
+        "Check stored fields, approved dependencies and actual code shape",
+        "Detect an unapproved dependency or ambient input"
+      ]
+    },
+    "P04": {
+      "criterion": "The owning role interprets each child and reference through its declared rule, including child order, boundaries and scope.",
+      "checks": [
+        "Check composition boundaries and all operand alternatives",
+        "Observe nested and shared occurrences",
+        "Detect a changed reference, dropped operand or changed child order"
+      ]
+    },
+    "P05": {
+      "criterion": "For every admitted storage edge, lifetime observations reflect the same declared values and bindings. A legitimate copy or restoration preserves these constraints.",
+      "checks": [
+        "Audit closed immutable fields and the checked list copy",
+        "Check inherited mutation and restoration paths",
+        "Detect a mutable or externally aliased child"
+      ]
+    },
+    "P06": {
+      "criterion": "Every normal finite value admitted at a complete root has a representation in its declared SQL profile with the same observable semantics.",
+      "checks": [
+        "Review every emitting alternative and intermediate shape",
+        "Run independent typed engine comparisons within fixed domains",
+        "Detect output that removes or changes an observed semantic component"
+      ]
+    },
+    "Q01": {
+      "criterion": "A universal construction argument or checked restrictions on the executed paths establish the local and composed conditions. A finite negative run supplies domain evidence for that argument.",
+      "checks": [
+        "Connect matched constructor templates and trusted primitives to the candidate bytes",
+        "Exercise independent invalid cases and the specified construction faults"
+      ],
+      "remainingTrust": "A checked guard template establishes the registered guard sequence. Its sufficiency for all language inputs and every remaining path requires separate review."
+    },
+    "Q02": {
+      "criterion": "The required admitted domain is preserved under construction and analyze. The finite domain attains each fixed symbolic identity and the seed ledger accounts for every scheduled case.",
+      "checks": [
+        "Run direct admission checks with independent expected inputs",
+        "Require all finite identities and mandatory structural forms",
+        "Detect whole rejection and collapsed generation"
+      ],
+      "remainingTrust": "Each finite witness establishes the recorded bounded identity. Admission across the full language scope needs its own argument."
+    },
+    "Q03": {
+      "criterion": "Every admitted child role and cross-child condition suffices for the parent rule with the declared binding layout.",
+      "checks": [
+        "Inspect constructor-to-lowering correspondence",
+        "Check each reference domain and composition boundary",
+        "Compare nested and reordered case observations"
+      ],
+      "remainingTrust": "The scoped structure and semantic specification are the basis for reviewing sufficiency."
+    },
+    "Q04": {
+      "criterion": "Use the owning SQL rule for every finite shape and preserve the exact declared observations under the same external bindings, engine release and mode.",
+      "checks": [
+        "Audit exhaustive SQL emission",
+        "Compare oracle and real engine results and effects",
+        "Exercise independently derived mismatches"
+      ],
+      "remainingTrust": "Real-engine comparisons establish the observed executions. The SQL rules, implementation correspondence and native profile require review."
+    },
+    "Q05": {
+      "criterion": "Establish that the checked definitions and run paths correspond to the actual distributed PHP. Bind all evidence to the approved checker and exact artifacts.",
+      "checks": [
+        "Verify the candidate source and autoload paths",
+        "Compare bytes of installed packages and exercise the published roots",
+        "Detect any artifact change after verification"
+      ],
+      "remainingTrust": "The local release-layout probe covers staged Composer installs. The publisher needs to check the released artifact and protected acceptance decision independently."
+    }
+  },
+  "additions": {
+    "server-projection-v1.json": {
+      "Arithmetic": {
+        "structure": "One ArithmeticOperator and two ordered scalar children in the signed arithmetic roles."
+      },
+      "ArithmeticOperator": {
+        "structure": "The three literal enum identities Add, Subtract and Multiply."
+      },
+      "BooleanLiteral": {
+        "structure": "One immutable Boolean value."
+      },
+      "ColumnReference": {
+        "structure": "A zero-based column slot in the local source scope. The join supplement supplies an explicit occurrence."
+      },
+      "Identifier": {
+        "structure": "One decoded string with the dialect limits.",
+        "meaning": "Identify or name an object in the owning role. The grouping and projection records govern output label positions."
+      },
+      "IntegerLiteral": {
+        "structure": "One exact signed decimal value. The MySQL local projection contract records its additional native width attributes."
+      },
+      "NullLiteral": {
+        "structure": "A nullary final role with no payload."
+      },
+      "ResultColumn": {
+        "structure": "One closed result expression and one decoded label in a fixed output position.",
+        "meaning": "Evaluate the expression in the owning row scope and retain the label for that output."
+      },
+      "Select": {
+        "structure": "Ordered output list, optional scoped source and exact grammar release."
+      },
+      "TableSource": {
+        "structure": "Separate schema and relation names and an ordered list of column names. PostgreSQL stores its descendant policy."
+      }
+    },
+    "server-join-v1.json": {
+      "ColumnReference": {
+        "meaning": "Read the recorded slot from its scoped occurrence, including any null-extended row.",
+        "sql": "Use the generated alias for the occurrence followed by its exact quoted source column name."
+      },
+      "Join": {
+        "role": "One binary join with two distinct operand roles and the predicate scoped to those operands.",
+        "meaning": "Form potential pairs of input rows. Keep the true matches. Extend unmatched outer-side rows with SQL NULLs according to the join kind."
+      },
+      "JoinKind": {
+        "structure": "A closed dialect-owned enum whose alternatives are listed by dialect.",
+        "conditions": "The composition enforces the allowed ON role and release support.",
+        "meaning": "Select Cartesian pairing, inner pairing or the appropriate left, right or full null extension.",
+        "sql": "Emit the fixed join keyword sequence for the enum case."
+      },
+      "Select": {
+        "role": "The projection and post-join filter over the owning occurrence layout.",
+        "meaning": "Apply WHERE to each joined row and emit its ordered projection when the predicate is true.",
+        "sql": "Emit the projection, its fully grouped native join tree and the resolved WHERE clause."
+      }
+    },
+    "server-delete-v2.json": {
+      "Delete": {
+        "role": "One resolved table deletion with an optional scoped row predicate.",
+        "meaning": "Remove admitted rows under the target relation's native inheritance and effect rules. The same external triggers and constraints participate."
+      },
+      "IntegerComparison": {
+        "role": "A comparison between two ordered signed integer expressions or slots.",
+        "meaning": "Compare the operands with the selected identity. A NULL operand gives unknown."
+      },
+      "IntegerOperator": {
+        "role": "The fixed native integer comparison selector.",
+        "structure": "An enum over equality, inequality and the four strict or inclusive order directions.",
+        "meaning": "Determine the true or false comparison for nonnull numeric operands.",
+        "sql": "Emit the exact native symbol with the catalog qualification required by the PostgreSQL implementation."
+      }
+    },
+    "server-insert-v1.json": {
+      "Insert": {
+        "meaning": "Assign every typed supplied row to the named writable target slots in order. Apply the external defaults, constraints and triggers to the same relation."
+      },
+      "InsertCell": {
+        "meaning": "Supply the exact signed value or explicit SQL NULL to one target position.",
+        "sql": "Write the integer literal or NULL in its row position."
+      },
+      "InsertRow": {
+        "meaning": "Supply one value tuple for assignment to the owning target list.",
+        "sql": "Emit a parenthesized list of the cells in assignment order."
+      }
+    },
+    "server-update-v2.json": {
+      "Update": {
+        "role": "One checked table write with an ordered assignment list and optional admitted-row predicate."
+      },
+      "UpdateAssignment": {
+        "meaning": "Assign the right operand to the resolved writable column in the row version selected by the dialect.",
+        "sql": "Emit the quoted target column, the assignment operator and the checked scalar right operand."
+      }
+    },
+    "server-result-v1.json": {
+      "Limit": {
+        "structure": "A checked count and initial offset. PostgreSQL permits the absent count role.",
+        "meaning": "Discard the first offset rows and select up to the count remaining rows. Apply the registered relation for ties."
+      },
+      "Order": {
+        "structure": "Positive projection ordinal, effective direction and effective NULL placement.",
+        "meaning": "Give precedence to this projected output position when determining row order. Equal keys retain the registered tie behavior."
+      },
+      "Select": {
+        "role": "Projection with duplicate selection, ordered output keys and effective row bounds.",
+        "meaning": "Evaluate the row projection, apply the duplicate policy, establish the recorded order and apply the bounds.",
+        "sql": "Emit DISTINCT when selected, followed by positional ORDER BY and the dialect's effective LIMIT and OFFSET."
+      }
+    },
+    "server-truth-v2.json": {
+      "LogicalOperator": {
+        "conditions": "Only the registered enum alternatives are admitted. The containing predicate enforces the unary or binary operand count."
+      }
+    },
+    "server-compound-v2.json": {
+      "CompoundOperator": {
+        "structure": "The enum alternatives UNION, INTERSECT and EXCEPT. The containing value stores the separate ALL policy.",
+        "conditions": "The enclosing statement validates availability, arm roles and equal width.",
+        "meaning": "Select union, intersection or left difference under the recorded multiplicity policy.",
+        "sql": "Use the exact operator keyword followed by ALL when requested."
+      },
+      "ResultKind": {
+        "structure": "MySQL uses signed narrow, signed wide, unsigned, integral decimal, unresolved bare NULL and null-only roles. PostgreSQL uses int4, int8, Boolean, unresolved bare NULL and text roles.",
+        "conditions": "Resolve each output position under the dialect's admitted type combinations at compound construction.",
+        "meaning": "Record the native type carried by a compatible position and distinguish a bare NULL during type resolution.",
+        "sql": "The owning projection and compound rules determine typed SQL expression output for each role."
+      }
+    },
+    "server-grouped-v3.json": {
+      "AggregateOperator": {
+        "sql": "Use the selected builtin name as a call. PostgreSQL qualifies it with pg_catalog."
+      },
+      "GroupColumn": {
+        "conditions": "The grouped statement verifies group membership or the aggregate argument's scope and preserves the output label.",
+        "sql": "Render the qualified key read or builtin call with the checked output naming rule."
+      }
+    },
+    "server-local-projection-v4.json": {
+      "LocalResultColumn": {
+        "meaning": "Read the named output position from the immediate local definition and attach the ordered output label.",
+        "sql": "Qualify the generated definition slot and name this projected output."
+      }
+    },
+    "server-create-table-v1.json": {
+      "IntegerStorage": {
+        "structure": "The three signed width identities Small, Standard and Wide.",
+        "conditions": "The owning column checks literal defaults against the selected storage range.",
+        "meaning": "Select the signed native width for this declared column.",
+        "sql": "Emit SMALLINT, INTEGER or BIGINT according to the stored role."
+      },
+      "TableColumn": {
+        "structure": "One decoded name, signed storage role, Boolean nullability and optional signed or SQL NULL default.",
+        "meaning": "Declare one ordered integer column, including its default and acceptance of NULL values.",
+        "sql": "Write the quoted name, type keyword and the required nullability and default clauses."
+      }
+    },
+    "server-drop-table-v1.json": {
+      "TableName": {
+        "meaning": "Address the ordinary persistent table in the exact named external schema.",
+        "sql": "Join the separately quoted schema and relation identifiers with a dot."
+      }
+    },
+    "server-transaction-v1.json": {
+      "Transaction": {
+        "role": "One transaction or savepoint transition under the selected native release."
+      },
+      "TransactionCommand": {
+        "structure": "The six enum cases Begin, Commit, Rollback, Savepoint, Release and RollbackTo.",
+        "meaning": "Select the transition on the same connection's transaction and savepoint state.",
+        "sql": "Emit the corresponding native command and a checked name in a named role."
+      }
+    },
+    "sqlite-grouped-v2.json": {
+      "Collation": {
+        "sql": "Emit the exact builtin collation identifier wherever the grouping or DISTINCT count rule needs that comparison."
+      },
+      "GroupColumn": {
+        "conditions": "The enclosing grouping validates its key membership or count argument and supplies the decoded output label.",
+        "sql": "Emit the scoped key or count call followed by its named result."
+      }
+    },
+    "sqlite-recursive-source-v1.json": {
+      "LocalSource": {
+        "structure": "An ordered immutable name list and one checked recursive definition in the recursive source role.",
+        "meaning": "Bind the recursive queue results under the declared slot order for the owning projection."
+      },
+      "RecursiveColumn": {
+        "meaning": "Evaluate the ordered successor expression against the dequeued row for the corresponding working slot."
+      }
+    },
+    "server-parameter-v4.json": {
+      "ParameterProjection": {
+        "structure": "The checked SELECT with ordered parameter and literal operands. PostgreSQL stores the resolved native input type and position on each occurrence.",
+        "meaning": "Evaluate each cast using the value bound to its exact native position and retain repetition, result order and labels.",
+        "sql": "Render the checked input type and native marker before any enclosing conversion."
+      }
+    }
+  }
+}

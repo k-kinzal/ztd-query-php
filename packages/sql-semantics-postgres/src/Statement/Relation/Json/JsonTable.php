@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * not LATERAL is written; the word is kept as written.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE. Status: Implemented.
  *
- * @visibility public
- * @example Reading the columns of JSON_TABLE
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' AS p COLUMNS (n FOR ORDINALITY, e boolean EXISTS)) AS j");
- *     [$query->statement->from->pathName->value, $query->field(0)->type->descriptor->name(), $query->field(1)->name->value] // => ['p', 'integer', 'e']
+ * @visibility SqlSemantics
  */
 final class JsonTable implements Relation
 {

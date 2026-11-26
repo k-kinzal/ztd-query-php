@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-index.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Preloading indexes
- *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('load index into cache t partition (all) ignore leaves');
- *     [$load->toString(), $load->statement->tables[0]->ignoreLeaves] // => ['LOAD INDEX INTO CACHE t PARTITION (ALL) IGNORE LEAVES', true]
+ * @visibility SqlSemantics
  */
 final class LoadIndex implements Statement
 {

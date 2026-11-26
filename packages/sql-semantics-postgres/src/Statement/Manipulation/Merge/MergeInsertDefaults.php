@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * Mirrors a `MergeWhenClause` with `CMD_INSERT` and no values.
  * Source: https://www.postgresql.org/docs/17/sql-merge.html.
  *
- * @visibility public
- * @example Reading an insert of the defaults
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT DEFAULT VALUES');
- *     $merge->statement->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsertDefaults // => true
+ * @visibility SqlSemantics
  */
 final class MergeInsertDefaults implements Node
 {

@@ -12,10 +12,10 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\OrderPlacement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerOrder;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TriggerOrder::class)]
 #[Medium]
@@ -52,7 +52,7 @@ final class TriggerOrderTest extends TestCase
     #[DataProvider('providerRenderWritesThePlacementAndTheOtherTrigger')]
     public function testRenderWritesThePlacementAndTheOtherTrigger(string $release, string $sql, string $expected, OrderPlacement $placement, string $other): void
     {
-        $create = (new Semantics($release))->analyze($sql);
+        $create = (new Inspection($release))->inspect($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertNotNull($statement->order);
@@ -64,7 +64,7 @@ final class TriggerOrderTest extends TestCase
 
     public function testRenderWritesAConstructedOrder(): void
     {
-        $out = new Output(new Codec((new Semantics())->profile()->grammar));
+        $out = new Output(new Codec((new Inspection())->profile()->grammar));
         (new TriggerOrder(OrderPlacement::Precedes, new Name('select')))->render($out);
 
         self::assertSame('PRECEDES `select`', (new Lexical())->join($out->pieces()));

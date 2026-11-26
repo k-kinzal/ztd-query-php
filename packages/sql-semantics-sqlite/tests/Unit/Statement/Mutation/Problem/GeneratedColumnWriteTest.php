@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\GeneratedColumnWrite;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\WriteKind;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(GeneratedColumnWrite::class)]
 #[Medium]
@@ -26,9 +26,9 @@ final class GeneratedColumnWriteTest extends TestCase
 
     public function testMessageNamesTheColumnAsDeclared(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a, Total AS (a * 2) STORED)');
-        $problem = $semantics->inspect('UPDATE t SET total = 1', [$table])->facts->diagnostics[0] ?? null;
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a, Total AS (a * 2) STORED)');
+        $problem = $semantics->diagnose('UPDATE t SET total = 1', [$table])->facts->diagnostics[0] ?? null;
 
         self::assertInstanceOf(GeneratedColumnWrite::class, $problem);
         self::assertSame(WriteKind::Update, $problem->write);

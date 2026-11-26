@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
  * The two words request the same; the word is kept as written.
  * Source: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html.
  *
- * @visibility public
- * @example Reading the roles
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES FOR ROLE joe GRANT SELECT ON TABLES TO ann');
- *     [$operation->statement->scopes[0]->word->value, $operation->statement->scopes[0]->roles[0]->name?->value] // => ['ROLE', 'joe']
+ * @visibility SqlSemantics
  */
 final class ForRoles implements DefaultScope
 {

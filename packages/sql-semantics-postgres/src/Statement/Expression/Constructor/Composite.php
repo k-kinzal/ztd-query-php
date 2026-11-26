@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  * its columns. Selecting a field reads its slot.
  * Source: https://www.postgresql.org/docs/17/rowtypes.html, https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-ROW-CONSTRUCTORS.
  *
- * @visibility public
- * @example Reading the fields of a row constructor
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ROW(1, 2)');
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->type->descriptor->fields[1]->name->value] // => ['record', 'f2']
+ * @visibility SqlSemantics
  */
 final class Composite implements TypeDescriptor
 {

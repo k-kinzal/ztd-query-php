@@ -11,9 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A query that PostgreSQL rejects because it breaks a rule of the language.
  *
- * @visibility public
- * @example Reading the problem of a star without input
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: SELECT * with no tables specified is not valid
+ * @visibility SqlSemantics
  */
 final class QueryMisuse implements Diagnostic
 {

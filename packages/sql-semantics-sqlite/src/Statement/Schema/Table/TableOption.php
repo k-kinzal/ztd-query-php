@@ -19,9 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
  * "unknown table option". The word is therefore kept with its quoting.
  * Source: https://sqlite.org/syntax/table-options.html. Status: Implemented.
  *
- * @visibility public
- * @example Telling a known option from an unknown one
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT "rowid"') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Table option "rowid" is unknown.
+ * @visibility SqlSemantics
  */
 final class TableOption implements Node
 {

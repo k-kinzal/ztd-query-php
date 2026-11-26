@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-PARMS-REFERENCES.
  *
- * @visibility public
- * @example Reading the event of a referential action
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int REFERENCES u ON DELETE CASCADE)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->actions[0]->event // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferenceEvent::Delete
+ * @visibility SqlSemantics
  */
 enum ReferenceEvent: string
 {

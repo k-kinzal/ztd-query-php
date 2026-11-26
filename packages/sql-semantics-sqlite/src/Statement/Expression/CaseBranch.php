@@ -12,10 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * One WHEN branch of a CASE expression.
  *
- * @visibility public
- * @example Reading a branch
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT CASE WHEN a THEN 'x' END FROM t");
- *     $query->statement->columns[0]->expression->branches[0]->then->value // => 'x'
+ * @visibility SqlSemantics
  */
 final class CaseBranch implements Node
 {

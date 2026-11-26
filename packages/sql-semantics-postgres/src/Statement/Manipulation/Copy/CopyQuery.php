@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
  * PG-COPY-001.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a COPY of a query
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY (SELECT 1) TO '/tmp/x' CSV");
- *     [$copy->statement->query instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $copy->toString()] // => [true, "COPY (SELECT 1) TO '/tmp/x' CSV"]
+ * @visibility SqlSemantics
  */
 final class CopyQuery implements Statement
 {

@@ -7,13 +7,13 @@ namespace Tests\Unit\Statement\Account\User;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Identification;
 use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\CurrentUser;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(UserSpecification::class)]
 #[Medium]
@@ -39,7 +39,7 @@ final class UserSpecificationTest extends TestCase
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame("CREATE USER u IDENTIFIED WITH p INITIAL AUTHENTICATION IDENTIFIED WITH q AS 'h'", (new Semantics())->analyze("create user u identified with p initial authentication identified with q as 'h'")->toString());
-        self::assertSame("ALTER USER u IDENTIFIED BY RANDOM PASSWORD REPLACE 'c' RETAIN CURRENT PASSWORD", (new Semantics())->analyze("alter user u identified by random password replace 'c' retain current password")->toString());
+        self::assertSame("CREATE USER u IDENTIFIED WITH p INITIAL AUTHENTICATION IDENTIFIED WITH q AS 'h'", (new Inspection())->inspect("create user u identified with p initial authentication identified with q as 'h'")->toString());
+        self::assertSame("ALTER USER u IDENTIFIED BY RANDOM PASSWORD REPLACE 'c' RETAIN CURRENT PASSWORD", (new Inspection())->inspect("alter user u identified by random password replace 'c' retain current password")->toString());
     }
 }

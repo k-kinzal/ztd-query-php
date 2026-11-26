@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CompoundStep::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class CompoundStepTest extends TestCase
 {
     public function testRenderWritesTheOperatorBeforeTheArm(): void
     {
-        $query = (new Semantics())->analyze('select 1 union all select 2 except values (3)');
+        $query = (new Inspection())->inspect('select 1 union all select 2 except values (3)');
 
         self::assertInstanceOf(Compound::class, $query->statement);
         self::assertSame(CompoundOperator::UnionAll, $query->statement->steps[0]->operator);
@@ -32,7 +32,7 @@ final class CompoundStepTest extends TestCase
 
     public function testRenderWritesIntersect(): void
     {
-        $query = (new Semantics())->analyze('SELECT 1 INTERSECT SELECT 1');
+        $query = (new Inspection())->inspect('SELECT 1 INTERSECT SELECT 1');
 
         self::assertInstanceOf(Compound::class, $query->statement);
         self::assertSame(CompoundOperator::Intersect, $query->statement->steps[0]->operator);

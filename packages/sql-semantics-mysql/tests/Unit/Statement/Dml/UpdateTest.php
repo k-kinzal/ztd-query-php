@@ -13,11 +13,11 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Update::class)]
 #[Medium]
@@ -25,10 +25,10 @@ final class UpdateTest extends TestCase
 {
     public function testDeriveStatementResolvesAssignmentsAgainstEveryTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('UPDATE t JOIN u ON t.a = u.x SET b = y WHERE a > 0', [$t, $u]);
+        $operation = $semantics->diagnose('UPDATE t JOIN u ON t.a = u.x SET b = y WHERE a > 0', [$t, $u]);
         self::assertInstanceOf(Update::class, $operation->statement);
         $column = $operation->facts->scalar($operation->statement->assignments[0]->column);
         $value = $operation->facts->scalar($operation->statement->assignments[0]->value);
@@ -42,18 +42,18 @@ final class UpdateTest extends TestCase
 
     public function testDeriveStatementReportsOrderAndLimitOfAMultipleTableUpdate(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('UPDATE t, u SET a = 1 ORDER BY a LIMIT 1', [$t, $u]);
+        $operation = $semantics->diagnose('UPDATE t, u SET a = 1 ORDER BY a LIMIT 1', [$t, $u]);
 
         self::assertSame(['Incorrect usage of UPDATE and ORDER BY', 'Incorrect usage of UPDATE and LIMIT'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('WITH c AS (SELECT 1 AS x) UPDATE LOW_PRIORITY IGNORE t SET a = a + 1 WHERE b IN (SELECT x FROM c) ORDER BY a DESC LIMIT 3', (new Semantics())->inspect('with c as (select 1 as x) update low_priority ignore t set a = a + 1 where b in (select x from c) order by a desc limit 3')->toString());
-        self::assertSame('UPDATE t SET a = 1 LIMIT 2', (new Semantics('mysql-5.6.51'))->inspect('update t set a = 1 limit 2')->toString());
+        self::assertSame('WITH c AS (SELECT 1 AS x) UPDATE LOW_PRIORITY IGNORE t SET a = a + 1 WHERE b IN (SELECT x FROM c) ORDER BY a DESC LIMIT 3', (new Inspection())->diagnose('with c as (select 1 as x) update low_priority ignore t set a = a + 1 where b in (select x from c) order by a desc limit 3')->toString());
+        self::assertSame('UPDATE t SET a = 1 LIMIT 2', (new Inspection('mysql-5.6.51'))->diagnose('update t set a = 1 limit 2')->toString());
     }
 
     public function testRenderRejectsAnUpdateWithoutAssignment(): void

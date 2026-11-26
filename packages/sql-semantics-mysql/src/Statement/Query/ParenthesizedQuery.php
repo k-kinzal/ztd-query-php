@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * query. Source: https://dev.mysql.com/doc/refman/8.4/en/union.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a parenthesized operand
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('(SELECT a FROM t ORDER BY a LIMIT 1) UNION SELECT b FROM u');
- *     $query->statement->left->query->limit !== null // => true
+ * @visibility SqlSemantics
  */
 final class ParenthesizedQuery implements Statement, Query
 {

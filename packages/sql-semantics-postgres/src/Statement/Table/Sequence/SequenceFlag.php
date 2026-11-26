@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createsequence.html, https://www.postgresql.org/docs/17/sql-altersequence.html.
  *
- * @visibility public
- * @example Reading a flag
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s NO CYCLE');
- *     $create->statement->options[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::NoCycle
+ * @visibility SqlSemantics
  */
 final class SequenceFlag implements SequenceOption
 {

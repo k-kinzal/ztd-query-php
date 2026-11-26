@@ -10,12 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A relation name that denotes exactly one declaration of the context.
  *
- * @visibility public
- * @example Reaching the supplied declaration object
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
- *     $query->facts->relation($query->inputRelation())->table->table === $table->declarations()[0] // => true
+ * @visibility SqlSemantics
  */
 final class DeclaredTable implements TableResolution
 {

@@ -14,7 +14,7 @@ final class SchemaRuleTest extends TestCase
 {
     public function testStatementLowersANamedSchema(): void
     {
-        self::assertSame('CREATE SCHEMA IF NOT EXISTS s', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SCHEMA IF NOT EXISTS s')->toString());
+        self::assertSame('CREATE SCHEMA IF NOT EXISTS s', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE SCHEMA IF NOT EXISTS s')->toString());
     }
 
     public function testElementsLowersEveryElement(): void

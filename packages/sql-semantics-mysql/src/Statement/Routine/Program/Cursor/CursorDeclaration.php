@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration;
  * declared before it in scope (MYSQL-PROGRAM-BLOCK-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-cursor.html.
  *
- * @visibility public
- * @example Reading a cursor declaration
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT a FROM t; END');
- *     $create->statement->body->declarations[0]->name->value // => 'c'
+ * @visibility SqlSemantics
  */
 final class CursorDeclaration implements Declaration
 {

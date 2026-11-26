@@ -20,9 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * https://dev.mysql.com/doc/refman/5.7/en/purge-binary-logs.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Writing MASTER LOGS as its synonym
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("purge master logs to 'binlog.000010'")->toString() // => "PURGE BINARY LOGS TO 'binlog.000010'"
+ * @visibility SqlSemantics
  */
 final class PurgeLogsTo implements Statement
 {

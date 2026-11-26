@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  * The facts follow PG-INSERT-001.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the query of an INSERT
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t (a) SELECT 1 ON CONFLICT DO NOTHING');
- *     [$insert->statement->source instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $insert->toString()] // => [true, 'INSERT INTO t (a) SELECT 1 ON CONFLICT DO NOTHING']
+ * @visibility SqlSemantics
  * @example Refusing a bare VALUES list, which is an INSERT of rows
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')))), [], null, new \SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])])) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

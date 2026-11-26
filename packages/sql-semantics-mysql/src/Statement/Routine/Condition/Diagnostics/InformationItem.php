@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * variable of the stored program that holds the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
  *
- * @visibility public
- * @example Reading the items of GET DIAGNOSTICS
- *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
- *     [$get->statement->information->items[1]->target->name->value, $get->statement->information->items[1]->item->value] // => ['r', 'ROW_COUNT']
+ * @visibility SqlSemantics
  */
 final class InformationItem implements Node
 {

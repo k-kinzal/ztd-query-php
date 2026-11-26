@@ -21,11 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  * interpreted by the type itself and are not part of the descriptor.
  * Source: https://www.postgresql.org/docs/17/ddl-schemas.html#DDL-SCHEMAS-PATH.
  *
- * @visibility public
- * @example Reading the declared type of a column of a user type
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $column = $semantics->analyze('CREATE TABLE person (current_mood mood)', [])->declarations()[0]->columns[0];
- *     [$column->type->name(), $column->type->missing[0]->describe()] // => ['mood', 'the definition of data type mood']
+ * @visibility SqlSemantics
  */
 final class NamedOnPath implements TypeDescriptor
 {

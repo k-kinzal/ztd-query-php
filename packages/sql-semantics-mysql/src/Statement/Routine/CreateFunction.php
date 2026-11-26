@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * context. The facts follow MYSQL-ROUTINE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading a function definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE FUNCTION twice(a INT) RETURNS BIGINT DETERMINISTIC RETURN a * 2');
- *     [$create->statement->returns->name(), $create->facts->diagnostics] // => ['BIGINT', []]
+ * @visibility SqlSemantics
  */
 final class CreateFunction implements Statement
 {

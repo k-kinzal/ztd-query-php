@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\OperatorRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
@@ -16,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(OperatorRule::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class OperatorRuleTest extends TestCase
 {
     public function testExpressionLowersEveryBinaryOperatorByItsSpelling(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a AND b, a OR b, a < b, a > b, a <= b, a >= b, a = b, a == b, a <> b, a != b, a & b, a | b, a << b, a >> b, a + b, a - b, a * b, a / b, a % b, a || b, a -> b, a ->> b FROM t');
+        $operation = (new Inspection())->inspect('SELECT a AND b, a OR b, a < b, a > b, a <= b, a >= b, a = b, a == b, a <> b, a != b, a & b, a | b, a << b, a >> b, a + b, a - b, a * b, a / b, a % b, a || b, a -> b, a ->> b FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([
@@ -43,7 +43,7 @@ final class OperatorRuleTest extends TestCase
 
     public function testExpressionLowersTheIsFamily(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a IS b, a IS NOT b, a IS DISTINCT FROM b, a IS NOT DISTINCT FROM b FROM t');
+        $operation = (new Inspection())->inspect('SELECT a IS b, a IS NOT b, a IS DISTINCT FROM b, a IS NOT DISTINCT FROM b FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([BinaryOperator::Is, BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom, BinaryOperator::IsNotDistinctFrom], array_map(static function (object $column): BinaryOperator {
@@ -57,7 +57,7 @@ final class OperatorRuleTest extends TestCase
 
     public function testExpressionLowersThePrefixOperators(): void
     {
-        $operation = (new Semantics())->analyze('SELECT NOT a AS c1, ~a AS c2, +a AS c3, -a AS c4 FROM t');
+        $operation = (new Inspection())->inspect('SELECT NOT a AS c1, ~a AS c2, +a AS c3, -a AS c4 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([UnaryOperator::Not, UnaryOperator::BitNot, UnaryOperator::Plus, UnaryOperator::Minus], array_map(static function (object $column): UnaryOperator {
@@ -71,7 +71,7 @@ final class OperatorRuleTest extends TestCase
 
     public function testExpressionKeepsTheOperandsInWrittenOrderAndTheStructureTheParserChose(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 + 2 * 3, 1 - 2 - 3');
+        $operation = (new Inspection())->inspect('SELECT 1 + 2 * 3, 1 - 2 - 3');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);

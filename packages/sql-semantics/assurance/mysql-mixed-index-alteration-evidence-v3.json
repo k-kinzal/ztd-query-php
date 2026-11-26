@@ -1,0 +1,149 @@
+{
+  "revision": "SemanticsIR/mysql-mixed-index-alteration-evidence-3",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-mixed-index-alteration-v1.json",
+    "mysql-multiple-index-removal-evidence-v1.json",
+    "mysql-index-renames-evidence-v1.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Native parameters, SQL mode empty, lower_case_table_names=0, utf8mb4, 16 KiB InnoDB pages.",
+  "constructors": {
+    "AlterIndexes": {
+      "type": "Schema/Index/Change/AlterIndexes",
+      "role": "Apply ordered native index removals and renames in one atomic table alteration.",
+      "structure": "Absolute TableIdentity, closed ordered mixed actions, grammar release and checked native policy.",
+      "conditions": "A nonempty group of removals and a nonempty group of renames share one selected owner and disjoint original name roles. At most 64 original name coordinates. The retained and renamed names are distinct under native comparison. Removal leaves a valid generating support key from the original namespace and admits the requested native policy. Unaffected key names participate in validation using the original complete native catalog.",
+      "meaning": "Remove the exact original selected keys and simultaneously rename the surviving selected keys. Ordered statistics effects follow the same native action list and preserve observed native diagnostics and row changes.",
+      "sql": "One ALTER TABLE with each checked action in written order and the shared effective native algorithm and lock."
+    },
+    "IndexAlteration": {
+      "type": "Schema/Index/Change/IndexAlteration",
+      "role": "An ordered physical removal operand or rename within a mixed native alteration.",
+      "structure": "The closed sum of one IndexIdentity or one IndexRename.",
+      "conditions": "The selected immutable role establishes local name validity. The owning structure enforces placement, existence, policy and composition.",
+      "meaning": "Remove the chosen physical key or rename the original chosen key to the exact supplied destination according to the selected branch.",
+      "sql": "Render the checked absolute owner's relative DROP INDEX or RENAME INDEX action using quoted native identifiers."
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Index/Change/AlterIndexes"
+  ],
+  "finite": {
+    "lifetimes": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "totalCoordinates": [
+      2,
+      3,
+      8,
+      63,
+      64
+    ],
+    "composition": [
+      "free-removed-label",
+      "fresh-destination",
+      "open-chain"
+    ],
+    "actionOrder": [
+      "remove-first",
+      "rename-first"
+    ],
+    "boundaryCases": [
+      "remove-and-move-same-key",
+      "duplicate-removal",
+      "final-collision",
+      "leading-support-renamed",
+      "no-support-remains",
+      "more-than-64-physical-names"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteLayouts": 90,
+  "negativeCount": 62,
+  "negative": [
+    "remove-and-move-same-key",
+    "duplicate-removal",
+    "final-collision",
+    "leading-support-renamed",
+    "no-support-remains",
+    "more-than-64-physical-names"
+  ],
+  "exploration": {
+    "seeds": [
+      1097,
+      5179,
+      16411
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare exact ordered IR actions, accepted input SQL and emitted SQL under the same native profile, key roles, names, ordered columns, direction, visibility, data, actual implicit commit and generated identities.",
+    "Observe the removal and renaming effects separately on the same initial native table and confirm no transient intermediate name or new reference is published.",
+    "Compare copied row counts and complete ordered native warnings whenever provided by the fixed fixture.",
+    "A persistent sibling with a different key layout and data remains unaffected when a temporary table shadows it."
+  ],
+  "evidence": {
+    "P01": "Require the exact original physical reference, corresponding destination, source operation tag and one absolute owner.",
+    "P02": "Reject invalid initial or final namespace, release, formation, lifetime, policy and backing-index composition.",
+    "P03": "Store only the resolved immutable roles, native policy and checked namespace inputs.",
+    "P04": "Use separate namespace and backing-index rules on the ordered closed action list.",
+    "P05": "Detach every stored input list and inspect all value and publication paths.",
+    "P06": "Require one total faithful ALTER statement using all typed actions. Compare native rows, effects and diagnostics."
+  },
+  "obligations": {
+    "Q01": "Audit the owning constructor and direct negative cases against the fixed rules.",
+    "Q02": "Require independently enumerated accepted coordinate evidence in analysis and direct construction.",
+    "Q03": "Check the initial disjoint namespace, final injectivity and retained generation under all selected operations.",
+    "Q04": "Compare independent predictions and exercise omission faults on both operation kinds.",
+    "Q05": "Measure and replay identified PHP and both staged layouts against the independently selected verifier."
+  },
+  "faults": [
+    "Ignore a surviving key that should have been removed.",
+    "Omit the original removal action in native SQL.",
+    "Omit one original rename action in native SQL."
+  ],
+  "trust": "Pinned native profile, fixed fixture, independent initial and final namespace models, constrained PHP shapes and exact runtime correspondence.",
+  "trackedBeyondThisSlice": [
+    "Mixed additions, visibility changes or table column changes and foreign-key-backed owners remain separate domains.",
+    "Partitioned, prefix, expression, FULLTEXT and SPATIAL index variants remain separate domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://dev.mysql.com/worklog/task/?id=6555"
+  ],
+  "supersedes": {
+    "path": "mysql-mixed-index-alteration-evidence-v1.json",
+    "sha256": "53307788ec9f2a473c135ec3dbf3d87ead07b2872e95501515110cb385860f44"
+  },
+  "fixtureIsolation": "After dropping the disposable target before every operation, clear only that target's InnoDB statistics rows and measure that both counts are zero. This gives the input SQL and the emitted SQL the same initially empty statistics catalog. Native warnings are still compared in full.",
+  "counterexample": {
+    "candidate": "454db196f3db69d1882647889b8b8c3ed659838d",
+    "release": "5.7.44",
+    "attempt": "seed/1097/10",
+    "signal": "meaning-mismatch",
+    "scope": "The original analysis SQL encountered native Warning 1025 during a repeated observation after the previous run left orphaned statistics. Rows, physical keys, commit and affected counts matched. Keep full warning comparisons."
+  },
+  "publicationContracts": {
+    "mysql-index-transient-validation-v1.json": "fa9dfe525c4c3f0909d1f56c0656ea7f31e603a4ee970ee3f19c2e51f3f54c70",
+    "mysql-mixed-index-alteration-evidence-v2.json": "cf8dab798394497cf06f819a0d1f363cc4bf85dd9766e3a67945bc49f9421904"
+  }
+}

@@ -28,10 +28,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
  * SQLITE-COLUMN-LOOKUP-001 and the facts of SQLITE-COLUMN-FACT-001.
  * Source: https://sqlite.org/lang_expr.html#column_names. Status: Implemented.
  *
- * @visibility public
- * @example Reading a qualified column use
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT t.a FROM t');
- *     [$query->statement->columns[0]->expression->qualifier?->name->value, $query->statement->columns[0]->expression->name->value] // => ['t', 'a']
+ * @visibility SqlSemantics
  */
 final class ColumnUse implements Scalar
 {

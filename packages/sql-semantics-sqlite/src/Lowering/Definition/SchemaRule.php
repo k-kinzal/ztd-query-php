@@ -83,6 +83,7 @@ final class SchemaRule
                 $this->lowering->names->qualified($form->node(2)),
                 $this->lowering->names->name($this->keyword($form->node(4), $form->node(5))),
                 $this->lowering->names->name($form->node(7)),
+                str_contains("\"'`[", $form->node(7)->tokens()[0]->text[0]),
             ),
             default => null,
         };

@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChange
  * as `AlterType` reads it (PG-ALTER-ATTRIBUTE-001), and a function property
  * set to NONE, or written alone, is removed. Source: https://www.postgresql.org/docs/17/sql-altertype.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the changed properties
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE t SET (storage = plain)');
- *     $operation->statement->options[0]->attribute->known // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute::Storage
+ * @visibility SqlSemantics
  */
 final class AlterTypeOptions implements Statement
 {

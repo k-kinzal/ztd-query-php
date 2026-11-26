@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * A literal default is the value itself; CURRENT_TIMESTAMP (and its synonyms) is the only function MySQL accepts without parentheses, for TIMESTAMP and DATETIME columns.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html.
  *
- * @visibility public
- * @example Reading the clause of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TIMESTAMP DEFAULT 1)');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral // => true
+ * @visibility SqlSemantics
  */
 final class DefaultLiteral implements ColumnAttribute
 {

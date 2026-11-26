@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/timestamp-initialization.html.
  *
- * @visibility public
- * @example Reading the clause of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate // => true
+ * @visibility SqlSemantics
  */
 final class OnUpdate implements ColumnAttribute
 {

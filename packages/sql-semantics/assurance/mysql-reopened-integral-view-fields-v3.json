@@ -1,0 +1,123 @@
+{
+  "revision": "SemanticsIR/mysql-reopened-integral-view-fields-3",
+  "approval": "pending-human-review",
+  "inherits": "mysql-external-view-read-names-v2.json",
+  "profiles": "The nine pinned MySQL releases, UTF-8 client and result character sets, case-sensitive table names, empty SQL mode, native prepared SELECT, separate external fixture bindings.",
+  "constructors": {},
+  "existingRoles": [
+    "TableSource",
+    "From/ColumnKind",
+    "From/IntegralSlot",
+    "From/IntegralColumnReference",
+    "ResultColumn",
+    "Select"
+  ],
+  "scope": "Project reopened signed integer fields from persistent views of a single source-free SELECT, including FROM DUAL, and explicit signed integral widths from a nonjoined base relation. Cover bare, qualified, repeated and wildcard references. A supplied view declaration determines external resolution independently of analysis of the query that reads it.",
+  "structure": "One external relation identity, its mode of materialization and the consumed ordered native slot layout, with each standard or other signed width and nullability. Each result has a bound slot and visible label. Literal tokens of the provider affect the wire type while deriving the declaration. The completed read retains no provider query or value.",
+  "invariants": [
+    "Resolve the analyzed field and width before publishing the SELECT. Alternate references to an occurrence share the same slot.",
+    "A standard reference requires its checked INT slot. An integral reference requires its checked TINYINT, SMALLINT, MEDIUMINT or BIGINT slot.",
+    "A source-free view materializes its heading for all three declaration algorithms. From DUAL has no underlying input.",
+    "For signed integral tokens the stored expression is opened on its normalized magnitude. Below wire width ten the temporary field is LONG. At width ten and above it is LONGLONG. MySQL 5.6 and 5.7 count the negative sign, including signed zero. Later profiles account for one sign position for both polarities.",
+    "The original catalog can report BIGINT even when a later read exposes LONG after removing leading zeroes. Retain both observations in the independent ledger.",
+    "Reuse the admitted projection rules for physical fields. Preserve full signed range, ordered column identities, names, duplicates and NULL."
+  ],
+  "meaning": "Text and group wrappers are decoded to the exact signed literal for declaration analysis. The selected column names, positions, native signed widths and result values remain those of the actual external relation under the same schema and view definitions. CREATE VIEW is executed in fixture setup, with the actual 1354 MERGE fallback warning captured independently.",
+  "observations": [
+    "Ordered result names, native type codes, lengths and null flags for view reads",
+    "Exact signed values, nullable base rows, duplicate base rows, consumed slot indexes and resolved physical widths",
+    "Exact creation warning code and resulting view algorithm, catalog data type and nullability, and the reopened result protocol",
+    "Direct and analyzed read outputs against the same permanent fixtures"
+  ],
+  "finite": {
+    "values": [
+      "0",
+      "-0",
+      "17",
+      "-42",
+      "99999999",
+      "100000000",
+      "-99999999",
+      "-100000000",
+      "999999999",
+      "1000000000",
+      "-2147483648",
+      "2147483647",
+      "-9223372036854775808",
+      "9223372036854775807"
+    ],
+    "tokenForms": [
+      "plain",
+      "grouped-plus",
+      "zero-padded"
+    ],
+    "algorithms": [
+      "UNDEFINED",
+      "TEMPTABLE",
+      "MERGE"
+    ],
+    "bindings": [
+      "bare",
+      "alias",
+      "wildcard"
+    ],
+    "bodySources": [
+      "implicit-unit",
+      "dual"
+    ],
+    "baseWidths": [
+      "TINYINT",
+      "SMALLINT",
+      "MEDIUMINT",
+      "INT",
+      "BIGINT"
+    ],
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      39,
+      719,
+      8093
+    ],
+    "casesPerSeed": 20,
+    "directCasesPerSeed": 20,
+    "timeoutSecondsPerRelease": 360,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Project an integral reference at an INT slot",
+    "Project a standard reference at a BIGINT slot",
+    "Project an integral reference outside the only source occurrence",
+    "Read a missing field through a qualified external view name",
+    "Read an exact DECIMAL or an unsigned literal as a signed external result"
+  ],
+  "faults": [
+    "Determine the reopened type from the raw padded token",
+    "Use physical INT for all reopened signed fields",
+    "Erase the declared signed width on a projection operand",
+    "Move a projected wide-value slot to the first source field",
+    "Ignore a changed native type or nullability in an otherwise equal observation"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/view-algorithms.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/sql_tmp_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_tmp_table.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/item.h"
+  ],
+  "remaining": [
+    "CREATE VIEW with MERGE fallback and its warning as a constructed statement effect",
+    "Materialized expression families other than signed integral literals",
+    "Extended signed slots in joined, local, grouped, ORDER BY and write-source roles",
+    "Additional grammar alternatives and optimizer or lexical profiles",
+    "Independent review and enforceable candidate-independent acceptance"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "versionedFrom": {
+    "path": "mysql-reopened-integral-view-fields-v2.json",
+    "sha256": "302d0f263f9ca22bd3ae5d3ab12013399bc64c75cc17caeeaf59f590340809e0",
+    "change": "Use the qualified From/ColumnKind role in the published constructor inventory."
+  }
+}

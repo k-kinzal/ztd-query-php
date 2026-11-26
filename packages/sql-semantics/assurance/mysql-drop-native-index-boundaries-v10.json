@@ -1,0 +1,1156 @@
+{
+  "revision": "SemanticsIR/mysql-drop-native-index-boundaries-10",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Checked native DROP INDEX role, owner, identity and facade dispatch. Includes the resolved native namespace, effective physical role and policy where applicable. Includes single ALTER TABLE native removal, bounded option composition and legacy IGNORE. Includes the resolved generating field and complete alternate backing names. Includes ordered atomic index removal, shared physical owner and lifetime, and survival of one complete AUTO_INCREMENT backing key. Includes the simultaneous physical index rename, its initial and final namespaces, and exact legacy qualifiers. Includes atomic mixed removals and renames, initial namespace disjointness and retained generating support after name replacement. Closes each native foreign-key side over all affected physical keys before the exact removal is published. Audits all native index visibility constructors, published routes, exact native owner binding, effective policy and operand order. Audit checked native foreign-key removal, ordered detached action storage and exact surviving constraint ownership.",
+  "rules": {
+    "Schema/Index/DropIndex::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target->autoIncrement === null || $target->autoIncrement->alternates !== [], 'DROP INDEX must retain a backing key for the AUTO_INCREMENT field.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$ignore || $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy->supports($target->owner->kind, $target->role->clustered()), 'The algorithm and lock cannot remove this native InnoDB index.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyClosure())->check([$target], $requirements);"
+      ]
+    },
+    "Schema/Index/DropIndex::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$name = $this->target->name->quoted();",
+        "$owner = $this->target->owner->quoted();",
+        "$policy = $this->policy->sql($this->ignore);",
+        "return $this->ignore ? 'ALTER IGNORE TABLE ' . $owner . ' DROP INDEX ' . $name . $policy : 'DROP INDEX ' . $name . ' ON ' . $owner . $policy;"
+      ]
+    },
+    "Schema/Index/DropIndex::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/drop-index';"
+      ]
+    },
+    "Schema/Index/IndexIdentity::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $name->value) === 1, 'An index name has 1 to 64 characters and no trailing space.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($role === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexRole::Primary ? $name->value === 'PRIMARY' : $case->fold($name->value) !== 'primary', 'Only the physical primary key has the canonical PRIMARY index identity.');",
+        "$target = $case->fold($name->value);",
+        "foreach ($autoIncrement->alternates ?? [] as $alternate) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($case->fold($alternate->value) !== $target, 'An AUTO_INCREMENT backing alternate must be a different physical key.');",
+        "}"
+      ]
+    },
+    "Schema/Index/DropIndexLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$target = $this->identity($operation, $statement, $statement->index);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndex($target, (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyLowering())->resolve($operation, $statement, [$target]), $operation->context->profile->grammar, (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexPolicyLowering())->lower($statement->options));"
+      ]
+    },
+    "Schema/Index/DropIndexLowering::index": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$key = $case->fold($name->value);",
+        "$indexes = array_values(array_filter($table->indexes ?? [], static fn(\\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\IndexDeclaration $index): bool => $case->fold($index->name->value) === $key));",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($indexes) === 1 && $indexes[0]->wholeFields, 'DROP INDEX requires one resolved ordinary index on its owning table.');",
+        "return $indexes[0];"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::applies": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropIndex || $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropTable || $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\View\\DropView || $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\RenameTable || $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\TruncateTable || $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable && ((new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterIndexRemovalLowering())->removals($statement) !== null || (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterIndexRenameLowering())->moves($statement) !== null || (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterMixedIndexesLowering())->changes($statement) !== null || (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\IndexVisibilityLowering())->edits($statement) !== null || (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalLowering())->changes($statement) !== null);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable && (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalLowering())->changes($statement) !== null => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable && (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\IndexVisibilityLowering())->edits($statement) !== null => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\IndexVisibilityLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable && (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterMixedIndexesLowering())->changes($statement) !== null => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterMixedIndexesLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable && (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterIndexRenameLowering())->moves($statement) !== null => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterIndexRenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterIndexRemovalLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropIndex => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndexLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropTable => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropTableLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\View\\DropView => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\DropViewLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\RenameTable => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\TableRenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\TruncateTable => (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    },
+    "Schema/Index/Policy/IndexChangePolicy::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/Policy/IndexChangePolicy::supports": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match ($owner) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable => $this->algorithm !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexAlgorithm::InPlace,",
+        "    \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable => $removesPrimary ? $this->algorithm !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexAlgorithm::InPlace && $this->lock !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexLock::None : $this->algorithm !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexAlgorithm::Copy || $this->lock !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexLock::None,",
+        "    \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::View => false,",
+        "};"
+      ]
+    },
+    "Schema/Index/Policy/IndexChangePolicy::sql": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$separator = $commaSeparated ? ', ' : ' ';",
+        "$algorithm = $this->algorithm === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexAlgorithm::Default ? '' : $separator . 'ALGORITHM=' . $this->algorithm->value;",
+        "$lock = $this->lock === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexLock::Default ? '' : $separator . 'LOCK=' . $this->lock->value;",
+        "return $algorithm . $lock;"
+      ]
+    },
+    "Schema/Index/Policy/IndexPolicyLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$algorithm = \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexAlgorithm::Default;",
+        "$lock = \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexLock::Default;",
+        "foreach ($options as $option) {",
+        "    if ($option instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption) {",
+        "        $requested = \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexAlgorithm::tryFrom(strtr($option->algorithm->value ?? 'DEFAULT', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'));",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($requested instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexAlgorithm, 'Ordinary InnoDB index changes accept DEFAULT, INPLACE or COPY algorithms.');",
+        "        $algorithm = $requested;",
+        "    } else {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($option instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption, 'An ordinary InnoDB index change requires a checked native lock.');",
+        "        $requested = \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexLock::tryFrom(strtr($option->lock->value ?? 'DEFAULT', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'));",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($requested instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexLock, 'An ordinary InnoDB index change requires a checked native lock.');",
+        "        $lock = $requested;",
+        "    }",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexChangePolicy($algorithm, $lock);"
+      ]
+    },
+    "Schema/Index/IndexRole::clustered": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match ($this) {",
+        "    self::Primary, self::ClusteredUnique => true,",
+        "    self::Unique, self::Ordinary => false,",
+        "};"
+      ]
+    },
+    "Schema/Alter/AlterIndexRemovalLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$actions = $this->removals($statement);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($actions !== null, 'ALTER TABLE index removal requires an ordered list of key actions.');",
+        "$release = $operation->context->profile->grammar;",
+        "$policy = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexPolicyLowering())->alteration($statement);",
+        "$identities = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndexLowering();",
+        "$targets = [];",
+        "foreach ($actions as $action) {",
+        "    $targets[] = $identities->identity($operation, $statement, $action->name->column ?? new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Name('PRIMARY'), $action->name?->table);",
+        "}",
+        "$requirements = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyLowering())->resolve($operation, $statement, $targets);",
+        "return count($targets) === 1 ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndex($targets[0], $requirements, $release, $policy, $statement->ignore) : new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndexes($targets, $requirements, $release, $policy, $statement->ignore);"
+      ]
+    },
+    "Schema/Index/IndexAutoIncrement::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $field->value) === 1, 'An AUTO_INCREMENT backing field needs a valid native name.');",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($alternates, \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier::class, 'AUTO_INCREMENT alternate keys form an ordered list of native names.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($checked) < 64, 'An AUTO_INCREMENT backing index can have at most 63 alternate keys.');",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$seen = [];",
+        "foreach ($checked as $alternate) {",
+        "    $key = $case->fold($alternate->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $alternate->value) === 1 && !isset($seen[$key]), 'The AUTO_INCREMENT alternate key names must be distinct native identifiers.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->alternates = $checked;"
+      ]
+    },
+    "Schema/Index/IndexAutoIncrementLowering::resolve": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$field = $target->autoIncrementField;",
+        "if ($field === null) {",
+        "    return null;",
+        "}",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$targetName = $case->fold($target->name->value);",
+        "$alternates = [];",
+        "foreach ($indexes as $index) {",
+        "    if ($index->autoIncrementField?->value === $field->value && $case->fold($index->name->value) !== $targetName) {",
+        "        $alternates[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($index->name->value);",
+        "    }",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexAutoIncrement(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($field->value), $alternates);"
+      ]
+    },
+    "Schema/Index/DropIndexLowering::identity": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native && $profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) && $context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'DROP INDEX requires the default native profile.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolution->table->kind === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\RelationKind::BaseTable && $resolution->table->name->catalog === null && $resolution->table->storageEngine !== null && strcasecmp($resolution->table->storageEngine, 'InnoDB') === 0, 'DROP INDEX requires a resolved ordinary InnoDB declaration.');",
+        "$table = $resolution->table;",
+        "$schema = ($table->name->schema ?? $context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'DROP INDEX requires an absolute owning table.');",
+        "if ($qualifier !== null) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($qualifier->schema === null || $qualifier->schema->value === $schema, 'DROP INDEX names a different owning database.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($qualifier->name->value === $table->name->name->value, 'DROP INDEX names a different owning table.');",
+        "}",
+        "$index = $this->index($table, $key);",
+        "$name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($table->name->name->value));",
+        "$owner = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity($name, $table->temporary ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable);",
+        "$role = match ($index->kind) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Primary => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexRole::Primary,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Unique => $index->clusteredUnique ? \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexRole::ClusteredUnique : \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexRole::Unique,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Index => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexRole::Ordinary,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::FullText, \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Spatial => null,",
+        "};",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($role !== null, 'DROP INDEX requires a primary or ordinary B-tree index.');",
+        "$increment = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexAutoIncrementLowering())->resolve($index, $table->indexes ?? []);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexIdentity($owner, new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($index->name->value), $role, $increment);"
+      ]
+    },
+    "Schema/Alter/AlterIndexRemovalLowering::removals": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$actions = [];",
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption || $command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption) {",
+        "        continue;",
+        "    }",
+        "    if (!$command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\DropElement || !in_array($command->kind, [\\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::PrimaryKey, \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::Index], true)) {",
+        "        return null;",
+        "    }",
+        "    $actions[] = $command;",
+        "}",
+        "return $actions !== [] ? $actions : null;"
+      ]
+    },
+    "Schema/Index/DropIndexes::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$ignore || $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($targets, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexIdentity::class, 'An atomic index removal requires an ordered list of at least two targets.', 2);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($checked) <= 64, 'An atomic index removal can contain at most 64 physical keys.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Batch\\IndexRemovalSet())->check($checked, $policy);",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyClosure())->check($checked, $requirements);",
+        "$this->targets = $checked;"
+      ]
+    },
+    "Schema/Index/DropIndexes::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/drop-index-set';"
+      ]
+    },
+    "Schema/Index/DropIndexes::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$operation = $this->ignore ? 'ALTER IGNORE TABLE ' : 'ALTER TABLE ';",
+        "$actions = [];",
+        "foreach ($this->targets as $index) {",
+        "    $actions[] = 'DROP INDEX ' . $index->name->quoted();",
+        "}",
+        "return $operation . $this->targets[0]->owner->quoted() . ' ' . implode(', ', $actions) . $this->policy->sql(true);"
+      ]
+    },
+    "Schema/Index/Batch/IndexRemovalSet::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$owner = $targets[0]->owner;",
+        "$expected = $this->coordinate($owner);",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$removed = [];",
+        "$clustered = 0;",
+        "foreach ($targets as $target) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($this->coordinate($target->owner) === $expected, 'An atomic index removal requires one owning table and lifetime.');",
+        "    $name = $case->fold($target->name->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($removed[$name]), 'An atomic index removal cannot repeat a physical key.');",
+        "    $removed[$name] = true;",
+        "    $clustered += (int) $target->role->clustered();",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($clustered <= 1, 'One table supplies at most one clustered index target.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy->supports($owner->kind, $clustered === 1), 'The algorithm and lock cannot remove these native InnoDB indexes.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Batch\\AutoIncrementRemovalSet())->check($targets, $removed);"
+      ]
+    },
+    "Schema/Index/Batch/IndexRemovalSet::coordinate": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return [$owner->name->schema->value, $owner->name->table->value, $owner->kind];"
+      ]
+    },
+    "Schema/Index/Batch/AutoIncrementRemovalSet::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$backing = null;",
+        "$field = null;",
+        "foreach ($targets as $target) {",
+        "    $increment = $target->autoIncrement;",
+        "    if ($increment === null) {",
+        "        continue;",
+        "    }",
+        "    $currentField = $case->fold($increment->field->value);",
+        "    $current = [$case->fold($target->name->value) => true];",
+        "    foreach ($increment->alternates as $alternate) {",
+        "        $current[$case->fold($alternate->value)] = true;",
+        "    }",
+        "    ksort($current, SORT_STRING);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($field === null || $currentField === $field && $current === $backing, 'Removed AUTO_INCREMENT backing indexes must agree on one field and its complete backing set.');",
+        "    $field = $currentField;",
+        "    $backing = $current;",
+        "}",
+        "if ($backing === null) {",
+        "    return;",
+        "}",
+        "foreach ($targets as $target) {",
+        "    $included = isset($backing[$case->fold($target->name->value)]);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($included === ($target->autoIncrement !== null), 'Each removed backing key must identify the same AUTO_INCREMENT dependence.');",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(array_diff_key($backing, $removed) !== [], 'Atomic removal must retain a backing key for the AUTO_INCREMENT field.');"
+      ]
+    },
+    "Schema/Alter/AlterIndexRenameLowering::moves": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$moves = [];",
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption || $command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption) {",
+        "        continue;",
+        "    }",
+        "    if (!$command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameElement || $command->kind !== \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::Index) {",
+        "        return null;",
+        "    }",
+        "    $moves[] = $command;",
+        "}",
+        "return $moves !== [] ? $moves : null;"
+      ]
+    },
+    "Schema/Alter/AlterIndexRenameLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$written = $this->moves($statement);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($written !== null, 'ALTER TABLE requires a native index rename.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolution->table->indexes !== null, 'Index renaming requires a complete physical key namespace.');",
+        "$selection = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndexLowering();",
+        "$source = $selection->identity($operation, $statement, $written[0]->from->column);",
+        "$moves = [];",
+        "$owner = $source->owner;",
+        "foreach ($written as $action) {",
+        "    $this->qualifier($owner, $action->from->table);",
+        "    $this->qualifier($owner, $action->to->table);",
+        "    $source = $selection->identity($operation, $statement, $action->from->column);",
+        "    $moves[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Rename\\IndexRename($source->name, new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($action->to->column->value));",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Rename\\RenameIndexes($owner, $moves, $this->unmoved($resolution->table->indexes, $moves), $operation->context->profile->grammar, (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexPolicyLowering())->alteration($statement));"
+      ]
+    },
+    "Schema/Alter/AlterIndexRenameLowering::qualifier": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($written === null) {",
+        "    return;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($written->schema === null || $written->schema->value === $owner->name->schema->value, 'Index renaming names a different owning database.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($written->name->value === $owner->name->table->value, 'Index renaming names a different owning table.');"
+      ]
+    },
+    "Schema/Alter/AlterIndexRenameLowering::unmoved": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$selected = [];",
+        "foreach ($moves as $move) {",
+        "    $selected[$case->fold($move->source->value)] = true;",
+        "}",
+        "$remaining = [];",
+        "foreach ($keys as $key) {",
+        "    if (!isset($selected[$case->fold($key->name->value)])) {",
+        "        $remaining[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($key->name->value);",
+        "    }",
+        "}",
+        "return $remaining;"
+      ]
+    },
+    "Schema/Index/Rename/IndexRename::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "foreach ([$source, $destination] as $name) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $name->value) === 1, 'An index name has 1 to 64 characters and no trailing space.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($case->fold($name->value) !== 'primary', 'A native index rename cannot name the physical primary key.');",
+        "}"
+      ]
+    },
+    "Schema/Index/Rename/IndexRename::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'RENAME INDEX ' . $this->source->quoted() . ' TO ' . $this->destination->quoted();"
+      ]
+    },
+    "Schema/Index/Rename/IndexRenameNamespace::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($moves) + count($unmoved) <= 64, 'A native index namespace can contain at most 64 physical keys.');",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$untouched = [];",
+        "foreach ($unmoved as $key) {",
+        "    $name = $case->fold($key->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $key->value) === 1 && !isset($untouched[$name]), 'The unmoved native index names must be distinct and valid.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name !== 'primary' || $key->value === 'PRIMARY', 'Only the native PRIMARY name supplies the physical primary key.');",
+        "    $untouched[$name] = true;",
+        "}",
+        "$original = $untouched;",
+        "$result = $untouched;",
+        "foreach ($moves as $move) {",
+        "    $before = $case->fold($move->source->value);",
+        "    $after = $case->fold($move->destination->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($original[$before]), 'Each source must name a distinct original native index.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($result[$after]), 'The resulting native index names must be distinct.');",
+        "    $original[$before] = true;",
+        "    $result[$after] = true;",
+        "}"
+      ]
+    },
+    "Schema/Index/Rename/RenameIndexes::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, 'Native index renaming requires MySQL 5.7 or later.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy->supports($owner->kind), 'The algorithm and lock cannot rename indexes on this native InnoDB table.');",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($moves, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Rename\\IndexRename::class, 'An atomic index rename requires a nonempty ordered move list.', 1);",
+        "$stable = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($unmoved, \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier::class, 'An atomic index rename requires an ordered list of unmoved names.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Rename\\IndexRenameNamespace())->check($checked, $stable);",
+        "$this->moves = $checked;",
+        "$this->unmoved = $stable;"
+      ]
+    },
+    "Schema/Index/Rename/RenameIndexes::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/rename-indexes';"
+      ]
+    },
+    "Schema/Index/Rename/RenameIndexes::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$actions = [];",
+        "foreach ($this->moves as $move) {",
+        "    $actions[] = $move->toString();",
+        "}",
+        "return 'ALTER TABLE ' . $this->owner->quoted() . ' ' . implode(', ', $actions) . $this->policy->sql(true);"
+      ]
+    },
+    "Schema/Alter/AlterMixedIndexesLowering::changes": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$actions = [];",
+        "$drops = $moves = false;",
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption || $command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption) {",
+        "        continue;",
+        "    }",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\DropElement && in_array($command->kind, [\\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::PrimaryKey, \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::Index], true)) {",
+        "        $drops = true;",
+        "    } elseif ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameElement && $command->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::Index) {",
+        "        $moves = true;",
+        "    } else {",
+        "        return null;",
+        "    }",
+        "    $actions[] = $command;",
+        "}",
+        "return $drops && $moves && $actions !== [] ? $actions : null;"
+      ]
+    },
+    "Schema/Alter/AlterMixedIndexesLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$written = $this->changes($statement);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($written !== null, 'ALTER TABLE requires both ordinary native index removals and renames.');",
+        "$resolved = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($resolved instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolved->table->indexes !== null, 'Mixed index alterations require a complete physical key namespace.');",
+        "$selector = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndexLowering();",
+        "$renames = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Alter\\AlterIndexRenameLowering();",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$owner = null;",
+        "$actions = $modified = $removed = [];",
+        "foreach ($written as $action) {",
+        "    if ($action instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\DropElement) {",
+        "        $source = $selector->identity($operation, $statement, $action->name->column ?? new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Name('PRIMARY'), $action->name?->table);",
+        "        $selected = $source;",
+        "        $removed[] = $source;",
+        "    } else {",
+        "        $source = $selector->identity($operation, $statement, $action->from->column, $action->from->table);",
+        "        $renames->qualifier($source->owner, $action->to->table);",
+        "        $selected = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Rename\\IndexRename($source->name, new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($action->to->column->value));",
+        "    }",
+        "    $owner ??= $source->owner;",
+        "    $modified[$case->fold($source->name->value)] = true;",
+        "    $actions[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Change\\IndexAlteration($selected);",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($removed !== [], 'Mixed index changes need a removal.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Change\\AlterIndexes($owner, $actions, $this->unmoved($resolved->table->indexes, $modified), (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyLowering())->resolve($operation, $statement, $removed), $operation->context->profile->grammar, (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexPolicyLowering())->alteration($statement));"
+      ]
+    },
+    "Schema/Alter/AlterMixedIndexesLowering::unmoved": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$unmoved = [];",
+        "foreach ($keys as $key) {",
+        "    if (!isset($modified[$case->fold($key->name->value)])) {",
+        "        $unmoved[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($key->name->value);",
+        "    }",
+        "}",
+        "return $unmoved;"
+      ]
+    },
+    "Schema/Index/Change/IndexAlteration::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/Change/IndexAlteration::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->operation instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexIdentity ? 'DROP INDEX ' . $this->operation->name->quoted() : $this->operation->toString();"
+      ]
+    },
+    "Schema/Index/Change/AlterIndexes::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, 'Mixed native index removal and renaming requires MySQL 5.7 or later.');",
+        "$owned = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($actions, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Change\\IndexAlteration::class, 'A mixed index alteration requires an ordered list of two or more actions.', 2);",
+        "$stable = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($unmoved, \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier::class, 'A mixed index alteration requires an ordered list of unmoved names.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Change\\MixedIndexChanges())->check($owner, $owned, $stable, $policy, $requirements);",
+        "$this->actions = $owned;",
+        "$this->unmoved = $stable;"
+      ]
+    },
+    "Schema/Index/Change/AlterIndexes::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/alter-indexes';"
+      ]
+    },
+    "Schema/Index/Change/AlterIndexes::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$clauses = [];",
+        "foreach ($this->actions as $action) {",
+        "    $clauses[] = $action->toString();",
+        "}",
+        "return 'ALTER TABLE ' . $this->owner->quoted() . ' ' . implode(', ', $clauses) . $this->policy->sql(true);"
+      ]
+    },
+    "Schema/Index/Change/MixedIndexChanges::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$moves = $drops = [];",
+        "$removals = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Batch\\IndexRemovalSet();",
+        "$coordinate = $removals->coordinate($owner);",
+        "foreach ($actions as $action) {",
+        "    $operation = $action->operation;",
+        "    if ($operation instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexIdentity) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($removals->coordinate($operation->owner) === $coordinate, 'Mixed index changes require one owning table and lifetime.');",
+        "        $drops[] = $operation;",
+        "    } else {",
+        "        $moves[] = $operation;",
+        "    }",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($drops !== [] && $moves !== [], 'A mixed index alteration requires at least one removal and one rename.');",
+        "$removals->check($drops, $policy);",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyClosure())->check($drops, $requirements);",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Change\\MixedIndexNamespace())->check($drops, $moves, $unmoved);"
+      ]
+    },
+    "Schema/Index/Change/MixedIndexNamespace::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Rename\\IndexRenameNamespace())->check($moves, $unmoved);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($drops) + count($moves) + count($unmoved) <= 64, 'A native index namespace can contain at most 64 physical keys.');",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$original = [];",
+        "foreach ($moves as $move) {",
+        "    $original[$case->fold($move->source->value)] = true;",
+        "}",
+        "foreach ($unmoved as $prior) {",
+        "    $original[$case->fold($prior->value)] = true;",
+        "}",
+        "foreach ($drops as $drop) {",
+        "    $name = $case->fold($drop->name->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($original[$name]), 'A removed index cannot also be renamed or unmoved.');",
+        "    $original[$name] = true;",
+        "}",
+        "foreach ($drops as $drop) {",
+        "    foreach ($drop->autoIncrement->alternates ?? [] as $alternate) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(isset($original[$case->fold($alternate->value)]), 'Every AUTO_INCREMENT backing name must belong to the original native namespace.');",
+        "    }",
+        "}"
+      ]
+    },
+    "Schema/Index/Dependency/IndexForeignKeyRequirement::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($owner->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable, 'Foreign-key index support requires a persistent owning table.');",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($keys, \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier::class, 'Foreign-key index support needs one or more physical keys.', 1);",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$seen = [];",
+        "foreach ($checked as $key) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $key->value) === 1, 'A supporting index name has 1 to 64 characters and no trailing space.');",
+        "    $name = $case->fold($key->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$name]), 'Foreign-key index support cannot repeat a physical key.');",
+        "    $seen[$name] = true;",
+        "}",
+        "$this->keys = $checked;"
+      ]
+    },
+    "Schema/Index/Dependency/IndexDependencyClosure::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($requirements, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexForeignKeyRequirement::class, 'Index removal needs checked native foreign-key requirements.');",
+        "$scope = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Batch\\IndexRemovalSet();",
+        "$owner = $scope->coordinate($targets[0]->owner);",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$removed = [];",
+        "foreach ($targets as $index) {",
+        "    $removed[$case->fold($index->name->value)] = true;",
+        "}",
+        "foreach ($checked as $requirement) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($scope->coordinate($requirement->owner) === $owner, 'A foreign-key index requirement must name the selected persistent owner.');",
+        "    $survives = false;",
+        "    foreach ($requirement->keys as $key) {",
+        "        $survives = $survives || !isset($removed[$case->fold($key->value)]);",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($survives, 'Index removal must retain a supporting key for each native foreign-key side.');",
+        "}"
+      ]
+    },
+    "Schema/Index/Dependency/IndexDependencyKeys::support": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "[$exactUnique, $hidden] = $this->policy($parent, $release);",
+        "$coverage = new \\SqlSemantics\\Platform\\MySql\\Rules\\TableDefinition\\Index\\IndexKeyCoverage();",
+        "$before = $hidden ? $coverage->cluster($initial) : null;",
+        "$after = $hidden ? $coverage->cluster($remaining) : null;",
+        "$result = [];",
+        "foreach ($initial as $index) {",
+        "    $survives = in_array($index, $remaining, true);",
+        "    if ($coverage->covers($fields, $index, $survives ? $after : $before, $exactUnique)) {",
+        "        $result[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($index->name->value);",
+        "    }",
+        "}",
+        "return $result;"
+      ]
+    },
+    "Schema/Index/Dependency/IndexDependencyKeys::policy": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match ($release) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 => [false, true],",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql8044, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql810, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql820, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql830 => [false, $parent],",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql847, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql901, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910 => [$parent, false],",
+        "};"
+      ]
+    },
+    "Schema/Index/Dependency/IndexDependencyLowering::resolve": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$owner = $targets[0]->owner;",
+        "if ($owner->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable) {",
+        "    return [];",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($operation->context->complete, 'Persistent index removal needs a complete native foreign-key catalog.');",
+        "$table = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($table instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $table->table->indexes !== null, 'Index removal needs a settled physical key namespace.');",
+        "$coverage = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyKeys();",
+        "$remaining = $this->remaining($targets, $table->table->indexes);",
+        "$requirements = [];",
+        "$release = $operation->context->profile->grammar;",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$removed = array_fill_keys(array_map(static fn(\\SqlSemantics\\Platform\\MySql\\Ir\\Identifier $name): string => $case->fold($name->value), $removedConstraints), true);",
+        "foreach ($operation->context->foreignKeys as $edge) {",
+        "    $child = $this->matches($edge->child, $owner);",
+        "    if ($child && isset($removed[$case->fold($edge->constraint->value)])) {",
+        "        continue;",
+        "    }",
+        "    if ($child) {",
+        "        $keys = $coverage->support($edge->childFields, false, $release, $table->table->indexes, $remaining);",
+        "        $requirements[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexForeignKeyRequirement($owner, $keys);",
+        "    }",
+        "    if ($this->matches($edge->parent, $owner)) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($edge->parentFields !== null && count($edge->parentFields) === count($edge->childFields), 'Index removal needs settled ordered parent fields.');",
+        "        $keys = $coverage->support($edge->parentFields, true, $release, $table->table->indexes, $remaining);",
+        "        $requirements[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexForeignKeyRequirement($owner, $keys);",
+        "    }",
+        "}",
+        "return $requirements;"
+      ]
+    },
+    "Schema/Index/Dependency/IndexDependencyLowering::matches": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$schema = $endpoint->schema?->value;",
+        "if ($endpoint->name->value !== $owner->name->table->value) {",
+        "    return false;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== null && $schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'The foreign-key index endpoint needs an absolute owning namespace.');",
+        "return $schema === $owner->name->schema->value;"
+      ]
+    },
+    "Schema/Index/Dependency/IndexDependencyLowering::remaining": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$removed = [];",
+        "foreach ($targets as $target) {",
+        "    $removed[$case->fold($target->name->value)] = true;",
+        "}",
+        "return array_values(array_filter($indexes, static fn(\\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\IndexDeclaration $key): bool => !isset($removed[$case->fold($key->name->value)])));"
+      ]
+    },
+    "Schema/Index/Policy/IndexPolicyLowering::alteration": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$last = [];",
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption) {",
+        "        $last['algorithm'] = $command;",
+        "    } elseif ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption) {",
+        "        $last['lock'] = $command;",
+        "    }",
+        "}",
+        "return $this->lower(array_values($last));"
+      ]
+    },
+    "Schema/Index/Visibility/SetIndexVisibility::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$available = match ($release) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 => false,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql8044, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql810, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql820, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql830, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql847, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql901, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910 => true,",
+        "};",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($available, 'Native index visibility requires MySQL 8.0 or later.');",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($edits, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\IndexVisibilityEdit::class, 'Index visibility requires an ordered nonempty edit list.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy->supports($owner->kind), 'The algorithm and lock cannot change native index visibility on this table.');",
+        "foreach ($checked as $edit) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($owner->kind !== \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable || $edit->kind !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\SecondaryIndexKind::FullText, 'An InnoDB temporary table cannot own a FULLTEXT index.');",
+        "}",
+        "$this->edits = $checked;"
+      ]
+    },
+    "Schema/Index/Visibility/SetIndexVisibility::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/index-visibility';"
+      ]
+    },
+    "Schema/Index/Visibility/SetIndexVisibility::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$clauses = [];",
+        "foreach ($this->edits as $edit) {",
+        "    $clauses[] = $edit->toString();",
+        "}",
+        "return 'ALTER TABLE ' . $this->owner->quoted() . ' ' . implode(', ', $clauses) . $this->policy->sql(true);"
+      ]
+    },
+    "Schema/Index/Visibility/IndexVisibilityEdit::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{1,64}(?<! )\\z/us', $index->value) === 1, 'An index name has 1 to 64 characters and no trailing space.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input((new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase())->fold($index->value) !== 'primary', 'Native index visibility requires a secondary key.');"
+      ]
+    },
+    "Schema/Index/Visibility/IndexVisibilityEdit::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'ALTER INDEX ' . $this->index->quoted() . ($this->visible ? ' VISIBLE' : ' INVISIBLE');"
+      ]
+    },
+    "Schema/Index/Visibility/IndexVisibilityLowering::edits": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$edits = [];",
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption || $command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption) {",
+        "        continue;",
+        "    }",
+        "    if (!$command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\IndexVisibility) {",
+        "        return null;",
+        "    }",
+        "    $edits[] = $command;",
+        "}",
+        "return $edits === [] || $statement->ignore ? null : $edits;"
+      ]
+    },
+    "Schema/Index/Visibility/IndexVisibilityLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$commands = $this->edits($statement);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($commands !== null, 'ALTER TABLE requires a visibility change group.');",
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native && $profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) && $context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'Native index visibility requires the default InnoDB profile.');",
+        "$bound = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($bound instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $bound->table->kind === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\RelationKind::BaseTable && $bound->table->name->catalog === null && $bound->table->indexes !== null && $bound->table->storageEngine !== null && strcasecmp($bound->table->storageEngine, 'InnoDB') === 0, 'Native index visibility requires a resolved InnoDB table and settled physical indexes.');",
+        "$table = $bound->table;",
+        "$schema = ($table->name->schema ?? $context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'Native index visibility needs an absolute owning database.');",
+        "$name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($table->name->name->value));",
+        "$owner = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity($name, $table->temporary ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable);",
+        "$edits = [];",
+        "foreach ($commands as $command) {",
+        "    $edits[] = $this->edit($command, $bound->table->indexes);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\SetIndexVisibility($owner, $edits, $profile->grammar, (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexPolicyLowering())->alteration($statement));"
+      ]
+    },
+    "Schema/Index/Visibility/IndexVisibilityLowering::edit": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$name = $case->fold($request->index->value);",
+        "$matches = array_values(array_filter($indexes, static fn(\\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\IndexDeclaration $key): bool => $case->fold($key->name->value) === $name));",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($matches) === 1, 'Native index visibility requires one resolved physical key.');",
+        "$native = $matches[0];",
+        "$kind = match ($native->kind) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Index => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\SecondaryIndexKind::Ordinary,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Unique => $native->clusteredUnique ? null : \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\SecondaryIndexKind::Unique,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::FullText => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\SecondaryIndexKind::FullText,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Spatial => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\SecondaryIndexKind::Spatial,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\PhysicalIndexKind::Primary => null,",
+        "};",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($kind !== null, 'Native index visibility requires a secondary key.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Visibility\\IndexVisibilityEdit(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($native->name->value), $kind, $request->visible);"
+      ]
+    },
+    "Schema/ForeignKey/DropForeignKeys::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$ignore || $release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, 'Only MySQL 5.6.51 admits ALTER IGNORE TABLE.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(array_is_list($actions) && $actions !== [], 'Foreign-key removal requires an ordered nonempty action list.');",
+        "$checked = [];",
+        "foreach ($actions as $action) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($action instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemoval || $action instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\IndexIdentity, 'Foreign-key removal requires a checked native action.');",
+        "    $checked[] = $action;",
+        "}",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalSet())->check($owner, $checked, $requirements, $release, $policy);",
+        "$this->actions = $checked;"
+      ]
+    },
+    "Schema/ForeignKey/DropForeignKeys::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb/drop-foreign-keys';"
+      ]
+    },
+    "Schema/ForeignKey/DropForeignKeys::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$verb = $this->ignore ? 'ALTER IGNORE TABLE ' : 'ALTER TABLE ';",
+        "$actions = [];",
+        "foreach ($this->actions as $action) {",
+        "    $actions[] = $action instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemoval ? $action->toString() : 'DROP INDEX ' . $action->name->quoted();",
+        "}",
+        "return $verb . $this->owner->quoted() . ' ' . implode(', ', $actions) . $this->policy->sql(true);"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemoval::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(($name === null) === ($kind === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalKind::IgnoredOnTemporary), 'Only a resolved persistent foreign-key action has a physical name.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name === null || preg_match('/\\A.{0,64}\\z/us', $name->value) === 1, 'A native foreign-key name has at most 64 characters.');"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemoval::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'DROP FOREIGN KEY ' . ($this->name?->quoted() ?? '``');"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemovalSet::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$temporary = $owner->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable;",
+        "$legacy = $this->legacy($release);",
+        "$expected = $temporary ? \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalKind::IgnoredOnTemporary : \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalKind::Constraint;",
+        "$physical = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Batch\\IndexRemovalSet();",
+        "$coordinate = $physical->coordinate($owner);",
+        "$case = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$keys = $indexes = [];",
+        "foreach ($actions as $action) {",
+        "    if ($action instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemoval) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($action->kind === $expected && (!$temporary || $legacy), 'The foreign-key action does not belong to this native table lifetime.');",
+        "        $name = $action->name === null ? '' : $case->fold($action->name->value);",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($legacy || !isset($keys[$name]), 'This MySQL release cannot repeat a foreign-key removal.');",
+        "        $keys[$name] = true;",
+        "    } else {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($physical->coordinate($action->owner) === $coordinate, 'A mixed foreign-key and index removal requires one owning table and lifetime.');",
+        "        $indexes[] = $action;",
+        "    }",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($keys !== [], 'The native action group needs at least one foreign-key removal.');",
+        "if ($indexes === []) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($requirements === [], 'A foreign-key-only removal does not consume index requirements.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy->supports($owner->kind), 'The algorithm and lock cannot remove native foreign keys on this table.');",
+        "} else {",
+        "    $physical->check($indexes, $policy);",
+        "    (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyClosure())->check($indexes, $requirements);",
+        "}"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemovalSet::legacy": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match ($release) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 => true,",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql8044, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql810, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql820, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql830, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql847, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql901, \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910 => false,",
+        "};"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemovalLowering::changes": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$actions = [];",
+        "$foreign = false;",
+        "foreach ($statement->commands as $command) {",
+        "    if ($command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption || $command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption) {",
+        "        continue;",
+        "    }",
+        "    if (!$command instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\DropElement || !in_array($command->kind, [\\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::ForeignKey, \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::Index, \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::PrimaryKey], true)) {",
+        "        return null;",
+        "    }",
+        "    $actions[] = $command;",
+        "    $foreign = $foreign || $command->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::ForeignKey;",
+        "}",
+        "return $foreign && $actions !== [] ? $actions : null;"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemovalLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$selected = $this->changes($statement);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($selected !== null, 'ALTER TABLE requires a native foreign-key removal group.');",
+        "$owner = $this->owner($operation, $statement);",
+        "$indexes = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\DropIndexLowering();",
+        "$actions = $physical = $removed = [];",
+        "foreach ($selected as $action) {",
+        "    if ($action->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::ForeignKey) {",
+        "        $constraint = $this->constraint($operation->context, $owner, $action);",
+        "        $actions[] = $constraint;",
+        "        if ($constraint->name !== null) {",
+        "            $removed[] = $constraint->name;",
+        "        }",
+        "    } else {",
+        "        $target = $indexes->identity($operation, $statement, $action->name->column ?? new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Name('PRIMARY'), $action->name?->table);",
+        "        $actions[] = $target;",
+        "        $physical[] = $target;",
+        "    }",
+        "}",
+        "$requirements = $physical === [] ? [] : (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyLowering())->resolve($operation, $statement, $physical, $removed);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\DropForeignKeys($owner, $actions, $requirements, $operation->context->profile->grammar, (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Policy\\IndexPolicyLowering())->alteration($statement), $statement->ignore);"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemovalLowering::owner": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native && $context->profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) && $context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'Native foreign-key removal requires the default InnoDB profile.');",
+        "$bound = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($bound instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $bound->table->kind === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\RelationKind::BaseTable && $bound->table->name->catalog === null && $bound->table->storageEngine !== null && strcasecmp($bound->table->storageEngine, 'InnoDB') === 0, 'Native foreign-key removal requires a resolved ordinary InnoDB table.');",
+        "$table = $bound->table;",
+        "$schema = ($table->name->schema ?? $context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'Native foreign-key removal needs an absolute owning database.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($table->name->name->value)), $table->temporary ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable);"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemovalLowering::constraint": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$written = $action->name;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($action->kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind::ForeignKey && $written !== null, 'A foreign-key removal requires a named constraint.');",
+        "$legacy = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalSet())->legacy($context->profile->grammar);",
+        "$this->qualifier($owner, $written->table, $legacy);",
+        "if ($owner->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($legacy, 'This MySQL release has no foreign-key removal target on a temporary table.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[^\\x00\\x{10000}-\\x{10FFFF}]*\\z/u', $written->column->value) === 1, 'The ignored native label must be a decoded BMP identifier.');",
+        "    return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemoval(null, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalKind::IgnoredOnTemporary);",
+        "}",
+        "$names = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeIdentifierCase();",
+        "$required = $names->fold($written->column->value);",
+        "$matches = [];",
+        "$scope = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Index\\Dependency\\IndexDependencyLowering();",
+        "foreach ($context->foreignKeys as $edge) {",
+        "    if ($names->fold($edge->constraint->value) === $required && $scope->matches($edge->child, $owner)) {",
+        "        $matches[] = $edge->constraint;",
+        "    }",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($matches) === 1, 'Native foreign-key removal requires one resolved constraint on its owning table.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemoval(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($matches[0]->value), \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\ForeignKey\\ForeignKeyRemovalKind::Constraint);"
+      ]
+    },
+    "Schema/ForeignKey/ForeignKeyRemovalLowering::qualifier": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($name === null) {",
+        "    return;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($legacy && $name->name->value === $owner->name->table->value && ($name->schema === null || $name->schema->value === $owner->name->schema->value), 'A qualified foreign-key removal must name its selected owning table.');"
+      ]
+    }
+  },
+  "revises": "mysql-drop-native-index-boundaries-v9.json"
+}

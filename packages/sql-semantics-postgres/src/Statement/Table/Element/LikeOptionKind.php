@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
  * constraints are always copied.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a LIKE option
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (LIKE u INCLUDING ALL EXCLUDING INDEXES)');
- *     $create->statement->definition->elements[0]->options[1]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind::Indexes
+ * @visibility SqlSemantics
  */
 enum LikeOptionKind: string
 {

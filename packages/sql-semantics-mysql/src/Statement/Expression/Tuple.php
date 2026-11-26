@@ -15,9 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
  * subqueries require rows of equal width.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  *
- * @visibility public
- * @example Reading the width of a row
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE (a, b) IS NULL') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Operand should contain 1 column(s), not 2.
+ * @visibility SqlSemantics
  */
 final class Tuple implements TypeDescriptor
 {

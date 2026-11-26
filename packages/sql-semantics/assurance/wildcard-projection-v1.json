@@ -1,0 +1,31 @@
+{
+  "revision": "SemanticsIR/wildcard-projection-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql", "Sqlite"],
+  "profiles": "The ordinary native projection profile of each pinned engine and release.",
+  "scope": "Expand an unqualified or qualified wildcard with a complete input shape into the same explicit checked output slots supported by the dialect projection.",
+  "open": ["Open shapes", "Composite and row-valued PostgreSQL expansions", "USING and NATURAL joins with merged fields", "Additional projected column types or declaration roles", "Generated and invisible-field visibility cases that need new declaration checks"],
+  "constructors": {},
+  "existingRoles": ["Select", "ColumnReference", "ResultColumn"],
+  "construction": "A direct constructor supplies the expanded output list. The analyzer reads the bound fields in result order and maps every wildcard field's resolved occurrence and slot through the same source binding used by an explicit column reference.",
+  "invariants": [
+    "Each projected slot has an exact locally visible occurrence and field identity.",
+    "A wildcard must have a closed, complete result layout and each output position has a resolved label.",
+    "Repeated output labels or repeated reads are retained. Aliases and qualifiers are inputs to binding, and the retained resolution distinguishes occurrences even when physical tables or column labels are equal.",
+    "A wildcard introduces no parameter positions. Parameters following expansion keep the engine's syntax position."
+  ],
+  "meaning": "A wildcard contributes its resolved sequence of fields in projection order. Rendering emits explicit qualified references with the same observed names. The duplicate policy, native types, parameters, row order guarantees and row count follow the same checked projection rules.",
+  "observations": ["Ordered field labels", "Typed values and multiplicity", "Exact occurrence and slot indexes from the constructed graph", "Explicit columns versus wildcard expansion against the same native fixture", "No publication when the static layout is incomplete"],
+  "native": {
+    "finite": {"relations": ["ordinary", "empty", "self-join"], "projections": ["unqualified", "qualified", "mixed", "repeated"]},
+    "exploration": {"seeds": [5779, 13577, 25163], "casesPerSeed": 18, "timeoutSecondsPerRelease": 180, "allowedExclusions": []}
+  },
+  "sqlite": {
+    "finite": {"relations": ["ordinary", "empty", "self-join"], "projections": ["unqualified", "qualified", "mixed", "repeated"]},
+    "exploration": {"seeds": [5779, 13577, 25163], "casesPerSeed": 18, "timeoutSeconds": 90, "allowedExclusions": []}
+  },
+  "negative": ["Missing or open source shape", "Unresolved qualifier", "An unsupported declared wildcard field"],
+  "faults": ["Swap two fields in an expanded star", "Resolve a repeated table scan to the first occurrence", "Drop an expanded output expression"],
+  "trust": ["The language-profile declaration facts and field ordering", "Independent observation of original and emitted SQL against typed fixture data", "Existing direct projection construction checks"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/select.html", "https://www.postgresql.org/docs/17/queries-select-lists.html", "https://sqlite.org/lang_select.html"]
+}

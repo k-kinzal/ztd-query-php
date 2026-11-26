@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/mysql-signed-literal-projection-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-signed-literal-projection-v2.json",
+  "rules": {
+    "Literal/IntegerTokenLowering::groupedSpelling": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$negative = false;",
+        "while ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped || $expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Unary) {",
+        "    if ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Unary && $expression->operator !== \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator::Plus) {",
+        "        if ($negative || $expression->operator !== \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator::Minus) {",
+        "            return null;",
+        "        }",
+        "        $negative = true;",
+        "    }",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($negative && $expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\SignedLiteral) {",
+        "    return null;",
+        "}",
+        "$token = $this->spelling($expression);",
+        "return $token !== null && $negative ? '-' . $token : $token;"
+      ]
+    },
+    "Ordering/ProjectedIntegerLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expression = $field->expression;",
+        "if ($expression === null) {",
+        "    return null;",
+        "}",
+        "$token = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntegerTokenLowering())->groupedSpelling($expression);",
+        "if ($token === null) {",
+        "    return null;",
+        "}",
+        "$literal = new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral($token);",
+        "$decimal = $literal->decimal();",
+        "$zeroes = strlen(ltrim($token, '-')) - strlen(ltrim($decimal, '-'));",
+        "$value = $zeroes <= \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral::MAX_LEADING_ZEROES && \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Standard->accepts(new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral($decimal)) ? new \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral($decimal, $zeroes, $token[0] === '-' && $decimal === '0') : $literal;",
+        "$name = $this->name($statement, $field, $literal, $profile);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn($value, $name);"
+      ]
+    }
+  }
+}

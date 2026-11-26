@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Sources;
  * facts follow PG-CURSOR-001.
  * Source: https://www.postgresql.org/docs/17/sql-declare.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a cursor declaration
- *     $declare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DECLARE c SCROLL CURSOR WITHOUT HOLD FOR SELECT 1');
- *     [$declare->statement->name->value, $declare->toString()] // => ['c', 'DECLARE c SCROLL CURSOR WITHOUT HOLD FOR SELECT 1']
+ * @visibility SqlSemantics
  */
 final class DeclareCursor implements Statement
 {

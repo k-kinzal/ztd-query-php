@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\AlterRoutine;
@@ -16,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignature;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(AlterRoutine::class)]
 #[Medium]
@@ -23,13 +23,13 @@ final class AlterRoutineTest extends TestCase
 {
     public function testDeriveStatementReportsAttributesOfProcedures(): void
     {
-        $operation = (new Semantics())->inspect('ALTER PROCEDURE p() IMMUTABLE');
+        $operation = (new Inspection())->diagnose('ALTER PROCEDURE p() IMMUTABLE');
         self::assertEquals([new RoutineProblem(RoutineProblemKind::ProcedureAttribute)], $operation->facts->diagnostics);
     }
 
     public function testRenderDropsTheIgnoredRestrict(): void
     {
-        $operation = (new Semantics())->inspect('ALTER ROUTINE r(int4) EXTERNAL SECURITY INVOKER NOT LEAKPROOF RESTRICT');
+        $operation = (new Inspection())->diagnose('ALTER ROUTINE r(int4) EXTERNAL SECURITY INVOKER NOT LEAKPROOF RESTRICT');
         self::assertSame('ALTER ROUTINE r (int4) SECURITY INVOKER NOT LEAKPROOF', $operation->toString());
     }
 

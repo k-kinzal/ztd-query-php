@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * columns of the relation are visible; it computes the new value from the old row.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Changing the type of a column
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET DATA TYPE bigint COLLATE "C" USING a + 1');
- *     $statement->toString() // => 'ALTER TABLE t ALTER a TYPE BIGINT COLLATE "C" USING a + 1'
+ * @visibility SqlSemantics
  */
 final class TypeChange implements AlterCommand
 {

@@ -1,0 +1,259 @@
+{
+  "revision": "SemanticsIR/sqlite-trigger-mutations-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Stock SQLite 3.47.2, UTF-8, normal ASCII identifier comparison, ordinary trigger and table declarations, no custom functions or collations in the finite fixture.",
+  "scope": "Extend the checked row trigger with ordered INSERT VALUES, UPDATE assigning scalar values and DELETE. The mutation actions can have no condition, ordered equality of one local target and one row image, or an exact NULL test of either role.",
+  "additionalPublicRoots": [],
+  "constructors": {
+    "Schema/Trigger/Mutation/TriggerUpdate": {
+      "role": "One UPDATE action within the ordered trigger body.",
+      "structure": "One bound TriggerDestination, a nonempty ordered list of scalar TriggerAssignment values, one native UpdateConflict and an optional checked filter.",
+      "conditions": "Each assignment writes an installed writable slot exactly once. Target filter positions belong to the destination layout. The enclosing trigger validates row-image operands and native target resolution.",
+      "meaning": "Evaluate each assignment against the selected old target record and the activation's row images, then write the assignments and apply the native conflict policy. An outer conflict policy can take precedence in SQLite.",
+      "sql": "Emit UPDATE with its optional OR clause, a local quoted destination, ordered names and values, and its condition when supplied.",
+      "externalInterpretation": "Same watched relation, stored trigger owner, ordered native schema search path and checked destination with corresponding columns, storage and constraints.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerAssignment": {
+      "role": "One scalar write to a checked UPDATE destination.",
+      "structure": "A local write position and an immutable IntegerLiteral, TextLiteral, NullLiteral or TriggerField.",
+      "conditions": "The position is nonnegative. The UPDATE action checks writability and uniqueness, and the parent trigger checks the row image and slot.",
+      "meaning": "Associate an exact native SQL value expression with the checked target column position, preserving the SQL storage class.",
+      "sql": "Render a separately quoted assigned column and the known value expression.",
+      "externalInterpretation": "Same watched relation, stored trigger owner, ordered native schema search path and checked destination with corresponding columns, storage and constraints.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerDelete": {
+      "role": "One DELETE action within the ordered trigger body.",
+      "structure": "One bound ordinary TriggerDestination and an optional checked filter.",
+      "conditions": "Target filter positions belong to the destination layout. The enclosing trigger checks row images and physical destination scope.",
+      "meaning": "Remove each target row for which the native predicate is true. Without a condition remove every row of the selected destination. Preserve the position of this action among other effects.",
+      "sql": "Emit DELETE FROM, the local quoted destination and its condition when supplied.",
+      "externalInterpretation": "Same watched relation, stored trigger owner, ordered native schema search path and checked destination with corresponding columns, storage and constraints.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerTargetField": {
+      "role": "A read position in the selected UPDATE or DELETE destination.",
+      "structure": "A nonnegative column position resolved against the action's destination.",
+      "conditions": "The containing action guarantees that the slot exists. It can be read regardless of whether it is writable.",
+      "meaning": "Read the corresponding value of the current target tuple subject to native declared affinity and collation.",
+      "sql": "Quote the declared column name. A local qualifier in the input is unnecessary after binding.",
+      "externalInterpretation": "Same watched relation, stored trigger owner, ordered native schema search path and checked destination with corresponding columns, storage and constraints.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerEquality": {
+      "role": "An ordered native equality of one local destination field and one available row-image field.",
+      "structure": "TriggerTargetField, TriggerField and a Boolean indicating target-first evaluation order.",
+      "conditions": "The action checks the local field; the enclosing trigger validates the image and watched position.",
+      "meaning": "Evaluate SQLite's native equality with NULL and comparison coercion. Keep the written operand order because collation selection can depend on it.",
+      "sql": "Emit the two checked field operands separated by equality, with parentheses.",
+      "externalInterpretation": "Same watched relation, stored trigger owner, ordered native schema search path and checked destination with corresponding columns, storage and constraints.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/Mutation/TriggerTargetNullTest": {
+      "role": "A NULL test of a local destination slot.",
+      "structure": "One TriggerTargetField and the explicit IS NULL or IS NOT NULL polarity.",
+      "conditions": "The enclosing action guarantees that the local field belongs to its destination.",
+      "meaning": "Test the value of the checked target slot against native NULL semantics.",
+      "sql": "Emit the checked local field and the exact NULL test.",
+      "externalInterpretation": "Same watched relation, stored trigger owner, ordered native schema search path and checked destination with corresponding columns, storage and constraints.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/Trigger/CreateTrigger",
+    "Schema/Trigger/TriggerDestination",
+    "Schema/Trigger/TriggerField",
+    "Schema/Trigger/TriggerCondition",
+    "Schema/Trigger/TriggerInsert",
+    "Mutation/UpdateConflict"
+  ],
+  "rules": [
+    "Flatten only grouping around a supported atom or one predicate. Retain WHERE equality operand orientation and NULL-test polarity.",
+    "Resolve every read through the binder to the exact local target occurrence or to the active watched occurrence with an explicit OLD or NEW image. Preserve the exact physical ordinal. Qualification used to identify a target field is redundant after it is bound.",
+    "Only admitted final action classes inhabit a trigger program. Its copy detaches array element references. The parent checks one coherent native destination scope and layout per bare name and validates each row image under the event.",
+    "One action's writes are ordered by its list and contain no repeated or generated slots. Use the exact native UPDATE OR policy or its absence. Return before publication on an unbound target or scalar.",
+    "Independently compare original and rendered trigger installation, then fire the same external change. Observe data before and after the trigger, native statement result and transaction behavior. Test timing through a fixture-only secondary trigger that reads the watched state.",
+    "FROM, RETURNING, row assignments, arbitrary predicates and target expressions remain planned coverage. The frozen grammar retains those alternatives and the scope report remains incomplete."
+  ],
+  "observations": [
+    "Exact operation, action order and multiplicity, trigger schema, watched source, row-image slot, assigned destination slot, predicate binding and orientation, and effective written conflict policy.",
+    "Native trigger installation and authorizer events, complete typed command results and fixture ledger headings/rows in all attached schemas.",
+    "Duplicated keys, no matches, conditional and unconditional writes, NULL and native types, effects of earlier steps, final rollback state and BEFORE/AFTER timing witness."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp",
+      "archive"
+    ],
+    "events": [
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+    ],
+    "timing": [
+      "BEFORE",
+      "AFTER"
+    ],
+    "actions": [
+      "update",
+      "delete",
+      "update-delete",
+      "delete-update"
+    ],
+    "filters": [
+      "none",
+      "match-key",
+      "missing-key",
+      "source-is-null",
+      "target-is-null"
+    ],
+    "payload": [
+      null,
+      "résumé",
+      71
+    ],
+    "rollback": [
+      false,
+      true
+    ],
+    "identity": "Enumerate all 2,160 combinations in this order. Construct each once through analyze and once through the public value roles. Recover statement structure, actual location, policy and typed fixture coordinates from submitted input and external observations. Test deletion under distinct previously installed typed payloads."
+  },
+  "exploration": {
+    "seeds": [
+      7321,
+      47929,
+      53087
+    ],
+    "casesPerSeed": 48,
+    "timeoutSeconds": 540,
+    "allowedExclusions": [],
+    "domain": "Vary action ordering and list length, include mixed insertion programs, BOTH row-image states where UPDATE makes them available, multiple predicates and operand orientations, conflict variants, empty/matching/multi-match data shapes, nullable typed payloads and user-controlled identifier spellings."
+  },
+  "negative": [
+    "An empty program list",
+    "A non-trigger operation in a program",
+    "A nondense program list",
+    "A negative destination field",
+    "A local filter slot outside the UPDATE target",
+    "A local filter slot outside the DELETE target",
+    "A repeated UPDATE destination column",
+    "An UPDATE assignment to a generated or unavailable position",
+    "A wrong row image in an UPDATE value",
+    "A wrong row image in a DELETE filter",
+    "A row image index outside the watched layout",
+    "A persistent trigger UPDATE in a different schema",
+    "Conflicting bare destination scopes across INSERT and DELETE"
+  ],
+  "analysisNegative": [
+    "An unresolved written table",
+    "An unresolved local target field",
+    "A row image outside the event",
+    "A qualified body UPDATE target",
+    "An UPDATE with a FROM relation",
+    "An UPDATE row assignment",
+    "A body DELETE with an unsupported predicate"
+  ],
+  "faults": [
+    "Reverse action order",
+    "Swap OLD and NEW in a predicate",
+    "Use a neighboring local filter slot",
+    "Omit the WHERE filter",
+    "Reverse the operand order in a collation-sensitive comparison",
+    "Drop one assignment",
+    "Ignore the explicit UPDATE conflict policy",
+    "Select an earlier same-name schema for a stored trigger",
+    "Permit an out-of-range local filter position",
+    "Permit a mutation action with an unavailable image",
+    "Suppress the body action dispatch"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "196c5a465048c339862d78039f33cf6edbf463c95a8039c1dab8338dd0117b42",
+    "observations": "24cc2655c3d546c6eac8cd18c2cc3e1b5a5c08c7b55b9f1a762ba79420ce2b26",
+    "timingDriver": "41e5e5e990b6589fcb00bfa6d251876b087bb0b788fb06cb007066ef64d70407",
+    "timingObservations": "cb2c1558e94bae3eac2043a2c4fe87575df5f601c4326ceb09e1c9a488cb3c13"
+  },
+  "open": [
+    "Only the stated finite fixture and generated variations have a bounded schedule. Whole-language coverage, exact native equivalence beyond these observations and approval of the independent baseline remain visible obligations."
+  ],
+  "trust": [
+    "Fixed SQLite engine and observer ABI, the closed PHP constructor and syntax binding machinery, verified snapshot and copy rules, and the independent relational transition used to predict writes."
+  ]
+}

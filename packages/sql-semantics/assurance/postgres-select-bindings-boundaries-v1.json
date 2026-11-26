@@ -1,0 +1,53 @@
+{
+  "revision": "SemanticsIR/postgres-select-bindings-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Distinct positive one-based parameter indexes are contiguous exactly when their maximum equals their cardinality. An empty set has maximum zero.",
+  "rules": {
+    "SelectBounds::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$positions = [];",
+        "foreach ($results as $result) {",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A tested predicate slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        if ($expression instanceof IntegerCase) {",
+        "            foreach ($expression->arms as $arm) {",
+        "                $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);",
+        "                $pending[] = [$arm->result, $height + 1];",
+        "            }",
+        "            if ($expression->otherwise !== null) {",
+        "                $pending[] = [$expression->otherwise, $height + 1];",
+        "            }",
+        "            continue;",
+        "        }",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $scope->column($expression, $inputs),",
+        "            $expression instanceof BuiltinCast, $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => $positions[$expression->position] = ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof WideIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,",
+        "        };",
+        "    }",
+        "}",
+        "Check::input(max([0, ...array_keys($positions)]) === count($positions), 'PostgreSQL parameter positions must cover the contiguous bound slots.');"
+      ]
+    }
+  }
+}

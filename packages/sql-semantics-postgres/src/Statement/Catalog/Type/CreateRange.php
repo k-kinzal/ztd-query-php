@@ -27,9 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\RangeAttri
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, https://www.postgresql.org/docs/17/rangetypes.html#RANGETYPES-DEFINING.
  * Status: Implemented.
  *
- * @visibility public
- * @example Defining a range type without its subtype
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TYPE floatrange AS RANGE (subtype_diff = float8mi)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: type attribute "subtype" is required
+ * @visibility SqlSemantics
  */
 final class CreateRange implements Statement
 {

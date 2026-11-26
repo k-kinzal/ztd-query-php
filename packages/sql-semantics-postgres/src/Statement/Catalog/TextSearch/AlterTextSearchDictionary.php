@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * Rule: PG-TS-DICTIONARY-001. Mirrors `AlterTSDictionaryStmt`; an option
  * without a value is removed. Source: https://www.postgresql.org/docs/17/sql-altertsdictionary.html. Status: Implemented.
  *
- * @visibility public
- * @example Changing a dictionary option
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH DICTIONARY my_dict (StopWords = newrussian)');
- *     $operation->statement->options[0]->name->value // => 'stopwords'
+ * @visibility SqlSemantics
  */
 final class AlterTextSearchDictionary implements Statement
 {

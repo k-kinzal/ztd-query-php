@@ -1,0 +1,51 @@
+{
+  "revision": "SemanticsIR/sqlite-foreign-key-audit-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Close native audit scope roles and require the selected child or builtin catalog to resolve before publication.",
+  "rules": {
+    "Maintenance/Metadata/ForeignKeyAudit::__construct": {
+      "common": [
+        "Check::input($catalogAccess === null || $target instanceof CatalogTable && $target->schema->key() === $catalogAccess->key(), 'An explicit foreign-key audit catalog access must match the selected builtin catalog.');",
+        "if ($target instanceof CatalogTable && $catalogAccess === null) {",
+        "    $schema = $target->schema->key();",
+        "    Check::input($schema === 'main' || $schema === 'temp', 'An implicit foreign-key audit cannot select an attached builtin catalog.');",
+        "}",
+        "if ($target instanceof RelationTarget) {",
+        "    Check::input(!(new CatalogAliases())->isCatalogName($target->name), 'An internal SQLite schema table requires a catalog role.');",
+        "}"
+      ]
+    },
+    "Maintenance/Metadata/ForeignKeyAudit::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Metadata/ForeignKeyAudit::toString": {
+      "common": [
+        "$target = $this->target;",
+        "if ($target instanceof CatalogTable) {",
+        "    $qualifier = $this->catalogAccess === null ? '' : $this->catalogAccess->quoted() . '.';",
+        "    return 'PRAGMA ' . $qualifier . 'foreign_key_check(' . $target->name()->quoted() . ')';",
+        "}",
+        "if ($target instanceof RelationTarget) {",
+        "    return 'PRAGMA ' . $target->schema->quoted() . '.foreign_key_check(' . $target->name->quoted() . ')';",
+        "}",
+        "return 'PRAGMA ' . $target->quoted() . '.foreign_key_check';"
+      ]
+    },
+    "Maintenance/Metadata/ForeignKeyAuditLowering::lower": {
+      "common": [
+        "$context = $operation->context;",
+        "$scope = (new PragmaScope())->resolve($context, $statement->name->schema);",
+        "$value = $statement->value;",
+        "if ($value === null) {",
+        "    return new ForeignKeyAudit($scope ?? new Identifier('main'));",
+        "}",
+        "$name = new Identifier($value instanceof PragmaNumber ? $value->nativeText() : $value->value);",
+        "$target = (new TableMetadataLowering())->target($context, $name, $scope);",
+        "Check::input(!$target instanceof MissingMetadataTable, 'Foreign-key audit requires a resolved child or schema catalog.');",
+        "return new ForeignKeyAudit($target, $target instanceof CatalogTable ? $scope : null);"
+      ]
+    }
+  }
+}

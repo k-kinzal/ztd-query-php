@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * Source: https://www.postgresql.org/docs/17/datatype-boolean.html,
  * https://www.postgresql.org/docs/17/sql-select.html#SQL-SELECT-LIST. Status: Implemented.
  *
- * @visibility public
- * @example Reading the name TRUE gives its column
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT TRUE');
- *     [$query->statement->targets[0]->expression->value, $query->field(0)->name->value] // => [true, '?column?']
+ * @visibility SqlSemantics
  */
 final class BooleanLiteral implements Scalar
 {

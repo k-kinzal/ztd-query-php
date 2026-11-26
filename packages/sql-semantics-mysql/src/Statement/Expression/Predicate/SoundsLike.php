@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#operator_sounds-like.
  * Status: Implemented.
  *
- * @visibility public
- * @example Comparing how two names sound
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a SOUNDS LIKE 'Smith'");
- *     $query->statement->where->pattern->value() // => 'Smith'
+ * @visibility SqlSemantics
  */
 final class SoundsLike implements Scalar
 {

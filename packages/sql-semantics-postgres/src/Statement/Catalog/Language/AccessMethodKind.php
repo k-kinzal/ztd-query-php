@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language;
  *
  * Source: https://www.postgresql.org/docs/17/sql-create-access-method.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the table kind
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\AccessMethodKind::Table->value // => 'TABLE'
  */

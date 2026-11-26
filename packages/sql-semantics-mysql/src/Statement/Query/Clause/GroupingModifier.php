@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Clause;
  * and `CUBE (...)` enclose the grouping list (MySQL 8.3 and later grammars).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-modifiers.html.
  *
- * @visibility public
- * @example Reading the modifier of a grouping
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t GROUP BY a WITH ROLLUP');
- *     $query->statement->groupBy->modifier // => \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::WithRollup
+ * @visibility SqlSemantics
  */
 enum GroupingModifier
 {

@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
  * Each case holds the message of the server error it corresponds to.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
- * @example Reading which rule a query breaks
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::StarWithoutTables
+ * @visibility SqlSemantics
  */
 enum MisuseRule: string
 {

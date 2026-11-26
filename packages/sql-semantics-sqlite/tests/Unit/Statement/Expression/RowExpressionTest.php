@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
@@ -18,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RowExpression::class)]
 #[Medium]
@@ -25,9 +25,9 @@ final class RowExpressionTest extends TestCase
 {
     public function testDeriveScalarGivesARowOfTheWrittenWidth(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT (a, b) = (1, 2), (a, a, 3) = (1, 2, 3) FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT (a, b) = (1, 2), (a, a, 3) = (1, 2, 3) FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -51,7 +51,7 @@ final class RowExpressionTest extends TestCase
 
     public function testDeriveScalarCombinesTheNullFactsOfTheElements(): void
     {
-        $operation = (new Semantics())->inspect('SELECT (1, ?) = (1, 2), (NULL, 1) = (1, 2), (1, 2) = (3, 4)', []);
+        $operation = (new Inspection())->diagnose('SELECT (1, ?) = (1, 2), (NULL, 1) = (1, 2), (1, 2) = (3, 4)', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -70,7 +70,7 @@ final class RowExpressionTest extends TestCase
 
     public function testDeriveScalarAsAResultColumnIsReportedByTheSelection(): void
     {
-        $operation = (new Semantics())->inspect('SELECT (1, 2)', []);
+        $operation = (new Inspection())->diagnose('SELECT (1, 2)', []);
 
         self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
         self::assertEquals(new Known(new Vector(2)), $operation->field(0)->type);
@@ -78,7 +78,7 @@ final class RowExpressionTest extends TestCase
 
     public function testRenderWritesTheElementsInParentheses(): void
     {
-        $operation = (new Semantics())->inspect('select (a,b) = (1,2) AS c1, (1, 2, 3) in (select 1, 2, 3) AS c2 from t');
+        $operation = (new Inspection())->diagnose('select (a,b) = (1,2) AS c1, (1, 2, 3) in (select 1, 2, 3) AS c2 from t');
 
         self::assertSame('SELECT (a, b) = (1, 2) AS c1, (1, 2, 3) IN (SELECT 1, 2, 3) AS c2 FROM t', $operation->toString());
     }

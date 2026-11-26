@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * location and the tablespace parameters of WITH ( ... ).
  * Source: https://www.postgresql.org/docs/17/sql-createtablespace.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the location of a new tablespace
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TABLESPACE fast OWNER app LOCATION '/ssd' WITH (random_page_cost = 1)");
- *     [$operation->statement->location->value, $operation->statement->options[0]->name->value] // => ['/ssd', 'random_page_cost']
+ * @visibility SqlSemantics
  */
 final class CreateTablespace implements Statement
 {

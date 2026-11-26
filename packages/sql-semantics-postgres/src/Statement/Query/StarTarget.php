@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\StarExpansion;
  * fields follow PG-STAR-001.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-SELECT-LIST.
  *
- * @visibility public
- * @example Keeping an unexpandable star as a typed request
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM t');
- *     [$query->statement->targets[0] instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\StarTarget, $query->facts->output->projection[0] instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar] // => [true, true]
+ * @visibility SqlSemantics
  */
 final class StarTarget implements Target
 {

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Mirrors PT_part_value_item_max.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-columns-range.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the greatest value of a row of partition values
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionRow([new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionMaximum()]);
  *     $row->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionMaximum // => true

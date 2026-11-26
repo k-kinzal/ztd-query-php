@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html (ER_FIELD_SPECIFIED_TWICE).
  *
- * @visibility public
- * @example Reading the column written twice
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a, a) VALUES (1, 2)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column 'a' specified twice
+ * @visibility SqlSemantics
  */
 final class DuplicateColumn implements Diagnostic
 {

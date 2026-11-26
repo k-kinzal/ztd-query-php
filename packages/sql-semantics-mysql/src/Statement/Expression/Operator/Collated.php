@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collate.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the collation
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a COLLATE utf8mb4_bin = 'x'");
- *     $query->statement->where->left->collation->value // => 'utf8mb4_bin'
+ * @visibility SqlSemantics
  */
 final class Collated implements Scalar
 {

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
  * the reference like parentheses and change no name. Source:
  * https://dev.mysql.com/doc/refman/5.7/en/join.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a 5.x ODBC escape
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('SELECT 1 FROM { oj t LEFT JOIN u ON t.a = u.a }');
- *     $query->statement->from->word->value // => 'oj'
+ * @visibility SqlSemantics
  */
 final class EscapedRelation implements Relation
 {

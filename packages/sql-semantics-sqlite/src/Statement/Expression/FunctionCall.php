@@ -34,11 +34,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
  * https://sqlite.org/lang_aggfunc.html, https://sqlite.org/windowfunctions.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of an aggregate call
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT count(DISTINCT a) FILTER (WHERE b > 0) FROM t');
- *     $call = $query->statement->columns[0]->expression;
- *     [$call->name->value, $call->quantifier, count($call->arguments), $call->filter !== null, $query->field(0)->nullability] // => ['count', \SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier::Distinct, 1, true, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  * @example Refusing arguments next to the star
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('count'), [new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()], true) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing a quantifier next to the star

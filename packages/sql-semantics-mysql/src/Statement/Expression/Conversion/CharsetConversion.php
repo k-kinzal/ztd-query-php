@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_convert.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the character set
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE CONVERT(a USING utf8mb4) = 'x'");
- *     $query->statement->where->left->charset->name->value // => 'utf8mb4'
+ * @visibility SqlSemantics
  */
 final class CharsetConversion implements Scalar
 {

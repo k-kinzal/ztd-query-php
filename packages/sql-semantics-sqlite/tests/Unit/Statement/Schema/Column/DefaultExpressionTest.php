@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(DefaultExpression::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class DefaultExpressionTest extends TestCase
 {
     public function testDeriveConstraintSeesNoColumn(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b DEFAULT (a + 1))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a INT, b DEFAULT (a + 1))', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -29,7 +29,7 @@ final class DefaultExpressionTest extends TestCase
 
     public function testDeriveConstraintAcceptsAConstantExpression(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a DEFAULT (1 + 2))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a DEFAULT (1 + 2))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -41,6 +41,6 @@ final class DefaultExpressionTest extends TestCase
 
     public function testRenderWritesTheExpressionInParentheses(): void
     {
-        self::assertSame('CREATE TABLE t (a DEFAULT (1 + 2))', (new Semantics())->inspect('create table t (a default(1+2))')->toString());
+        self::assertSame('CREATE TABLE t (a DEFAULT (1 + 2))', (new Inspection())->diagnose('create table t (a default(1+2))')->toString());
     }
 }

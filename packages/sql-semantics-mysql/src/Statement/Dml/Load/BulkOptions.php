@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * since 8.0.30, PARALLEL and MEMORY since 8.2.
  * Source: https://dev.mysql.com/doc/heatwave-aws/en/mys-hw-aws-bulk-ingest.html.
  *
- * @visibility public
- * @example Reading the options of a bulk load
- *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 4 ALGORITHM = BULK");
- *     [$load->statement->bulk->parallel->text, $load->statement->bulk->bulk] // => ['4', true]
+ * @visibility SqlSemantics
  */
 final class BulkOptions implements Node
 {

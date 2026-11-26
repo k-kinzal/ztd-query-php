@@ -20,11 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * IN parameter.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading a parameter
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p(INOUT total DECIMAL(10, 2)) BEGIN END');
- *     $parameter = $create->statement->parameters->parameters[0];
- *     [$parameter->mode, $parameter->name->value, $parameter->type->name()] // => [\SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode::InOut, 'total', 'DECIMAL']
+ * @visibility SqlSemantics
  */
 final class Parameter implements Node
 {

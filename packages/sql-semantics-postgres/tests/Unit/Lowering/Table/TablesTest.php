@@ -123,7 +123,7 @@ final class TablesTest extends TestCase
     {
         $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves(), \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('CREATE TABLE t AS EXECUTE q');
-        $execute = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('EXECUTE q')->statement;
+        $execute = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('EXECUTE q')->statement;
         $value = $lowering->tables->createTableAsExecute($lowering->productions->form($tree->find('ExecuteStmt')[0]), $execute);
         $n1 = $value;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTableAsExecute::class, $n1);

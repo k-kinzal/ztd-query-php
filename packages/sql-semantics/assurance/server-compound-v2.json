@@ -1,0 +1,196 @@
+{
+  "revision": "SemanticsIR/server-compound-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql",
+    "PostgreSql"
+  ],
+  "profiles": "The pinned native projection releases and name, operator and lexical profiles. MySQL 5.6 and 5.7 provide left-associated UNION. Later pinned releases and PostgreSQL provide UNION, INTERSECT and EXCEPT.",
+  "scope": "A binary tree of checked SELECT arms and set operators without row-selection clauses on the compound or its arms. Branches retain their scopes and exactly preserve the first output names.",
+  "open": [
+    "Additional leaf query forms, compound ordering and bounds, WITH, mixed types outside the recorded domain, and larger generated trees"
+  ],
+  "additionalPublicRoots": [
+    "Rows/Compound"
+  ],
+  "constructors": {
+    "Compound": {
+      "type": "Rows/Compound",
+      "role": "A closed typed set operation on two independently scoped queries",
+      "fields": [
+        "left",
+        "operator",
+        "all",
+        "right"
+      ],
+      "invariants": [
+        "Both operands have the same profile and nonempty width",
+        "Every paired position resolves to a supported native output type",
+        "Every arm uses checked result expressions and no local ordering or bound",
+        "Depth at most 16 and at most 64 expanded arms",
+        "MySQL 5.6 and 5.7 accept UNION with a SELECT right operand"
+      ],
+      "meaning": "UNION ALL adds row multiplicities. INTERSECT ALL takes their minimum. EXCEPT ALL subtracts right multiplicity down to zero. Unmodified operators use support sets. NULLs in a given common output position compare as equivalent for these operations. The first operand supplies ordered column names. PostgreSQL resolves a pair of unknown NULL operands to text and uses the known role where one operand is unknown. MySQL uses the selected integral width. An all-NULL result has a fixed null-only role whose native metadata is recorded by profile and materialization rule.",
+      "sql": "Emit operators and explicit ALL where used. Modern MySQL and PostgreSQL enclose nested branches to preserve the tree. MySQL 5.x emits its left spine in infix order.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "CompoundOperator": {
+      "type": "Rows/CompoundOperator",
+      "role": "The selected native set operation",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "ResultKind": {
+      "type": "Rows/ResultKind",
+      "role": "A native output type or a leaf whose bare NULL participates in type determination",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Read operand names and types in their own fact scopes, preserve parenthesized set grouping and normalize explicit DISTINCT to default set semantics. Reject unsupported query modifiers and incompatible type or width before returning a complete value.",
+  "mysqlNullOnlyTags": {
+    "mysql-5.6.51": {
+      "unionsAll": "STRING",
+      "other": "STRING"
+    },
+    "mysql-8.0.44": {
+      "unionsAll": "STRING",
+      "other": "STRING"
+    },
+    "mysql-8.1.0": {
+      "unionsAll": "STRING",
+      "other": "STRING"
+    },
+    "mysql-8.2.0": {
+      "unionsAll": "STRING",
+      "other": "STRING"
+    },
+    "mysql-8.3.0": {
+      "unionsAll": "STRING",
+      "other": "STRING"
+    },
+    "mysql-5.7.44": {
+      "unionsAll": "NULL",
+      "other": "STRING"
+    },
+    "mysql-8.4.7": {
+      "unionsAll": "VAR_STRING",
+      "other": "VAR_STRING"
+    },
+    "mysql-9.0.1": {
+      "unionsAll": "VAR_STRING",
+      "other": "VAR_STRING"
+    },
+    "mysql-9.1.0": {
+      "unionsAll": "VAR_STRING",
+      "other": "VAR_STRING"
+    }
+  },
+  "observations": [
+    "Column names and native type tags in first-arm order",
+    "Bag of exact typed values and NULLs, including duplicates",
+    "Observable grouping when operator and quantifier choices differ"
+  ],
+  "finite": {
+    "operators": {
+      "mysql": [
+        "UNION",
+        "INTERSECT",
+        "EXCEPT"
+      ],
+      "mysql-legacy": [
+        "UNION"
+      ],
+      "postgres": [
+        "UNION",
+        "INTERSECT",
+        "EXCEPT"
+      ]
+    },
+    "pairs": [
+      "two signed literal arms",
+      "two ordinary table arms with different rows",
+      "absent rows",
+      "NULL opposite signed integer"
+    ],
+    "quantifiers": [
+      "DISTINCT",
+      "ALL"
+    ],
+    "widths": [
+      1,
+      2
+    ],
+    "completeness": "Verify the exact product of registered operators, width, quantifier and operand forms from the inspected values."
+  },
+  "exploration": {
+    "seeds": [
+      1019,
+      4951,
+      10979
+    ],
+    "casesPerSeed": 28,
+    "timeoutSecondsPerRelease": 175,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Different widths",
+    "Different releases",
+    "Arm ordering or bound present",
+    "Over-depth tree or too many expanded arms"
+  ],
+  "negativeByRelease": {
+    "mysql-5.6.51": [
+      "Right-associated UNION",
+      "Non-UNION operator"
+    ],
+    "mysql-5.7.44": [
+      "Right-associated UNION",
+      "Non-UNION operator"
+    ],
+    "default": [
+      "More than 64 expanded arms"
+    ]
+  },
+  "additionalPostgreSqlNegatives": [
+    "Incompatible output types"
+  ],
+  "faults": [
+    "Swap the operands",
+    "Change ALL to distinct",
+    "Change set operator or remove a required grouping"
+  ],
+  "trust": [
+    "Fixed native operator, type and result metadata rules",
+    "Independent row-bag arithmetic",
+    "Declared data and connection profiles",
+    "Server documentation and typed native observations for the supported domains"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/set-operations.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/union.html",
+    "https://www.postgresql.org/docs/17/queries-union.html",
+    "https://www.postgresql.org/docs/17/typeconv-union-case.html"
+  ],
+  "replaces": "server-compound-v1.json",
+  "change": "The exact null-only wire tags are fixed per tested release. Recorded original and emitted native SQL exposed the mismatch on 8.0.44 through 8.3.0. Row values, native type tags, generated inputs, case budgets and comparison equality remain required."
+}

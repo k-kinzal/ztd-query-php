@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  * and always written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-add-drop-column.
  *
- * @visibility public
- * @example Adding two columns
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD (b INT, c INT)');
- *     [count($alter->statement->commands[0]->elements), $alter->toString()] // => [2, 'ALTER TABLE t ADD COLUMN (b INT, c INT)']
+ * @visibility SqlSemantics
  */
 final class AddColumns implements AlterCommand
 {

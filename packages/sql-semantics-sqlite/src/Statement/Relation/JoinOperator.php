@@ -26,11 +26,7 @@ use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
  * type, which SQLite reports and treats as an inner join.
  * Source: https://sqlite.org/lang_select.html#the_from_clause. Status: Implemented.
  *
- * @visibility public
- * @example Reading the meaning of a join operator
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t NATURAL LEFT JOIN u');
- *     $operator = $query->statement->from->steps[0]->operator;
- *     [$operator->natural(), $operator->left(), $operator->right(), $operator->valid()] // => [true, true, false, true]
+ * @visibility SqlSemantics
  * @example Refusing words after a comma
  *     new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator(true, [\SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword::Left]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */

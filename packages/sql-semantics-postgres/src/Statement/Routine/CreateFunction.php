@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html,
  * https://www.postgresql.org/docs/17/sql-createprocedure.html.
  *
- * @visibility public
- * @example Reading the parameters of a function
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN a + b');
- *     [$operation->statement->name->last()->value, count($operation->statement->parameters->parameters)] // => ['add', 2]
+ * @visibility SqlSemantics
  */
 final class CreateFunction implements Statement
 {

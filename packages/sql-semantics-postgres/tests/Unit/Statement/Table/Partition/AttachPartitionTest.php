@@ -14,10 +14,10 @@ final class AttachPartitionTest extends TestCase
 {
     public function testDeriveClauseResolvesThePartition(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE p ATTACH PARTITION t DEFAULT', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE p ATTACH PARTITION t DEFAULT', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
         $n2 = $n1->commands[0];
@@ -29,8 +29,8 @@ final class AttachPartitionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES FROM (1) TO (10)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES FROM (1) TO (10)', []);
         self::assertSame('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES FROM (1) TO (10)', $statement->toString());
     }
 }

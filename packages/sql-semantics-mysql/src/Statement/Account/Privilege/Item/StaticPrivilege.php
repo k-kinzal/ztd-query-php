@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * take a column list; the columns are kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-column-privileges.
  *
- * @visibility public
- * @example Reading a column privilege
- *     $privilege = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT SELECT (a, b) ON t TO u')->statement->privileges[0];
- *     [$privilege->kind, count($privilege->columns)] // => [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, 2]
+ * @visibility SqlSemantics
  */
 final class StaticPrivilege implements Grantable
 {

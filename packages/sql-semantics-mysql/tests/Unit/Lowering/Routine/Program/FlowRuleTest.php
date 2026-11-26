@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
@@ -38,6 +37,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(FlowRule::class)]
 #[Medium]
@@ -57,7 +57,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerConditionalLowersTheBranchesAndTheElse')]
     public function testConditionalLowersTheBranchesAndTheElse(string $release): void
     {
-        $operation = (new Semantics($release))->analyze('create procedure p(x int) if x = 1 then set @a = 1; set @a = 2; elseif x = 2 then set @a = 3; elseif x = 3 then set @a = 4; else set @a = 5; end if');
+        $operation = (new Inspection($release))->inspect('create procedure p(x int) if x = 1 then set @a = 1; set @a = 2; elseif x = 2 then set @a = 3; elseif x = 3 then set @a = 4; else set @a = 5; end if');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $conditional = $statement->body;
@@ -87,7 +87,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerConditionalLowersAnIfWithoutElse')]
     public function testConditionalLowersAnIfWithoutElse(string $release, string $sql, int $branches, string $rendering): void
     {
-        $operation = (new Semantics($release))->analyze('create procedure p(x int) b: begin ' . $sql . '; end');
+        $operation = (new Inspection($release))->inspect('create procedure p(x int) b: begin ' . $sql . '; end');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -125,7 +125,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerChoiceLowersASimpleCase')]
     public function testChoiceLowersASimpleCase(string $release): void
     {
-        $operation = (new Semantics($release))->analyze('create procedure p(x int) case x when 1 then set x = 2; when 2 then set x = 3; set x = 4; else set x = 5; end case');
+        $operation = (new Inspection($release))->inspect('create procedure p(x int) case x when 1 then set x = 2; when 2 then set x = 3; set x = 4; else set x = 5; end case');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
@@ -151,7 +151,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerChoiceLowersASearchedCase')]
     public function testChoiceLowersASearchedCase(string $release): void
     {
-        $operation = (new Semantics($release))->analyze('create procedure p(x int) case when x > 1 then set x = 0; end case');
+        $operation = (new Inspection($release))->inspect('create procedure p(x int) case when x > 1 then set x = 0; end case');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
@@ -175,7 +175,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerLabeledLowersALabeledLoop')]
     public function testLabeledLowersALabeledLoop(string $release, string $sql, Loop|WhileLoop|RepeatLoop $expected, string $rendering): void
     {
-        $operation = (new Semantics($release))->analyze('create procedure p() ' . $sql);
+        $operation = (new Inspection($release))->inspect('create procedure p() ' . $sql);
         self::assertInstanceOf(CreateProcedure::class, $operation->statement);
 
         self::assertEquals($expected, $operation->statement->body);
@@ -196,7 +196,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerEndLabelLowersTheLabelAfterEnd')]
     public function testEndLabelLowersTheLabelAfterEnd(string $release, string $sql, ?Name $endLabel, string $rendering): void
     {
-        $operation = (new Semantics($release))->analyze('create procedure p() ' . $sql);
+        $operation = (new Inspection($release))->inspect('create procedure p() ' . $sql);
         self::assertInstanceOf(CreateProcedure::class, $operation->statement);
         $loop = $operation->statement->body;
         self::assertInstanceOf(RepeatLoop::class, $loop);
@@ -219,7 +219,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerLoopLowersLoopWhileAndRepeat')]
     public function testLoopLowersLoopWhileAndRepeat(string $release): void
     {
-        $operation = (new Semantics($release))->analyze('create procedure p(x int) begin while x > 0 do set x = x - 1; end while; repeat set x = x + 1; until x > 9 end repeat; loop set x = 0; end loop; end');
+        $operation = (new Inspection($release))->inspect('create procedure p(x int) begin while x > 0 do set x = x - 1; end while; repeat set x = x + 1; until x > 9 end repeat; loop set x = 0; end loop; end');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -248,7 +248,7 @@ final class FlowRuleTest extends TestCase
     #[DataProvider('providerJumpLowersReturnLeaveAndIterate')]
     public function testJumpLowersReturnLeaveAndIterate(string $release): void
     {
-        $operation = (new Semantics($release))->analyze('create function f(x int) returns int begin l: loop if x > 0 then leave l; end if; iterate l; end loop; return x + 1; end');
+        $operation = (new Inspection($release))->inspect('create function f(x int) returns int begin l: loop if x > 0 then leave l; end if; iterate l; end loop; return x + 1; end');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);

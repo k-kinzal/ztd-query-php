@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(VariableDeclaration::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class VariableDeclarationTest extends TestCase
 {
     public function testDeriveRelationAnswersANullablePositionPerName(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE a, b VARCHAR(5) DEFAULT \'x\'; END');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE a, b VARCHAR(5) DEFAULT \'x\'; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -42,7 +42,7 @@ final class VariableDeclarationTest extends TestCase
 
     public function testDeriveRelationDerivesTheDefaultBeforeTheDeclaration(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(a INT) BEGIN DECLARE b INT DEFAULT a + c; END');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p(a INT) BEGIN DECLARE b INT DEFAULT a + c; END');
 
         self::assertSame(['Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -50,7 +50,7 @@ final class VariableDeclarationTest extends TestCase
     #[DataProvider('providerRenderWritesTheDeclaration')]
     public function testRenderWritesTheDeclaration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     /**

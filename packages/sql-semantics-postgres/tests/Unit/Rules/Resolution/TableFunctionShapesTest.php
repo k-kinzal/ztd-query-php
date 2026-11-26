@@ -14,22 +14,22 @@ final class TableFunctionShapesTest extends TestCase
 {
     public function testXmlReportsASecondOrdinalityColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text NULL NOT NULL, n FOR ORDINALITY, m FOR ORDINALITY)");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text NULL NOT NULL, n FOR ORDINALITY, m FOR ORDINALITY)");
         self::assertSame('only one FOR ORDINALITY column is allowed', $query->facts->diagnostics[1]->message());
     }
 
     public function testOptionsReportsConflictingNullability(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text NULL NOT NULL, n FOR ORDINALITY, m FOR ORDINALITY)");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text NULL NOT NULL, n FOR ORDINALITY, m FOR ORDINALITY)");
         self::assertSame('conflicting or redundant NULL / NOT NULL declarations for column "a"', $query->facts->diagnostics[0]->message());
     }
 
     public function testJsonHasTheColumnsInOrder(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (a text, NESTED '\$.b' COLUMNS (b text), c text))");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (a text, NESTED '\$.b' COLUMNS (b text), c text))");
         self::assertSame(['a:Nullable', 'b:Nullable', 'c:Nullable'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field $field): string => ($field->name->value ?? '') . ':' . $field->nullability->name, $query->fields()->items ?? []));
     }
 
@@ -42,8 +42,8 @@ final class TableFunctionShapesTest extends TestCase
 
     public function testTypedReportsABehaviorTheColumnRefuses(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (e boolean EXISTS EMPTY ON ERROR))");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (e boolean EXISTS EMPTY ON ERROR))");
         self::assertSame('invalid ON ERROR behavior for column "e"', $query->facts->diagnostics[0]->message());
     }
 

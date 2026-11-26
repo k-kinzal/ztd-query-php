@@ -11,9 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A catalog command that PostgreSQL rejects because it breaks a rule of the command.
  *
- * @visibility public
- * @example Reading the problem of a duplicated database option
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d OWNER a OWNER b') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: conflicting or redundant options
+ * @visibility SqlSemantics
  */
 final class CatalogMisuse implements Diagnostic
 {

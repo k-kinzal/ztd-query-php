@@ -14,11 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  *
  * Resolved references point to this object itself; it is never copied.
  *
- * @visibility public
- * @example Reaching the declared column from a query field
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
- *     $semantics->analyze('SELECT a FROM t', [$table])->field('a')->column() === $table->columns[0] // => true
+ * @visibility SqlSemantics
  */
 final class Column
 {
@@ -29,12 +25,16 @@ final class Column
      * @param TypeDescriptor $type The declared type
      * @param Nullability $nullability Whether the column can hold NULL
      * @param bool $generated Whether the column is computed from other columns of its row and cannot be written
+     * @param bool $identity Whether the column owns an identity sequence
+     * @param DeclaredTextCollation|null $collation A resolved declared collation, when known
      */
     public function __construct(
         public readonly Name $name,
         public readonly TypeDescriptor $type,
         public readonly Nullability $nullability = Nullability::Nullable,
         public readonly bool $generated = false,
+        public readonly bool $identity = false,
+        public readonly ?DeclaredTextCollation $collation = null,
     ) {
     }
 }

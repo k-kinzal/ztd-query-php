@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
@@ -26,10 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
  * Source: https://sqlite.org/lang_createtable.html#check_constraints.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a table check
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, CHECK (a < b))');
- *     $create->facts->scalar($create->statement->constraints[0]->items[0]->expression->right)->resolution->slot->name->value // => 'b'
+ * @visibility SqlSemantics
  */
 final class TableCheck implements TableConstraint
 {
@@ -39,7 +37,7 @@ final class TableCheck implements TableConstraint
      * @param Scalar $expression The condition every row must not fail
      * @param ConflictResolution|null $conflict The written ON CONFLICT resolution, which SQLite ignores
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?ConflictResolution $conflict = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?ConflictResolution $conflict = null, public readonly ?Layout $labelLayout = null)
     {
     }
 
@@ -57,7 +55,7 @@ final class TableCheck implements TableConstraint
      */
     public function render(Output $out): void
     {
-        $out->keyword('CHECK')->symbol('(')->node($this->expression)->symbol(')');
+        $out->keyword('CHECK')->symbol('(')->layout($this->labelLayout, $this->expression)->symbol(')');
         if ($this->conflict !== null) {
             $out->keyword('ON', 'CONFLICT', $this->conflict->value);
         }

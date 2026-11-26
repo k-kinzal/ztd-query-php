@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  * objects and privileges are derived and checked as for GRANT.
  * Source: https://www.postgresql.org/docs/17/sql-revoke.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a revoke
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE GRANT OPTION FOR SELECT ON accounts FROM joe CASCADE');
- *     [$operation->statement->grantOptionOnly, $operation->statement->behavior?->value] // => [true, 'CASCADE']
+ * @visibility SqlSemantics
  */
 final class Revoke implements Statement
 {

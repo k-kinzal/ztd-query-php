@@ -20,9 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * the priority range cannot be checked.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-resource-group.html. Status: Implemented.
  *
- * @visibility public
- * @example Disabling a group by force
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter resource group batch disable force')->toString() // => 'ALTER RESOURCE GROUP batch DISABLE FORCE'
+ * @visibility SqlSemantics
  */
 final class AlterResourceGroup implements Statement
 {

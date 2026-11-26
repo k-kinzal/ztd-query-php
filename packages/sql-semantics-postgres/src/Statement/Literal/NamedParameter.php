@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * statement is sent. Rule: PG-PARAMETER-002. Facts: the type and NULL fact
  * depend on the bound value. Status: Implemented.
  *
- * @visibility public
- * @example Reading a named placeholder
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics(null, null, \SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle::Named);
- *     $semantics->analyze('SELECT :id')->statement->targets[0]->expression->name // => 'id'
+ * @visibility SqlSemantics
  */
 final class NamedParameter implements Scalar, OutputNaming
 {

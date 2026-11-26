@@ -21,12 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\ColumnFacts;
  * which is the only relation visible there.
  * Source: https://www.postgresql.org/docs/17/sql-createindex.html.
  *
- * @visibility public
- * @example Resolving an indexed column
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a int, b text)');
- *     $index = $semantics->analyze('CREATE INDEX i ON t (b)', $table->declarations());
- *     $index->facts->scalar($index->statement->elements[0]->key)->resolution->slot->column === $table->declarations()[0]->columns[1] // => true
+ * @visibility SqlSemantics
  */
 final class ColumnKey implements Scalar
 {

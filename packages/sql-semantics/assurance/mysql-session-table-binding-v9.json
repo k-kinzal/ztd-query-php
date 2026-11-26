@@ -1,0 +1,57 @@
+{
+  "revision": "SemanticsIR/mysql-session-table-binding-9",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "e2c17e110d293f408b3b67e2f7df776d9d59bc84dd7b4abf968a29b02d3925a1",
+      "role": "Closed immutable ordered foreign-key edges and the existing complete catalog and declaration rules."
+    },
+    "src/Model/Construction/Derivation.php": {
+      "sha256": "5538a564e7ca7adf34226f61a55329699707e49d3df29d94ef490327f27ec839",
+      "role": "Route the CTE and native lookup precedence with retained lexical scope."
+    },
+    "src/Model/Resolution/TableLookup.php": {
+      "sha256": "78ff02773d800472eac2afb20b2bd3a5ec57322ae28a5b18bb56976bfa326acc",
+      "role": "Select the correct native namespace before classifying ambiguity or absence."
+    },
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "239aa1e023f03b498f40c2d5572573baac569a506e05941814fa7999ba442c90",
+      "role": "Require session-local provenance to belong to a checked base-table declaration."
+    },
+    "src/Rules/TableChange/Renamings.php": {
+      "sha256": "22ca3de6dbf820304bdbc71f8230bec965fb55d3d5df6b0c7d5a09a5e948694f",
+      "role": "Select the permanent origin and preserve left-to-right name changes under a temporary overlay."
+    },
+    "src/Rules/TableChange/Targets.php": {
+      "sha256": "637a3ef7310d87531211015e01e6f10b3cc9b274ec60ee9aec23e11b61a50dd5",
+      "role": "Expose the lookup policy while retaining resolved column bindings."
+    },
+    "src/Model/Resolution/TableNamespace.php": {
+      "sha256": "50114b671a72d14541a88a32493f2d9af68a656c719449d70d3c338c4e18a5c8",
+      "role": "Close the operation-specific namespace selection policies."
+    },
+    "src/Statement/Alter/DropTable.php": {
+      "role": "Choose temporary-only resolution for the explicit native DROP modifier before constructing table identities.",
+      "sha256": "10141883ad4f405b89370e4cad0ee560a2743e1052c82aef3d3fec40d19f4f7f"
+    },
+    "src/Model/Contract/ForeignKeyEdge.php": {
+      "role": "Check exact qualified child and parent coordinates and detached ordered field sequences in the transient catalog.",
+      "sha256": "95e677c23c0686b63a82482361b92061c9320f223b6c809d28d00137482464a1"
+    },
+    "src/Model/Facade/Catalog.php": {
+      "sha256": "d88fc6d60db06babc8a1f2a5c306fb7f815741cc0d87bddc1867d9b5924697fa",
+      "role": "Collect each relation definition's effective native references before final publication of the immutable catalog."
+    },
+    "src/Platform.php": {
+      "sha256": "d080d39859dce9d4fa4fee9d673761601b1fbd5f17861c483c987d71d8acc5fd",
+      "role": "Transport collected foreign-key edges to the selected dialect context."
+    },
+    "src/Rules/TableDefinition/ForeignKeyDeclarations.php": {
+      "role": "Use exact coordinates, release-specific inline rules and the ordered native child and parent fields.",
+      "sha256": "3ba2f8c9d6f060331e76403e28daec64c8e0af0dbb573bc1a35476dfb20bb0d1"
+    }
+  },
+  "extends": "mysql-session-table-binding-v3.json",
+  "amendment": "Resolve named and generated physical foreign constraints with a stable owning table identity in the supplied declaration sequence.",
+  "revises": "mysql-session-table-binding-v8.json"
+}

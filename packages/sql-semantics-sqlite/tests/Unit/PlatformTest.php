@@ -7,14 +7,19 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Index;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Platform;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Platform::class)]
 #[Medium]
@@ -80,6 +85,22 @@ final class PlatformTest extends TestCase
         self::assertSame('`select`', $codec->name(new Name('select'), NameUse::Column));
     }
 
+    public function testSyntaxOutputUsesTheSqliteWriter(): void
+    {
+        $pieces = (new Platform())->syntaxOutput()->node(new IntegerLiteral('13'))->canonical();
+
+        self::assertSame('13', $pieces[0]->text);
+    }
+
+    public function testDiscardedBindingsSelectOnlyTheEmptyMembershipOperand(): void
+    {
+        $operand = new IntegerLiteral('17');
+        $empty = new InList($operand, []);
+        $nonempty = new InList($operand, [new IntegerLiteral('0')]);
+
+        self::assertSame([spl_object_id($empty) => 'operand'], (new Platform())->discardedBindings([$empty, $nonempty, $operand]));
+    }
+
     public function testLeafKeysKeysSqliteTokens(): void
     {
         $platform = new Platform();
@@ -111,6 +132,16 @@ final class PlatformTest extends TestCase
         self::assertSame(['temp', 'main', 'aux'], array_map(static fn (Name $schema): string => $schema->value, $explicit->searchPath));
         self::assertSame(['temp', 'main', 'aux'], array_map(static fn (Name $schema): string => $schema->value, $plain->searchPath));
         self::assertFalse($plain->complete);
+    }
+
+    public function testDeclarationsAttachesColumnRemovalFactsToTheOwnedTable(): void
+    {
+        $inspection = new Inspection();
+        $binding = $inspection->diagnose('CREATE TABLE accounts (id INTEGER PRIMARY KEY, name TEXT)')->binding();
+        $platform = new Platform();
+
+        self::assertSame([0 => true], $platform->declarations($binding)[0]->columnRemoval?->protected);
+        self::assertSame([], $platform->declarations($inspection->diagnose('SELECT 1')->binding()));
     }
 
     public function testStatementNamespaceNamesTheSqliteStatementValues(): void
@@ -204,5 +235,53 @@ final class PlatformTest extends TestCase
     public function testSharedReusesTheDatabasePlatform(): void
     {
         self::assertSame(Platform::shared(), Platform::shared());
+    }
+
+    public function testIndexDeclarationExportsTheBoundAbsoluteOwner(): void
+    {
+        $inspection = new Inspection();
+        $binding = $inspection->diagnose(
+            'CREATE INDEX temp.by_code ON items(code)',
+            [$inspection->inspect('CREATE TABLE temp.items (code TEXT)')]
+        )->binding();
+        $platform = new Platform();
+        $declaration = $platform->indexDeclaration($binding);
+
+        self::assertNotNull($declaration);
+        self::assertSame(['temp', 'by_code', 'items'], [$declaration->schema->value, $declaration->name->value, $declaration->table->value]);
+        self::assertNull($platform->indexDeclaration($inspection->diagnose('SELECT 1')->binding()));
+    }
+
+    public function testConstraintIndexesRetainTheWithoutRowidPrimaryKeyName(): void
+    {
+        $binding = (new Inspection())->diagnose('CREATE TABLE main.members (id INTEGER PRIMARY KEY, code UNIQUE) WITHOUT ROWID')->binding();
+        $indexes = (new Platform())->constraintIndexes($binding);
+
+        self::assertNotNull($indexes);
+        self::assertSame(
+            ['sqlite_autoindex_members_1', 'sqlite_autoindex_members_2'],
+            array_map(static fn (Index $index): string => $index->name->value, $indexes)
+        );
+        self::assertFalse($indexes[1]->removable);
+    }
+
+    public function testTriggerDeclarationKeepsOnlyTheExternalTriggerAndWatchCoordinates(): void
+    {
+        $platform = new Platform();
+        $dialect = new \SqlSemantics\Platform\Sqlite\Semantics();
+        $context = $dialect->context(['CREATE TABLE watched (id)']);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+        $binder = new \SqlSemantics\Platform\Sqlite\Model\Facade\StatementBinder($platform->parser($dialect->profile()));
+        $trigger = $platform->triggerDeclaration(
+            $binder->resolve('CREATE TEMP TRIGGER track AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END', $context),
+            true,
+        );
+
+        self::assertNotNull($trigger);
+        self::assertSame('temp', $trigger->schema->value);
+        self::assertSame('track', $trigger->name->value);
+        self::assertSame('main', $trigger->watchedSchema->value);
+        self::assertSame('watched', $trigger->watchedName->value);
+        self::assertNull($platform->triggerDeclaration($binder->resolve('SELECT 1', $context), true));
     }
 }

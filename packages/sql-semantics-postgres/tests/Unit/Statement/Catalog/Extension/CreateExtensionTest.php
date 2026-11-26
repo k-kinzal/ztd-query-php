@@ -14,16 +14,16 @@ final class CreateExtensionTest extends TestCase
 {
     public function testRenderDropsTheNoiseWith(): void
     {
-        self::assertSame('CREATE EXTENSION IF NOT EXISTS hstore SCHEMA ext CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA ext CASCADE')->toString());
+        self::assertSame('CREATE EXTENSION IF NOT EXISTS hstore SCHEMA ext CASCADE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA ext CASCADE')->toString());
     }
 
     public function testDeriveStatementReportsFrom(): void
     {
-        self::assertSame('CREATE EXTENSION ... FROM is no longer supported', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE EXTENSION e FROM \'1.0\'')->facts->diagnostics[0]->message());
+        self::assertSame('CREATE EXTENSION ... FROM is no longer supported', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE EXTENSION e FROM \'1.0\'')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementReportsARepeatedOption(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE EXTENSION e SCHEMA a SCHEMA b')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE EXTENSION e SCHEMA a SCHEMA b')->facts->diagnostics[0]->message());
     }
 }

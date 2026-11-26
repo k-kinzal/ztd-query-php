@@ -14,18 +14,18 @@ final class CreateLanguageExtensionTest extends TestCase
 {
     public function testIfNotExistsFollowsOrReplace(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE LANGUAGE plperl')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE OR REPLACE LANGUAGE plperl')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\CreateLanguageExtension::class, $statement);
         self::assertSame(true, $statement->ifNotExists());
     }
 
     public function testRenderKeepsTrusted(): void
     {
-        self::assertSame('CREATE TRUSTED LANGUAGE plperl', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRUSTED LANGUAGE plperl')->toString());
+        self::assertSame('CREATE TRUSTED LANGUAGE plperl', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE TRUSTED LANGUAGE plperl')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE LANGUAGE plperl')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE LANGUAGE plperl')->facts->diagnostics);
     }
 }

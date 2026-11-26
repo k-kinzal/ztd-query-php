@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Server\Storage\Option;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SizeOption::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class SizeOptionTest extends TestCase
 {
     public function testRenderWritesKeywordAndSize(): void
     {
-        self::assertSame('ALTER TABLESPACE ts AUTOEXTEND_SIZE `4M` MAX_SIZE 1024', (new Semantics())->analyze('alter tablespace ts autoextend_size = 4M max_size 1024')->toString());
+        self::assertSame('ALTER TABLESPACE ts AUTOEXTEND_SIZE `4M` MAX_SIZE 1024', (new Inspection())->inspect('alter tablespace ts autoextend_size = 4M max_size 1024')->toString());
     }
 
     public function testKeywordAnswersTheKind(): void

@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Schema\Table;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\ForeignKey;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ForeignKey::class)]
 #[Medium]
@@ -19,14 +19,14 @@ final class ForeignKeyTest extends TestCase
 {
     public function testDeriveConstraintAcceptsChildColumnsOfTheTable(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (a, b, FOREIGN KEY (a, B) REFERENCES parent)', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE c (a, b, FOREIGN KEY (a, B) REFERENCES parent)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testDeriveConstraintReportsAChildColumnTheTableDoesNotHave(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (a, FOREIGN KEY (rowid) REFERENCES parent)', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE c (a, FOREIGN KEY (rowid) REFERENCES parent)', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(UnknownColumn::class, $operation->facts->diagnostics[0]);
@@ -35,7 +35,7 @@ final class ForeignKeyTest extends TestCase
 
     public function testDeriveConstraintReportsDecoratedColumnsOnBothSides(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (a, FOREIGN KEY (a DESC) REFERENCES parent (id ASC))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE c (a, FOREIGN KEY (a DESC) REFERENCES parent (id ASC))', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[0]);
@@ -44,7 +44,7 @@ final class ForeignKeyTest extends TestCase
 
     public function testRenderWritesTheColumnsTheParentAndTheDeferrability(): void
     {
-        $operation = (new Semantics())->inspect('create table c (a, b, foreign key (a, b) references parent (x, y) on delete cascade deferrable initially deferred)');
+        $operation = (new Inspection())->diagnose('create table c (a, b, foreign key (a, b) references parent (x, y) on delete cascade deferrable initially deferred)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

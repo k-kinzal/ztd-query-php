@@ -22,12 +22,12 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\ColumnResolver;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ColumnResolver::class)]
 #[Medium]
@@ -35,9 +35,9 @@ final class ColumnResolverTest extends TestCase
 {
     public function testFindPrefersAColumnOfTheFromClauseToAnAlias(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
+        $operation = $semantics->diagnose('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
@@ -51,9 +51,9 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindFallsBackToTheAliasOfASelectListItem(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('SELECT a AS x FROM t GROUP BY x ORDER BY x + 1', [$table]);
+        $operation = $semantics->diagnose('SELECT a AS x FROM t GROUP BY x ORDER BY x + 1', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
@@ -67,9 +67,9 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindReportsAnAliasOfSeveralDifferentItems(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('SELECT a AS x, b AS x FROM t GROUP BY x', [$table]);
+        $operation = $semantics->diagnose('SELECT a AS x, b AS x FROM t GROUP BY x', [$table]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(AmbiguousAlias::class, $operation->facts->diagnostics[0]);
@@ -78,7 +78,7 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindIsConditionalWhileAnUndeclaredRelationCouldOwnTheName(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 AS x FROM u GROUP BY x');
+        $operation = (new Inspection())->diagnose('SELECT 1 AS x FROM u GROUP BY x');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
@@ -91,9 +91,9 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindIgnoresAliasesForAQualifiedName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('SELECT a AS x FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT a AS x FROM t', [$table]);
 
         self::assertInstanceOf(MissingColumn::class, (new ColumnResolver())->find(new Environment($operation->context, null, [], [], [$operation->field('x')]), new Name('x'), new QualifiedName(new Name('t'))));
         self::assertInstanceOf(AliasTarget::class, (new ColumnResolver())->find(new Environment($operation->context, null, [], [], [$operation->field('x')]), new Name('X')));
@@ -101,7 +101,7 @@ final class ColumnResolverTest extends TestCase
 
     public function testAliasTreatsItemsComputingTheSameExpressionAsOne(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 AS x, 1 AS x, 2 AS x', []);
+        $operation = (new Inspection())->diagnose('SELECT 1 AS x, 1 AS x, 2 AS x', []);
         $fields = $operation->fields()->items ?? [];
 
         self::assertInstanceOf(AliasTarget::class, (new ColumnResolver())->alias(new Name('x'), [$fields[0], $fields[1]]));
@@ -115,10 +115,10 @@ final class ColumnResolverTest extends TestCase
 
     public function testUnlistedAnswersTheOccurrencesThatMayGiveAHavingPositionTheName(): void
     {
-        $semantics = new Semantics();
-        $star = $semantics->inspect('SELECT * FROM u HAVING c > 0');
-        $grouped = $semantics->inspect('SELECT 1 FROM u GROUP BY c HAVING c > 0');
-        $other = $semantics->inspect('SELECT 1 FROM u GROUP BY d HAVING c > 0');
+        $semantics = new Inspection();
+        $star = $semantics->diagnose('SELECT * FROM u HAVING c > 0');
+        $grouped = $semantics->diagnose('SELECT 1 FROM u GROUP BY c HAVING c > 0');
+        $other = $semantics->diagnose('SELECT 1 FROM u GROUP BY d HAVING c > 0');
         $starSelect = $star->statement;
         $groupedSelect = $grouped->statement;
         self::assertInstanceOf(Select::class, $starSelect);
@@ -139,8 +139,8 @@ final class ColumnResolverTest extends TestCase
 
     public function testFactAnswersTheFactsOfTheColumnOrTheProblem(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a FROM t', [$semantics->inspect('CREATE TABLE t (a INT NOT NULL)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT a FROM t', [$semantics->diagnose('CREATE TABLE t (a INT NOT NULL)')]);
         $resolution = $operation->field('a')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $environment = new Environment($operation->context, null, [], [], [$operation->field('a')]);
@@ -153,8 +153,8 @@ final class ColumnResolverTest extends TestCase
 
     public function testRowTellsWhetherATriggerRowIsVisible(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT new.a FROM t AS new', [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT new.a FROM t AS new', [$semantics->diagnose('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('a')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $visible = new Environment($operation->context, null, [new VisibleRelation($resolution->relation, $operation->facts->relation($resolution->relation)->shape, new Name('NEW'))]);
@@ -167,9 +167,9 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindIsConditionalWhileAnItemWithoutADecidedNameCouldHaveTheName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect("SELECT 'é' FROM t GROUP BY q", [$table]);
+        $operation = $semantics->diagnose("SELECT 'é' FROM t GROUP BY q", [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
@@ -183,14 +183,14 @@ final class ColumnResolverTest extends TestCase
 
     public function testUnnamedAnswersTheInputsTheItemNamesDependOn(): void
     {
-        $operation = (new Semantics())->inspect("SELECT 'é' AS x, 'ü'");
+        $operation = (new Inspection())->diagnose("SELECT 'é' AS x, 'ü'");
 
         self::assertEquals([new SessionState('character_set_client')], (new ColumnResolver())->unnamed([$operation->field(0), $operation->field(1)]));
     }
 
     public function testUndecidedJoinsTheInputsOfOpenOccurrencesAndUnnamedItems(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM u');
+        $operation = (new Inspection())->diagnose('SELECT a FROM u');
         $input = $operation->inputRelation();
         self::assertNotNull($input);
         $resolution = (new ColumnResolver())->undecided(new Name('a'), [], [new VisibleRelation($input, $operation->facts->relation($input)->shape)], [new SessionState('character_set_client')]);

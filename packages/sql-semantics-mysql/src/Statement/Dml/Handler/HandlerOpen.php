@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  * statement returns no rows. Terminates: no child. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/handler.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a HANDLER ... OPEN
- *     $open = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER shop.t OPEN AS h');
- *     [$open->statement->table->name->value, $open->statement->alias?->value, $open->toString()] // => ['t', 'h', 'HANDLER shop.t OPEN AS h']
+ * @visibility SqlSemantics
  */
 final class HandlerOpen implements Statement
 {

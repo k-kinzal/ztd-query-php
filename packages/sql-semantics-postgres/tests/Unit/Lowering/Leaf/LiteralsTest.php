@@ -50,10 +50,10 @@ final class LiteralsTest extends TestCase
 
     public function testNumberTokenKeepsTheTextASettingReceives(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         self::assertSame(
             ['SET application_name TO 1e2', 'SET application_name TO .5', 'SET application_name TO - .5', 'SET application_name TO 0001.50', 'SET application_name TO 0x1FFFFFFFFF'],
-            [$semantics->analyze('SET application_name = 1e2')->toString(), $semantics->analyze('SET application_name = .5')->toString(), $semantics->analyze('SET application_name = -.5')->toString(), $semantics->analyze('SET application_name = 0001.50')->toString(), $semantics->analyze('SET application_name = 0x1FFFFFFFFF')->toString()],
+            [$semantics->inspect('SET application_name = 1e2')->toString(), $semantics->inspect('SET application_name = .5')->toString(), $semantics->inspect('SET application_name = -.5')->toString(), $semantics->inspect('SET application_name = 0001.50')->toString(), $semantics->inspect('SET application_name = 0x1FFFFFFFFF')->toString()],
         );
     }
 

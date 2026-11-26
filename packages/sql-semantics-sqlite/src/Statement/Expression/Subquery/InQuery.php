@@ -30,10 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#the_in_and_not_in_operators.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a membership test against a query
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 IN (SELECT 2)');
- *     [$query->statement->columns[0]->expression->negated, $query->field(0)->nullability] // => [false, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  */
 final class InQuery implements Scalar
 {

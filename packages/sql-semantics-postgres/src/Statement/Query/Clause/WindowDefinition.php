@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification;
  * columns of the selection that holds it.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-WINDOW.
  *
- * @visibility public
- * @example Reading a named window
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 WINDOW w AS ()');
- *     $query->statement->windows[0]->name->value // => 'w'
+ * @visibility SqlSemantics
  */
 final class WindowDefinition implements Clause
 {

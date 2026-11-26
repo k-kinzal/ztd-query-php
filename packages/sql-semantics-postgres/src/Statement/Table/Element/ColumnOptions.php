@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * [ column_constraint [ ... ] ]") and are not kept.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Adding a constraint to a column of a partition
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p (a WITH OPTIONS NOT NULL) DEFAULT');
- *     $create->toString() // => 'CREATE TABLE p1 PARTITION OF p (a NOT NULL) DEFAULT'
+ * @visibility SqlSemantics
  */
 final class ColumnOptions implements Clause
 {

@@ -40,12 +40,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
  * not part of a declaration context: the statement provides no declaration.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html. Status: Implemented.
  *
- * @visibility public
- * @example Resolving the indexed table
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
- *     $index = $semantics->analyze('CREATE UNIQUE INDEX i ON t (b DESC, (a + b))', [$table]);
- *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->diagnostics] // => [true, []]
+ * @visibility SqlSemantics
  */
 final class CreateIndex implements Statement, Relation
 {
@@ -104,7 +99,7 @@ final class CreateIndex implements Statement, Relation
         $scope = $targets->scope($derivation, $this, new QualifiedName($this->table->name), $fact->shape, $declared === null ? [] : $targets->implicit($declared));
         foreach ($this->parts as $part) {
             $part->deriveKeyPart($derivation, $scope);
-            if ($declared !== null && $declared->complete && $part instanceof ColumnPart && $declared->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
+            if ($declared !== null && $declared->complete && $part instanceof ColumnPart && $declared->matchingIndexColumns($part->column->value) === []) {
                 $derivation->report(new UnknownKeyColumn($part->column));
             }
         }

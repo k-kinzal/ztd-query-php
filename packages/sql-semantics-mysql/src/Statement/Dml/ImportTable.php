@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * Terminates: no child expression. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/import-table.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the files of IMPORT TABLE
- *     $import = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("IMPORT TABLE FROM '/tmp/t1_*.sdi', '/tmp/t2.sdi'");
- *     [count($import->statement->files), $import->toString()] // => [2, "IMPORT TABLE FROM '/tmp/t1_*.sdi', '/tmp/t2.sdi'"]
+ * @visibility SqlSemantics
  */
 final class ImportTable implements Statement
 {

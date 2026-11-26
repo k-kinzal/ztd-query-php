@@ -1,0 +1,117 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger;
+
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
+use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerMutationSql;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
+use SqlSemantics\Platform\Sqlite\Ir\TableSource;
+
+/**
+ * Renders checked trigger operands and local destinations in their owning scope.
+ *
+ * @visibility SqlSemantics\Platform\Sqlite
+ */
+final class TriggerSql
+{
+    /**
+     * Emits the complete trigger definition.
+     */
+    public function statement(CreateTrigger $trigger): string
+    {
+        $temporary = $trigger->placement === TriggerPlacement::TemporaryKeyword;
+        $declaration = ($temporary ? 'CREATE TEMP TRIGGER ' : 'CREATE TRIGGER ')
+            . ($trigger->ifNotExists ? 'IF NOT EXISTS ' : '')
+            . ($temporary ? '' : $trigger->schema->quoted() . '.') . $trigger->name->quoted();
+        $watched = $trigger->watched;
+        $events = $trigger->timing->value . ' ' . $trigger->event->value;
+        $names = [];
+        foreach ($trigger->selectors as $member) {
+            $selector = $member->selector;
+            $names[] = (is_int($selector) ? $watched->columns[$selector] : $selector)->quoted();
+        }
+        if ($names !== []) {
+            $events .= ' OF ' . implode(', ', $names);
+        }
+        $condition = $trigger->condition;
+        $when = $condition === null ? '' : ' WHEN ' . $this->field($condition->field, $watched)
+            . ($condition->isNull ? ' IS NULL' : ' IS NOT NULL');
+        $steps = [];
+        $mutation = new TriggerMutationSql();
+        foreach ($trigger->program as $step) {
+            $steps[] = match (true) {
+                $step instanceof TriggerRaise => $this->raise($step, $watched),
+                $step instanceof TriggerInsert => $this->insertion($step, $watched),
+                $step instanceof TriggerUpdate, $step instanceof TriggerDelete => $mutation->action($step, $watched),
+            } . ';';
+        }
+
+        return $declaration . ' ' . $events . ' ON ' . $watched->schema->quoted() . '.' . $watched->table->quoted()
+            . $when . ' BEGIN ' . implode(' ', $steps) . ' END';
+    }
+
+    /**
+     * Emits one exact insertion and its destination and value associations.
+     */
+    public function insertion(TriggerInsert $step, TableSource $watched): string
+    {
+        $target = $step->destination->table;
+        $columns = [];
+        $rows = [];
+        foreach ($step->rows as $index => $tuple) {
+            $values = [];
+            foreach ($tuple->fields as $field) {
+                if ($index === 0) {
+                    $columns[] = $target->columns[$field->column]->quoted();
+                }
+                $values[] = $this->value($field->value, $watched);
+            }
+            $rows[] = '(' . implode(', ', $values) . ')';
+        }
+        $policy = $step->conflict === InsertConflict::Inherit ? '' : ' OR ' . strtoupper($step->conflict->value);
+
+        return 'INSERT' . $policy . ' INTO ' . $target->table->quoted()
+            . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $rows);
+    }
+
+    /**
+     * Emits the native control policy, checked message and optional row-image test.
+     */
+    public function raise(TriggerRaise $step, TableSource $watched): string
+    {
+        $condition = $step->where;
+        $message = $step->message === null ? '' : ', ' . $this->value($step->message, $watched);
+        $filter = $condition === null ? '' : ' WHERE ' . $this->field($condition->field, $watched)
+            . ($condition->isNull ? ' IS NULL' : ' IS NOT NULL');
+
+        return 'SELECT RAISE(' . $step->policy->value . $message . ')' . $filter;
+    }
+
+    /**
+     * Emits a scalar literal or bound active image without inspecting the original syntax.
+     */
+    public function value(IntegerLiteral|TextLiteral|NullLiteral|TriggerField $value, TableSource $watched): string
+    {
+        return match (true) {
+            $value instanceof TriggerField => $this->field($value, $watched),
+            $value instanceof IntegerLiteral => $value->decimal,
+            $value instanceof TextLiteral => $value->toString(),
+            $value instanceof NullLiteral => 'NULL',
+        };
+    }
+
+    /**
+     * Emits a checked row-image field against the watched layout.
+     */
+    public function field(TriggerField $field, TableSource $watched): string
+    {
+        return $field->image->value . '.' . $watched->columns[$field->column]->quoted();
+    }
+}

@@ -9,19 +9,19 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableInput::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class TableInputTest extends TestCase
 {
     public function testNameAndAliasAnswerTheWrittenNames(): void
     {
-        $query = (new Semantics())->inspect('SELECT * FROM main.t AS x INDEXED BY i');
+        $query = (new Inspection())->diagnose('SELECT * FROM main.t AS x INDEXED BY i');
         $input = $query->singleNamedInput();
 
         self::assertInstanceOf(TableInput::class, $input);
@@ -37,14 +37,14 @@ final class TableInputTest extends TestCase
         self::assertSame('main', $input->name()->schema?->value);
         self::assertSame('x', $input->alias()?->value);
         self::assertSame('i', $input->index?->index?->value);
-        self::assertNull((new Semantics())->inspect('SELECT * FROM t')->singleNamedInput()->alias());
+        self::assertNull((new Inspection())->diagnose('SELECT * FROM t')->singleNamedInput()->alias());
     }
 
     public function testDeriveRelationResolvesADeclaredTableWithItsRowIdentifier(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT b, rowid FROM t', [$t]);
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT b, rowid FROM t', [$t]);
         $fact = $query->facts->relation($query->singleNamedInput());
 
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
@@ -58,9 +58,9 @@ final class TableInputTest extends TestCase
 
     public function testDeriveRelationResolvesACommonTableToItsDefinition(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('WITH w AS (SELECT a FROM t) SELECT * FROM w', [$t]);
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('WITH w AS (SELECT a FROM t) SELECT * FROM w', [$t]);
 
         self::assertInstanceOf(WithQuery::class, $query->statement);
         self::assertInstanceOf(Select::class, $query->statement->body);
@@ -73,9 +73,9 @@ final class TableInputTest extends TestCase
 
     public function testDeriveRelationAnswersMissingAndUndeclaredTables(): void
     {
-        $semantics = new Semantics();
-        $missing = $semantics->inspect('SELECT * FROM t', []);
-        $undeclared = $semantics->inspect('SELECT * FROM t');
+        $semantics = new Inspection();
+        $missing = $semantics->diagnose('SELECT * FROM t', []);
+        $undeclared = $semantics->diagnose('SELECT * FROM t');
 
         self::assertInstanceOf(MissingTable::class, $missing->facts->relation($missing->singleNamedInput())->table);
         self::assertSame($missing->facts->relation($missing->singleNamedInput())->table, $missing->facts->diagnostics[0]);
@@ -86,10 +86,10 @@ final class TableInputTest extends TestCase
 
     public function testAliasHidesTheTableName(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $aliased = $semantics->inspect('SELECT x.a FROM t AS x', [$t]);
-        $original = $semantics->inspect('SELECT t.a FROM t AS x', [$t]);
+        $semantics = new Inspection();
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $aliased = $semantics->diagnose('SELECT x.a FROM t AS x', [$t]);
+        $original = $semantics->diagnose('SELECT t.a FROM t AS x', [$t]);
 
         self::assertSame($t->declarations()[0]->columns[1], $aliased->field(0)->column());
         self::assertInstanceOf(MissingColumn::class, $original->field(0)->resolution);
@@ -98,12 +98,12 @@ final class TableInputTest extends TestCase
 
     public function testRenderWritesSchemaAliasAndIndexChoice(): void
     {
-        $semantics = new Semantics();
-        $built = new Operation($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice())));
+        $semantics = new Inspection();
+        $built = new InspectedStatement($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice())));
 
         self::assertSame('SELECT * FROM main.t AS x NOT INDEXED', $built->toString());
-        self::assertSame('SELECT * FROM t x INDEXED BY i', $semantics->inspect('select * from t x indexed by i')->toString());
-        self::assertSame('SELECT * FROM t AS x INDEXED BY i', $semantics->inspect('select * from t as x indexed by i')->toString());
+        self::assertSame('SELECT * FROM t x INDEXED BY i', $semantics->diagnose('select * from t x indexed by i')->toString());
+        self::assertSame('SELECT * FROM t AS x INDEXED BY i', $semantics->diagnose('select * from t as x indexed by i')->toString());
     }
 
     public function testRenderRefusesToLeaveOutAsWithoutAnAlias(): void

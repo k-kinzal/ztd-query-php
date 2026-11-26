@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * Without a target, a conflict with any unique constraint is skipped.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html#SQL-ON-CONFLICT.
  *
- * @visibility public
- * @example Reading a conflict clause without target
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT DO NOTHING');
- *     $insert->statement->conflict->target // => null
+ * @visibility SqlSemantics
  */
 final class ConflictDoNothing implements Node
 {

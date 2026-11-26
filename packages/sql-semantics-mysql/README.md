@@ -1,213 +1,147 @@
 # SQL Semantics for MySQL
 
-[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-semantics-mysql.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-semantics-mysql)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docs](https://img.shields.io/badge/docs-sql--semantics--mysql-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
+Requires PHP 8.1 or later. See [grammar releases and usage](../sql-semantics/) for the common interface.
 
-SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md): the statement structure classes of the official MySQL grammars, the MySQL rules for resolving names and deriving types, NULL facts and diagnostics, and the MySQL spelling of rendered SQL. The package provides its own `Semantics` analyzer and installs the common SQL Semantics interfaces. The `Mode` class describes the session settings that change how SQL is read. No database connection is needed.
-
-## Requirements
-
-- PHP 8.1+
-- No PHP extension
-
-## Support Syntax
-
-The following grammar releases are supported. Pass the version tag, or the version number alone, as the first argument of `Semantics`; omitting it selects the default. A statement is read with the grammar of the selected release only.
-
-| Version | Version tag | Default |
-|---------|-------------|---------|
-| 5.6.51 | `mysql-5.6.51` | |
-| 5.7.44 | `mysql-5.7.44` | |
-| 8.0.44 | `mysql-8.0.44` | |
-| 8.1.0 | `mysql-8.1.0` | |
-| 8.2.0 | `mysql-8.2.0` | |
-| 8.3.0 | `mysql-8.3.0` | |
-| 8.4.7 | `mysql-8.4.7` | Yes |
-| 9.0.1 | `mysql-9.0.1` | |
-| 9.1.0 | `mysql-9.1.0` | |
-
-## Installation
-
-```bash
-composer require k-kinzal/sql-semantics-mysql
-```
-
-## Usage
-
-```php
-use SqlSemantics\Platform\MySql\Semantics;
-use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
-use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-
-$semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INT NOT NULL PRIMARY KEY, name VARCHAR(40))');
-$query = $semantics->analyze('select id, upper(name) as label from users where id > 10', [$users]);
-
-$query->toString(); // => 'SELECT id, upper(`name`) AS label FROM users WHERE id > 10'
-$query->field('label')->type instanceof Known; // => true
-$query->field('label')->type->descriptor->name(); // => 'VARCHAR'
-$query->field('id')->nullability; // => Nullability::NotNull
-$semantics->analyze('SELECT missing FROM users', [$users]); // throws SemanticException with message 'Column missing does not exist.'
-```
-
-See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
-
-### Releases
-
-Each release is read with its own grammar and keywords, and version comments are read as that release reads them:
-
-```php
-use SqlSemantics\Platform\MySql\Semantics;
-
-(new Semantics('8.0.44'))->profile()->grammar->value; // => 'mysql-8.0.44'
-(new Semantics('mysql-8.4.7'))->analyze('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 1 + 2 AS n'
-(new Semantics('mysql-5.7.44'))->analyze('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 2 AS n'
-```
-
-### Session modes
-
-Five `sql_mode` settings change tokenization: `ANSI_QUOTES`, `PIPES_AS_CONCAT`, `HIGH_NOT_PRECEDENCE`, `NO_BACKSLASH_ESCAPES` and `IGNORE_SPACE`. Pass a `Mode` as the third argument of `Semantics`. `Mode::fromString()` reads a value as `SELECT @@SESSION.sql_mode` reports it: a combination mode such as `ANSI` turns on the settings it includes, and every other mode name is accepted and not recorded, because it changes no token.
-
-```php
-use SqlSemantics\Platform\MySql\Semantics;
-use SqlSemantics\Platform\MySql\Mode;
-
-Mode::fromString('STRICT_TRANS_TABLES,ansi_quotes')->toString(); // => 'ANSI_QUOTES'
-Mode::fromString('ANSI')->toString(); // => 'ANSI_QUOTES,PIPES_AS_CONCAT,IGNORE_SPACE'
-
-$default = new Semantics();
-$ansi = new Semantics(null, Mode::fromString('ANSI_QUOTES,PIPES_AS_CONCAT'));
-
-$default->analyze('SELECT a FROM users WHERE "name" = a || b')->toString(); // => "SELECT a FROM users WHERE 'name' = a OR b"
-$ansi->analyze('SELECT a FROM users WHERE "name" = a || b')->toString(); // => 'SELECT a FROM users WHERE `name` = a || b'
-```
-
-The mode is part of the language profile. A declaration analyzed under one mode cannot be used in a context of another mode. Rendered SQL is meant to be read under the mode it was rendered for.
-
-### Current database
-
-MySQL searches an unqualified table name in the current database only. Name it with a `SearchPath` of exactly one schema; unqualified declarations then belong to that database, and qualified names in it resolve to them. Without a search path, the current database is unnamed: a name qualified with a database does not match an unqualified declaration, and facts that would show the database name depend on it as session state.
-
-```php
-use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
-use SqlSemantics\Platform\MySql\Model\Contract\SearchPath;
-use SqlSemantics\Platform\MySql\Semantics;
-use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
-
-$semantics = new Semantics(null, null, ParameterStyle::Native, new SearchPath('shop'));
-$users = $semantics->analyze('CREATE TABLE users (id INT)');
-$query = $semantics->analyze('SELECT id FROM shop.users', [$users]);
-
-$query->facts->relation($query->inputRelation())->table instanceof DeclaredTable; // => true
-(new Semantics())->analyze('SHOW TABLES')->shape()->missing[0]->describe(); // => 'the session state: the current database'
-new Semantics(null, null, ParameterStyle::Native, new SearchPath('shop', 'other')); // throws InvalidArgumentException
-```
-
-### Parameters
-
-The native parameter style reads `?` markers. `ParameterStyle::Named` adds `:name` markers, as PDO accepts them; without it, `:name` is a syntax error. A parameter's type depends on the value bound to it.
-
-```php
-use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
-use SqlSemantics\Platform\MySql\Semantics;
-
-$named = new Semantics(null, null, ParameterStyle::Named);
-
-$named->analyze('SELECT :id, ?')->field(0)->type->missing[0]->describe(); // => 'the value bound to parameter :id'
-(new Semantics())->analyze('SELECT :id'); // throws AnalysisException
-```
-
-### Names
-
-- Table and database names are compared exactly. Column names and output field names are compared without regard to ASCII letter case.
-- Names are rendered bare when they are no keyword, function name or introducer of the release, and in backticks otherwise. Backticks are identifiers under every mode.
-- User variables (`@total`) and system variables are session state; their facts depend on it.
-
-```php
-use SqlSemantics\Platform\MySql\Semantics;
-use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
-
-$semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INT)');
-
-$semantics->analyze('SELECT ID FROM users', [$users])->field(0)->resolution instanceof ResolvedColumn; // => true
-$semantics->analyze('SELECT id FROM USERS', [$users]); // throws SemanticException
-$semantics->analyze('SELECT @total')->field(0)->type->missing[0]->describe(); // => 'the session state: user variable @total'
-```
-
-### Result column names
-
-MySQL names a select list item without alias after the text of its expression as the statement writes it, so `SELECT 1+1` and `SELECT 1 + 1` return columns named `1+1` and `1 + 1`. An item that names itself keeps its own name: a column reference its column name, a string the value of its first quoted part, `NULL` the name `NULL`, a number its text, `?` the name `?`, and in MySQL 5.6 and 5.7 `TRUE` and `FALSE` those words; parentheses and a unary plus do not change it. The server removes leading spaces and control characters from the name, and keeps at most 255 bytes of it.
-
-Such an item keeps the spelling of its expression as a layout (`SelectExpression::$layout`), and `toString()` writes the expression as it was written, comments included, so the rendered SQL returns the same column names. The optional words that change that text are part of the model: `AS` before an alias, `OUTER` and `INNER` of a join, the empty parentheses of `CURDATE()` and the other niladic functions, `ROW`, the `OF` of `MEMBER OF`, `INT` after `SIGNED`, `CHARACTER SET` for `CHARSET`, and the 5.6 and 5.7 leading dot of `.t`. Version comment markers are left out, as the server leaves them out of the name. An item built without a layout is named after, and written as, the canonical rendering of its expression. The name ends where the expression ends: whitespace and comments after it are not part of it, so `SELECT 1+1 /* c */` returns a column named `1+1`.
-
-The server converts the name to its system character set. A string with an introducer is named after its converted value: `_utf8mb4` text keeps its characters, with `?` for each character outside the Basic Multilingual Plane, `_binary` and `_utf8mb3` text and national strings keep their bytes. When the name cannot be decided from the statement, the field has a null name and its slot lists what the name depends on (`OutputSlot::$unnamed`). For text read in the client character set that holds characters outside ASCII, or is longer than 255 bytes, that is the session state `character_set_client`. For other introduced character sets it is the server's conversion (`NameConversion`). A lookup by name (`fields()->lookup()`) then answers a `DependentField` instead of an `AbsentField`.
-
-Derived tables, common tables, `CREATE TABLE ... SELECT` and views take these names. A view renames a generated name that is no valid column name to `Name_exp_N` and one that repeats an earlier name with the prefix `Name_exp_` (`My_exp_` in 5.6 and 5.7), as the server does; `CREATE TABLE ... SELECT` reports an invalid one (`IncorrectColumnName`). A name in `ORDER BY`, `GROUP BY` and `HAVING` finds an item by the name it was given after its text, as it finds an alias.
-
-```php
-use SqlSemantics\Platform\MySql\Semantics;
-use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\MySql\Model\Statement\Shape\DependentField;
-
-$semantics = new Semantics();
-
-$query = $semantics->analyze('SELECT 1+1, CURRENT_DATE, a total, NOW( ) FROM users', []);
-[$query->field(0)->name?->value, $query->field(3)->name?->value, $query->toString()]; // => ['1+1', 'NOW( )', 'SELECT 1+1, CURRENT_DATE, a total, NOW( ) FROM users']
-$semantics->analyze('SELECT `1+1` FROM (SELECT 1+1) AS d', [])->field(0)->resolution instanceof ResolvedColumn; // => true
-$semantics->analyze("SELECT 'ü'", [])->fields()?->lookup('ü') instanceof DependentField; // => true
-$semantics->analyze("SELECT 'ü'", [])->field(0)->slot->unnamed[0]->describe(); // => 'the session state: character_set_client'
-```
-
-### Tables and views
-
-A `CREATE VIEW` declares a view (`RelationKind::View`); every other declaration is a base table. The declared kind decides what statements on the name do, as the server decides it. `SHOW CREATE TABLE` returns `Table` and `Create Table` for a base table and the four columns of `SHOW CREATE VIEW` for a view. A statement that needs a base table (`ALTER TABLE`, `CREATE INDEX`, `CREATE TRIGGER`, `CREATE TABLE ... LIKE`, `HANDLER ... OPEN`) refuses a view, and one that needs a view (`ALTER VIEW`, `CREATE OR REPLACE VIEW`, `SHOW CREATE VIEW`, `DROP VIEW`) refuses a base table (`WrongRelationKind`). `DROP TABLE` and `TRUNCATE TABLE` do not find a view. `DROP VIEW IF EXISTS` of a base table is refused in 8.1, 8.2, 8.3, 9.0 and 9.1 only; the other releases add only a note.
+    composer require k-kinzal/sql-semantics-mysql
 
 ```php
 use SqlSemantics\Platform\MySql\Semantics;
 
 $semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a INT)');
-$view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+$context = $semantics->context(['CREATE TABLE app.accounts (id INTEGER)']);
+$ir = $semantics->analyze('SELECT id, accounts.id FROM app.accounts', $context);
 
-$semantics->analyze('SHOW CREATE TABLE v', [$table, $view])->field(1)->name?->value; // => 'Create View'
-$semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view]); // throws SemanticException with message 'v is not BASE TABLE.'
+echo $ir->toString();
 ```
 
-### Generated columns
+The checked complete domain includes signed integers and native VARCHAR projections. Configure the grammar release and lexical profile before declaring the catalog. Use a database-qualified relation name for binding or configure a current database in the mode.
 
-A column defined with `AS (expr)`, `VIRTUAL` or `STORED`, is declared generated (`Column::$generated`), also in a copy made with `CREATE TABLE ... LIKE`; a column that `CREATE TABLE ... SELECT` takes from a query, or a view column, is not. The server computes such a column and accepts only a default value for it: a value other than `DEFAULT` or `DEFAULT(col)` written into it by `INSERT` or `REPLACE` (a row of `VALUES`, with or without a column list, `SET`, a query source), by `ON DUPLICATE KEY UPDATE` or by `UPDATE` is reported (`GeneratedColumnWrite`), whatever `IGNORE` and the SQL mode say. A query source passes the default only through a select item `DEFAULT(col)` of a single query block, so the columns of a union, of `TABLE` or of an expanded `*` are reported. `CREATE TABLE ... SELECT` reports a generated column of its column list that the query fills. `LOAD DATA` computes generated columns and ignores what it reads for them. From MySQL 8.0 on, the parser refuses `DEFAULT`, `ON UPDATE`, `AUTO_INCREMENT`, `SERIAL DEFAULT VALUE`, `COLUMN_FORMAT` and `STORAGE` on a generated column, and the type `SERIAL`, so analyzing such a definition throws `AnalysisException`.
+In a result projection, `CAST(? AS SIGNED)` and `CAST(? AS UNSIGNED)` retain separate `Ir\Binding\ParameterTarget` values. A position starts at one within its SELECT and follows the order of its markers. A compound emits markers in its left-to-right query order. Supply the corresponding values when preparing and executing the emitted SQL.
 
-```php
-use SqlSemantics\Platform\MySql\Semantics;
+A declared session-temporary table has its own `ExternalRelationKind::TemporaryTable` value. Reads and writes bind to the temporary table when it shares an absolute name with a persistent table. A resolved `RENAME TABLE` continues to address the persistent table of that name. Evaluate the IR in a connection with the corresponding temporary table declaration.
 
-$semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a INT, total INT AS (a * 2) STORED)');
+`DROP VIEW` binds in the persistent catalog. A session-temporary table at the same absolute name remains available after removing the view. `DROP VIEW IF EXISTS` can represent an absent persistent view even if a temporary table uses that name.
 
-$table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table]); // Returns a query
-$semantics->analyze('UPDATE t SET total = 3', [$table]); // throws SemanticException with message "The value specified for generated column 'total' in table 't' is not allowed."
-```
+`DROP TABLE` keeps each persistent or session-local identity. `DROP TEMPORARY TABLE` restricts lookup to session tables and leaves the transaction open. Use `IF EXISTS` to allow a known absent name in the selected namespace.
 
-## Limitations
+A persistent table removal requires a complete catalog of foreign-key referrers. On MySQL 5.6 and 5.7, place each referencing persistent child before its parent in the same statement. On MySQL 8.0 and later, all referenced tables and their distinct referencing children can be dropped together in either order. A temporary child with the same name leaves the permanent child's foreign key in force. Direct construction takes the ordered target list and the explicit complete list of native incoming references.
 
-- Optimizer hints (`/*+ ... */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so from 5.7 on a statement with a hint is refused with `ImplementationGap` instead of being read without it. In MySQL 5.6 such a comment is an ordinary comment.
-- Version comments (`/*!80000 ... */`) are read as the selected release reads them: the body is part of the statement when the release is at least the written version, and a comment otherwise. Rendered SQL writes that reading without the comment markers, so it is SQL for the selected release.
-- Table and database names are compared exactly, as a server with `lower_case_table_names=0` (the default on Unix) compares them. A server running with 1 or 2 compares them without regard to letter case; that setting is not part of the analysis.
-- Column names are compared without regard to ASCII letter case. The server also folds letters outside ASCII; two column names that differ only in the case of such a letter are one name to the server and two names here.
-- The name of an unaliased select item whose text is read in `character_set_client` and holds characters outside ASCII, or is longer than 255 bytes, depends on that session state. The same applies to a string introduced with a character set other than `binary`, `utf8mb3` and `utf8mb4` that holds bytes outside ASCII, and to any string in `ucs2`, `utf16`, `utf16le` or `utf32`, whose name depends on the server's conversion table (`NameConversion`). Such a field has a null name and lists the input in `OutputSlot::$unnamed`, and a column lookup in a derived table that could only match it depends on that input, as does a name in `GROUP BY`, `HAVING` or an `ORDER BY` expression that could name the item. A bare name in `ORDER BY` that a column of the `FROM` clause has still resolves to that column, although the server would take the item first if the item had that name. A name of ASCII characters is known for every client character set that encodes ASCII as ASCII, which all of them but `swe7` do.
-- The name `NAME_CONST` gives a column is derived for a string, decimal or integer number, hexadecimal or bit value and boolean name argument; other arguments are refused with `ImplementationGap`.
-- For a name the context does not declare, `SHOW CREATE TABLE` has a row shape that depends on whether the name is a table or a view (`TableOrView`).
-- A foreign key that references a view is not reported. The server refuses it only for a storage engine that keeps foreign keys, and the storage engine can come from the session. Writes into a view that cannot be updated are not reported either.
-- A write through a view into a column that reads a generated column is not reported; the server refuses it and names the column and table of the base table. The checks of a generated column definition that need its expression or keys are not reported: a reference to a later generated column or to an `AUTO_INCREMENT` column, `ON UPDATE`/`ON DELETE` actions of a foreign key over it, and keys the server refuses on a virtual column.
-- `INSERT ... VALUES ROW(...)`, which the server inserts as the rows of `INSERT ... VALUES`, is analyzed as a `VALUES` statement source: `DEFAULT` in it is reported and its values do not see the columns of the table.
-- When no current database is given, results that would show its name, such as the column name of `SHOW TABLES`, depend on it.
+`CREATE TABLE … LIKE` resolves the source table in the session's visible namespace and records the destination separately. Use `CREATE TEMPORARY TABLE … LIKE` for a session-local destination. The server creates an empty table using the original column and index definitions.
 
-See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.
+`CREATE TABLE … AS SELECT` accepts signed 32-bit integer, Boolean and NULL literals, including a single `CAST(… AS SIGNED)`. A projection over a single resolved table can also select its signed INT and checked utf8mb4_bin VARCHAR fields. It supports integer comparisons and NULL tests of those fields. Construction checks the effective ordered heading after applying explicit storage overrides. The native width is at most 1,017 fields. The logical and clustered record checks count each projected occurrence, including repeated fields, length prefixes and nullability. Each selected field inherits its native storage, default and nullability. Use the corresponding source table and session when executing the SQL. The returned `Schema\Query\CreateTableAs` retains the absolute target, its lifetime and the completed `Select`. The selected MySQL release determines the native storage of each projected column. Use `CREATE TEMPORARY TABLE … AS SELECT` to keep the table definition for the session. InnoDB rolls back the populated rows on a transaction rollback and keeps the temporary definition. A source-free declaration can list explicit signed column definitions before AS. Declaration-only fields precede the projected fields. A declared field matching a projected name supplies its storage, default and nullability.
 
-## License
+Declare `COLLATE utf8mb4_bin` on the VARCHAR field or as the table default to read the field by its native position. The declaration can name `CHARACTER SET utf8mb4` explicitly. A field with its own character-set clause needs its own collation. Bare, qualified and wildcard projections of the same field retain the same reference and its declared VARCHAR length. Values retain trailing spaces, and comparisons for ORDER BY and DISTINCT use the collation’s PAD SPACE rules. Use IS NULL and IS NOT NULL on the resolved field in a result, a WHERE filter or a join condition.
 
-MIT License. See [LICENSE](LICENSE) for details.
+Compare a resolved VARCHAR field with another field, a plain text literal or NULL using `=`, `<>`, `<`, `<=`, `>`, `>=` or `<=>`. The field fixes the collation. Ordinary comparisons propagate NULL and `<=>` produces an integer truth value for every operand pair. Use these comparisons as projected results or in SELECT, UPDATE and DELETE filters and local join conditions.
+
+An ordinary single-table UPDATE can assign a resolved VARCHAR field, a plain text literal or NULL to another declared VARCHAR field. The target layout retains the character capacity and nullability. Assignments run in written order, so a later read sees the value stored by an earlier assignment. The native empty SQL mode applies character truncation and substitutes an empty string for NULL in a required field, with warnings.
+
+A SELECT can read an external view declared in the catalog. Supply its defining statement and the declarations for its inputs. The IR records the resolved database, name and view kind, and directly projected fields retain supported native types and collations. The server evaluates the view when running the emitted SQL. Mutation targets require a base table.
+
+A single-table SELECT can project all five signed integral storage widths. Its resolved source records each referenced width and its nullability. For a view defined by a source-free SELECT of signed integer literals, the field type follows the server's reopened view. For example, the literal `100000000` produces an INT field on MySQL 5.6 and a BIGINT field on MySQL 8.0. Capture view definitions alongside table declarations when binding queries that consume those fields.
+
+External view fields use the native UTF-8 identifier comparison. An unaliased read from a simple merged view returns the stored field name. An explicit `TEMPTABLE` view can return the written reference as its result name. The checked source's `materializedView` flag supplies that rule when constructing the same IR directly.
+
+Create or replace a persistent view over a checked ordinary SELECT. The IR exposes the effective ordered catalog heading, view algorithm and SQL security policy. A definition can read a single declared base table or return independent literals. MySQL 9.1 also supports `CREATE VIEW IF NOT EXISTS`.
+
+For a source-free view or a view with `SELECT DISTINCT` requested with `ALGORITHM=MERGE`, `installedAlgorithm` holds `UNDEFINED`. The emitted SQL keeps the requested `MERGE` directive so the server reports warning 1354 when it applies the fallback. A DISTINCT view materializes its input and preserves the results of native duplicate elimination.
+
+A mergeable base-table view can declare `WITH LOCAL CHECK OPTION` or `WITH CASCADED CHECK OPTION`. The IR stores the resolved `checkOption` and emits its native clause. An unqualified `WITH CHECK OPTION` resolves to `CASCADED`. On writes through an updatable view, the check requires the proposed row to satisfy the stored predicate. MySQL 5.6 and 5.7 allow a read-only constant projection with a check option. MySQL 8.0 and later require the projection to expose a writable base-table field. [MySQL view checks](https://dev.mysql.com/doc/refman/8.4/en/view-check-option.html)
+
+The view declaration can also name a `ViewDefiner` with separate user and host values. The user name retains its case and the host uses the native lowercase form. An omitted host resolves to `%`. The default `definer` value selects the executing account and covers both spellings of `CURRENT_USER`. The definition admits decoded BMP names within the release's native limits. SQL SECURITY controls whose privileges the server uses for a subsequent view access. [MySQL view definers](https://dev.mysql.com/doc/refman/8.4/en/create-view.html)
+
+Issue `DROP VIEW` against absolute persistent view identities. Supply the referenced declarations for required targets. `IF EXISTS` also admits a known absence in a named database. The emitted statement retains MySQL's release-specific removal and transaction effects.
+
+An ordinary INSERT VALUES can write text, signed integer and NULL literals to an explicit list of resolved native destinations. Each row follows the destination order. With empty SQL mode, NULL in a required VARCHAR causes a single-row INSERT to fail. A multi-row INSERT stores the implicit empty value and emits a warning.
+
+An ordinary `INSERT ... SELECT` can write native VARCHAR fields, text literals, and NULL alongside signed values from a checked SELECT. The field order determines the destination of each expression. `DISTINCT` applies before the target’s storage conversion. Under empty SQL mode this form substitutes the implicit empty string for NULL assigned to a required VARCHAR and warns, including when the SELECT produces one row.
+
+COUNT can read a native VARCHAR field in a global or signed-key grouped query. COUNT skips NULL and COUNT DISTINCT counts the field’s case-sensitive PAD SPACE equivalence classes.
+
+For a grouped projection, `HAVING` can compare signed keys, integer literals, explicit NULL and numeric `COUNT`, `SUM`, `MIN` or `MAX` results. A NULL-safe comparison such as `HAVING SUM(amount) <=> NULL` also applies to a global group over an empty table. The IR keeps the exact operator and operand order. An output alias refers to its computed value, while a grouping field of the same name takes precedence under the MySQL resolution rules.
+
+When a bare name refers to a grouping field and also names a different projected value, the IR retains that field's coordinate and the decoded name spelling. This preserves stock MySQL's release-specific collision warnings and leaves the grouping field available as a resolved reference for downstream consumers.
+
+MIN and MAX over a native VARCHAR field use its PAD SPACE ordering. They return the original bytes of an extremal value, including trailing spaces, or NULL when no non-NULL value enters the aggregate. Equal extremal values can have different stored bytes.
+
+An independent derived input in a join can export native VARCHAR fields alongside signed fields. Outer operands read the exact derived occurrence and output position. Native type, collation and character capacity are derived from the checked inner projection.
+
+An ordinary InnoDB `CREATE TABLE` can declare `VARCHAR(n)` with the checked `utf8mb4_bin` collation, including inheritance from an explicit table default. `Schema\CharacterStorage` carries the declared capacity in characters. Each column keeps its own nullability and optional text or NULL default. Excess ASCII whitespace in a default remains in the emitted SQL so the server can report its truncation. Defaults that discard significant characters are rejected during construction.
+
+An ordinary InnoDB declaration accepts up to 1,017 columns. With the stock strict InnoDB profile and 16 KiB pages, the clustered record must be smaller than 8,126 bytes. The checked width includes fixed storage, the local VARCHAR representation, nullable bits and the implicit row identifier when no primary key is declared. Stock MySQL 5.6 allows a larger record declaration with a warning. It can still refuse an oversized row at insertion.
+
+Use `TINYINT`, `SMALLINT`, `MEDIUMINT`, `INTEGER` or `BIGINT` for an ordinary signed declaration. The model checks the exact signed range of a literal default, including both BIGINT endpoints, and retains its decimal value.
+
+An ordinary signed `PRIMARY KEY` retains the ordered positions of its required fields. Inline and table clauses resolve to the same key type. The column layout records effective defaults for the selected release, including the zero default that MySQL 5.6 can assign when a table key makes a column required. Key terms retain descending storage from MySQL 8.0.
+
+Use `CREATE INDEX` or `CREATE UNIQUE INDEX` to declare an ordinary InnoDB B-tree index over declared signed INT fields. Supply the owning table declaration. The resolved owner exposes the selected fields in declaration order, and the ordered index parts refer to those fields by slot. A session-temporary table shadows a permanent table with the same name. MySQL 5.6 and 5.7 store the key parts in ascending order. Newer releases retain effective descending direction and index visibility. The first required-only unique index must stay visible when no earlier key supplies primary identity. The completed value records whether the new key is ordinary, secondary unique or clustered unique. Both direct construction and analysis check the prior physical key names before publishing the value. A new name must be distinct under MySQL's system identifier case comparison. The owning declaration must leave a free position among InnoDB's 64 keys, counting an explicit primary key. Executing the output can still fail on existing data, for example when a unique tuple repeats.
+
+Use `DROP INDEX` with the owning relation declaration to remove a resolved physical primary, unique or ordinary index. The selected table may be a session-temporary shadow. The returned `DropIndex` includes the absolute owner, the native physical name and its key policy. Names generated by table definitions resolve in declaration order, including native case and release-specific suffixes. MySQL calls an explicitly declared primary key `PRIMARY`. A required unique key that supplies InnoDB's clustered identity keeps its own name. The index change carries `ALGORITHM` and `LOCK` as native typed requests and validates them against its owner and operation. Persistent clustered removals, including removal of an implicitly clustered unique key, require `DEFAULT` or `COPY` and a lock other than `NONE`. Temporary tables allow `COPY` with `NONE`. The emitted statements preserve the native implicit commit. A single `ALTER TABLE` action written as `DROP INDEX`, `DROP KEY` or `DROP PRIMARY KEY` produces the same resolved value. Repeated algorithm or lock directives use their last checked value. MySQL 5.6 retains `ALTER IGNORE TABLE` when requested so that the native warning is preserved. When the removed index leads with an `AUTO_INCREMENT` field, construction checks the other indexes that keep generation available. The completed target retains its owner, name and key role. Removing its last backing key is refused during construction. A key with that field in a later position cannot provide the required support.
+
+A single `ALTER TABLE` with multiple index removals returns `DropIndexes`. It keeps their order and emits one atomic statement, with one native algorithm and lock policy for the whole set. Every target must belong to the same physical table. The set must retain a backing key for any `AUTO_INCREMENT` field supported by the removed indexes.
+
+Use `ALTER TABLE ... RENAME INDEX` on MySQL 5.7 or later. `RenameIndexes` resolves all renames in the original owning table and publishes them together. For example, two indexes can exchange names in one statement. Their fields, uniqueness and visibility follow the original indexes. An unmoved index keeps its name, so another index cannot claim that name. A case-only spelling change retains the requested spelling.
+
+When a single `ALTER TABLE` mixes native index removal and renaming, `AlterIndexes` preserves both operations in their written order. Each action resolves against the original table. A rename can take the name of a removed index. A surviving key continues to support an `AUTO_INCREMENT` field when the same statement renames that key.
+
+Persistent InnoDB index removal requires a complete catalog of foreign-key dependencies. The entire removal group must leave an eligible supporting index on each affected side. A renamed surviving index can still provide support. On the default MySQL 8.4 and 9 profiles, a referenced parent side requires a whole unique or primary key in the declared field order. Direct construction supplies the complete applicable support sets as `IndexForeignKeyRequirement` values.
+
+A single `ALTER TABLE` can drop resolved foreign keys and add replacements. The MySQL analyzer returns `AlterForeignKeys` with the ordered actions and one native copying policy. An old symbol remains reserved for name allocation throughout the statement. The returned exchange and addition values identify any older implicit child indexes superseded by the new supporting keys.
+
+The same `AlterForeignKeys` value supports ordinary and unique whole-field secondary additions with foreign-key additions on a persistent owner with an original clustered identity. Supply the matching table and parent declarations. The result carries the exact ordered clauses, generated and explicit physical names, and replaced implicit indexes. An explicit key can provide the needed child prefix in either clause order. The order still determines name allocation when two new keys need the same name.
+
+An atomic foreign-key addition can also remove a resolved whole B-tree key. The result carries the removed `IndexIdentity` in the action order and lists automatically superseded keys separately. A new key can reuse the removed name or carry forward a leading `AUTO_INCREMENT` field. Provide a complete catalog of the original constraints and physical keys. Direct construction supplies each old removal as an `IndexRemovalTarget` and the retained reference operands as `ForeignKeyIndexSide` values. The constructor checks both the original and resulting parent support for an added self-reference. The returned actions expose only the resolved physical and constraint effects.
+
+When the operation removes the clustered key, `clusteredReplacement` identifies the remaining or introduced unique key that takes its place. A clustered removal with a null replacement uses the native synthetic row identity. An eligible unique key has whole required fields. The constructor uses the selected key's hidden fields only on MySQL profiles that allow a referencing side to use an extended physical prefix.
+
+`ALTER TABLE ... DROP FOREIGN KEY ...` returns `DropForeignKeys` under the native InnoDB profile. It records the absolute owning relation and the decoded native constraint name. A standalone removal preserves the backing index. A mixed group can remove a backing index in either clause order when every unremoved foreign-key side keeps support. Provide a complete catalog for a mixed persistent group. MySQL 5.6 and 5.7 admit repeated targets and use an explicit ignored action for a temporary owner. From MySQL 8.0 the analyzed operation requires a persistent owner and distinct resolved targets.
+
+`ALTER TABLE ... ADD FOREIGN KEY ...` returns `AddForeignKeys` for checked native integer, character, byte, decimal, bit, floating-point, temporal, `ENUM` and `SET` references. Each addition keeps the absolute parent, ordered child and parent names, native symbol, any generated physical index, and independent update/delete effects. An unqualified parent uses the child database and resolves in its persistent dictionary. The complete catalog must include original keys and any other native constraints in that schema. MySQL 5.6 and 5.7 discard written event overrides under MATCH. Modern releases retain event overrides and FULL or PARTIAL metadata. Every admitted MATCH mode allows a reference containing NULL.
+
+Character foreign keys require the same resolved `utf8mb4_bin`, `utf8mb4_general_ci` or `utf8mb4_unicode_ci` collation on both fields. Byte strings keep their fixed or varying storage and exact bytes. The constructor checks the resolved physical row layout per column and the separate combined key byte limit.
+
+A scalar comparison records both effective field encodings. InnoDB compares packed fields such as `DECIMAL`, `BIT` and fractional temporal values in the same physical byte family as binary strings. A pair can retain different dimensions and admit a row when their stored encodings match. `DATE` shares its native comparison with signed `MEDIUMINT`, and `YEAR` shares its comparison with unsigned `TINYINT`. The declared field on each side determines its stored interpretation.
+
+An `ENUM` or `SET` comparison keeps each field's ordered native labels and resolved input collation. InnoDB compares the stored ordinal or mask with an equal-width unsigned field. Different label orders can give the same ordinal different displayed values. A cascading update copies the stored numeric value. The child field's own declaration governs its displayed value.
+
+The MySQL catalog settles generated child-support index names from the foreign key's constraint symbol, written key name or canonical leading field. A declared key can already provide the required leading fields. An implicit backing key with a longer matching prefix can also supply those fields. A new foreign key with the exact same ordered fields can replace the prior implicit index. A generated or explicit supporting index keeps its physical identity in a table made with `CREATE TABLE LIKE`. Only the source declaration contributes the original foreign-key constraint.
+
+On MySQL 8.0 and later, `ALTER TABLE ... ALTER INDEX ... VISIBLE` or `INVISIBLE` returns `SetIndexVisibility`. The value resolves each secondary key in its table and keeps every requested flag in written order. The final request for a key determines its optimizer visibility. Its physical definition and uniqueness remain in effect. Both visibility directions require a secondary key.
+
+Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
+
+Signed integer comparisons preserve the ordered operands, exact native widths, NULL and signed 64-bit values. The `<=>` operator returns a nonnull native integer and matches two NULLs. Signed integer `BETWEEN` and `NOT BETWEEN` retain their inclusive bounds and accept resolved fields in all five signed integer widths. A known out-of-range comparison determines the result even when the other bound is NULL.
+
+A projected decimal integer can use the full signed 64-bit range, with leading zeroes, parentheses, unary plus and a single unary minus. `Ir\Literal\ProjectedIntegerLiteral::decimal()` gives the exact mathematical value as a string. The value also retains the digits that determine the native result width, including the sign of negative zero. Read the output name from the owning result column. A nonnegative unaliased token above the ordinary alias limit supplies its intrinsic heading directly. An unaliased negative result keeps the heading that MySQL derives from its written expression.
+
+For an explicit signed integer projection alias, `Ir\Ordering\RequestedResultAlias` retains the requested name when the native heading differs. Its `value` property gives the native heading, including an empty heading. Its `requested` property preserves the characters needed to reproduce the server's warnings. MySQL strips leading non-graphic ASCII bytes and returns at most 256 bytes of the heading. Use an ordinary `Ir\Identifier` when the requested name already equals the effective heading.
+
+On MySQL 8.0 and later, a `WITH` definition or independent derived table can inherit UTF-8 names from its projected signed literals. Resolve references against the effective names after leading control bytes are removed and the alias is clipped to 256 bytes. The inherited names must be distinct under MySQL's simple UTF-8 lowercase comparison. Accents, composed spellings and trailing spaces still matter. A field clipped in the middle of a UTF-8 character cannot be found by its shorter display name. An explicit column list supplies a separate set of names, including when the requested aliases normalize to the same name. The IR preserves the requested names that produce diagnostics and keeps each reference as a position in its definition. [MySQL derived tables](https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html) · [MySQL WITH](https://dev.mysql.com/doc/refman/8.4/en/with.html)
+
+MySQL 5.6 and 5.7 also bind independent derived tables to inherited UTF-8 aliases. When directly constructing a `LocalProjection` or `DerivedSource` with a requested alias on these releases, pass `inheritsRequestedAliases: true`. The IR checks the child names and renders the consumer with its actual inherited names. [MySQL 5.7 derived tables](https://dev.mysql.com/doc/refman/5.7/en/derived-tables.html)
+
+A checked persistent view has its own ordered catalog heading. For a view that projects signed integer literals, a distinct requested body alias can produce a native warning while the declared view column determines the name exposed to readers. The analyzer checks every written body alias against the view's 64-character limit before it normalizes the name. Direct construction checks the same limit on each `RequestedResultAlias`. Body aliases accept one to 64 BMP characters and disallow ASCII whitespace at the end. [MySQL CREATE VIEW](https://dev.mysql.com/doc/refman/8.4/en/create-view.html)
+
+Starting with MySQL 8.0, a declared column list retains exact spelling, including leading whitespace. An empty heading comes from a checked inherited projection. MySQL 5.6 and 5.7 apply their native 256-byte name assignment to a declared list. Use `RequestedResultAlias` inside `ViewColumn` when assignment changes the requested name and produces a diagnostic. The effective name remains available through `name->value`. A legacy view can expose a longer name to readers than the 64-character display name in `information_schema.COLUMNS`.
+
+The analyzer resolves generated names before publishing a view. It can keep an unaliased literal's original projection heading while assigning the native suffix for a duplicate stored column. A checked view over independent signed literals can use up to 4,096 result positions. The standalone form of that projection can also expose a 4,097th result.
+
+`Ir\Predicate\IntegerMembership` represents signed integer `IN` and `NOT IN` with one subject and 1 to 8190 ordered alternatives. The leaves can be signed literals, NULL or resolved fields with TINYINT, SMALLINT, MEDIUMINT, INT or BIGINT storage. The owning source retains each consumed field's storage width and NULL policy. Projections return MySQL's native `1`, `0` or NULL. Filters, join conditions and write predicates select a row only when the test is true. The emitted SQL keeps duplicates, literal format and occurrence bindings. Supply an explicit projection alias.
+
+Use `Expression\Choice\SignedCase` to inspect simple and searched signed CASE expressions. It retains the optional simple subject, ordered WHEN/THEN values and the optional ELSE. Results can be signed fields, integer or Boolean literals, NULL, or another signed CASE. A searched arm can also use signed membership as its decision. `Select::signedCaseLayout($position)` reports the result's native signed storage and heading nullability for the SELECT's release and input occurrences. MySQL 5.6 and 5.7 merge the result widths in branch order. In those releases, an INT24 result after a BIGINT can yield native INT metadata and narrower values at the wire. MySQL 5.6 also considers nullable decisions when reporting the result heading's nullability. Supply an explicit output alias.
+
+`Ir\Predicate\Truth\TruthTest` records one resolved operand and one of the six `IS [NOT] TRUE`, `IS [NOT] FALSE` and `IS [NOT] UNKNOWN` operations. A test returns the nonnull native integer `0` or `1`. Nonzero signed values test true, zero tests false, and NULL tests unknown. The NOT forms test the complement. The operand may be a checked signed field, literal, predicate or nested truth test. Supply an explicit output alias for a projection.
+
+On MySQL 8.0 and later an ordinary `WITH` retains the ordered definition bodies and the resolved relation and field positions in each local projection. Independent nested definitions keep their own scope. Native markers in projected signed casts follow the definition order and then the result query.
+
+`RENAME TABLE` publishes `Ir\Schema\Alter\RenameTable` with the move list in native execution order. Every move records its current name, destination and original table identity. A swap through an intermediate name retains the same origin when that name becomes the next source. Supply the declarations and a named current database for unqualified operands. The checked operation covers persistent base tables.
+
+`TRUNCATE TABLE` publishes `Ir\Schema\Truncate\TruncateTable` with the resolved persistent or session-local `TableIdentity`. Rendering retains native allocation reset and implicit commit. A same-named permanent table and its foreign-key dependencies stay separate when the statement resolves to a temporary table. Supply a complete catalog for a persistent truncation. A foreign key from another persistent table blocks construction. An unqualified reference uses the declaring child's database, and MySQL 9 also enforces inline REFERENCES. Direct construction takes the resolved table and the explicit list of referencing table identities.
+
+Use `new Semantics(mode: Mode::fromString('ANSI_QUOTES'))` to analyze supported SELECT, set, derived and ordinary WITH projections with double-quoted identifiers. Build the catalog with that analyzer. To construct the same projection directly, pass `mode: Ir\Binding\ProjectionMode::AnsiQuotes` to `Ir\Select` and each owning `Ir\Rows\With\WithProjection`. Compose queries from the same mode. The resulting profile identifies its mode, and the SQL uses backticks for identifiers and single quotes for text. [MySQL SQL modes](https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html)
+
+`NO_BACKSLASH_ESCAPES` may be set alone or with `ANSI_QUOTES` for these projections. For direct construction use `ProjectionMode::NoBackslashEscapes` or `ProjectionMode::AnsiQuotesAndNoBackslashEscapes`. A plain text literal stores decoded UTF-8. In verbatim mode its SQL doubles single quotes and preserves every other byte, including NUL. Execute the rendered statement with the profile's lexical settings and a client that sends the full SQL byte length. [MySQL string literals](https://dev.mysql.com/doc/refman/8.4/en/string-literals.html)
+
+Use `ParameterStyle::Named` when analyzing projections such as `SELECT CAST(:amount AS SIGNED) AS amount`. The complete `Ir\Binding\Parameter` carries the local one-based position, the conversion target and the optional `ParameterName`. Names are case-sensitive. Native SQL uses a `?` for each occurrence. Read bindings from the graph in projection order, visiting the left compound arm before the right, local definitions once, and WITH definitions before the final consumer. Each named occurrence reads the same key, and each anonymous occurrence consumes the next anonymous input. A read of a CTE uses its definition's result slots.
+
+Concrete types are under `SqlSemantics\Platform\MySql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

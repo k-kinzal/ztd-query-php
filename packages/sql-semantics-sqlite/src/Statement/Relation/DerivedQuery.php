@@ -25,10 +25,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Query\RelationNames;
  * query, named by SQLITE-RELATION-NAME-001.
  * Source: https://sqlite.org/lang_select.html#the_from_clause. Status: Implemented.
  *
- * @visibility public
- * @example Reading a derived query
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT x FROM (SELECT 1 AS x) AS d');
- *     [$query->statement->from->alias->value, $query->field('x')->type->descriptor] // => ['d', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer]
+ * @visibility SqlSemantics
  */
 final class DerivedQuery implements Relation
 {

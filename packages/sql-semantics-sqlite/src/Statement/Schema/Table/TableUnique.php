@@ -28,10 +28,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
  * Source: https://sqlite.org/lang_createtable.html#unique_constraints.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the terms of a unique constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
- *     count($create->statement->constraints[0]->items[0]->terms) // => 2
+ * @visibility SqlSemantics
  */
 final class TableUnique implements TableConstraint
 {

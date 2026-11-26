@@ -1,0 +1,83 @@
+{
+  "revision": "SemanticsIR/sqlite-vacuum-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Close the native VACUUM scope, evaluated filename and inert binding roles. Pin lexical registration extraction and the emitted operand.",
+  "rules": {
+    "Expression/Binding/NumberedRegistrations::collect": {
+      "common": [
+        "$output = Platform::shared()->syntaxOutput();",
+        "$output->node($expression);",
+        "$bindings = [];",
+        "foreach ($output->canonical() as $piece) {",
+        "    if ($piece->kind !== PieceKind::Literal || !str_contains('?:@$', $piece->text[0])) {",
+        "        continue;",
+        "    }",
+        "    Check::input($piece->text[0] === '?', $message);",
+        "    $bindings[] = new Parameter(substr($piece->text, 1));",
+        "}",
+        "return $bindings;"
+      ]
+    },
+    "Maintenance/Vacuum/Vacuum::__construct": {
+      "common": [
+        "Check::input($destination === null || ($schema->key() === 'temp') === $destination instanceof VacuumRegistrations, 'VACUUM accepts an evaluated destination for a persistent source or numbered registrations for temp.');"
+      ]
+    },
+    "Maintenance/Vacuum/Vacuum::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Vacuum/Vacuum::toString": {
+      "common": [
+        "$sql = 'VACUUM ' . $this->schema->quoted();",
+        "return $this->destination === null ? $sql : $sql . ' INTO ' . $this->destination->toString();"
+      ]
+    },
+    "Maintenance/Vacuum/VacuumDestination::__construct": {
+      "common": [
+        "Check::input(count($expression->values) === 1, 'VACUUM INTO needs exactly one source-free filename operand.');"
+      ]
+    },
+    "Maintenance/Vacuum/VacuumDestination::toString": {
+      "common": [
+        "return $this->expression->toString();"
+      ]
+    },
+    "Maintenance/Vacuum/VacuumRegistrations::__construct": {
+      "common": [
+        "Check::input(count($bindings) <= 8192, 'VACUUM registration occurrences exceed the scalar budget.');",
+        "$this->bindings = Check::listOf($bindings, Parameter::class, 'VACUUM requires a nonempty list of numbered registrations.', 1);",
+        "$bytes = 0;",
+        "foreach ($this->bindings as $binding) {",
+        "    $bytes += strlen($binding->label);",
+        "}",
+        "Check::input($bytes <= 990000000, 'VACUUM registrations exceed the SQL payload budget.');"
+      ]
+    },
+    "Maintenance/Vacuum/VacuumRegistrations::toString": {
+      "common": [
+        "$markers = [];",
+        "foreach ($this->bindings as $binding) {",
+        "    $markers[] = '?' . $binding->label;",
+        "}",
+        "return '(0 IN (' . implode(', ', $markers) . '))';"
+      ]
+    },
+    "Maintenance/Vacuum/VacuumLowering::lower": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->schema) ?? new Identifier('main');",
+        "$into = $statement->into;",
+        "if ($into === null) {",
+        "    return new Vacuum($schema);",
+        "}",
+        "if ($statement->ignoresDestination()) {",
+        "    $bindings = (new NumberedRegistrations())->collect($into, 'VACUUM temp requires numbered bindings.');",
+        "    return new Vacuum($schema, $bindings === [] ? null : new VacuumRegistrations($bindings));",
+        "}",
+        "$value = (new ExpressionLowering())->lower($into, new SourceBinding($operation, null));",
+        "return new Vacuum($schema, new VacuumDestination(new ValueRow([$value])));"
+      ]
+    }
+  }
+}

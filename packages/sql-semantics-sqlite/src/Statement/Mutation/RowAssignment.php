@@ -17,10 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * Source: https://sqlite.org/rowvalue.html#update_table_set_c1_c2_value_value.
  *
- * @visibility public
- * @example Reading a row assignment
- *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('UPDATE t SET (a, b) = (1, 2)');
- *     [count($update->statement->assignments[0]->columns), count($update->statement->assignments[0]->value->items)] // => [2, 2]
+ * @visibility SqlSemantics
  */
 final class RowAssignment implements Node
 {

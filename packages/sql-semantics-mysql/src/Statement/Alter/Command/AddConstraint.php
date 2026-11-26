@@ -7,9 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter\Command;
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 
 /**
@@ -20,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  * the changed table.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
- * @example Adding an index
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD INDEX i (a)');
- *     $alter->toString() // => 'ALTER TABLE t ADD INDEX i (a)'
+ * @visibility SqlSemantics
  */
 final class AddConstraint implements AlterCommand
 {
@@ -39,8 +38,14 @@ final class AddConstraint implements AlterCommand
     /**
      * Derives the expressions of the element.
      */
-    public function deriveCommand(Derivation $derivation, Environment $scope): void
+    public function deriveCommand(Derivation $derivation, Environment $scope, ?Name $ownerDatabase = null): void
     {
+        if ($this->element instanceof ForeignKey && $ownerDatabase !== null) {
+            $this->element->deriveElement($derivation, $scope);
+            $this->element->references->deriveAlterReference($derivation, $ownerDatabase);
+
+            return;
+        }
         (new ElementFacts())->element($this->element, $derivation, $scope);
     }
 

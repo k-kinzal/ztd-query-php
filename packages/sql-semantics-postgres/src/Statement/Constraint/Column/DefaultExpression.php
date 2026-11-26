@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  * sees no column, so it is derived where no relation is visible.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a default
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int DEFAULT 1 + 2)');
- *     $create->toString() // => 'CREATE TABLE t (a INT DEFAULT 1 + 2)'
+ * @visibility SqlSemantics
  */
 final class DefaultExpression implements Constraint
 {

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  * reports any other word.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/ddl-partitioning.html.
  *
- * @visibility public
- * @example Reading the strategy
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int) PARTITION BY HASH (a)');
- *     $create->statement->partitioning->strategy->value // => 'hash'
+ * @visibility SqlSemantics
  */
 final class PartitionSpec implements Clause
 {

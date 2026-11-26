@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-plugins.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PLUGINS');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Name', 'SHOW PLUGINS']
+ * @visibility SqlSemantics
  */
 final class ShowPlugins implements Statement
 {

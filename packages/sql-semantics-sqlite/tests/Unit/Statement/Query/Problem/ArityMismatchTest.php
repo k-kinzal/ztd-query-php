@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ArityMismatch::class)]
 #[Medium]
@@ -47,7 +47,7 @@ final class ArityMismatchTest extends TestCase
 
     public function testMessageIsReportedForArmsOfDifferentWidth(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1, 2 UNION SELECT 3');
+        $query = (new Inspection())->diagnose('SELECT 1, 2 UNION SELECT 3');
 
         self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
         self::assertSame(2, $query->facts->diagnostics[0]->expected);

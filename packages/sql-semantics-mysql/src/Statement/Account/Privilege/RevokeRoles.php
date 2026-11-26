@@ -22,9 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * role is a RoleOrPrivilegeMismatch by MYSQL-PRIVILEGE-CHECKS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html. Status: Implemented.
  *
- * @visibility public
- * @example Revoking a role
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('revoke if exists r from u, v')->toString() // => 'REVOKE IF EXISTS r FROM u, v'
+ * @visibility SqlSemantics
  */
 final class RevokeRoles implements Statement
 {

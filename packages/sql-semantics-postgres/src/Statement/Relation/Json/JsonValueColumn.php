@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * NESTED PATH of a nested column (NESTED has a lower precedence than PATH).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE.
  *
- * @visibility public
- * @example Reading a value column
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (a integer PATH '$.a'))");
- *     [$query->statement->from->columns[0]->path->value, $query->field(0)->type->descriptor->name()] // => ['$.a', 'integer']
+ * @visibility SqlSemantics
  */
 final class JsonValueColumn implements JsonTableColumn
 {

@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
  * https://dev.mysql.com/doc/refman/8.4/en/all-subqueries.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Comparing with every row
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a >= ALL (SELECT 1)');
- *     [$query->statement->where->operator->value, $query->statement->where->quantifier->value] // => ['>=', 'ALL']
+ * @visibility SqlSemantics
  */
 final class QuantifiedComparison implements Scalar
 {

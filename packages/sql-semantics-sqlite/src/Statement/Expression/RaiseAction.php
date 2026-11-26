@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
  *
  * Source: https://sqlite.org/lang_createtrigger.html#the_raise_function.
  *
- * @visibility public
- * @example Reading the action of a RAISE
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(ABORT, 'no'); END");
- *     $trigger->statement->steps[0]->columns[0]->expression->action // => \SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction::Abort
+ * @visibility SqlSemantics
  */
 enum RaiseAction: string
 {

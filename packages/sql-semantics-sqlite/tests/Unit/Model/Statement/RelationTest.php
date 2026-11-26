@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Relation::class)]
 #[Medium]
@@ -18,9 +18,9 @@ final class RelationTest extends TestCase
 {
     public function testDeriveRelationGivesEachOccurrenceOfOneTableItsOwnFact(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
-        $operation = $semantics->analyze('SELECT x.a FROM t AS x JOIN t AS y ON x.a = y.a', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+        $operation = $semantics->inspect('SELECT x.a FROM t AS x JOIN t AS y ON x.a = y.a', [$table]);
         $join = $operation->inputRelation();
 
         self::assertInstanceOf(JoinChain::class, $join);

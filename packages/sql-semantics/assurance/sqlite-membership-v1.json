@@ -1,0 +1,56 @@
+{
+  "revision": "SemanticsIR/sqlite-membership-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 in UTF-8 with checked scalar expressions and ordinary declared collations.",
+  "scope": "Scalar IN and NOT IN with an explicit ordered list and fully resolved operands, including an empty list.",
+  "constructors": {
+    "Predicate/MembershipItem": {
+      "role": "One ordered member expression of a scalar IN list.",
+      "structure": "One immutable child in the closed scalar domain.",
+      "conditions": "All admitted expressions are scalar. The enclosing statement checks the actual child at its occurrence.",
+      "meaning": "Supply a candidate value for the match without supplying its expression affinity or an implicit column collation.",
+      "externalInterpretation": "Use the same physical columns and runtime bindings when evaluating the member.",
+      "sql": "Emit the child through the same scalar renderer in its written list position.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Predicate/MembershipTest": {
+      "role": "A scalar membership or negated membership test.",
+      "structure": "One scalar operand, an owned ordered list of MembershipItem values, and a negation flag.",
+      "conditions": "Zero through 8190 list members. The enclosing statement applies the existing 8192-node expanded envelope, source and binding checks to every occurrence.",
+      "meaning": "An empty list yields false for IN and true for NOT IN. Otherwise a NULL tested value yields NULL. A matching nonnull member decides the result even when other members are NULL. A miss is NULL when any member is NULL and false otherwise. Negation complements a decided result and preserves NULL.",
+      "externalInterpretation": "The tested operand supplies its affinity and implicit collation. Member evaluation retains the original value, while each membership comparison uses the tested operand's affinity rules. Explicit collation expressions require a separate contract.",
+      "sql": "Use native IN or NOT IN syntax with the tested operand, exact list order, explicit parentheses and the original numbered binding roles. Emit the tested operand in the empty form to retain binding registration.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "Rows/ValuesQuery", "ColumnReference", "Parameter"],
+  "observations": [
+    "Distinct INTEGER truth values and NULL, native numbered bind count and first label, exact result labels, order of result columns and row multiplicities.",
+    "Retain the order and duplicate expressions in the IR and the matched SQL, even when exact membership results would match after reordering.",
+    "A declared collation on the tested column applies. A declared affinity or implicit collation on a list-member column does not replace that rule."
+  ],
+  "finite": {
+    "roots": ["select-unit", "select-table", "values"],
+    "negated": [false, true],
+    "lengths": [0, 1, 2],
+    "atoms": [["null"], ["integer", "-1"], ["integer", "0"], ["integer", "2"], ["text", "2"]],
+    "slots": [0, 1],
+    "identity": "Cross the tested leaf and all lists of length zero, one and two in order, for both forms and three roots. The table root adds two leaf slots. Exhaust all 1418 measured identities."
+  },
+  "exploration": {
+    "seeds": [8893, 20117, 35257],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 180,
+    "allowedExclusions": [],
+    "structure": "Generate member lists through length four with nullable and duplicate values, nested membership tests and arithmetic, numbered bind aliases, reversed output positions and mixed result types."
+  },
+  "negative": ["Non-list members", "Nonmember object", "Missing tested slot", "Missing list-member slot", "Row-value input", "Expanded height above the checked limit"],
+  "faults": ["Collapsing the empty list to a constant erases binding registration", "Remove a decisive member", "Ignore NOT", "Treat a nonmatching NULL member as a decided miss"],
+  "open": [
+    "Query, table and table-valued-function operands, and explicit collation expressions.",
+    "SQLite can fold an empty list before binding names in its left operand. The valid native example SELECT (missing + ?02) IN () still registers slot 2, even though the name needs no resolution at runtime. It requires a representation of the surviving binding slots without an unresolved scalar."
+  ],
+  "trust": ["Pinned SQLite C observation", "Independent NULL and membership rules", "Owned list and full ordered traversal audits"],
+  "sources": ["https://sqlite.org/lang_expr.html#the_in_and_not_in_operators", "https://sqlite.org/datatype3.html#type_conversions_prior_to_comparison", "https://sqlite.org/datatype3.html#collating_sequences"]
+}

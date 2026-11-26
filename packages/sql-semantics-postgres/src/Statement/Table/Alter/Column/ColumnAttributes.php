@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * Mirrors `AT_SetOptions` and `AT_ResetOptions`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Setting column options
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET (n_distinct = 100)');
- *     $statement->toString() // => 'ALTER TABLE t ALTER a SET (n_distinct = 100)'
+ * @visibility SqlSemantics
  */
 final class ColumnAttributes implements AlterCommand
 {

@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(NumberChecks::class)]
 #[Medium]
@@ -30,14 +30,14 @@ final class NumberChecksTest extends TestCase
 
     public function testRangeReportsANumberOutsideTheRange(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('The value 65536 is not accepted for DAY (ER_WRONG_VALUE).', $semantics->inspect('CREATE USER u PASSWORD EXPIRE INTERVAL 65536 DAY')->facts->diagnostics[0]->message());
-        self::assertSame([], $semantics->inspect('CREATE USER u PASSWORD EXPIRE INTERVAL 65535 DAY')->facts->diagnostics);
+        self::assertSame('The value 65536 is not accepted for DAY (ER_WRONG_VALUE).', $semantics->diagnose('CREATE USER u PASSWORD EXPIRE INTERVAL 65536 DAY')->facts->diagnostics[0]->message());
+        self::assertSame([], $semantics->diagnose('CREATE USER u PASSWORD EXPIRE INTERVAL 65535 DAY')->facts->diagnostics);
     }
 
     public function testFactorReportsAFactorOtherThanTwoAndThree(): void
     {
-        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics())->inspect('ALTER USER u 02 FACTOR UNREGISTER')->facts->diagnostics[0]);
+        self::assertInstanceOf(NumberOutOfRange::class, (new Inspection())->diagnose('ALTER USER u 02 FACTOR UNREGISTER')->facts->diagnostics[0]);
     }
 }

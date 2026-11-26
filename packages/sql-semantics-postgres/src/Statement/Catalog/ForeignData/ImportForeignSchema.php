@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
  * provides no declaration; the restricted table names are remote names and
  * are not resolved. Source: https://www.postgresql.org/docs/17/sql-importforeignschema.html. Status: Implemented.
  *
- * @visibility public
- * @example Importing a remote schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('IMPORT FOREIGN SCHEMA remote LIMIT TO (a, b) FROM SERVER s INTO local');
- *     [$operation->statement->localSchema->value, count($operation->statement->restriction?->tables ?? []), $operation->declarations()] // => ['local', 2, []]
+ * @visibility SqlSemantics
  */
 final class ImportForeignSchema implements Statement
 {

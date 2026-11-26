@@ -33,10 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange;
  * output can be referred to in ORDER BY and GROUP BY clauses using ... column
  * positions"). Status: Implemented.
  *
- * @visibility public
- * @example Reading the position of an ordering item
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a, b FROM t ORDER BY 2');
- *     $query->statement->orderBy[0]->expression->position() // => 2
+ * @visibility SqlSemantics
  * @example Refusing a decimal as a position
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.0')) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

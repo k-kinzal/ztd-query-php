@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-tablespace.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Encrypting a tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter tablespace ts encryption = 'Y'");
- *     [$statement->toString(), count($statement->statement->options)] // => ["ALTER TABLESPACE ts ENCRYPTION 'Y'", 1]
+ * @visibility SqlSemantics
  */
 final class AlterTablespace implements Statement
 {

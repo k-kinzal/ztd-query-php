@@ -14,8 +14,8 @@ final class CommaLimitTest extends TestCase
 {
     public function testRenderWritesTheComma(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT 1 LIMIT ALL, 2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT 1 LIMIT ALL, 2');
         self::assertSame('SELECT 1 LIMIT ALL, 2', $query->toString());
     }
 }

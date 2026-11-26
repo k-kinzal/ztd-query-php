@@ -1,0 +1,18 @@
+{
+  "revision": "SemanticsIR/sqlite-fault-replay-1",
+  "approval": "pending-human-review",
+  "scope": "Independently replay each registered SQLite renderer fault from its healthy and injected PHP responses, exact source files, and native fixture observer.",
+  "admission": "The archived checker declares the case name, source path, exact replacement, input and required signal. The replay requires one receipt for every declared case and compares the stored source, injected bytes and diff to the exact candidate.",
+  "observations": [
+    "The unchanged response must pass the same domain observer and independent oracle.",
+    "The injected response must reproduce the declared failure signal, including its native observation or specific prepared-statement rejection.",
+    "Arbitrary worker crashes, missing responses, missing receipts, substituted inputs, malformed overlays and stale files do not satisfy a fault."
+  ],
+  "specialSuites": {
+    "initial": "Audit all twelve required fault overlays against their recorded exact source bytes. The live initial runner executes the dedicated fault mechanism.",
+    "relational": "Audit every relational overlay against its exact source. Re-evaluate the four captured SQL replies with the relational observer. The restoration overlay has a static shape witness."
+  },
+  "faults": ["Remove the archived healthy response", "Supply the healthy response as the mutant", "Modify the applied patch"],
+  "excluded": [],
+  "trust": ["Archived mutation declarations and database observers", "Exact candidate manifest", "Read-only isolated PHP worker and protected record writes"]
+}

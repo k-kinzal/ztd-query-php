@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\PredicateTyping;
  * would take it (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-matching.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a negated match with an escape character
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' NOT LIKE 'a!%' ESCAPE '!'");
- *     [$query->field(0)->expression->escape->value->value, $query->field(0)->type->descriptor->name()] // => ['!', 'boolean']
+ * @visibility SqlSemantics
  */
 final class PatternMatch implements Scalar
 {

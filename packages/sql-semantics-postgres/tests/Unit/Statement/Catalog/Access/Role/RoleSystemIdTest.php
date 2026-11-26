@@ -19,6 +19,6 @@ final class RoleSystemIdTest extends TestCase
 
     public function testRenderWritesTheIdentifier(): void
     {
-        self::assertSame('CREATE ROLE r SYSID 100', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE r SYSID 100')->toString());
+        self::assertSame('CREATE ROLE r SYSID 100', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE ROLE r SYSID 100')->toString());
     }
 }

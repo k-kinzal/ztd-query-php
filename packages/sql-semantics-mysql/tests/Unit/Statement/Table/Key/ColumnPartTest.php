@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Table\Key;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ColumnPart::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class ColumnPartTest extends TestCase
 {
     public function testDeriveKeyPartDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a TEXT, KEY (a(4) DESC))');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a TEXT, KEY (a(4) DESC))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -33,6 +33,6 @@ final class ColumnPartTest extends TestCase
 
     public function testRenderWritesTheColumnTheLengthAndTheDirection(): void
     {
-        self::assertSame('CREATE TABLE t (a TEXT, INDEX (a(4) ASC))', (new Semantics())->analyze('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
+        self::assertSame('CREATE TABLE t (a TEXT, INDEX (a(4) ASC))', (new Inspection())->inspect('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
     }
 }

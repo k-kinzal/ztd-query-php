@@ -14,11 +14,11 @@ final class CreateAccessMethodTest extends TestCase
 {
     public function testRenderWritesTheKindAndHandler(): void
     {
-        self::assertSame('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler')->toString());
+        self::assertSame('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ACCESS METHOD b TYPE INDEX HANDLER s.h')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE ACCESS METHOD b TYPE INDEX HANDLER s.h')->facts->diagnostics);
     }
 }

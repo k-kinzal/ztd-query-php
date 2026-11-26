@@ -4,50 +4,35 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Model\Validation;
 
-use SqlParser\Lexer\SourceException;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
-use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvariantViolation;
-use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
-use SqlSemantics\Platform\Sqlite\Model\Rendering\Lexical;
-use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Facts;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Script;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Platform;
 
 /**
- * Establishes everything an operation publishes: audited structure, complete facts, and corresponding SQL.
- *
- * Rule: CORE-PUBLICATION-001. (1) The structure is audited against the closed
- * immutable value domain. (2) The statement derives its facts against the
- * context; every scalar, relation and query node must have received a fact.
- * (3) The structure is rendered to typed pieces and joined to text. (4) The
- * text is parsed under the same profile and lowered by the same rules, and the
- * result must correspond operand by operand to the structure. Spelled regions
- * must only re-spell the rendered tokens (CORE-SPELLING-001). Any failure
- * discards the candidate. Trusted: the parser, the lowering and derivation
- * rules, and these checks. Status: Implemented.
+ * Checks the internal statement graph and derives its binding facts.
  *
  * @visibility SqlSemantics
  */
 final class Publication
 {
     /**
-     * Derives the facts and the checked SQL of a statement.
-     *
-     * @return array{Facts, string}
-     * @throws InvariantViolation When the rendered SQL does not correspond to the structure
+     * Audits the whole syntax graph and derives facts for the nodes SQLite binds.
      */
-    public function establish(AnalysisContext $context, Statement $statement): array
+    public function facts(AnalysisContext $context, Statement $statement): Facts
     {
         $platform = Platform::shared();
         $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\', $platform->statementNamespace()]);
         $objects = $graph->objects($statement);
+        $discarded = $platform->discardedBindings($objects);
+        if ($discarded !== []) {
+            $objects = $graph->objects($statement, $discarded);
+        }
 
         $derivation = new Derivation($context);
         $derivation->statement($statement);
@@ -59,28 +44,6 @@ final class Publication
         }
         $graph->objects($facts);
 
-        $output = new Output($platform->codec($context->profile));
-        $statement->render($output);
-        $sql = (new Lexical())->join($output->pieces()) . $output->trailing();
-        (new Spellings($platform->parser($context->profile), $platform->productions($context->profile), $platform->leafKeys($context->profile)))->check((new Lexical())->join($output->canonical()), $sql);
-        try {
-            $tree = $platform->parser($context->profile)->parse($sql);
-        } catch (SourceException $error) {
-            throw new InvariantViolation('The rendered SQL is outside the grammar: ' . $error->getMessage() . ' in: ' . $sql, 0, $error);
-        }
-        $difference = (new Equivalence())->difference($statement, $this->root($platform->lower($tree, $context->profile, new Leaves())));
-        Check::invariant($difference === null, 'The rendered SQL does not correspond to the statement at ' . $difference . ' in: ' . $sql);
-
-        return [$facts, $sql];
-    }
-
-    /**
-     * Answers the root of a lowered input: its only statement, or a script of none or several.
-     *
-     * @param list<Statement> $statements
-     */
-    public function root(array $statements): Statement
-    {
-        return count($statements) === 1 ? $statements[0] : new Script($statements);
+        return $facts;
     }
 }

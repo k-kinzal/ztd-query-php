@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Counting the transformed types
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('hstore')])));
  *     count((new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\Transforms([$type]))->types) // => 1

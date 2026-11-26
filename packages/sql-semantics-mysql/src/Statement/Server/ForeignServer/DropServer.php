@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-server.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing a server
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("drop server if exists 's'");
- *     [$drop->toString(), $drop->statement->name->value] // => ['DROP SERVER IF EXISTS s', 's']
+ * @visibility SqlSemantics
  */
 final class DropServer implements Statement
 {

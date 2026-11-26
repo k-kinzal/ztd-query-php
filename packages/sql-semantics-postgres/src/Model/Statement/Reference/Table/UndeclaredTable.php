@@ -10,10 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A relation name an open context has no declaration for; it may exist in the database.
  *
- * @visibility public
- * @example Keeping the missing declaration of a named input
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t');
- *     $query->facts->relation($query->inputRelation())->table->missing->name->name->value // => 't'
+ * @visibility SqlSemantics
  */
 final class UndeclaredTable implements TableResolution
 {

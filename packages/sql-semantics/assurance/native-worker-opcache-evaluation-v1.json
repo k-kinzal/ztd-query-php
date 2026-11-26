@@ -1,0 +1,47 @@
+{
+  "revision": "SemanticsIR/native-worker-opcache-evaluation-1",
+  "contract": {
+    "file": "native-worker-opcache-v1.json",
+    "sha256": "95f1c5b41a8b0c96acd5ac63e9ed487fb2af40147a3cd06afe556a80fd38e2e8"
+  },
+  "candidate": "c57323ad98b41361ba9da32e0e56dd72251be83a",
+  "sameResponseBytes": true,
+  "decision": "retain-normal-PHP-worker",
+  "reason": "Neither pinned worker stream ran faster with the additional cache settings during the measured local run.",
+  "results": {
+    "postgres": {
+      "inputs": "9d788f2e4e377bc3c62fe152ccc00d3b421275ec8fa4ce98edb974c2713f5a3e",
+      "opaqueRuntime": {
+        "php": "8.3.37",
+        "intSize": 8
+      },
+      "outcomes": {
+        "constructed": 1099,
+        "rejected": 26
+      },
+      "uncached": "d25bd979c5ba7ff0b0a68a9d42758aadb6cc31203d9450e4fe944d70dfad6fdd",
+      "cached": "d25bd979c5ba7ff0b0a68a9d42758aadb6cc31203d9450e4fe944d70dfad6fdd",
+      "wallTimingLogs": {
+        "before": "c7301e3b0249ff43bbbeac2084d808cb682132e272aefa570de14ad9d230f642",
+        "after": "332a594ecbcbef4077de10ce7cca2ccc90593d2c6fa3bd9511ee3f403b32914a"
+      }
+    },
+    "mysql": {
+      "inputs": "a7d2db73a28fa30084b3677b648eeb4f36dc8cd1a39861ab2fbeeaf43bfd3699",
+      "opaqueRuntime": {
+        "php": "8.3.37",
+        "intSize": 8
+      },
+      "outcomes": {
+        "constructed": 636,
+        "rejected": 98
+      },
+      "uncached": "fa0605b3262f314c798c75c2692ef9a73e2d5ba790b3ef4ba6932b8ae392a229",
+      "cached": "fa0605b3262f314c798c75c2692ef9a73e2d5ba790b3ef4ba6932b8ae392a229",
+      "wallTimingLogs": {
+        "before": "102d21d379c7978c233e940be23dc66b01c51ca9cfc97f91e22e3389182cb616",
+        "after": "2a982022f2f3488060f8f61839d42bdb33645b4d38d281baa5c76f05d33ba62b"
+      }
+    }
+  }
+}

@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\NameRule;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
@@ -20,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(NameRule::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class NameRuleTest extends TestCase
 {
     public function testNameDecodesAnIdentifierAtANamePosition(): void
     {
-        $select = (new Semantics())->inspect('SELECT a FROM "my table" AS [the alias]')->statement;
+        $select = (new Inspection())->diagnose('SELECT a FROM "my table" AS [the alias]')->statement;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableInput::class, $select->from);
@@ -37,7 +37,7 @@ final class NameRuleTest extends TestCase
 
     public function testNameAcceptsAStringAtANamePosition(): void
     {
-        $operation = (new Semantics())->inspect("CREATE TABLE 'tbl' (a)");
+        $operation = (new Inspection())->diagnose("CREATE TABLE 'tbl' (a)");
 
         self::assertInstanceOf(CreateTable::class, $operation->statement);
         self::assertSame('tbl', $operation->statement->name->name->value);
@@ -46,7 +46,7 @@ final class NameRuleTest extends TestCase
 
     public function testTokenDecodesAnIdentifierTokenAndKeepsItsCase(): void
     {
-        $select = (new Semantics())->inspect('SELECT [a b], `C``d`, MixedCase FROM t')->statement;
+        $select = (new Inspection())->diagnose('SELECT [a b], `C``d`, MixedCase FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame(['a b', 'C`d', 'MixedCase'], array_map(static function (object $column): string {
@@ -59,9 +59,9 @@ final class NameRuleTest extends TestCase
 
     public function testScopedReadsTheSchemaWhenASecondNameFollows(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->inspect('SELECT * FROM t')->statement;
-        $scoped = $semantics->inspect('SELECT * FROM main.t')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->diagnose('SELECT * FROM t')->statement;
+        $scoped = $semantics->diagnose('SELECT * FROM main.t')->statement;
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(Select::class, $scoped);
@@ -75,9 +75,9 @@ final class NameRuleTest extends TestCase
 
     public function testQualifiedLowersAFullnameWithAndWithoutASchema(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $qualified = $semantics->inspect('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END')->statement;
+        $semantics = new Inspection();
+        $plain = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $qualified = $semantics->diagnose('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END')->statement;
 
         self::assertInstanceOf(CreateTrigger::class, $plain);
         self::assertInstanceOf(CreateTrigger::class, $qualified);
@@ -88,7 +88,7 @@ final class NameRuleTest extends TestCase
 
     public function testPairPutsTheFirstNameAsTheSchemaOfTheSecond(): void
     {
-        $operation = (new Semantics())->inspect('DELETE FROM temp.log');
+        $operation = (new Inspection())->diagnose('DELETE FROM temp.log');
 
         self::assertInstanceOf(Delete::class, $operation->statement);
         self::assertSame('temp', $operation->statement->target->name->schema?->value);
@@ -98,7 +98,7 @@ final class NameRuleTest extends TestCase
 
     public function testListLowersTheNamesOfAnIdlistInWrittenOrder(): void
     {
-        $insert = (new Semantics())->inspect('INSERT INTO t (a, "b c", [d]) VALUES (1, 2, 3)')->statement;
+        $insert = (new Inspection())->diagnose('INSERT INTO t (a, "b c", [d]) VALUES (1, 2, 3)')->statement;
 
         self::assertInstanceOf(InsertRows::class, $insert);
         self::assertSame(['a', 'b c', 'd'], array_map(static fn (Name $name): string => $name->value, $insert->into->columns));
@@ -106,9 +106,9 @@ final class NameRuleTest extends TestCase
 
     public function testOptionalListGivesNoColumnsWithoutParentheses(): void
     {
-        $semantics = new Semantics();
-        $bare = $semantics->inspect('INSERT INTO t VALUES (1)')->statement;
-        $listed = $semantics->inspect('INSERT INTO t (a) VALUES (1)')->statement;
+        $semantics = new Inspection();
+        $bare = $semantics->diagnose('INSERT INTO t VALUES (1)')->statement;
+        $listed = $semantics->diagnose('INSERT INTO t (a) VALUES (1)')->statement;
 
         self::assertInstanceOf(InsertRows::class, $bare);
         self::assertInstanceOf(InsertRows::class, $listed);
@@ -118,7 +118,7 @@ final class NameRuleTest extends TestCase
 
     public function testCollationLowersTheCollationNameOrNullWhenNoneIsWritten(): void
     {
-        $query = (new Semantics())->inspect('WITH c (a COLLATE nocase, b, d COLLATE "no case") AS (SELECT 1, 2, 3) SELECT * FROM c')->statement;
+        $query = (new Inspection())->diagnose('WITH c (a COLLATE nocase, b, d COLLATE "no case") AS (SELECT 1, 2, 3) SELECT * FROM c')->statement;
 
         self::assertInstanceOf(WithQuery::class, $query);
         $columns = $query->with->tables[0]->columns;
@@ -129,7 +129,7 @@ final class NameRuleTest extends TestCase
 
     public function testCollationOfAnExpressionIsDecodedLikeAnyName(): void
     {
-        $select = (new Semantics())->inspect("SELECT a COLLATE 'no case' FROM t")->statement;
+        $select = (new Inspection())->diagnose("SELECT a COLLATE 'no case' FROM t")->statement;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(ResultColumn::class, $select->columns[0]);

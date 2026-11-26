@@ -18,12 +18,12 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Sqlite\SqliteProvider;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 $grammarVersion = 'sqlite-3.47.2';
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/sqlite');
 $provider = new SqliteProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new RoundTripTarget(new Semantics($grammarVersion), $grammarVersion);
+$target = new RoundTripTarget(new Inspection($grammarVersion), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('cmd')->requiringNonEmpty();
 

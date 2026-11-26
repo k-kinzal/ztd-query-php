@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\View;
  * the spelling is kept because the grammar keeps it.
  * Source: https://www.postgresql.org/docs/17/sql-createview.html.
  *
- * @visibility public
- * @example Reading the check option
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE VIEW v AS SELECT 1 AS a WITH LOCAL CHECK OPTION');
- *     $create->statement->checkOption->cascaded() // => false
+ * @visibility SqlSemantics
  */
 enum CheckOption: string
 {

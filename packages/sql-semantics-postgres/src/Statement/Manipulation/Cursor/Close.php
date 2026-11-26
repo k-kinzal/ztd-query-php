@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Rule: PG-CLOSE-001: cursors are session state; nothing is derived.
  * Source: https://www.postgresql.org/docs/17/sql-close.html. Status: Implemented.
  *
- * @visibility public
- * @example Closing a cursor
- *     $close = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CLOSE c');
- *     $close->statement->cursor->value // => 'c'
+ * @visibility SqlSemantics
  */
 final class Close implements Statement
 {

@@ -7,11 +7,9 @@ namespace Tests\Unit\Statement\Expression\Subquery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
@@ -21,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(InQuery::class)]
 #[Medium]
@@ -28,8 +28,8 @@ final class InQueryTest extends TestCase
 {
     public function testDeriveScalarIsIntegerAndNotNullWhenNeitherSideCanBeNull(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a IN (SELECT a FROM t), a NOT IN (SELECT 1 UNION SELECT 2) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a IN (SELECT a FROM t), a NOT IN (SELECT 1 UNION SELECT 2) FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -40,8 +40,8 @@ final class InQueryTest extends TestCase
 
     public function testDeriveScalarCanBeNullWhenTheOperandOrAComparedColumnCan(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a IN (SELECT b FROM t), b IN (SELECT a FROM t), 1 IN (SELECT 1 UNION SELECT NULL) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a IN (SELECT b FROM t), b IN (SELECT a FROM t), 1 IN (SELECT 1 UNION SELECT NULL) FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $nullability = array_map(static fn (Field $field): Nullability => $field->nullability, $query->fields()->items ?? []);
 
         self::assertSame([Nullability::Nullable, Nullability::Nullable, Nullability::Nullable], $nullability);
@@ -49,9 +49,9 @@ final class InQueryTest extends TestCase
 
     public function testDeriveScalarDependsOnTheMissingInputsOfAnOpenShape(): void
     {
-        $semantics = new Semantics();
-        $star = $semantics->inspect('SELECT 1 IN (SELECT * FROM x)');
-        $column = $semantics->inspect('SELECT 1 IN (SELECT c FROM x)');
+        $semantics = new Inspection();
+        $star = $semantics->diagnose('SELECT 1 IN (SELECT * FROM x)');
+        $column = $semantics->diagnose('SELECT 1 IN (SELECT c FROM x)');
 
         self::assertInstanceOf(Known::class, $star->field(0)->type);
         self::assertSame(Storage::Integer, $star->field(0)->type->descriptor);
@@ -62,8 +62,8 @@ final class InQueryTest extends TestCase
 
     public function testDeriveScalarReportsAQueryOfAnotherWidth(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT 1 IN (SELECT a, b FROM t)', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT 1 IN (SELECT a, b FROM t)', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
@@ -75,8 +75,8 @@ final class InQueryTest extends TestCase
 
     public function testDeriveScalarAdmitsARowOperandOfTheWidthOfTheQuery(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT (1, 2) IN (SELECT a, b FROM t)', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT (1, 2) IN (SELECT a, b FROM t)', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertSame([], $query->facts->diagnostics);
         self::assertSame(Nullability::Nullable, $query->field(0)->nullability);
@@ -84,8 +84,8 @@ final class InQueryTest extends TestCase
 
     public function testDeriveScalarRecordsTheFactOfTheQueryInsideTheEnvironmentOfTheExpression(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT b IN (SELECT a + 1) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT b IN (SELECT a + 1) FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InQuery::class, $test);
@@ -96,7 +96,7 @@ final class InQueryTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheQuery(): void
     {
-        $query = (new Semantics())->inspect('select a not in (select a from t) AS c1 from t');
+        $query = (new Inspection())->diagnose('select a not in (select a from t) AS c1 from t');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InQuery::class, $test);
@@ -106,9 +106,9 @@ final class InQueryTest extends TestCase
 
     public function testRenderWritesANewlyBuiltTest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $test = new InQuery(new IntegerLiteral('1'), new Select([new ResultColumn(new IntegerLiteral('2'))]));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($test)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn($test)]));
 
         self::assertSame('SELECT 1 IN (SELECT 2)', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

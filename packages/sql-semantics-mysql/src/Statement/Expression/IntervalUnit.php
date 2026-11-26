@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  * units are the same keywords to the server.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/expressions.html#temporal-intervals.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a unit
  *     \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::DayHour->value // => 'DAY_HOUR'
  */

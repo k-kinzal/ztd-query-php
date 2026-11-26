@@ -7,30 +7,42 @@ namespace Tests\Unit\Rules\Access;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege;
 
-#[CoversClass(\SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists::class)]
+#[CoversClass(PrivilegeLists::class)]
 #[Medium]
 final class PrivilegeListsTest extends TestCase
 {
     public function testPrivilegesAcceptsAnEmptyList(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists())->privileges([]));
+        self::assertSame([], (new PrivilegeLists())->privileges([]));
     }
 
     public function testPrivilegesRejectsAForeignItem(): void
     {
         $this->expectExceptionMessage('The privileges of a grant are a list of privileges.');
-        (new \SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists())->privileges([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('select')]);
+        (new PrivilegeLists())->privileges([new Name('select')]);
     }
 
     public function testRolesRejectsAnEmptyList(): void
     {
         $this->expectExceptionMessage('A role grant names at least one role.');
-        (new \SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists())->roles([]);
+        (new PrivilegeLists())->roles([]);
     }
 
     public function testWriteSpellsAnEmptyListAsAll(): void
     {
-        self::assertSame('REVOKE ALL ON TABLE t FROM joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE ALL PRIVILEGES ON t FROM joe')->toString());
+        self::assertSame('REVOKE ALL ON TABLE t FROM joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('REVOKE ALL PRIVILEGES ON t FROM joe')->toString());
+    }
+
+    public function testLegacyOnlyDistinguishesAllFromAnInertRequest(): void
+    {
+        $lists = new PrivilegeLists();
+        $legacy = new Privilege(new Name('rule'));
+        self::assertTrue($lists->legacyOnly([$legacy, $legacy]));
+        self::assertFalse($lists->legacyOnly([]));
+        self::assertFalse($lists->legacyOnly([$legacy, new Privilege(new Name('usage'))]));
     }
 }

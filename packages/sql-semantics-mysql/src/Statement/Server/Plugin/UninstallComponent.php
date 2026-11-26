@@ -20,9 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/uninstall-component.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing a component
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("uninstall component 'file://a'")->toString() // => "UNINSTALL COMPONENT 'file://a'"
+ * @visibility SqlSemantics
  */
 final class UninstallComponent implements Statement
 {

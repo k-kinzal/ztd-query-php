@@ -1,0 +1,15 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Solution",
+  "theorem_names": ["SqlMembership.positive", "SqlMembership.negative"],
+  "definition_names": [
+    "SqlMembership.truthOr",
+    "SqlMembership.truthAnd",
+    "SqlMembership.negate",
+    "SqlMembership.exactEqual",
+    "SqlMembership.inList",
+    "SqlMembership.notInList",
+    "SqlMembership.anyEqual"
+  ],
+  "permitted_axioms": ["propext"]
+}

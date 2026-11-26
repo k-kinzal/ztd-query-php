@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * statement, except configuration settings.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that an attribute keyword is a routine option
  *     \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineAttribute::Immutable instanceof \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption // => true
  */

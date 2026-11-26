@@ -13,10 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
  * relation. It holds decoded names and exact literals and no binding. The same
  * node instance occurs at most once in a statement.
  *
- * @visibility public
- * @example Reading the structure of an analyzed statement
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1');
- *     $operation->statement instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Node // => true
+ * @visibility SqlSemantics
  */
 interface Node
 {

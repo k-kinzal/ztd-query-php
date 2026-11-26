@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Limit;
  * https://sqlite.org/partialindex.html, https://sqlite.org/expridx.html,
  * https://sqlite.org/gencol.html.
  *
- * @visibility public
- * @example Reading the position of a prohibited expression
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a CHECK (a > ?))');
- *     $create->facts->diagnostics[0]->position // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition::CheckConstraint
+ * @visibility SqlSemantics
  */
 enum DefinitionPosition: string
 {

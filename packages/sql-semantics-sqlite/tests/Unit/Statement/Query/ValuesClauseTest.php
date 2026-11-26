@@ -11,12 +11,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ValuesClause::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class ValuesClauseTest extends TestCase
 {
     public function testDeriveStatementNamesTheColumnsByPosition(): void
     {
-        $query = (new Semantics())->inspect("VALUES (1, 'a', NULL)");
+        $query = (new Inspection())->diagnose("VALUES (1, 'a', NULL)");
 
         self::assertSame(['column1', 'column2', 'column3'], array_map(static fn (object $field): ?string => $field->name?->value, [...$query->fields() ?? []]));
         self::assertSame([], $query->facts->diagnostics);
@@ -34,7 +34,7 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveQueryChoosesTheTypeOverTheRowsAndTheirNullability(): void
     {
-        $query = (new Semantics())->inspect("VALUES (1, 'a'), ('x', NULL)");
+        $query = (new Inspection())->diagnose("VALUES (1, 'a'), ('x', NULL)");
         $first = $query->field(0)->type;
         $second = $query->field(1)->type;
 
@@ -49,7 +49,7 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveQueryReportsARowOfAnotherWidthOnce(): void
     {
-        $query = (new Semantics())->inspect('VALUES (1, 2), (3), (4, 5, 6)');
+        $query = (new Inspection())->diagnose('VALUES (1, 2), (3), (4, 5, 6)');
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
@@ -60,7 +60,7 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveQuerySeesNoRelationOfItsOwn(): void
     {
-        $query = (new Semantics())->inspect('VALUES (a)');
+        $query = (new Inspection())->diagnose('VALUES (a)');
 
         self::assertInstanceOf(ValuesClause::class, $query->statement);
         self::assertInstanceOf(MissingColumn::class, $query->facts->scalar($query->statement->rows[0]->values[0])->resolution);
@@ -69,14 +69,14 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
-        $query = (new Semantics())->inspect('VALUES (RAISE(IGNORE))');
+        $query = (new Inspection())->diagnose('VALUES (RAISE(IGNORE))');
 
         self::assertSame(MisuseRule::RaiseOutsideTrigger->value, $query->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheRows(): void
     {
-        $query = (new Semantics())->inspect('values(1),(2)');
+        $query = (new Inspection())->diagnose('values(1),(2)');
 
         self::assertSame('VALUES (1), (2)', $query->toString());
     }

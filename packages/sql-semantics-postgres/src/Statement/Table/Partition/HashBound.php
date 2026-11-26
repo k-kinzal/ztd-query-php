@@ -19,9 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  * than `modulus` and `remainder` is reported.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Writing a hash bound
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, remainder 0)')->toString() // => 'CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, remainder 0)'
+ * @visibility SqlSemantics
  */
 final class HashBound implements PartitionBound
 {

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * The server joins the parts with dots into one parameter name.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Joining the parts of a parameter name
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('myext'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('setting')]))->parameter() // => 'myext.setting'
  */

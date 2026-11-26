@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-replicas.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44'))->analyze('SHOW SLAVE HOSTS');
- *     [$show->field(4)->name?->value, $show->toString()] // => ['Slave_UUID', 'SHOW SLAVE HOSTS']
+ * @visibility SqlSemantics
  */
 final class ShowReplicas implements Statement
 {

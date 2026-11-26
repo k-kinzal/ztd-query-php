@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * label provider is used. A labelled relation or column is resolved.
  * Source: https://www.postgresql.org/docs/17/sql-security-label.html.
  *
- * @visibility public
- * @example Reading the provider
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SECURITY LABEL FOR selinux ON SCHEMA app IS 'x'");
- *     $operation->statement->provider?->word->value // => 'selinux'
+ * @visibility SqlSemantics
  */
 final class SecurityLabel implements Statement
 {

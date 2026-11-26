@@ -25,10 +25,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
  * that term.
  * Source: https://sqlite.org/lang_select.html#the_from_clause. Status: Implemented.
  *
- * @visibility public
- * @example Reading a parenthesised join
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM a LEFT JOIN (b JOIN c) AS x');
- *     [$query->statement->from->steps[0]->relation->alias->value, count($query->statement->from->steps[0]->relation->relation->steps)] // => ['x', 1]
+ * @visibility SqlSemantics
  */
 final class NestedInput implements Relation
 {

@@ -1,0 +1,29 @@
+{
+  "revision": "SemanticsIR/sqlite-numeric-boundaries-2",
+  "approval": "pending-human-review",
+  "scope": "Map each admitted parsed binary operator to its exact closed semantic operation.",
+  "rules": {
+    "Expression/BinaryOperatorLowering::lower": {
+      "common": [
+        "return match ($operator) {",
+        "    BinaryOperator::Add, BinaryOperator::Subtract, BinaryOperator::Multiply, BinaryOperator::Divide, BinaryOperator::Modulo,",
+        "    BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::ShiftLeft, BinaryOperator::ShiftRight",
+        "        => ArithmeticOperator::from($operator->value),",
+        "    BinaryOperator::And => LogicalOperator::And,",
+        "    BinaryOperator::Or => LogicalOperator::Or,",
+        "    BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,",
+        "    BinaryOperator::NotEqual, BinaryOperator::BangEqual => ComparisonOperator::NotEqual,",
+        "    BinaryOperator::Is, BinaryOperator::IsNotDistinctFrom => ComparisonOperator::Is,",
+        "    BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom => ComparisonOperator::IsNot,",
+        "    BinaryOperator::Less => ComparisonOperator::Less,",
+        "    BinaryOperator::LessOrEqual => ComparisonOperator::LessOrEqual,",
+        "    BinaryOperator::Greater => ComparisonOperator::Greater,",
+        "    BinaryOperator::GreaterOrEqual => ComparisonOperator::GreaterOrEqual,",
+        "    BinaryOperator::Concat, BinaryOperator::Extract, BinaryOperator::ExtractValue",
+        "        => throw new InvalidConstruction('This operation has no complete SQLite scalar representation.'),",
+        "};"
+      ]
+    }
+  },
+  "extends": "sqlite-numeric-boundaries-v1.json"
+}

@@ -14,7 +14,7 @@ final class TypeRuleTest extends TestCase
 {
     public function testStatementLowersAnEnumChange(): void
     {
-        self::assertSame('ALTER TYPE t RENAME VALUE \'a\' TO \'b\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE t RENAME VALUE \'a\' TO \'b\'')->toString());
+        self::assertSame('ALTER TYPE t RENAME VALUE \'a\' TO \'b\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE t RENAME VALUE \'a\' TO \'b\'')->toString());
     }
 
     public function testChangesLowersEveryCommand(): void

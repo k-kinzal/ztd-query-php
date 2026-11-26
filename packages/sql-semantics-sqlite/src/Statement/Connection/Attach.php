@@ -21,9 +21,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * declaration and changes no context.
  * Source: https://sqlite.org/lang_attach.html. Status: Implemented.
  *
- * @visibility public
- * @example Writing an attach request without the optional keyword
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("ATTACH DATABASE 'file.db' AS aux")->toString() // => "ATTACH 'file.db' AS aux"
+ * @visibility SqlSemantics
  */
 final class Attach implements Statement
 {

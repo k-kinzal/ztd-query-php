@@ -22,11 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
  * The facts follow MYSQL-PROGRAM-BLOCK-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/begin-end.html.
  *
- * @visibility public
- * @example Reading a labeled block
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() work: BEGIN DECLARE a INT; SELECT a; END work');
- *     $block = $create->statement->body;
- *     [$block->label->value, count($block->declarations), count($block->statements)] // => ['work', 1, 1]
+ * @visibility SqlSemantics
  */
 final class Block implements ProgramStatement
 {

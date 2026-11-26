@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * the same request. Facts: none.
  * Source: https://www.postgresql.org/docs/17/sql-set.html. Status: Implemented.
  *
- * @visibility public
- * @example Restoring a default
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET work_mem = DEFAULT');
- *     [$operation->statement->source, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Default, 'SET work_mem TO DEFAULT']
+ * @visibility SqlSemantics
  */
 final class SetParameterFrom implements Statement
 {

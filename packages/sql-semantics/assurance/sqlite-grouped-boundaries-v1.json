@@ -1,0 +1,109 @@
+{
+  "revision": "SemanticsIR/sqlite-grouped-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Exact AST obligations for the named grouping, collation and COUNT constructors, binding and emission.",
+  "trust": "Pinned PHP AST parsing, builtin SQLite collation and function registry, and the detached checked-list and snapshot primitives.",
+  "rules": {
+    "Aggregation/Count::__construct": {
+      "common": [
+        "Check::input($argument !== null || $distinctCollation === null, 'A distinct count requires a field argument.');",
+        "Check::input($argument === null || $argument->source === 0, 'A count argument must read the single input occurrence.');"
+      ]
+    },
+    "Aggregation/GroupKey::__construct": {
+      "common": [
+        "Check::input($column->source === 0, 'A grouping key must read the single input occurrence.');"
+      ]
+    },
+    "Aggregation/GroupBinding::key": {
+      "common": [
+        "$explicit = null;",
+        "while ($expression instanceof Grouped || $expression instanceof Collate) {",
+        "    if ($expression instanceof Collate) {",
+        "        Check::input($explicit === null, 'A grouped field can have one explicit collation.');",
+        "        $explicit = $expression->collation;",
+        "    }",
+        "    $expression = $expression->operand;",
+        "}",
+        "$reference = $this->source->reference($expression);",
+        "$resolution = $this->operation->facts->scalar($expression)->resolution;",
+        "Check::invariant($resolution instanceof ResolvedColumn, 'The bound grouping slot is a resolved column.');",
+        "$default = $compareText ? $resolution->declaration()?->collation : null;",
+        "$collation = GroupCollation::tryFrom(strtoupper(($explicit ?? $default)?->value ?? 'BINARY'));",
+        "Check::input($collation !== null, 'A grouped text comparison requires a resolved builtin collation.');",
+        "",
+        "return new GroupKey($reference, $collation);"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "common": [
+        "$grouping = Check::listOf($keys, GroupKey::class, 'A grouped query requires an owned key list.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped query requires a nonempty result list.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the SQLite group profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input(isset($source->columns[$key->column->slot]), 'Each grouping key must belong to its input.');",
+        "    $members[$key->column->slot] = true;",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->source === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } else {",
+        "        Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'A count slot must belong to the group input.');",
+        "    }",
+        "}",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "Aggregation/GroupedSelect::toString": {
+      "common": [
+        "return (new GroupedSql())->render($this);"
+      ]
+    },
+    "Aggregation/GroupedSelect::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters/grouped-builtin';"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "common": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $field) {",
+        "    $items[] = $this->field($field->value, $query->source, $renderer) . ' AS ' . $field->name->quoted();",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items);",
+        "if ($query->source !== null) {",
+        "    $sql .= ' FROM ' . $renderer->source($query->source, 0);",
+        "}",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->expression($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key->column, $query->source) . ' COLLATE ' . $key->collation->value;",
+        "}",
+        "",
+        "return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));"
+      ]
+    },
+    "Aggregation/GroupedSql::field": {
+      "common": [
+        "if ($value instanceof ColumnReference) {",
+        "    return $renderer->expression($value, $source);",
+        "}",
+        "if ($value->argument === null) {",
+        "    return 'count(*)';",
+        "}",
+        "$argument = $renderer->expression($value->argument, $source);",
+        "if ($value->distinctCollation !== null) {",
+        "    $argument = 'DISTINCT ' . $argument . ' COLLATE ' . $value->distinctCollation->value;",
+        "}",
+        "",
+        "return 'count(' . $argument . ')';"
+      ]
+    }
+  }
+}

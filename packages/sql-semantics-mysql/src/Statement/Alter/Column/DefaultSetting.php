@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
- * @example Setting a literal default
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER a SET DEFAULT 1');
- *     [$alter->statement->commands[0]->expression, $alter->toString()] // => [false, 'ALTER TABLE t ALTER COLUMN a SET DEFAULT 1']
+ * @visibility SqlSemantics
  */
 final class DefaultSetting implements AlterCommand
 {

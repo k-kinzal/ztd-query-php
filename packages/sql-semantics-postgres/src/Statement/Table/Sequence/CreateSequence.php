@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  * `last_value` and `log_cnt` (bigint) and `is_called` (boolean), never NULL, and the system columns.
  * Source: https://www.postgresql.org/docs/17/sql-createsequence.html.
  *
- * @visibility public
- * @example Declaring a sequence
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TEMP SEQUENCE IF NOT EXISTS s AS bigint INCREMENT BY 2 START WITH 10 OWNED BY t.id');
- *     [$statement->declarations()[0]->name->schema->value, $statement->declarations()[0]->columns[0]->name->value, $statement->toString()] // => ['pg_temp', 'last_value', 'CREATE TEMP SEQUENCE IF NOT EXISTS s AS BIGINT INCREMENT 2 START 10 OWNED BY t.id']
+ * @visibility SqlSemantics
  */
 final class CreateSequence implements SchemaElement
 {

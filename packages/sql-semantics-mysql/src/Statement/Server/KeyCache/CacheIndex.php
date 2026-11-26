@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cache-index.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Assigning indexes to a key cache
- *     $cache = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('cache index t key (primary, i), u in hot');
- *     [$cache->toString(), $cache->statement->cache?->value] // => ['CACHE INDEX t INDEX (PRIMARY, i), u IN hot', 'hot']
+ * @visibility SqlSemantics
  */
 final class CacheIndex implements Statement
 {

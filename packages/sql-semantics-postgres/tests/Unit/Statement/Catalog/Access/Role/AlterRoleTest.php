@@ -14,17 +14,17 @@ final class AlterRoleTest extends TestCase
 {
     public function testRenderDropsTheNoiseWordWith(): void
     {
-        self::assertSame('ALTER USER CURRENT_USER nosuperuser USER a', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER USER CURRENT_USER WITH NOSUPERUSER USER a')->toString());
+        self::assertSame('ALTER USER CURRENT_USER nosuperuser USER a', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER USER CURRENT_USER WITH NOSUPERUSER USER a')->toString());
     }
 
     public function testDeriveStatementReportsPublicAndAReservedName(): void
     {
-        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER ROLE public LOGIN; ')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER ROLE public LOGIN; ')->facts->diagnostics));
     }
 
     public function testDeriveStatementReportsAReservedName(): void
     {
-        self::assertSame(['role name "pg_monitor" is reserved', 'conflicting or redundant options'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER ROLE pg_monitor LOGIN LOGIN')->facts->diagnostics));
+        self::assertSame(['role name "pg_monitor" is reserved', 'conflicting or redundant options'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER ROLE pg_monitor LOGIN LOGIN')->facts->diagnostics));
     }
 
     public function testRejectsTheGroupWord(): void

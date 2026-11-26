@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The statement that holds the row derives its values.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html.
  *
- * @visibility public
- * @example Reading the values of a row
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t VALUES (1, 2), ()') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column count doesn't match value count at row 2
+ * @visibility SqlSemantics
  */
 final class InsertedRow implements Node
 {

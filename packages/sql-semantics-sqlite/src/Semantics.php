@@ -10,7 +10,62 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
-use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Attach;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\ConnectionLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Detach;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\MaintenanceLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\DeleteLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumnLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropColumnLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DefinitionLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropView;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\View\CreateView;
+use SqlSemantics\Platform\Sqlite\Ir\Select;
+use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\Transaction;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionLowering;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
@@ -18,49 +73,52 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException;
+use SqlSemantics\Platform\Sqlite\Model\Facade\Catalog;
 use SqlSemantics\Platform\Sqlite\Model\Facade\Splitter;
-use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Model\Validation\LeafEmbedding;
-use SqlSemantics\Platform\Sqlite\Model\Validation\Publication;
-use SqlSemantics\Platform\Sqlite\Model\Validation\TokenCorrespondence;
-use SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph;
-use SqlSemantics\Query;
+use SqlSemantics\Platform\Sqlite\Model\Facade\StatementBinder;
+use SqlSemantics\Platform\Sqlite\Statement\Connection\Attach as ParsedAttach;
+use SqlSemantics\Platform\Sqlite\Statement\Connection\Detach as ParsedDetach;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze as ParsedAnalyze;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma as ParsedPragma;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex as ParsedReindex;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum as ParsedVacuum;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertDefaults as ParsedInsertDefaults;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows as ParsedInsert;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect as ParsedInsertSelect;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedUpdate;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Compound as ParsedCompound;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameTable;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex as ParsedCreateIndex;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTableAs as ParsedCreateTableAs;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView as ParsedCreateView;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
+use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger as ParsedCreateTrigger;
 
 /**
- * Analyzes SQL of one fixed language profile into read-only operations.
- *
- * An operation holds the concrete structure of the statement, the facts
- * derived against an explicit declaration context, and SQL rendered from that
- * structure. Nothing here changes an operation: a different statement is
- * analyzed anew or built from explicit inputs.
+ * Binds SQL under a fixed dialect profile and publishes complete semantic values.
  *
  * @visibility public
- * @example Resolving a query against the declaration it depends on
+ * @example Analyzing and rendering a projection
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
- *     $query = $semantics->analyze('SELECT name FROM users WHERE id = 1', [$users]);
- *     $query->field('name')->column() === $users->declarations()[0]->columns[1] // => true
- * @example Rendering SQL from the analyzed structure
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $semantics->analyze('select   1')->toString() // => 'SELECT 1'
- * @example Finding the statements of a script
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $semantics->split("SELECT 1; SELECT ';'") // => ['SELECT 1;', " SELECT ';'"]
+ *     $semantics->analyze('SELECT 42 AS answer')->profileId() === $semantics->analyze('SELECT 1')->profileId() // => true
  */
 final class Semantics implements Analyzer
 {
-    private readonly Platform $platform;
-
     private readonly LanguageProfile $profile;
 
     private readonly SqlParser $parser;
 
-    /**
-     * @var list<string>|null
-     */
-    private readonly ?array $searchPath;
+    private readonly Catalog $catalog;
+
+    private readonly StatementBinder $binder;
 
     /**
      * Fixes the language profile: database, grammar release, session mode and parameter style.
@@ -74,11 +132,12 @@ final class Semantics implements Analyzer
      */
     public function __construct(?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null)
     {
-        $this->platform = Platform::shared();
-        $this->profile = $this->platform->profile($grammarVersion, $mode, $parameters);
-        $this->parser = $this->platform->parser($this->profile);
-        $this->searchPath = $searchPath?->schemas;
-        $this->platform->context($this->profile, $this->searchPath, [], false);
+        $platform = Platform::shared();
+        $this->profile = $platform->profile($grammarVersion, $mode, $parameters);
+        $this->parser = $platform->parser($this->profile);
+        $platform->context($this->profile, $searchPath?->schemas, [], false);
+        $this->catalog = new Catalog($this->profile, $searchPath?->schemas, $this->parser);
+        $this->binder = new StatementBinder($this->parser);
     }
 
     /**
@@ -90,112 +149,79 @@ final class Semantics implements Analyzer
     }
 
     /**
-     * Prepares an immutable declaration context or verifies a supplied context.
+     * Builds a context from explicit relation, index and trigger definitions.
      *
-     * Null declarations give an open context: relations that are not declared
-     * may exist. A list, even an empty one, gives a context that enumerates
-     * every relation unless `$complete` is false. An operation in the list
-     * contributes the declarations it provides; it is not executed, and ALTER,
-     * DROP and writes contribute nothing.
-     *
-     * @param list<Table|Operation>|Context|null $declarations A declaration list, a prepared context, or null for an open context
-     * @param bool $complete Whether a given list enumerates every relation
-     *
-     * @throws InvalidConstruction When a declaration belongs to another language profile
+     * Null describes an open catalog. An explicit list can enumerate the entire catalog.
+     * @param array<array-key, mixed>|null $declarations An ordered list of relation, index and trigger definitions
      */
-    public function context(array|Context|null $declarations = null, bool $complete = true): AnalysisContext
+    public function context(?array $declarations = null, bool $complete = true): Context
     {
-        if ($declarations instanceof Context) {
-            Check::input($declarations instanceof AnalysisContext, 'The context must belong to the selected database.');
-            Check::input($this->profile->compatibleWith($declarations->profile), 'The context must match the selected language profile.');
-
-            return $declarations;
+        if ($declarations === null) {
+            return $this->catalog->build(null, $complete);
         }
-        $tables = [];
-        foreach ($declarations ?? [] as $declaration) {
-            if ($declaration instanceof Operation) {
-                Check::input($this->profile->compatibleWith($declaration->profile()), 'A declaring operation must belong to the selected language profile.');
-                array_push($tables, ...$declaration->declarations());
-            } else {
-                $tables[] = $declaration;
-            }
+        Check::input(array_is_list($declarations), 'Catalog definitions must form a list.');
+        $definitions = [];
+        foreach ($declarations as $definition) {
+            Check::input(is_string($definition), 'Catalog definitions must be SQL strings.');
+            $definitions[] = $definition;
         }
 
-        return $this->platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete);
+        return $this->catalog->build($definitions, $complete);
     }
 
     /**
-     * Analyzes SQL and returns a checked operation against the given declarations.
-     *
-     * @param list<Table|Operation>|Context|null $context A declaration list, a prepared context, or null for an open context
-     * @return Operation
+     * Resolves a statement and returns its complete database-specific representation.
      *
      * @throws AnalysisException When the grammar rejects the SQL
-     * @throws SemanticException When the analysis establishes a semantic problem
-     * @throws InvalidConstruction When the context belongs to another dialect or language profile
+     * @throws SemanticException When the analysis establishes a semantic error
+     * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, array|Context|null $context = null): Query
+    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|DropTrigger|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
     {
-        $operation = $this->inspect($sql, $context);
-        if ($operation->facts->diagnostics !== []) {
-            throw new SemanticException($operation->facts->diagnostics);
-        }
+        $declarations = $this->catalog->resolve($context);
+        $operation = $this->binder->resolve($sql, $declarations);
+        $statement = $operation->statement;
 
-        return $operation;
+        return match (true) {
+            $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
+            $statement instanceof ParsedSelect, $statement instanceof WithQuery => (new SelectLowering())->lower($operation),
+            $statement instanceof ParsedCompound => (new CompoundLowering())->lower($operation, $statement),
+            $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
+            $statement instanceof ParsedInsert, $statement instanceof ParsedInsertSelect, $statement instanceof ParsedInsertDefaults => (new InsertLowering())->lower($operation, $statement),
+            $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
+            $statement instanceof ValuesClause => (new ValuesLowering())->lower($operation, $statement),
+            $statement instanceof Drop => (new DropLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateIndex, $statement instanceof ParsedCreateTableAs,
+            $statement instanceof ParsedCreateTrigger, $statement instanceof ParsedCreateView => (new DefinitionLowering())->lower($operation, $statement),
+            $statement instanceof AlterRenameColumn, $statement instanceof AlterRenameTable => (new RenameLowering())->lower($operation, $statement),
+            $statement instanceof AlterAddColumn => (new AddColumnLowering())->lower($operation, $statement),
+            $statement instanceof AlterDropColumn => (new DropColumnLowering())->lower($operation, $statement),
+            $statement instanceof ParsedAnalyze, $statement instanceof ParsedReindex, $statement instanceof ParsedPragma, $statement instanceof ParsedVacuum => (new MaintenanceLowering())->lower($operation, $statement),
+            $statement instanceof ParsedAttach, $statement instanceof ParsedDetach => (new ConnectionLowering())->lower($operation, $statement),
+            default => (new TransactionLowering())->lower($statement),
+        };
     }
 
     /**
-     * Checks the structure and derives facts, including diagnostics for invalid statements.
-     *
-     * @visibility SqlSemantics
-     * @param list<Table|Operation>|Context|null $context
-     * @throws AnalysisException When the grammar rejects the SQL
-     * @throws InvalidConstruction When the context belongs to another dialect or language profile
-     */
-    public function inspect(string $sql, array|Context|null $context = null): Operation
-    {
-        $declarations = $this->context($context);
-        try {
-            $tree = $this->parser->parse($sql);
-        } catch (SourceException $error) {
-            throw new AnalysisException($error->getMessage(), 0, $error);
-        }
-        $leaves = new Leaves();
-        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves));
-        $operation = new Operation($declarations, $statement);
-
-        $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\', $this->platform->statementNamespace()]);
-        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));
-        Check::invariant($dropped === null, 'The statement lost an operand of the input: ' . ($dropped === null ? '' : $dropped::class));
-        $tokens = new TokenCorrespondence();
-        $keys = $this->platform->leafKeys($this->profile);
-        $productions = $this->platform->productions($this->profile);
-        $difference = $tokens->difference($tokens->keys($tree, $productions, $keys), $tokens->keys($this->parser->parse($operation->toString()), $productions, $keys));
-        Check::invariant($difference === null, 'The rendered SQL does not carry the tokens of the input: ' . $difference . ' in: ' . $operation->toString());
-
-        return $operation;
-    }
-
-    /**
-     * Analyzes each statement of a script against the same explicit declaration context.
+     * Publishes a complete value for each statement of a script against the same explicit declaration context.
      *
      * No statement is executed for the ones after it.
      *
-     * @param list<Table|Operation>|Context|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Operation>
+     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|DropTrigger|CreateView|RenameColumn|RenameTable|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem
+     * @throws InvalidConstruction When any statement has no complete representation
      */
-    public function analyzeAll(string $sql, array|Context|null $context = null): array
+    public function analyzeAll(string $sql, ?Context $context = null): array
     {
-        $declarations = $this->context($context);
-        $operations = [];
+        $declarations = $this->catalog->resolve($context);
+        $results = [];
         foreach ($this->split($sql) as $statement) {
-            $operations[] = $this->analyze($statement, $declarations);
+            $results[] = $this->analyze($statement, $declarations);
         }
 
-        return $operations;
+        return $results;
     }
 
     /**

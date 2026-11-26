@@ -1,0 +1,98 @@
+{
+  "revision": "SemanticsIR/postgres-stock-collation-lookup-evidence-1",
+  "approval": "pending-human-review",
+  "reference": {
+    "file": "postgres-stock-collation-lookup-v1.json",
+    "sha256": "eb52074034c54a26ad1ed3d60d51aabe2da6e4c27bce5a79ec452bec80248aa7"
+  },
+  "profiles": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "finite": {
+    "path": [
+      "implicit-stock-first",
+      "explicit-stock-first",
+      "temporary-namesake",
+      "earlier-application"
+    ],
+    "selector": [
+      "column-collation",
+      "index-collation",
+      "text-operator-class"
+    ],
+    "composition": [
+      "standalone",
+      "schema-member"
+    ],
+    "spelling": [
+      "unqualified",
+      "stock-qualified"
+    ],
+    "coordinates": 48,
+    "admitted": 42,
+    "shadowedUnqualified": 6,
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      23563,
+      34961,
+      58771
+    ],
+    "casesPerSeed": 24,
+    "directCasesPerSeed": 24,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": []
+  },
+  "routes": {
+    "analyze": "48 path, spelling, selector and composition coordinates, comprising 42 admissible and 6 shadowed",
+    "direct": "6 canonical selector/composition coordinates, independent of parsed source and the search path used in source SQL",
+    "negative": "6 shadowed and 3 further out-of-domain selectors observed to resolve to different native identities"
+  },
+  "negativeCount": 9,
+  "observations": [
+    "Read the physical namespace and identity of the column and index collations and text operator class from the pinned native catalogs.",
+    "Preserve table and index coordinates, byte-ordered text rows and the exact stock identities in the constructed graph and emitted SQL.",
+    "Supply differently named catalog identities in the current temporary namespace and a real earlier application namespace. Verify their existence and measure selection.",
+    "Check catalog presence of both physical namespace namesakes, effective search order, full ordered physical column names and kinds, physical B-tree key slot and rows with byte order, NULLs and duplicates."
+  ],
+  "faults": [
+    "Ignore an earlier application namespace",
+    "Treat the current temporary namespace as a collation or operator-class blocker",
+    "Resolve the whole declaration from a later rather than original search path",
+    "Accept a changed native operator class identity"
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "dialects": [
+    "PostgreSql"
+  ],
+  "constructors": {},
+  "existingRoles": [
+    "Schema/CreateTable",
+    "Schema/TableColumn",
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Index/Btree/IndexKey",
+    "Schema/Namespace/CreateSchema"
+  ],
+  "calibration": {
+    "calibrate-setup.sql": "d6c6dc5a80e7c048e104a4a99405723ae8a3e2af11f0ff6f2d7e1c9ff82793bb",
+    "generate.py": "105d5c240bedc921878492d30b59425d32118106d5696711de5a2b853a01efc2",
+    "observe.sql": "650373e5ba0fc3149d30b3addf8bc822c902fe33741a7625f3b1718f1fe6455a",
+    "inputs.jsonl": "be9fd102fac0b1ef0a38cca6a1d67a52c90527b0d325b529b10528561985e1b7",
+    "16.6.stdout": "4c6866b64e66f07de8d68897e0d10ed88ae6c17a458aa72332940765342fe4d8",
+    "17.2.stdout": "4960e022d18b6ae33353a28e13ee9343e5b7df2debb0b000a3615c255aa6703b"
+  }
+}

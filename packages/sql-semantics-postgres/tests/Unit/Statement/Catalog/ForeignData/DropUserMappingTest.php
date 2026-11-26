@@ -14,11 +14,11 @@ final class DropUserMappingTest extends TestCase
 {
     public function testRenderWritesIfExists(): void
     {
-        self::assertSame('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s')->toString());
+        self::assertSame('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP USER MAPPING FOR USER SERVER s')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP USER MAPPING FOR USER SERVER s')->facts->diagnostics);
     }
 }

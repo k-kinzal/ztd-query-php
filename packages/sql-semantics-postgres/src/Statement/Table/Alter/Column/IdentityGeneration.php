@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\GeneratedWhen;
  * Mirrors the `generated` `DefElem` of `AT_SetIdentity`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Changing when an identity is generated
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET GENERATED ALWAYS');
- *     $statement->statement->commands[0]->options[0]->when // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\GeneratedWhen::Always
+ * @visibility SqlSemantics
  */
 final class IdentityGeneration implements Node
 {

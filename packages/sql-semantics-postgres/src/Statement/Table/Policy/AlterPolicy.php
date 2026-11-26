@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * the conditions are derived as in CREATE POLICY (PG-POLICY-001).
  * Source: https://www.postgresql.org/docs/17/sql-alterpolicy.html.
  *
- * @visibility public
- * @example Changing a policy
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER POLICY p ON t TO PUBLIC USING (true)');
- *     $statement->toString() // => 'ALTER POLICY p ON t TO public USING (TRUE)'
+ * @visibility SqlSemantics
  */
 final class AlterPolicy implements Statement, Relation
 {

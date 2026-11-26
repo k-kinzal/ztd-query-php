@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * Mirrors PostgreSQL's `AlterOpFamilyStmt` with `isDrop` true.
  * Source: https://www.postgresql.org/docs/17/sql-alteropfamily.html.
  *
- * @visibility public
- * @example Counting the removed members
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR FAMILY f USING btree DROP FUNCTION 1 (int4, int8)');
- *     count($operation->statement->members) // => 1
+ * @visibility SqlSemantics
  */
 final class OperatorFamilyRemoval implements Statement
 {

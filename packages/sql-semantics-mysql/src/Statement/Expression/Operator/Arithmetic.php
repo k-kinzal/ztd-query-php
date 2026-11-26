@@ -33,12 +33,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * https://dev.mysql.com/doc/refman/8.4/en/bit-functions.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Writing MOD as the remainder operator
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a MOD 2 = 1')->toString() // => 'SELECT a FROM t WHERE a % 2 = 1'
- * @example Typing a division of integers as DECIMAL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE 1 / 2');
- *     $query->facts->scalar($query->statement->where)->type->descriptor->name() // => 'DECIMAL'
+ * @visibility SqlSemantics
  */
 final class Arithmetic implements Scalar
 {

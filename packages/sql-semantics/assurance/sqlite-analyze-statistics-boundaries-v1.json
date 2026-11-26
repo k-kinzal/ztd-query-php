@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/sqlite-analyze-statistics-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Rebuild no native statistics until one complete SQLite selector is established. Verify native schema-before-index-before-relation priority.",
+  "rules": {
+    "Maintenance/Analyze::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Analyze::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Analyze::toString": {
+      "common": [
+        "return $this->target === null ? 'ANALYZE' : 'ANALYZE ' . $this->target->quoted();"
+      ]
+    },
+    "Maintenance/AnalyzeLowering::lower": {
+      "common": [
+        "$target = $statement->target;",
+        "if ($target === null) {",
+        "    return new Analyze();",
+        "}",
+        "$context = $operation->context;",
+        "$lookup = new MaintenanceLookup();",
+        "if ($target->schema === null) {",
+        "    $schema = $lookup->schema($target->name, $lookup->path($context));",
+        "    if ($schema !== null) {",
+        "        return new Analyze(new Identifier($schema->value));",
+        "    }",
+        "}",
+        "$scopes = $lookup->scopes($context, $target->schema);",
+        "$selected = $lookup->index($context, $target, $scopes) ?? $lookup->relation($context, $target, $scopes);",
+        "Check::input($selected !== null, 'ANALYZE requires a resolved schema, relation or index.');",
+        "return new Analyze($selected);"
+      ]
+    }
+  }
+}

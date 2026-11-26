@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
  * Mirrors an `A_Indices` item with `is_slice` true.
  * Source: https://www.postgresql.org/docs/17/arrays.html#ARRAYS-ACCESSING.
  *
- * @visibility public
- * @example Reading a slice without a lower bound
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $1[:2]');
- *     [$query->field(0)->expression->steps[0]->lower, $query->toString()] // => [null, 'SELECT $1 [: 2]']
+ * @visibility SqlSemantics
  */
 final class Slice implements IndirectionStep
 {

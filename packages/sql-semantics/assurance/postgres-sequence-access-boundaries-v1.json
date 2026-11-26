@@ -1,0 +1,320 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-access-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Validate explicit sequence access statement dispatch, closed privilege operands, detached recipient and target lists, release checks and SQL composition.",
+  "rules": {
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\ChangeOwner, $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename && $statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaAlterLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\SetSchema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\MoveSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\AlterSequence => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\ReconfigureSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequenceActionsLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant, $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Revoke => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccessLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => match ($statement->target) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSchemaLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabaseLowering())->lower($operation, $statement),",
+        "    },",
+        "};"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequencePrincipal::reference": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;"
+      ]
+    },
+    "Schema/Sequence/Authorization/SequencePrincipal::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'OWNER TO ' . $this->reference();"
+      ]
+    },
+    "Schema/Sequence/Access/GrantSequenceAccess::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($grantOption && $access->target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\NamedSequences && $access->hasEffectiveRights()) {",
+        "    foreach ($access->grantees as $recipient) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($recipient->role !== \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\UniversalGrantee::Everyone, 'Grant options on named sequences require individual grantees.');",
+        "    }",
+        "}"
+      ]
+    },
+    "Schema/Sequence/Access/GrantSequenceAccess::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->access->profileId();"
+      ]
+    },
+    "Schema/Sequence/Access/GrantSequenceAccess::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'GRANT ' . $this->access->objectSql() . ' TO ' . $this->access->recipientsSql() . ($this->grantOption ? ' WITH GRANT OPTION' : '') . $this->access->grantorSql();"
+      ]
+    },
+    "Schema/Sequence/Access/RevokeSequenceAccess::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Sequence/Access/RevokeSequenceAccess::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->access->profileId();"
+      ]
+    },
+    "Schema/Sequence/Access/RevokeSequenceAccess::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REVOKE ' . ($this->grantOptionOnly ? 'GRANT OPTION FOR ' : '') . $this->access->objectSql() . ' FROM ' . $this->access->recipientsSql() . $this->access->grantorSql() . ' ' . $this->dependency->value;"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccess::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\NamedSequences) {",
+        "    $target->checkRelease($release);",
+        "}",
+        "$grantor?->checkRelease($release);",
+        "$this->rights = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($rights, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceRight::class, 'Sequence privileges require an ordered list of rights.');",
+        "$recipients = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($grantees, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceGrantee::class, 'Sequence privileges require an ordered nonempty list of recipients.', 1);",
+        "foreach ($recipients as $recipient) {",
+        "    $recipient->checkRelease($release);",
+        "}",
+        "$this->grantees = $recipients;"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccess::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccess::hasEffectiveRights": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($this->rights === []) {",
+        "    return true;",
+        "}",
+        "foreach ($this->rights as $right) {",
+        "    if ($right !== \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceRight::LegacyRule) {",
+        "        return true;",
+        "    }",
+        "}",
+        "return false;"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccess::objectSql": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->rights as $right) {",
+        "    $names[] = $right->value;",
+        "}",
+        "$rights = $names === [] ? 'ALL' : implode(', ', $names);",
+        "return $rights . ' ON ' . $this->target->toString();"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccess::recipientsSql": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$roles = [];",
+        "foreach ($this->grantees as $role) {",
+        "    $roles[] = $role->toString();",
+        "}",
+        "return implode(', ', $roles);"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccess::grantorSql": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->grantor === null ? '' : ' GRANTED BY ' . $this->grantor->reference();"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceGrantee::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Sequence/Access/SequenceGrantee::checkRelease": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($this->role instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequencePrincipal) {",
+        "    $this->role->checkRelease($release);",
+        "}"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceGrantee::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->role instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequencePrincipal ? $this->role->reference() : $this->role->value;"
+      ]
+    },
+    "Schema/Sequence/Access/NamedSequences::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$list = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($sequences, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceSelector::class, 'Sequence privileges require named sequence targets.', 1);",
+        "foreach ($list as $sequence) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($sequence->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing, 'Sequence privileges require an existing named sequence.');",
+        "}",
+        "$this->sequences = $list;"
+      ]
+    },
+    "Schema/Sequence/Access/NamedSequences::checkRelease": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "foreach ($this->sequences as $sequence) {",
+        "    $sequence->checkProfile($release);",
+        "}"
+      ]
+    },
+    "Schema/Sequence/Access/NamedSequences::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->sequences as $sequence) {",
+        "    $names[] = $sequence->quoted();",
+        "}",
+        "return 'SEQUENCE ' . implode(', ', $names);"
+      ]
+    },
+    "Schema/Sequence/Access/SequencesInSchemas::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$list = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($schemas, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier::class, 'Schema-wide sequence privileges require named schemas.', 1);",
+        "foreach ($list as $schema) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'Sequence privileges cannot use a numbered temporary schema.');",
+        "}",
+        "$this->schemas = $list;"
+      ]
+    },
+    "Schema/Sequence/Access/SequencesInSchemas::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->schemas as $schema) {",
+        "    $names[] = $schema->quoted();",
+        "}",
+        "return 'ALL SEQUENCES IN SCHEMA ' . implode(', ', $names);"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccessLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'Sequence privileges require the native naming profile.');",
+        "$target = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccessTargetLowering())->lower($context, $statement->target);",
+        "$owners = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering();",
+        "$grantees = [];",
+        "foreach ($statement->grantees as $role) {",
+        "    $grantees[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceGrantee($role->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind::Everyone ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\UniversalGrantee::Everyone : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequencePrincipal($owners->lower($context, $role)));",
+        "}",
+        "$grantor = $statement->grantor === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Authorization\\SequencePrincipal($owners->lower($context, $statement->grantor));",
+        "$rights = [];",
+        "foreach ($statement->privileges as $privilege) {",
+        "    $word = match ($privilege->privilege()) {",
+        "        'select' => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceRight::Select,",
+        "        'update' => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceRight::Update,",
+        "        'usage' => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceRight::Usage,",
+        "        'rule' => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceRight::LegacyRule,",
+        "        default => null,",
+        "    };",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($word !== null && $privilege->columns === [], 'A sequence privilege must name one native right without columns.');",
+        "    $rights[] = $word;",
+        "}",
+        "$access = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceAccess($target, $rights, $grantees, $grantor, $context->profile->grammar);",
+        "if ($statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant) {",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\GrantSequenceAccess($access, $statement->grantOption);",
+        "}",
+        "$dependency = match ($statement->behavior) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior::Cascade => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceGrantDependency::Cascade,",
+        "    null, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior::Restrict => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequenceGrantDependency::Restrict,",
+        "};",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\RevokeSequenceAccess($access, $statement->grantOptionOnly, $dependency);"
+      ]
+    },
+    "Schema/Sequence/Access/SequenceAccessTargetLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\RelationsTarget || $target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\SchemaContentsTarget) && $target->object === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeObjectKind::Sequence, 'Sequence privileges require an explicit sequence target.');",
+        "if ($target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\RelationsTarget) {",
+        "    $lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceTargetLowering();",
+        "    $sequences = [];",
+        "    foreach ($target->relations as $relation) {",
+        "        $sequences[] = $lowering->lower($context, $relation->name, false);",
+        "    }",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\NamedSequences($sequences);",
+        "}",
+        "$binding = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding();",
+        "$schemas = [];",
+        "foreach ($target->schemas as $schema) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($binding->known($context, $schema), 'Sequence privileges require a declared schema.');",
+        "    $schemas[] = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Access\\SequencesInSchemas($schemas);"
+      ]
+    }
+  }
+}

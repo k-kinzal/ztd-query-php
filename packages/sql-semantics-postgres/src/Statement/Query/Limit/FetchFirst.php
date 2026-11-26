@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\FetchCounts;
  * constant, as the grammar requires.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-LIMIT.
  *
- * @visibility public
- * @example Reading FETCH FIRST WITH TIES
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 ORDER BY 1 FETCH NEXT 2 ROW WITH TIES');
- *     [$query->statement->options->limit->count->withTies, $query->toString()] // => [true, 'SELECT 1 ORDER BY 1 FETCH FIRST 2 ROWS WITH TIES']
+ * @visibility SqlSemantics
  * @example Refusing a count that would need parentheses
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));
  *     $two = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'));

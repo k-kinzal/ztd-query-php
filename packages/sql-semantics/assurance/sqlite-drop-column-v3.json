@@ -1,0 +1,182 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-column-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 UTF-8, short names, numbered parameters, sane native schema rewriting with legacy_alter_table and writable_schema disabled. Fixtures enable foreign_keys.",
+  "scope": "Removing one resolved ordinary or generated declared column from an ordinary table, with a checked declaration-local dependency projection and native schema-wide rewrite effects.",
+  "constructors": {
+    "Schema/Alter/DropColumn": {
+      "role": "Remove one resolved declared column of an ordinary table.",
+      "structure": "Absolute schema and table, an ordered declaration heading with immutable columns and their local drop restrictions, and the exact ordinal to remove.",
+      "conditions": "The heading has 2 through 2,000 distinct declared identifiers under SQLite ASCII folding. The target ordinal belongs to this heading and picks a column that the original table declaration permits removing. At least one non-generated column survives. Quoted identifiers stay exact, and no context or unresolved declaration is reachable from the value.",
+      "meaning": "Remove the selected column's data and owned declaration constraints. Compact the remaining slots without changing their types, order or rows. Apply SQLite's native schema validation and atomic failure behavior for external dependencies and native storage state. Row identifier aliases can become available again when a declared alias is removed.",
+      "externalInterpretation": "Use the same table and declaration facts, storage mode, outside schema relationships, rows and transaction state. An index or view outside the table definition can prevent native execution. The analyzed declaration is only a source of checked structural metadata.",
+      "sql": "Emit ALTER TABLE, quoted schema and table, DROP COLUMN, and the quoted name of the selected declared ordinal.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Alter/DropMember": {
+      "role": "One declared member in an ordinary table's column-removal heading.",
+      "structure": "One Identifier, one Boolean for whether it is generated and one Boolean for a declaration-local removal restriction.",
+      "conditions": "Immutable checked identifier, closed Boolean data. Actual ownership, unique placement and selection are enforced by DropColumn.",
+      "meaning": "Records a declared coordinate and the roles required to determine whether a removal can leave a valid declaration.",
+      "externalInterpretation": "The corresponding named column must have the recorded generated status and declaration-local drop restriction.",
+      "sql": "The owning removal emits the selected member's checked quoted name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Alter/DropColumn"
+  ],
+  "existingRoles": [
+    "Identifier"
+  ],
+  "rules": [
+    "Analyze resolves the absolute table under native search order and selects a declared slot by native ASCII-insensitive comparison, with no fallback to an implicit rowid for locating the removed member.",
+    "Catalog compilation derives declaration-local restrictions from the bound CREATE TABLE definition. Inline and table primary or unique key references and local members of a surviving table-level foreign key are protected. References from any surviving generated expression or CHECK are checked against actual resolved slots. An owned check disappears with its own column, and SQLite discards the left side of empty membership.",
+    "A surviving CHECK may still read a row identifier via a previously declared rowid alias after its removal if the ordinary table has a native row identifier. The same substitution is unavailable to generated expressions. The declaration projection preserves that distinction.",
+    "An absent, last, locally protected or only non-generated member cannot become a completed removal. Missing declaration facts, nonordinary relations and ambiguous targets are rejected before publication.",
+    "A separate named index or view of the target can cause a native step-time rollback of the rewrite. Measuring those actual effects belongs to the native observer. A same-named table in another schema and its declarations stay independently observable.",
+    "For native main-side index rewrite under temp-table shadowing, compare the actual phase-specific refusal when the indexed name is absent in temp. A quoted index field can become an expression after removing its main-side column with a matching name in temp. When native SQLite makes that change, retain its resulting catalog, row and integrity observations."
+  ],
+  "observations": [
+    "Compare the exact field removed and ordered typed catalog and row results, including nulls and duplicates. Compare STRICT and WITHOUT ROWID, table identity, dependency kinds, names, underlying rowid where present and transactional restoration.",
+    "Measure later inserts and reads of retained rows and retained dependencies and native guarded failures, without treating a preparation error as a successful comparison.",
+    "Measure original and emitted SQL independently for authored statements. Exercise quoted and folded column names and same-named schema shadowing.",
+    "Observe sqlite_schema object retention, index_info's expression ordinal, integrity diagnostics and restoration before and after the rewrite, subsequent insert and rollback."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "topology": [
+      "rowid",
+      "rowid-key",
+      "without-rowid",
+      "strict"
+    ],
+    "positions": [
+      1,
+      2,
+      3
+    ],
+    "population": [
+      "empty",
+      "typed-null",
+      "duplicate"
+    ],
+    "definitions": [
+      "plain",
+      "own-check",
+      "independent-check",
+      "surviving-generated",
+      "removed-generated"
+    ],
+    "externalEffects": [
+      "none",
+      "retained-index",
+      "blocked-index",
+      "blocked-view"
+    ],
+    "identity": "All 1,440 coordinates in printed axis order, recovered from the built member, prior native catalog and stored rows, declaration effect and external fixture observation."
+  },
+  "exploration": {
+    "seeds": [
+      52313,
+      63743,
+      85121
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 360,
+    "allowedExclusions": [],
+    "domain": "Vary heading width, position, names, append/generated/ordinary roles, table profiles, NULL and repeated values, and dependency obstruction. Include authored controls for the first unkeyed member, an exposed rowid, folded CHECK, quoted names and temp shadowing."
+  },
+  "negative": [
+    "Unordered heading",
+    "Repeated declared names",
+    "Non-member element",
+    "Missing ordinal",
+    "Out-of-profile heading width",
+    "Only declared column",
+    "Only remaining ordinary column",
+    "Protected member"
+  ],
+  "analysisNegative": [
+    "Missing table",
+    "Nonordinary table",
+    "Implicit rowid is not a declared column",
+    "Last declared column",
+    "Inline primary-key role",
+    "Inline unique-key role",
+    "Table unique-key role",
+    "Composite primary-key role",
+    "Surviving CHECK dependency",
+    "Surviving generation dependency",
+    "Local term of a table foreign key",
+    "Only non-generated member"
+  ],
+  "faults": [
+    "Remove column eligibility guard",
+    "Permit removal of the only ordinary member",
+    "Render an adjacent old ordinal",
+    "Render against the wrong schema",
+    "Forget the local dependency restriction during lowering"
+  ],
+  "open": [
+    "Additional attachment and SQLite release profiles, larger schema dependency combinations and broader trigger and foreign-key effect witnesses remain tracked by the language inventory."
+  ],
+  "trust": [
+    "Native pinned SQLite transition and exact profile",
+    "Bound declaration facts and typed dependency projection",
+    "Independent fixture, row and catalog observer, ordered effect evaluator and isolated distribution replay"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_altertable.html#alter_table_drop_column",
+    "https://sqlite.org/gencol.html",
+    "https://sqlite.org/src/file/src/alter.c?ci=version-3.47.2"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "1c46a9dabf1e05df2fd8f8a65e8c3316341d7a508344ba7361e779d1fb852357",
+    "nativeCases": "ea1f5b8b53328719de2d56215b72fdc5684cc8ac4077df68a730c745183328a6",
+    "definitionDriver": "ad4e381ff455babf46fd0504afabbaeaf256bc43cd23340923e2c41b91924723",
+    "definitionCases": "240f0933b8edafd2a641527ed7a70bc84e7668effad180f250b7d0042c980b08",
+    "rowidDriver": "3e9807a63041676abac56bbb7e0c605cde327cd295df975031b550598c514c0f",
+    "rowidCases": "85220ef8f9f8b40cc8aa7c69a4228705e4d968d647463b90faa3e5fd4b85413b",
+    "indexShadowDriver": "66bc088fa9f5123c57f2c62bf6110936272c479c6a1faadfac77fddbec19d489",
+    "indexShadowCases": "e4ae0d0641014600640d2b86b73668920bac8000d1526179a0b618fe35a75a23",
+    "indexRebindDriver": "16e871b12cf1d3e62c16b37734d0ceb266a30b4320a73795c2f8fc7a7ac293f6",
+    "indexRebindCases": "e89b36f3a429ea932755eb8e14c689f3dbafa8029dad2dd0eaea90407a4371a3"
+  },
+  "extends": "sqlite-drop-column-v2.json",
+  "change": "Extends observations after native preflight found index-schema reparse depends on the same-named temp table and the original index's quoting. Retains the complete finite product, all original inputs and budgets. Adds two mandatory authored controls, including one known native index integrity failure, and preserves the initial counterexample. The execution record separates the twelve distinct analysis refusals from the direct negatives and enumerates the comparator injection separately from the five production-source mutations. All six failure obligations still execute.",
+  "comparatorFaults": [
+    "Ignore actual surviving generated storage or row data in comparison"
+  ]
+}

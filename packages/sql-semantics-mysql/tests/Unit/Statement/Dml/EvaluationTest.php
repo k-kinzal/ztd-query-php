@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Dml;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Evaluation::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class EvaluationTest extends TestCase
 {
     public function testDeriveStatementDerivesTheItemsWithoutOutput(): void
     {
-        $operation = (new Semantics())->inspect('DO 1 + 1, @a := 2');
+        $operation = (new Inspection())->diagnose('DO 1 + 1, @a := 2');
         self::assertInstanceOf(Evaluation::class, $operation->statement);
 
         self::assertCount(2, $operation->statement->items);
@@ -25,15 +25,15 @@ final class EvaluationTest extends TestCase
 
     public function testDeriveStatementReportsAStarWithoutTables(): void
     {
-        $operation = (new Semantics())->inspect('DO *');
+        $operation = (new Inspection())->diagnose('DO *');
 
         self::assertSame('No tables used', $operation->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheItems(): void
     {
-        self::assertSame('DO 1, 2', (new Semantics('mysql-5.6.51'))->inspect('do 1, 2')->toString());
-        self::assertSame('DO 1 x', (new Semantics('mysql-5.7.44'))->inspect('do 1 x')->toString());
+        self::assertSame('DO 1, 2', (new Inspection('mysql-5.6.51'))->diagnose('do 1, 2')->toString());
+        self::assertSame('DO 1 x', (new Inspection('mysql-5.7.44'))->diagnose('do 1 x')->toString());
     }
 
     public function testRenderRejectsAnEmptyList(): void

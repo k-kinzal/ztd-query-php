@@ -10,10 +10,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(FetchCursor::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class FetchCursorTest extends TestCase
 {
     public function testDeriveProgramResolvesTheCursorAndTheTargets(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE b INT; DECLARE c CURSOR FOR SELECT 1, 2; FETCH c INTO a, B; END');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE b INT; DECLARE c CURSOR FOR SELECT 1, 2; FETCH c INTO a, B; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -40,7 +40,7 @@ final class FetchCursorTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsAnUndeclaredName')]
     public function testDeriveProgramReportsAnUndeclaredName(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -59,7 +59,7 @@ final class FetchCursorTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     /**

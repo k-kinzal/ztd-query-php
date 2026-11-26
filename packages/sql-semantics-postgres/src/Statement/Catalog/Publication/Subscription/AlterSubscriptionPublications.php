@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * ALTER_SUBSCRIPTION_ADD_PUBLICATION, _SET_PUBLICATION or _DROP_PUBLICATION.
  * Source: https://www.postgresql.org/docs/17/sql-altersubscription.html. Status: Implemented.
  *
- * @visibility public
- * @example Adding a publication
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s ADD PUBLICATION p3');
- *     [$operation->statement->action, $operation->statement->publications[0]->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction::Add, 'p3']
+ * @visibility SqlSemantics
  */
 final class AlterSubscriptionPublications implements Statement
 {

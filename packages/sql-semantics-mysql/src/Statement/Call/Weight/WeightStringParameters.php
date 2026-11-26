@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * Source: https://github.com/mysql/mysql-server/blob/8.4/sql/item_strfunc.cc (Item_func_weight_string::print).
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing the internal form
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT WEIGHT_STRING('ab', 0, 4, 64)");
- *     $query->field(0)->type->descriptor->name() // => 'VARBINARY'
+ * @visibility SqlSemantics
  */
 final class WeightStringParameters implements Scalar
 {

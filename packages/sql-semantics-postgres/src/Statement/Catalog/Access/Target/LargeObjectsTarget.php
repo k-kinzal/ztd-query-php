@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  * number that is no object identifier (PG-LARGE-OBJECT-OID-001).
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
- * @example Reading the identifier of a large object
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SELECT ON LARGE OBJECT 16385 TO joe');
- *     $operation->statement->target->identifiers[0]->magnitude->digits // => '16385'
+ * @visibility SqlSemantics
  */
 final class LargeObjectsTarget implements PrivilegeTarget
 {

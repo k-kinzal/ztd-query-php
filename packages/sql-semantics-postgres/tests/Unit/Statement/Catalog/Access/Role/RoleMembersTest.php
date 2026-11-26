@@ -19,7 +19,7 @@ final class RoleMembersTest extends TestCase
 
     public function testRenderWritesTheKeywordsAndTheRoles(): void
     {
-        self::assertSame('CREATE ROLE r IN GROUP a, b ROLE c USER d ADMIN CURRENT_USER IN ROLE e', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ROLE r IN GROUP a, b ROLE c USER d ADMIN CURRENT_USER IN ROLE e')->toString());
+        self::assertSame('CREATE ROLE r IN GROUP a, b ROLE c USER d ADMIN CURRENT_USER IN ROLE e', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE ROLE r IN GROUP a, b ROLE c USER d ADMIN CURRENT_USER IN ROLE e')->toString());
     }
 
     public function testRejectsAnEmptyList(): void

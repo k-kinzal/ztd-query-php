@@ -19,9 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stop-group-replication.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Stopping group replication
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('stop group_replication')->toString() // => 'STOP GROUP_REPLICATION'
+ * @visibility SqlSemantics
  */
 final class StopGroupReplication implements Statement
 {

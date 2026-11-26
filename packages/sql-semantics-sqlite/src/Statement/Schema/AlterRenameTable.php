@@ -27,10 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * Source: https://sqlite.org/lang_altertable.html#alter_table_rename.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a table rename
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE main.t RENAME TO u');
- *     [$alter->statement->table->name->value, $alter->statement->newName->value, $alter->declarations()] // => ['t', 'u', []]
+ * @visibility SqlSemantics
  */
 final class AlterRenameTable implements Statement
 {

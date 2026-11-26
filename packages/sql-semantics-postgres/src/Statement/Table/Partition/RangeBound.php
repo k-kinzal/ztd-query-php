@@ -19,9 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\RangeDatums;
  * column is visible.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Writing a range bound
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, MINVALUE) TO (10, maxvalue)')->toString() // => 'CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, minvalue) TO (10, maxvalue)'
+ * @visibility SqlSemantics
  */
 final class RangeBound implements PartitionBound
 {

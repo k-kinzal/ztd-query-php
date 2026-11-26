@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Query\With;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(WithClause::class)]
 #[Medium]
@@ -18,9 +18,9 @@ final class WithClauseTest extends TestCase
 {
     public function testRenderWritesRecursiveAndEveryTable(): void
     {
-        $semantics = new Semantics();
-        $recursive = $semantics->inspect('with recursive c as (select 1), d as (select 2) select * from c, d');
-        $plain = $semantics->inspect('with c as (select 1) select * from c');
+        $semantics = new Inspection();
+        $recursive = $semantics->diagnose('with recursive c as (select 1), d as (select 2) select * from c, d');
+        $plain = $semantics->diagnose('with c as (select 1) select * from c');
 
         self::assertInstanceOf(WithQuery::class, $recursive->statement);
         self::assertTrue($recursive->statement->with->recursive);
@@ -33,7 +33,7 @@ final class WithClauseTest extends TestCase
 
     public function testRenderWritesTablesThatRepeatANameAndReportsThem(): void
     {
-        $query = (new Semantics())->inspect('WITH c AS (SELECT 1), c AS (SELECT 2) SELECT * FROM c');
+        $query = (new Inspection())->diagnose('WITH c AS (SELECT 1), c AS (SELECT 2) SELECT * FROM c');
 
         self::assertSame('WITH c AS (SELECT 1), c AS (SELECT 2) SELECT * FROM c', $query->toString());
         self::assertSame(MisuseRule::DuplicateCommonTable->value, $query->facts->diagnostics[0]->message());

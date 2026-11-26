@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * stands for every column.
  * Source: https://www.postgresql.org/docs/17/sql-vacuum.html, https://www.postgresql.org/docs/17/sql-analyze.html.
  *
- * @visibility public
- * @example Reading the columns of an analyzed table
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ANALYZE app.t (a, b)');
- *     [$operation->statement->targets[0]->table->schema->value, count($operation->statement->targets[0]->columns)] // => ['app', 2]
+ * @visibility SqlSemantics
  */
 final class MaintenanceTarget implements Node
 {

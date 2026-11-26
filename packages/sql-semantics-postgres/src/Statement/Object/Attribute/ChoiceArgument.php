@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * set; the member is the word the text names.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, https://www.postgresql.org/docs/17/sql-createtype.html.
  *
- * @visibility public
- * @example Reading the parallel mode of an aggregate
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4, parallel = SAFE)');
- *     $operation->statement->definition[2]->value->choice // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Safe
+ * @visibility SqlSemantics
  * @example Rejecting a member the text does not name
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\ChoiceArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('safe'), \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Unsafe) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

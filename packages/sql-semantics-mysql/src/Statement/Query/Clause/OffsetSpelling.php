@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Clause;
  * write the offset and the count in opposite order.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
- * @visibility public
- * @example Reading the spelling of an offset
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t LIMIT 5, 10');
- *     $query->statement->limit->spelling // => \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma
+ * @visibility SqlSemantics
  */
 enum OffsetSpelling
 {

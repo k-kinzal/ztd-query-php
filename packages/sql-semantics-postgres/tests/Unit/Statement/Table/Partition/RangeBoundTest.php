@@ -14,8 +14,8 @@ final class RangeBoundTest extends TestCase
 {
     public function testDeriveClauseSeesNoColumnButTheInfiniteBounds(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (x)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (x)', []);
         self::assertSame([
           0 => 'Relation p does not exist.',
           1 => 'Column x does not exist.',
@@ -24,8 +24,8 @@ final class RangeBoundTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, MINVALUE) TO (10, MAXVALUE)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, MINVALUE) TO (10, MAXVALUE)', []);
         self::assertSame('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, minvalue) TO (10, maxvalue)', $statement->toString());
     }
 }

@@ -1,0 +1,106 @@
+{
+  "revision": "SemanticsIR/postgres-automatic-btree-name-evidence-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "reference": {
+    "file": "postgres-automatic-btree-name-v1.json",
+    "sha256": "6b631a80acf72bf208b75fe35fad02f8ece2cbdfcd7d66027511e08578392208"
+  },
+  "constructors": {},
+  "existingRoles": [
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Namespace/CreateSchema"
+  ],
+  "finite": {
+    "standalone": {
+      "coordinates": 192,
+      "axes": {
+        "layout": [
+          "single",
+          "key-order",
+          "includes",
+          "label-collisions",
+          "asymmetric-utf8",
+          "equal-utf8-bytes"
+        ],
+        "existingRole": [
+          "named-table",
+          "generated-index",
+          "sequence",
+          "namespace-decoy"
+        ],
+        "occupiedPrefixLength": [
+          0,
+          1,
+          3,
+          11
+        ],
+        "policy": [
+          "plain",
+          "unique"
+        ]
+      }
+    },
+    "schema": {
+      "coordinates": 30,
+      "axes": {
+        "layout": [
+          "single",
+          "key-order",
+          "includes",
+          "label-collisions",
+          "asymmetric-utf8",
+          "equal-utf8-bytes"
+        ],
+        "earlierOccupant": [
+          "none",
+          "table",
+          "sequence",
+          "view",
+          "index"
+        ]
+      },
+      "indexCountPerCoordinate": 2
+    }
+  },
+  "exploration": {
+    "seeds": [
+      19613,
+      68011,
+      91873
+    ],
+    "casesPerSeed": 24,
+    "allowedExclusions": [],
+    "timeoutSecondsPerRelease": 420
+  },
+  "negative": [
+    "Open namespace",
+    "Opaque catalog with an omitted expression-key index name",
+    "Name occupant conflicting with an unguarded direct value",
+    "A schema member falsely declares an earlier index name vacant"
+  ],
+  "faults": [
+    "Ignore included attribute contribution",
+    "Reuse an occupied lower suffix",
+    "Use another schema's occupied names",
+    "Overclip the selected valid UTF-8 prefix",
+    "Forget a prior unnamed schema index",
+    "Ignore a native physical attribute label difference"
+  ],
+  "calibration": {
+    "standalone": {
+      "16.6": "264151fa7ae241ff85159ca89f5a9cc20d51f283214caa7c82dd6735cde3a938",
+      "17.2": "e856c1a4a400c2a9822eb049828df5c9e7b20120caafa0261f9411de6fac37ec"
+    },
+    "schema": {
+      "16.6": "4bde54ccf2e1fa3f6bc9566546ed65a2f920b3c9f8734a97f4aa7c0e25e46476",
+      "17.2": "4bd06c70a106d36cd0645e088d3e3f2dd32ea9073a1eb5abd35c9726119eaab9"
+    }
+  },
+  "extends": {
+    "file": "postgres-automatic-btree-name-evidence-v1.json",
+    "sha256": "24ab8dff9d692510c6d1493380f49eb3c2952603f2b694037a3cf173b8a65530"
+  }
+}

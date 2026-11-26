@@ -10,7 +10,47 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
-use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedLowering;
+use SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect;
+use SqlSemantics\Platform\MySql\Ir\Mutation\Delete;
+use SqlSemantics\Platform\MySql\Ir\Mutation\DeleteLowering;
+use SqlSemantics\Platform\MySql\Ir\Mutation\Insert;
+use SqlSemantics\Platform\MySql\Ir\Mutation\InsertLowering;
+use SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery;
+use SqlSemantics\Platform\MySql\Ir\Mutation\Update;
+use SqlSemantics\Platform\MySql\Ir\Mutation\UpdateLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\Compound;
+use SqlSemantics\Platform\MySql\Ir\Rows\CompoundLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
+use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjectionLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\Recursive\RecursiveSeriesLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\RecursiveSeries;
+use SqlSemantics\Platform\MySql\Ir\Rows\With\WithLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
+use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RelationChangeLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RenameTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\CreateRelationLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\CreateTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys;
+use SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndexLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes;
+use SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility;
+use SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike;
+use SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs;
+use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView;
+use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
+use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Ir\SelectLowering;
+use SqlSemantics\Platform\MySql\Ir\Transaction\Transaction;
+use SqlSemantics\Platform\MySql\Ir\Transaction\TransactionLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Contract\SearchPath;
@@ -18,49 +58,48 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException;
+use SqlSemantics\Platform\MySql\Model\Facade\Catalog;
 use SqlSemantics\Platform\MySql\Model\Facade\Splitter;
-use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
-use SqlSemantics\Platform\MySql\Model\Validation\LeafEmbedding;
-use SqlSemantics\Platform\MySql\Model\Validation\Publication;
-use SqlSemantics\Platform\MySql\Model\Validation\TokenCorrespondence;
-use SqlSemantics\Platform\MySql\Model\Validation\ValueGraph;
-use SqlSemantics\Query;
+use SqlSemantics\Platform\MySql\Model\Facade\StatementBinder;
+use SqlSemantics\Platform\MySql\Statement\Dml\Delete as ParsedDelete;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery as ParsedInsertQuery;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows as ParsedInsert;
+use SqlSemantics\Platform\MySql\Statement\Dml\Update as ParsedUpdate;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery as ParsedParenthesized;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression as ParsedWith;
+use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation as ParsedCompound;
+use SqlSemantics\Platform\MySql\Statement\Query\With\With as ParsedRecursiveWith;
+use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable as ParsedDerived;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin as ParsedBegin;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit as ParsedCommit;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\ReleaseSavepoint as ParsedReleaseSavepoint;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback as ParsedRollback;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint as ParsedRollbackToSavepoint;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint as ParsedSavepoint;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction as ParsedStartTransaction;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex as ParsedCreateIndex;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable as ParsedCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike as ParsedCreateTableLike;
+use SqlSemantics\Platform\MySql\Statement\View\CreateView as ParsedCreateView;
 
 /**
- * Analyzes SQL of one fixed language profile into read-only operations.
- *
- * An operation holds the concrete structure of the statement, the facts
- * derived against an explicit declaration context, and SQL rendered from that
- * structure. Nothing here changes an operation: a different statement is
- * analyzed anew or built from explicit inputs.
+ * Binds SQL under a fixed dialect profile and publishes complete semantic values.
  *
  * @visibility public
- * @example Resolving a query against the declaration it depends on
+ * @example Analyzing and rendering a projection
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
- *     $query = $semantics->analyze('SELECT name FROM users WHERE id = 1', [$users]);
- *     $query->field('name')->column() === $users->declarations()[0]->columns[1] // => true
- * @example Rendering SQL from the analyzed structure
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $semantics->analyze('select   1')->toString() // => 'SELECT 1'
- * @example Finding the statements of a script
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $semantics->split("SELECT 1; SELECT ';'") // => ['SELECT 1;', " SELECT ';'"]
+ *     $semantics->analyze('SELECT 42 AS answer')->profileId() === $semantics->analyze('SELECT 1')->profileId() // => true
  */
 final class Semantics implements Analyzer
 {
-    private readonly Platform $platform;
-
     private readonly LanguageProfile $profile;
 
     private readonly SqlParser $parser;
 
-    /**
-     * @var list<string>|null
-     */
-    private readonly ?array $searchPath;
+    private readonly Catalog $catalog;
+
+    private readonly StatementBinder $binder;
 
     /**
      * Fixes the language profile: database, grammar release, session mode and parameter style.
@@ -74,11 +113,12 @@ final class Semantics implements Analyzer
      */
     public function __construct(?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null)
     {
-        $this->platform = Platform::shared();
-        $this->profile = $this->platform->profile($grammarVersion, $mode, $parameters);
-        $this->parser = $this->platform->parser($this->profile);
-        $this->searchPath = $searchPath?->schemas;
-        $this->platform->context($this->profile, $this->searchPath, [], false);
+        $platform = Platform::shared();
+        $this->profile = $platform->profile($grammarVersion, $mode, $parameters);
+        $this->parser = $platform->parser($this->profile);
+        $platform->context($this->profile, $searchPath?->schemas, [], false);
+        $this->catalog = new Catalog($this->profile, $searchPath?->schemas, $this->parser);
+        $this->binder = new StatementBinder($this->parser);
     }
 
     /**
@@ -90,112 +130,78 @@ final class Semantics implements Analyzer
     }
 
     /**
-     * Prepares an immutable declaration context or verifies a supplied context.
+     * Builds a context from explicit SQL relation definitions.
      *
-     * Null declarations give an open context: relations that are not declared
-     * may exist. A list, even an empty one, gives a context that enumerates
-     * every relation unless `$complete` is false. An operation in the list
-     * contributes the declarations it provides; it is not executed, and ALTER,
-     * DROP and writes contribute nothing.
-     *
-     * @param list<Table|Operation>|Context|null $declarations A declaration list, a prepared context, or null for an open context
-     * @param bool $complete Whether a given list enumerates every relation
-     *
-     * @throws InvalidConstruction When a declaration belongs to another language profile
+     * Null describes an open catalog. An explicit list can enumerate the entire catalog.
+     * @param array<array-key, mixed>|null $declarations An ordered list of SQL relation definitions
      */
-    public function context(array|Context|null $declarations = null, bool $complete = true): AnalysisContext
+    public function context(?array $declarations = null, bool $complete = true): Context
     {
-        if ($declarations instanceof Context) {
-            Check::input($declarations instanceof AnalysisContext, 'The context must belong to the selected database.');
-            Check::input($this->profile->compatibleWith($declarations->profile), 'The context must match the selected language profile.');
-
-            return $declarations;
+        if ($declarations === null) {
+            return $this->catalog->build(null, $complete);
         }
-        $tables = [];
-        foreach ($declarations ?? [] as $declaration) {
-            if ($declaration instanceof Operation) {
-                Check::input($this->profile->compatibleWith($declaration->profile()), 'A declaring operation must belong to the selected language profile.');
-                array_push($tables, ...$declaration->declarations());
-            } else {
-                $tables[] = $declaration;
-            }
+        Check::input(array_is_list($declarations), 'Catalog definitions must form a list.');
+        $definitions = [];
+        foreach ($declarations as $definition) {
+            Check::input(is_string($definition), 'Catalog definitions must be SQL strings.');
+            $definitions[] = $definition;
         }
 
-        return $this->platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete);
+        return $this->catalog->build($definitions, $complete);
     }
 
     /**
-     * Analyzes SQL and returns a checked operation against the given declarations.
-     *
-     * @param list<Table|Operation>|Context|null $context A declaration list, a prepared context, or null for an open context
-     * @return Operation
+     * Resolves a statement and returns its complete database-specific representation.
      *
      * @throws AnalysisException When the grammar rejects the SQL
-     * @throws SemanticException When the analysis establishes a semantic problem
-     * @throws InvalidConstruction When the context belongs to another dialect or language profile
+     * @throws SemanticException When the analysis establishes a semantic error
+     * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, array|Context|null $context = null): Query
+    public function analyze(string $sql, ?Context $context = null): AddForeignKeys|AlterForeignKeys|Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropForeignKeys|DropIndex|DropIndexes|DropTable|AlterIndexes|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|SetIndexVisibility|Transaction|TruncateTable|Update|WithProjection
     {
-        $operation = $this->inspect($sql, $context);
-        if ($operation->facts->diagnostics !== []) {
-            throw new SemanticException($operation->facts->diagnostics);
-        }
+        $declarations = $this->catalog->resolve($context);
+        $operation = $this->binder->resolve($sql, $declarations);
+        $statement = $operation->statement;
+        $relationChange = new RelationChangeLowering();
 
-        return $operation;
+        return match (true) {
+            $statement instanceof ParsedWith && $statement->with instanceof ParsedRecursiveWith && $statement->with->recursive => (new RecursiveSeriesLowering())->lower($operation, $statement),
+            $statement instanceof ParsedWith && $statement->with !== null => (new WithLowering())->lower($operation, $statement),
+            $statement instanceof ParsedSelect && $statement->from instanceof ParsedDerived => (new LocalProjectionLowering())->lower($operation),
+            $statement instanceof ParsedCompound, $statement instanceof ParsedParenthesized => (new CompoundLowering())->lower($operation, $statement),
+            $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
+            $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateIndex => (new CreateIndexLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateTableLike, $statement instanceof ParsedCreateView => (new CreateRelationLowering())->lower($operation, $statement),
+            $relationChange->applies($statement) => $relationChange->lower($operation, $statement),
+            $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
+            $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
+            $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
+            $statement instanceof ParsedBegin, $statement instanceof ParsedCommit, $statement instanceof ParsedRollback, $statement instanceof ParsedStartTransaction, $statement instanceof ParsedSavepoint, $statement instanceof ParsedReleaseSavepoint, $statement instanceof ParsedRollbackToSavepoint => (new TransactionLowering())->lower($operation),
+            default => (new SelectLowering())->lower($operation),
+        };
     }
 
     /**
-     * Checks the structure and derives facts, including diagnostics for invalid statements.
-     *
-     * @visibility SqlSemantics
-     * @param list<Table|Operation>|Context|null $context
-     * @throws AnalysisException When the grammar rejects the SQL
-     * @throws InvalidConstruction When the context belongs to another dialect or language profile
-     */
-    public function inspect(string $sql, array|Context|null $context = null): Operation
-    {
-        $declarations = $this->context($context);
-        try {
-            $tree = $this->parser->parse($sql);
-        } catch (SourceException $error) {
-            throw new AnalysisException($error->getMessage(), 0, $error);
-        }
-        $leaves = new Leaves();
-        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves));
-        $operation = new Operation($declarations, $statement);
-
-        $graph = new ValueGraph(['SqlSemantics\\Platform\\MySql\\Model\\Statement\\', 'SqlSemantics\\Platform\\MySql\\Model\\Contract\\', $this->platform->statementNamespace()]);
-        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));
-        Check::invariant($dropped === null, 'The statement lost an operand of the input: ' . ($dropped === null ? '' : $dropped::class));
-        $tokens = new TokenCorrespondence();
-        $keys = $this->platform->leafKeys($this->profile);
-        $productions = $this->platform->productions($this->profile);
-        $difference = $tokens->difference($tokens->keys($tree, $productions, $keys), $tokens->keys($this->parser->parse($operation->toString()), $productions, $keys));
-        Check::invariant($difference === null, 'The rendered SQL does not carry the tokens of the input: ' . $difference . ' in: ' . $operation->toString());
-
-        return $operation;
-    }
-
-    /**
-     * Analyzes each statement of a script against the same explicit declaration context.
+     * Publishes a complete value for each statement of a script against the same explicit declaration context.
      *
      * No statement is executed for the ones after it.
      *
-     * @param list<Table|Operation>|Context|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Operation>
+     * @return list<AddForeignKeys|AlterForeignKeys|Compound|CreateIndex|CreateTable|CreateTableAs|CreateTableLike|CreateView|Delete|DropForeignKeys|DropIndex|DropIndexes|DropTable|AlterIndexes|RenameIndexes|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|SetIndexVisibility|Transaction|TruncateTable|Update|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem
+     * @throws InvalidConstruction When any statement has no complete representation
      */
-    public function analyzeAll(string $sql, array|Context|null $context = null): array
+    public function analyzeAll(string $sql, ?Context $context = null): array
     {
-        $declarations = $this->context($context);
-        $operations = [];
+        $declarations = $this->catalog->resolve($context);
+        $results = [];
         foreach ($this->split($sql) as $statement) {
-            $operations[] = $this->analyze($statement, $declarations);
+            $results[] = $this->analyze($statement, $declarations);
         }
 
-        return $operations;
+        return $results;
     }
 
     /**

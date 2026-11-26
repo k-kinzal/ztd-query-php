@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Name;
  * EXTENSION are one node each with an object kind, not one node per kind.
  * Source: https://www.postgresql.org/docs/17/sql-commands.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling an object kind
  *     \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::MaterializedView->keywords() // => ['MATERIALIZED', 'VIEW']
  */

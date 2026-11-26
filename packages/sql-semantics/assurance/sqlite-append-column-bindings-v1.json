@@ -1,0 +1,59 @@
+{
+  "revision": "SemanticsIR/sqlite-append-column-bindings-1",
+  "approval": "pending-human-review",
+  "profile": "SQLite 3.47.2 with SQLite identifier comparison, main and temp shadowing, UTF-8 and numbered parameters",
+  "references": {
+    "sqlite-add-column-v3.json": "156f45b0a77b3944d3735c2c26ca3b78b2035e035f16d28c6559acbdaeb3c662",
+    "sqlite-add-generated-column-v1.json": "606754be160a3039b0a6e8fc2a52314b00f2bc5055ecc7f59a1fd0436c627a60",
+    "sqlite-appended-column-checks-v2.json": "d51fd4ee7cda94276cf5e9156ce139a8ca793c1383e2e9f75d0d2e90bd9dd75f",
+    "sqlite-appended-implicit-checks-v1.json": "8a3b2d3ffb466f8ca0087ca18bdcebd1a6e448ae2801ee79792bdc1626520e4f"
+  },
+  "constructors": {
+    "Schema/Alter/AddColumn": "Append one ordinary column definition and its checked inline conditions to the resolved table.",
+    "Schema/Alter/AddGeneratedColumn": "Append one generated column definition and its checked inline conditions to the resolved table."
+  },
+  "rules": [
+    "Check the complete ordered prior heading, target, type mode, distinct names, inline condition owners and native limits during construction.",
+    "Record the appended field slot as the prior heading width. Keep the absolute target, target type mode, checked appended definition and ordered inline checks.",
+    "Bind a slot to its exact declared identifier exactly when some retained condition or generator selects that slot. The mapping is sparse, unique and sorted by slot. Used occurrences in a condition can name the appended field. The generated value can refer only to prior slots.",
+    "Represent the empty set of references by an empty map. Do not use a filler identifier, keep unused prior names, or consult the analyzed declaration after construction.",
+    "Check all named and implicit CHECK presentation rules with the original complete scope. Preserve the native implicit label, rebinding on rename, order, defaults and effects.",
+    "The reference projector traverses checked operands independent of database or parser state. The formatter reads the selected source position directly and quotes the bound name without querying a catalog."
+  ],
+  "validation": {
+    "proofPremises": "Existing exact external definitions and same SQLite executable profile. No extra execution exclusions.",
+    "thresholds": "Keep all prior finite coordinates, reference budgets and seeded cases, typed negative outcomes, comparison observations and fault obligations.",
+    "healthy": "Both public construction routes yield the same slot and sparse name bindings. Compare native effects and ordered result metadata under the existing four native fixture laws.",
+    "externalStructure": "Use the fixed input operand tree, not the candidate reference traversal, to independently compute the expected bound names and appended position. Preserve tests of the complete prior heading through the native observer.",
+    "faults": [
+      "Retain any unrelated prior heading member or lose a referenced slot.",
+      "Bind a CHECK operand or generated input to a different visible field and observe the native effect.",
+      "Reuse caller arrays by reference or accept unresolved field slots."
+    ]
+  },
+  "nativeCalibration": {
+    "coordinateOrder": [
+      "all six prior field permutations",
+      "two unrelated names",
+      "ordinary, named check or virtual generation",
+      "main and temp"
+    ],
+    "coordinates": 72,
+    "wrongOperandControls": 48,
+    "recipeSha256": "f372350d660853f7726497933c9337c98cdbd3bb589871f3ceeb5b24e2fe3231",
+    "observationsSha256": "b4c99e054ef855c5bae0a753b3064d70641d77762c2af06e1fce1c614a33beb2"
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ]
+}

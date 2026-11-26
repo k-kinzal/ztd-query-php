@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey;
  * of the table are visible.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading a partition key
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text) PARTITION BY LIST (a COLLATE "C" text_ops)');
- *     $create->statement->partitioning->elements[0]->operatorClass->last()->value // => 'text_ops'
+ * @visibility SqlSemantics
  */
 final class PartitionElement implements Clause
 {

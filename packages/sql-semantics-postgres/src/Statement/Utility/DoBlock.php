@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  * block without code, and code or a language written twice.
  * Source: https://www.postgresql.org/docs/17/sql-do.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the code of an anonymous block
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DO $$BEGIN NULL; END$$ LANGUAGE plpgsql');
- *     [$operation->statement->code()?->value, $operation->statement->language()?->name()] // => ['BEGIN NULL; END', 'plpgsql']
+ * @visibility SqlSemantics
  * @example Refusing a block without items
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\DoBlock([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

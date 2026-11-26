@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-replica-status.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW REPLICA STATUS FOR CHANNEL 'c'");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Replica_IO_State', "SHOW REPLICA STATUS FOR CHANNEL 'c'"]
+ * @visibility SqlSemantics
  */
 final class ShowReplicaStatus implements Statement
 {

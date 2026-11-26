@@ -14,11 +14,11 @@ final class CreateFdwTest extends TestCase
 {
     public function testRenderWritesFunctionsAndOptions(): void
     {
-        self::assertSame('CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug \'true\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug \'true\')')->toString());
+        self::assertSame('CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug \'true\')', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug \'true\')')->toString());
     }
 
     public function testDeriveStatementReportsATwiceNamedHandler(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE FOREIGN DATA WRAPPER w HANDLER a HANDLER b')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE FOREIGN DATA WRAPPER w HANDLER a HANDLER b')->facts->diagnostics[0]->message());
     }
 }

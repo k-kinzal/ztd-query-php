@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
  * columns and no known column (PG-QUERY-TABLE-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtableas.html.
  *
- * @visibility public
- * @example Declaring the table of a prepared statement
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t AS EXECUTE q (1) WITH DATA');
- *     [$create->declarations()[0]->complete, $create->toString()] // => [false, 'CREATE TABLE t AS EXECUTE q (1) WITH DATA']
+ * @visibility SqlSemantics
  */
 final class CreateTableAsExecute implements Statement
 {

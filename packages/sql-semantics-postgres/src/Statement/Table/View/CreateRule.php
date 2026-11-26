@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
  * NOTHING is no action without parentheses; empty statements between semicolons are not kept.
  * Source: https://www.postgresql.org/docs/17/sql-createrule.html.
  *
- * @visibility public
- * @example Reading a rule
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)');
- *     [count($statement->statement->actions), $statement->toString()] // => [2, 'CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)']
+ * @visibility SqlSemantics
  */
 final class CreateRule implements Statement, Relation
 {

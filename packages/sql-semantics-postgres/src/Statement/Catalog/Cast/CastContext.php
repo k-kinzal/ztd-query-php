@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast;
  * A cast without AS ASSIGNMENT or AS IMPLICIT is applied only when written.
  * Source: https://www.postgresql.org/docs/17/sql-createcast.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the implicit context
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastContext::Implicit->value // => 'IMPLICIT'
  */

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  * are words, strings and numbers the parameter interprets when the command runs.
  * Source: https://www.postgresql.org/docs/17/sql-set.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a SET with several values
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SET LOCAL search_path = app, 'Public'");
- *     [$operation->statement->parameter->text(), count($operation->statement->values), $operation->toString()] // => ['search_path', 2, "SET LOCAL search_path TO app, 'Public'"]
+ * @visibility SqlSemantics
  * @example Refusing a SET without a value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]), []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

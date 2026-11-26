@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ExpressionPart::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class ExpressionPartTest extends TestCase
 {
     public function testDeriveKeyPartResolvesTheExpressionInTheTable(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, KEY ((a)))');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT, KEY ((a)))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -34,6 +34,6 @@ final class ExpressionPartTest extends TestCase
 
     public function testRenderWritesTheParenthesizedExpression(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, INDEX ((a + 1) DESC))', (new Semantics())->analyze('CREATE TABLE t (a INT, KEY ((a + 1) DESC))')->toString());
+        self::assertSame('CREATE TABLE t (a INT, INDEX ((a + 1) DESC))', (new Inspection())->inspect('CREATE TABLE t (a INT, KEY ((a + 1) DESC))')->toString());
     }
 }

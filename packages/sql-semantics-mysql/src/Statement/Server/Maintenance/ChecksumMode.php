@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
  * otherwise.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/checksum-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode::Extended->value // => 'EXTENDED'
  */

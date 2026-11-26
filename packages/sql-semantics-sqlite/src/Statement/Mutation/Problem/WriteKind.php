@@ -9,11 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem;
  *
  * Source: https://sqlite.org/gencol.html.
  *
- * @visibility public
- * @example Reading how a statement writes a generated column
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a, b AS (a + 1))');
- *     $semantics->analyze('INSERT INTO t (b) VALUES (1)', [$table])->facts->diagnostics[0]->write // => \SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\WriteKind::Insert
+ * @visibility SqlSemantics
  */
 enum WriteKind: string
 {

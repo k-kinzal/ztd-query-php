@@ -7,8 +7,6 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
@@ -17,6 +15,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CaseBranch::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class CaseBranchTest extends TestCase
 {
     public function testRenderKeepsTheConditionAndTheResultInOrder(): void
     {
-        $operation = (new Semantics())->analyze('select case when a > 1 then \'x\' when a then 2 end AS c1 from t');
+        $operation = (new Inspection())->inspect('select case when a > 1 then \'x\' when a then 2 end AS c1 from t');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -40,9 +40,9 @@ final class CaseBranchTest extends TestCase
 
     public function testRenderWritesANewlyBuiltBranch(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $branch = new CaseBranch(new IntegerLiteral('1'), new TextLiteral('one'));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new CaseExpression(null, [$branch, new CaseBranch(new IntegerLiteral('2'), new NullLiteral())]))]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new CaseExpression(null, [$branch, new CaseBranch(new IntegerLiteral('2'), new NullLiteral())]))]));
 
         self::assertSame("SELECT CASE WHEN 1 THEN 'one' WHEN 2 THEN NULL END", $operation->toString());
     }

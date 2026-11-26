@@ -31,10 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
  * https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing the current timestamp with a precision
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT CURRENT_TIMESTAMP(3)');
- *     [$query->field(0)->type->descriptor->precision, $query->field(0)->nullability] // => ['3', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  * @example Refusing a precision for a date
  *     new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::CurrentDate, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3')) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

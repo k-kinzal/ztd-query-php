@@ -19,9 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * do not make a name ambiguous. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/problems-with-alias.html.
  *
- * @visibility public
- * @example Keeping every select list item an alias names
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column x is ambiguous.
+ * @visibility SqlSemantics
  * @example Refusing a single candidate
  *     new \SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('x'), []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

@@ -1,0 +1,102 @@
+{
+  "revision": "SemanticsIR/postgres-values-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL standalone VALUES under UTF-8, standard-conforming strings and builtin type resolution.",
+  "extends": ["server-compound-v2.json", "postgres-text-literal-v1.json", "postgres-signed-range-widths-v1.json"],
+  "additionalPublicRoots": ["Rows/Values/ValuesQuery"],
+  "constructors": {
+    "ValuesQuery": {
+      "type": "Rows/Values/ValuesQuery",
+      "role": "A complete unordered native constant table with typed column positions.",
+      "structure": "A nonempty ordered list of rows of equal width and a native release. Each column kind follows from all corresponding cells.",
+      "conditions": "Require a nonempty rectangular list of checked cells, at most 1664 fields per row and a compatible native type at each position.",
+      "meaning": "Return the bag of all supplied rows. Names are column1 through columnN. The native kind of each column is resolved across its entire vertical input.",
+      "sql": "Emit VALUES with every row and cell in structural order. Print each explicitly typed operand in its native role."
+    },
+    "ValuesRow": {
+      "type": "Rows/Values/ValuesRow",
+      "role": "One ordered row of scalar constants in a standalone VALUES.",
+      "structure": "An owned ordered nonempty list of exact signed int4, int8, Boolean, text, untyped NULL or a NULL cast to one of the four builtin types.",
+      "conditions": "Admit only the specified immutable cell objects. A builtin cast cell must contain a literal NULL. The owning query checks common types and width across rows.",
+      "meaning": "Supply one cell per column position; retain duplicate rows and explicit source kind.",
+      "sql": "Parenthesize the cell list and render each literal or its qualified builtin NULL cast."
+    }
+  },
+  "existingRoles": ["IntegerLiteral", "Expression/WideIntegerLiteral", "BooleanLiteral", "Expression/TextLiteral", "NullLiteral", "Expression/BuiltinCast", "Expression/CastDestination", "From/ColumnKind"],
+  "structure": "The matrix retains a closed typed value in each position. The resolved output heading is uniquely derived from the ordered dimensions and per-column cells.",
+  "conditions": "Accept integer and bigint mixtures, Boolean columns, text columns and untyped NULL in each compatible column. Untyped quoted strings are accepted where the selected output is text. An all-untyped NULL column resolves to text. Reject incompatible types, non-rectangular or empty shapes, contextual DEFAULT and analysis inputs without a checked cell.",
+  "meaning": "Every row contributes one result without deduplication or an ordering requirement. Resolve unknown NULLs against all typed neighbors in their column. Native int4 values widen into a bigint column without value loss. Preserve every explicitly typed NULL's type participation.",
+  "sql": "Emit a single native VALUES operation with matching row boundaries and exact literals. Use qualified PostgreSQL builtin types where needed to guarantee signed width, text identity or typed NULL.",
+  "observations": [
+    "Structural row and position coordinates, cell kind and exact value",
+    "Result names and positions, PostgreSQL type OIDs, duplicate and NULL rows including matching all-null columns",
+    "Native int4 and bigint boundary values and exact UTF-8 text, apostrophes and backslashes",
+    "Whole-column type resolution after two or more leading untyped NULL rows"
+  ],
+  "finite": {
+    "rows": [1, 2, 3],
+    "width": [1, 2, 3],
+    "kind": ["integer", "bigint", "boolean", "text"],
+    "layout": ["typed", "null-first", "repeat"],
+    "identities": 108,
+    "completeness": "Recover dimensions, primary output kind and placement from checked cells. Use typed NULL in the one-row null-first representative to distinguish it from other layouts."
+  },
+  "analysis": [
+    "Integer and bigint at the signed boundaries",
+    "Boolean and text in separate columns and duplicate rows",
+    "Two leading untyped NULL values before a signed result",
+    "A column containing only untyped NULL values",
+    "Typed Boolean and bigint NULL in separate columns",
+    "Untyped UTF-8 text and explicitly typed text",
+    "Repeated multi-column rows with untyped NULL beside nonnull text",
+    "Native integer to bigint widening"
+  ],
+  "negative": [
+    "Empty query rows",
+    "Empty cell list",
+    "Non-rectangular matrix",
+    "Boolean mixed with typed integer in one column",
+    "Text mixed with typed Boolean in one column",
+    "Unchecked cast operand in a cell",
+    "Native DEFAULT outside INSERT"
+  ],
+  "exploration": {
+    "seeds": [2027, 12211, 43649],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary dimensions, positional roles, signed extremes, exact text values, native kind, typed and untyped NULL and row duplication."
+  },
+  "faults": [
+    "Drop a row",
+    "Switch two column positions",
+    "Render a bigint as int4",
+    "Lose a typed NULL's cast",
+    "Accept non-rectangular rows"
+  ],
+  "evidence": {
+    "P01": "Preserve cell kind, ordered positions and the uniquely derived common type and heading.",
+    "P02": "Validate closed cell roles and whole-matrix invariants before publication.",
+    "P03": "Use only typed values, row positions and the database profile.",
+    "P04": "Derive output by positional whole-column type resolution and bag union of rows.",
+    "P05": "Own detached rectangular rows and closed immutable cell operands.",
+    "P06": "Print each supported matrix with native positional names, inferred type, values and duplicates.",
+    "Q01": "Check malformed shapes, incompatible columns and unchecked operands against their owning boundary.",
+    "Q02": "Construct the complete fixed Cartesian grid and all required analyzed forms.",
+    "Q03": "Compare a positional type and row oracle with the loaded graph and actual fixtures.",
+    "Q04": "Compare result OIDs, names and typed rows in native PostgreSQL.",
+    "Q05": "Observe the exact public construction and analysis routes from both Composer layouts."
+  },
+  "open": [
+    "FROM and WITH composition, set arms and ORDER BY or row bounds at the VALUES query boundary",
+    "Nonconstant expressions, native parameters and implicit conversion of bare strings to non-text column types",
+    "Additional native types, domains and collation selection"
+  ],
+  "trust": ["Native pinned PostgreSQL literal behavior and column-name rules", "Independent oracle and typed PDO adapter", "Protected source, runtime and package identity"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-values.html",
+    "https://www.postgresql.org/docs/17/typeconv-union-case.html"
+  ]
+}

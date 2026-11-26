@@ -1,0 +1,210 @@
+{
+  "revision": "SemanticsIR/postgres-grouped-result-order-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Audit the exact query-bound output names, grouped ordinal ownership and the shared order and bounds renderer.",
+  "rules": {
+    "Aggregation/GroupedSelect::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input($key->occurrence === 0 && $source->columnKind($key->slot) === ColumnKind::Int4, 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } else {",
+        "        Check::input($value->argument === null || $source->columnKind($value->argument->slot) === ColumnKind::Int4, 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$source]);",
+        "$keysInOrder = Check::listOf($orderBy, Order::class, 'A grouped SELECT needs an owned list of output order keys.');",
+        "Check::input(count($keysInOrder) <= 1024, 'A grouped SELECT can have at most 1024 order keys.');",
+        "foreach ($keysInOrder as $key) {",
+        "    Check::input(is_int($key->target) && $key->target <= count($results), 'A grouped order key must select a projected position.');",
+        "}",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;",
+        "$this->orderBy = $keysInOrder;"
+      ]
+    },
+    "Aggregation/GroupedLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'A grouped projection requires the native language profile.');",
+        "",
+        "$binding = new SourceBinding($operation, $statement->from);",
+        "$keys = (new GroupedKeys())->lower($statement, $binding);",
+        "$aggregate = new AggregateBinding($operation->context);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $aggregate->catalogFirst);",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A grouped projection requires a resolved output shape.');",
+        "$columns = [];",
+        "foreach ($statement->targets as $index => $target) {",
+        "    Check::input($target instanceof Target, 'A grouped projection requires explicit result fields.');",
+        "    $name = $fields->at($index)->name;",
+        "    Check::input($name !== null, 'A grouped result must have a resolved name.');",
+        "    $value = $target->expression instanceof ParsedAggregate",
+        "        ? $aggregate->lower($target->expression, $binding)",
+        "        : $binding->reference($target->expression);",
+        "    $columns[] = new GroupColumn($value, new Identifier($name->value));",
+        "}",
+        "$source = $binding->source();",
+        "Check::input($source !== null && $columns !== [], 'A grouped SELECT needs one resolved input and at least one named result.');",
+        "",
+        "$result = new ResultLowering();",
+        "$order = $result->orders($operation, $statement, null, [], $aggregate->catalogFirst);",
+        "",
+        "return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where, $order, $result->limit($statement->options?->limit));"
+      ]
+    },
+    "Aggregation/GroupedKeys::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $statement->having === null && $statement->windows === [] && $statement->distinct === null",
+        "        && $statement->into === null && $statement->groupQuantifier === null",
+        "        && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),",
+        "    'The grouped projection requires an ordinary GROUP BY and checked result clauses.',",
+        ");",
+        "$keys = [];",
+        "foreach ($statement->groupBy as $key) {",
+        "    Check::input($key instanceof Scalar, 'A grouped projection requires simple grouping keys.');",
+        "    $keys[] = $binding->reference($key);",
+        "}",
+        "",
+        "return $keys;"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        $result = $renderer->expression($value, $query->source);",
+        "    } else {",
+        "        $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);",
+        "        $result = 'pg_catalog.' . $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';",
+        "    }",
+        "    $items[] = $result . ' AS ' . $column->name->quoted();",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->predicate($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key, $query->source);",
+        "}",
+        "",
+        "$sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);",
+        "",
+        "return $sql . (new ResultSql())->render($query, $renderer);"
+      ]
+    },
+    "Ordering/ResultLowering::orders": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = $operation->facts->query($query)->fields();",
+        "Check::input($fields !== null, 'ORDER BY requires a closed result layout.');",
+        "$keys = [];",
+        "foreach ($query->options->order ?? [] as $key) {",
+        "    Check::input($key->using === null, 'ORDER BY requires a supported default sort operator.');",
+        "    $keys[] = new Order(",
+        "        $this->target($key, $operation, $fields, $binding, $results, $catalogFirst, $query->distinct !== null),",
+        "        $key->direction === SortDirection::Descending,",
+        "        $key->nulls === null ? null : $key->nulls === NullsOrder::First,",
+        "    );",
+        "}",
+        "",
+        "return $keys;"
+      ]
+    },
+    "Ordering/ResultLowering::target": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$resolution = $operation->facts->scalar($key->expression)->resolution;",
+        "if ($resolution instanceof AliasTarget) {",
+        "    $position = $resolution->field->position;",
+        "    Check::input(($fields->items[$position] ?? null) === $resolution->field, 'ORDER BY must resolve inside the owning result layout.');",
+        "",
+        "    return $position + 1;",
+        "}",
+        "Check::input($binding !== null, 'A grouped ORDER BY needs a projected name or position.');",
+        "if ($resolution instanceof ResolvedColumn) {",
+        "    $column = $binding->resolved($resolution);",
+        "",
+        "    if (!$distinct) {",
+        "        return $column;",
+        "    }",
+        "    foreach ($results as $position => $result) {",
+        "        $projected = $result->expression;",
+        "        if (($projected instanceof ColumnReference || $projected instanceof BooleanColumnReference",
+        "            || $projected instanceof TextColumnReference || $projected instanceof WideIntegerColumnReference)",
+        "            && $projected::class === $column::class",
+        "            && $projected->slot === $column->slot && $projected->occurrence === $column->occurrence) {",
+        "            return $position + 1;",
+        "        }",
+        "    }",
+        "    throw new InvalidConstruction('A DISTINCT SELECT must order by projected positions.');",
+        "}",
+        "",
+        "Check::input(!$distinct, 'A DISTINCT SELECT must order by projected positions.');",
+        "$expression = (new ExpressionLowering())->lower($key->expression, $binding, $catalogFirst);",
+        "Check::input(",
+        "    $expression instanceof Arithmetic || $expression instanceof BuiltinCast || $expression instanceof CollatedText,",
+        "    'ORDER BY requires a supported typed input expression.',",
+        ");",
+        "",
+        "return $expression;"
+      ]
+    },
+    "Ordering/ResultSql::render": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$terms = [];",
+        "foreach ($select->orderBy as $key) {",
+        "    $target = is_int($key->target) ? (string) $key->target : $sqlPrinter->expression($key->target, $select->source);",
+        "    $terms[] = $target . ($key->descending ? ' DESC' : ' ASC');",
+        "    $terms[count($terms) - 1] .= $key->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST';",
+        "}",
+        "$sql = $terms === [] ? '' : ' ORDER BY ' . implode(', ', $terms);",
+        "if ($select->limit?->count !== null) {",
+        "    $sql .= ' LIMIT ' . $select->limit->count;",
+        "}",
+        "if ($select->limit !== null && $select->limit->offset > 0) {",
+        "    $sql .= ' OFFSET ' . $select->limit->offset;",
+        "}",
+        "",
+        "return $sql;"
+      ]
+    }
+  }
+}

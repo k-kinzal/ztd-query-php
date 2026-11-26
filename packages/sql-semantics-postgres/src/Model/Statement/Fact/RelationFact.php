@@ -11,12 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * What an operation derived for one relation occurrence or one table use.
  *
- * @visibility public
- * @example Reading the shape of a named input
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
- *     count($query->facts->relation($query->inputRelation())->shape->slots) // => 2
+ * @visibility SqlSemantics
  */
 final class RelationFact
 {

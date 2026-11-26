@@ -29,10 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
  * context. The facts follow MYSQL-TRIGGER-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
  *
- * @visibility public
- * @example Reading a trigger definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET @changed = 1');
- *     [$create->statement->time->value, $create->statement->event->value, $create->statement->table->name->name->value] // => ['BEFORE', 'UPDATE', 't']
+ * @visibility SqlSemantics
  */
 final class CreateTrigger implements Statement
 {

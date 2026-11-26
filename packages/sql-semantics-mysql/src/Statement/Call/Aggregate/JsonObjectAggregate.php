@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_json-objectagg.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing JSON_OBJECTAGG()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT JSON_OBJECTAGG('a', 1)");
- *     $query->field(0)->type->descriptor->name() // => 'JSON'
+ * @visibility SqlSemantics
  */
 final class JsonObjectAggregate implements SetFunction
 {

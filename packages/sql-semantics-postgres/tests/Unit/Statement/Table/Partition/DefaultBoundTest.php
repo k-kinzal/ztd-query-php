@@ -14,8 +14,8 @@ final class DefaultBoundTest extends TestCase
 {
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p0 PARTITION OF p DEFAULT', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p0 PARTITION OF p DEFAULT', []);
         self::assertSame([
           0 => 'Relation p does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -23,8 +23,8 @@ final class DefaultBoundTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p0 PARTITION OF p DEFAULT', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p0 PARTITION OF p DEFAULT', []);
         self::assertSame('CREATE TABLE p0 PARTITION OF p DEFAULT', $statement->toString());
     }
 }

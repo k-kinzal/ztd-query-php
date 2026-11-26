@@ -13,11 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A relation name that several distinct declarations of the context claim; none is chosen.
  *
- * @visibility public
- * @example Keeping conflicting declarations
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE t (b TEXT)')]);
- *     $semantics->analyze('SELECT 1 FROM t', $declarations) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation t has conflicting declarations.
+ * @visibility SqlSemantics
  */
 final class ConflictingTables implements TableResolution, Diagnostic
 {

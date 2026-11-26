@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
  * is the relation fact of its node.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Finalizing a detach
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE p DETACH PARTITION p1 FINALIZE');
- *     $statement->statement->commands[0]->mode // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\DetachMode::Finalize
+ * @visibility SqlSemantics
  */
 final class DetachPartition implements AlterCommand
 {

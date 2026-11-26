@@ -1,0 +1,350 @@
+name: SemanticsIR assurance evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: Full candidate commit SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-rebuild-lexical-proof:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-26.04-arm
+    timeout-minutes: 15
+    steps:
+      - name: Validate the requested candidate identity
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+        run: test "${#CANDIDATE}" -eq 40 && [[ "$CANDIDATE" =~ ^[0-9a-f]+$ ]]
+      - name: Check out the acceptance proof and verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Check out the exact candidate as source data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.candidate }}
+          path: candidate
+          persist-credentials: false
+      - name: Install proof runtime and PHP parser dependencies
+        working-directory: trusted/packages/sql-semantics-sqlite
+        env:
+          COMPOSER_ROOT_VERSION: dev-main
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends bubblewrap php-cli php-mbstring php-xml composer
+          composer install --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
+      - name: Verify the official Lean toolchain archive
+        run: |
+          archive=lean-4.36.0-linux_aarch64.tar.zst
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://github.com/leanprover/lean4/releases/download/v4.36.0/$archive" -o "$RUNNER_TEMP/$archive"
+          echo "35471998152191ef809418ce5bf61f8fc5f209e5e3be05b48bdc4949fdb3e726  $RUNNER_TEMP/$archive" | sha256sum -c -
+          tar --zstd -C "$RUNNER_TEMP" -xf "$RUNNER_TEMP/$archive"
+      - name: Check the lexical proof and candidate PHP correspondence
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/verify_postgres_reindex_proof.py \
+            --candidate candidate --candidate-sha "$CANDIDATE" \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --lean "$RUNNER_TEMP/lean-4.36.0-linux_aarch64" \
+            --archive "$RUNNER_TEMP/lean-4.36.0-linux_aarch64.tar.zst" \
+            --out "$RUNNER_TEMP/postgres-reindex-proof"
+      - name: Preserve the lexical proof receipts and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgres-reindex-lexical-proof
+          path: ${{ runner.temp }}/postgres-reindex-proof/
+      - name: Check the signed decimal order theorem and candidate PHP correspondence
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/verify_postgres_sequence_order_proof.py \
+            --candidate candidate --candidate-sha "$CANDIDATE" \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --lean "$RUNNER_TEMP/lean-4.36.0-linux_aarch64" \
+            --archive "$RUNNER_TEMP/lean-4.36.0-linux_aarch64.tar.zst" \
+            --out "$RUNNER_TEMP/postgres-sequence-order-proof"
+      - name: Preserve signed decimal order receipts and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgres-sequence-order-proof
+          path: ${{ runner.temp }}/postgres-sequence-order-proof/
+      - name: Check the signed membership theorems and candidate PHP correspondence
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/verify_postgres_signed_membership_proof.py \
+            --candidate candidate --candidate-sha "$CANDIDATE" \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --lean "$RUNNER_TEMP/lean-4.36.0-linux_aarch64" \
+            --archive "$RUNNER_TEMP/lean-4.36.0-linux_aarch64.tar.zst" \
+            --out "$RUNNER_TEMP/postgres-signed-membership-proof"
+      - name: Preserve signed membership receipts and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgres-signed-membership-proof
+          path: ${{ runner.temp }}/postgres-signed-membership-proof/
+
+  initial-domain:
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    needs: postgres-rebuild-lexical-proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      mysql:
+        image: container-registry.oracle.com/mysql/community-server@sha256:d41e2405f035982ef25911a3e21283cbbccd5e967bafffd3454031c050b37eac
+        env:
+          MYSQL_ROOT_PASSWORD: ir_fixture
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: ir_fixture
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost --silent"
+          --health-interval 10s
+          --health-start-period 40s
+          --health-timeout 5s
+          --health-retries 12
+      postgres:
+        image: postgres@sha256:3267c505060a0052e5aa6e5175a7b41ab6b04da2f8c4540fc6e98a37210aa2d3
+        env:
+          POSTGRES_PASSWORD: ir_fixture
+          POSTGRES_DB: ir_fixture
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ir_fixture"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
+    steps:
+      - name: Validate the requested candidate identity
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+        run: test "${#CANDIDATE}" -eq 40 && [[ "$CANDIDATE" =~ ^[0-9a-f]+$ ]]
+      - name: Check out the acceptance tools from the workflow revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Check out the candidate as input
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.candidate }}
+          path: candidate
+          persist-credentials: false
+      - name: Set up PHP for the independent source audit
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, pdo_pgsql
+          coverage: none
+      - name: Install locked audit dependencies from the acceptance revision
+        working-directory: trusted/packages/sql-semantics-sqlite
+        env:
+          COMPOSER_ROOT_VERSION: dev-main
+        run: composer install --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
+      - name: Prepare pinned engine and isolated candidate runtime
+        run: |
+          curl -fsSL https://sqlite.org/2024/sqlite-amalgamation-3470200.zip -o "$RUNNER_TEMP/sqlite.zip"
+          echo "aa73d8748095808471deaa8e6f34aa700e37f2f787f4425744f53fdd15a89c40  $RUNNER_TEMP/sqlite.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/sqlite.zip" -d "$RUNNER_TEMP"
+          cc -O2 -DSQLITE_THREADSAFE=1 -shared -fPIC "$RUNNER_TEMP/sqlite-amalgamation-3470200/sqlite3.c" -o "$RUNNER_TEMP/libsqlite3.so"
+          docker pull php@sha256:f1ef73e865793418aac8cf6d8dbb44b33b527cdac62dbcf2e47061ed8f40b81a
+      - name: Run and replay the SQLite assurance matrix
+        if: ${{ !cancelled() }}
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_matrix.py \
+            --candidate candidate --candidate-sha "$CANDIDATE" \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --evidence-root "$RUNNER_TEMP"
+      - name: Collect MySQL and PostgreSQL projection observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.mysql.ports[3306] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.postgres.ports[5432] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-server-evidence"
+      - name: Exercise evidence and package verification controls
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/assurance_controls.py \
+            --root "$RUNNER_TEMP" --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/assurance-controls"
+      - name: Verify native constructor boundaries and guard faults
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/check_native_boundaries.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/native-boundaries"
+      - name: Verify installed Composer package bytes and publication
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/verify_release_layout.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/release-layout"
+      - name: Download the proof receipt from this workflow run
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: postgres-reindex-lexical-proof
+          path: ${{ runner.temp }}/postgres-reindex-proof
+      - name: Download the signed decimal order receipts from this workflow run
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: postgres-sequence-order-proof
+          path: ${{ runner.temp }}/postgres-sequence-order-proof
+      - name: Download the signed membership receipts from this workflow run
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: postgres-signed-membership-proof
+          path: ${{ runner.temp }}/postgres-signed-membership-proof
+      - name: Compile the candidate evidence index
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          verifier="trusted/packages/sql-semantics/assurance"
+          python3 "$verifier/index_evidence.py" \
+            --candidate candidate --verifier "$verifier" \
+            --evidence-root "$RUNNER_TEMP" --out "$RUNNER_TEMP/review-bundle"
+      - name: Preserve observations and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: semantics-ir-evidence
+          path: |
+            ${{ runner.temp }}/semantics-ir-evidence/
+            ${{ runner.temp }}/semantics-ir-server-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-relational-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-merged-join-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-merged-prefix-join-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-merged-right-join-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-merged-full-join-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-result-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-delete-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-values-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-local-source-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-joined-local-source-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-recursive-source-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-insert-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-update-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-drop-table-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-drop-view-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-create-view-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-create-view-grouped-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-create-view-compound-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-create-view-local-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-resolved-view-input-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-create-table-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-create-as-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-scalars-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-compound-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-transaction-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-grouped-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-group-filter-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-wildcard-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-insert-query-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-insert-input-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-case-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-coalesce-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-cast-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-numeric-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-unary-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-truth-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-between-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-membership-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-folded-membership-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-collation-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-concatenation-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-pattern-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-computed-defaults-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-not-null-conflict-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-strict-tables-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-primary-keys-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-auto-rowid-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-unique-keys-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-named-checks-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-folded-checks-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-implicit-checks-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-generated-columns-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-rename-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-add-column-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-add-generated-column-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-drop-column-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-create-index-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-index-expression-spelling-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-drop-index-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-constraint-index-names-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-reindex-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-analyze-statistics-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-flag-pragmas-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-table-metadata-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-inventory-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-index-metadata-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-fk-audit-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-integrity-audit-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-header-pragmas-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-vacuum-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-connection-commands-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-page-pragmas-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-reclaim-pragmas-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-cache-pragmas-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-audit-triggers-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-drop-triggers-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-trigger-mutations-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-trigger-insert-batches-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-trigger-raise-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-appended-checks-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-appended-implicit-checks-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-mutation-conflicts-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-upsert-nothing-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-insert-returning-evidence/
+            ${{ runner.temp }}/sqlite-fault-preflight/
+            ${{ runner.temp }}/sqlite-index/
+            ${{ runner.temp }}/sqlite-launch/
+            ${{ runner.temp }}/assurance-controls/
+            ${{ runner.temp }}/native-boundaries/
+            ${{ runner.temp }}/release-layout/
+            ${{ runner.temp }}/review-bundle/

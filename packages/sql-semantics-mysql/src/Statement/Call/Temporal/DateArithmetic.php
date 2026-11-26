@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-add.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing a date plus months
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT ADDDATE(DATE '2024-01-01', INTERVAL 1 MONTH) AS d");
- *     [$query->field(0)->type->descriptor->name(), $query->toString()] // => ['DATE', "SELECT DATE_ADD(DATE '2024-01-01', INTERVAL 1 MONTH) AS d"]
+ * @visibility SqlSemantics
  */
 final class DateArithmetic implements Scalar
 {

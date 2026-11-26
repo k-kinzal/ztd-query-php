@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * analysis context holds no indexes. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/index-hints.html.
  *
- * @visibility public
- * @example Reading an index hint
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t IGNORE KEY FOR GROUP BY (i, j)');
- *     [$query->statement->from->indexHints[0]->action, count($query->statement->from->indexHints[0]->indexes)] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Ignore, 2]
+ * @visibility SqlSemantics
  * @example Refusing FORCE INDEX without an index
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Force, null, []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

@@ -26,6 +26,17 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 #[Small]
 final class EnvironmentTest extends TestCase
 {
+    public function testOwningSchemaIsInheritedFromTheViewBoundary(): void
+    {
+        $schema = new Name('main');
+        $context = new AnalysisContext(new LanguageProfile(GrammarRelease::Sqlite3472), [$schema]);
+        $root = new Environment($context);
+        $view = new Environment($context, $root, relationSchema: $schema);
+
+        self::assertNull($root->owningSchema());
+        self::assertSame($schema, (new Environment($context, $view))->owningSchema());
+    }
+
     public function testCommonTableFindsTheNearestBindingWithLaterOnesShadowingEarlierOnes(): void
     {
         $context = new AnalysisContext(new LanguageProfile(GrammarRelease::Sqlite3472), [new Name('main')], [], true, Comparison::AsciiInsensitive);

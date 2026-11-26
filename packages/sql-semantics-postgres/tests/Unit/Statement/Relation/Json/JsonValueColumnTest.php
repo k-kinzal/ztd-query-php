@@ -14,15 +14,15 @@ final class JsonValueColumnTest extends TestCase
 {
     public function testRenderWritesTheClausesInOrder(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER))");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER))");
         self::assertSame("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER))", $query->toString());
     }
 
     public function testRenderQuotesAColumnNamedNested(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (\"nested\" path PATH '\$.n'))");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (\"nested\" path PATH '\$.n'))");
         self::assertSame("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (\"nested\" path PATH '\$.n'))", $query->toString());
     }
 }

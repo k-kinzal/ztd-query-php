@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * The facts follow MYSQL-PROGRAM-FLOW-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/loop.html.
  *
- * @visibility public
- * @example Reading a labeled loop
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() again: LOOP LEAVE again; END LOOP again');
- *     [$create->statement->body->label->value, count($create->statement->body->statements)] // => ['again', 1]
+ * @visibility SqlSemantics
  */
 final class Loop implements ProgramStatement
 {

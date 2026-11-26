@@ -7,11 +7,9 @@ namespace Tests\Unit\Statement\Expression\Subquery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
@@ -19,6 +17,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Exists::class)]
 #[Medium]
@@ -26,8 +26,8 @@ final class ExistsTest extends TestCase
 {
     public function testDeriveScalarIsAnIntegerThatIsNeverNull(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT EXISTS (SELECT b FROM t), EXISTS (SELECT * FROM x)', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT EXISTS (SELECT b FROM t), EXISTS (SELECT * FROM x)', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -38,8 +38,8 @@ final class ExistsTest extends TestCase
 
     public function testDeriveScalarRecordsTheFactOfTheQuery(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT EXISTS (SELECT a, b FROM t)', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT EXISTS (SELECT a, b FROM t)', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $exists = $query->field(0)->expression;
 
         self::assertInstanceOf(Exists::class, $exists);
@@ -49,8 +49,8 @@ final class ExistsTest extends TestCase
 
     public function testDeriveScalarDerivesTheQueryInsideTheEnvironmentOfTheExpression(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a FROM t WHERE EXISTS (SELECT 1 WHERE a = 1)', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a FROM t WHERE EXISTS (SELECT 1 WHERE a = 1)', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -65,9 +65,9 @@ final class ExistsTest extends TestCase
 
     public function testRenderWritesTheKeywordAndTheParentheses(): void
     {
-        $semantics = new Semantics();
-        $plain = $semantics->inspect('select exists (select 1 from t) AS c1');
-        $negated = $semantics->inspect('SELECT NOT EXISTS (SELECT 1 FROM t) AS c1');
+        $semantics = new Inspection();
+        $plain = $semantics->diagnose('select exists (select 1 from t) AS c1');
+        $negated = $semantics->diagnose('SELECT NOT EXISTS (SELECT 1 FROM t) AS c1');
 
         self::assertSame('SELECT EXISTS (SELECT 1 FROM t) AS c1', $plain->toString());
         self::assertInstanceOf(Unary::class, $negated->field(0)->expression);
@@ -77,9 +77,9 @@ final class ExistsTest extends TestCase
 
     public function testRenderWritesANewlyBuiltTest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $exists = new Exists(new Select([new ResultColumn(new IntegerLiteral('1'))]));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($exists)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn($exists)]));
 
         self::assertSame('SELECT EXISTS (SELECT 1)', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

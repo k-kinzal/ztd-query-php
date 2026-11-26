@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\WordRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Generated;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(WordRule::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class WordRuleTest extends TestCase
 {
     public function testWordKeepsTheQuotingOfTheToken(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a DEFAULT x, b DEFAULT "x", c DEFAULT [x], d DEFAULT `x`)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a DEFAULT x, b DEFAULT "x", c DEFAULT [x], d DEFAULT `x`)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $quotes = array_map(static fn (object $column): ?WordQuote => $column->constraints[0] instanceof DefaultWord ? $column->constraints[0]->word->quote : null, $statement->columns);
@@ -29,7 +29,7 @@ final class WordRuleTest extends TestCase
 
     public function testWordDecodesTheName(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (a, b AS (a) "my ""word""")')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (a, b AS (a) "my ""word""")')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $generated = $statement->columns[1]->constraints[0];
@@ -39,7 +39,7 @@ final class WordRuleTest extends TestCase
 
     public function testNameReadsAnIdentifierOrAStringToken(): void
     {
-        $statement = (new Semantics())->inspect("CREATE TABLE t (a) WITHOUT rowid, 'strict'")->statement;
+        $statement = (new Inspection())->diagnose("CREATE TABLE t (a) WITHOUT rowid, 'strict'")->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame(WordQuote::Bare, $statement->options[0]->word->quote);

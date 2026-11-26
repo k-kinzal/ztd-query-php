@@ -12,11 +12,11 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ConditionName::class)]
 #[Medium]
@@ -40,7 +40,7 @@ final class ConditionNameTest extends TestCase
 
     public function testRenderWritesTheNameASignalRaises(): void
     {
-        $create = (new Semantics())->analyze("CREATE PROCEDURE p() BEGIN DECLARE `select` CONDITION FOR SQLSTATE '45000'; SIGNAL `select`; END");
+        $create = (new Inspection())->inspect("CREATE PROCEDURE p() BEGIN DECLARE `select` CONDITION FOR SQLSTATE '45000'; SIGNAL `select`; END");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;

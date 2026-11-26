@@ -14,16 +14,16 @@ final class BeginTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('BEGIN ISOLATION LEVEL SERIALIZABLE')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('BEGIN ISOLATION LEVEL SERIALIZABLE')->facts->diagnostics);
     }
 
     public function testRenderDropsTheNoiseWordAndCommas(): void
     {
-        self::assertSame('BEGIN ISOLATION LEVEL REPEATABLE READ READ WRITE NOT DEFERRABLE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE, NOT DEFERRABLE')->toString());
+        self::assertSame('BEGIN ISOLATION LEVEL REPEATABLE READ READ WRITE NOT DEFERRABLE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE, NOT DEFERRABLE')->toString());
     }
 
     public function testRenderKeepsRepeatedModesInOrder(): void
     {
-        self::assertSame('START TRANSACTION READ ONLY READ WRITE READ ONLY', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('START TRANSACTION READ ONLY READ WRITE READ ONLY')->toString());
+        self::assertSame('START TRANSACTION READ ONLY READ WRITE READ ONLY', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('START TRANSACTION READ ONLY READ WRITE READ ONLY')->toString());
     }
 }

@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * prepared statements are session state; nothing is derived.
  * Source: https://www.postgresql.org/docs/17/sql-deallocate.html. Status: Implemented.
  *
- * @visibility public
- * @example Removing every prepared statement
- *     $deallocate = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DEALLOCATE PREPARE ALL');
- *     [$deallocate->statement->name, $deallocate->toString()] // => [null, 'DEALLOCATE ALL']
+ * @visibility SqlSemantics
  */
 final class Deallocate implements Statement
 {

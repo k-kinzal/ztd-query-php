@@ -14,8 +14,8 @@ final class ViewsTest extends TestCase
 {
     public function testDeriveReportsAnUnloggedView(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE UNLOGGED VIEW v AS SELECT 1', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE UNLOGGED VIEW v AS SELECT 1', []);
         self::assertSame([
           0 => 'views cannot be unlogged because they do not have storage',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));

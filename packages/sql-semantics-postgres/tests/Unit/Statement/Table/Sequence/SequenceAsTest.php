@@ -14,16 +14,16 @@ final class SequenceAsTest extends TestCase
 {
     public function testDeriveClauseDerivesTheType(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE SEQUENCE s AS bigint', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE SEQUENCE s AS bigint', []);
         self::assertSame([
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE SEQUENCE s AS smallint', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE SEQUENCE s AS smallint', []);
         self::assertSame('CREATE SEQUENCE s AS SMALLINT', $statement->toString());
     }
 }

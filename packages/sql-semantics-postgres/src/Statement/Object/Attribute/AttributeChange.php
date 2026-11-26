@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * holds its value as the command reads it.
  * Source: `operator_def_elem` in `src/backend/parser/gram.y` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading an attribute set to NONE
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
- *     [$operation->statement->attributes[0]->none, $operation->statement->attributes[0]->attribute->value] // => [true, null]
+ * @visibility SqlSemantics
  * @example Refusing NONE together with a value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange(new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), null, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('y')), true) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

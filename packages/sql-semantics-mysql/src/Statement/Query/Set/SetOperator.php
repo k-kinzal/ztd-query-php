@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
  * later accept INTERSECT and EXCEPT).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-operations.html.
  *
- * @visibility public
- * @example Reading the operator of a union
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 UNION SELECT 2');
- *     $query->statement->operator // => \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union
+ * @visibility SqlSemantics
  */
 enum SetOperator: string
 {

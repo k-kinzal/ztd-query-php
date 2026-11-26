@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
- * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, a INT)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Duplicate column name a.
+ * @visibility SqlSemantics
  */
 final class DuplicateColumn implements Diagnostic
 {

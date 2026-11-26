@@ -11,10 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
  *
  * Source: https://sqlite.org/datatype3.html#storage_classes_and_datatypes.
  *
- * @visibility public
- * @example Reading the storage class of a literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1');
- *     $query->field(0)->type->descriptor // => \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer
+ * @visibility SqlSemantics
  */
 enum Storage: string implements TypeDescriptor
 {

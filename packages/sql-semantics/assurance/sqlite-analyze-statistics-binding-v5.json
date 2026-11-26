@@ -1,0 +1,36 @@
+{
+  "revision": "SemanticsIR/sqlite-analyze-statistics-binding-5",
+  "approval": "pending-human-review",
+  "scope": "Connect SQLite ANALYZE from native grammatical selector through shared closed catalog indexes to the audited statistics statement.",
+  "artifacts": {
+    "src/Statement/Maintenance/Analyze.php": {
+      "sha256": "9f2262a2a6d948d3c514f673ca8e073c2d623e30104051aea1614012772b40d9",
+      "role": "Source role distinguishes optional selector components from fixed native grammar."
+    }
+  },
+  "sharedBindings": {
+    "src/Lowering/Definition/MaintenanceRule.php": {
+      "contract": "sqlite-reindex-binding-v5.json",
+      "sha256": "73a8b686773a372812144d91ef5fc9fd6d5c6a1370fe8cfba9abb1cac8cdb66d"
+    },
+    "src/Rules/Definition/ObjectNames.php": {
+      "sha256": "05f6d3b0f670a4a2dcd8584b5cc5570ce86e8fed38f1697e82bf966b5523a0c0",
+      "contract": "sqlite-reindex-binding-v5.json"
+    },
+    "src/Platform.php": {
+      "sha256": "9155ac8850b3300971fcca7eb3120453f03c3c0ded91f10420bafd3f00b964f6",
+      "contract": "sqlite-folded-binding-sources-v11.json"
+    },
+    "src/Model/Facade/Catalog.php": {
+      "sha256": "4e55f3d2e4c6e648fcf3578d05fbed159be9a0e36353023aa2fd6ddc582b8ff9",
+      "contract": "sqlite-drop-column-binding-v6.json"
+    },
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "c5994a6a2b915f3f1272d08ed6669a6f8208a0752c625b2223763f79a338b29f",
+      "contract": "sqlite-drop-index-binding-v6.json"
+    }
+  },
+  "revises": "sqlite-analyze-statistics-binding-v3.json",
+  "extends": "sqlite-analyze-statistics-binding-v4.json",
+  "change": "Extend the catalog to carry resolved trigger identities while retaining every existing binding source and dependency."
+}

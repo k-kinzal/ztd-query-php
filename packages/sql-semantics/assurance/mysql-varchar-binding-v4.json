@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-binding-4",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Column.php": {
+      "sha256": "22928d90b745acfa8b094a562eb365fb7cd81f7c1c058d6b5e84ce588435c883",
+      "role": "Hold the resolved effective collation on the declared identity."
+    },
+    "src/Rules/TableDefinition/TableDeclaration.php": {
+      "sha256": "5c03d94a0e031d95c659c9192f24ae920b083e34153bf716eb89814681155005",
+      "role": "Resolve effective table collation and retain the resolved field collation of a directly projected view column."
+    },
+    "src/Statement/Table/Column/CollateAttribute.php": {
+      "sha256": "39aa73934c51d2ffdba6984b1c7dc54540201c2d17b240864fdb31c2e0ce6abd",
+      "role": "Associate the parsed COLLATE clause with the exact column specification."
+    },
+    "src/Statement/Table/Column/OrdinaryColumn.php": {
+      "sha256": "c1cc51ee7b4d41904f64b2f574e4b9effe95201c0f42ed159b6c602b21fe3e97",
+      "role": "Supply the ordered checked attributes of each declared column."
+    },
+    "src/Statement/Name/CollationName.php": {
+      "sha256": "3367e0564b14162551e29c2635949bc9a9f700a3c7f9b0ae8bedf6790fb71fe1",
+      "role": "Distinguish a named collation from DEFAULT."
+    },
+    "src/Statement/Table/Option/CharsetOption.php": {
+      "role": "Distinguish the table charset option from column modifiers and unrelated clauses.",
+      "sha256": "8d9eb3584c066f1442c3d42f1a9eb5b514d0c42596d745eb8b2514c67a96a681"
+    },
+    "src/Statement/Table/Option/CollationOption.php": {
+      "role": "Expose a named or unresolved table collation to the binding rule.",
+      "sha256": "b1da86ffece5cc81a859faf2cd934ee17442fc5a7b6a6143d7fab6f5e88c2992"
+    },
+    "src/Statement/Name/CharsetName.php": {
+      "role": "Distinguish a named character set from DEFAULT without consulting the environment.",
+      "sha256": "c62912105f891719fbf0c49a615234ce09f195fbdc2072e21de4072558874a06"
+    },
+    "src/Lowering/TableDefinition/TableOptionRule.php": {
+      "role": "Keep charset and collation table declarations distinct during parser lowering.",
+      "sha256": "7aa6f805862b6ffa1c07dc08ae8e4c9405aadf3a023f398438707d6e75dac322"
+    },
+    "src/Rules/Query/Projection.php": {
+      "sha256": "8254e114fe831f811a713697914f4f0bff3abca730148288b0eb30e8bdc7f74e",
+      "role": "Associate the projected field with the original identity and its declared type."
+    },
+    "src/Model/Statement/Shape/Field.php": {
+      "sha256": "f3b68bdbe8739cc45e0574714c7f92e2dfa9a7260c4add49efe87f6ef5c2fddc",
+      "role": "Expose the exact resolved source column behind a direct projection."
+    },
+    "src/Model/Statement/Shape/OutputSlot.php": {
+      "sha256": "92ee80934a5219a9df5694030582ebdbb92a245d09177579ea4ee17ae05a2308",
+      "role": "Retain direct heading facts at each ordered output position."
+    }
+  }
+}

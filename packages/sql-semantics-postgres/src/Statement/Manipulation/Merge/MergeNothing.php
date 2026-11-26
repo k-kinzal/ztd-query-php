@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * Mirrors a `MergeWhenClause` with `CMD_NOTHING`.
  * Source: https://www.postgresql.org/docs/17/sql-merge.html.
  *
- * @visibility public
- * @example Reading a skip action
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN DO NOTHING');
- *     $merge->statement->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeNothing // => true
+ * @visibility SqlSemantics
  */
 final class MergeNothing implements Node
 {

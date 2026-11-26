@@ -36,10 +36,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * https://www.postgresql.org/docs/17/rowtypes.html#ROWTYPES-USAGE, https://www.postgresql.org/docs/17/sql-select.html#SQL-ORDERBY.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a qualified column reference
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT t.a FROM t');
- *     [count($query->statement->targets[0]->expression->parts), $query->field(0)->name->value] // => [2, 'a']
+ * @visibility SqlSemantics
  */
 final class ColumnReference implements Scalar, OutputNaming
 {

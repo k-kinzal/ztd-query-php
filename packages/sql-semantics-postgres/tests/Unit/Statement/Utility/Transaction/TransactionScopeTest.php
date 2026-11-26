@@ -14,6 +14,6 @@ final class TransactionScopeTest extends TestCase
 {
     public function testBothScopesAreKept(): void
     {
-        self::assertSame(['SET TRANSACTION READ ONLY', 'SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET TRANSACTION READ ONLY')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY')->toString()]);
+        self::assertSame(['SET TRANSACTION READ ONLY', 'SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY'], [(new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET TRANSACTION READ ONLY')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY')->toString()]);
     }
 }

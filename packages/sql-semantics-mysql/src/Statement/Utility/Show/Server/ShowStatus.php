@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-status.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW LOCAL STATUS LIKE 'a%'");
- *     [$show->statement->scope, $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, "SHOW SESSION STATUS LIKE 'a%'"]
+ * @visibility SqlSemantics
  */
 final class ShowStatus implements Statement, Relation
 {

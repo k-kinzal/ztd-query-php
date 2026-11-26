@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * the symbol follows it.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a string body
  *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition(new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('sql'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('SELECT 1')));
  *     [$option->source->language?->value, $option->source->text->value, $option->symbol] // => ['sql', 'SELECT 1', null]

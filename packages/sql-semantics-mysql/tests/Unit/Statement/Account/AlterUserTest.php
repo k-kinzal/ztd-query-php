@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Account;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AlterUser::class)]
 #[Medium]
@@ -18,8 +18,8 @@ final class AlterUserTest extends TestCase
 {
     public function testDeriveStatementReportsFactorAndPasswordHashProblems(): void
     {
-        $factors = (new Semantics())->inspect('ALTER USER u MODIFY 2 FACTOR IDENTIFIED BY \'a\' MODIFY 2 FACTOR IDENTIFIED BY \'b\'');
-        $hash = (new Semantics('mysql-5.7.44'))->inspect("ALTER USER u IDENTIFIED BY PASSWORD '*AB'");
+        $factors = (new Inspection())->diagnose('ALTER USER u MODIFY 2 FACTOR IDENTIFIED BY \'a\' MODIFY 2 FACTOR IDENTIFIED BY \'b\'');
+        $hash = (new Inspection('mysql-5.7.44'))->diagnose("ALTER USER u IDENTIFIED BY PASSWORD '*AB'");
 
         self::assertInstanceOf(InvalidFactorPair::class, $factors->facts->diagnostics[0]);
         self::assertInstanceOf(RejectedPasswordHash::class, $hash->facts->diagnostics[0]);
@@ -27,6 +27,6 @@ final class AlterUserTest extends TestCase
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame("ALTER USER IF EXISTS u DISCARD OLD PASSWORD, v REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 1 PASSWORD REQUIRE CURRENT OPTIONAL ATTRIBUTE '{}'", (new Semantics())->inspect("alter user if exists u discard old password, v require none with max_queries_per_hour 1 password require current optional attribute '{}'")->toString());
+        self::assertSame("ALTER USER IF EXISTS u DISCARD OLD PASSWORD, v REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 1 PASSWORD REQUIRE CURRENT OPTIONAL ATTRIBUTE '{}'", (new Inspection())->diagnose("alter user if exists u discard old password, v require none with max_queries_per_hour 1 password require current optional attribute '{}'")->toString());
     }
 }

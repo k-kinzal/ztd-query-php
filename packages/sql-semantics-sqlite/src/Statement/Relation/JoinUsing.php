@@ -14,10 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * The USING constraint of a join: the columns both sides are joined on and merged by.
  *
- * @visibility public
- * @example Reading the columns of a USING constraint
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t JOIN u USING (a, b)');
- *     $query->statement->from->steps[0]->constraint->columns[1]->value // => 'b'
+ * @visibility SqlSemantics
  */
 final class JoinUsing implements Node
 {

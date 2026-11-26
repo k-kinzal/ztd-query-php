@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
  *
- * @visibility public
- * @example Reading the order of a trigger
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW PRECEDES other SET @a = 1');
- *     [$create->statement->order->placement->value, $create->statement->order->other->value] // => ['PRECEDES', 'other']
+ * @visibility SqlSemantics
  */
 final class TriggerOrder implements Node
 {

@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Node;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectItem;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversNothing]
 #[Medium]
@@ -25,7 +25,7 @@ final class SelectItemTest extends TestCase
 
     public function testAProjectedExpressionIsASelectItem(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a, 1 AS one FROM t');
+        $operation = (new Inspection())->inspect('SELECT a, 1 AS one FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertContainsOnlyInstancesOf(SelectItem::class, $operation->statement->items);

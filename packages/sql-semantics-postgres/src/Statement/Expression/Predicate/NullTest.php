@@ -26,9 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * its place before IS (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-comparison.html. Status: Implemented.
  *
- * @visibility public
- * @example A NULL test is never NULL
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NULL IS NOT NULL')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 final class NullTest implements Scalar
 {

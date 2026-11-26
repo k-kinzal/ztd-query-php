@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling an account specification apart
  *     $entry = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser());
  *     $entry instanceof \SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration // => true

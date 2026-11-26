@@ -1,0 +1,228 @@
+{
+  "revision": "SemanticsIR/sqlite-scalar-boundaries-5",
+  "approval": "pending-human-review",
+  "scope": "Scalar scope walking, conditional and cast rules, typed prefix operands, numeric signs, and SQL emission. Resolve truth tests and preserve their operands under the checked table scope.",
+  "rules": {
+    "Expression/CaseExpression::__construct": {
+      "common": [
+        "Check::input(count($branches) <= 32, 'A CASE expression can have at most 32 branches.');",
+        "$this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression needs at least one checked branch.', 1);"
+      ]
+    },
+    "Predicate/ExpressionScope::check": {
+      "common": [
+        "$nodes = 0;",
+        "$payloadBytes = 0;",
+        "while ($pending !== []) {",
+        "    [$expression, $height, $visibility] = array_pop($pending);",
+        "    Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "    if ($expression instanceof CaseExpression) {",
+        "        foreach ($this->choice($expression, $height + 1, $visibility) as $operand) {",
+        "            $pending[] = $operand;",
+        "        }",
+        "        continue;",
+        "    }",
+        "    match (true) {",
+        "        $expression instanceof ColumnReference => Check::input(",
+        "            $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),",
+        "            'Column slot must belong to the statement source at a visible occurrence.',",
+        "        ),",
+        "        $expression instanceof Parameter => $payloadBytes += strlen($expression->label),",
+        "        $expression instanceof CastExpression, $expression instanceof TruthTest, $expression instanceof UnaryExpression",
+        "            => $pending[] = [$expression->operand, $height + 1, $visibility],",
+        "        $expression instanceof BetweenTest => array_push(",
+        "            $pending,",
+        "            [$expression->upper, $height + 1, $visibility],",
+        "            [$expression->lower, $height + 1, $visibility],",
+        "            [$expression->operand, $height + 1, $visibility],",
+        "        ),",
+        "        $expression instanceof TextLiteral => $payloadBytes += strlen($expression->value) + substr_count($expression->value, \"'\"),",
+        "        $expression instanceof BlobLiteral => $payloadBytes += strlen($expression->hex),",
+        "        $expression instanceof RealLiteral => $payloadBytes += strlen($expression->whole) + strlen($expression->fraction ?? '') + strlen($expression->exponent ?? ''),",
+        "        $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical",
+        "            => array_push($pending, [$expression->right, $height + 1, $visibility], [$expression->left, $height + 1, $visibility]),",
+        "        $expression instanceof HexIntegerLiteral, $expression instanceof IntegerLiteral, $expression instanceof NullLiteral => null,",
+        "    };",
+        "    Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');",
+        "}"
+      ]
+    },
+    "Predicate/ExpressionScope::choice": {
+      "common": [
+        "$operands = [];",
+        "if ($expression->base !== null) {",
+        "    $operands[] = [$expression->base, $height, $visibility];",
+        "}",
+        "foreach ($expression->branches as $branch) {",
+        "    $operands[] = [$branch->when, $height, $visibility];",
+        "    $operands[] = [$branch->then, $height, $visibility];",
+        "}",
+        "if ($expression->otherwise !== null) {",
+        "    $operands[] = [$expression->otherwise, $height, $visibility];",
+        "}",
+        "",
+        "return $operands;"
+      ]
+    },
+    "SelectSql::choice": {
+      "common": [
+        "$sql = '(CASE';",
+        "if ($expression->base !== null) {",
+        "    $sql .= ' ' . $this->expression($expression->base, $source, $joins);",
+        "}",
+        "foreach ($expression->branches as $branch) {",
+        "    $sql .= ' WHEN ' . $this->expression($branch->when, $source, $joins)",
+        "        . ' THEN ' . $this->expression($branch->then, $source, $joins);",
+        "}",
+        "if ($expression->otherwise !== null) {",
+        "    $sql .= ' ELSE ' . $this->expression($expression->otherwise, $source, $joins);",
+        "}",
+        "",
+        "return $sql . ' END)';"
+      ]
+    },
+    "ExpressionLowering::choice": {
+      "common": [
+        "$branches = [];",
+        "foreach ($expression->branches as $branch) {",
+        "    $branches[] = new CaseBranch($this->lower($branch->when, $binding), $this->lower($branch->then, $binding));",
+        "}",
+        "",
+        "return new CaseExpression(",
+        "    $expression->base === null ? null : $this->lower($expression->base, $binding),",
+        "    $branches,",
+        "    $expression->otherwise === null ? null : $this->lower($expression->otherwise, $binding),",
+        ");"
+      ]
+    },
+    "SelectSql::expression": {
+      "common": [
+        "if ($expression instanceof ColumnReference) {",
+        "    $source = $expression->source === 0 ? $source : ($joins[$expression->source - 1]->source ?? null);",
+        "    Check::invariant(isset($source->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "",
+        "    return $this->alias($expression->source) . '.' . $source->columns[$expression->slot]->quoted();",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical",
+        "        => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',",
+        "    $expression instanceof BetweenTest => $this->between($expression, $source, $joins),",
+        "    $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),",
+        "    $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))',",
+        "    $expression instanceof TruthTest => $this->truth($expression, $source, $joins),",
+        "    $expression instanceof UnaryExpression => '(' . $expression->kind->value . ' ' . $this->expression($expression->operand, $source, $joins) . ')',",
+        "    $expression instanceof IntegerLiteral => $expression->decimal,",
+        "    $expression instanceof HexIntegerLiteral => ($expression->negated ? '-' : '') . '0x' . $expression->digits,",
+        "    $expression instanceof RealLiteral => $expression->toString(),",
+        "    $expression instanceof TextLiteral => \"'\" . str_replace(\"'\", \"''\", $expression->value) . \"'\",",
+        "    $expression instanceof BlobLiteral => \"X'\" . $expression->hex . \"'\",",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => '?' . $expression->label,",
+        "};"
+      ]
+    },
+    "ExpressionLowering::cast": {
+      "common": [
+        "$target = match ($expression->target?->affinity() ?? Affinity::Numeric) {",
+        "    Affinity::Integer => CastTarget::Integer,",
+        "    Affinity::Real => CastTarget::Real,",
+        "    Affinity::Numeric => CastTarget::Numeric,",
+        "    Affinity::Text => CastTarget::Text,",
+        "    Affinity::Blob => CastTarget::Blob,",
+        "};",
+        "",
+        "return new CastExpression($target, $this->lower($expression->operand, $binding));"
+      ]
+    },
+    "ExpressionLowering::prefix": {
+      "common": [
+        "$literal = (new NumericLiteralLowering())->signed($expression);",
+        "if ($literal !== null) {",
+        "    return $literal;",
+        "}",
+        "$operand = $this->lower($expression->operand, $binding);",
+        "",
+        "return match ($expression->operator) {",
+        "    UnaryOperator::Plus => new UnaryExpression(UnaryKind::Plus, $operand),",
+        "    UnaryOperator::Not => new UnaryExpression(UnaryKind::Not, $operand),",
+        "    UnaryOperator::BitNot => new UnaryExpression(UnaryKind::Complement, $operand),",
+        "    UnaryOperator::Minus => new Arithmetic(ArithmeticOperator::Subtract, new IntegerLiteral('0'), $operand),",
+        "};"
+      ]
+    },
+    "Literal/NumericLiteralLowering::signed": {
+      "common": [
+        "if ($expression->operator !== UnaryOperator::Plus && $expression->operator !== UnaryOperator::Minus) {",
+        "    return null;",
+        "}",
+        "$operand = $expression->operand;",
+        "while ($operand instanceof Grouped || ($operand instanceof Unary && $operand->operator === UnaryOperator::Plus)) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "",
+        "return $operand instanceof ParsedInteger || $operand instanceof ParsedHex || $operand instanceof ParsedReal",
+        "    ? $this->lower($operand, $expression->operator === UnaryOperator::Minus)",
+        "    : null;"
+      ]
+    },
+    "SelectSql::truth": {
+      "common": [
+        "$value = $this->expression($expression->operand, $source, $joins);",
+        "$condition = $expression->desired ? $value : '(NOT ' . $value . ')';",
+        "[$matched, $unmatched] = $expression->negated ? ['0', '1'] : ['1', '0'];",
+        "",
+        "return '(CASE WHEN ' . $condition . ' THEN ' . $matched . ' ELSE ' . $unmatched . ' END)';"
+      ]
+    },
+    "ExpressionLowering::binary": {
+      "common": [
+        "$operator = (new BinaryOperatorLowering())->lower($expression->operator);",
+        "$left = $this->lower($expression->left, $binding);",
+        "$writtenRight = $expression->right;",
+        "while ($writtenRight instanceof Grouped) {",
+        "    $writtenRight = $writtenRight->operand;",
+        "}",
+        "if (($operator === ComparisonOperator::Is || $operator === ComparisonOperator::IsNot)",
+        "    && $writtenRight instanceof TruthWord && ($desired = $binding->constantTruth($writtenRight)) !== null) {",
+        "    return new TruthTest($left, $desired, $operator === ComparisonOperator::IsNot);",
+        "}",
+        "$right = $this->lower($writtenRight, $binding);",
+        "",
+        "return match (true) {",
+        "    $operator instanceof ArithmeticOperator => new Arithmetic($operator, $left, $right),",
+        "    $operator instanceof ComparisonOperator => new Comparison($operator, $left, $right),",
+        "    $operator instanceof LogicalOperator => new Logical($operator, $left, $right),",
+        "};"
+      ]
+    },
+    "ExpressionLowering::truthWord": {
+      "common": [
+        "$truth = $binding->constantTruth($expression);",
+        "",
+        "return $truth === null ? $binding->reference($expression) : new IntegerLiteral($truth ? '1' : '0');"
+      ]
+    },
+    "SourceBinding::constantTruth": {
+      "common": [
+        "return $this->operation->facts->scalar($word)->resolution === null ? $word->value : null;"
+      ]
+    },
+    "SelectSql::between": {
+      "common": [
+        "return '(' . $this->expression($expression->operand, $source, $joins)",
+        "    . ($expression->negated ? ' NOT BETWEEN ' : ' BETWEEN ')",
+        "    . $this->expression($expression->lower, $source, $joins) . ' AND '",
+        "    . $this->expression($expression->upper, $source, $joins) . ')';"
+      ]
+    },
+    "Literal/RealLiteral::toString": {
+      "common": [
+        "return ($this->negative ? '-' : '') . $this->whole",
+        "    . ($this->fraction === null ? '' : '.' . $this->fraction)",
+        "    . ($this->exponent === null ? '' : 'e' . $this->exponent);"
+      ]
+    }
+  },
+  "extends": "sqlite-scalar-boundaries-v3.json"
+}

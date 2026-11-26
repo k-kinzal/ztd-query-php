@@ -12,10 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-handler.html.
  *
- * @visibility public
- * @example Reading the class a handler names
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END');
- *     $create->statement->body->declarations[0]->conditions[0]->class // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass::SqlException
+ * @visibility SqlSemantics
  */
 final class GeneralCondition implements Condition
 {

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-global-privileges.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the level
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel())->describe() // => 'the global level'
  */

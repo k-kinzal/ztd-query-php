@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * the columns of the common table; the BY columns name columns of it.
  * Source: https://www.postgresql.org/docs/17/queries-with.html#QUERIES-WITH-SEARCH.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a search clause
  *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchClause(\SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchOrder::Depth, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('id')], new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('ordercol'));
  *     [$clause->order->value, $clause->sequence->value] // => ['DEPTH', 'ordercol']

@@ -1,0 +1,49 @@
+{
+  "revision": "SemanticsIR/postgres-signed-comparison-widths-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL builtin comparisons of int4 and int8 under the explicit pg_catalog operator namespace or a lookup with pg_catalog first.",
+  "extends": ["postgres-int8-fields-v1.json", "postgres-int4-operators-v2.json", "server-join-v2.json", "postgres-signed-write-widths-v1.json"],
+  "constructors": {},
+  "existingRoles": ["Predicate/IntegerComparison", "Predicate/IntegerOperator", "ColumnReference", "From/WideIntegerColumnReference", "Expression/WideIntegerLiteral", "IntegerLiteral", "ResultColumn", "Select", "From/Join"],
+  "structure": "A signed comparison retains the exact operator and ordered native field or literal operands. Each operand has its own int4 or int8 role. The pair identifies the builtin overload. The result is nullable Boolean.",
+  "conditions": "Both operands must be resolved signed native fields or canonical signed literals. Every column, including one below a Boolean comparison in a projected result, must match its owning source occurrence and native kind. Analyzed comparisons admit unqualified builtin lookup with pg_catalog first and explicit pg_catalog qualification.",
+  "meaning": "Evaluate the two signed values without narrowing. A NULL operand produces a NULL comparison result. WHERE and ON admit only true. A projected result retains false and NULL distinctly. Join null extension and duplicate matches retain the existing relational meaning.",
+  "sql": "Emit the two typed operands in their original order with the qualified pg_catalog operator inside parentheses. Emit result aliases and apply the same submitted or positional column order.",
+  "observations": ["Ordered typed comparison operand roles and exact slot locations", "Result column labels and native Boolean type including empty results", "True, false and NULL result values", "Typed equality or distinct relational row bags after filtering and left or inner matching"],
+  "finite": {
+    "widths": ["int4-int4", "int4-int8", "int8-int4", "int8-int8"],
+    "operator": ["=", "<>", "<", "<=", ">", ">="],
+    "layout": ["output", "filter", "join"],
+    "operands": ["both fields", "left literal", "right literal"],
+    "identities": 216,
+    "completeness": "Independently recover the operator, operand widths, owning placement, and reference-versus-literal role from the observed direct graph. The fixture includes both signed endpoints, NULLs, duplicate values, and exactly distinguishable field coordinates."
+  },
+  "analysis": ["Reversed same-source mixed-width field comparison in a named result", "Catalogue-qualified cross-width comparison with an endpoint literal", "Native inequality alias and nullable result", "Mixed-width left join with independently scoped references", "Qualified filter with grouped signed operands", "Order a projected Boolean by its label", "Filter a null-extended bigint field after a join", "Explicit default schema spelling for a known signed builtin"],
+  "exploration": {
+    "seeds": [5021, 22003, 37277],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary operator, width, predicate layout, nested Boolean filters, source occurrence, nullable operands, labels, and local literal versus source field."
+  },
+  "negative": ["A wide reference over an int4 slot inside a projected comparison", "An int4 reference over an int8 slot inside a filter", "Nonexistent occurrence inside an ON comparison", "Unknown signed field in analyzed input", "A non-catalog explicit comparison operator", "A text field in a signed comparison"],
+  "faults": ["Swap the comparison operands", "Reverse the selected comparison operator", "Narrow an int8 comparison literal to int4", "Read the wrong join occurrence", "Drop the ownership walk for a projected comparison"],
+  "evidence": {
+    "P01": "The complete comparison identifies the exact builtin, operand role and native widths.",
+    "P02": "Operand types and the owning layout reject invalid fields and operator choices before publication.",
+    "P03": "The comparison holds signed literal and reference values without source SQL or analysis state.",
+    "P04": "Apply the same scalar comparison in output, WHERE and ON with native three-valued selection.",
+    "P05": "Own final immutable operands and verify the whole reference graph.",
+    "P06": "Preserve Boolean values, NULLs, operand order, and relational selection in emitted SQL.",
+    "Q01": "Verify the typed slot and operator bounds and each fixed rejection.",
+    "Q02": "Exhaust the fixed independent direct grid and compare admitted SQL spellings separately.",
+    "Q03": "Compare linked projections, predicates and join results.",
+    "Q04": "Compare exact signed relations and nullable Boolean results with both pinned databases.",
+    "Q05": "Check the loaded distribution's role types, lowering, scope walk and output bodies."
+  },
+  "open": ["Explicit and inferred typed NULL literal operands", "Additional scalar comparison domains, user-defined operators, and numeric arithmetic operands", "Mixed-width BETWEEN and DISTINCT predicates", "Ordered and bounded aggregate result roles"],
+  "trust": ["PostgreSQL builtin int4 and int8 cross-type operator identities", "Independent signed comparisons over fixed distinct fixture values", "Exact source ownership and native evaluation versions"],
+  "sources": ["https://www.postgresql.org/docs/17/functions-comparison.html", "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/include/catalog/pg_operator.dat"]
+}

@@ -11,8 +11,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Field::class)]
 #[Medium]
@@ -20,10 +20,10 @@ final class FieldTest extends TestCase
 {
     public function testColumnReachesTheDeclarationADirectReferenceReturns(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')->declarations()[0];
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')->declarations()[0];
 
-        $field = $semantics->analyze('SELECT a AS x FROM t', [$table])->field('x');
+        $field = $semantics->inspect('SELECT a AS x FROM t', [$table])->field('x');
 
         self::assertSame(0, $field->position);
         self::assertSame('x', $field->name?->value);
@@ -36,10 +36,10 @@ final class FieldTest extends TestCase
 
     public function testColumnIsNullForAComputedField(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0];
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
 
-        $field = $semantics->analyze('SELECT a + 1 FROM t', [$table])->field(0);
+        $field = $semantics->inspect('SELECT a + 1 FROM t', [$table])->field(0);
 
         self::assertNull($field->column());
         self::assertNull($field->resolution);
@@ -49,10 +49,10 @@ final class FieldTest extends TestCase
 
     public function testColumnFollowsASetOperationFieldWithoutASingleExpression(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0];
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
 
-        $field = $semantics->analyze('SELECT a FROM t UNION SELECT 1', [$table])->field(0);
+        $field = $semantics->inspect('SELECT a FROM t UNION SELECT 1', [$table])->field(0);
 
         self::assertNull($field->expression);
         self::assertSame('a', $field->name?->value);

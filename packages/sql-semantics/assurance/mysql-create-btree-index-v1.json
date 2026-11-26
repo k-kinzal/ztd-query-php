@@ -1,0 +1,67 @@
+{
+  "revision": "SemanticsIR/mysql-create-btree-index-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "releases": ["5.6.51", "5.7.44", "8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+  "mode": "Native parameter profile, utf8mb4, exact database and table names, empty SQL mode, and ordinary InnoDB tables.",
+  "scope": "Ordinary standalone CREATE INDEX and CREATE UNIQUE INDEX with full named signed INT fields, optional USING BTREE, and the native effective visibility and key directions. Include the session-temporary table namespace. Other grammar alternatives remain required and are tracked separately.",
+  "constructors": {
+    "CreateIndex": {
+      "type": "Schema/Index/CreateIndex",
+      "role": "Create an identified native B-tree index over checked fields of one resolved ordinary InnoDB table.",
+      "structure": "Absolute owning identity and checked signed field roles, decoded native index identifier, ordered selected slot list, uniqueness, effective visibility, and immutable release.",
+      "conditions": "Require a resolved InnoDB table or session-temporary declaration, a native unreserved index identifier of 1 through 64 BMP characters with no trailing space, and 1 through 16 distinct full signed INT field references. Legacy releases store ascending effective order and visible indexes. The caller's current database alone identifies no completed table.",
+      "meaning": "Create the ordered native secondary index. Unique indexes admit repeated NULL keys and reject duplicate populated key tuples per the native rules. An occupied index identifier in the execution state or a duplicate key in the data can prevent creation. The table and its rows retain their existing identity and values. A session temporary declaration shadows the persistent table of the same identity.",
+      "sql": "Emit an explicit qualified target and quote the decoded index and field names. Use ordinary InnoDB native B-tree syntax, exact term order and effective direction. Emit UNIQUE or INVISIBLE when required by the checked role."
+    },
+    "IndexColumn": {
+      "type": "Schema/Index/IndexColumn",
+      "role": "An ordered effective reference to a local signed field of the index owner.",
+      "structure": "Zero-based resolved target slot and effective descending flag.",
+      "conditions": "The local slot is in the native field range. The index constructor enforces owner membership, distinct role, signed type and release direction.",
+      "meaning": "Values for the selected field form this ordered index key component with the checked orientation.",
+      "sql": "Use the physical column name at the checked position and write DESC exactly when the profile stores descending order."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "lifetimes": ["persistent", "temporary", "temporary-shadow"],
+    "keys": ["single-required", "single-nullable", "composite-reordered", "sixteen-ordered"],
+    "directions": ["ascending", "descending"],
+    "unique": [false, true],
+    "visibility": {"legacy": ["visible"], "modern": ["visible", "invisible"]},
+    "order": "Release-dependent lexicographic product in the declared axis order, on both direct and analyzed routes.",
+    "edges": ["Qualified and unqualified references select the same session shadow", "Native BMP names of length 64 and 65", "Reserved PRIMARY name and case-insensitive physical identity", "Duplicate and missing fields", "Seventeen key parts", "Legacy written DESC is stored ascending", "Repeated NULL versus populated unique-key collision"]
+  },
+  "exploration": {
+    "seeds": [2719, 7463, 18019],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 270,
+    "allowedExclusions": [],
+    "structure": "Permute 1 through 16 references, nullable roles, explicit case and non-ASCII identifiers, visibility, lifetimes, and per-part legal direction."
+  },
+  "observations": [
+    "Exact named owning table and session precedence on a separate catalog connection.",
+    "Native BTREE, index name, uniqueness, effective visibility, nullable status, exact key field order and stored direction from SHOW INDEX.",
+    "Preserved table and row values with duplicate and NULL data. Compare subsequent uniqueness enforcement and typed duplicate-value or occupied-name effects.",
+    "Persistent and temporary transaction effects and cleanup from an independent session.",
+    "Verify typed construction refusals and scope before publication. Retain real native outcomes separately for data-dependent failures."
+  ],
+  "faults": [
+    "Replace an ordered field by a different valid source slot.",
+    "Reverse the native order of a multiple-field key.",
+    "Erase native descending direction or invisibility when meaningful.",
+    "Treat UNIQUE as an ordinary index.",
+    "Return the persistent target in the temporary shadow case.",
+    "Accept repeated, excess or out-of-owner fields.",
+    "Skip a required native profile or weaken the ordered-index observation."
+  ],
+  "trust": ["Independent native engine profiles and two-session observations, the pinned constructor templates, declared ordinary InnoDB table binding, and a comparator that preserves order and exact visibility."],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/create-index.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/descending-indexes.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-limits.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html"
+  ]
+}

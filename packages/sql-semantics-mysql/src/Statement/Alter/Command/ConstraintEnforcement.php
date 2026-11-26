@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  * for a check constraint).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-foreign-check-constraints.
  *
- * @visibility public
- * @example Suspending a check constraint
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER CHECK c NOT ENFORCED');
- *     [$alter->statement->commands[0]->enforced, $alter->toString()] // => [false, 'ALTER TABLE t ALTER CHECK c NOT ENFORCED']
+ * @visibility SqlSemantics
  */
 final class ConstraintEnforcement implements AlterCommand
 {

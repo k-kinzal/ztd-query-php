@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * unquoted name is folded to lower case when it is read.
  * Source: https://www.postgresql.org/docs/17/sql-set.html, https://www.postgresql.org/docs/17/runtime-config-custom.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the text of a dotted parameter name
  *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('plpgsql'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('variable_conflict')]);
  *     $name->text() // => 'plpgsql.variable_conflict'

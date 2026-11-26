@@ -10,9 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter;
  * Mirrors the `objtype` of `AlterTableStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading the kind of altered relation
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER MATERIALIZED VIEW m SET TABLESPACE s')->statement->target // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTarget::MaterializedView
+ * @visibility SqlSemantics
  */
 enum AlterTarget: string
 {

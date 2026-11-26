@@ -1,0 +1,169 @@
+{
+  "revision": "SemanticsIR/sqlite-create-view-boundaries-4",
+  "approval": "pending-human-review",
+  "scope": "Check view lowering, source and parameter boundaries, including references to one checked local definition.",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'A CREATE VIEW needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($view->key(), 'sqlite_'), 'A CREATE VIEW cannot use the reserved SQLite namespace.');",
+        "$names = Check::listOf($columns, Identifier::class, 'A CREATE VIEW needs effective column names.', 1);",
+        "Check::input(count($names) <= 2000, 'View output count exceeds the SQLite profile.');",
+        "if ($query instanceof CompoundQuery) {",
+        "    (new CompoundViewBounds())->check($schema, $query, count($names), strlen((new ViewSql())->header($schema, $view, $names, $ifNotExists)));",
+        "} else {",
+        "    (new ViewQueryBounds())->check($schema, $query, count($names));",
+        "}",
+        "$seen = [];",
+        "foreach ($names as $name) {",
+        "    $key = $name->key();",
+        "    Check::input($key !== 'true' && $key !== 'false', 'A view name list must use the effective name of a truth word.');",
+        "    Check::input(!isset($seen[$key]), 'Effective view column names must be unique.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $names;"
+      ]
+    },
+    "Schema/View/CreateView::profileId": {
+      "common": [
+        "return $this->query->profileId();"
+      ]
+    },
+    "Schema/View/CreateView::toString": {
+      "common": [
+        "return (new ViewSql())->header($this->schema, $this->view, $this->columns, $this->ifNotExists) . $this->query->toString();"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::check": {
+      "common": [
+        "if ($query instanceof GroupedSelect) {",
+        "    $this->grouped($schema, $query, $width);",
+        "",
+        "    return;",
+        "}",
+        "if ($query instanceof Select) {",
+        "    Check::input(count($query->columns) === $width, 'View columns must match the query width.');",
+        "    if ($query->source !== null) {",
+        "        $this->source($schema, $query->source);",
+        "    }",
+        "    foreach ($query->joins as $join) {",
+        "        $this->source($schema, $join->source);",
+        "    }",
+        "    (new SelectBounds())->check($query->columns, $query->source, $query->joins, $query->where, $query->orderBy, $query->limit, false);",
+        "",
+        "    return;",
+        "}",
+        "",
+        "Check::input(count($query->rows[0]->values) === $width, 'View columns must match the query width.');",
+        "$pending = [];",
+        "foreach ($query->rows as $row) {",
+        "    foreach ($row->values as $value) {",
+        "        $pending[] = [$value, 0, 0];",
+        "    }",
+        "}",
+        "(new ExpressionScope())->check([], $pending, false, false);"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::source": {
+      "common": [
+        "if ($source instanceof LocalSource) {",
+        "    return;",
+        "}",
+        "Check::input($schema->key() === 'temp' || $schema->key() === $source->schema->key(), 'A persistent view can only reference tables in its schema.');"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "common": [
+        "$schema = (new CreateSchema())->resolve($operation, $statement->name, $statement->temporary);",
+        "$query = $statement->query;",
+        "$body = match (true) {",
+        "    $query instanceof ParsedCompound => (new CompoundLowering())->lower($operation, $query),",
+        "    $query instanceof ValuesClause => (new ValuesLowering())->lower($operation, $query),",
+        "    $query instanceof ParsedSelect && (new GroupedLowering())->applies($query) => (new GroupedLowering())->lower($operation, $query),",
+        "    $query instanceof ParsedSelect, $query instanceof WithQuery => (new SelectLowering())->lower($operation, $query),",
+        "    default => throw new InvalidConstruction('CREATE VIEW requires a checked query.'),",
+        "};",
+        "$declaration = $operation->facts->declarations[0] ?? null;",
+        "Check::invariant($declaration !== null && $declaration->kind === RelationKind::View, 'The view operation has a named view declaration.');",
+        "$columns = [];",
+        "foreach ($declaration->columns as $column) {",
+        "    $columns[] = new Identifier($column->name->value);",
+        "}",
+        "",
+        "return new CreateView($schema, new Identifier($statement->name->name->value), $columns, $body, $statement->ifNotExists);"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::grouped": {
+      "common": [
+        "Check::input(count($query->columns) === $width, 'View columns must match the query width.');",
+        "$widths = [];",
+        "if ($query->source !== null) {",
+        "    $this->source($schema, $query->source);",
+        "    $widths[] = count($query->source->columns);",
+        "}",
+        "$pending = [];",
+        "foreach ([$query->where, $query->having?->threshold] as $operand) {",
+        "    if ($operand !== null) {",
+        "        $pending[] = [$operand, 0, count($widths)];",
+        "    }",
+        "}",
+        "(new ExpressionScope())->check($widths, $pending, false, false);"
+      ]
+    },
+    "Schema/View/CompoundViewBounds::check": {
+      "common": [
+        "$arms = [$query->first];",
+        "foreach ($query->steps as $step) {",
+        "    $arms[] = $step->query;",
+        "}",
+        "$bounds = new ViewQueryBounds();",
+        "foreach ($arms as $arm) {",
+        "    $bounds->check($schema, $arm, $width);",
+        "    $this->types($arm);",
+        "}",
+        "if ($query->limit !== null) {",
+        "    $items = [[$query->limit->count, 0, 0]];",
+        "    if ($query->limit->offset !== null) {",
+        "        $items[] = [$query->limit->offset, 0, 0];",
+        "    }",
+        "    (new ExpressionScope())->check([], $items, false, false);",
+        "}",
+        "(new CompoundBounds())->check($query->first, $query->steps, $query->orderBy, $query->limit, $prefixBytes);"
+      ]
+    },
+    "Schema/View/CompoundViewBounds::types": {
+      "common": [
+        "$values = [];",
+        "if ($arm instanceof Select) {",
+        "    foreach ($arm->columns as $field) {",
+        "        $values[] = $field->expression;",
+        "    }",
+        "} else {",
+        "    foreach ($arm->rows as $row) {",
+        "        foreach ($row->values as $value) {",
+        "            $values[] = $value;",
+        "        }",
+        "    }",
+        "}",
+        "",
+        "foreach ($values as $value) {",
+        "    while ($value instanceof CollatedExpression) {",
+        "        $value = $value->operand;",
+        "    }",
+        "    Check::input(!$value instanceof ColumnReference && !$value instanceof CastExpression, 'Compound view results require no declared-type affinity.');",
+        "}"
+      ]
+    },
+    "Schema/View/ViewSql::header": {
+      "common": [
+        "$columns = [];",
+        "foreach ($names as $name) {",
+        "    $columns[] = $name->quoted();",
+        "}",
+        "",
+        "return 'CREATE VIEW ' . ($ifNotExists ? 'IF NOT EXISTS ' : '')",
+        "    . $schema->quoted() . '.' . $view->quoted() . ' (' . implode(', ', $columns) . ') AS ';"
+      ]
+    }
+  }
+}

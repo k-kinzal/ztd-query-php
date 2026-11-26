@@ -14,8 +14,8 @@ final class PartitionOfTest extends TestCase
 {
     public function testElementsAnswersTheColumnOptions(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p (a NOT NULL, CHECK (a > 0)) DEFAULT', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p (a NOT NULL, CHECK (a > 0)) DEFAULT', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -25,8 +25,8 @@ final class PartitionOfTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF s.p (a NOT NULL) FOR VALUES IN (1, 2)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF s.p (a NOT NULL) FOR VALUES IN (1, 2)', []);
         self::assertSame('CREATE TABLE p1 PARTITION OF s.p (a NOT NULL) FOR VALUES IN (1, 2)', $statement->toString());
     }
 }

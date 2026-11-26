@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_is-null.
  * Status: Implemented.
  *
- * @visibility public
- * @example Testing a column for NULL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a IS NOT NULL');
- *     $query->statement->where->negated // => true
+ * @visibility SqlSemantics
  */
 final class NullTest implements Scalar
 {

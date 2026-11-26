@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Mutation;
  *
  * Source: https://sqlite.org/lang_conflict.html.
  *
- * @visibility public
- * @example Reading the algorithm of an INSERT OR
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT OR IGNORE INTO t VALUES (1)');
- *     $insert->statement->into->resolution // => \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore
+ * @visibility SqlSemantics
  */
 enum ConflictResolution: string
 {

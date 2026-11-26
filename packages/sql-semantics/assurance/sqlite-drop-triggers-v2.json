@@ -1,0 +1,207 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-triggers-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Stock SQLite 3.47.2, UTF-8, ASCII case-insensitive object lookup, temp then main then ordered attached schemas, ordinary declared triggers on available tables or views.",
+  "scope": "Resolved trigger removal and guarded absence. External catalog construction collects trigger identities from submitted declarations without running or retaining the program.",
+  "additionalPublicRoots": [
+    "Schema/Trigger/DropTrigger"
+  ],
+  "constructors": {
+    "Schema/Trigger/DropTrigger": {
+      "role": "Remove a resolved installed trigger or execute the native guarded absence.",
+      "structure": "A checked TriggerReference or MissingTrigger and the IF EXISTS policy.",
+      "conditions": "An absent target requires IF EXISTS. The target fixes an explicit installed identity or a determined external absence.",
+      "meaning": "Remove only the selected trigger and disable its future firing. On an absent target issue the read-only no-op with the corresponding schema verification. Normal transaction rollback restores a removed trigger.",
+      "sql": "Emit DROP TRIGGER, the optional guard and the target's quoted selector.",
+      "externalInterpretation": "Same SQLite attachment order, exact trigger identity with its absolute watched relation, or same absence under the selected verification scope.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerReference": {
+      "role": "One absolute installed SQLite trigger and its watched relation under the external interpretation.",
+      "structure": "Immutable trigger schema and name, and watched relation schema and name.",
+      "conditions": "The stored trigger and its watched relation have the same owning schema unless the trigger belongs to temp. Ordinary trigger names cannot start with sqlite_.",
+      "meaning": "Select the exact installed definition, independently of the original spelling and any same-named siblings. Its declared watched relation identifies the effect of removing it.",
+      "sql": "Quote the absolute trigger schema and name separately. The watched relation is an external semantic coordinate.",
+      "externalInterpretation": "Same SQLite attachment order, exact trigger identity with its absolute watched relation, or same absence under the selected verification scope.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/MissingTrigger": {
+      "role": "One absent trigger selector under the recorded verification scope.",
+      "structure": "Decoded trigger name, verification kind and, for a qualified kind, a decoded schema qualifier.",
+      "conditions": "SearchPath has no qualifier. KnownSchema and UnknownSchema have one, including the empty string if supplied. The enclosing removal must use IF EXISTS.",
+      "meaning": "The native no-op verifies the whole native path, one attached schema, or no schema, determined respectively by the three verification kinds.",
+      "sql": "Emit the optional exact qualifier and independently quote the trigger name.",
+      "externalInterpretation": "Same SQLite attachment order, exact trigger identity with its absolute watched relation, or same absence under the selected verification scope.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Trigger/TriggerVerification": {
+      "role": "The schema verification scope of a guarded absence.",
+      "structure": "SearchPath, KnownSchema or UnknownSchema.",
+      "conditions": "The absence boundary establishes this scope from the selector and the declared native namespace profile.",
+      "meaning": "Select the databases observed by native schema verification. UnknownSchema verifies none.",
+      "sql": "SearchPath uses an unqualified name. Both qualified cases use the retained exact qualifier.",
+      "externalInterpretation": "Same SQLite attachment order, exact trigger identity with its absolute watched relation, or same absence under the selected verification scope.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Identifier",
+    "Schema/Trigger/CreateTrigger"
+  ],
+  "rules": [
+    "An unqualified name selects the first trigger in temp, main or the ordered attachments. A qualifier selects exactly that catalog. Qualify a resolved target absolutely using the catalog spelling.",
+    "An open catalog can establish a qualified positive or an unqualified temp positive. It cannot establish any absence or skip a possibly shadowing schema.",
+    "Multiple competing declarations at the same coordinate are indeterminate. A CREATE TRIGGER declaration must bind the watched relation without crossing persistent schema boundaries. A TEMP trigger may watch a relation in any schema.",
+    "IF EXISTS converts a missing trigger into a native read-only no-op. An unqualified absence verifies every database, a known qualifier verifies just that database, and an unknown qualifier verifies none. Unknown qualifiers under IF EXISTS are accepted.",
+    "Required missing targets are rejected before publication. An external declaration identifies an installed object and its watched relation without requiring the program to belong to the published CREATE TRIGGER family.",
+    "Inputs outside the ordinary profile include orphaned TEMP triggers, nonstandard primary schema names, writable-schema definitions and namespace states not established by the caller."
+  ],
+  "observations": [
+    "Exact target spelling, owning schema, referenced watched relation and application trigger authorization versus temporary trigger authorization.",
+    "EXPLAIN transaction verification scopes, read-only state, changes, bindings, result names, and row values.",
+    "Ordered catalog definitions before and after execution, unaffected sibling declarations, rollback restoration, and audit rows from later firing on separately seeded relations."
+  ],
+  "finite": {
+    "layouts": [
+      "empty",
+      "main",
+      "archive",
+      "temp",
+      "temp-shadow",
+      "attached-shadow",
+      "second-attachment",
+      "temp-and-attached"
+    ],
+    "qualifiers": [
+      null,
+      "main",
+      "temp",
+      "archive",
+      "archive2",
+      "missing"
+    ],
+    "spellings": [
+      "tracker",
+      "TRACKER",
+      "absent"
+    ],
+    "guards": [
+      false,
+      true
+    ],
+    "rollback": [
+      false,
+      true
+    ],
+    "identity": "Cartesian order as printed (576 coordinates). The 364 admissible coordinates have a resolved selected identity or IF EXISTS. Check all 364 through direct and analyzed construction; independently enumerate and check the 212 required-missing coordinates as typed refusals with native preparation controls."
+  },
+  "exploration": {
+    "seeds": [
+      8719,
+      46919,
+      97213
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 360,
+    "allowedExclusions": [],
+    "domain": "Use fresh quoted and Unicode identifiers, all native owner and qualifier scopes, same-name sibling layouts, different watched and trigger schemas for TEMP, transaction outcome, and distinguishable row programs and data."
+  },
+  "negative": [
+    "A missing selector without the guard",
+    "All-scope verification with a qualifier",
+    "Known-schema verification without a qualifier",
+    "Unknown-schema verification without a qualifier",
+    "Installed trigger in the reserved namespace",
+    "Persistent trigger watches a relation in a different schema",
+    "Installed target with a null schema"
+  ],
+  "analysisNegative": [
+    "Optional absence in an open catalog",
+    "Unqualified main trigger behind an unknown temp scope",
+    "Competing catalog definitions at the same coordinate",
+    "Search path repeats a schema by SQLite comparison",
+    "Catalog declaration watches an unresolved relation",
+    "Definition with an undeclared owning schema",
+    "Unqualified trigger definition whose owner can change with open temp scope"
+  ],
+  "faults": [
+    "Drop from another schema",
+    "Drop the adjacent trigger",
+    "Drop the guard",
+    "Restrict all-database verification to main",
+    "Turn a qualified absence into unqualified verification",
+    "Permit an unguarded absent constructor",
+    "Permit an installed cross-schema persistent reference"
+  ],
+  "open": [
+    "Other trigger programs and language modes remain enumerated in the fixed grammar scope. Finite positive and negative counts apply only to the fixed matrix. Authorizer absence for orphaned temporary objects requires a separate external interpretation."
+  ],
+  "trust": [
+    "Pinned SQLite ABI and schema observer, typed values and checked binder, immutable identifiers and exact PHP runtime separation. Native observations and the independent expected effect are compared without dropping catalog entries, row multiplicity or verification scope."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "nativeCases": "380932a55a79a9e7f41768a564a809a690b3c17730703589ceb26699e4f9d051",
+    "driver": "02b64301fe85acee55b27ae5823fa3ce1ab0076768c2e7b426fd6684d30feb72",
+    "pinnedEngineRoutines": [
+      "sqlite3DropTrigger",
+      "sqlite3DropTriggerPtr",
+      "sqlite3CodeVerifyNamedSchema",
+      "sqlite3DbIsNamed"
+    ]
+  },
+  "scheduledRejections": 212,
+  "extends": "sqlite-drop-triggers-v1.json",
+  "change": "Expose the already required 212 finite required-missing coordinates as a separate machine-checked rejection budget. No coordinate, scenario or observation changed."
+}

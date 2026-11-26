@@ -1,0 +1,16 @@
+{
+  "revision": "SemanticsIR/mysql-create-like-observer-queries-1",
+  "approval": "pending-human-review",
+  "semanticContract": "mysql-create-like-v1.json",
+  "scope": "Reuse the compound observer's own SHOW CREATE TABLE and SHOW FULL COLUMNS records while deriving one complete native table snapshot.",
+  "invariant": "The supplied records come from the same evaluating PDO connection and exact qualified fixture relation used by the shared table observer. The fixture has no intervening write or concurrent writer between those observations. Values, allocated columns, foreign keys, native index observations, stored rows and visibility remain in the receipt.",
+  "method": "Derive the CREATE LIKE-specific fields and the shared table observation from the same raw native metadata records. Retain independent SHOW INDEX, row reads, database-state phases, typed invalid-structure controls and all existing fault cases.",
+  "acceptance": {
+    "timeoutSecondsPerRelease": 300,
+    "finite": 192,
+    "seedBudget": 72,
+    "exclusions": [],
+    "compare": "For each emitted and authored SQL case compare the complete native observations with the unchanged independent predictions. Record actual duration and all timeouts through the fixed schedule. Retain the earlier incomplete attempts."
+  },
+  "change": "The two overlapping metadata queries are issued once per fixture table snapshot. Database images, SQL mode, comparator, input domain and registered budgets remain fixed."
+}

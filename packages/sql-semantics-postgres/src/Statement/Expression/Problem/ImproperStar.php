@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/rowtypes.html#ROWTYPES-USAGE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\ImproperStar())->message() // => 'Improper use of "*".'
  */

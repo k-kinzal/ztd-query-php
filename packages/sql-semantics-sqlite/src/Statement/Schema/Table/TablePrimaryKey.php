@@ -31,11 +31,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
  * Source: https://sqlite.org/lang_createtable.html#the_primary_key,
  * https://sqlite.org/lang_createtable.html#rowid. Status: Implemented.
  *
- * @visibility public
- * @example Reading the terms of a primary key
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, PRIMARY KEY (a, b DESC) ON CONFLICT ROLLBACK)');
- *     $key = $create->statement->constraints[0]->items[0];
- *     [count($key->terms), $key->terms[1]->direction?->value, $key->conflict?->value] // => [2, 'DESC', 'ROLLBACK']
+ * @visibility SqlSemantics
  */
 final class TablePrimaryKey implements TableConstraint
 {

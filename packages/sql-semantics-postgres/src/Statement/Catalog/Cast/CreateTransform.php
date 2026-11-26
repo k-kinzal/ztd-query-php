@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * language and one function per direction, kept in the order written.
  * Source: https://www.postgresql.org/docs/17/sql-createtransform.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the language of a transform
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plpython3u (FROM SQL WITH FUNCTION a(internal), TO SQL WITH FUNCTION b(internal))');
- *     [$operation->statement->language->value, count($operation->statement->functions)] // => ['plpython3u', 2]
+ * @visibility SqlSemantics
  */
 final class CreateTransform implements Statement
 {

@@ -1,0 +1,182 @@
+{
+  "revision": "SemanticsIR/sqlite-create-index-4",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Pinned SQLite 3.47.2 UTF-8, native file format 4, built-in BINARY, NOCASE and RTRIM collations, SQLite table and parameter resolution, stock LIKE behavior.",
+  "scope": "CREATE INDEX over a resolved ordinary table, with ordered column and deterministic checked scalar keys, optional native unique policy, guarded existence and partial predicate.",
+  "constructors": {
+    "Schema/Index/CreateIndex": {
+      "role": "Create an ordinary or unique index for one absolute table.",
+      "structure": "Absolute schema, table and new index names, ordered declared column names, a nonempty ordered list of IndexTerm operands, an optional compiled predicate, UNIQUE and IF NOT EXISTS policies.",
+      "conditions": "The table and key roles use the same exact schema and heading. Identifiers use the checked encoding and schema and names avoid reserved objects. Terms use only declared column slots. A predicate may also name a native rowid alias that resolves to an existing declared primary-key slot. Graph sizes and typed slots are checked before publication. A live parameter is prohibited. A marker discarded by empty membership retains its lexical registration.",
+      "meaning": "Install a full or partial index on the fixed table in the given schema. A partial WHERE admits true, excluding false and NULL. Unique comparison uses the ordered typed terms, effective collations and SQLite's NULL distinctness. Existing index metadata stays fixed on guarded no-op. Row contents are unchanged by the declaration; later writes and probes observe its actual effects.",
+      "externalInterpretation": "Use the same declared table, field and effective collation semantics, data, object names and runtime transaction state. Initial duplicate data, later conflicting writes and catalog name availability retain native evaluation behavior.",
+      "sql": "Qualify the index by the resolved schema. Emit its named table in the native unqualified position, each checked key with native expression grouping and direction, and the optional compiled WHERE.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/IndexTerm": {
+      "role": "One checked native column or expression in an index key.",
+      "structure": "A closed scalar expression with its collation when present and a direction flag.",
+      "conditions": "An isolated string term in SQLite's name-reading position must be resolved to a column before construction. The owning index checks reference slots, resource limits and absence of live parameters. SQLite accepts native default NULL positioning and rejects explicit NULLS FIRST or LAST on an index term.",
+      "meaning": "Contribute one ordered key including native column affinity and collation, or the checked value of a scalar expression.",
+      "externalInterpretation": "Interpret column references in the owning table's declared ordinal space under the pinned native collation rules.",
+      "sql": "Emit the checked operand and its direction, keeping the ordered operands and exact native parameter registrations.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Index/CreateIndex"
+  ],
+  "existingRoles": [
+    "Identifier",
+    "ColumnReference",
+    "Collation",
+    "Expression/CollatedExpression",
+    "Predicate/FoldedMembership"
+  ],
+  "rules": [
+    "An unqualified index name follows the ordinary table search path. An explicitly qualified index belongs to that schema and names its table there. Emit the resolved schema on the index, because SQLite's ON table position is unqualified.",
+    "An index term written as a string in native name-reading position is bound to the declared column. A genuine computed string retains its value and type. Emit the closed resolved role without preserving raw tokens.",
+    "Declaration-derived collation of an ordinary column, explicit builtin collation, ordering direction, duplicates and NULL handling remain observable.",
+    "Empty membership may discard a syntactic parameter or dormant input before semantic qualification, with the exact numbered registrations retained. Each live parameter, subquery, unresolved static operation and unsupported NULL placement is a typed analysis or construction refusal.",
+    "The native benchmark distinguishes installing a definition, failing due to existing data and leaving an existing same-named definition unchanged under IF NOT EXISTS. Later writes and forced index scans distinguish predicate and key errors.",
+    "An empty-membership decision in an index stays an empty-membership expression even when it has no registrations. The native planner compares that shape when a caller forces a partial index.",
+    "The analyzed index boundary refuses IFNULL and CAST words or arguments whose current generic scalar canonicalization would erase planner-relevant form. Canonical COALESCE and the five exact-case plain CAST targets preserve their supported native form. Wider admission remains open under the pinned grammar."
+  ],
+  "observations": [
+    "Compare index schema and owning table, unique and partial flags, ordered key references with computed-term coordinates, effective collation, direction, first spellings and count of registered parameters, retained rows and rollback.",
+    "Compare typed later write outcomes and covered rows, including repeated keys, NULL, case-distinct and trailing-space literals, native failure phases, and opposite independently populated schemas.",
+    "For admitted SQL compare the separately authored original and emitted SQL using the same native profile and external conditions. Construct the entire finite product through public constructors."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "keys": [
+      "amount",
+      "inherited-code",
+      "nocase-code-desc",
+      "sum-constant"
+    ],
+    "predicates": [
+      "all",
+      "positive",
+      "code-present",
+      "folded"
+    ],
+    "unique": [
+      false,
+      true
+    ],
+    "existing": [
+      "absent",
+      "guarded"
+    ],
+    "population": [
+      "empty",
+      "mixed"
+    ],
+    "identity": "All 256 coordinates in printed axis order, recovered from the actual root and declared operands, before native catalog and actual stored rows."
+  },
+  "exploration": {
+    "seeds": [
+      29501,
+      51133,
+      78277
+    ],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 300,
+    "allowedExclusions": [],
+    "domain": "Vary source columns and their collations, ordered key count and references, arithmetic nesting, partial selection, direction, guarded and native conflict outcomes, and NULL and duplicate groups. Include native string-name binding, both schema paths, case-folding and folded markers in keys and predicates."
+  },
+  "negative": [
+    "Empty key list",
+    "Non-list key collection",
+    "Wrong member in key list",
+    "Unowned key ordinal",
+    "Unowned predicate ordinal",
+    "Live parameter inside a key",
+    "Bare textual key role",
+    "Textual key under one collation",
+    "Repeated heading names",
+    "Reserved object name"
+  ],
+  "analysisNegative": [
+    "Missing relation",
+    "Nonordinary relation",
+    "Unknown key column",
+    "Unknown predicate column",
+    "Qualified key operand",
+    "Implicit rowid in index keys",
+    "Live marker in a key",
+    "Live marker in the predicate",
+    "Subquery in the predicate",
+    "NULLS FIRST",
+    "NULLS LAST",
+    "IFNULL in the predicate",
+    "CAST shorthand nested inside COALESCE",
+    "Lowercase native CAST spelling would change a forced-index match"
+  ],
+  "faults": [
+    "Omit a checked bound",
+    "Move an index to the other schema",
+    "Reverse an ordered key or direction",
+    "Erase partial filter",
+    "Lose an explicit collation",
+    "Erase exact folded registrations",
+    "Lose UNIQUE",
+    "Collapse a marker-free empty membership into a literal in a partial index"
+  ],
+  "open": [
+    "External custom collation definitions, additional SQLite releases, partial predicates on a hidden anonymous rowid, and planner equivalences beyond the checked expression shapes remain under the language inventory.",
+    "Native IFNULL and noncanonical CAST forms in an index retain planner-relevant syntax and require dedicated semantic roles or checked presentation data. These valid grammar inputs remain unimplemented."
+  ],
+  "trust": [
+    "Pinned native SQLite, file format and schema binding",
+    "Independent fixture including contrasting collations and row groups",
+    "Closed value shapes, compiled definition binding, exact package bytes and native replay"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createindex.html",
+    "https://sqlite.org/partialindex.html",
+    "https://sqlite.org/expridx.html"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "3f5e617501ccc2745a9caed4999373ebf33f469ef889d348e67b717cd8543437",
+    "nativeCases": "c09a4d5fb581d16e010dea79cc7369f4c6f6d66c17e638f8723988300b54bc8c",
+    "forcedIndexDriver": "ada48428f08dc6b45b6024b49417bd744cf9e55d7f30b3cab229a0541330d725",
+    "forcedIndexCases": "3fed6871ad9bdc657ee78724d5b38690c564b378566c5e40a0be1e089707a454",
+    "castTypeDriver": "844acef1588cf2f90607e4c159e6edb7218b01de7ece0d4f670ca03fcc06ec1a",
+    "castTypeCases": "f68ae4ff0192a5dc5bc0315ce87bd6a447d94f7e8ab23009c9c62c1322848c65"
+  },
+  "extends": "sqlite-create-index-v3.json",
+  "change": "Adds forced-scan checks for both decisions of empty membership without bindings and retains the original finite product and named parameters. Lists each required refusal exactly. Records two unrepresented planner-sensitive spellings and prevents publication when their current scalar lowering would change native forced-index admission. Adds an applied source mutation that collapses the native empty-membership shape without bindings. Distinguishes exact-case SQLite CAST names in the forced-index observation and adds the native lowercase witness."
+}

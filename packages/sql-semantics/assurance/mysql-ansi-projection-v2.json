@@ -1,0 +1,207 @@
+{
+  "revision": "SemanticsIR/mysql-ansi-projection/2",
+  "approval": "pending-human-review",
+  "requiredBaseline": "contract-v1.json",
+  "roles": [
+    "Binding/ProjectionMode",
+    "Select",
+    "From/DerivedSource",
+    "Rows/Compound",
+    "Rows/LocalProjection"
+  ],
+  "counterexamples": "Qualified and unqualified double-quoted field references, aliases, text, sets and derived queries under ANSI_QUOTES were refused before publication by 41942d42f1721351c80174b36252bcbdbe0f59bd.",
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "environment": "The pinned native release running with an utf8mb4 connection, exact relation names, native prepared parameters and the existing derived-merge profile.",
+  "profiles": [
+    "empty",
+    "ANSI_QUOTES"
+  ],
+  "structure": "A closed mode selects the interpretation of double quotes. A field use retains its occurrence and slot, identifier and alias roles retain decoded names and a string role retains decoded bytes. The mode is checked across SELECT occurrences, including a derived join child and set arms. A local projection inherits its defining query mode.",
+  "admission": "Each previously admitted SELECT, compound and derived projection role has the same structural domain under ANSI_QUOTES. Ordinary alias, field and string quotation is interpreted using the analyzer's selected mode before construction. A context from another mode and a direct composition of different modes are rejected at the owning boundary.",
+  "rendering": "Identifiers use escaped backticks. Decoded character values use escaped single quotes. ANSI_QUOTES changes neither of those spellings. Complete output contains no double-quoted SQL token chosen by its spelling in the source.",
+  "observations": [
+    "Result column names, positions and native types",
+    "Typed row values including NULL, repeated rows, and guaranteed order",
+    "External identity and occurrence or slot for resolved references, including qualified and unqualified occurrences",
+    "Native parameter correspondence and ordered supplied bindings"
+  ],
+  "fixture": {
+    "table": "ir_fixture.mode_rows",
+    "columns": [
+      "id",
+      "peer",
+      "a\"b",
+      "a`b"
+    ],
+    "types": [
+      "INT NOT NULL",
+      "INT",
+      "INT NOT NULL",
+      "INT NOT NULL"
+    ],
+    "rows": [
+      [
+        1,
+        17,
+        7,
+        27
+      ],
+      [
+        3,
+        71,
+        10,
+        37
+      ],
+      [
+        1,
+        null,
+        4,
+        14
+      ],
+      [
+        1,
+        17,
+        7,
+        27
+      ]
+    ]
+  },
+  "finite": {
+    "order": [
+      "mode",
+      "slots",
+      "labels",
+      "distinct"
+    ],
+    "mode": [
+      "empty",
+      "ANSI_QUOTES"
+    ],
+    "slots": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        0,
+        1,
+        3
+      ]
+    ],
+    "labels": [
+      "ordinary",
+      "quote",
+      "backtick"
+    ],
+    "distinct": [
+      false,
+      true
+    ],
+    "identities": 48,
+    "recovery": "Recover mode from the published profile identifier, ordered slots and labels from the measured fields, and duplicate policy from the observed graph. Compare the recovered set to the independently expanded Cartesian product and require a single occurrence of each coordinate."
+  },
+  "analysis": [
+    "qualified-reference",
+    "quoted-delimiters",
+    "wildcard",
+    "string-and-null",
+    "repeat-and-distinct",
+    "typed-parameters",
+    "compound",
+    "derived",
+    "empty-mode-control",
+    "ansi-mode-control"
+  ],
+  "exploration": {
+    "seeds": [
+      30139,
+      60331
+    ],
+    "casesPerSeed": 32,
+    "dimensions": [
+      "projection width",
+      "field slot",
+      "text literal bytes",
+      "aliases",
+      "distinct",
+      "scope nesting",
+      "mode"
+    ],
+    "timeoutSecondsPerRelease": 900
+  },
+  "negative": [
+    "mixed-derived-join-modes",
+    "mixed-compound-arm-modes",
+    "unresolved-quoted-field",
+    "incompatible-analysis-context"
+  ],
+  "faults": [
+    "detach-mode-from-profile",
+    "allow-cross-mode-composition",
+    "misbind-quoted-column",
+    "emit-identifier-as-string"
+  ],
+  "budgets": {
+    "attemptSeconds": 15,
+    "releaseSeconds": 900
+  },
+  "exclusions": [],
+  "obligations": {
+    "Q01": "Closed construction and exact incompatible-mode and unresolved-reference refusals.",
+    "Q02": "Independent legal coordinate generation, analysis examples and structural exploration in both modes.",
+    "Q03": "Compatibility checks on direct set and derived edges, and analyzed reference identity.",
+    "Q04": "Native execution of original and emitted SQL plus an independent typed evaluator. Compare multisets only for cases without guaranteed ordering.",
+    "Q05": "Audit the declared enum, constructors, lowering and dispatch shapes and run identical probes in both staged distribution layouts."
+  },
+  "trust": [
+    "PHP final classes, readonly fields and enum singletons",
+    "Pinned MySQL native servers",
+    "External lexical observer and case comparator",
+    "Reviewed checker selection and recorded distribution"
+  ],
+  "remainingBaseline": "The governing baseline has broader MySQL statement and mode coverage. This addition does not change required statement families, parameter styles, mode combinations or other dialects.",
+  "previous": "mysql-ansi-projection-v1.json",
+  "dialects": [
+    "MySql"
+  ],
+  "existingRoles": [
+    "Select",
+    "From/DerivedSource",
+    "Rows/Compound",
+    "Rows/LocalProjection"
+  ],
+  "constructors": {
+    "ProjectionMode": {
+      "type": "Binding/ProjectionMode",
+      "role": "The source and rendering profile's interpretation of double quotes.",
+      "structure": "Exactly two immutable enum cases, empty and ANSI_QUOTES.",
+      "conditions": "A complete Select admits the empty mode or ANSI_QUOTES alone. Compositions of queries require the same mode.",
+      "meaning": "Double quotes delimit identifiers in ANSI_QUOTES and strings under the empty lexical mode. Analysis resolves that distinction before constructing a value. No parser state survives.",
+      "sql": "Report the selected mode in profileId. Under either mode write quoted identifiers with backticks and decoded text with escaped single quotes."
+    }
+  },
+  "requirements": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ]
+}

@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * from PostgreSQL 17).
  * Source: https://www.postgresql.org/docs/17/sql-copy.html#id-1.9.3.55.10.
  *
- * @visibility public
- * @example Reading the columns of a FORCE option
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT CSV FORCE QUOTE a, b');
- *     [count($copy->statement->legacy[1]->columns), $copy->statement->legacy[1]->option()] // => [2, 'force_quote']
+ * @visibility SqlSemantics
  * @example Refusing columns together with the star
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForce(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForceKind::Quote, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')], true) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

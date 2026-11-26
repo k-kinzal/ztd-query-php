@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem;
  * `src/backend/commands/functioncmds.c` and `oper_argtypes`, `aggr_arg` and
  * `makeOrderedSetArgs` in `src/backend/parser/gram.y` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of a repeated option
  *     \SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind::ConflictingOptions->value // => 'conflicting or redundant options'
  */

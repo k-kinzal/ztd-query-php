@@ -10,9 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\View;
  * Mirrors the `CmdType` of `RuleStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-createrule.html.
  *
- * @visibility public
- * @example Reading the event of a rule
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE RULE r AS ON DELETE TO t DO INSTEAD NOTHING')->statement->event // => \SqlSemantics\Platform\PostgreSql\Statement\Table\View\RuleEvent::Delete
+ * @visibility SqlSemantics
  */
 enum RuleEvent: string
 {

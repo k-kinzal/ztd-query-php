@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-character-set.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading SET CHARACTER SET
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET CHARACTER SET DEFAULT');
- *     [$set->statement->items[0]->charset->name, $set->toString()] // => [null, 'SET CHARSET DEFAULT']
+ * @visibility SqlSemantics
  */
 final class SetCharacterSet implements SetItem
 {

@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * It always carries the missing inputs. It is never used because a rule is
  * not implemented.
  *
- * @visibility public
- * @example Naming the declaration a type depends on
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t');
- *     $operation->field('a')->type->missing[0] instanceof \SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRelation // => true
+ * @visibility SqlSemantics
  */
 final class Dependent implements TypeFact
 {

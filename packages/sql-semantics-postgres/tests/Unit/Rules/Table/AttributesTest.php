@@ -20,8 +20,8 @@ final class AttributesTest extends TestCase
 
     public function testReportReportsConflictsAndAttributesTheKindDoesNotAdmit(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a int, CHECK (a > 0) DEFERRABLE NOT DEFERRABLE, UNIQUE (a) INITIALLY DEFERRED INITIALLY IMMEDIATE)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a int, CHECK (a > 0) DEFERRABLE NOT DEFERRABLE, UNIQUE (a) INITIALLY DEFERRED INITIALLY IMMEDIATE)', []);
         self::assertSame([
           0 => 'conflicting constraint properties',
           1 => 'CHECK constraints cannot be marked DEFERRABLE',

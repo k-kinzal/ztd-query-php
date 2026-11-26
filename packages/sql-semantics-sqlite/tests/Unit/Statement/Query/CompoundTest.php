@@ -7,12 +7,10 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
@@ -29,6 +27,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Compound::class)]
 #[Medium]
@@ -36,7 +36,7 @@ final class CompoundTest extends TestCase
 {
     public function testDeriveStatementNamesTheOutputAfterTheFirstArm(): void
     {
-        $query = (new Semantics())->inspect("SELECT 1 AS a, 'x' AS b UNION ALL SELECT 2 AS c, 'y' AS d");
+        $query = (new Inspection())->diagnose("SELECT 1 AS a, 'x' AS b UNION ALL SELECT 2 AS c, 'y' AS d");
 
         self::assertInstanceOf(Compound::class, $query->statement);
         self::assertSame(['a', 'b'], array_map(static fn (object $field): ?string => $field->name?->value, [...$query->fields() ?? []]));
@@ -45,7 +45,7 @@ final class CompoundTest extends TestCase
 
     public function testDeriveQueryChoosesTheTypeOverTheArmsAndTheirNullability(): void
     {
-        $query = (new Semantics())->inspect("SELECT 1 AS a UNION SELECT 'x' UNION SELECT NULL");
+        $query = (new Inspection())->diagnose("SELECT 1 AS a UNION SELECT 'x' UNION SELECT NULL");
         $type = $query->field('a')->type;
 
         self::assertInstanceOf(Choice::class, $type);
@@ -55,7 +55,7 @@ final class CompoundTest extends TestCase
 
     public function testDeriveQueryReportsArmsOfDifferentWidthOnce(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1 UNION SELECT 2, 3 UNION SELECT 4, 5, 6');
+        $query = (new Inspection())->diagnose('SELECT 1 UNION SELECT 2, 3 UNION SELECT 4, 5, 6');
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
@@ -66,7 +66,7 @@ final class CompoundTest extends TestCase
 
     public function testDeriveQueryOrdersTheCombinedRowsByTheNamesOfEveryArm(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1 AS a UNION ALL SELECT 2 AS b ORDER BY b');
+        $query = (new Inspection())->diagnose('SELECT 1 AS a UNION ALL SELECT 2 AS b ORDER BY b');
 
         self::assertInstanceOf(Compound::class, $query->statement);
         self::assertInstanceOf(Select::class, $query->statement->steps[0]->query);
@@ -79,9 +79,9 @@ final class CompoundTest extends TestCase
 
     public function testDeriveQueryReportsAnOrderByOrALimitBeforeTheOperator(): void
     {
-        $semantics = new Semantics();
-        $ordered = $semantics->inspect('SELECT 1 ORDER BY 1 UNION SELECT 2');
-        $limited = $semantics->inspect('SELECT 1 LIMIT 1 UNION SELECT 2');
+        $semantics = new Inspection();
+        $ordered = $semantics->diagnose('SELECT 1 ORDER BY 1 UNION SELECT 2');
+        $limited = $semantics->diagnose('SELECT 1 LIMIT 1 UNION SELECT 2');
 
         self::assertInstanceOf(Misuse::class, $ordered->facts->diagnostics[0]);
         self::assertSame(MisuseRule::OrderByBeforeCompound, $ordered->facts->diagnostics[0]->rule);
@@ -91,7 +91,7 @@ final class CompoundTest extends TestCase
 
     public function testDeriveQueryKeepsAnUndeclaredFirstArmOpen(): void
     {
-        $query = (new Semantics())->inspect('SELECT * FROM t UNION SELECT 1');
+        $query = (new Inspection())->diagnose('SELECT * FROM t UNION SELECT 1');
 
         self::assertNull($query->fields());
         self::assertInstanceOf(OpenStar::class, $query->facts->output?->projection[0]);
@@ -99,17 +99,17 @@ final class CompoundTest extends TestCase
 
     public function testRenderWritesTheArmsThenTheOrderingAndTheLimit(): void
     {
-        $query = (new Semantics())->inspect('select 1 as a union all values (2) intersect select 3 except select 4 order by a desc limit 1 offset 1');
+        $query = (new Inspection())->diagnose('select 1 as a union all values (2) intersect select 3 except select 4 order by a desc limit 1 offset 1');
 
         self::assertSame('SELECT 1 AS a UNION ALL VALUES (2) INTERSECT SELECT 3 EXCEPT SELECT 4 ORDER BY a DESC LIMIT 1 OFFSET 1', $query->toString());
     }
 
     public function testRenderWritesANewlyBuiltCompound(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $first = new ValuesClause([new ValueRow([new IntegerLiteral('1')])]);
         $compound = new Compound($first, [new CompoundStep(CompoundOperator::Union, new Select([new ResultColumn(new IntegerLiteral('2'))]))], [], new Limit(new IntegerLiteral('1')));
-        $operation = new Operation($semantics->context(), $compound);
+        $operation = new InspectedStatement($semantics->context(), $compound);
 
         self::assertSame('VALUES (1) UNION SELECT 2 LIMIT 1', $operation->toString());
         self::assertSame('column1', $operation->field(0)->name?->value);
@@ -117,7 +117,7 @@ final class CompoundTest extends TestCase
 
     public function testRenderRefusesAnOrderingLeftOnTheLastArm(): void
     {
-        $ordered = (new Semantics())->inspect('SELECT 1 AS a ORDER BY a')->statement;
+        $ordered = (new Inspection())->diagnose('SELECT 1 AS a ORDER BY a')->statement;
         self::assertInstanceOf(Select::class, $ordered);
 
         $this->expectExceptionMessage('ORDER BY and LIMIT after the last arm belong to the compound query.');

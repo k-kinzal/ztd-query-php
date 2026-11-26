@@ -22,10 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the decoded text of a string literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT 'it''s'");
- *     [$query->statement->columns[0]->expression->value, $query->toString()] // => ["it's", "SELECT 'it''s'"]
+ * @visibility SqlSemantics
  */
 final class TextLiteral implements Scalar
 {

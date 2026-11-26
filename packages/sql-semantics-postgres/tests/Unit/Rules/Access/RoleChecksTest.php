@@ -14,36 +14,36 @@ final class RoleChecksTest extends TestCase
 {
     public function testOptionsReportsEveryProblemOnce(): void
     {
-        self::assertSame(['unrecognized role option "bar"', 'invalid connection limit: -3', 'conflicting or redundant options'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER ROLE joe bar CONNECTION LIMIT -3 CONNECTION LIMIT 2 INHERIT noinherit')->facts->diagnostics));
+        self::assertSame(['unrecognized role option "bar"', 'invalid connection limit: -3', 'conflicting or redundant options'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER ROLE joe bar CONNECTION LIMIT -3 CONNECTION LIMIT 2 INHERIT noinherit')->facts->diagnostics));
     }
 
     public function testOptionsAcceptsDistinctOptions(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ROLE joe SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN REPLICATION BYPASSRLS CONNECTION LIMIT -1 PASSWORD NULL VALID UNTIL \'infinity\' IN ROLE a ROLE b ADMIN c')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE ROLE joe SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN REPLICATION BYPASSRLS CONNECTION LIMIT -1 PASSWORD NULL VALID UNTIL \'infinity\' IN ROLE a ROLE b ADMIN c')->facts->diagnostics));
     }
 
     public function testReservedReportsThePrefix(): void
     {
-        self::assertSame(['role name "pg_x" is reserved'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ROLE pg_x')->facts->diagnostics));
+        self::assertSame(['role name "pg_x" is reserved'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE ROLE pg_x')->facts->diagnostics));
     }
 
     public function testAlterableReportsPublicAndReservedNames(): void
     {
-        self::assertSame(['role name "pg_x" is reserved'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER ROLE pg_x LOGIN')->facts->diagnostics));
+        self::assertSame(['role name "pg_x" is reserved'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER ROLE pg_x LOGIN')->facts->diagnostics));
     }
 
     public function testExistingReportsPublic(): void
     {
-        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP OWNED BY PUBLIC')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('DROP OWNED BY PUBLIC')->facts->diagnostics));
     }
 
     public function testExistingAcceptsSessionDesignations(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP OWNED BY CURRENT_USER, SESSION_USER, CURRENT_ROLE')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('DROP OWNED BY CURRENT_USER, SESSION_USER, CURRENT_ROLE')->facts->diagnostics));
     }
 
     public function testDroppableReportsADesignation(): void
     {
-        self::assertSame(['cannot use special role specifier in DROP ROLE'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP ROLE SESSION_USER')->facts->diagnostics));
+        self::assertSame(['cannot use special role specifier in DROP ROLE'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('DROP ROLE SESSION_USER')->facts->diagnostics));
     }
 }

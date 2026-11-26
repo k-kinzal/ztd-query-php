@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem;
  * https://www.postgresql.org/docs/17/sql-cluster.html, https://www.postgresql.org/docs/17/sql-reindex.html,
  * https://www.postgresql.org/docs/17/sql-do.html, https://www.postgresql.org/docs/17/sql-notify.html.
  *
- * @visibility public
- * @example Reading which rule a command breaks
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SET CATALOG 'd'");
- *     $operation->facts->diagnostics[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind::CatalogChange
+ * @visibility SqlSemantics
  */
 enum UtilityProblemKind: string
 {

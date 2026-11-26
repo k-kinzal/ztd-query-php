@@ -14,16 +14,16 @@ final class AlterEventTriggerTest extends TestCase
 {
     public function testDeriveStatementHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('ALTER EVENT TRIGGER e ENABLE', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('ALTER EVENT TRIGGER e ENABLE', []);
         self::assertSame([
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('ALTER EVENT TRIGGER e ENABLE ALWAYS', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('ALTER EVENT TRIGGER e ENABLE ALWAYS', []);
         self::assertSame('ALTER EVENT TRIGGER e ENABLE ALWAYS', $statement->toString());
     }
 }

@@ -22,10 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of the current timestamp
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CURRENT_TIMESTAMP');
- *     $query->field(0)->type->descriptor // => \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text
+ * @visibility SqlSemantics
  */
 final class CurrentTime implements Scalar
 {

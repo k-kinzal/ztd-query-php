@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Type;
  *
  * Source: https://sqlite.org/syntax/signed-number.html.
  *
- * @visibility public
- * @example Reading the sign of a type argument
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CAST(1 AS DECIMAL(-2))');
- *     $query->statement->columns[0]->expression->target->arguments[0]->sign // => \SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign::Minus
+ * @visibility SqlSemantics
  */
 enum NumberSign: string
 {

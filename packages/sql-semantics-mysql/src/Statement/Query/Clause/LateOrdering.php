@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  * https://dev.mysql.com/doc/refman/5.6/en/select.html,
  * https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_yacc.yy (`order_clause`, `limit_options`).
  *
- * @visibility public
- * @example Reading an ORDER BY written after FOR UPDATE in a 5.6 subquery
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->analyze('SELECT (SELECT a FROM t FOR UPDATE ORDER BY a)');
- *     count($query->statement->items[0]->expression->query->late->orderBy) // => 1
+ * @visibility SqlSemantics
  * @example Refusing a late ordering without clauses
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering([]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

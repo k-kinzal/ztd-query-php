@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * `binary`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collation-names.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a collation name and the default
  *     $named = new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('utf8mb4_bin'));
  *     [$named->name?->value, (new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null))->name] // => ['utf8mb4_bin', null]

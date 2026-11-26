@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-table-privileges
  * ("the privileges to be granted must include the CREATE privilege").
  *
- * @visibility public
- * @example Granting CREATE on a table that does not exist yet
- *     $grant = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT CREATE ON t TO u', []);
- *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\AbsentGrantTable // => true
+ * @visibility SqlSemantics
  */
 final class AbsentGrantTable implements TableResolution
 {

@@ -7,13 +7,11 @@ namespace Tests\Unit\Statement\Expression\Subquery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\ScalarSubquery;
@@ -21,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ScalarSubquery::class)]
 #[Medium]
@@ -28,9 +28,9 @@ final class ScalarSubqueryTest extends TestCase
 {
     public function testDeriveScalarYieldsTheTypeOfTheOneColumnAndCanAlwaysBeNull(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT (SELECT a FROM t), (SELECT 1 UNION SELECT 2)', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('SELECT (SELECT a FROM t), (SELECT 1 UNION SELECT 2)', [$create]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame($create->declarations()[0]->columns[0]->type, $query->field(0)->type->descriptor);
@@ -43,7 +43,7 @@ final class ScalarSubqueryTest extends TestCase
 
     public function testDeriveScalarYieldsARowValueForSeveralColumns(): void
     {
-        $query = (new Semantics())->analyze('SELECT (SELECT 1, 2) = (1, 2)', []);
+        $query = (new Inspection())->inspect('SELECT (SELECT 1, 2) = (1, 2)', []);
         $comparison = $query->field(0)->expression;
 
         self::assertInstanceOf(Binary::class, $comparison);
@@ -57,7 +57,7 @@ final class ScalarSubqueryTest extends TestCase
 
     public function testDeriveScalarDependsOnTheMissingInputsOfAnOpenShape(): void
     {
-        $query = (new Semantics())->analyze('SELECT (SELECT * FROM x)');
+        $query = (new Inspection())->inspect('SELECT (SELECT * FROM x)');
 
         self::assertInstanceOf(Dependent::class, $query->field(0)->type);
         self::assertInstanceOf(UndeclaredRelation::class, $query->field(0)->type->missing[0]);
@@ -68,8 +68,8 @@ final class ScalarSubqueryTest extends TestCase
 
     public function testDeriveScalarDerivesTheQueryInsideTheEnvironmentOfTheExpression(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->analyze('SELECT (SELECT a + 1) FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->inspect('SELECT (SELECT a + 1) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $subquery = $query->field(0)->expression;
 
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
@@ -84,16 +84,16 @@ final class ScalarSubqueryTest extends TestCase
 
     public function testRenderWritesTheQueryInParentheses(): void
     {
-        $query = (new Semantics())->analyze('select (select 1 union select 2) AS c1, (select a from t where a > 1) AS c2');
+        $query = (new Inspection())->inspect('select (select 1 union select 2) AS c1, (select a from t where a > 1) AS c2');
 
         self::assertSame('SELECT (SELECT 1 UNION SELECT 2) AS c1, (SELECT a FROM t WHERE a > 1) AS c2', $query->toString());
     }
 
     public function testRenderWritesANewlyBuiltSubquery(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $subquery = new ScalarSubquery(new Select([new ResultColumn(new IntegerLiteral('1'))]));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($subquery)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn($subquery)]));
 
         self::assertSame('SELECT (SELECT 1)', $operation->toString());
         self::assertInstanceOf(Known::class, $operation->field(0)->type);

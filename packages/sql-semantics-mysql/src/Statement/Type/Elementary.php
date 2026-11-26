@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
  * https://dev.mysql.com/doc/refman/8.4/en/json.html,
  * https://dev.mysql.com/doc/refman/9.1/en/vector.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a bit type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '8');
  *     [$type->name(), $type->length] // => ['BIT', '8']

@@ -12,9 +12,9 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\QualifiedTemporaryName;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CreateTableAs::class)]
 #[Medium]
@@ -22,9 +22,9 @@ final class CreateTableAsTest extends TestCase
 {
     public function testDeriveStatementDeclaresTheColumnsOfTheQueryOutput(): void
     {
-        $semantics = new Semantics();
-        $source = $semantics->inspect('CREATE TABLE s (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('CREATE TABLE t AS SELECT b, a AS n FROM s', [$source]);
+        $semantics = new Inspection();
+        $source = $semantics->diagnose('CREATE TABLE s (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('CREATE TABLE t AS SELECT b, a AS n FROM s', [$source]);
         $table = $operation->declarations()[0];
 
         self::assertTrue($table->complete);
@@ -36,9 +36,9 @@ final class CreateTableAsTest extends TestCase
 
     public function testDeriveStatementDeclaresARowIdentifierAndNewColumnObjects(): void
     {
-        $semantics = new Semantics();
-        $source = $semantics->inspect('CREATE TABLE s (a INTEGER)');
-        $table = $semantics->inspect('CREATE TABLE t AS SELECT a FROM s', [$source])->declarations()[0];
+        $semantics = new Inspection();
+        $source = $semantics->diagnose('CREATE TABLE s (a INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE t AS SELECT a FROM s', [$source])->declarations()[0];
 
         self::assertCount(1, $table->implicit);
         self::assertNotSame($source->declarations()[0]->columns[0], $table->columns[0]);
@@ -46,7 +46,7 @@ final class CreateTableAsTest extends TestCase
 
     public function testDeriveStatementMarksTheDeclarationIncompleteWhenTheQueryShapeIsOpen(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t AS SELECT 1 AS one, * FROM undeclared');
+        $operation = (new Inspection())->diagnose('CREATE TABLE t AS SELECT 1 AS one, * FROM undeclared');
         $table = $operation->declarations()[0];
 
         self::assertFalse($table->complete);
@@ -55,8 +55,8 @@ final class CreateTableAsTest extends TestCase
 
     public function testDeriveStatementDeclaresATemporaryTableInTheTempSchema(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('CREATE TEMP TABLE main.t AS SELECT 1 AS one');
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('CREATE TEMP TABLE main.t AS SELECT 1 AS one');
 
         self::assertSame('temp', $operation->declarations()[0]->name->schema?->value);
         self::assertInstanceOf(QualifiedTemporaryName::class, $operation->facts->diagnostics[0]);
@@ -68,8 +68,8 @@ final class CreateTableAsTest extends TestCase
     #[TestWith(['CREATE TABLE v AS SELECT * FROM (SELECT a, a, A FROM t)'])]
     public function testDeriveStatementNamesTheColumnsAsSqliteDoes(string $sql): void
     {
-        $semantics = new Semantics();
-        $view = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)')]);
+        $semantics = new Inspection();
+        $view = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INTEGER, b TEXT)')]);
         $source = new PDO('sqlite::memory:');
         $rendered = new PDO('sqlite::memory:');
         $source->exec('CREATE TABLE t (a INTEGER, b TEXT); ' . $sql);
@@ -86,7 +86,7 @@ final class CreateTableAsTest extends TestCase
 
     public function testRenderWritesTheQueryAfterAs(): void
     {
-        $operation = (new Semantics())->inspect('create temp table if not exists t as select 1 as one');
+        $operation = (new Inspection())->diagnose('create temp table if not exists t as select 1 as one');
 
         self::assertInstanceOf(CreateTableAs::class, $operation->statement);
         self::assertSame('CREATE TEMP TABLE IF NOT EXISTS t AS SELECT 1 AS one', $operation->toString());

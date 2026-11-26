@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * visible.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Replacing a generation expression
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER b SET EXPRESSION AS (a * 2)');
- *     $statement->toString() // => 'ALTER TABLE t ALTER b SET EXPRESSION AS (a * 2)'
+ * @visibility SqlSemantics
  */
 final class SetExpression implements AlterCommand
 {

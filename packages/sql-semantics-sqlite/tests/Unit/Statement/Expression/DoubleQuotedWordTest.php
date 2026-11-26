@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
@@ -16,11 +15,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRel
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(DoubleQuotedWord::class)]
 #[Medium]
@@ -28,9 +28,9 @@ final class DoubleQuotedWordTest extends TestCase
 {
     public function testDeriveScalarResolvesADeclaredColumn(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT "a", "b" FROM t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT "a", "b" FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -48,10 +48,10 @@ final class DoubleQuotedWordTest extends TestCase
 
     public function testDeriveScalarReadsTheWordAsTextWhenNoColumnCanResolve(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $withTable = $semantics->analyze('SELECT "zzz", "a b" FROM t', [$create]);
-        $withoutTable = $semantics->analyze('SELECT "zzz"', []);
+        $semantics = new Inspection();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $withTable = $semantics->inspect('SELECT "zzz", "a b" FROM t', [$create]);
+        $withoutTable = $semantics->inspect('SELECT "zzz"', []);
         $statement = $withTable->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -68,7 +68,7 @@ final class DoubleQuotedWordTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredRelation(): void
     {
-        $operation = (new Semantics())->analyze('SELECT "zzz" FROM u');
+        $operation = (new Inspection())->inspect('SELECT "zzz" FROM u');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -82,7 +82,7 @@ final class DoubleQuotedWordTest extends TestCase
 
     public function testDeriveScalarIsTextWithoutAnyRelationInAnOpenContext(): void
     {
-        $operation = (new Semantics())->analyze('SELECT "zzz"');
+        $operation = (new Inspection())->inspect('SELECT "zzz"');
 
         self::assertEquals(new Known(Storage::Text), $operation->field(0)->type);
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
@@ -90,9 +90,9 @@ final class DoubleQuotedWordTest extends TestCase
 
     public function testDeriveScalarResolvesAResultAlias(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT a AS x FROM t ORDER BY "x"', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT a AS x FROM t ORDER BY "x"', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -103,16 +103,16 @@ final class DoubleQuotedWordTest extends TestCase
 
     public function testRenderKeepsTheDoubleQuotes(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
 
-        self::assertSame('SELECT "a", "b", "zzz" FROM t', $semantics->analyze('select "a", "b", "zzz" from t', [$create])->toString());
+        self::assertSame('SELECT "a", "b", "zzz" FROM t', $semantics->inspect('select "a", "b", "zzz" from t', [$create])->toString());
     }
 
     public function testRenderDoublesAnEmbeddedDoubleQuote(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new DoubleQuotedWord(new Name('say "hi"')))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new DoubleQuotedWord(new Name('say "hi"')))]));
 
         self::assertSame('SELECT "say ""hi"""', $operation->toString());
         self::assertEquals(new Known(Storage::Text), $operation->field(0)->type);

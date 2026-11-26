@@ -25,9 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * reads as a role here and is not accepted by the constructor.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-roles. Status: Implemented.
  *
- * @visibility public
- * @example Granting roles with the admin option
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("grant r1, 'r2'@'%' to u with admin option")->toString() // => 'GRANT r1, r2@`%` TO u WITH ADMIN OPTION'
+ * @visibility SqlSemantics
  */
 final class GrantRoles implements Statement
 {

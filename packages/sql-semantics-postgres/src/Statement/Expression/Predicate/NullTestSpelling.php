@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate;
  * Both spellings request the same test; the grammar keeps different token sequences.
  * Source: https://www.postgresql.org/docs/17/functions-comparison.html.
  *
- * @visibility public
- * @example Reading the spelling of a NULL test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 NOTNULL');
- *     $query->field(0)->expression->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTestSpelling::Postfix
+ * @visibility SqlSemantics
  */
 enum NullTestSpelling
 {

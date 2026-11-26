@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-open-tables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW OPEN TABLES FROM shop LIKE 'a%'");
- *     [$show->statement->database?->value, $show->toString()] // => ['shop', "SHOW OPEN TABLES FROM shop LIKE 'a%'"]
+ * @visibility SqlSemantics
  */
 final class ShowOpenTables implements Statement, Relation
 {

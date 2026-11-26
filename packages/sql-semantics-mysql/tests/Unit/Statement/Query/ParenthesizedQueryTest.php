@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ParenthesizedQuery::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class ParenthesizedQueryTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRowsOfTheInnerQuery(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -34,7 +34,7 @@ final class ParenthesizedQueryTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('(SELECT a FROM t)', [$t]);
+        $operation = $semantics->inspect('(SELECT a FROM t)', [$t]);
 
         self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->query);
@@ -43,7 +43,7 @@ final class ParenthesizedQueryTest extends TestCase
 
     public function testDeriveQueryAnswersTheFactsOfTheInnerQuery(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -52,7 +52,7 @@ final class ParenthesizedQueryTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('((SELECT a FROM t)) UNION SELECT c FROM u', [$t, $u]);
+        $operation = $semantics->inspect('((SELECT a FROM t)) UNION SELECT c FROM u', [$t, $u]);
 
         self::assertInstanceOf(SetOperation::class, $operation->statement);
         self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->left);
@@ -62,6 +62,6 @@ final class ParenthesizedQueryTest extends TestCase
 
     public function testRenderWritesTheParentheses(): void
     {
-        self::assertSame('((SELECT 1)) UNION SELECT 2', (new Semantics())->analyze('((select 1)) union select 2')->toString());
+        self::assertSame('((SELECT 1)) UNION SELECT 2', (new Inspection())->inspect('((select 1)) union select 2')->toString());
     }
 }

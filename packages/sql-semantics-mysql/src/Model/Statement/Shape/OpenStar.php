@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * It stands for an undetermined number of output positions. No placeholder
  * fields are invented for them.
  *
- * @visibility public
- * @example Keeping an unexpandable star as a typed request
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT * FROM t');
- *     $operation->facts->output?->projection[0] instanceof \SqlSemantics\Platform\MySql\Model\Statement\Shape\OpenStar // => true
+ * @visibility SqlSemantics
  */
 final class OpenStar
 {

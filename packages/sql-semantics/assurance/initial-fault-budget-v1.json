@@ -1,0 +1,9 @@
+{
+  "revision": "SemanticsIR/initial-fault-budget-1",
+  "approval": "pending-human-review",
+  "workerStartupSeconds": 180,
+  "workerExecutionSeconds": 20,
+  "scope": "Initial F01 through F12 control and fault workers. The startup budget covers the process launch and PHP handshake. The existing execution budget begins after that handshake.",
+  "reason": "An isolated worker occasionally exhausted the prior combined deadline before its handshake. A startup timeout is reported independently and still fails the required run.",
+  "acceptance": "Every fixed healthy control must complete and every required fault must produce its fixed signal. Startup timeout, execution timeout, an arbitrary crash or unexecuted validation remain failures."
+}

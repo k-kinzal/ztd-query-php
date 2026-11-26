@@ -18,9 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
  * declared in a context, so the statement has no resolution facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/rename-user.html. Status: Implemented.
  *
- * @visibility public
- * @example Renaming two accounts
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('rename user a to b, c to d')->toString() // => 'RENAME USER a TO b, c TO d'
+ * @visibility SqlSemantics
  */
 final class RenameUser implements Statement
 {

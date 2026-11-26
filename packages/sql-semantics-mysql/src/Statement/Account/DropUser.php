@@ -18,9 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * declared in a context, so the statement has no resolution facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-user.html. Status: Implemented.
  *
- * @visibility public
- * @example Dropping accounts
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("drop user if exists a, 'b'@'h'")->toString() // => 'DROP USER IF EXISTS a, b@h'
+ * @visibility SqlSemantics
  */
 final class DropUser implements Statement
 {

@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * statement derives nothing and returns no rows. Terminates: no child.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/handler.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a HANDLER ... CLOSE
- *     $close = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h CLOSE');
- *     [$close->statement->handler->value, $close->toString()] // => ['h', 'HANDLER h CLOSE']
+ * @visibility SqlSemantics
  */
 final class HandlerClose implements Statement
 {

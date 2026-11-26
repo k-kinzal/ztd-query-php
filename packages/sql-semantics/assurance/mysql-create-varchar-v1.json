@@ -1,0 +1,37 @@
+{
+  "revision": "SemanticsIR/mysql-create-varchar-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native utf8mb4, empty SQL mode, lower_case_table_names=0, InnoDB and the pinned fixture's physical storage settings.",
+  "extends": ["server-create-table-v1.json", "mysql-varchar-inheritance-v2.json", "mysql-varchar-slot-boundaries-v1.json"],
+  "constructors": {
+    "CharacterStorage": {
+      "type": "Schema/CharacterStorage",
+      "role": "The exact native length and stock collation of an ordinary nonbinary VARCHAR declaration.",
+      "structure": "A character capacity from 0 through 16383 and the checked stock utf8mb4_bin collation role. The column supplies nullability and its own typed default.",
+      "conditions": "Bind the explicit or effective native character set and collation before creating the storage value. Other native type families have their own roles.",
+      "meaning": "Declare a length-bearing string column. Preserve valid Unicode and trailing spaces within the capacity. The external server fixtures enforce their own physical page limits.",
+      "sql": "Write VARCHAR with its exact character capacity, CHARACTER SET utf8mb4 and the resolved builtin collation."
+    }
+  },
+  "existingRoles": ["Schema/CreateTable", "Schema/TableColumn", "Schema/IntegerStorage", "From/TextCollation", "Literal/TextLiteral", "NullLiteral"],
+  "structure": "An absolute named persistent target, ordered distinct checked columns, the existence policy and an explicit table default collation when supplied. The absence of a table override uses the named schema's externally supplied native default. Each character column holds its effective collation even when inherited.",
+  "conditions": "Match defaults to column storage. Preserve absent and explicit NULL defaults separately. Reject explicit NULL for a required column. An overlength character literal is accepted when only ASCII whitespace is discarded. For this ordinary layout, add the maximum encoded bytes and length prefix of each field and its nullable bitmap. Require the logical record to fit within 65535 bytes. Check the engine's physical fixture separately.",
+  "meaning": "Create an ordered native table if admitted by the existence policy. Keep the exact default expression operand and the resulting typed storage. An overlength ASCII-whitespace suffix can produce Note 1265 during a native declaration. A significant truncated suffix causes error 1067 and cannot enter the checked VARCHAR default role. DDL commits the transaction marker under the native MySQL rules.",
+  "sql": "Emit an absolute CREATE TABLE, canonical ordinary InnoDB storage, explicit field charset and collation, nullability and literal default. Preserve an explicit compatible table default with CHARACTER SET before COLLATE. Preserve the default literal bytes so native declaration diagnostics continue to be observable.",
+  "observations": ["Ordered schema and native column types, character capacity, nullable positions, field and table collation", "Catalog default value and exact typed value after a native default insertion", "Create diagnostics and default-insertion diagnostics by severity, code and destination", "Behavior on an occupied target and the DDL transaction marker, including the durable catalog and stored values"],
+  "catalogDefaultEncoding": "The pinned server's information schema may replace supplementary codepoints with a question mark in COLUMN_DEFAULT. Record the exact catalog bytes separately. The actual default insertion must yield the full expected UTF-8 value.",
+  "finite": {"forms": ["zero-empty", "zero-absent", "zero-null", "zero-spaces", "wide-absent", "wide-required", "wide-quoted", "wide-unicode", "wide-space", "wide-truncated-space"], "existsPolicy": [false, true], "occupied": [false, true], "mixed": [false, true], "identities": 80, "completeness": "Recover lengths, nullability, default form, outer column layout, existence policy and independent fixture occupancy. Require all 80 distinct identities for each release."},
+  "exploration": {"seeds": [5189, 16411, 54629], "casesPerSeed": 20, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Use named nullable and required defaults, UTF-8 and NUL, literal padding, alternate mixed widths and both occupied and empty targets. Probe the exact single-field and combined logical record edges separately."},
+  "analysis": ["Explicit stock column collation and a typed Unicode default", "Column inherits the checked table collation", "Column owns its collation despite a preceding table declaration option", "Zero-capacity required field with no default", "Nullable explicit DEFAULT NULL", "Excess ASCII whitespace produces a native declaration note"],
+  "negative": ["Integer default in the character role", "Text default in the signed role", "Significant trailing value beyond capacity", "Explicit NULL default in a required VARCHAR", "Logical maximum row size exceeded", "VARCHAR capacity outside the exact native role", "A different or unresolved column collation"],
+  "faults": ["Change the assigned text bytes", "Erase the declared collation", "Change character capacity", "Discard a required column flag", "Reverse the mixed column list"],
+  "evidence": {
+    "P01": "Resolve exact type, field and table collation, nullability, default and absolute identity.", "P02": "Enforce compatible immutable default roles, length and row layout.", "P03": "Retain operation semantics, typed literals and schema identity without analysis state.", "P04": "Derive the declaration and default effects from the target layout.", "P05": "Verify the finalized readonly type and list graph.", "P06": "Observe native creation and default-insertion effects under all pinned releases.",
+    "Q01": "Assert the named invalid defaults and storage layouts fail in their owning construction boundary.", "Q02": "Exhaust the exact finite domain and check signed and native VARCHAR inputs remain accepted.", "Q03": "Preserve required and nullable roles, composition and target policy across direct and analyzed forms.", "Q04": "Compare exact catalog and storage effects and whole native diagnostic observations on the disposable database.", "Q05": "Replay the observed effects, source shapes and installed distribution with fixed digests."
+  },
+  "open": ["Automatic promotion to VARBINARY, TEXT and BLOB on declarations outside the VARCHAR role", "Other collations, declared row formats, computed and generated defaults and storage layouts that depend on other physical profiles"],
+  "trust": ["The native release's character encoding and InnoDB physical fixture", "The logical record layout rules and default assignment comparator", "Pinned declaration option resolution and independently observed catalog and effects"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/create-table.html", "https://dev.mysql.com/doc/refman/8.4/en/column-count-limit.html", "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_table.cc#L7902-L7912", "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.cc#L5735-L5756"]
+}

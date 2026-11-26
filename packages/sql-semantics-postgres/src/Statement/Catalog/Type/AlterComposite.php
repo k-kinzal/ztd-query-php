@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * declaration (a composite type is not a relation of the context).
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the changes
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a');
- *     count($operation->statement->changes) // => 2
+ * @visibility SqlSemantics
  */
 final class AlterComposite implements Statement
 {

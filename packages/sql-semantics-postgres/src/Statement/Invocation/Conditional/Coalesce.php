@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * Source: https://www.postgresql.org/docs/17/functions-conditional.html#FUNCTIONS-COALESCE-NVL-IFNULL,
  * https://www.postgresql.org/docs/17/typeconv-union-case.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional\Coalesce([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()]))->outputName()->value // => 'coalesce'
  */

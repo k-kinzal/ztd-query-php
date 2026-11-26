@@ -14,8 +14,8 @@ final class ColumnUniqueTest extends TestCase
 {
     public function testKindIsUnique(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE TABLE t (a int UNIQUE)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE TABLE t (a int UNIQUE)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -29,15 +29,15 @@ final class ColumnUniqueTest extends TestCase
 
     public function testDeriveClauseDerivesTheStorageParameters(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE TABLE t (a int UNIQUE WITH (fillfactor = 70))', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE TABLE t (a int UNIQUE WITH (fillfactor = 70))', []);
         self::assertSame(0, count($statement->facts->diagnostics));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE TABLE t (a int UNIQUE NULLS NOT DISTINCT WITH (fillfactor = 70) USING INDEX TABLESPACE s)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE TABLE t (a int UNIQUE NULLS NOT DISTINCT WITH (fillfactor = 70) USING INDEX TABLESPACE s)', []);
         self::assertSame('CREATE TABLE t (a INT UNIQUE NULLS NOT DISTINCT WITH (fillfactor = 70) USING INDEX TABLESPACE s)', $statement->toString());
     }
 }

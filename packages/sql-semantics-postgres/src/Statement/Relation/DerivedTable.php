@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Resolution\ColumnAliases;
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM,
  * https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-SUBQUERIES. Status: Implemented.
  *
- * @visibility public
- * @example Reading a derived table
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT x.b FROM (SELECT 1 AS a) AS x (b)');
- *     [$query->statement->from->alias->value, $query->field(0)->type->descriptor->name()] // => ['x', 'integer']
+ * @visibility SqlSemantics
  */
 final class DerivedTable implements Relation
 {

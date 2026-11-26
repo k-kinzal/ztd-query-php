@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * `json`, NULL exactly when the value is. The result column is named `json`.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a parse with a uniqueness check
  *     $parse = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonParse(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()), new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys(true));
  *     [$parse->unique->unique, $parse->outputName()->value] // => [true, 'json']

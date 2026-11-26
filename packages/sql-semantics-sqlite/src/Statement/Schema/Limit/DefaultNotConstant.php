@@ -17,9 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * the definition with "default value of column [name] is not constant".
  * Source: https://sqlite.org/lang_createtable.html#the_default_clause.
  *
- * @visibility public
- * @example Reporting a bound parameter in a default
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a DEFAULT (?))') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: The default value of column a is not constant.
+ * @visibility SqlSemantics
  */
 final class DefaultNotConstant implements Diagnostic
 {

@@ -1,0 +1,72 @@
+{
+  "revision": "SemanticsIR/postgres-declaration-binding-sources-2",
+  "approval": "pending-human-review",
+  "related": "postgres-text-declarations-v2.json",
+  "artifacts": {
+    "src/Model/Facade/Catalog.php": {
+      "sha256": "d8893a6263710b194efd4b665a4efb2d1b094a41a02d714a47553613d7420e15",
+      "role": "Propagate complete versus open declarations while preserving their order."
+    },
+    "src/Platform.php": {
+      "sha256": "f0b4babdbc1e6163a77d5c6a4b324f620a6f61e6df495dfcf9a1277dc67e3969",
+      "role": "Resolve the implicit temporary and catalog namespaces and preserve the ordered search path."
+    },
+    "src/Rules/Table/Definition/ColumnTyping.php": {
+      "sha256": "815c39d2de3ae7fb83a7c88b16f42e508a4dbefc87067e16d871dff0365a3ed6",
+      "role": "Keep the type resolved by each declaration at its original position."
+    },
+    "src/Statement/Type/Designation/NamedDesignation.php": {
+      "sha256": "af507dac7740b51e4aa8598682a07b53074bd7f4309194320773ee1a6537483a",
+      "role": "Resolve a name before a native physical column is published."
+    },
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "30ed5d65653648acc08bdd50bc334a98fc59b93654ac3e4d7f77ac692b60eccd",
+      "role": "Store the checked namespace as part of the transient dialect context."
+    },
+    "src/Model/Contract/Index/IndexDeclaration.php": {
+      "sha256": "4900b82667e0920001f5d74d9a22f6ae9abdfc363f5373cdd9b965053bfcd14c",
+      "role": "Collect a local identity and whether the index is removable."
+    },
+    "src/Model/Contract/Index/IndexNamespace.php": {
+      "sha256": "24a1932e1beee871e61a9b342fd2abb9b084a71d14bf0d889bedc9c8ee0b9f02",
+      "role": "Copy declared and opaque namespaces."
+    },
+    "src/Model/Contract/Index/IndexSchemas.php": {
+      "sha256": "2de75d9a2c43a0d525ef62abb280d4660f26733e2f1e6124ee22aad450b0d6eb",
+      "role": "Distinguish stock and session-internal namespace names."
+    },
+    "src/Model/Contract/Index/StockIndexNames.php": {
+      "sha256": "c077403df9c7e92165509f2f29e75c6c69de41c8950f8eee5f12033538e6bea2",
+      "role": "Fix exact stock relation names for both releases."
+    },
+    "src/Model/Facade/Index/CatalogIndexes.php": {
+      "sha256": "da8431d330f8c4eab728cc4365c6b9d19f22af204b349bca98c02c612a981e4f",
+      "role": "Collect installed and opaque index identities from bound definitions."
+    },
+    "src/Model/Facade/Index/CatalogRelationCoordinates.php": {
+      "sha256": "8e1b24f7f44624b96b71de26bdb5aff062bbb9dfeabe9774b8eaffa06feefcd8",
+      "role": "Preserve absolute relation names at their declaration position."
+    },
+    "src/Model/Facade/Index/IndexCreationVisibility.php": {
+      "sha256": "5b4afc81440eb39ff62852b015011b1625d0281a2f636da524b03371037269bf",
+      "role": "Check exact index namespace and creation owner."
+    },
+    "src/Model/Facade/Index/IndexBinding.php": {
+      "sha256": "3053d42f3a77fcbc181877e96be382530a87aa0bfc8ea8162a93a6abccb072a4",
+      "role": "Resolve the index coordinate and its owning relation."
+    },
+    "src/Model/Facade/Index/TableIndexFacts.php": {
+      "sha256": "619690c87b98f9c2aaeaf5c5bb83c25aa1b6ca27060cc69a5567e9d83e5d2250",
+      "role": "Find definite owned indexes and mark unresolved generated names."
+    },
+    "src/Statement/Object/Drop.php": {
+      "sha256": "c69667f9f7f290816d3c4a818c7a1eb3efe2a4f98092f0002f771d772eb04bc0",
+      "role": "Keep parsed DROP INDEX binding and concurrent diagnostics on their designated route."
+    },
+    "src/Model/Contract/Index/InformationSchemaNames.php": {
+      "sha256": "af10d11c7117742aa125b3d6d4906fa1bfa7ed508b1c2285c9f4f91c55bbb317",
+      "role": "Fix the shared information schema relation names."
+    }
+  },
+  "revises": "postgres-declaration-binding-sources-v1.json"
+}

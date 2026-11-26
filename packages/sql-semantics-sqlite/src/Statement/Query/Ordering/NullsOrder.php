@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Ordering;
  *
  * Source: https://sqlite.org/lang_select.html#the_order_by_clause.
  *
- * @visibility public
- * @example Reading a written NULL placement
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t ORDER BY a NULLS LAST');
- *     $query->statement->orderBy[0]->nulls // => \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder::Last
+ * @visibility SqlSemantics
  */
 enum NullsOrder: string
 {

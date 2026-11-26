@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-errors.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW COUNT(*) ERRORS');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['@@session.error_count', 'SHOW COUNT(*) ERRORS']
+ * @visibility SqlSemantics
  */
 final class ShowErrorCount implements Statement
 {

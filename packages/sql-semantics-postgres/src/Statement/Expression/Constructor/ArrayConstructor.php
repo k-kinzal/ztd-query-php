@@ -27,9 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * supplies; the array is never NULL. An unaliased result column is named
  * `array`. Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-ARRAY-CONSTRUCTORS. Status: Implemented.
  *
- * @visibility public
- * @example Typing an array of mixed numbers
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ARRAY[1, 2.5]')->field(0)->type->descriptor->name() // => 'numeric[]'
+ * @visibility SqlSemantics
  */
 final class ArrayConstructor implements Scalar, OutputNaming
 {

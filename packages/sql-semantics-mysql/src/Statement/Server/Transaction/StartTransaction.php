@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Starting a read-only transaction with a consistent snapshot
- *     $start = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('start transaction with consistent snapshot, read only');
- *     [$start->toString(), $start->statement->characteristics[1]] // => ['START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY', \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly]
+ * @visibility SqlSemantics
  */
 final class StartTransaction implements Statement
 {

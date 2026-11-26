@@ -1,0 +1,8 @@
+{
+  "revision": "SemanticsIR/mysql-signed-membership-storage-1",
+  "approval": "pending-human-review",
+  "owner": "Predicate/IntegerMembership",
+  "storage": {
+    "alternatives": "mysql-integer-membership-copy"
+  }
+}

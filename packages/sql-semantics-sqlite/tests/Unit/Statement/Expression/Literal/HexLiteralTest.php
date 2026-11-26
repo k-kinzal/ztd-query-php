@@ -7,17 +7,17 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(HexLiteral::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class HexLiteralTest extends TestCase
 {
     public function testDeriveScalarGivesInteger(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 0x1f, 0xFFFFFFFFFFFFFFFF, 0x0000000000000000001', []);
+        $operation = (new Inspection())->diagnose('SELECT 0x1f, 0xFFFFFFFFFFFFFFFF, 0x0000000000000000001', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -42,7 +42,7 @@ final class HexLiteralTest extends TestCase
 
     public function testDeriveScalarReportsALiteralWiderThanSixtyFourBits(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 0x10000000000000000', []);
+        $operation = (new Inspection())->diagnose('SELECT 0x10000000000000000', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -57,13 +57,13 @@ final class HexLiteralTest extends TestCase
 
     public function testRenderWritesThePrefixAndUpperCaseDigits(): void
     {
-        self::assertSame('SELECT 0x1F AS c1, 0xABC AS c2', (new Semantics())->inspect('select 0X1f AS c1, 0xabc AS c2')->toString());
+        self::assertSame('SELECT 0x1F AS c1, 0xABC AS c2', (new Inspection())->diagnose('select 0X1f AS c1, 0xabc AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new HexLiteral('00FF'))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new HexLiteral('00FF'))]));
 
         self::assertSame('SELECT 0x00FF', $operation->toString());
     }

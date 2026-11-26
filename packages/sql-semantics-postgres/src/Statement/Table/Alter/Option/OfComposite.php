@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * Mirrors `AT_AddOf`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Making a table typed
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t OF person');
- *     $statement->statement->commands[0]->type->last()->value // => 'person'
+ * @visibility SqlSemantics
  */
 final class OfComposite implements AlterCommand
 {

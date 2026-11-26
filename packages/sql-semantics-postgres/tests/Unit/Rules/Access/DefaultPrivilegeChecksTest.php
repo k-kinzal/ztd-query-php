@@ -14,11 +14,11 @@ final class DefaultPrivilegeChecksTest extends TestCase
 {
     public function testCheckReportsARepeatedClause(): void
     {
-        self::assertSame(['conflicting or redundant options'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES FOR ROLE a FOR USER b GRANT SELECT ON TABLES TO joe')->facts->diagnostics));
+        self::assertSame(['conflicting or redundant options'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DEFAULT PRIVILEGES FOR ROLE a FOR USER b GRANT SELECT ON TABLES TO joe')->facts->diagnostics));
     }
 
     public function testCheckAcceptsDistinctClauses(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES FOR ROLE a IN SCHEMA s GRANT usage ON TYPES TO joe WITH GRANT OPTION')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DEFAULT PRIVILEGES FOR ROLE a IN SCHEMA s GRANT usage ON TYPES TO joe WITH GRANT OPTION')->facts->diagnostics));
     }
 }

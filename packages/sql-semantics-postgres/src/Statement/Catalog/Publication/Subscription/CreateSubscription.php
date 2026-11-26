@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * connection string, publication names on the publisher and parameters.
  * Source: https://www.postgresql.org/docs/17/sql-createsubscription.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the publications of a subscription
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE SUBSCRIPTION s CONNECTION 'host=a' PUBLICATION p1, p2 WITH (enabled = false)");
- *     count($operation->statement->publications) // => 2
+ * @visibility SqlSemantics
  */
 final class CreateSubscription implements Statement
 {

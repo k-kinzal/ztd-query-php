@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields;
  *
  * Source: https://www.postgresql.org/docs/17/datatype-datetime.html#DATATYPE-INTERVAL-INPUT.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming a restricted interval type
  *     $span = new \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\IntervalSpan(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields::DayToSecond, 3);
  *     $span->name() // => 'interval day to second(3)'

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop;
  * group or as a member, and a `pg_` name as the group.
  * Source: https://www.postgresql.org/docs/17/sql-altergroup.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the members removed from a group
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER GROUP staff DROP USER joe, ann');
- *     [$operation->statement->action->value, count($operation->statement->members)] // => ['DROP', 2]
+ * @visibility SqlSemantics
  */
 final class AlterGroupMembers implements Statement
 {

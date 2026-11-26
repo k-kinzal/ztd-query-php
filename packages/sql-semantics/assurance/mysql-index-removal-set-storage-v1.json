@@ -1,0 +1,11 @@
+{
+  "revision": "SemanticsIR/mysql-index-removal-set-storage-1",
+  "approval": "pending-human-review",
+  "owner": "Schema/Index/DropIndexes",
+  "storage": {
+    "targets": [
+      "Schema/Index/IndexIdentity",
+      2
+    ]
+  }
+}

@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscri
  *
  * Source: https://www.postgresql.org/docs/17/sql-altersubscription.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the skipping action
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\SubscriptionOptionAction::Skip->value // => 'SKIP'
  */

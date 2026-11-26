@@ -18,11 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * iteration, counting, positional lookup and name lookup, and nothing that
  * adds, removes, reorders or replaces a field.
  *
- * @visibility public
- * @example Looking fields up by position and by name
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS a, 2 AS a, 3 AS b');
- *     $fields = $operation->fields();
- *     [count($fields), $fields->at(2)->name?->value, $fields->lookup('a') instanceof \SqlSemantics\Platform\MySql\Model\Statement\Shape\AmbiguousFields] // => [3, 'b', true]
+ * @visibility SqlSemantics
  * @implements IteratorAggregate<int, Field>
  */
 final class Fields implements Countable, IteratorAggregate

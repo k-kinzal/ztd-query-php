@@ -1,0 +1,166 @@
+{
+  "revision": "SemanticsIR/mysql-drop-view-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL, lower_case_table_names=0, empty sql_mode, utf8mb4 connection and persistent named schemas.",
+  "extends": [
+    "mysql-drop-view-v1.json",
+    "server-drop-table-v1.json",
+    "mysql-external-views-v1.json",
+    "mysql-drop-view-v2.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/View/DropView"
+  ],
+  "constructors": {
+    "ViewName": {
+      "type": "Schema/View/ViewName",
+      "role": "An absolute view identity in a persistent MySQL database.",
+      "structure": "An exact schema identifier and an exact relation identifier.",
+      "conditions": "Both names satisfy the persistent schema or view role. Each contains 1 to 64 BMP characters, with no path separators, dot, NUL or trailing space.",
+      "meaning": "Designate the persistent view name under the fixed name comparison and external schema interpretation.",
+      "sql": "Quote both parts of the exact absolute identity."
+    },
+    "DropView": {
+      "type": "Schema/View/DropView",
+      "role": "An ordered native view removal with its missing-object policy.",
+      "structure": "A nonempty ordered list of distinct absolute view identities, a no-op permission for absent views, and the exact native release.",
+      "conditions": "Check list shape, role and distinct names before publication. Analysis binds each present view, or with IF EXISTS a known absence in a named schema. Unresolved references, non-view declarations and unknown schemas cannot publish a completed value in this domain. View removal consults the persistent catalog even when a session-temporary table shadows the same name.",
+      "meaning": "Drop requested present views and preserve unrelated objects. IF EXISTS tolerates absent views. Required absence can leave different catalog effects on releases before and after the native atomic DROP VIEW change. The operation obeys implicit commit behavior. A session-temporary table never participates in persistent removal or presence.",
+      "sql": "Emit DROP VIEW, the explicit IF EXISTS policy and the absolute names in their checked order. MySQL ignores RESTRICT and CASCADE."
+    }
+  },
+  "structure": "The removal has ordered absolute view identities and the exact native missing-object policy. A conditionally absent target has the same absolute name as a present view.",
+  "conditions": "An analyzed target is a complete catalog view or a known absent name permitted by IF EXISTS. Name comparison and release belong to one language profile. Direct absolute names supply the external interpretation. Resolve view names and optional absence in the persistent namespace.",
+  "meaning": "The database changes presence of named persistent views under the native release's rules. The same-named view in another schema, base data and dependent view metadata remain observable. With IF EXISTS absent objects are omitted with native notes. The pinned profiles either perform partial removal or an atomic rejection when a required name is absent. The transaction marker observes implicit commit even if the statement returns an error. The native fixture separates the 5.6 and 5.7 partial behavior from the atomic rejection observed on the later pinned binaries. Temporary overlays at the same absolute names remain intact.",
+  "sql": "Preserve the target set, list order, missing-object policy and exact SQL operation. Omit behavior words which the profile ignores.",
+  "observations": [
+    "Affected and retained view catalog names with exact absolute identities",
+    "Status and runtime absence diagnosis with the native release distinction",
+    "Retained base rows and a surviving dependent view entry",
+    "Implicit commit and data seen on a fresh transaction",
+    "Equivalent original RESTRICT and CASCADE forms",
+    "Typed rows of temporary tables with the exact names of present, absent and other-schema persistent views remain intact."
+  ],
+  "finite": {
+    "targets": [
+      "first",
+      "second",
+      "both",
+      "first-missing",
+      "missing-first",
+      "missing",
+      "cross-schema"
+    ],
+    "ifExists": [
+      false,
+      true
+    ],
+    "dependent": [
+      false,
+      true
+    ],
+    "identities": 56,
+    "completeness": "Recover the constructed target list and policy and independently verify the real persistent and session table fixture. Require all 56 direct coordinates per release.",
+    "shadowed": [
+      false,
+      true
+    ]
+  },
+  "analysis": [
+    "One declared view",
+    "Two absolute declared views",
+    "One optional known missing view",
+    "Dependent view under RESTRICT",
+    "Dependent view under CASCADE",
+    "Same view name declared in two schemas",
+    "A persistent view hidden by a temporary table",
+    "An optionally absent persistent view with the same name as a temporary table",
+    "Two hidden persistent views in distinct schemas"
+  ],
+  "exploration": {
+    "seeds": [
+      1901,
+      12049,
+      43613
+    ],
+    "casesPerSeed": 12,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary ordered view lists, optional and required absence, dependencies, and whether there are two views named alike in different schemas. Both namespace fixture modes must appear in the seeded observations."
+  },
+  "negative": [
+    "Direct empty list",
+    "Direct repeated target",
+    "A name outside the view identifier role",
+    "Non-view declaration during analysis",
+    "A required absent view",
+    "An optional target in an unknown database",
+    "A required view name with only a session-temporary table at its coordinates"
+  ],
+  "faults": [
+    "Substitute the same name in another database",
+    "Omit the second target",
+    "Change the missing-object policy",
+    "Admit duplicate target identities",
+    "Look up removal targets in the session-visible namespace"
+  ],
+  "evidence": {
+    "P01": "Absolute target identity, view operation, absence policy and release are explicit.",
+    "P02": "The checked name and closed removal operation own enforced role and list validity.",
+    "P03": "Only the removal policy, checked names and native release are retained.",
+    "P04": "Combine the ordered targets under the release-specific removal rules.",
+    "P05": "Use closed immutable values and a detached ordered target list.",
+    "P06": "Emit the absolute native removal statement with unchanged dependency and absence meaning.",
+    "Q01": "Reject each specified invalid target or list and unresolved analyzed name.",
+    "Q02": "Run all direct combinations and independently authored accepted statements.",
+    "Q03": "Compare the complete retained catalog and transaction state against a separate effect model.",
+    "Q04": "Compare native effects, original spellings, precise diagnostics and rollback on each profile.",
+    "Q05": "Connect the loaded shape, construction and SQL emission to the isolated Composer layouts."
+  },
+  "open": [
+    "Queries reading invalidated dependent views outside the fixture observation",
+    "View creation and replacement and non-view DROP targets",
+    "Connection and privilege failures"
+  ],
+  "trust": [
+    "The pinned native removal and transaction rules",
+    "The same persistent schema and dependency interpretation",
+    "The independent observer, reference effect model and PHP distribution identity"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/drop-view.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/create-temporary-table.html"
+  ],
+  "absenceEffects": {
+    "partialRemovalOnError": [
+      "mysql-5.6.51",
+      "mysql-5.7.44"
+    ],
+    "atomicRejection": [
+      "mysql-8.0.44",
+      "mysql-8.1.0",
+      "mysql-8.2.0",
+      "mysql-8.3.0",
+      "mysql-8.4.7",
+      "mysql-9.0.1",
+      "mysql-9.1.0"
+    ],
+    "diagnostics": "Required absence reports SQLSTATE 42S02 with native error 1051. Optional absence reports a note with code 1051.",
+    "physicalCalibration": "The pinned 8.0 through 8.3 binaries retain all targets after the required-absence error in this fixture. This differs from the release transition stated in the general DROP VIEW manual. Keep both the direct effect probes and the release-dependent comparator."
+  }
+}

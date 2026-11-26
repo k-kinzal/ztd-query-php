@@ -14,8 +14,8 @@ final class JsonTableColumnTest extends TestCase
 {
     public function testColumnsImplementTheContract(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' AS p PASSING 1 AS x COLUMNS (n FOR ORDINALITY, v integer PATH '\$.v' NULL ON EMPTY, f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER, e boolean EXISTS PATH '\$.e' ERROR ON ERROR, NESTED '\$.b[*]' AS q COLUMNS (b text)) ERROR ON ERROR) AS j");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect("SELECT * FROM JSON_TABLE ('[]', '\$[*]' AS p PASSING 1 AS x COLUMNS (n FOR ORDINALITY, v integer PATH '\$.v' NULL ON EMPTY, f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER, e boolean EXISTS PATH '\$.e' ERROR ON ERROR, NESTED '\$.b[*]' AS q COLUMNS (b text)) ERROR ON ERROR) AS j");
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $from = $select->from;

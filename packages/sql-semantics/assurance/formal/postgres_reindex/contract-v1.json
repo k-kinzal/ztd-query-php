@@ -1,0 +1,37 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-lexical-proof-1",
+  "approval": "pending-human-review",
+  "targets": [
+    "PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings, native parameters"
+  ],
+  "obligations": [
+    "P06",
+    "Q04",
+    "Q05"
+  ],
+  "theorems": [
+    "For each decoded name and a suffix whose first character is not the identifier quote, the scanner of the quoted name followed by this suffix returns the identical decoded name and suffix.",
+    "Every header and target of the stated arity round-trips under the fixed canonical REINDEX decoder. The command head preserves the exact selector, requested concurrency when applicable, and progress-reporting choice."
+  ],
+  "profileConditions": [
+    "The accepted PostgreSQL Identifier contains a nonempty valid UTF-8 sequence without NUL and fits the 63-byte profile. The formal lexical result quantifies over all character lists.",
+    "PostgreSQL parses the fixed canonical syntax and counts each doubled identifier quote as one decoded character. Native name binding requires the same externally supplied identities.",
+    "The single named table syntax can refer to a standalone or partitioned owner. The separate IR role constrains which external owner is selected."
+  ],
+  "connection": "Check the exact checked PHP value graph and method templates, including canonical identifier spelling, six reindex roots and their local operand spelling. The certificate associates installed PHP files and decoder operands with the fixed application functions.",
+  "proofValidation": "Use a fixed trusted challenge export and compare both named theorem statements. Replay with Lean and at least one external kernel. Reject unapproved axioms, native computation axioms and mismatched theorem types. Record the exact verifier, source and artifact identity and actual availability of the sandbox.",
+  "measurement": "Separate the universal lexical theorem from the native execution comparison. The theorem covers canonical tokenization and names. The PostgreSQL engine and source rule checks establish the bounded semantic report, storage and transaction observations.",
+  "contractArtifacts": {
+    "ReindexSpec.lean": "1d847b171c60a07f82dc9df6a9e3e06dcbfbcedc2829e2b192d22990a111b32c",
+    "Challenge.lean": "be835d836d6ae4a911c9017f83eab4ce47d85332dad1643f45298b7c2dedff49",
+    "comparator.json": "e8cb93dcd3fdf14801a8ed99a80bba0de3d34bba6a7dc9b88775379494b02c29",
+    "lean-toolchain": "582a63f8f9c5128067b688778c1051cf1464c3ca9d57b9325025c051c29b774a"
+  },
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-syntax-lexical.html",
+    "https://www.postgresql.org/docs/17/sql-syntax-lexical.html",
+    "https://www.postgresql.org/docs/16/sql-reindex.html",
+    "https://www.postgresql.org/docs/17/sql-reindex.html",
+    "https://lean-lang.org/doc/reference/latest/ValidatingProofs/"
+  ]
+}

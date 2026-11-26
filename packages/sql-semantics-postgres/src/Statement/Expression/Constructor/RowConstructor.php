@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * needs at least two fields: one field in parentheses is a grouping.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-ROW-CONSTRUCTORS. Status: Implemented.
  *
- * @visibility public
- * @example Reading the fields of a row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT ROW(1, 'a')");
- *     [count($query->field(0)->expression->fields), $query->field(0)->name->value] // => [2, 'row']
+ * @visibility SqlSemantics
  * @example Rejecting an implicit row of one field
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()], \SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowSpelling::Implicit) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

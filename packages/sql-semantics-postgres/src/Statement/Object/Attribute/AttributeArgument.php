@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * written value is kept so the attribute is written back as it was given.
  * Source: `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading the function of an operator
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (rightarg = int4, function = int4eq)');
- *     $operation->statement->definition[1]->value instanceof \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeArgument // => true
+ * @visibility SqlSemantics
  */
 interface AttributeArgument extends Clause
 {

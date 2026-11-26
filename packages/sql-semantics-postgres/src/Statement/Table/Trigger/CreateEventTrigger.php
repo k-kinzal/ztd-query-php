@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * FUNCTION is not kept.
  * Source: https://www.postgresql.org/docs/17/sql-createeventtrigger.html.
  *
- * @visibility public
- * @example Creating an event trigger
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE EVENT TRIGGER e ON sql_drop EXECUTE PROCEDURE f()');
- *     $statement->toString() // => 'CREATE EVENT TRIGGER e ON sql_drop EXECUTE FUNCTION f()'
+ * @visibility SqlSemantics
  */
 final class CreateEventTrigger implements Statement
 {

@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
  * server keeps as written, a `NumericConstant` (PG-LEX-NUMBER-001).
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC.
  *
- * @visibility public
- * @example Reading a hexadecimal integer
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 0x1_F');
- *     $query->statement->targets[0]->expression->value->digits // => '31'
+ * @visibility SqlSemantics
  * @example Rejecting digits that are not canonical
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('007') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

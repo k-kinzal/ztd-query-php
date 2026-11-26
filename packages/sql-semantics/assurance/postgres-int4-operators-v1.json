@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/postgres-int4-operators-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "existingRoles": ["Arithmetic", "ArithmeticOperator", "ColumnReference", "IntegerLiteral", "Select", "TableSource"],
+  "profile": "Native PostgreSQL 16.6 and 17.2 under the projection and declaration conditions in server-projection-v1.json.",
+  "constructors": {},
+  "scope": "Add builtin int4 division, remainder, bitwise AND, OR and exclusive OR to the closed ordered arithmetic role.",
+  "admission": [
+    "Apply an admitted pg_catalog operator to two already resolved int4 operands. A nullable resolved int4 slot retains its type. An untyped NULL or an explicitly foreign operator cannot enter the arithmetic role.",
+    "Preserve each overloaded operator family identity and the int4 result. All existing per-expression and projection limits apply."
+  ],
+  "meaning": [
+    "Division truncates the mathematical quotient toward zero. Remainder follows the dividend sign, including zero for the minimum integer modulo minus one.",
+    "A zero non-NULL divisor in division or remainder yields SQLSTATE 22012. The minimum int4 divided by minus one yields SQLSTATE 22003. Outside these outcomes the exact signed integer result is observed.",
+    "Bitwise operations use the signed 32-bit word and do not extend the result type. A NULL input to a strict operator yields a typed NULL."
+  ],
+  "sql": "Render the two operands in order with OPERATOR(pg_catalog.<operator>) inside parentheses. Retain explicit int4 casts of integer literals and the ordered result names.",
+  "observations": [
+    "Exact resulting field names and int4 types, values, duplicate rows, NULL, ONLY and inherited rows, and exact SQLSTATE when the fixed attempted operation fails.",
+    "An explicit builtin operator retains its identity even if a role called from another search path has an identically named operator."
+  ],
+  "finite": {
+    "sources": ["unit", "inherited", "only"],
+    "operators": ["/", "%", "&", "|", "#"],
+    "integers": [-2147483648, -7, -1, 0, 1, 3, 5, 2147483647],
+    "slots": [0, 1],
+    "identity": "Cross the five operators with both position operands. The unit scope has only the eight literal leaves, and each table scope adds two slots. Exhaust the 1320 tuples of the observed operator and source roles."
+  },
+  "exploration": {
+    "seeds": [5531, 10169, 32009],
+    "casesPerSeed": 20,
+    "timeoutSeconds": 165,
+    "allowedExclusions": [],
+    "structure": "Generate mixed nested operators with depth up to three, named duplicate result columns, and varied nullable slot and inheritance choices. Generate nested division and remainder with nonzero divisors in the small safe domain. Probe zero and overflow separately in the fixed finite and evaluation-boundary cases."
+  },
+  "negative": ["Missing left slot", "Missing right slot", "Ordered operator written in another schema", "Non-int4 literal used as an operand"],
+  "faults": ["Emit a remainder for division", "Reverse the operands of a signed remainder", "Emit bitwise OR for exclusive OR", "Drop the builtin operator qualification under the distinguishing search path"],
+  "open": ["Other numeric types, unary operators, and platform-dependent shifts."],
+  "trust": ["Pinned PostgreSQL and PDO observer with exact metadata", "Independent integer and error rules", "Disposable fixtures with inherited slots and a shadow operator"],
+  "sources": ["https://www.postgresql.org/docs/17/functions-math.html", "https://www.postgresql.org/docs/17/errcodes-appendix.html"]
+}

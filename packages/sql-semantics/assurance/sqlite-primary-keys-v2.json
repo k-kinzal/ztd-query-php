@@ -1,0 +1,165 @@
+{
+  "revision": "SemanticsIR/sqlite-primary-keys-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with ordinary and strict rowid or WITHOUT ROWID tables, builtin collations and ordinary stored columns.",
+  "scope": "One column or table PRIMARY KEY over resolved declaration slots, including ordered composite keys, the five constraint algorithms and WITHOUT ROWID.",
+  "constructors": {
+    "Schema/Key/PrimaryKey": {
+      "role": "A checked primary key fragment of an owning table declaration.",
+      "structure": "An ordered nonempty list of key terms, a column-versus-table declaration decision and a primary key conflict algorithm.",
+      "conditions": "A column constraint owns exactly one term with the default collation of its declared column. Each term is bound to an existing owned column by the parent. WITHOUT ROWID requires a primary key. All owned lists have checked lengths and copied immutable entries.",
+      "meaning": "Enforce uniqueness of non-NULL key tuples with the term comparison rules and the chosen conflict algorithm. Ordinary non-alias rowid keys can contain NULL unless a column policy applies. STRICT and WITHOUT ROWID require non-NULL key slots, subject to native INTEGER rowid allocation in a rowid table. Exactly one INTEGER term aliases the rowid except when written inline with DESC or when there is no rowid.",
+      "externalInterpretation": "The database uses the same native storage mode, builtin collations and conflict rules. The fixture controls the write sequence, initial state and transaction.",
+      "sql": "Emit the inline clause after its owning column with its direction. Emit table-level ordered, quoted terms with their collations and directions. Append the checked explicit constraint conflict policy when needed. The parent's mode controls STRICT and WITHOUT ROWID.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Key/KeyTerm": {
+      "role": "One ordered component of a primary key.",
+      "structure": "A zero-based column slot, a direction decision and a builtin collation.",
+      "conditions": "The slot is nonnegative at fragment construction and smaller than the owning table's width at composition. A closed collation determines key equality and comparison. An inline fragment uses the default of the admitted column declaration.",
+      "meaning": "Use only the identified column value as this term of the key. Collation changes key equality for TEXT values and direction fixes index ordering.",
+      "externalInterpretation": "Bind the slot to the same column definition and interpret BINARY, NOCASE and RTRIM as the pinned SQLite builtins.",
+      "sql": "The owning table obtains the key name from the checked slot. Apply the selected direction and any nondefault key collation in the appropriate grammar position.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Key/KeyConflict": {
+      "role": "The effective conflict policy of the primary key constraint.",
+      "structure": "The closed alternatives ABORT, FAIL, IGNORE, REPLACE and ROLLBACK.",
+      "conditions": "A missing explicit algorithm resolves to ABORT. The policy is owned by exactly one primary key declaration. Per-statement conflict overrides belong to writing statements.",
+      "meaning": "On a duplicate key, ABORT undoes the statement, FAIL retains its preceding successful progress, IGNORE skips the candidate row, REPLACE removes the conflicting existing row and performs the write, and ROLLBACK undoes the active transaction.",
+      "externalInterpretation": "Use the same duplicate key, statement override, prior transaction effects, and SQLite settings.",
+      "sql": "The parent emits the algorithm after the primary key clause. The default ABORT needs no additional tokens.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/CreateTable",
+    "Schema/TableColumn",
+    "Schema/DeclaredDatatypeName",
+    "Schema/NotNullConflict",
+    "Collation"
+  ],
+  "observations": [
+    "Compare the resolved target, defined ordered names, type spellings, native key column order and storage mode.",
+    "Observe the materialized primary key index terms, directions and collations when the key uses an index. Distinguish inline descending INTEGER and table descending INTEGER.",
+    "Compare typed stored rows and generated aliases after omission or NULL, the difference between a duplicate and a distinct composite key, exact conflict errors and change counts.",
+    "Compare whether the tested rowid reference exists, and the effect on a preceding transaction write."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "layouts": [
+      "inline-integer-ascending",
+      "inline-integer-descending",
+      "table-integer-ascending",
+      "table-integer-descending",
+      "inline-int",
+      "inline-text",
+      "table-text-nocase",
+      "table-text-rtrim",
+      "table-pair-forward",
+      "table-pair-reversed"
+    ],
+    "modes": [
+      "rowid",
+      "strict-rowid",
+      "without-rowid",
+      "strict-without-rowid"
+    ],
+    "conflicts": [
+      "ABORT",
+      "FAIL",
+      "IGNORE",
+      "REPLACE",
+      "ROLLBACK"
+    ],
+    "nullableDeclaration": [
+      false,
+      true
+    ],
+    "identity": "Check all 800 declaration identities exactly once. Measure both implicit and explicit transactions and distinguish NULL writes, compatible numeric keys and collation-sensitive duplicates."
+  },
+  "exploration": {
+    "seeds": [
+      33023,
+      45119,
+      61253
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 300,
+    "allowedExclusions": [],
+    "structure": "Vary the declaration width, bound column positions, nonempty term list, direction, key collation, placement, rowid and type modes and conflict policy. Compare the observed choices and slot relationships with the selected schedule."
+  },
+  "negative": [
+    "Negative term slot",
+    "Term outside the owning declaration",
+    "Multiple terms on an inline key",
+    "Nondefault inline collation",
+    "WITHOUT ROWID without a key",
+    "AUTOINCREMENT on a non-alias INT primary key",
+    "Multiple PRIMARY KEY declarations"
+  ],
+  "faults": [
+    "Erase the distinction between the column and table forms for descending INTEGER",
+    "Bind a term to a different column",
+    "Drop WITHOUT ROWID",
+    "Discard an effective collating sequence",
+    "Replace the declared duplicate-key policy with ABORT"
+  ],
+  "open": [
+    "Additional column and table constraint roles, qualified indexed expressions and user-supplied collations."
+  ],
+  "trust": [
+    "The shape catalogue and runtime boundary for placement and ordinal ownership.",
+    "An independent model for fixture constraint decisions, stored keys and rollback.",
+    "The trusted engine observer permits only engine-created indexes for the fixture's CREATE TABLE and maintains rejection controls for direct index commands."
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createtable.html#the_primary_key",
+    "https://sqlite.org/withoutrowid.html",
+    "https://sqlite.org/lang_conflict.html",
+    "https://sqlite.org/autoinc.html"
+  ],
+  "changeFromV1": "The previously unsupported INTEGER PRIMARY KEY AUTOINCREMENT example is a required positive of sqlite-auto-rowid-v1.json. The substitute negative is illegal under the native alias rule. The original key identity enumeration, exploration and observations remain the same."
+}

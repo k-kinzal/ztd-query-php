@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ConditionDeclaration::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class ConditionDeclarationTest extends TestCase
 {
     public function testRenderWritesTheNameAndTheErrorCode(): void
     {
-        $operation = (new Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; END');
+        $operation = (new Inspection())->inspect('CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -36,7 +36,7 @@ final class ConditionDeclarationTest extends TestCase
     #[DataProvider('providerRenderWritesTheDeclaration')]
     public function testRenderWritesTheDeclaration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->inspect($sql)->toString());
     }
 
     /**

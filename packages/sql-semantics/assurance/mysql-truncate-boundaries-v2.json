@@ -1,0 +1,74 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-boundaries-2",
+  "approval": "pending-human-review",
+  "extends": "mysql-truncate-boundaries-v1.json",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Keep the same persistent identity and explicitly retain the native namespace for a resolved temporary truncation.",
+  "rules": {
+    "Schema/Identity/TableIdentity::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($kind->isTable(), 'A resolved table identity requires a persistent or temporary table.');"
+      ]
+    },
+    "Schema/Identity/TableIdentity::quoted": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->name->quoted();"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": []
+    },
+    "Schema/Truncate/TruncateTable::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native';"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'TRUNCATE TABLE ' . $this->target->quoted();"
+      ]
+    },
+    "Schema/Truncate/TruncateLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "    && $context->relationNames === Comparison::Sensitive, 'TRUNCATE TABLE requires the default native profile.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "Check::input(",
+        "    $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable",
+        "    && $resolution->table->name->catalog === null,",
+        "    'TRUNCATE TABLE requires a resolved base table.',",
+        ");",
+        "$name = $resolution->table->name;",
+        "$schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "Check::input($schema !== SessionDatabase::UNNAMED, 'TRUNCATE TABLE needs an absolute table identity.');",
+        "$kind = $resolution->table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;",
+        "$target = new TableName(new Identifier($schema), new Identifier($name->name->value));",
+        "",
+        "return new TruncateTable(new TableIdentity($target, $kind), $profile->grammar);"
+      ]
+    }
+  }
+}

@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint;
  * than the attribute markers, which are `ConstraintAttribute` values here.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the kind of a table constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, PRIMARY KEY (a))');
- *     $create->statement->definition->elements[1]->kind() // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind::PrimaryKey
+ * @visibility SqlSemantics
  */
 enum ConstraintKind
 {

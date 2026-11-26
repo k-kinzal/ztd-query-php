@@ -1,0 +1,68 @@
+{
+  "revision": "SemanticsIR/postgres-schema-indexes-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "scope": "Add checked named ordinary B-tree members to the CREATE SCHEMA index phase. The target is an ordinary table actually created by the table phase. Index predicates and key roles use the standalone B-tree contract. Other native index methods, automatic names, concurrent builds, and subsequent trigger and grant phases have separate obligations.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-createindex.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/parser/parse_utilcmd.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_utilcmd.c"
+  ],
+  "constructors": {
+    "CreateSchema": {
+      "type": "Schema/Namespace/CreateSchema",
+      "role": "Declare checked indexes on tables within a newly declared namespace, after the sequence, table and view phases.",
+      "structure": "The owned ordered schema member lists with a detached ordered list of checked CreateIndex members.",
+      "conditions": "Containing namespace and release are fixed, the parent is unguarded and index creation is nonconcurrent. Each indexed relation is the actual earlier base table and the complete ordered native heading agrees with it. Determine index name occupancy from previously created sequences, tables, views and indexes. The child state must agree and a collision requires the child's own guard. This holds for direct construction and both analysis routes.",
+      "meaning": "After creating preceding members, apply each index to its identified relation in index member order. The guard retains any actual same-name occupant. Set key order, covering columns, uniqueness, NULL policy and membership predicate under the fixed B-tree semantics.",
+      "sql": "Use the complete CREATE INDEX child with a resolved qualified table and a locally spelled index name, appended to the same native CREATE SCHEMA command in phase order."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "owners": ["effective", "named"],
+    "layouts": ["vacant", "prior-index", "prior-view", "prior-table", "prior-sequence"],
+    "writtenOrders": ["index-first", "index-last"],
+    "transactional": [false, true],
+    "bound": "40 coordinates per native release on each of analyzed and direct construction, with the outcome or guarded no-op independently measured."
+  },
+  "exploration": {
+    "seeds": [22031, 52169, 87523],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "structure": "Vary ordered index members, key and covering positions, ascending and descending NULL placement, partial Boolean conditions, uniqueness and NULL equality, quoted namespaces and headings, first local table selection, role and transaction mode."
+  },
+  "observations": [
+    "Exact indexed relation OID and attribute positions, qualified target and index name, owner, storage method, key and covering boundaries, uniqueness, NULL policy and predicate.",
+    "The relation and original definition surviving each guarded collision, preserving distinct occupants from every preceding phase.",
+    "Insert transitions with equal keys, NULL keys and Boolean filtering, independent of the native catalog spelling of predicates.",
+    "The exact dependency on local rather than external decoy relation, separate unchanged external metadata and rows, and absent or restored members when the containing statement is rejected or rolled back."
+  ],
+  "negative": [
+    "Explicit foreign schema index target (42P15).",
+    "Missing local indexed table with a same-name external decoy (42P01).",
+    "Index on a local ordinary view (42809).",
+    "Concurrent index within schema declaration (25001).",
+    "Collision with an earlier view without IF NOT EXISTS (42P07).",
+    "Missing key field even when the index name already exists and the child has a guard (42703).",
+    "Direct child states name occupancy inconsistent with the preceding phases.",
+    "Direct child has a different language release.",
+    "Direct child substitutes a physical field kind or position.",
+    "Direct child references a table shadowed by an earlier sequence.",
+    "Direct index list contains an unchecked operand."
+  ],
+  "faults": [
+    "Omit the index phase.",
+    "Change the first retained key while keeping its table and SQL valid.",
+    "Drop NULLS NOT DISTINCT and retain the same unique index.",
+    "Omit the partial predicate and retain the same index and operations."
+  ],
+  "trust": [
+    "The isolated PostgreSQL session gives the same meaning to explicit external catalog coordinates and native language settings.",
+    "PostgreSQL establishes exact ordered member effects after selecting the declared owner. The test probes check both native catalog identity and the index constraint effect using discriminating writes."
+  ]
+}

@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Inspection;
  *
  * Source: https://sqlite.org/lang_explain.html.
  *
- * @visibility public
- * @example Telling the two inspection requests apart
- *     $explain = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('EXPLAIN QUERY PLAN SELECT 1');
- *     $explain->statement->mode // => \SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode::QueryPlan
+ * @visibility SqlSemantics
  */
 enum ExplainMode
 {

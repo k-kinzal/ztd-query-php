@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/optimize-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('optimize table t');
- *     [$statement->toString(), !$statement->statement->noWriteToBinlog] // => ['OPTIMIZE TABLE t', true]
+ * @visibility SqlSemantics
  */
 final class OptimizeTable implements Statement
 {

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * kept as written. The statement that holds the item derives its expression.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sorting-rows.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding an ordering expression and its direction
  *     $item = new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')), \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending);
  *     [$item->expression->name->value, $item->direction] // => ['a', \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending]

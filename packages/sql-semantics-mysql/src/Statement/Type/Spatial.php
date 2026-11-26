@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
  * `GEOMCOLLECTION` is `GEOMETRYCOLLECTION`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/spatial-type-overview.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a spatial type
  *     (new \SqlSemantics\Platform\MySql\Statement\Type\Spatial(\SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind::Point))->name() // => 'POINT'
  */

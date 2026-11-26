@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/operator-precedence.html,
  * https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_high_not_precedence.
  *
- * @visibility public
- * @example Reading a unary minus
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE -a < 0');
- *     $query->statement->where->left->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus
+ * @visibility SqlSemantics
  */
 enum UnaryOperator: string
 {

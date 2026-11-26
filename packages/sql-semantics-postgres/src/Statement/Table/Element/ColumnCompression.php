@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * `AT_SetCompression`). The method name is checked by the server.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading the compression of a column
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text COMPRESSION DEFAULT)');
- *     $create->statement->definition->elements[0]->compression->method // => null
+ * @visibility SqlSemantics
  */
 final class ColumnCompression implements Node
 {

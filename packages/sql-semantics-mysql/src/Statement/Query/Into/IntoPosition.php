@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Into;
  * position does not change the meaning and is kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select-into.html.
  *
- * @visibility public
- * @example Reading where an INTO clause is written
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t INTO @x');
- *     $query->statement->intoPosition // => \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterQuery
+ * @visibility SqlSemantics
  */
 enum IntoPosition
 {

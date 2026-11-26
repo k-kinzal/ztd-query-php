@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * of the session. The value is the keyword spelling.
  * Source: https://www.postgresql.org/docs/17/sql-set-transaction.html.
  *
- * @visibility public
- * @example Reading the scope of session characteristics
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY');
- *     $operation->statement->scope // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::SessionCharacteristics
+ * @visibility SqlSemantics
  */
 enum TransactionScope: string
 {

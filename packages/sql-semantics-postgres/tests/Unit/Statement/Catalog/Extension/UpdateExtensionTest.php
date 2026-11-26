@@ -14,11 +14,11 @@ final class UpdateExtensionTest extends TestCase
 {
     public function testRenderWritesTheVersions(): void
     {
-        self::assertSame('ALTER EXTENSION hstore UPDATE TO \'2.0\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION hstore UPDATE TO \'2.0\'')->toString());
+        self::assertSame('ALTER EXTENSION hstore UPDATE TO \'2.0\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER EXTENSION hstore UPDATE TO \'2.0\'')->toString());
     }
 
     public function testDeriveStatementReportsTwoVersions(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION hstore UPDATE TO \'2.0\' TO v')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER EXTENSION hstore UPDATE TO \'2.0\' TO v')->facts->diagnostics[0]->message());
     }
 }

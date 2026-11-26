@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * Rule: PG-DOMAIN-004. Mirrors `AlterDomainStmt` subtype 'O' (SET) or 'N' (DROP).
  * Source: https://www.postgresql.org/docs/17/sql-alterdomain.html. Status: Implemented.
  *
- * @visibility public
- * @example Forbidding NULL values
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d SET NOT NULL');
- *     $operation->statement->notNull // => true
+ * @visibility SqlSemantics
  */
 final class AlterDomainNotNull implements Statement
 {

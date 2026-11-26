@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  * written several times the server uses the last.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading the characteristics of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ALTER PROCEDURE p COMMENT 'x' SQL SECURITY INVOKER");
- *     $alter->statement->characteristics[1] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic // => true
+ * @visibility SqlSemantics
  */
 interface Characteristic extends Node
 {

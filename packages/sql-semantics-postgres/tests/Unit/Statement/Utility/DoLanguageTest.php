@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\DoLanguage;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(DoLanguage::class)]
 #[Small]
@@ -24,6 +24,6 @@ final class DoLanguageTest extends TestCase
 
     public function testRenderWritesTheClause(): void
     {
-        self::assertSame("DO 'x' LANGUAGE \"PL\"", (new Semantics())->analyze("DO 'x' LANGUAGE \"PL\"")->toString());
+        self::assertSame("DO 'x' LANGUAGE \"PL\"", (new Inspection())->inspect("DO 'x' LANGUAGE \"PL\"")->toString());
     }
 }

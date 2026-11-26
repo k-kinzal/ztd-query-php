@@ -12,10 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
 /**
  * What an operation derived for one scalar expression at its use position.
  *
- * @visibility public
- * @example Reading the facts of an expression
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT NULL');
- *     $query->facts->scalar($query->field(0)->expression)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable
+ * @visibility SqlSemantics
  */
 final class ScalarFact
 {

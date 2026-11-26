@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * statement with ER_ONLY_INTEGERS_ALLOWED.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/number-literals.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')))->message() // => 'Only integers are allowed, not 1.5 (ER_ONLY_INTEGERS_ALLOWED).'
  */

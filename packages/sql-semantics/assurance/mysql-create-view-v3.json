@@ -1,0 +1,208 @@
+{
+  "revision": "SemanticsIR/mysql-create-view-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL view creation in persistent named schemas, utf8mb4 connection, empty sql_mode and case-sensitive database and relation names.",
+  "extends": [
+    "mysql-create-view-v1.json",
+    "mysql-external-views-v1.json",
+    "mysql-drop-view-v2.json",
+    "server-projection-v1.json",
+    "mysql-create-view-v2.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/View/CreateView"
+  ],
+  "constructors": {
+    "CreateView": {
+      "type": "Schema/View/CreateView",
+      "role": "A complete persistent MySQL view declaration with its creation and execution policies.",
+      "structure": "An absolute view identity, resolved result heading, checked SELECT body, creation policy, algorithm and SQL security mode.",
+      "conditions": "Require a checked unbounded literal or single persistent base-table projection with distinct checked heading names. Check identity, scope, exact width and algorithm placement. Block parameters, self references, explicit definer clauses and unchecked query forms. IF NOT EXISTS requires the pinned supporting release.",
+      "meaning": "Create, replace or preserve the named view under the stored policy. The native view reuses the resolved query and exposes its explicitly indicated result names and native field order. The server selects the implicit definer at execution. Its requested directive remains fixed. The installed algorithm is derivable from the body and the directive if a new definition takes effect.",
+      "sql": "Emit the exact absolute target with the resulting column list, creation option, algorithm, security and closed SELECT. Generate distinct internal query labels inside the ordered heading."
+    },
+    "ViewColumn": {
+      "type": "Schema/View/ViewColumn",
+      "role": "A name in the catalog heading of a persistent MySQL view.",
+      "structure": "One checked identifier for the resulting position.",
+      "conditions": "This domain admits one through 64 non-NUL ASCII characters without a trailing space. Compare heading names with ASCII case folding and reject duplicates in the owner.",
+      "meaning": "Name this exact catalog position for future qualification or wildcard expansion.",
+      "sql": "Quote the decoded identifier in the explicit heading list."
+    },
+    "ViewCreationPolicy": {
+      "type": "Schema/View/ViewCreationPolicy",
+      "role": "The persistent view collision policy.",
+      "structure": "Require new, replace a view, or preserve an existing name.",
+      "conditions": "The modes are mutually exclusive. The checked preserve mode is available on the MySQL 9.1.0 pin.",
+      "meaning": "Respect the native existing-object outcome of the selected creation statement.",
+      "sql": "Emit ordinary CREATE VIEW, CREATE OR REPLACE VIEW, or CREATE VIEW IF NOT EXISTS."
+    },
+    "ViewAlgorithm": {
+      "type": "Schema/View/ViewAlgorithm",
+      "role": "The requested native view evaluation algorithm and its installed interpretation.",
+      "structure": "UNDEFINED, MERGE or TEMPTABLE.",
+      "conditions": "Each of UNDEFINED, MERGE and TEMPTABLE is valid over a checked simple base projection or a checked independent literal projection.",
+      "meaning": "A requested MERGE over a source-free projection publishes warning 1354 and installs UNDEFINED when creation succeeds. The requested directive remains observable when a same-name collision prevents installation. Existing catalog state, effective algorithm and native diagnostics follow the distinct creation policy.",
+      "sql": "Emit the requested algorithm. The server performs the effective algorithm fallback and reports its native warning."
+    },
+    "ViewSecurity": {
+      "type": "Schema/View/ViewSecurity",
+      "role": "The native execution security context of the view.",
+      "structure": "DEFINER or INVOKER.",
+      "conditions": "The input selects one mode and uses the implicit definer of the creation execution.",
+      "meaning": "Evaluate the view under the privileges of the definer or invoker as declared.",
+      "sql": "Emit the matching SQL SECURITY clause and leave the native implicit definer selection intact."
+    }
+  },
+  "existingRoles": [
+    "Schema/View/ViewName",
+    "Select",
+    "TableSource",
+    "ResultColumn",
+    "Identifier",
+    "From/TextColumnReference",
+    "ColumnReference"
+  ],
+  "structure": "A checked persistent declaration retains the query and exact result positions. Every external reference is absolute. The definition includes explicit policy values and an effective heading independent of the source spelling.",
+  "conditions": "Accept checked ordinary unbounded projections over a resolved persistent base table or independent literals with all three requested algorithms. Keep the existing target, native policy, heading, parameter, definer, and source placement boundaries.",
+  "meaning": "The declaration creates a server view with an explicit result heading and uses the body when read. Preserve data multiplicity and NULL over future changes to the input. Retain native catalog behavior for existing objects, algorithm, security and implicit commit.",
+  "sql": "Render the definition from the scoped SELECT and exact heading, with stable quoting and no stored SQL fragment. Normalize omitted algorithm and security to their native defaults. Use the native DUAL singleton for the earlier releases when an isolated projection needs a FROM clause. The view body requires no subquery to supply that row.",
+  "observations": [
+    "Status, native diagnostics and implicit commit or rollback marker",
+    "Exact catalog object, heading names, order, signed or VARCHAR metadata, collation and nullable values",
+    "Native updatability and security flags for simple base projections",
+    "Before and after live view reads after an independent base mutation",
+    "Replacement and preserved existing definitions",
+    "Native admission and NULL or empty-result behavior for the isolated literal definition with a native DUAL source",
+    "Warning 1354 before a same-name collision diagnostic, where required by the pinned native release",
+    "The installed algorithm for source-free MERGE compared with the requested directive and effective execution data"
+  ],
+  "finite": {
+    "algorithm": [
+      "automatic",
+      "merge",
+      "temporary"
+    ],
+    "security": [
+      "definer",
+      "invoker"
+    ],
+    "policy": [
+      "require-new",
+      "replace"
+    ],
+    "body": [
+      "base-all",
+      "base-filtered",
+      "unit-plain",
+      "unit-retained",
+      "unit-empty"
+    ],
+    "fixture": [
+      "absent",
+      "existing-view"
+    ],
+    "identities": {
+      "standard": 120,
+      "mysql-9.1.0": 180
+    },
+    "completeness": "Recover the requested algorithm, security, policy, relation and filter form, and the measured fixture pre-state. Execute the complete product through direct construction and analysis on every pinned release.",
+    "policyAdditionalByRelease": {
+      "mysql-9.1.0": [
+        "preserve"
+      ]
+    }
+  },
+  "analysis": [
+    "View with inherited projected names",
+    "View with explicit renamed heading",
+    "Native MERGE and DEFINER",
+    "TEMPTABLE with INVOKER",
+    "Base filter and an exact resolved field",
+    "An independent literal definition",
+    "An existing view replaced under OR REPLACE",
+    "Isolated literal projection with FROM DUAL and a false filter"
+  ],
+  "optionalNativeForms": {
+    "mysql-9.1.0": [
+      "Preserve an existing definition through IF NOT EXISTS",
+      "Create an absent definition through IF NOT EXISTS"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      1901,
+      12049,
+      43613
+    ],
+    "casesPerSeed": 16,
+    "timeoutSecondsPerRelease": 600,
+    "allowedExclusions": [],
+    "requiredForms": "Vary relative field positions, duplicate source values, explicit heading order, quoted names, policies, algorithms, security and case-sensitive source identities. Also generate source-free literal values, all three algorithms and both nonempty and empty row effects.",
+    "directCasesPerSeed": 12
+  },
+  "negative": [
+    "Incorrect heading width",
+    "Case-folded duplicate heading",
+    "A projected native marker",
+    "A reference to the declared view itself",
+    "Unsupported view source kind",
+    "Explicit definer selection",
+    "Version-inapplicable IF NOT EXISTS through the public constructor"
+  ],
+  "faults": [
+    "Change the view's absolute identity",
+    "Swap two resulting heading positions",
+    "Omit OR REPLACE",
+    "Switch SQL SECURITY mode",
+    "Allow a duplicated result label",
+    "Write UNDEFINED before the server can report the requested MERGE fallback",
+    "Ignore a missing native view fallback warning while still comparing the installed catalog"
+  ],
+  "evidence": {
+    "P01": "Fix query operand and source roles, physical identity, heading and all admitted policy values.",
+    "P02": "Enforce query, scope, role, placement and heading conditions in every publication path.",
+    "P03": "Retain the typed body and the definition's stable semantic information without SQL text or analysis state.",
+    "P04": "Derive the resulting view from the body, effective heading and declared native policy.",
+    "P05": "Own a detached heading and use closed immutable values throughout the definition.",
+    "P06": "Render the native view effect from its complete immutable structure.",
+    "Q01": "Check each malformed or unsupported placement at the owning boundary.",
+    "Q02": "Consume the fixed finite product and all independently authored native cases.",
+    "Q03": "Compare catalog and transaction effects with the independent fixture evaluator.",
+    "Q04": "Preserve native observations across original and rendered statements at each release.",
+    "Q05": "Connect direct and analyzed construction and rendering to the actual distributed PHP."
+  },
+  "open": [
+    "View CHECK OPTION and explicit definers",
+    "Views depending on other views or temporary relations, grouped, joined, compound and correlated inputs",
+    "Non-ASCII catalog heading equivalence and grant enforcement"
+  ],
+  "trust": [
+    "Truthful persistent base-table declarations and database profile",
+    "Independent native fixture, result and DDL observer",
+    "Loaded PHP values and reviewed acceptance tools",
+    "The native observer captures the ordered, typed view creation diagnostics, which also distinguish a requested MERGE from an already normalized UNDEFINED."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.0/en/view-algorithms.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-view.html"
+  ],
+  "versionedFrom": {
+    "path": "mysql-create-view-v2.json",
+    "sha256": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108"
+  }
+}

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
  * the written table, never a table qualifier.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html, https://www.postgresql.org/docs/17/sql-update.html.
  *
- * @visibility public
- * @example Reading the element an assignment writes
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE t SET a[1] = 2');
- *     [$update->statement->assignments[0]->column->column->value, count($update->statement->assignments[0]->column->steps)] // => ['a', 1]
+ * @visibility SqlSemantics
  */
 final class ColumnTarget implements Clause
 {

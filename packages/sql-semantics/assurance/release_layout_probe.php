@@ -1,0 +1,4256 @@
+<?php
+
+declare(strict_types=1);
+
+$installed = $argv[1] ?? '/stage';
+$catalog = $argv[2] ?? '/roles.json';
+require $installed . '/vendor/autoload.php';
+
+$roles = json_decode(file_get_contents($catalog), true, 512, JSON_THROW_ON_ERROR);
+function observeEnum(string $name): array
+{
+    $reflection = new ReflectionEnum($name);
+    if ($reflection->getBackingType()?->getName() !== 'string') {
+        throw new RuntimeException('An installed IR enum has an unexpected backing type.');
+    }
+    $listed = $name::cases();
+    $cases = [];
+    foreach ($reflection->getCases() as $position => $declaration) {
+        $case = $declaration->getValue();
+        $direct = constant($name . '::' . $case->name);
+        $selected = $name::from($case->value);
+        $optional = $name::tryFrom($case->value);
+        $restored = unserialize(serialize($case), ['allowed_classes' => [$name]]);
+        if ($case !== $direct || $case !== ($listed[$position] ?? null) || $case !== $selected
+            || $case !== $optional || $case !== $restored) {
+            throw new RuntimeException('An installed enum publication route returned another value.');
+        }
+        $cases[] = [$case->name, $case->value];
+    }
+    if (count($listed) !== count($cases)) {
+        throw new RuntimeException('An installed enum exposes an extra case.');
+    }
+    $unknown = '__ztd_invalid_enum_value';
+    while ($name::tryFrom($unknown) !== null) {
+        $unknown .= '_';
+    }
+    try {
+        $name::from($unknown);
+    } catch (ValueError) {
+        return ['backing' => 'string', 'cases' => $cases, 'unknownValue' => $unknown, 'unknownRejected' => true];
+    }
+
+    throw new RuntimeException('An installed enum accepts an unknown backing value.');
+}
+
+function observeMysqlHaving(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.having_rows (id INT, amount INT)']);
+    $query = $semantics->analyze(
+        'SELECT id, sum(amount) AS total FROM app.having_rows GROUP BY id HAVING total > 4294967292',
+        $context,
+    );
+    $shadow = $semantics->analyze('SELECT count(*) AS id FROM app.having_rows GROUP BY id HAVING id > 1', $context);
+    $condition = $query->having;
+
+    return [$condition::class, $condition->left === $query->columns[1]->value, $condition->left->operator->value,
+        $condition->right::class, $condition->right->decimal, $shadow->having->left::class, $shadow->having->left->column->slot,
+        $query->toString(), $shadow->toString()];
+}
+
+function observeMysqlProjectionModes(SqlSemantics\Platform\MySql\Semantics $ordinary): array
+{
+    $ansi = new SqlSemantics\Platform\MySql\Semantics(mode: new SqlSemantics\Platform\MySql\Mode(ansiQuotes: true));
+    $declarations = ['CREATE TABLE app.lexical_rows (id INT, decoy INT)'];
+    $catalog = $ansi->context($declarations);
+    $input = 'SELECT "id" AS "first_value", "r"."id" AS "second_value" FROM "app"."lexical_rows" AS "r"';
+    $analyzed = $ansi->analyze($input, $catalog);
+    [$batch] = $ansi->analyzeAll($input, $catalog);
+    $id = new SqlSemantics\Platform\MySql\Ir\Identifier('id');
+    $slot = new SqlSemantics\Platform\MySql\Ir\ColumnReference(0);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select(
+        [
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($slot, new SqlSemantics\Platform\MySql\Ir\Identifier('first_value')),
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($slot, new SqlSemantics\Platform\MySql\Ir\Identifier('second_value')),
+        ],
+        new SqlSemantics\Platform\MySql\Ir\TableSource(
+            new SqlSemantics\Platform\MySql\Ir\Identifier('app'),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('lexical_rows'),
+            [$id],
+        ),
+        release: $ansi->profile()->grammar,
+        mode: SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::AnsiQuotes,
+    );
+    $text = $ordinary->analyze('SELECT "id" AS `first_value`');
+
+    return [$analyzed == $direct, $batch == $direct, $analyzed->profileId(), $analyzed->toString(),
+        array_map(static fn ($column): array => [$column->expression->occurrence, $column->expression->slot], $analyzed->columns),
+        $text->profileId(), $text->columns[0]->expression->value, $text->toString()];
+}
+
+function observeMysqlWithMode(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(mode: new SqlSemantics\Platform\MySql\Mode(ansiQuotes: true));
+    $input = 'WITH "a" AS (SELECT 7 AS "n"), "b" AS (SELECT "n" FROM "a") SELECT "n" AS "answer" FROM "b"';
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $name = new SqlSemantics\Platform\MySql\Ir\Identifier('n');
+    $release = $analyzer->profile()->grammar;
+    $mode = SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::AnsiQuotes;
+    $seed = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('7'), $name),
+    ], release: $release, mode: $mode);
+    $first = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($seed);
+    $second = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition(
+        new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, [new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, $name)]),
+    );
+    $heading = new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('answer'));
+    $consumer = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(1, [$heading]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$first, $second], $consumer, $release, $mode);
+    return [$analyzed == $direct, $batch == $direct, $analyzed->profileId(), $analyzed->definitions[1]->body->definition,
+        $analyzed->body->definition, $analyzed->toString()];
+}
+
+function observeMysqlVerbatimProjection(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(
+        mode: new SqlSemantics\Platform\MySql\Mode(ansiQuotes: true, noBackslashEscapes: true),
+    );
+    $input = "SELECT 'a\\n' 'b''c\0棚' AS \"sample\"";
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $value = "a\\nb'c\0棚";
+    $column = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+        new SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral($value),
+        new SqlSemantics\Platform\MySql\Ir\Identifier('sample'),
+    );
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select(
+        [$column], release: $analyzer->profile()->grammar,
+        mode: SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::AnsiQuotesAndNoBackslashEscapes,
+    );
+
+    return [$direct == $analyzed, $direct == $batch, $analyzed->profileId(), $analyzed->columns[0]->expression->value, $analyzed->toString()];
+}
+
+function observeMysqlVerbatimWith(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(mode: new SqlSemantics\Platform\MySql\Mode(noBackslashEscapes: true));
+    $input = "WITH q AS (SELECT 'x\\n\0棚' AS v) SELECT v AS answer FROM q";
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $mode = SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::NoBackslashEscapes;
+    $release = $analyzer->profile()->grammar;
+    $column = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+        new SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral("x\\n\0棚"),
+        new SqlSemantics\Platform\MySql\Ir\Identifier('v'),
+    );
+    $definition = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition(
+        new SqlSemantics\Platform\MySql\Ir\Select([$column], release: $release, mode: $mode),
+    );
+    $read = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('answer')),
+    ]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$definition], $read, $release, $mode);
+
+    return [$direct == $analyzed, $direct == $batch, $analyzed->profileId(), $analyzed->body->definition,
+        $analyzed->definitions[0]->body->columns[0]->expression->value, $analyzed->toString()];
+}
+
+function observeMysqlParameterTargets(SqlSemantics\Platform\MySql\Semantics $analyzer): array
+{
+    $input = 'SELECT CAST(? AS SIGNED) AS signed_input, CAST((?) AS UNSIGNED INTEGER) AS unsigned_input';
+    $analysis = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $signed = new SqlSemantics\Platform\MySql\Ir\Binding\Parameter(1);
+    $unsigned = new SqlSemantics\Platform\MySql\Ir\Binding\Parameter(2, SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::Unsigned);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn($signed, new SqlSemantics\Platform\MySql\Ir\Identifier('signed_input')),
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn($unsigned, new SqlSemantics\Platform\MySql\Ir\Identifier('unsigned_input')),
+    ], release: $analyzer->profile()->grammar);
+    $roles = array_map(static fn ($column): array => [$column->expression->position, $column->expression->target->value], $analysis->columns);
+
+    return [$analysis == $direct, $batch == $direct, $roles, $analysis->toString()];
+}
+
+function observeMysqlNamedParameterBindings(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(parameters: SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle::Named);
+    $input = 'SELECT CAST(/* :amount kept */ (:amount) AS SIGNED), CAST(? AS SIGNED) AS alternate, CAST(:amount AS UNSIGNED) AS original_value';
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $name = new SqlSemantics\Platform\MySql\Ir\Binding\ParameterName('amount');
+    $signed = SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::Signed;
+    $unsigned = SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::Unsigned;
+    $columns = [];
+    foreach ([
+        [$signed, $name, 'CAST(/* :amount kept */ (?) AS SIGNED)'],
+        [$signed, null, 'alternate'],
+        [$unsigned, $name, 'original_value'],
+    ] as $position => [$target, $key, $label]) {
+        $columns[] = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+            new SqlSemantics\Platform\MySql\Ir\Binding\Parameter($position + 1, $target, $key),
+            new SqlSemantics\Platform\MySql\Ir\Identifier($label),
+        );
+    }
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select($columns, release: $analyzer->profile()->grammar);
+    $sites = array_map(static fn ($column): array => [
+        $column->expression->position, $column->expression->target->value, $column->expression->name?->value,
+    ], $analyzed->columns);
+
+    return [$analyzed == $direct, $batch == $direct, $sites, $analyzed->toString()];
+}
+
+function observeMysqlNullableHaving(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.having_rows (amount INT)']);
+    $sql = 'SELECT SUM(amount) AS total FROM app.having_rows HAVING NULL <=> SUM(amount)';
+    $query = $semantics->analyze($sql, $context);
+    $batch = $semantics->analyzeAll($sql, $context)[0];
+    $condition = $query->having;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect(
+        $query->source,
+        [],
+        $query->columns,
+        $query->release,
+        null,
+        new SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedComparison(
+            SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator::NullSafeEqual,
+            new SqlSemantics\Platform\MySql\Ir\NullLiteral(),
+            $query->columns[0]->value,
+        ),
+    );
+
+    return [$query == $direct, $query == $batch, $condition->operator->value,
+        $condition->left::class, $condition->right == $query->columns[0]->value,
+        $condition->right->argument->slot, $query->toString()];
+}
+
+function observeMysqlWithAvailability(string $sql, object $definition, object $body): array
+{
+    $rejections = [];
+    $releases = [SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651,
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5744];
+    foreach ($releases as $release) {
+        $direct = $analysis = null;
+        try {
+            new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$definition], $body, $release);
+        } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+            $direct = $error->getMessage();
+        }
+        try {
+            (new SqlSemantics\Platform\MySql\Semantics($release->value))->analyze($sql);
+        } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException $error) {
+            $analysis = $error::class;
+        }
+        $rejections[] = [$release->value, $direct, $analysis];
+    }
+
+    return $rejections;
+}
+
+function observeMysqlWithProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $sql = 'WITH names(a, b) AS (SELECT 11 AS ` requested`, 22 AS ` requested`) SELECT b AS second, a AS first FROM names';
+    $analyzed = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $alias = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' requested');
+    $first = new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('11'), $alias);
+    $second = new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('22'), $alias);
+    $release = $semantics->profile()->grammar;
+    $definition = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition(
+        new SqlSemantics\Platform\MySql\Ir\Select([$first, $second], release: $release)
+    );
+    $read = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('second')),
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('first')),
+    ]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$definition], $read, $release);
+
+    return [$analyzed == $batch, $analyzed == $direct, $analyzed->body->columns[0]->slot, $analyzed->toString()];
+}
+
+function observeMysqlDerivedProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $from = '(SELECT 11 AS ` requested`, 22 AS ` requested`) AS d (a, b)';
+    $sql = 'SELECT d.b AS selected FROM ' . $from;
+    $local = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $name = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' requested');
+    $left = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('11'), $name),
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('22'), $name),
+    ], release: $semantics->profile()->grammar);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($left, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('selected')),
+    ]);
+    $right = $semantics->analyze('SELECT 33 AS ` second`');
+    $joined = $semantics->analyze('SELECT e.z AS right_value, d.b AS left_value FROM ' . $from
+        . ' CROSS JOIN (SELECT 33 AS ` second`) AS e (z)');
+    $source = new SqlSemantics\Platform\MySql\Ir\From\Join(
+        SqlSemantics\Platform\MySql\Ir\From\JoinKind::Cross,
+        new SqlSemantics\Platform\MySql\Ir\From\DerivedSource($left),
+        new SqlSemantics\Platform\MySql\Ir\From\DerivedSource($right),
+    );
+    $joinedDirect = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\ColumnReference(0, 1),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('right_value')),
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\ColumnReference(1),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('left_value')),
+    ], $source, $semantics->profile()->grammar);
+
+    return [$local == $batch, $local == $direct, $joined == $joinedDirect, $local->toString(), $joined->toString()];
+}
+
+function observeMysqlInheritedLocalAliases(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $body = 'SELECT 41 AS ` First`, 53 AS ` second`';
+    $projection = 'SELECT d.SECOND AS selected, d.FIRST AS original';
+    $localSql = $projection . ' FROM (' . $body . ') AS d';
+    $cteSql = 'WITH d AS (' . $body . ') ' . $projection . ' FROM d';
+    $local = $semantics->analyze($localSql);
+    $cte = $semantics->analyze($cteSql);
+    [$batchLocal, $batchCte] = $semantics->analyzeAll($localSql . '; ' . $cteSql);
+    $definition = $semantics->analyze($body);
+    $columns = [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('selected')),
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('original')),
+    ];
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($definition, $columns);
+    $directCte = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection(
+        [new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($definition)],
+        new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, $columns),
+        $semantics->profile()->grammar
+    );
+    $nested = $semantics->analyze(
+        'SELECT d.UPPER_NAME FROM (SELECT q.first AS upper_name FROM (' . $body . ') AS q) AS d'
+    );
+
+    return [$local == $batchLocal, $cte == $batchCte, $local == $direct, $cte == $directCte,
+        [$local->columns[0]->slot, $local->columns[1]->slot], $nested->columns[0]->name->value,
+        $local->toString(), $cte->toString()];
+}
+
+function observeLegacyMysqlInheritedAliases(): array
+{
+    $semantics = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+    $body = 'SELECT 41 AS ` First`, 53 AS ` second`';
+    $sql = 'SELECT d.SECOND AS selected FROM (' . $body . ') AS d';
+    $local = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $definition = $semantics->analyze($body);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($definition, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('selected')),
+    ], inheritsRequestedAliases: true);
+    $nested = $semantics->analyze(
+        'SELECT d.UPPER_NAME FROM (SELECT q.first AS upper_name FROM (' . $body . ') AS q) AS d'
+    );
+
+    return [$local == $batch, $local == $direct, $local->inheritsRequestedAliases,
+        $local->columns[0]->slot, $nested->columns[0]->name->value, $local->toString()];
+}
+
+function observeMysqlNativeLocalColumnNames(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $selection = 'SELECT 41 AS ` K`, 53 AS ` É`';
+    $sql = 'SELECT d.k AS `first_value`, d.é AS `second_value` FROM (' . $selection . ') AS d';
+    $analyzed = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $definition = $semantics->analyze($selection);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($definition, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('first_value')),
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(1, new SqlSemantics\Platform\MySql\Ir\Identifier('second_value')),
+    ]);
+    $requested = ' ' . str_repeat('漢', 90);
+    $wire = str_repeat('漢', 85);
+    $clipped = $semantics->analyze('SELECT d.`' . $wire . '` AS retained FROM (SELECT 66 AS `' . $requested
+        . '`, 99 AS `' . $wire . '`) AS d');
+    $child = $clipped->definition->columns[0]->name;
+
+    return [$analyzed == $batch, $analyzed == $direct, [$analyzed->columns[0]->slot, $analyzed->columns[1]->slot],
+        $clipped->columns[0]->slot, $child->requested, $child->value, $analyzed->toString()];
+}
+
+function observeMysqlCreateViewProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $sql = 'CREATE VIEW app.alias_effect (stored_heading) AS SELECT -2147483649 AS ` requested`';
+    $analyzed = $semantics->analyze($sql);
+    [$batch] = $semantics->analyzeAll($sql);
+    $label = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' requested');
+    $operand = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral('-2147483649');
+    $selection = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn($operand, $label),
+    ], release: $semantics->profile()->grammar);
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('alias_effect')
+    );
+    $field = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('stored_heading')
+    );
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView($target, $selection, [$field]);
+
+    return [$analyzed == $batch, $analyzed == $direct, $analyzed->columns[0]->name->value,
+        $analyzed->query->columns[0]->name->requested, $analyzed->query->columns[0]->expression->decimal(), $analyzed->toString()];
+}
+
+function observeMysqlPersistentOutputNames(SqlSemantics\Platform\MySql\Semantics $modern): array
+{
+    $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('named')
+    );
+    $atom = new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('17');
+    $bodyAlias = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' body');
+    $emptyAlias = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(" \x7f");
+    $declared = 'CREATE VIEW app.named (` K`) AS SELECT 17 AS ` body`';
+    $inherited = "CREATE VIEW app.named AS SELECT 17 AS ` \x7f`";
+    $result = [];
+    foreach ([[$legacy, $declared, $bodyAlias, new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias(' K')],
+              [$modern, $declared, $bodyAlias, new SqlSemantics\Platform\MySql\Ir\Identifier(' K')],
+              [$modern, $inherited, $emptyAlias, new SqlSemantics\Platform\MySql\Ir\Identifier('')]] as [$semantics, $sql, $output, $field]) {
+        $analyzed = $semantics->analyze($sql);
+        [$batch] = $semantics->analyzeAll($sql);
+        $body = new SqlSemantics\Platform\MySql\Ir\Select([
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($atom, $output),
+        ], release: $semantics->profile()->grammar);
+        $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView($target, $body, [
+            new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($field),
+        ]);
+        $name = $analyzed->columns[0]->name;
+        $result[] = [$analyzed == $batch, $analyzed == $direct, $name->value,
+            $name instanceof SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias ? $name->requested : null,
+            $analyzed->toString()];
+    }
+
+    return $result;
+}
+
+function observeMysqlGeneratedViewHeadings(SqlSemantics\Platform\MySql\Semantics $modern): array
+{
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('numbered')
+    );
+    $result = [];
+    foreach ([[$modern, 'Name_exp_'], [new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'), 'My_exp_']] as [$semantics, $prefix]) {
+        $reserved = strtolower($prefix) . '1';
+        $sql = 'CREATE VIEW app.numbered AS SELECT 1, 1, 7 AS `' . $reserved . '`, 1';
+        $analyzed = $semantics->analyze($sql);
+        [$batch] = $semantics->analyzeAll($sql);
+        $number = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+            new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('1'), new SqlSemantics\Platform\MySql\Ir\Identifier('1')
+        );
+        $fixed = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+            new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('7'), new SqlSemantics\Platform\MySql\Ir\Identifier($reserved)
+        );
+        $query = new SqlSemantics\Platform\MySql\Ir\Select([$number, $number, $fixed, $number], release: $semantics->profile()->grammar);
+        $fields = ['1', $prefix . '1_1', $reserved, $prefix . '2_1'];
+        $columns = array_map(static fn (string $name): SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn =>
+            new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn(new SqlSemantics\Platform\MySql\Ir\Identifier($name)), $fields);
+        $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView($target, $query, $columns);
+        $result[] = [$analyzed == $direct, $analyzed == $batch,
+            array_map(static fn ($column): string => $column->name->value, $analyzed->columns), $analyzed->toString()];
+    }
+
+    return $result;
+}
+
+function observeMysqlWideProjectionConsumers(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $integer = new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('7');
+    $targetName = new SqlSemantics\Platform\MySql\Ir\Identifier('destination');
+    $schema = new SqlSemantics\Platform\MySql\Ir\Identifier('app');
+    $names = [];
+    $results = [];
+    for ($position = 0; $position < 1025; ++$position) {
+        $name = new SqlSemantics\Platform\MySql\Ir\Identifier('field_' . $position);
+        $names[] = $name;
+        $results[] = new SqlSemantics\Platform\MySql\Ir\ResultColumn($integer, $name);
+    }
+    $release = $semantics->profile()->grammar;
+    $wide = new SqlSemantics\Platform\MySql\Ir\Select($results, release: $release);
+    $small = new SqlSemantics\Platform\MySql\Ir\Select([$results[0]], release: $release);
+    $smallDefinition = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($small);
+    $reference = new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, $names[0]);
+    $target = new SqlSemantics\Platform\MySql\Ir\TableSource($schema, $targetName, $names);
+    $table = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+        new SqlSemantics\Platform\MySql\Ir\Schema\TableName($schema, $targetName),
+        SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable
+    );
+    $operators = [
+        'derived' => static fn () => new SqlSemantics\Platform\MySql\Ir\From\DerivedSource($wide),
+        'local' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection($wide, [$reference]),
+        'with-definition' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($wide),
+        'with-body' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$smallDefinition], $wide, $release),
+        'compound' => static fn () => new SqlSemantics\Platform\MySql\Ir\Rows\Compound(
+            $wide, SqlSemantics\Platform\MySql\Ir\Rows\CompoundOperator::Union, true, $wide
+        ),
+        'insert-destination' => static fn () => new SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery($target, $wide),
+        'innodb-record' => static fn () => new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($table, $wide),
+    ];
+    $observed = [];
+    foreach ($operators as $role => $construct) {
+        try {
+            $construct();
+            throw new RuntimeException('A wide literal projection reached an unverified placement.');
+        } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+            $observed[$role] = $error->getMessage();
+        }
+    }
+
+    return $observed;
+}
+
+function observeMysqlExternalViewReadNames(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $schema = new SqlSemantics\Platform\MySql\Ir\Identifier('app');
+    $view = new SqlSemantics\Platform\MySql\Ir\Identifier('numbered_view');
+    $stored = new SqlSemantics\Platform\MySql\Ir\Identifier(' K');
+    $position = new SqlSemantics\Platform\MySql\Ir\ColumnReference(0);
+    $sql = 'SELECT v.` k` FROM app.numbered_view AS v';
+    $observed = [];
+    foreach (['MERGE' => false, 'TEMPTABLE' => true] as $algorithm => $materialized) {
+        $context = $semantics->context([
+            'CREATE TABLE app.accounts (id INT NOT NULL)',
+            'CREATE ALGORITHM=' . $algorithm . ' VIEW app.numbered_view (` K`) AS SELECT id FROM app.accounts',
+        ]);
+        $analyzed = $semantics->analyze($sql, $context);
+        [$batch] = $semantics->analyzeAll($sql, $context);
+        $source = new SqlSemantics\Platform\MySql\Ir\TableSource(
+            $schema, $view, [$stored], [SqlSemantics\Platform\MySql\Ir\From\ColumnKind::RequiredSignedInt],
+            SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::View, $materialized,
+        );
+        $label = $materialized ? new SqlSemantics\Platform\MySql\Ir\Identifier(' k') : $stored;
+        $direct = new SqlSemantics\Platform\MySql\Ir\Select([
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($position, $label),
+        ], $source, $semantics->profile()->grammar);
+        $observed[] = [$analyzed == $batch, $analyzed == $direct, $analyzed->source->materializedView,
+            $analyzed->source->columns[0]->value, $analyzed->columns[0]->expression->slot,
+            $analyzed->columns[0]->name->value, $analyzed->toString()];
+    }
+
+    return $observed;
+}
+
+function observeMysqlReopenedIntegralViewFields(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE VIEW app.signed_view AS SELECT 100000000 AS p, 00000000000029 AS q',
+    ]);
+    $sql = 'SELECT v.P, v.q, v.p AS copied FROM app.signed_view AS v';
+    $analyzed = $semantics->analyze($sql, $context);
+    [$batch] = $semantics->analyzeAll($sql, $context);
+    $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+    $wide = new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(0);
+    $slot = new SqlSemantics\Platform\MySql\Ir\ColumnReference(1);
+    $source = new SqlSemantics\Platform\MySql\Ir\TableSource(
+        new $identifier('app'),
+        new $identifier('signed_view'),
+        [new $identifier('p'), new $identifier('q')],
+        [new SqlSemantics\Platform\MySql\Ir\From\IntegralSlot(
+            SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Wide, false
+        ), SqlSemantics\Platform\MySql\Ir\From\ColumnKind::RequiredSignedInt],
+        SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::View,
+        true
+    );
+    $column = SqlSemantics\Platform\MySql\Ir\ResultColumn::class;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([
+        new $column($wide, new $identifier('P')),
+        new $column($slot, new $identifier('q')),
+        new $column($wide, new $identifier('copied')),
+    ], $source, $semantics->profile()->grammar);
+
+    return [$analyzed == $batch, $analyzed == $direct, $analyzed->toString()];
+}
+
+function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE TABLE app.external_input (id INT, label VARCHAR(8) COLLATE utf8mb4_bin)',
+        'CREATE ALGORITHM=TEMPTABLE VIEW app.external_rows (key_value, label_value) AS SELECT id, label FROM app.external_input',
+    ]);
+    $view = $semantics->analyze('SELECT v.key_value, label_value FROM app.external_rows AS v', $context);
+    if (!$view instanceof SqlSemantics\Platform\MySql\Ir\Select
+        || !$view->source instanceof SqlSemantics\Platform\MySql\Ir\TableSource
+        || !$view->source->columnTypes[1] instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar) {
+        throw new RuntimeException('The installed MySQL view input lost its native source or field roles.');
+    }
+    $rejection = null;
+    try {
+        new SqlSemantics\Platform\MySql\Ir\Mutation\Delete($view->source);
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejection = $error->getMessage();
+    }
+    $text = $view->source->columnTypes[1];
+
+    return [$view->source->kind->value, $view->source->schema->value, $view->source->table->value,
+        array_column($view->source->columns, 'value'), $text->length, $text->collation->value, $text->nullable,
+        $view->toString(), $rejection];
+}
+
+function observeMysqlVarchar(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE TABLE app.native_source (id INT, label VARCHAR(8)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin',
+        'CREATE TABLE app.native_target (id INT, label VARCHAR(2) COLLATE utf8mb4_bin NOT NULL)',
+    ]);
+    $projection = $semantics->analyze('SELECT label COLLATE utf8mb4_bin AS v, s.label AS v FROM app.native_source s', $context);
+    $grouped = $semantics->analyze('SELECT MIN(label) AS low, MAX(DISTINCT s.label) AS high FROM app.native_source s', $context);
+    $write = $semantics->analyze('INSERT INTO app.native_target (label, id) SELECT DISTINCT s.label COLLATE utf8mb4_bin AS v, s.id AS n FROM app.native_source s', $context);
+    $joined = $semantics->analyze('SELECT q.message AS message, q.id AS local_id FROM app.native_source p LEFT JOIN '
+        . '(SELECT label AS message, id FROM app.native_source) q ON p.id = q.id', $context);
+    $composed = $semantics->analyze('SELECT q.label AS item, q.id AS item FROM (SELECT id, label FROM app.native_source) q', $context);
+    if (!$projection instanceof SqlSemantics\Platform\MySql\Ir\Select
+        || !$grouped instanceof SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect
+        || !$write instanceof SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery
+        || !$composed instanceof SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection
+        || !$joined instanceof SqlSemantics\Platform\MySql\Ir\Select
+        || !$joined->source instanceof SqlSemantics\Platform\MySql\Ir\From\Join) {
+        throw new RuntimeException('The installed analyzer lost a checked MySQL VARCHAR root.');
+    }
+    $derived = $joined->source->inputs()[1];
+    if (!$derived instanceof SqlSemantics\Platform\MySql\Ir\From\DerivedSource) {
+        throw new RuntimeException('The installed analyzer lost the derived MySQL occurrence.');
+    }
+    $explicit = $projection->columns[0]->expression;
+    $implicit = $projection->columns[1]->expression;
+    $low = $grouped->columns[0]->value;
+    $high = $grouped->columns[1]->value;
+    $destination = $write->target->columnTypes[0];
+    $inherited = $projection->source->columnTypes[0];
+    $first = $write->query->columns[0]->expression;
+    $second = $write->query->columns[1]->expression;
+    $local = $joined->columns[0]->expression;
+    $native = $derived->columnType(0);
+    return [
+        'projection' => [$explicit::class, $explicit->operand::class, $explicit->operand->slot, $implicit::class, $implicit->slot,
+            $inherited->collation->value, $inherited->length, $projection->toString()],
+        'group' => [$low->operator->value, $low->argument::class, $low->argument->slot, $low->distinct,
+            $high->operator->value, $high->argument::class, $high->argument->slot, $high->distinct, $grouped->toString()],
+        'write' => [array_map(static fn ($column) => $column->value, $write->target->columns),
+            $destination->length, $destination->collation->value, $destination->nullable, $write->target->columnTypes[1]->value,
+            $write->query->distinct, $first::class, $first->operand->slot, $second::class, $second->slot, $write->toString()],
+        'derived' => [$local::class, $local->occurrence, $local->slot, $native->collation->value, $native->length,
+            $native === $derived->definition->source->columnTypes[0], $derived->columnType(1)->value,
+            $derived->columnType(2), $joined->toString()],
+        'local' => [array_map(static fn ($column) => [$column->slot, $column->name->value], $composed->columns),
+            $composed->definition->columns[1]->expression::class, $composed->toString()],
+    ];
+}
+
+function observeMysqlVarcharDeclaration(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $query = "CREATE TABLE IF NOT EXISTS app.varchar_decl (n SMALLINT NOT NULL DEFAULT -7, label VARCHAR(1) DEFAULT 'é  ')"
+        . ' DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin';
+    $analyzed = $semantics->analyze($query);
+    $space = SqlSemantics\Platform\MySql\Ir\From\TextCollation::Utf8mb4Bin;
+    $name = new SqlSemantics\Platform\MySql\Ir\Identifier('label');
+    $storage = new SqlSemantics\Platform\MySql\Ir\Schema\CharacterStorage(1, $space);
+    $value = new SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral('é  ');
+    $column = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn($name, $storage, true, $value);
+    $n = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('n'),
+        SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Small, false, new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('-7')
+    );
+    $location = new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('varchar_decl')
+    );
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+        $location, SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable
+    );
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($target, [$n, $column], true, defaultCollation: $space);
+    $type = $analyzed->columns[1]->storage;
+
+    return [
+        $analyzed::class, $analyzed->target->name->schema->value, $analyzed->target->name->table->value, $analyzed->ifNotExists,
+        $analyzed->defaultCollation->value, $analyzed->columns[0]->storage->value, $type::class, $type->length,
+        $type->collation->value, $analyzed->columns[1]->nullable, $analyzed->columns[1]->default->value,
+        $analyzed->toString(), $direct->toString(), $direct->profileId(),
+    ];
+}
+
+function observeMysqlSignedDeclaration(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $value = $semantics->analyze('CREATE TABLE app.signed_decl (a TINYINT DEFAULT -128, b MEDIUMINT DEFAULT 8388607, '
+        . 'c BIGINT NOT NULL DEFAULT 9223372036854775807, d BIGINT DEFAULT -9223372036854775808)');
+    $rejected = null;
+    try {
+        $semantics->analyze('CREATE TABLE app.signed_decl (a TINYINT DEFAULT 128)');
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage();
+    }
+
+    return [array_map(static fn ($field): array => [
+        $field->storage->value, $field->storage->bytes(), $field->nullable, $field->default::class, $field->default->decimal,
+    ], $value->columns), $value->toString(), $rejected];
+}
+
+function observeMysqlSessionCreateTable(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $analyzed = $semantics->analyze('CREATE TEMPORARY TABLE IF NOT EXISTS app.scratch (n SMALLINT NOT NULL DEFAULT -7)');
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable(
+        new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+            new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+                new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('scratch')
+            ),
+            SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::TemporaryTable
+        ),
+        [new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+            new SqlSemantics\Platform\MySql\Ir\Identifier('n'), SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Small,
+            false, new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('-7')
+        )],
+        true
+    );
+
+    return [$analyzed->target->name->schema->value, $analyzed->target->name->table->value,
+        $analyzed->target->kind->value, $direct->target == $analyzed->target, $analyzed->toString(), $direct->toString()];
+}
+
+function observeMysqlQueryBackedInnoDbWidth(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE TABLE app.layout_source (wide VARCHAR(64) COLLATE utf8mb4_bin NOT NULL, '
+        . 'required_value INT NOT NULL, optional_value INT NULL) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
+    ]);
+    $selected = array_map(static fn (int $position): string => 'wide AS field_' . $position, range(0, 196));
+    $tail = array_map(static fn (int $position): string => 'required_value AS tail_' . $position, range(0, 5));
+    $statement = 'CREATE TABLE app.layout_result ENGINE=InnoDB AS SELECT ' . implode(', ', [...$selected, ...$tail])
+        . ' FROM app.layout_source';
+    $accepted = $semantics->analyze($statement, $context);
+    $rejected = null;
+    try {
+        $semantics->analyze(str_replace('required_value AS', 'optional_value AS', $statement), $context);
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage();
+    }
+
+    return [count($accepted->query->columns), $accepted->query->source->columnTypes[0]->nullable,
+        $accepted->query->source->columnTypes[1]->nullable(), $accepted->query->columns[202]->expression->slot,
+        $accepted->query->columns[202]->name->value, $rejected];
+}
+
+function observeMysqlInnoDbDeclarationWidth(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+        new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+            new SqlSemantics\Platform\MySql\Ir\Identifier('app'),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('staged_width'),
+        ),
+        SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable,
+    );
+    $fields = $signed = $definitions = [];
+    foreach (range(0, 1016) as $position) {
+        $name = new SqlSemantics\Platform\MySql\Ir\Identifier('c' . $position);
+        $fields[] = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+            $name, SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Tiny, false,
+        );
+        $signed[] = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+            $name, SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Wide, false,
+        );
+        $definitions[] = $name->quoted() . ' TINYINT NOT NULL';
+    }
+    $primary = new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey([
+        new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(1016),
+    ]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($target, $fields, primaryKey: $primary);
+    $analyzed = $semantics->analyze('CREATE TABLE app.staged_width (' . implode(', ', $definitions) . ', PRIMARY KEY (c1016))');
+    $refusal = null;
+    try {
+        new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($target, $signed, primaryKey: $primary);
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $refusal = $error->getMessage();
+    }
+
+    return [count($direct->columns), count($analyzed->columns), $analyzed->primaryKey->terms[0]->slot,
+        $analyzed->columns[1016]->name->value, $analyzed->toString() === $direct->toString(), $refusal];
+}
+
+function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $value = $semantics->analyze('CREATE TABLE app.key_decl (lo SMALLINT, hi BIGINT NOT NULL DEFAULT -7, PRIMARY KEY (HI DESC, lo))');
+    $key = $value->primaryKey;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey([
+        new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(1, true),
+        new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(0),
+    ]);
+
+    return [
+        $key::class, $key->terms[0]::class,
+        array_map(static fn ($term): array => [$term->slot, $term->descending], $key->terms),
+        $direct == $key, $value->columns[0]->nullable, $value->columns[0]->default, $value->toString(),
+    ];
+}
+
+function observeMysqlSignedComparisonWidths(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.ordered_input (lo SMALLINT NOT NULL, val BIGINT, hi MEDIUMINT)']);
+    $written = 'SELECT val <=> NULL AS same, val NOT BETWEEN lo AND hi AS outside_window FROM app.ordered_input';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $reference = static fn (int $slot) => new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference($slot);
+    $test = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison(
+        SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator::NullSafeEqual, $reference(0),
+        new SqlSemantics\Platform\MySql\Ir\NullLiteral(),
+    );
+    $range = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange($reference(0), $reference(1), $reference(2), true);
+
+    return [$analyzed == $batch, $test == $analyzed->columns[0]->expression, $range == $analyzed->columns[1]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        array_map(static fn ($type) => [$type->storage->value, $type->nullable], $analyzed->source->columnTypes), $analyzed->toString()];
+}
+
+function observeMysqlSignedProjection(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $digits = str_repeat('0', 256) . '2147483648';
+    $written = 'SELECT ' . $digits;
+    $analyzed = $semantics->analyze($written);
+    [$batch] = $semantics->analyzeAll($written);
+    $literal = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral($digits);
+    $label = new SqlSemantics\Platform\MySql\Ir\Literal\IntrinsicIntegerName($digits);
+    $result = new SqlSemantics\Platform\MySql\Ir\ResultColumn($literal, $label);
+    $release = $semantics->profile()->grammar;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$result], release: $release);
+    $wrapper = '+ (((+ (-' . $digits . '))))';
+    $wrapped = $semantics->analyze('SELECT ' . $wrapper);
+    $negative = new SqlSemantics\Platform\MySql\Ir\Literal\ProjectedIntegerLiteral('-' . $digits);
+    $negativeLabel = new SqlSemantics\Platform\MySql\Ir\Identifier(substr($wrapper, 0, 255));
+    $wrappedDirect = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn($negative, $negativeLabel),
+    ], release: $release);
+
+    return [$direct == $analyzed, $analyzed == $batch, $analyzed->columns[0]->expression::class,
+        $analyzed->columns[0]->name::class, $literal->decimal(), $analyzed->columns[0]->name->value, $analyzed->toString(),
+        $wrappedDirect == $wrapped, $wrapped->columns[0]->expression->decimal(), $wrapped->columns[0]->name->value, $wrapped->toString()];
+}
+
+function observeMysqlSignedProjectionAlias(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $requested = ' ' . str_repeat('漢', 86) . '`X';
+    $written = 'SELECT 1 AS `' . str_replace('`', '``', $requested) . '`';
+    $analyzed = $semantics->analyze($written);
+    [$batch] = $semantics->analyzeAll($written);
+    $label = new SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias($requested);
+    $column = new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('1'), $label);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select([$column], release: $semantics->profile()->grammar);
+    $actual = $analyzed->columns[0]->name;
+
+    return [$analyzed == $batch, $analyzed == $direct, $actual::class, $actual->requested, $actual->value, $analyzed->toString()];
+}
+
+function observeMysqlNativeTruth(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.truth_release (wide BIGINT, unused INTEGER)']);
+    $written = 'SELECT ((wide IS NOT UNKNOWN) IS TRUE) AS visible FROM app.truth_release';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $reference = new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(0);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest(
+        SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthOperator::True,
+        new SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthTest(
+            SqlSemantics\Platform\MySql\Ir\Predicate\Truth\TruthOperator::NotUnknown,
+            $reference,
+        ),
+    );
+
+    return [$analyzed == $batch, $direct == $analyzed->columns[0]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        $analyzed->source->columnTypes[0]->storage->value, $analyzed->toString()];
+}
+
+function observeMysqlSignedCase(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $legacy = new SqlSemantics\Platform\MySql\Semantics(grammarVersion: 'mysql-5.6.51');
+    $declarations = ['CREATE TABLE app.case_release (a MEDIUMINT NOT NULL, b BIGINT NOT NULL)'];
+    $written = 'SELECT CASE WHEN NULL THEN 2147483648 WHEN 1 THEN b ELSE a END AS choice FROM app.case_release';
+    $modern = $semantics->analyze($written, $semantics->context($declarations));
+    $historical = $legacy->analyze($written, $legacy->context($declarations));
+    [$batch] = $semantics->analyzeAll($written, $semantics->context($declarations));
+    $true = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('1');
+    $wide = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('2147483648');
+    $null = new SqlSemantics\Platform\MySql\Ir\NullLiteral();
+    $direct = new SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase([
+        new SqlSemantics\Platform\MySql\Ir\Expression\Choice\SearchedCaseArm($null, $wide),
+        new SqlSemantics\Platform\MySql\Ir\Expression\Choice\SearchedCaseArm($true, new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(0)),
+    ], otherwise: new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference(1));
+
+    return [$modern == $batch, $direct == $modern->columns[0]->expression,
+        $historical->signedCaseLayout(0), $modern->signedCaseLayout(0),
+        array_map(static fn ($name) => $name->value, $modern->source->columns), $modern->toString(), $historical->toString()];
+}
+
+function observeMysqlSignedMembership(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE app.membership_release '
+        . '(a TINYINT, b SMALLINT NOT NULL, c MEDIUMINT, d INT NOT NULL, e BIGINT, unused INT)']);
+    $written = 'SELECT a NOT IN (b, c, d, e, NULL, 2147483648, 2147483648) AS selected FROM app.membership_release';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $integral = static fn (int $slot) => new SqlSemantics\Platform\MySql\Ir\From\IntegralColumnReference($slot);
+    $number = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('2147483648');
+    $changing = $number;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerMembership($integral(0), [
+        $integral(1), $integral(2), new SqlSemantics\Platform\MySql\Ir\ColumnReference(3), $integral(4),
+        new SqlSemantics\Platform\MySql\Ir\NullLiteral(), &$changing, $number,
+    ], true);
+    $changing = new SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral('2147483649');
+
+    return [$analyzed == $batch, $direct == $analyzed->columns[0]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        array_map(static fn ($kind) => $kind instanceof SqlSemantics\Platform\MySql\Ir\From\IntegralSlot
+            ? [$kind->storage->value, $kind->nullable] : $kind->value, $analyzed->source->columnTypes),
+        array_map(static fn ($term) => $term->slot ?? $term->decimal ?? null, $direct->alternatives),
+        $direct->negated, $analyzed->toString()];
+}
+
+function observePostgresSignedMembership(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.membership_release (a INTEGER, unused BIGINT)']);
+    $written = 'SELECT a NOT IN (2147483648, NULL, 2147483648) AS selected FROM public.membership_release';
+    $analyzed = $semantics->analyze($written, $context);
+    [$batch] = $semantics->analyzeAll($written, $context);
+    $wide = new SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral('2147483648');
+    $alias = $wide;
+    $subject = new SqlSemantics\Platform\PostgreSql\Ir\ColumnReference(0);
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerMembership(
+        $subject, [&$alias, new SqlSemantics\Platform\PostgreSql\Ir\NullLiteral(), $wide], true,
+    );
+    $alias = new SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral('2147483649');
+
+    return [$analyzed == $batch, $direct == $analyzed->columns[0]->expression,
+        array_map(static fn ($name) => $name->value, $analyzed->source->columns),
+        array_map(static fn ($term) => $term->decimal ?? null, $direct->alternatives),
+        $direct->negated, $analyzed->toString()];
+}
+
+function observePostgresSignedDefault(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze('CREATE TABLE public.signed_default_decl (minimum SMALLINT DEFAULT -9223372036854775808, '
+        . 'source_width BIGINT DEFAULT CAST(7 AS pg_catalog.int8), rendered pg_catalog.text DEFAULT 9223372036854775807)');
+
+    return [array_map(static fn ($column): array => [
+        $column->storage->value, $column->default::class, $column->default->decimal,
+    ], $value->columns), $value->toString()];
+}
+
+function observePostgresBooleanDefault(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze("CREATE TABLE public.bool_decl (enabled pg_catalog.bool NOT NULL DEFAULT ' YE ', "
+        . "disabled BOOLEAN DEFAULT CAST(' of ' AS pg_catalog.bool))");
+
+    return [array_map(static fn ($column): array => [
+        $column->storage::class, $column->storage->value, $column->nullable, $column->default::class, $column->default->value,
+    ], $value->columns), $value->toString()];
+}
+
+function observePostgresPrimaryKey(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze(
+        'CREATE TABLE public.checked_key (a INTEGER NULL, b BIGINT, note pg_catalog.text,'
+        . ' CONSTRAINT "my key" PRIMARY KEY (b,a) INCLUDE (note,b,note) INITIALLY DEFERRED)',
+    );
+    $key = $value->primaryKey;
+    $payload = $key->included[0];
+    $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Key\PrimaryKey(
+        $key->keys, [&$payload, $key->included[1], $key->included[2]], $key->name, $key->timing,
+    );
+    $payload = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('mutated');
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+        $value->target, $value->columns, primaryKey: $rebuilt,
+    );
+    $rejected = false;
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+            $value->target, [$value->columns[0]], primaryKey: $rebuilt,
+        );
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage() === 'A primary key reference must select a declared column.';
+    }
+
+    return [array_column($key->keys, 'value'), array_column($rebuilt->included, 'value'),
+        $key->name->value, $key->timing->value, array_column($value->columns, 'nullable'),
+        $value->toString(), $direct->toString(), $rejected];
+}
+
+function observePostgresUniqueKey(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze(
+        'CREATE TABLE public.retained_unique (a INTEGER UNIQUE NULLS NOT DISTINCT, b INTEGER PRIMARY KEY,'
+        . ' CONSTRAINT transferred UNIQUE (b), CONSTRAINT discarded UNIQUE (b),'
+        . ' CONSTRAINT deferred_unique UNIQUE (a) INITIALLY DEFERRED)',
+    );
+    $definition = $value->uniqueKeys[0];
+    $fromCaller = [&$definition, $value->uniqueKeys[1]];
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+        $value->target, $value->columns, primaryKey: $value->primaryKey, uniqueKeys: $fromCaller,
+    );
+    $definition = $value->uniqueKeys[1];
+    $reject = false;
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+            $value->target, [$value->columns[1]], uniqueKeys: $fromCaller,
+        );
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $reject = $error->getMessage() === 'A unique key reference must select a declared column.';
+    }
+
+    return [$value->primaryKey->name->value, array_map(static fn ($key): array => [
+        array_column($key->keys, 'value'), $key->name?->value, $key->nullsNotDistinct, $key->timing->value,
+    ], $direct->uniqueKeys), $value->toString(), $direct->toString(), $reject];
+}
+
+function observePostgresTableWidth(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $empty = $semantics->analyze('CREATE TABLE public.empty_decl ()');
+    $name = new SqlSemantics\Platform\PostgreSql\Ir\Schema\TableName(
+        new SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'), new SqlSemantics\Platform\PostgreSql\Ir\Identifier('staged_width'),
+    );
+    $fields = [];
+    $declared = [];
+    foreach (range(1, 1600) as $position) {
+        $field = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('field_' . $position);
+        $fields[] = new SqlSemantics\Platform\PostgreSql\Ir\Schema\TableColumn($field, SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage::Standard);
+        $declared[] = $field->quoted() . ' INTEGER';
+    }
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable($name, $fields);
+    $analyzed = $semantics->analyze('CREATE TABLE public.staged_width (' . implode(', ', $declared) . ')');
+    $rejected = false;
+    $fields[] = $fields[0];
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable($name, $fields);
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage() === 'A PostgreSQL heap table can declare at most 1600 columns.';
+    }
+
+    return [count($empty->columns), $empty->toString(), count($direct->columns), count($analyzed->columns),
+        $analyzed->columns[0]->name->value, $analyzed->columns[1599]->name->value, $direct->toString() === $analyzed->toString(), $rejected];
+}
+
+function observePostgresStockLookup(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $release = $semantics->profile()->grammar->value;
+    $earlier = new SqlSemantics\Platform\PostgreSql\Model\Contract\SearchPath('pg_temp', 'app', 'pg_catalog', 'public');
+    $later = new SqlSemantics\Platform\PostgreSql\Model\Contract\SearchPath('pg_temp', 'pg_catalog', 'app', 'public');
+    $shadowed = new SqlSemantics\Platform\PostgreSql\Semantics($release, searchPath: $earlier);
+    $stock = new SqlSemantics\Platform\PostgreSql\Semantics($release, searchPath: $later);
+    $table = 'CREATE TABLE public.codes (label pg_catalog.text COLLATE "C")';
+    $index = 'CREATE INDEX choice ON public.codes (label text_ops)';
+    $written = 'CREATE SCHEMA lookup_owner CREATE INDEX choice ON codes (label text_ops) '
+        . 'CREATE TABLE codes (label pg_catalog.text COLLATE "C")';
+    $absolute = str_replace(['label text_ops', 'COLLATE "C"'], ['label pg_catalog.text_ops', 'COLLATE pg_catalog."C"'], $written);
+    $value = $stock->analyze($written, $stock->context([]));
+    [$batch] = $stock->analyzeAll($written, $stock->context([]));
+    $explicit = $shadowed->analyze($absolute, $shadowed->context([]));
+    $declared = $shadowed->context([str_replace('COLLATE "C"', 'COLLATE pg_catalog."C"', $table)]);
+    $denied = [];
+    foreach ([$table, $index] as $statement) {
+        try {
+            $shadowed->analyze($statement, $declared);
+        } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+            $denied[] = $error->getMessage();
+        }
+    }
+
+    return [$value->tables[0]->columns[0]->collation->value, $value->indexes[0]->keys[0]->collation->value,
+        $value == $explicit, $value == $batch, $value->toString(), $denied];
+}
+
+function observePostgresBooleanFields(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled pg_catalog.bool)']);
+    $value = $semantics->analyze('SELECT enabled AS first, f.enabled AS second, id FROM public.flags f WHERE f.enabled IS UNKNOWN', $context);
+    $read = $value->columns[0]->expression;
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference(0);
+    $other = $value->columns[1]->expression;
+    $predicate = $value->where;
+
+    return [$read::class, $read == $direct, $other == $read, $predicate->operand == $read, $predicate->operator->value,
+        [$value->source->columnKind(0)?->value, $value->source->columnKind(1)?->value], $value->toString()];
+}
+
+function observePostgresBooleanReturning(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled BOOLEAN)']);
+    $value = $semantics->analyze('DELETE FROM public.flags WHERE enabled RETURNING enabled AS flag, id', $context);
+    $field = $value->returning[0];
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Mutation\ReturnedColumn(
+        new SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference(0),
+        new SqlSemantics\Platform\PostgreSql\Ir\Identifier('flag'),
+    );
+
+    return [$field->reference::class, $field == $direct, $field->reference == $value->where,
+        [$field->name->value, $value->returning[1]->name->value], $value->toString()];
+}
+
+function observePostgresBooleanWrites(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled BOOLEAN, fallback BOOLEAN)']);
+    $literal = $semantics->analyze('INSERT INTO public.flags (enabled,fallback) VALUES (TRUE,NULL)', $context);
+    $query = $semantics->analyze(
+        'INSERT INTO public.flags (fallback) SELECT DISTINCT CAST(NULL AS pg_catalog.bool) AS typed',
+        $context,
+    );
+    $update = $semantics->analyze('UPDATE public.flags SET enabled=fallback, fallback=enabled', $context);
+
+    return [
+        array_map(static fn ($slot): array => [$slot->slot, $slot->kind->value], $literal->target->written),
+        $literal->rows[0]->values[0]->value->value, $literal->rows[0]->values[1]->value, $literal->toString(),
+        $query->query->columns[0]->expression->target->value, $query->query->distinct, $query->toString(),
+        array_map(static fn ($assignment): array => [$assignment->target::class, $assignment->target->slot, $assignment->value->slot], $update->assignments),
+        $update->toString(),
+    ];
+}
+
+function observePostgresBooleanInput(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (enabled BOOLEAN)']);
+    $ordinary = $semantics->analyze("INSERT INTO public.flags (enabled) SELECT ' Of ' AS value", $context);
+    $distinct = $semantics->analyze(
+        "INSERT INTO public.flags (enabled) SELECT DISTINCT CAST(' YE ' AS pg_catalog.bool) AS value",
+        $context,
+    );
+    $negative = null;
+    try {
+        $semantics->analyze("INSERT INTO public.flags (enabled) SELECT DISTINCT ' YE ' AS value", $context);
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $failure) {
+        $negative = $failure->getMessage();
+    }
+    $literal = $ordinary->query->columns[0]->expression;
+    $cast = $distinct->query->columns[0]->expression;
+
+    return [$literal::class, $literal->value, $cast->target->value, $cast->operand->value, $negative,
+        $ordinary->toString(), $distinct->toString()];
+}
+
+function observePostgresInt8Field(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (lo bigint, enabled boolean)']);
+    $value = $semantics->analyze(
+        'SELECT ((lo)) AS grouped, b.lo AS resolved, CAST(b.lo AS integer) AS narrow FROM public.bounds_read b',
+        $context,
+    );
+    $first = $value->columns[0]->expression;
+    $second = $value->columns[1]->expression;
+    $narrowed = $value->columns[2]->expression;
+
+    return [$first::class, $first->slot, $first->occurrence, $second == $first, $narrowed->operand == $first, $narrowed->target->value,
+        $value->source->columnKind($first->slot)?->value, $value->toString()];
+}
+
+function observePostgresOutputOrder(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
+    $value = $semantics->analyze(
+        'SELECT lo AS id, id AS signed FROM public.bounds_read ORDER BY (id) DESC NULLS LAST, signed LIMIT 2 OFFSET 1',
+        $context,
+    );
+
+    return [array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $value->orderBy),
+        [$value->limit->count, $value->limit->offset], $value->toString()];
+}
+
+
+function observePostgresGroupedBounds(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.group_bounds (id integer)']);
+    $group = $semantics->analyze(
+        'SELECT id AS owner, count(*) AS n FROM public.group_bounds GROUP BY id ORDER BY n DESC NULLS LAST, owner LIMIT 2 OFFSET 1',
+        $context,
+    );
+
+    return [$group::class, array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $group->orderBy),
+        [$group->limit->count, $group->limit->offset], $group->toString()];
+}
+
+function observePostgresExternalSourceKinds(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE VIEW public.active_rows AS SELECT 1::bigint AS id',
+        'CREATE MATERIALIZED VIEW public.saved_rows AS SELECT 2::bigint AS id',
+    ]);
+    $view = $semantics->analyze('SELECT v.id FROM public.active_rows v', $context);
+    $stored = $semantics->analyze('SELECT id FROM ONLY public.saved_rows', $context);
+    $rejection = null;
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Mutation\Delete($view->source);
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejection = $error->getMessage();
+    }
+
+    return [$view->source->kind->value, $stored->source->kind->value, $stored->source->only,
+        $stored->source->columnKind(0)->value, $view->toString(), $stored->toString(), $rejection];
+}
+
+function observePostgresHaving(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.having_input (id integer, amount integer)']);
+    $query = $semantics->analyze(
+        'SELECT id AS key FROM public.having_input GROUP BY id HAVING SUM(amount) > 2147483649 ORDER BY key',
+        $context,
+    );
+    $having = $query->having;
+
+    return [$having::class, $having->left::class, $having->left->operator->value, $having->left->argument->slot,
+        $having->operator->value, $having->right::class, $having->right->decimal, $query->toString()];
+}
+
+function observePostgresSignedRangeWidths(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.range_fields (amount bigint)']);
+    $query = $semantics->analyze(
+        'SELECT amount IS NOT DISTINCT FROM CAST(NULL AS bigint) AS exact_null FROM public.range_fields',
+        $context,
+    );
+    $predicate = $query->columns[0]->expression;
+
+    return [$predicate::class, $predicate->left::class, $predicate->left->slot, $predicate->right::class,
+        $predicate->negated, $query->toString()];
+}
+
+function observePostgresWithProjection(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $query = $semantics->analyze(
+        'WITH a AS (SELECT 42 AS n), b AS MATERIALIZED (SELECT n FROM a) SELECT n AS answer FROM b',
+    );
+
+    return [$query->definitions[1]->materialization->value, $query->definitions[1]->body->definition,
+        $query->body->definition, $query->body->columns[0]->slot, $query->toString()];
+}
+
+function observePostgresSignedComparison(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
+    $query = $semantics->analyze('SELECT ((lo)) > id AS result FROM public.bounds_read WHERE id < lo', $context);
+    $expression = $query->columns[0]->expression;
+
+    return [$expression::class, $expression->left::class, $expression->left->slot,
+        $expression->right::class, $expression->right->slot, $query->where->operator->value, $query->toString()];
+}
+
+function observePostgresSignedWrites(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.signed_bounds (id integer, wide bigint)']);
+    $insert = $semantics->analyze(
+        'INSERT INTO public.signed_bounds (wide,id) VALUES (-9223372036854775808,7) RETURNING wide AS low,id',
+        $context,
+    );
+    $update = $semantics->analyze('UPDATE public.signed_bounds SET wide=id,id=wide RETURNING wide', $context);
+    $cell = $insert->rows[0]->values[0]->value;
+    $field = $insert->returning[0]->reference;
+
+    return [$cell::class, $cell->decimal, $insert->target->written[0]->kind->value,
+        $field::class, $field->slot, $field->occurrence, $insert->toString(),
+        $update->assignments[0]->target::class, $update->assignments[1]->value::class, $update->toString()];
+}
+
+function observePostgresSourceOrder(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
+    $input = $semantics->analyze(
+        'SELECT a.id AS lo FROM public.bounds_read a ORDER BY a.lo DESC NULLS LAST, 1 LIMIT 2 OFFSET 1',
+        $context,
+    );
+    $distinct = $semantics->analyze(
+        'SELECT DISTINCT a.lo AS value, a.id FROM public.bounds_read a ORDER BY a.lo DESC, a.id',
+        $context,
+    );
+    $reference = $input->orderBy[0]->target;
+
+    return [$reference::class, $reference->slot, $reference->occurrence, count($input->columns), $input->toString(),
+        array_map(static fn ($key) => $key->target, $distinct->orderBy), $distinct->toString()];
+}
+
+function observeSqliteAppendBindings(
+    SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn|SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn $value,
+): array {
+    $bindings = [];
+    foreach ($value->bindings as $slot => $name) {
+        $bindings[] = [$slot, $name->value];
+    }
+
+    return $bindings;
+}
+
+foreach (array_keys($roles) as $name) {
+    $role = new ReflectionClass($name);
+    $path = $role->getFileName();
+    if ($path === false) {
+        throw new RuntimeException('An installed role has no source file.');
+    }
+    echo json_encode([
+        'probe' => 'role',
+        'name' => $role->getName(),
+        'kind' => $role->isInterface() ? 'interface' : ($role->isEnum() ? 'enum' : 'class'),
+        'final' => $role->isFinal(),
+        'enum' => $role->isEnum() ? observeEnum($name) : null,
+        'path' => $path,
+        'sha256' => hash_file('sha256', $path),
+    ], JSON_THROW_ON_ERROR) . "\n";
+}
+
+foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $platform => $schema) {
+    $namespace = 'SqlSemantics\\Platform\\' . $platform . '\\';
+    $analyzer = $namespace . 'Semantics';
+    $semantics = new $analyzer();
+    if (array_intersect(['inspect', 'diagnose', 'ir'], get_class_methods($semantics)) !== []
+        || interface_exists('SqlSemantics\\Query') || class_exists($namespace . 'Model\\Statement\\Operation')
+        || class_exists('SqlSemantics\\Testing\\' . $platform . '\\Inspection')) {
+        throw new RuntimeException('The installed package exposes an obsolete publication path.');
+    }
+
+    $table = $schema . '.accounts';
+    $declarations = ["CREATE TABLE $table (id INTEGER)"];
+    if ($platform === 'MySql') {
+        $declarations[] = 'CREATE TABLE app.index_drop_probe (id INT, KEY ready (id))';
+        $declarations[] = 'CREATE TABLE app.index_rename_probe (a INT, b INT, c INT, KEY by_a (a), KEY by_b (b), KEY by_c (c))';
+        $declarations[] = 'CREATE TABLE app.visibility_probe (a INT, b INT, KEY no_shadow (a))';
+        $declarations[] = 'CREATE TEMPORARY TABLE app.visibility_probe (a INT, b INT, KEY first_key (a), UNIQUE KEY second_key (b))';
+        $declarations[] = 'CREATE TABLE app.fk_drop_parent (a INT PRIMARY KEY)';
+        $declarations[] = 'CREATE TABLE app.exchange_parent (a INT NOT NULL PRIMARY KEY, b INT NOT NULL, UNIQUE KEY both_fields (a,b))';
+        $declarations[] = 'CREATE TABLE app.exchange_child (pid INT, other_id INT, FOREIGN KEY (pid) REFERENCES exchange_parent(a))';
+        $declarations[] = 'CREATE TABLE app.indexed_exchange (rid INT PRIMARY KEY, pid INT, spare INT)';
+        $declarations[] = 'CREATE TABLE app.fk_add_parent (a BIGINT PRIMARY KEY, b BIGINT NOT NULL UNIQUE)';
+        $declarations[] = 'CREATE TABLE app.fk_add_child (x BIGINT, y BIGINT, z INT PRIMARY KEY, KEY Earlier (y DESC))';
+        $declarations[] = 'CREATE TEMPORARY TABLE app.fk_add_parent (bad_shape VARCHAR(3))';
+        $declarations[] = 'CREATE TABLE app.fk_drop_child (x INT, CONSTRAINT Owner_Link FOREIGN KEY (x) REFERENCES app.fk_drop_parent(a))';
+        $declarations[] = 'CREATE TABLE app.batch_index (a INT AUTO_INCREMENT, b INT NOT NULL, c INT, PRIMARY KEY (a), KEY by_a (a,b), KEY keeps_a (a,c))';
+    }
+    if ($platform === 'Sqlite') {
+        $declarations[] = "CREATE VIEW main.removable AS SELECT id FROM $table";
+    }
+    if ($platform === 'PostgreSql') {
+        $storageDeclaration = 'CREATE TABLESPACE "cold ""archive""" LOCATION \'/sql-context/cold\'';
+        $declarations[] = $storageDeclaration;
+        $declarations[] = "CREATE VIEW public.removable AS SELECT id FROM $table";
+        $declarations[] = "CREATE MATERIALIZED VIEW public.snapshot AS SELECT id FROM $table";
+    }
+    $context = $semantics->context($declarations);
+    $reference = $semantics->analyze("SELECT id, accounts.id FROM $table", $context);
+    $occurrence = $platform === 'Sqlite' ? 'source' : 'occurrence';
+    foreach ($reference->columns as $column) {
+        $expression = $column->expression;
+        if ([$expression::class, $expression->slot ?? null, $expression->$occurrence ?? null] !== [$namespace . 'Ir\\ColumnReference', 0, 0]) {
+            throw new RuntimeException('The installed analyzer resolved different slots for equivalent references.');
+        }
+    }
+    if ($platform !== 'Sqlite') {
+        $parameterSql = $platform === 'MySql' ? 'SELECT CAST(? AS SIGNED) AS value' : 'SELECT CAST($1 AS integer) AS value';
+        $value = $semantics->analyze($parameterSql)->columns[0]->expression;
+        if ($value::class !== $namespace . 'Ir\\Binding\\Parameter' || $value->position !== 1) {
+            throw new RuntimeException('The installed analyzer lost the projected parameter position.');
+        }
+    }
+    $queries = [
+        'Select' => 'SELECT 42 AS answer',
+        'Rows\\Compound' => 'SELECT 1 AS a UNION ALL SELECT 2 AS b',
+        'Mutation\\Delete' => "DELETE FROM $table WHERE id < 2",
+        'Mutation\\Insert' => "INSERT INTO $table (id) VALUES (2)",
+        'Mutation\\Update' => "UPDATE $table SET id = 2",
+        'Schema\\CreateTable' => "CREATE TABLE $schema.other (id INTEGER)",
+        'Schema\\DropTable' => "DROP TABLE IF EXISTS $table",
+        'Transaction\\Transaction' => 'ROLLBACK TO SAVEPOINT bookmark',
+    ];
+    $queries['Aggregation\\GroupedSelect'] = "SELECT id, COUNT(*) AS entries FROM $table GROUP BY id";
+    if ($platform === 'Sqlite') {
+        $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
+        $queries['Schema\\DropView'] = 'DROP VIEW IF EXISTS main.removable';
+        $queries['Schema\\CreateTable'] = 'CREATE TABLE other (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE UNIQUE CONSTRAINT "ref id" CHECK(id), UNIQUE(code COLLATE BINARY DESC) ON CONFLICT IGNORE)';
+        $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TABLE made AS SELECT CAST(9 AS INTEGER) AS result';
+        $queries['Schema\\View\\CreateView'] = 'CREATE VIEW view_result("true") AS SELECT id FROM accounts';
+        $queries['Schema\\Alter\\RenameTable'] = "ALTER TABLE $table RENAME TO renamed";
+        $queries['Schema\\Alter\\RenameColumn'] = "ALTER TABLE $table RENAME COLUMN ID TO renamed";
+        $queries['Schema\\Alter\\AddColumn'] = "ALTER TABLE $table ADD COLUMN added TEXT COLLATE NOCASE DEFAULT 'value'";
+        $queries['Schema\\Alter\\AddGeneratedColumn'] = "ALTER TABLE $table ADD total INTEGER AS (id + 7) STORED";
+        $queries['Schema\\Alter\\DropColumn'] = 'ALTER TABLE removable DROP COLUMN OLD';
+        $queries['Schema\\Trigger\\DropTrigger'] = 'DROP TRIGGER tracked';
+        $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX tag';
+        $queries['Maintenance\\Reindex'] = 'REINDEX names';
+        $queries['Maintenance\\Analyze'] = 'ANALYZE names';
+        $queries['Maintenance\\FlagPragma'] = "PRAGMA Temp.Writable_Schema('reset')";
+        $queries['Maintenance\\Inventory\\InventoryPragma'] = 'PRAGMA Temp.function_list(+1)';
+        $queries['Maintenance\\Metadata\\TableInspection'] = "PRAGMA table_xinfo(accounts)";
+        $queries['Maintenance\\Metadata\\IndexInspection'] = 'PRAGMA index_xinfo(storage_table)';
+        $queries['Maintenance\\Metadata\\ForeignKeyAudit'] = 'PRAGMA foreign_key_check(audit_child)';
+        $queries['Maintenance\\Integrity\\IntegrityAudit'] = 'PRAGMA quick_check(integrity_child)';
+        $queries['Maintenance\\Header\\HeaderPragma'] = 'PRAGMA metadata.user_version = -2147483648';
+        $queries['Schema\\Trigger\\CreateTrigger'] = 'CREATE TRIGGER archive.audit_tr AFTER UPDATE OF payload,future ON watched WHEN OLD.payload IS NOT NULL BEGIN INSERT INTO journal(prior,current) VALUES(OLD.payload,NEW.payload); END';
+        $queries['Maintenance\\Cache\\CacheSize'] = 'PRAGMA ARCHIVE.cache_size(-128)';
+        $queries['Maintenance\\Cache\\DefaultCacheSize'] = 'PRAGMA ARCHIVE.default_cache_size(-2147483648)';
+        $queries['Maintenance\\Cache\\CacheSpill'] = "PRAGMA ARCHIVE.cache_spill('+256')";
+        $queries['Maintenance\\Reclaim\\AutoVacuum'] = 'PRAGMA ARCHIVE.auto_vacuum(INCREMENTAL)';
+        $queries['Maintenance\\Reclaim\\IncrementalVacuum'] = 'PRAGMA ARCHIVE.incremental_vacuum(2)';
+        $queries['Maintenance\\Page\\PagePragma'] = 'PRAGMA archive.max_page_count(4294967295)';
+        $queries['Maintenance\\Vacuum\\Vacuum'] = 'VACUUM archive INTO ?002';
+        $queries['Connection\\Attach'] = 'ATTACH ?002 AS reports KEY ?007';
+        $queries['Connection\\Detach'] = "DETACH DATABASE 'ARChive'";
+        $queries['Maintenance\\Metadata\\TableListing'] = "PRAGMA main.table_list('sqlite_master')";
+        $queries['Schema\\Index\\CreateIndex'] = "CREATE UNIQUE INDEX IF NOT EXISTS indexed_tag ON indexed_rows('CODE' DESC) WHERE (?09+?1) NOT IN ()";
+    } else {
+        $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
+        $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
+        $queries['Rows\\RecursiveSeries'] = 'WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT t.n + 1 FROM t WHERE t.n < 3) SELECT n AS value FROM t';
+        $queries['Select'] = 'SELECT 42 AS answer WHERE (NOT NULL) IS NULL';
+        $predicate = $semantics->analyze($queries['Select'])->where;
+        if ($predicate::class !== $namespace . 'Ir\\Predicate\\NullTest'
+            || $predicate->operand::class !== $namespace . 'Ir\\Predicate\\LogicalPredicate'
+            || $predicate->operand->operator->value !== 'NOT') {
+            throw new RuntimeException('The installed analyzer lost the composed predicate.');
+        }
+    }
+
+    if ($platform === 'MySql') {
+        $queries['Schema\\View\\CreateView'] = 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW app.answer (value) AS SELECT 42 AS original';
+        $queries['Schema\\Like\\CreateTableLike'] = 'CREATE TEMPORARY TABLE IF NOT EXISTS app.copy_probe (LIKE app.accounts)';
+        $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TEMPORARY TABLE IF NOT EXISTS app.result_probe AS SELECT CAST(17 AS SIGNED) AS n, NULL AS absent';
+        $queries['Schema\\View\\DropView'] = 'DROP VIEW IF EXISTS app.absent_view CASCADE';
+        $queries['Schema\\Alter\\RenameTable'] = 'RENAME TABLE app.accounts TO app.staged, app.staged TO app.archived';
+        $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE app.accounts';
+        $queries['Schema\\Index\\CreateIndex'] = 'CREATE INDEX lookup ON app.accounts (id DESC) INVISIBLE';
+        $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX READY ON app.index_drop_probe';
+        $queries['Schema\\Index\\DropIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, DROP KEY by_a';
+        $queries['Schema\\Index\\Rename\\RenameIndexes'] = 'ALTER TABLE app.index_rename_probe RENAME KEY by_a TO by_b, RENAME INDEX by_b TO by_a';
+        $queries['Schema\\Index\\Change\\AlterIndexes'] = 'ALTER TABLE app.batch_index DROP PRIMARY KEY, RENAME INDEX by_a TO new_a';
+        $queries['Schema\\Index\\Visibility\\SetIndexVisibility'] = 'ALTER TABLE app.visibility_probe ALTER INDEX FIRST_KEY INVISIBLE, ALTER INDEX first_key VISIBLE, ALTER INDEX SECOND_KEY INVISIBLE, ALGORITHM=COPY, LOCK=NONE';
+        $queries['Schema\\ForeignKey\\DropForeignKeys'] = 'ALTER TABLE app.fk_drop_child DROP INDEX owner_link, DROP FOREIGN KEY OWNER_LINK';
+        $queries['Schema\\ForeignKey\\Exchange\\AlterForeignKeys'] = 'ALTER TABLE app.exchange_child '
+            . 'DROP FOREIGN KEY EXCHANGE_CHILD_IBFK_1, ADD CONSTRAINT Wider_Link FOREIGN KEY (pid, other_id) '
+            . 'REFERENCES exchange_parent(a, b) ON UPDATE CASCADE ON DELETE SET NULL, ALGORITHM=COPY';
+        $queries['Schema\\ForeignKey\\Add\\AddForeignKeys'] = 'ALTER TABLE app.fk_add_child '
+            . 'ADD CONSTRAINT Live_Link FOREIGN KEY (x) REFERENCES fk_add_parent(a) MATCH FULL ON DELETE CASCADE, '
+            . 'ADD FOREIGN KEY unused_proposal (y DESC) REFERENCES fk_add_parent(b) MATCH PARTIAL ON UPDATE SET NULL';
+        $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
+    }
+    if ($platform === 'MySql' || $platform === 'PostgreSql') {
+        $queries['Rows\\With\\WithProjection'] = 'WITH a AS (SELECT 42 AS n), b AS (SELECT n FROM a) SELECT n FROM b';
+    }
+    if ($platform === 'PostgreSql') {
+        $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
+        $queries['Schema\\Index\\DropIndex'] = 'DROP INDEX IF EXISTS removal, absent_namespace.idx CASCADE';
+        $queries['Schema\\Namespace\\CreateSchema'] = 'CREATE SCHEMA IF NOT EXISTS "Tax.Reg" AUTHORIZATION "Tax Owner"';
+        $queries['Schema\\Namespace\\DropSchema'] = 'DROP SCHEMA IF EXISTS "reporting.data", "Absent", "Absent" CASCADE';
+        $queries['Schema\\Namespace\\RenameSchema'] = 'ALTER SCHEMA "Tax.Reg" RENAME TO "Archive.2025"';
+        $queries['Schema\\Namespace\\ChangeSchemaOwner'] = 'ALTER SCHEMA "Tax.Reg" OWNER TO "Tax Owner"';
+        $queries['Schema\\Sequence\\CreateSequence'] = 'CREATE UNLOGGED SEQUENCE IF NOT EXISTS public."Ticket.棚" AS smallint INCREMENT 2 START 3 RESTART 10 CACHE 2 CYCLE';
+        $queries['Schema\\Sequence\\DropSequence'] = 'DROP SEQUENCE IF EXISTS ticket, pg_temp.ticket, public.absent, unknown CASCADE';
+        $queries['Schema\\Sequence\\Alter\\RenameSequence'] = 'ALTER SEQUENCE ticket RENAME TO "Next.Ticket"';
+        $queries['Schema\\Sequence\\Alter\\MoveSequence'] = 'ALTER SEQUENCE public.ticket SET SCHEMA "Archive.棚"';
+        $queries['Schema\\Sequence\\Alter\\ReconfigureSequence'] = 'ALTER SEQUENCE public.ticket RESTART OWNED BY NONE START 5 CYCLE';
+        $queries['Schema\\Sequence\\Alter\\SetSequenceLogging'] = 'ALTER SEQUENCE public.ticket SET LOGGED, SET UNLOGGED';
+        $queries['Schema\\Sequence\\Authorization\\AlterSequenceAuthorization'] = 'ALTER SEQUENCE public.ticket SET LOGGED, OWNER TO "Tax Owner", OWNER TO SESSION_USER, SET UNLOGGED';
+        $queries['Schema\\Sequence\\Access\\GrantSequenceAccess'] = 'GRANT UPDATE, USAGE ON SEQUENCE ticket, public.ticket TO "PUBLIC", SESSION_USER WITH GRANT OPTION GRANTED BY CURRENT_ROLE';
+        $queries['Schema\\Sequence\\Access\\RevokeSequenceAccess'] = 'REVOKE GRANT OPTION FOR SELECT ON ALL SEQUENCES IN SCHEMA "Audit.Log", public FROM PUBLIC, "PUBLIC" GRANTED BY SESSION_USER CASCADE';
+        $queries['Schema\\Sequence\\Defaults\\GrantSequenceDefaults'] = 'ALTER DEFAULT PRIVILEGES IN SCHEMA "Policy.Archive" FOR USER "Owner Role", CURRENT_ROLE GRANT USAGE, UPDATE ON SEQUENCES TO "Reader Role", SESSION_USER WITH GRANT OPTION';
+        $queries['Schema\\Sequence\\Defaults\\RevokeSequenceDefaults'] = 'ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL PRIVILEGES ON SEQUENCES FROM PUBLIC, CURRENT_ROLE CASCADE';
+        $queries['Schema\\Index\\ReindexIndex'] = 'REINDEX (CONCURRENTLY FALSE) INDEX CONCURRENTLY removal';
+        $queries['Schema\\Index\\ReindexTable'] = 'REINDEX (CONCURRENTLY ON) TABLE public.snapshot';
+        $queries['Schema\\Index\\Scope\\ReindexSchema'] = 'REINDEX (CONCURRENTLY OFF) SCHEMA CONCURRENTLY "reporting.data"';
+        $queries['Schema\\Index\\Scope\\ReindexDatabase'] = 'REINDEX (CONCURRENTLY OFF) DATABASE CONCURRENTLY';
+        $queries['Schema\\Index\\Scope\\ReindexSystemCatalogs'] = 'REINDEX SYSTEM "billing.data"';
+        $queries['Schema\\Index\\Partition\\ReindexPartitionTable'] = 'REINDEX TABLE CONCURRENTLY public.partitioned_items';
+        $queries['Schema\\Index\\Btree\\CreateIndex'] =
+            'CREATE UNIQUE INDEX "new index" ON ledger (wide DESC NULLS LAST, value ASC NULLS FIRST) INCLUDE (ready, ready) NULLS NOT DISTINCT';
+        $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
+        $queries['Schema\\View\\CreateMaterializedView'] = 'CREATE MATERIALIZED VIEW materialized_probe (n) AS VALUES (6) WITH NO DATA';
+        $queries['Schema\\Query\\CreateTableAs'] = 'CREATE UNLOGGED TABLE copy_probe (n) AS VALUES (6) WITH NO DATA';
+        $queries['Schema\\Alter\\RenameTable'] = 'ALTER TABLE ONLY accounts RENAME TO archived';
+        $queries['Schema\\Alter\\RenameColumn'] = 'ALTER TABLE IF EXISTS ONLY accounts RENAME id TO "new Id"';
+        $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE TABLE ONLY accounts, accounts RESTART IDENTITY CASCADE';
+        $queries['Schema\\View\\RefreshMaterializedView'] = 'REFRESH MATERIALIZED VIEW snapshot WITH NO DATA';
+        $queries['Rows\\Values\\ValuesQuery'] = 'VALUES (FALSE, NULL), (TRUE, 4000000000)';
+        $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
+    }
+    foreach ($queries as $role => $sql) {
+        $activeContext = $context;
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\DropSequence', 'Schema\\Sequence\\Alter\\RenameSequence'], true)) {
+            $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE TEMP SEQUENCE ticket']);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\MoveSequence') {
+            $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE SCHEMA "Archive.棚"']);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, [
+            'Schema\\Sequence\\Alter\\ReconfigureSequence', 'Schema\\Sequence\\Alter\\SetSequenceLogging',
+        ], true)) {
+            $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket AS smallint']);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization') {
+            $activeContext = $semantics->context(['CREATE SEQUENCE public.ticket', 'CREATE ROLE "Tax Owner"']);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\Access\\GrantSequenceAccess', 'Schema\\Sequence\\Access\\RevokeSequenceAccess'], true)) {
+            $activeContext = $semantics->context([
+                'CREATE ROLE "PUBLIC"', 'CREATE SCHEMA "Audit.Log"', 'CREATE SEQUENCE public.ticket', 'CREATE TEMP SEQUENCE ticket',
+            ]);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\Defaults\\GrantSequenceDefaults', 'Schema\\Sequence\\Defaults\\RevokeSequenceDefaults'], true)) {
+            $activeContext = $semantics->context(['CREATE ROLE "Owner Role"', 'CREATE ROLE "Reader Role"', 'CREATE SCHEMA "Policy.Archive"']);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexSchema', 'Schema\\Namespace\\DropSchema'], true)) {
+            $activeContext = $semantics->context(['CREATE SCHEMA "reporting.data"', 'CREATE SCHEMA decoy', $storageDeclaration]);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {
+            $activeContext = $semantics->context(['CREATE USER "Tax Owner"']);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Namespace\\RenameSchema', 'Schema\\Namespace\\ChangeSchemaOwner'], true)) {
+            $activeContext = $semantics->context(['CREATE USER "Tax Owner"', 'CREATE TABLE "Tax.Reg".ledger (id integer)']);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSystemCatalogs'], true)) {
+            $configured = new SqlSemantics\Platform\PostgreSql\Semantics(
+                currentDatabase: new SqlSemantics\Platform\PostgreSql\Ir\Identifier('billing.data'),
+            );
+            $activeContext = $configured->context([$storageDeclaration]);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Partition\\ReindexPartitionTable') {
+            $activeContext = $semantics->context([
+                $storageDeclaration,
+                'CREATE SCHEMA regional',
+                'CREATE TABLE public.partitioned_items (id integer) PARTITION BY RANGE (id)',
+                'CREATE TABLE regional.child PARTITION OF public.partitioned_items FOR VALUES FROM (0) TO (10)',
+            ]);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Btree\\CreateIndex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE public.ledger (value integer, wide bigint, ready boolean)',
+                'CREATE INDEX existing ON public.ledger (value)',
+            ]);
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Index\\DropIndex', 'Schema\\Index\\ReindexIndex'], true)) {
+            $activeContext = $semantics->context([
+                $storageDeclaration,
+                'CREATE TABLE public.persistent_items (id integer)',
+                'CREATE INDEX removal ON public.persistent_items (id)',
+                'CREATE TEMP TABLE keyed (n integer)',
+                'CREATE INDEX removal ON pg_temp.keyed (n)',
+            ]);
+        }
+
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\DropColumn') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.removable (old INTEGER UNIQUE, id INTEGER PRIMARY KEY)',
+                'CREATE TEMP TABLE removable (id INTEGER PRIMARY KEY, keep INTEGER, old INTEGER, total AS (keep+1))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Connection\\Detach') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Trigger\\DropTrigger') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([
+                'CREATE TABLE main.watched (id)', 'CREATE TABLE archive.watched (id)',
+                'CREATE TRIGGER main.Tracked AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END',
+                'CREATE TEMP TRIGGER Tracked AFTER INSERT ON archive.watched BEGIN SELECT NEW.id; END',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Trigger\\CreateTrigger') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([
+                'CREATE TABLE temp.watched (decoy)', 'CREATE TABLE main.watched (decoy)',
+                'CREATE TABLE archive.watched (id,payload)', 'CREATE TABLE temp.journal (wrong)',
+                'CREATE TABLE archive.journal (prior,current)',
+            ]);
+        }
+        if ($platform === 'Sqlite' && str_starts_with($role, 'Maintenance\\Cache\\')) {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && in_array($role, ['Maintenance\\Reclaim\\AutoVacuum', 'Maintenance\\Reclaim\\IncrementalVacuum'], true)) {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Page\\PagePragma') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'archive'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Header\\HeaderPragma') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'metadata'),
+            );
+            $activeContext = $configured->context([]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Integrity\\IntegrityAudit') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.integrity_child(id INT)',
+                'CREATE TEMP TABLE integrity_child(id INT)',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\ForeignKeyAudit') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.audit_child(id INT REFERENCES parent(id))',
+                'CREATE TEMP TABLE audit_child(id INT REFERENCES parent(id))',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\IndexInspection') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.storage_table(code INT, label TEXT, UNIQUE(label), PRIMARY KEY(code DESC)) WITHOUT ROWID',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableInspection') {
+            $activeContext = $semantics->context([...$declarations, 'CREATE TEMP TABLE accounts(code TEXT, doubled INT AS (3*2))']);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Analyze') {
+            $configured = new SqlSemantics\Platform\Sqlite\Semantics(
+                searchPath: new SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', 'extension'),
+            );
+            $activeContext = $configured->context([
+                'CREATE TABLE main.names (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE main.extension (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE temp.accounts (id INT PRIMARY KEY, code TEXT)',
+                'CREATE INDEX temp.names ON accounts(code)',
+                'CREATE VIEW main.stats_view AS SELECT id FROM main.names',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Reindex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.names (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE main.nocase (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE temp.accounts (id INT PRIMARY KEY, code TEXT)',
+                'CREATE INDEX temp.names ON accounts(code)',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\DropIndex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.indexed_rows (id INTEGER PRIMARY KEY)',
+                'CREATE TABLE temp.local_rows (id INTEGER PRIMARY KEY)',
+                'CREATE INDEX main.Tag ON indexed_rows(id)',
+                'CREATE INDEX temp.tAg ON local_rows(id)',
+            ]);
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
+            $activeContext = $semantics->context([
+                'CREATE TABLE main.indexed_rows (code TEXT, id INTEGER)',
+                'CREATE TABLE temp.indexed_rows (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE, ignored INTEGER)',
+            ]);
+        }
+        $result = $semantics->analyze($sql, $activeContext);
+        if (!$result instanceof SqlSemantics\SemanticsIR || $result::class !== $namespace . 'Ir\\' . $role) {
+            throw new RuntimeException('The installed analyzer published an unexpected role.');
+        }
+        $details = [];
+        if ($platform === 'MySql' && $role === 'Schema\\View\\CreateView') {
+            $details['createViewAlias'] = observeMysqlCreateViewProjectionAlias($semantics);
+            $details['persistentOutputNames'] = observeMysqlPersistentOutputNames($semantics);
+            $details['generatedViewHeadings'] = observeMysqlGeneratedViewHeadings($semantics);
+            $details['wideProjectionConsumers'] = observeMysqlWideProjectionConsumers($semantics);
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+            $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
+            $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,
+                array_map(static fn ($field): string => $field->name->value, $result->columns), $filtered->toString()];
+            $statement = 'CREATE ALGORITHM=MERGE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE';
+            $merged = $legacy->analyze($statement);
+            [$batch] = $legacy->analyzeAll($statement);
+            $name = new SqlSemantics\Platform\MySql\Ir\Identifier('value');
+            $selection = new SqlSemantics\Platform\MySql\Ir\Select([
+                new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('42'), $name),
+            ], release: $legacy->profile()->grammar, where: new SqlSemantics\Platform\MySql\Ir\BooleanLiteral(false));
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName(
+                    new SqlSemantics\Platform\MySql\Ir\Identifier('app'),
+                    new SqlSemantics\Platform\MySql\Ir\Identifier('filtered')
+                ),
+                $selection,
+                [new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($name)],
+                algorithm: SqlSemantics\Platform\MySql\Ir\Schema\View\ViewAlgorithm::Merge
+            );
+            $details['literalMergeFallback'] = [$merged == $direct, $merged == $batch, $merged->algorithm->value,
+                $merged->installedAlgorithm->value, $merged->toString()];
+            $input = 'CREATE TABLE app.unique_input (id INT NOT NULL)';
+            $definition = 'CREATE ALGORITHM=MERGE VIEW app.unique_v (`K`) AS SELECT DISTINCT id FROM app.unique_input';
+            $distinct = $semantics->analyze($definition, $semantics->context([$input]));
+            $read = $semantics->analyze('SELECT v.k FROM app.unique_v AS v', $semantics->context([$input, $definition]));
+            $details['distinctViewEffect'] = [
+                $distinct->query->distinct, $distinct->algorithm->value, $distinct->installedAlgorithm->value,
+                $read->source->materializedView, $read->source->columns[0]->value, $read->columns[0]->name->value,
+                $read->columns[0]->expression->slot, $read->toString(),
+            ];
+            $guardedSchema = new SqlSemantics\Platform\MySql\Ir\Identifier('app');
+            $id = new SqlSemantics\Platform\MySql\Ir\Identifier('id');
+            $guardedContext = $semantics->context(['CREATE TABLE app.guarded_input (id INT)']);
+            $statement = 'CREATE VIEW app.guarded_view AS SELECT id FROM app.guarded_input WHERE id > 1';
+            $local = $semantics->analyze($statement . ' WITH LOCAL CHECK OPTION', $guardedContext);
+            $cascaded = $semantics->analyze($statement . ' WITH CASCADED CHECK OPTION', $guardedContext);
+            [$implicit] = $semantics->analyzeAll($statement . ' WITH CHECK OPTION', $guardedContext);
+            $source = new SqlSemantics\Platform\MySql\Ir\TableSource($guardedSchema, new SqlSemantics\Platform\MySql\Ir\Identifier('guarded_input'), [$id]);
+            $field = new SqlSemantics\Platform\MySql\Ir\ColumnReference(0);
+            $guard = new SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison(
+                SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator::Greater,
+                $field,
+                new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('1'),
+            );
+            $query = new SqlSemantics\Platform\MySql\Ir\Select([
+                new SqlSemantics\Platform\MySql\Ir\ResultColumn($field, $id),
+            ], $source, $semantics->profile()->grammar, $guard);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName($guardedSchema, new SqlSemantics\Platform\MySql\Ir\Identifier('guarded_view')),
+                $query,
+                [new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($id)],
+                checkOption: SqlSemantics\Platform\MySql\Ir\Schema\View\ViewCheckOption::Local,
+            );
+            $details['checkedViewEffects'] = [$local == $direct, $cascaded == $implicit, $local->checkOption->value, $implicit->checkOption->value,
+                $local->query->where->left->slot, $local->toString(), $cascaded->toString()];
+            $named = $semantics->analyze(str_replace('CREATE VIEW ', "CREATE DEFINER=' Reader@West '@' ÉXAMPLE.TEST ' VIEW ", $statement), $guardedContext);
+            [$session] = $semantics->analyzeAll(str_replace('CREATE VIEW ', 'CREATE DEFINER=CURRENT_USER() VIEW ', $statement), $guardedContext);
+            $default = $semantics->analyze($statement, $guardedContext);
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewName($guardedSchema, new SqlSemantics\Platform\MySql\Ir\Identifier('guarded_view')),
+                $query,
+                [new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewColumn($id)],
+                definer: new SqlSemantics\Platform\MySql\Ir\Schema\View\ViewDefiner('Reader@West', 'ÉXAMPLE.TEST'),
+            );
+            $details['viewDefiner'] = [$named == $direct, $session == $default, $session->definer,
+                $named->definer->user, $named->definer->host, $named->toString(), $session->toString()];
+            $constant = 'CREATE VIEW app.constant_guard AS SELECT 42 AS value FROM app.guarded_input WITH LOCAL CHECK OPTION';
+            $oldContext = $legacy->context(['CREATE TABLE app.guarded_input (id INT)']);
+            $legacyView = $legacy->analyze($constant, $oldContext);
+            $calls = [
+                static fn () => $semantics->analyze($constant, $guardedContext),
+                static fn () => new SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView(
+                    $legacyView->name,
+                    new SqlSemantics\Platform\MySql\Ir\Select($legacyView->query->columns, $source, $semantics->profile()->grammar),
+                    $legacyView->columns,
+                    checkOption: $legacyView->checkOption,
+                ),
+            ];
+            $refusals = [];
+            foreach ($calls as $construct) {
+                try {
+                    $construct();
+                    $refusals[] = null;
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $refusals[] = $error->getMessage();
+                }
+            }
+            $details['constantCheckAdmission'] = [$legacyView->checkOption->value, $legacyView->toString(), $refusals];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Rows\\With\\WithProjection') {
+            $table = $semantics->analyze('WITH q AS MATERIALIZED (VALUES (5,TRUE), (NULL,FALSE)) SELECT column2 AS flag,column1 AS id FROM q');
+            $body = $table->definitions[0]->body;
+            if ($body::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery'
+                || $table->body::class !== $namespace . 'Ir\\Rows\\With\\WithRead') {
+                throw new RuntimeException('An installed VALUES relation lost its local body and positional reads.');
+            }
+            $details['withValues'] = [count($body->rows), $body->columnKind(0)->value, $body->columnKind(1)->value,
+                $table->body->definition, array_column($table->body->columns, 'slot'), $table->toString()];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Rows\\Compound') {
+            $set = $semantics->analyze('VALUES (5),(5) EXCEPT ALL (SELECT 5 AS other UNION ALL VALUES (4000000000))');
+            if ($set::class !== $namespace . 'Ir\\Rows\\Compound'
+                || $set->left::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery'
+                || $set->right::class !== $namespace . 'Ir\\Rows\\Compound'
+                || $set->right->right::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery') {
+                throw new RuntimeException('The installed set lost its native constant-table arms.');
+            }
+            $details['valuesCompound'] = [$set->operator->value, $set->all, $set->left->columnKind(0)->value,
+                $set->right->right->columnKind(0)->value, $set->toString()];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Rows\\Values\\ValuesQuery') {
+            $details['valuesHeading'] = [$result->columnKind(0)->value, $result->columnKind(1)->value, count($result->rows)];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\View\\CreateView') {
+            $input = $result->query;
+            if ($input::class !== $namespace . 'Ir\\Select' || $input->source::class !== $namespace . 'Ir\\TableSource'
+                || $input->columns[0]->expression::class !== $namespace . 'Ir\\ColumnReference') {
+                throw new RuntimeException('The installed view lost its resolved source.');
+            }
+            $details['postgresCreateView'] = [$result->name->schema->value, $result->name->view->value,
+                array_column($result->columns, 'value'), $result->replace, $result->securityBarrier,
+                $result->securityInvoker, $result->checkOption->value,
+                $input->source->schema->value, $input->source->table->value, $input->columns[0]->expression->slot];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Query\\CreateTableAs') {
+            if ($result->query::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery') {
+                throw new RuntimeException('The installed table declaration lost its native defining query.');
+            }
+            $details['postgresCreateTableAs'] = [$result->target->schema->value, $result->target->table->value,
+                array_column($result->columns, 'value'), $result->query->columnKind(0)->value,
+                $result->unlogged, $result->ifNotExists, $result->withData];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\View\\CreateMaterializedView') {
+            if ($result->query::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery') {
+                throw new RuntimeException('The installed materialized view lost its native constant-table definition.');
+            }
+            $details['postgresMaterializedView'] = [$result->name->schema->value, $result->name->view->value,
+                array_column($result->columns, 'value'), $result->query->columnKind(0)->value,
+                $result->ifNotExists, $result->withData];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\View\\RefreshMaterializedView') {
+            $details['postgresRefreshMaterializedView'] = [$result->name->schema->value, $result->name->view->value, $result->withData];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Btree\\CreateIndex') {
+            $id = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $kind = SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::class;
+            $heading = SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading::class;
+            $ledger = new $heading($result->table, [new $id('value'), new $id('wide'), new $id('ready')], [$kind::Int4, $kind::Int8, $kind::Boolean]);
+            $first = $result->keys[0];
+            $keys = [&$first, $result->keys[1]];
+            $reconstructed = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $ledger, $result->name, $keys, $result->included, $result->presence, $result->ifNotExists,
+                $result->unique, $result->nullsNotDistinct, $result->concurrently, $result->release,
+            );
+            $first = $result->keys[1];
+            $guarded = $semantics->analyze('CREATE INDEX IF NOT EXISTS existing ON ledger (ready)', $activeContext);
+            $details['postgresCreateBtree'] = [
+                $reconstructed->table->schema->value,
+                array_map(static fn ($field) => $field->kind->value, $reconstructed->bindings),
+                array_map(static fn ($key) => [$key->slot, $key->order->value], $reconstructed->keys),
+                array_map(static fn ($inc) => $inc->slot, $reconstructed->included),
+                $reconstructed->presence->value, $reconstructed->toString(), $guarded->presence->value, $guarded->ifNotExists,
+            ];
+            $partial = $semantics->analyze('CREATE INDEX "partial probe" ON ledger (value) WHERE (public.ledger.ready IS NOT NULL)', $activeContext);
+            $predicate = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate(
+                $partial->predicate->slot, $partial->predicate->negated,
+            );
+            $partialCopy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $ledger, $partial->name, $partial->keys, $partial->included,
+                release: $partial->release, predicate: $predicate,
+            );
+            $details['postgresPartialBtree'] = [$predicate->slot, $predicate->negated, $partial->toString(), $partialCopy->toString()];
+            $formula = $semantics->analyze(
+                'CREATE INDEX composite ON ledger (wide) WHERE NOT (ledger.value IS NULL OR public.ledger.ready IS NOT NULL)',
+                $activeContext,
+            );
+            $node = SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanPredicate::class;
+            $logical = SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator::class;
+            $leaf = SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\NullIndexPredicate::class;
+            $detached = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $ledger, $formula->name, $formula->keys, release: $formula->release,
+                predicate: new $node($logical::Not, new $node($logical::Or, new $leaf(0), new $leaf(2, true))),
+            );
+            $parsedPredicate = $formula->predicate;
+            $details['postgresBooleanIndexPredicate'] = [
+                $parsedPredicate->operator->value, $parsedPredicate->left->operator->value,
+                $parsedPredicate->left->left->slot, $parsedPredicate->left->right->slot,
+                $formula->toString(), $detached->toString(), $parsedPredicate == $detached->predicate,
+            ];
+            $truth = $semantics->analyze(
+                'CREATE INDEX "truth probe" ON ledger (wide) WHERE public.ledger.ready IS NOT UNKNOWN',
+                $activeContext,
+            );
+            $test = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexTruthTest(
+                2,
+                SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator::IsNotUnknown,
+            );
+            $copy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $ledger, $truth->name, $truth->keys, release: $truth->release, predicate: $test,
+            );
+            $details['postgresIndexTruthTest'] = [
+                $truth->predicate->slot, $truth->predicate->operator->value,
+                $truth->toString(), $copy->toString(), $test == $truth->predicate,
+            ];
+            $field = $semantics->analyze('CREATE INDEX "field probe" ON ledger (wide) WHERE NOT ledger.ready', $activeContext);
+            $value = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexBooleanColumn(2);
+            $negated = new $node($logical::Not, $value);
+            $detachedField = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $ledger, $field->name, $field->keys, release: $field->release, predicate: $negated,
+            );
+            $details['postgresIndexBooleanValue'] = [
+                $field->predicate->operator->value, $field->predicate->left->slot,
+                $field->toString(), $detachedField->toString(), $negated == $field->predicate,
+            ];
+            $leftContext = $semantics->context(['CREATE TABLE public.bound_fields (spare TEXT, amount INT, flags BOOLEAN, irrelevant DATE)']);
+            $rightContext = $semantics->context(['CREATE TABLE public.bound_fields (decoy JSONB, amount INT, flags BOOLEAN, remark BYTEA)']);
+            $source = 'CREATE INDEX bound_only ON public.bound_fields (amount) WHERE flags IS TRUE';
+            $left = $semantics->analyze($source, $leftContext);
+            $right = $semantics->analyze($source, $rightContext);
+            $detail = [];
+            foreach ($left->bindings as $slot => $binding) {
+                $detail[] = [$slot, $binding->name->value, $binding->kind->value];
+            }
+            $details['postgresIndexOperandBindings'] = [$left == $right, $detail, $left->toString(), $right->toString()];
+            $namingContext = $semantics->context([
+                'CREATE TABLE public.naming (id integer, enabled boolean)',
+                'CREATE SEQUENCE public.naming_id_enabled_idx',
+            ]);
+            $named = $semantics->analyze('CREATE INDEX ON public.naming (id) INCLUDE (enabled)', $namingContext);
+            $explicit = $semantics->analyze('CREATE INDEX naming_id_enabled_idx1 ON public.naming (id) INCLUDE (enabled)', $namingContext);
+            $batch = $semantics->analyze(
+                'CREATE SCHEMA naming_scope CREATE TABLE t (name integer) CREATE SEQUENCE t_name_idx'
+                . ' CREATE INDEX ON t (name) CREATE INDEX ON t (name DESC)'
+            );
+            $details['postgresAutomaticIndexNames'] = [
+                $named->name->value, $named == $explicit, $named->toString(),
+                $batch->indexes[0]->name->value, $batch->indexes[1]->name->value,
+            ];
+            $catalog = $semantics->context([
+                'CREATE SCHEMA named_prior CREATE TABLE t (id integer) CREATE SEQUENCE t_id_idx'
+                . ' CREATE INDEX ON t (id) CREATE INDEX ON t (id)',
+            ]);
+            $dropPrior = $semantics->analyze('DROP INDEX named_prior.t_id_idx1', $catalog);
+            $rebuildPrior = $semantics->analyze('REINDEX INDEX named_prior.t_id_idx2', $catalog);
+            $newIndex = $semantics->analyze('CREATE INDEX ON named_prior.t (id)', $catalog);
+            $details['postgresAnonymousCatalog'] = [
+                $dropPrior->toString(), $rebuildPrior->target->schema->value, $rebuildPrior->target->index->value,
+                $rebuildPrior->target->table->value, $newIndex->name->value,
+            ];
+            $collatedOwner = $semantics->context([
+                'CREATE TABLE public.collated_index_owner (code text COLLATE pg_catalog."POSIX", payload text)',
+            ]);
+            $textKey = $semantics->analyze('CREATE INDEX codes ON public.collated_index_owner (code COLLATE pg_catalog."C") INCLUDE (payload)', $collatedOwner);
+            $type = SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind::Text;
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\Binding\IndexTarget(new $name('public'), new $name('collated_index_owner'));
+            $input = new SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\IndexHeading($target, [new $name('code'), new $name('payload')], [$type, $type]);
+            $directText = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\CreateIndex(
+                $input, new $name('codes'),
+                [new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IndexKey(0, collation: SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation::C)],
+                [new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Btree\IncludedColumn(1)], release: $textKey->release,
+            );
+            $details['postgresIndexTextKeys'] = [
+                $directText == $textKey, $textKey->keys[0]->collation->value, $textKey->bindings[1]->kind->value, $textKey->toString(),
+            ];
+            $copied = $semantics->context([
+                'CREATE TABLE public.collated_source (spare integer, code text COLLATE pg_catalog."C")',
+                'CREATE TABLE public.copy_fields (LIKE public.collated_source)',
+            ]);
+            $inherited = $semantics->analyze('CREATE INDEX inherited_ops ON public.copy_fields (code pg_catalog.text_ops)', $copied);
+            $explicit = $semantics->analyze('CREATE INDEX inherited_ops ON public.copy_fields (code COLLATE pg_catalog."C")', $copied);
+            $details['postgresDeclaredIndexCollation'] = [
+                $inherited == $explicit, [$inherited->keys[0]->slot, $inherited->keys[0]->collation->value],
+                $inherited->table->table->value, $inherited->bindings[1]->kind->value,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\RenameSchema') {
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');
+            $destination = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Archive.2025');
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\RenameSchema($name, $destination, $result->release);
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SCHEMA unrelated RENAME TO pending', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'ALTER SCHEMA requires a declared source namespace.';
+            }
+            $details['postgresRenameSchema'] = [$result->schema->value, $result->destination->value, $direct->toString(), $refused];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\ChangeSchemaOwner') {
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');
+            $owner = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax Owner');
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\ChangeSchemaOwner($name, $owner, $result->release);
+            $session = $semantics->analyze('ALTER SCHEMA "Tax.Reg" OWNER TO SESSION_USER', $activeContext);
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SCHEMA "Tax.Reg" OWNER TO unrelated', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A named schema owner requires a declared role.';
+            }
+            $details['postgresChangeSchemaOwner'] = [
+                $result->schema->value, $result->owner->value, $direct->toString(), $session->owner->name, $session->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\MoveSequence') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\MoveSequence(
+                $source, new $name('Archive.棚'), release: $result->release,
+            );
+            $checked = $semantics->analyze('ALTER SEQUENCE IF EXISTS missing.ticket SET SCHEMA unused', $activeContext);
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SEQUENCE public.ticket SET SCHEMA unused', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence move requires a declared destination namespace.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresMoveSequence'] = [
+                $result->source->schema?->value, $result->source->name->value, $result->source->presence->value,
+                $result->destination?->value, $direct->toString(), $direct == $result, $batch === [] ? false : $batch[0] == $direct,
+                $checked->destination, $checked->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\ReconfigureSequence') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $integer = SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $changes = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceChanges(
+                start: new $integer('5'),
+                restart: SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceResetOperand::Native,
+                cycle: true,
+                owner: SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ClearSequenceOwner::Remove,
+            );
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\ReconfigureSequence($source, $changes, release: $result->release);
+            $guarded = $semantics->analyze('ALTER SEQUENCE IF EXISTS unused CACHE 0 CACHE 1', $activeContext);
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceChanges(increment: new $integer('0'));
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence increment cannot be zero.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresReconfigureSequence'] = [
+                $result->source->schema?->value, $result->source->name->value, $result->changes->start?->decimal,
+                $result->changes->restart->value, $result->changes->owner->value, $result->changes->cache,
+                $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
+                $guarded->changes, $guarded->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\SetSequenceLogging') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $mode = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging::class;
+            $type = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SetSequenceLogging::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $first = $mode::Logged;
+            $inputs = [&$first, $mode::Unlogged];
+            $direct = new $type($source, $inputs, release: $result->release);
+            $first = $mode::Unlogged;
+            $guarded = $semantics->analyze('ALTER SEQUENCE IF EXISTS unused SET UNLOGGED, SET LOGGED', $activeContext);
+            $refused = false;
+            try {
+                new $type($source, [$mode::Logged, $mode::Unlogged, $mode::Logged], release: $result->release);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence logging prefix must request one consistent mode.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresSequenceLogging'] = [
+                $result->source->schema?->value, $result->source->name->value, array_column($result->modes, 'value'),
+                array_column($direct->modes, 'value'), $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
+                $guarded->modes, $guarded->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Authorization\\AlterSequenceAuthorization') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $mode = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\SequenceLogging::class;
+            $type = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\AlterSequenceAuthorization::class;
+            $action = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequenceAuthorizationAction::class;
+            $owner = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal::class;
+            $roleToken = SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('public'));
+            $first = new $action($mode::Logged);
+            $inputs = [&$first, new $action(new $owner(new $name('Tax Owner'))), new $action(new $owner($roleToken::Session)), new $action($mode::Unlogged)];
+            $direct = new $type($source, $inputs, release: $result->release);
+            $first = new $action($mode::Unlogged);
+            $guarded = $semantics->analyze('ALTER SEQUENCE IF EXISTS unused OWNER TO role_not_declared', $activeContext);
+            $refused = false;
+            try {
+                new $type($source, [new $action($mode::Unlogged)], release: $result->release);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A present sequence authorization requires an owning role assignment.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresSequenceAuthorization'] = [
+                $result->source->schema?->value, $result->source->name->value,
+                array_map(static fn ($item): string => $item->toString(), $direct->actions),
+                $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct,
+                $guarded->actions, $guarded->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\Access\\GrantSequenceAccess', 'Schema\\Sequence\\Access\\RevokeSequenceAccess'], true)) {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $principal = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal::class;
+            $token = SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::class;
+            $access = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceAccess::class;
+            $grantee = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantee::class;
+            $right = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceRight::class;
+            $everyone = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\UniversalGrantee::Everyone;
+            $grant = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\GrantSequenceAccess::class;
+            $revoke = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\RevokeSequenceAccess::class;
+            $namedPublic = new $grantee(new $principal(new $name('PUBLIC')));
+            if ($result instanceof $grant) {
+                $selector = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector::class;
+                $first = new $selector(new $name('ticket'), new $name('pg_temp'));
+                $second = new $selector(new $name('ticket'), new $name('public'));
+                $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\NamedSequences([&$first, $second]);
+                $first = $second;
+                $rights = [$right::Update, $right::Usage];
+                $grantees = [$namedPublic, new $grantee(new $principal($token::Session))];
+                $direct = new $grant(new $access($target, $rights, $grantees, new $principal($token::Effective), $result->access->release), true);
+                $legacy = $semantics->analyze('GRANT RULE ON SEQUENCE public.ticket TO PUBLIC WITH GRANT OPTION', $activeContext)->toString();
+            } else {
+                $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequencesInSchemas([new $name('Audit.Log'), new $name('public')]);
+                $recipients = [new $grantee($everyone), $namedPublic];
+                $operands = new $access($target, [$right::Select], $recipients, new $principal($token::Session), $result->access->release);
+                $direct = new $revoke($operands, true, SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantDependency::Cascade);
+                $legacy = null;
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresSequenceAccess'] = [
+                $result->access->target->toString(), array_column($result->access->rights, 'value'), $result->access->recipientsSql(),
+                $result->access->grantorSql(), $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct, $legacy,
+            ];
+        }
+        if ($platform === 'PostgreSql' && in_array($role, ['Schema\\Sequence\\Defaults\\GrantSequenceDefaults', 'Schema\\Sequence\\Defaults\\RevokeSequenceDefaults'], true)) {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $principal = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Authorization\SequencePrincipal::class;
+            $token = SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\SchemaSessionRole::class;
+            $policy = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\SequenceDefaultPolicy::class;
+            $grantee = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantee::class;
+            $right = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceRight::class;
+            $everyone = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\UniversalGrantee::Everyone;
+            $grant = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\GrantSequenceDefaults::class;
+            $revoke = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Defaults\RevokeSequenceDefaults::class;
+            if ($result instanceof $grant) {
+                $firstCreator = new $principal(new $name('Owner Role'));
+                $firstSchema = new $name('Policy.Archive');
+                $grantees = [new $grantee(new $principal(new $name('Reader Role'))), new $grantee(new $principal($token::Session))];
+                $operands = new $policy([&$firstCreator, new $principal($token::Effective)], [&$firstSchema], [$right::Usage, $right::Update], $grantees, $result->policy->release);
+                $firstCreator = new $principal($token::Session);
+                $firstSchema = new $name('other');
+                $direct = new $grant($operands, true);
+            } else {
+                $operands = new $policy([], [], [], [new $grantee($everyone), new $grantee(new $principal($token::Effective))], $result->policy->release);
+                $direct = new $revoke($operands, true, SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Access\SequenceGrantDependency::Cascade);
+            }
+            $refused = false;
+            try {
+                new $grant(new $policy([], [], [$right::LegacyRule], [new $grantee($everyone)], $result->policy->release), true);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'Default sequence grant options require individual recipients.';
+            }
+            $batch = $semantics->analyzeAll($sql, $activeContext);
+            $details['postgresSequenceDefaultAccess'] = [
+                $result->policy->scopeSql(), $result->policy->objectSql(), $result->policy->recipientsSql(),
+                $direct->toString(), $direct == $result, $batch !== [] && $batch[0] == $direct, $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\Alter\\RenameSequence') {
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $source = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector(new $name('ticket'), new $name('pg_temp'));
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Alter\RenameSequence(
+                $source, new $name('Next.Ticket'), release: $result->release,
+            );
+            $refused = false;
+            try {
+                $semantics->analyze('ALTER SEQUENCE pg_temp.ticket RENAME TO ticket', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A present sequence rename requires a distinct destination.';
+            }
+            $details['postgresRenameSequence'] = [
+                $result->source->schema?->value, $result->source->name->value, $result->source->presence->value,
+                $result->destination->value, $result == $direct, $direct->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\DropSequence') {
+            $target = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceSelector::class;
+            $name = SqlSemantics\Platform\PostgreSql\Ir\Identifier::class;
+            $absence = SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePresence::MissingSequence;
+            $selected = new $target(new $name('ticket'), new $name('pg_temp'));
+            $qualified = new $target(new $name('absent'), new $name('public'), $absence);
+            $bare = new $target(new $name('unknown'), null, $absence);
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence(
+                [$selected, $selected, $qualified, $bare], true, true, $result->release,
+            );
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\DropSequence([$bare]);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'An absent sequence selector requires IF EXISTS.';
+            }
+            $details['postgresDropSequence'] = [
+                array_map(static fn ($part) => [$part->schema?->value, $part->name->value, $part->presence->value], $result->targets),
+                $result == $direct, $direct->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Sequence\\CreateSequence') {
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceName(
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'),
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Ticket.棚'),
+            );
+            $integer = SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral::class;
+            $options = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequenceParameters(
+                SqlSemantics\Platform\PostgreSql\Ir\Schema\IntegerStorage::Small,
+                new $integer('2'), start: new $integer('3'), initial: new $integer('10'), cache: new $integer('2'), cycle: true,
+            );
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence(
+                $name, $options, SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\SequencePersistence::Unlogged, true, $result->release,
+            );
+            $refused = false;
+            try {
+                $semantics->analyze('CREATE SEQUENCE public.invalid_seq INCREMENT 0', $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A sequence increment cannot be zero.';
+            }
+            $details['postgresCreateSequence'] = [
+                $result->name->schema->value, $result->name->name->value, $result->persistence->name,
+                $result->parameters->storage->value, $result->parameters->start->decimal, $result->parameters->initial->decimal,
+                $result->ifNotExists, $result == $direct, $direct->toString(), $refused,
+            ];
+            $declared = $semantics->context(['CREATE TABLE public.ledger (id integer, tag text)']);
+            $bound = $semantics->analyze('CREATE SEQUENCE public.owner_ticket AS smallint OWNED BY ledger.tag', $declared);
+            $owner = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\Ownership\SequenceOwner(
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('public'),
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('ledger'),
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('tag'),
+            );
+            $owned = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Sequence\CreateSequence(
+                $bound->name, $bound->parameters, release: $bound->release, owner: $owner,
+            );
+            $badColumn = false;
+            try {
+                $semantics->analyze('CREATE SEQUENCE public.other_ticket OWNED BY ledger.unknown', $declared);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $badColumn = $error->getMessage() === 'Sequence ownership requires one declared column.';
+            }
+            $details['postgresSequenceOwner'] = [
+                $bound->owner->schema->value, $bound->owner->relation->value, $bound->owner->column->value,
+                $bound->owner->kind->value, $bound == $owned, $owned->toString(), $badColumn,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\CreateSchema') {
+            $composed = $semantics->analyze(
+                'CREATE SCHEMA "Counter Batch" CREATE TABLE IF NOT EXISTS ticket (n integer)'
+                . ' CREATE SEQUENCE ticket AS smallint START 3 RESTART 8',
+                $activeContext,
+            );
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $composed->name, $composed->owner, false, $composed->release, $composed->tables, $composed->sequences,
+            );
+            $sequence = $composed->sequences[0];
+            $invalid = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    new SqlSemantics\Platform\PostgreSql\Ir\Identifier('other'),
+                    release: $composed->release,
+                    sequences: [$sequence],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $invalid = $error->getMessage() === 'A schema sequence must belong to its namespace and release.';
+            }
+            $details['postgresSchemaSequences'] = [
+                $sequence->name->schema->value, $sequence->name->name->value, $sequence->parameters->start->decimal,
+                $sequence->parameters->initial->decimal, $composed->tables[0]->ifNotExists,
+                $composed->toString(), $rebuilt->toString(), $invalid,
+            ];
+            $owner = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax Owner');
+            $name = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('Tax.Reg');
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema($name, $owner, true, $result->release);
+            [$effective, $session] = $semantics->analyzeAll(
+                'CREATE SCHEMA AUTHORIZATION CURRENT_ROLE; CREATE SCHEMA AUTHORIZATION SESSION_USER;',
+                $activeContext,
+            );
+            $details['postgresCreateSchema'] = [
+                $result->name?->value, $result->owner->value, $result->ifNotExists, $direct->toString(),
+                [$effective->name, $effective->owner->name, $effective->toString()],
+                [$session->name, $session->owner->name, $session->toString()],
+            ];
+            $composite = $semantics->analyze(
+                'CREATE SCHEMA "Batch" AUTHORIZATION "Tax Owner" CREATE TABLE child (n integer)'
+                . ' CREATE TABLE IF NOT EXISTS child (wide bigint)',
+                $activeContext,
+            );
+            [$original, $repeat] = $composite->tables;
+            $first = $original;
+            $members = [&$first, $repeat];
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $composite->name, $owner, release: $composite->release, tables: $members,
+            );
+            $first = $repeat;
+            $wrongRelease = new SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable(
+                $repeat->target, $repeat->columns, true,
+                SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql166,
+            );
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $composite->name, $owner, release: $composite->release, tables: [$wrongRelease],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A schema table must belong to its namespace and release.';
+            }
+            $details['postgresSchemaTables'] = [
+                array_map(static fn ($table) => [$table->target->schema->value, $table->target->table->value,
+                    $table->columns[0]->name->value, $table->columns[0]->storage->value, $table->ifNotExists], $rebuilt->tables),
+                $composite->toString(), $rebuilt->toString(), $refused,
+            ];
+            [$namespaceView] = $semantics->analyzeAll(
+                'CREATE SCHEMA "View Batch" CREATE VIEW feed ("Number") AS SELECT n FROM child'
+                . ' CREATE TABLE child (n integer);',
+                $activeContext,
+            );
+            $qualifiedView = $semantics->analyze(
+                'CREATE SCHEMA "View Batch" CREATE VIEW feed ("Number") AS SELECT n FROM "View Batch".child'
+                . ' CREATE TABLE child (n integer)',
+            );
+            $view = $namespaceView->views[0];
+            $member = $view;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $namespaceView->name, $namespaceView->owner, release: $namespaceView->release,
+                tables: $namespaceView->tables, views: [&$member],
+            );
+            $member = null;
+            $unbound = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $namespaceView->name, $namespaceView->owner, release: $namespaceView->release, views: [$view],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $unbound = $error->getMessage() === 'A schema view must resolve its local input to a preceding base table.';
+            }
+            $details['postgresSchemaViews'] = [
+                $view->name->schema->value, $view->name->view->value, $view->columns[0]->value,
+                $view->query->source->schema->value, $view->query->source->table->value,
+                $view->query->source->columns[0]->value, $view->query->source->columnKind(0)->value,
+                $view === $rebuilt->views[0], $namespaceView->toString(), $rebuilt->toString(), $unbound,
+                $qualifiedView == $namespaceView,
+            ];
+            $indexBatch = $semantics->analyze(
+                'CREATE SCHEMA "Index Batch" CREATE UNIQUE INDEX picked ON ledger (amount DESC) NULLS NOT DISTINCT WHERE enabled'
+                . ' CREATE INDEX IF NOT EXISTS seen ON ledger (amount) CREATE VIEW seen AS SELECT 1'
+                . ' CREATE TABLE ledger (id integer, amount bigint, enabled boolean)',
+            );
+            [$fresh, $guarded] = $indexBatch->indexes;
+            $member = $fresh;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $indexBatch->name, $indexBatch->owner, release: $indexBatch->release, tables: $indexBatch->tables,
+                views: $indexBatch->views, indexes: [&$member, $guarded],
+            );
+            $member = $guarded;
+            $mismatched = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $indexBatch->name, $indexBatch->owner, release: $indexBatch->release, tables: $indexBatch->tables,
+                    indexes: [$guarded],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $mismatched = $error->getMessage() === 'A schema index must retain the actual presence of its name.';
+            }
+            $details['postgresSchemaIndexes'] = [
+                $fresh->table->schema->value, $fresh->table->table->value, $fresh->name->value,
+                $fresh->keys[0]->slot, $fresh->keys[0]->order->value, $fresh->bindings[1]->kind->value,
+                $fresh === $rebuilt->indexes[0], $fresh->presence->value, $guarded->presence->value,
+                $indexBatch->toString(), $rebuilt->toString(), $mismatched,
+            ];
+            $grantBatch = $semantics->analyze(
+                'CREATE SCHEMA "Policy Batch" AUTHORIZATION "Tax Owner"'
+                . ' GRANT USAGE ON SEQUENCE feed TO SESSION_USER, "PUBLIC" WITH GRANT OPTION GRANTED BY CURRENT_ROLE'
+                . ' CREATE SEQUENCE feed',
+                $semantics->context(['CREATE ROLE "Tax Owner"', 'CREATE ROLE "PUBLIC"', 'CREATE SEQUENCE public.feed']),
+            );
+            $grant = $grantBatch->grants[0];
+            $member = $grant;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $grantBatch->name, $grantBatch->owner, release: $grantBatch->release,
+                sequences: $grantBatch->sequences, grants: [&$member],
+            );
+            $member = null;
+            $missing = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $grantBatch->name, $grantBatch->owner, release: $grantBatch->release, grants: [$grant],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $missing = $error->getMessage() === 'A schema grant requires a preceding sequence at each named local target.';
+            }
+            $target = $grant->access->target->sequences[0];
+            $details['postgresSchemaSequenceGrants'] = [
+                $grantBatch->owner->value, $target->schema->value, $target->name->value, $grant->grantOption,
+                $grant->access->grantees[0]->toString(), $grant->access->grantees[1]->toString(),
+                $grant->access->grantor->reference(), $rebuilt->grants[0] === $grant,
+                $grantBatch->toString(), $rebuilt->toString(), $missing,
+            ];
+            $chain = $semantics->analyze(
+                'CREATE SCHEMA "Chain Batch" CREATE VIEW source (n,mystery) AS SELECT 18,NULL'
+                . ' CREATE VIEW leaf (result) AS SELECT mystery FROM "Chain Batch".source',
+            );
+            [$upstream, $downstream] = $chain->views;
+            $closed = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $chain->name, $chain->owner, release: $chain->release, views: [$upstream, $downstream],
+            );
+            $future = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $chain->name, $chain->owner, release: $chain->release, views: [$downstream, $upstream],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $future = $error->getMessage() === 'A schema view must resolve its local view input to a preceding ordinary view.';
+            }
+            $external = $semantics->analyze(
+                'CREATE VIEW mirror AS SELECT note FROM public.upstream',
+                $semantics->context(['CREATE VIEW public.upstream (note) AS SELECT NULL']),
+            );
+            $source = $downstream->query->source;
+            $details['postgresSchemaViewDependencies'] = [
+                $source->kind->value, $source->schema->value, $source->table->value, $source->columns[0]->value,
+                $source->columnKind(0)->value, $downstream->columns[0]->value, $closed->toString(), $chain->toString(), $future,
+                $external->query->source->kind->value, $external->toString(),
+            ];
+            $replacement = $semantics->analyze(
+                'CREATE SCHEMA "Replacement Batch" CREATE VIEW feed (n,c) AS SELECT 1,\'old\''
+                . ' CREATE VIEW prev AS SELECT n FROM "Replacement Batch".feed'
+                . ' CREATE OR REPLACE VIEW feed (n,c,enabled) AS SELECT 2,\'changed\',TRUE'
+                . ' CREATE VIEW next AS SELECT enabled FROM "Replacement Batch".feed',
+            );
+            [$first, $prior, $updated, $next] = $replacement->views;
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                $replacement->name, $replacement->owner, release: $replacement->release, views: [$first, $prior, $updated, $next],
+            );
+            $renamed = $updated->columns;
+            $renamed[0] = new SqlSemantics\Platform\PostgreSql\Ir\Identifier('different');
+            $wrongPrefix = new SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView(
+                $updated->name, $updated->query, $renamed, replace: true,
+            );
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\CreateSchema(
+                    $replacement->name, $replacement->owner, release: $replacement->release, views: [$first, $wrongPrefix],
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = $error->getMessage() === 'A schema view replacement cannot rename established fields.';
+            }
+            $details['postgresSchemaViewReplacement'] = [
+                $first->replace, $updated->replace, array_column($updated->columns, 'value'),
+                $next->query->source->columns[0]->value, $next->query->source->columnKind(0)->value,
+                $replacement->toString(), $rebuilt->toString(), $refused,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Namespace\\DropSchema') {
+            [$present, $absent] = $result->targets;
+            $first = $present;
+            $targets = [&$first, $absent, $absent];
+            $constructed = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema($targets, true, true, $result->release);
+            $first = $absent;
+            $batch = $semantics->analyzeAll($sql . '; DROP SCHEMA decoy;', $activeContext);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Namespace\DropSchema([$absent]);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage() === 'An absent schema removal target requires IF EXISTS.';
+            }
+            $details['postgresDropSchema'] = [
+                array_map(static fn ($target) => [$target->name->value, $target->present], $constructed->targets),
+                $result->ifExists, $result->cascade, $constructed->toString(), array_map(static fn ($value) => $value->toString(), $batch), $rejected,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\DropIndex') {
+            [$target, $absence] = $result->targets;
+            $targets = [&$target, $absence];
+            $verified = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex(
+                $targets, $result->ifExists, $result->cascade, $result->mode, $result->release,
+            );
+            $target = $absence;
+            $concurrent = $semantics->analyze('DROP INDEX CONCURRENTLY public.removal', $activeContext);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\DropIndex([$absence]);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = str_contains($error->getMessage(), 'guarded absence');
+            }
+            $details['postgresDropIndex'] = [
+                $verified->targets[0]->schema->value, $verified->targets[0]->index->value, $verified->targets[0]->table->value,
+                $verified->targets[1]->schema->value, $verified->targets[1]->missingSchema, $verified->toString(),
+                $concurrent->mode->value, $concurrent->toString(), $rejected,
+            ];
+        }
+        if ($platform === 'PostgreSql' && in_array($role, [
+            'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable',
+            'Schema\\Index\\Partition\\ReindexPartitionTable', 'Schema\\Index\\Scope\\ReindexSchema',
+            'Schema\\Index\\Scope\\ReindexDatabase', 'Schema\\Index\\Scope\\ReindexSystemCatalogs',
+        ], true)) {
+            $suffix = substr($result->toString(), strlen('REINDEX '));
+            $reported = $semantics->analyze('REINDEX (VERBOSE FALSE, VERBOSE ON) ' . $suffix, $activeContext);
+            $quiet = $semantics->analyze('REINDEX (VERBOSE, VERBOSE OFF) ' . $suffix, $activeContext);
+            $details['postgresReindexVerbose'] = [
+                $reported::class === $result::class, $reported->verbose, $reported->toString(),
+                $quiet::class === $result::class, $quiet->verbose, $quiet->toString(),
+            ];
+            $placed = $semantics->analyze('REINDEX (TABLESPACE omitted, VERBOSE, TABLESPACE "cold ""archive""") ' . $suffix, $activeContext);
+            $placement = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Placement\IndexTablespace(
+                new SqlSemantics\Platform\PostgreSql\Ir\Identifier('cold "archive"'),
+            );
+            $direct = match ($role) {
+                'Schema\\Index\\ReindexIndex', 'Schema\\Index\\ReindexTable' =>
+                    new ($result::class)($result->target, $result->mode, $result->release, true, $placement),
+                'Schema\\Index\\Partition\\ReindexPartitionTable' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable(
+                        $result->target, $result->kind, $result->mode, $result->release, true, $placement,
+                    ),
+                'Schema\\Index\\Scope\\ReindexSchema' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema(
+                        $result->schema, $result->mode, $result->release, true, $placement,
+                    ),
+                'Schema\\Index\\Scope\\ReindexDatabase' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase(
+                        $result->database, $result->mode, $result->release, true, $placement,
+                    ),
+                'Schema\\Index\\Scope\\ReindexSystemCatalogs' =>
+                    new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs(
+                        $result->database, $result->release, true, $placement,
+                    ),
+            };
+            $rejected = false;
+            try {
+                $semantics->analyze('REINDEX (TABLESPACE pg_default, TABLESPACE undeclared_destination) ' . $suffix, $activeContext);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = str_contains($error->getMessage(), 'requires a declared tablespace');
+            }
+            $details['postgresReindexPlacement'] = [
+                $placed::class === $result::class, $placed->tablespace?->name->value, $placed->verbose,
+                $placed->toString(), $direct->toString(), $rejected,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexIndex') {
+            $absolute = $semantics->analyzeAll(
+                'REINDEX (CONCURRENTLY ON, CONCURRENTLY OFF) INDEX public.removal; REINDEX INDEX removal;',
+                $activeContext,
+            );
+            $detached = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                $result->target, $result->mode, $result->release,
+            );
+            $details['postgresReindexIndex'] = [
+                $result->target->schema->value, $result->target->index->value, $result->target->table->value,
+                $result->mode->value, $result->toString(), $detached->toString(),
+                $absolute[0]->toString(), $absolute[1]->toString(),
+            ];
+            $constraints = $semantics->context([
+                'CREATE TABLE public.indexed_items (id integer, CONSTRAINT saved_key PRIMARY KEY (id))',
+            ]);
+            $boundKey = $semantics->analyze('REINDEX INDEX saved_key', $constraints);
+            $key = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ConstraintIndexReference(
+                $boundKey->target->schema, $boundKey->target->index, $boundKey->target->table,
+            );
+            $withKey = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex($key, $boundKey->mode, $boundKey->release);
+            $badDatabase = false;
+            try {
+                $semantics->analyze('REINDEX INDEX other.public.saved_key', $constraints);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $badDatabase = str_contains($error->getMessage(), 'requires the matching current database');
+            }
+            $details['postgresReindexConstraintIndex'] = [
+                $boundKey->target::class === $key::class,
+                $boundKey->target->table->value, $boundKey->toString(), $withKey->toString(), $badDatabase,
+            ];
+            $partition = $semantics->context([
+                'CREATE SCHEMA regional',
+                'CREATE TABLE public.groups (id integer) PARTITION BY RANGE (id)',
+                'CREATE TABLE regional.child PARTITION OF public.groups FOR VALUES FROM (0) TO (10)',
+                'CREATE INDEX branch_idx ON public.groups (id)',
+                'CREATE INDEX physical ON regional.child (id)',
+            ]);
+            $branch = $semantics->analyze('REINDEX INDEX public.branch_idx', $partition);
+            $physical = $semantics->analyze('REINDEX INDEX CONCURRENTLY regional.physical', $partition);
+            $partitionIndex = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\PartitionIndexReference(
+                $physical->target->schema, $physical->target->index, $physical->target->table, $physical->target->kind,
+            );
+            $copy = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                $partitionIndex, $physical->mode, $physical->release,
+            );
+            $details['postgresReindexPartitionIndex'] = [
+                $branch->target->kind->value, $branch->target->table->value, $branch->toString(),
+                $physical->target->kind->value, $physical->target->table->value, $physical->toString(), $copy->toString(),
+            ];
+            $exclusions = $semantics->context([
+                'CREATE TABLE public.booked (id integer, ready boolean, CONSTRAINT avoid_overlap EXCLUDE USING btree (id WITH =) WHERE (ready))',
+                'CREATE TEMP TABLE booked (id integer, CONSTRAINT avoid_overlap EXCLUDE USING btree (id WITH =))',
+            ]);
+            $permanent = $semantics->analyze('REINDEX INDEX public.avoid_overlap', $exclusions);
+            $temporary = $semantics->analyze('REINDEX INDEX CONCURRENTLY avoid_overlap', $exclusions);
+            $exclusion = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ExclusionIndexReference(
+                $permanent->target->schema, $permanent->target->index, $permanent->target->table,
+            );
+            $rebuilt = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                $exclusion, $permanent->mode, $permanent->release,
+            );
+            $invalid = false;
+            try {
+                new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexIndex(
+                    $exclusion, $temporary->mode, $permanent->release,
+                );
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $invalid = str_contains($error->getMessage(), 'persistent exclusion index requires a standard rebuild');
+            }
+            $details['postgresReindexExclusionIndex'] = [
+                $permanent->target::class === $exclusion::class,
+                $exclusion->table->value, $permanent->toString(), $rebuilt->toString(), $temporary->toString(), $invalid,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\ReindexTable') {
+            $temporary = $semantics->context([
+                'CREATE TABLE public.orders (id integer)',
+                'CREATE TEMP TABLE orders (id integer)',
+            ]);
+            $shadow = $semantics->analyze('REINDEX TABLE orders', $temporary);
+            $target = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTableTarget(
+                $result->target->schema, $result->target->name, $result->target->kind,
+            );
+            $detached = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\ReindexTable($target, $result->mode, $result->release);
+            $badDatabase = false;
+            try {
+                $semantics->analyze('REINDEX TABLE other.public.orders', $temporary);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $badDatabase = str_contains($error->getMessage(), 'requires the matching current database');
+            }
+            $details['postgresReindexTable'] = [
+                $target->schema->value, $target->name->value, $target->kind->value, $result->mode->value,
+                $detached->toString(), $shadow->target->kind->value, $shadow->toString(), $badDatabase,
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Scope\\ReindexSchema') {
+            $reassembled = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSchema(
+                $result->schema, $result->mode, $result->release,
+            );
+            $details['postgresReindexSchema'] = [
+                $result->schema->value, $result->mode->value, $result->toString(), $reassembled->toString(),
+            ];
+        }
+        if ($result instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase) {
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexDatabase(
+                $result->database, $result->mode, $result->release,
+            );
+            $details['postgresReindexDatabase'] = [$result->database->value, $result->mode->value, $direct->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs) {
+            $direct = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Scope\ReindexSystemCatalogs($result->database, $result->release);
+            $details['postgresReindexSystemCatalogs'] = [$result->database->value, $direct->toString()];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Index\\Partition\\ReindexPartitionTable') {
+            $leaf = $semantics->analyze('REINDEX TABLE regional.child', $activeContext);
+            $reassembled = new SqlSemantics\Platform\PostgreSql\Ir\Schema\Index\Partition\ReindexPartitionTable(
+                $result->target, $result->kind, $result->mode, $result->release,
+            );
+            $details['postgresReindexPartitionTable'] = [
+                $result->kind->value, $result->target->schema->value, $result->target->table->value, $reassembled->toString(),
+                $leaf->kind->value, $leaf->target->schema->value, $leaf->target->table->value, $leaf->toString(),
+            ];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {
+            $ordinary = $semantics->analyze('DROP VIEW IF EXISTS public.removable RESTRICT', $context);
+            if ($ordinary::class !== $namespace . 'Ir\\Schema\\View\\DropView') {
+                throw new RuntimeException('The installed ordinary view removal lost its concrete kind.');
+            }
+            $details['dropView'] = [$result->kind->value, $result->targets[0]->schema->value, $result->targets[0]->view->value,
+                $result->ifExists, $result->cascade, $ordinary->kind->value, $ordinary->toString()];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\View\\DropView') {
+            $details['dropView'] = [$result->targets[0]->schema->value, $result->targets[0]->view->value, $result->ifExists];
+        }
+        if ($platform === 'MySql' && $role === 'Rows\With\WithProjection') {
+            $details['withMode'] = observeMysqlWithMode();
+            $details['verbatimWith'] = observeMysqlVerbatimWith();
+            $predecessor = $result->definitions[1]->body;
+            $body = $result->body;
+            $details['withCoordinates'] = [$predecessor->definition, $predecessor->columns[0]->slot,
+                $body->definition, $body->columns[0]->slot, $result->width()];
+            $details['withAvailability'] = observeMysqlWithAvailability($sql, $result->definitions[0], $predecessor);
+            $details['withAliases'] = observeMysqlWithProjectionAlias($semantics);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Mutation\\Delete') {
+            $details['booleanReturning'] = observePostgresBooleanReturning($semantics);
+            $details['booleanWrites'] = observePostgresBooleanWrites($semantics);
+            $details['booleanInput'] = observePostgresBooleanInput($semantics);
+            $details['signedWrites'] = observePostgresSignedWrites($semantics);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
+            $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);
+            $details['postgresBooleanDefault'] = observePostgresBooleanDefault($semantics);
+            $details['postgresPrimaryKey'] = observePostgresPrimaryKey($semantics);
+            $details['postgresUniqueKey'] = observePostgresUniqueKey($semantics);
+            $details['postgresTableWidth'] = observePostgresTableWidth($semantics);
+            $details['postgresStockLookup'] = observePostgresStockLookup($semantics);
+            $complete = $semantics->context([]);
+            $table = $semantics->analyze('CREATE TABLE public.declared_c (code text COLLATE pg_catalog."C" NOT NULL, payload text)', $complete);
+            $schema = $semantics->analyze(
+                'CREATE SCHEMA test_collation CREATE INDEX local_index ON codes (key) '
+                . 'CREATE TABLE codes (key text COLLATE pg_catalog."C")', $complete,
+            );
+            $details['postgresCollatedTable'] = [
+                $table->columns[0]->collation->value, $table->columns[1]->collation,
+                $schema->tables[0]->columns[0]->collation->value, $schema->indexes[0]->keys[0]->collation->value,
+                $schema->indexes[0]->table->table->value, $table->toString(),
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
+            $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);
+            $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);
+            $details['mysqlPrimaryKey'] = observeMysqlPrimaryKey($semantics);
+            $details['mysqlSessionCreateTable'] = observeMysqlSessionCreateTable($semantics);
+            $details['mysqlInnoDbDeclarationWidth'] = observeMysqlInnoDbDeclarationWidth($semantics);
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Query\\CreateTableAs') {
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($result->target, $result->query, $result->ifNotExists);
+            $first = $result->query->columns[0];
+            $rejected = false;
+            try {
+                $duplicate = new SqlSemantics\Platform\MySql\Ir\Select([$first, $first]);
+                new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($result->target, $duplicate);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage() === 'CREATE TABLE AS cannot repeat a column name.';
+            }
+            $details['mysqlCreateTableAs'] = [$result->target->name->schema->value, $result->target->name->table->value,
+                $result->target->kind->value, $result->ifNotExists, array_column(array_column($result->query->columns, 'name'), 'value'),
+                $first->expression::class, $result->profileId(), $result->toString(), $direct->toString(), $rejected];
+            $details['mysqlQueryBackedInnoDbWidth'] = observeMysqlQueryBackedInnoDbWidth($semantics);
+            $from = $semantics->analyze(
+                'CREATE TABLE app.bound_probe AS SELECT id AS a, app.ctas_probe.id AS b FROM app.ctas_probe',
+                $semantics->context(['CREATE TABLE app.ctas_probe (id INT)', 'CREATE TEMPORARY TABLE app.ctas_probe (id INT NOT NULL)'])
+            );
+            if (!$from instanceof SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs
+                || !$from->query->source instanceof SqlSemantics\Platform\MySql\Ir\TableSource) {
+                throw new RuntimeException('The installed table creation lost its resolved input.');
+            }
+            $slots = [];
+            foreach ($from->query->columns as $column) {
+                if (!$column->expression instanceof SqlSemantics\Platform\MySql\Ir\ColumnReference) {
+                    throw new RuntimeException('The installed input lost its signed field role.');
+                }
+                $slots[] = [$column->name->value, $column->expression->occurrence, $column->expression->slot];
+            }
+            $details['mysqlCreateTableAsSource'] = [$from->query->source->schema->value, $from->query->source->table->value,
+                $from->query->source->kind->value, $slots, $from->toString()];
+            $large = $semantics->context(['CREATE TABLE app.text_source (v VARCHAR(8191) COLLATE utf8mb4_bin, z VARCHAR(0) COLLATE utf8mb4_bin)']);
+            $edge = $semantics->analyze('CREATE TABLE app.text_copy AS SELECT v AS a, v AS b, z AS c, z AS d FROM app.text_source', $large);
+            if (!$edge instanceof SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs
+                || !$edge->query->source instanceof SqlSemantics\Platform\MySql\Ir\TableSource) {
+                throw new RuntimeException('The installed table creation lost its resolved VARCHAR input.');
+            }
+            $widths = [];
+            foreach ($edge->query->source->columnTypes as $field) {
+                if (!$field instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar) {
+                    throw new RuntimeException('The installed input lost its VARCHAR storage.');
+                }
+                $widths[] = [$field->length, $field->collation->value];
+            }
+            $rejectedWidth = false;
+            try {
+                $semantics->analyze('CREATE TABLE app.text_copy AS SELECT v AS a, v AS b, z AS c, z AS d, z AS e FROM app.text_source', $large);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejectedWidth = $error->getMessage() === 'The projected logical table record cannot exceed 65535 bytes.';
+            }
+            $details['mysqlCreateTableAsVarchar'] = [$widths, $edge->toString(), $rejectedWidth];
+            $declared = $semantics->analyze(
+                'CREATE TABLE app.declared_copy (pre SMALLINT DEFAULT 7, N TINYINT NOT NULL) AS SELECT NULL AS n'
+            );
+            if (!$declared instanceof SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs) {
+                throw new RuntimeException('The installed table creation lost its declared fields.');
+            }
+            [$first, $second] = $declared->declaredColumns;
+            $alias = $second;
+            $caller = [$first, &$alias];
+            $owned = new SqlSemantics\Platform\MySql\Ir\Schema\Query\CreateTableAs($declared->target, $declared->query, false, $caller);
+            $alias = $first;
+            $details['mysqlCreateTableAsDeclaration'] = [array_column(array_column($owned->declaredColumns, 'name'), 'value'),
+                $declared->toString(), $owned->toString(), $owned->declaredColumns[1] === $second];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Like\\CreateTableLike') {
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->source, true);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\MySql\Ir\Schema\Like\CreateTableLike($result->destination, $result->destination);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage() === 'CREATE TABLE LIKE requires distinct source and destination names.';
+            }
+            $details['mysqlCreateLike'] = [$result->destination->name->schema->value, $result->destination->name->table->value,
+                $result->destination->kind->value, $result->source->name->schema->value, $result->source->name->table->value,
+                $result->source->kind->value, $result->ifNotExists, $result->toString(), $direct->toString(), $rejected];
+        }
+        if ($platform === 'MySql' && $role === 'Select') {
+            $details['projectionModes'] = observeMysqlProjectionModes($semantics);
+            $details['verbatimProjection'] = observeMysqlVerbatimProjection();
+            $details['unsignedParameters'] = observeMysqlParameterTargets($semantics);
+            $details['namedParameters'] = observeMysqlNamedParameterBindings();
+            $value = $result->columns[0]->expression;
+            if ($value::class !== $namespace . 'Ir\\Expression\\SignedCast'
+                || $value->operand::class !== $namespace . 'Ir\\IntegerLiteral') {
+                throw new RuntimeException('The installed projection lost the signed conversion.');
+            }
+            $details['signedCast'] = $value->operand->decimal;
+            $unsigned = $result->columns[1]->expression;
+            if ($unsigned::class !== $namespace . 'Ir\\Expression\\UnsignedCast'
+                || $unsigned->operand::class !== $namespace . 'Ir\\IntegerLiteral') {
+                throw new RuntimeException('The installed projection lost the unsigned conversion.');
+            }
+            $details['unsignedCast'] = $unsigned->operand->decimal;
+            $text = $semantics->analyze("SELECT 'it''s \\0' '𐐷' AS `sample`");
+            $literal = $text->columns[0]->expression;
+            if ($literal::class !== $namespace . 'Ir\\Literal\\TextLiteral') {
+                throw new RuntimeException('The installed projection lost the decoded MySQL character role.');
+            }
+            $legacyRelease = SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651;
+            $details['mysqlTextLiteral'] = [$literal->value, $text->columns[0]->name->value, $text->toString(),
+                $legacyRelease->textCollation(), $text->release->textCollation()];
+            $details['mysqlVarcharPublication'] = observeMysqlVarchar($semantics);
+            $details['mysqlExternalViews'] = observeMysqlExternalViews($semantics);
+            $details['mysqlHaving'] = observeMysqlHaving($semantics);
+            $details['mysqlNullableHaving'] = observeMysqlNullableHaving($semantics);
+            $details['mysqlSignedMembership'] = observeMysqlSignedMembership($semantics);
+            $details['mysqlSignedCase'] = observeMysqlSignedCase($semantics);
+            $details['mysqlNativeTruth'] = observeMysqlNativeTruth($semantics);
+            $details['mysqlSignedComparisonWidths'] = observeMysqlSignedComparisonWidths($semantics);
+            $details['mysqlSignedProjection'] = observeMysqlSignedProjection($semantics);
+            $details['mysqlSignedProjectionAlias'] = observeMysqlSignedProjectionAlias($semantics);
+            $details['mysqlDerivedProjectionAlias'] = observeMysqlDerivedProjectionAlias($semantics);
+            $details['mysqlInheritedLocalAliases'] = observeMysqlInheritedLocalAliases($semantics);
+            $details['mysqlLegacyInheritedAliases'] = observeLegacyMysqlInheritedAliases();
+            $details['mysqlNativeLocalColumnNames'] = observeMysqlNativeLocalColumnNames($semantics);
+            $details['mysqlExternalViewReadNames'] = observeMysqlExternalViewReadNames($semantics);
+            $details['mysqlReopenedIntegralViewFields'] = observeMysqlReopenedIntegralViewFields($semantics);
+        }
+        if ($platform === 'PostgreSql' && $role === 'Select') {
+            $details['postgresSignedMembership'] = observePostgresSignedMembership($semantics);
+            $namedDatabase = new SqlSemantics\Platform\PostgreSql\Semantics(
+                currentDatabase: new SqlSemantics\Platform\PostgreSql\Ir\Identifier('billing'),
+            );
+            $local = $namedDatabase->context(['CREATE TABLE public.ledger (id integer)']);
+            $equivalent = $namedDatabase->analyzeAll(
+                'SELECT id FROM public.ledger; SELECT billing.public.ledger.id FROM billing.public.ledger;',
+                $local,
+            );
+            $unresolvedDatabase = false;
+            try {
+                $namedDatabase->analyze('SELECT other.public.ledger.id FROM public.ledger', $local);
+            } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+                $unresolvedDatabase = str_contains($error->getMessage(), 'requires the matching current database');
+            }
+            $details['postgresLocalCatalog'] = [
+                $equivalent[1]->source->schema->value, $equivalent[1]->source->table->value,
+                $equivalent[1]->columns[0]->expression->slot, $equivalent[0]->toString(), $equivalent[1]->toString(),
+                $unresolvedDatabase,
+            ];
+            $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';
+            $value = $result->columns[0]->expression;
+            if ($value::class !== $castRole || $value->operand::class !== $castRole
+                || $value->operand->operand::class !== $namespace . 'Ir\\IntegerLiteral') {
+                throw new RuntimeException('The installed projection lost an explicit scalar conversion.');
+            }
+            $details['nestedCast'] = [$value->target->value, $value->operand->target->value, $value->operand->operand->decimal];
+            $wide = $result->columns[1]->expression;
+            $exact = $result->columns[2]->expression;
+            $wideRole = $namespace . 'Ir\\Expression\\WideIntegerLiteral';
+            if ($wide::class !== $castRole || $wide->operand::class !== $castRole
+                || $wide->operand->operand::class !== $wideRole || $exact::class !== $wideRole) {
+                throw new RuntimeException('The installed projection lost a bigint operand or result.');
+            }
+            $details['wideCast'] = [$wide->target->value, $wide->operand->target->value, $wide->operand->operand->decimal, $exact->decimal];
+            $bindings = $semantics->analyze('SELECT $2::integer AS a0, $1::bigint AS a1, $1::integer AS a2', $context)->columns;
+            $int4 = $bindings[0]->expression;
+            $int8 = $bindings[1]->expression;
+            $narrow = $bindings[2]->expression;
+            $parameterRole = $namespace . 'Ir\\Binding\\Parameter';
+            if ($int4::class !== $parameterRole || $int8::class !== $parameterRole || $narrow::class !== $castRole
+                || $narrow->operand::class !== $parameterRole) {
+                throw new RuntimeException('The installed projection lost the distinction between a binding and conversion.');
+            }
+            $details['typedParameters'] = [
+                [$int4->position, $int4->input->value], [$int8->position, $int8->input->value],
+                [$narrow->operand->position, $narrow->operand->input->value, $narrow->target->value],
+            ];
+            $text = $semantics->analyze("SELECT 'it''s \\値' AS sample");
+            $literal = $text->columns[0]->expression;
+            if ($literal::class !== $namespace . 'Ir\\Expression\\TextLiteral') {
+                throw new RuntimeException('The installed projection lost the resolved text literal.');
+            }
+            $details['textLiteral'] = [$literal->value, $text->columns[0]->name->value, $text->toString()];
+            $preparedText = $semantics->analyze('SELECT $1::pg_catalog.text AS a0');
+            $marker = $preparedText->columns[0]->expression;
+            if ($marker::class !== $parameterRole) {
+                throw new RuntimeException('The installed projection lost the resolved text binding.');
+            }
+            $details['textMarker'] = [$marker->position, $marker->input->value, $preparedText->toString()];
+            $typedContext = $semantics->context(['CREATE TABLE public.typed_table (id integer, label text)', 'CREATE TEMP TABLE text (part integer)']);
+            $typed = $semantics->analyze('SELECT label, t.label, t.id FROM public.typed_table t', $typedContext);
+            $columns = [];
+            foreach ($typed->columns as $column) {
+                $field = $column->expression;
+                $columns[] = [substr($field::class, strlen($namespace . 'Ir\\')), $field->slot, $field->occurrence, $column->name->value];
+            }
+            $details['booleanFields'] = observePostgresBooleanFields($semantics);
+            $details['int8Field'] = observePostgresInt8Field($semantics);
+            $details['outputOrder'] = observePostgresOutputOrder($semantics);
+            $details['sourceOrder'] = observePostgresSourceOrder($semantics);
+            $details['signedComparison'] = observePostgresSignedComparison($semantics);
+            $details['groupedBounds'] = observePostgresGroupedBounds($semantics);
+            $details['externalSourceKinds'] = observePostgresExternalSourceKinds($semantics);
+            $details['groupedHaving'] = observePostgresHaving($semantics);
+            $details['signedRangeWidths'] = observePostgresSignedRangeWidths($semantics);
+            $details['withProjection'] = observePostgresWithProjection($semantics);
+            $details['typedColumns'] = [
+                array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
+                $columns,
+                $typed->toString(),
+            ];
+            $joinedText = $semantics->analyze(
+                'SELECT q.label FROM public.typed_table a CROSS JOIN (SELECT label, id FROM public.typed_table) q',
+                $typedContext,
+            );
+            $export = $joinedText->source->right;
+            $reference = $joinedText->columns[0]->expression;
+            if ($export::class !== $namespace . 'Ir\\From\\DerivedSource'
+                || $reference::class !== $namespace . 'Ir\\From\\TextColumnReference') {
+                throw new RuntimeException('The installed analyzer lost the native derived text slot.');
+            }
+            $details['derivedText'] = [
+                $export->columnKind(0)?->value, $export->columnKind(1)?->value,
+                $reference->slot, $reference->occurrence, $joinedText->columns[0]->name->value,
+                str_starts_with($joinedText->toString(), 'SELECT "__ztd_source_1"."__ztd_c0" AS "label" FROM '),
+            ];
+            $returning = $semantics->analyze(
+                'DELETE FROM public.typed_table WHERE FALSE RETURNING label AS removed, id',
+                $typedContext,
+            );
+            $details['typedReturning'] = array_map(
+                static fn ($field): array => [
+                    substr($field->reference::class, strlen($namespace . 'Ir\\')),
+                    $field->reference->slot,
+                    $field->name->value,
+                ],
+                $returning->returning,
+            );
+            $writeContext = $semantics->context(['CREATE TABLE public.text_updates (id integer, label text, note text)']);
+            $written = $semantics->analyze(
+                'UPDATE public.text_updates SET label = note, note = label RETURNING label, note',
+                $writeContext,
+            );
+            $details['typedUpdate'] = array_map(
+                static fn ($assignment): array => [
+                    substr($assignment->target::class, strlen($namespace . 'Ir\\')),
+                    $assignment->target->slot,
+                    $assignment->value->slot,
+                ],
+                $written->assignments,
+            );
+            $textInsert = $semantics->analyze(
+                "INSERT INTO public.text_updates (label, id) VALUES ('', 4) RETURNING label, id",
+                $writeContext,
+            );
+            $details['typedInsert'] = [
+                array_map(static fn ($slot): array => [$slot->kind->value, $slot->slot], $textInsert->target->written),
+                $textInsert->rows[0]->values[0]->value->value,
+                $textInsert->rows[0]->values[1]->value->decimal,
+            ];
+            $selectInsert = $semantics->analyze(
+                'INSERT INTO public.text_updates (label, id) SELECT DISTINCT NULL AS label, 4 AS id RETURNING label',
+                $writeContext,
+            );
+            $details['typedInsertQuery'] = [
+                array_map(static fn ($slot): string => $slot->kind->value, $selectInsert->target->written),
+                $selectInsert->query->distinct,
+                str_contains($selectInsert->toString(), 'SELECT DISTINCT CAST(NULL AS pg_catalog.text) AS "label"'),
+            ];
+            $details['nullableKinds'] = [
+                [$typed->source->columnKind(0)?->value, $typed->source->columnKind(1024)?->value],
+                [$export->columnKind(0)?->value, $export->columnKind(1024)?->value],
+                [$textInsert->target->columnKind(0)?->value, $textInsert->target->columnKind(1024)?->value],
+            ];
+        }
+        if ($platform === 'Sqlite' && $role === 'Select') {
+            $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');
+            if ($joined->source::class !== $namespace . 'Ir\\Rows\\LocalSource'
+                || $joined->columns[0]->expression::class !== $namespace . 'Ir\\ColumnReference'
+                || $joined->columns[1]->expression::class !== $namespace . 'Ir\\ColumnReference') {
+                throw new RuntimeException('Installed SQLite join lost its local definition or references.');
+            }
+            $details['joinedLocal'] = [
+                $joined->source === $joined->joins[0]->source, $joined->columns[0]->expression->source,
+                $joined->columns[1]->expression->source, substr_count($joined->toString(), '?02'),
+            ];
+            $selection = $semantics->analyze('SELECT IFNULL(NULL, ?007) AS chosen');
+            $expression = $selection->columns[0]->expression;
+            if ($expression::class !== $namespace . 'Ir\\Expression\\Nulls\\Coalesce'
+                || $expression->arguments[0]::class !== $namespace . 'Ir\\Expression\\Nulls\\CoalesceArgument'
+                || $expression->arguments[0]->expression::class !== $namespace . 'Ir\\NullLiteral'
+                || $expression->arguments[1]->expression::class !== $namespace . 'Ir\\Parameter') {
+                throw new RuntimeException('The installed first non-NULL scalar lost its ordered operand roles.');
+            }
+            $details['coalesce'] = [count($expression->arguments), $expression->arguments[1]->expression->label, $selection->toString()];
+            $read = $semantics->analyze('SELECT * FROM main.removable', $context);
+            if ($read->source === null || $read->source::class !== $namespace . 'Ir\\TableSource'
+                || $read->source->kind::class !== $namespace . 'Ir\\From\\ExternalRelationKind') {
+                throw new RuntimeException('Installed SQLite read lost its resolved view occurrence.');
+            }
+            $details['viewInput'] = [$read->source->schema->value, $read->source->table->value, $read->source->kind->value,
+                array_column($read->source->columns, 'value'), $read->columns[0]->expression->slot];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
+            $textTable = $semantics->analyze("CREATE TABLE public.text_decl (label pg_catalog.text NOT NULL DEFAULT 'quote''s')");
+            $column = $textTable->columns[0];
+            $details['postgresTextStorage'] = [$column->storage->value, $column->nullable, $column->default->value, $textTable->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
+            $details['keyLayout'] = array_map(static fn ($key): array => [
+                $key instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey ? 'primary' : 'unique',
+                $key->inline, $key->terms[0]->slot, $key->terms[0]->descending, $key->terms[0]->collation->value,
+                $key->conflict?->value,
+            ], $result->keys);
+            $implicit = $semantics->analyze('CREATE TABLE bounded (a INTEGER CHECK (a ==00))', $context)->checks[0];
+            $presentation = $implicit->label;
+            $comparison = $implicit->condition;
+            if ($presentation::class !== $namespace . 'Ir\\Schema\\Predicate\\ImplicitCheckLabel'
+                || $comparison::class !== $namespace . 'Ir\\Predicate\\Comparison'
+                || $comparison->left::class !== $namespace . 'Ir\\ColumnReference') {
+                throw new RuntimeException('The installed analyzer lost the implicit CHECK role.');
+            }
+            $details['implicitCheck'] = [$presentation->columnName->value, $presentation->token->value, $presentation->quoted,
+                $presentation->beforeOperator, $presentation->afterOperator, $presentation->leadingZeroes,
+                $comparison->operator->value, $comparison->left->slot];
+            $details['namedChecks'] = array_map(static function ($check) use ($namespace): array {
+                if ($check::class !== $namespace . 'Ir\\Schema\\Predicate\\CheckConstraint'
+                    || $check->condition::class !== $namespace . 'Ir\\ColumnReference' || $check->condition->source !== 0) {
+                    throw new RuntimeException('The installed table condition lost its constraint or reference role.');
+                }
+                return [$check->label->value, $check->column, $check->condition->slot];
+            }, $result->checks);
+            $folded = $semantics->analyze('CREATE TABLE folded (code INTEGER, CONSTRAINT chk CHECK ((SELECT ?07 + ?1 + ?007) NOT IN ()))')->checks[0]->condition;
+            if ($folded::class !== $namespace . 'Ir\\Predicate\\FoldedMembership' || !$folded->matches) {
+                throw new RuntimeException('The installed declaration lost the folded empty membership.');
+            }
+            $details['foldedCheckBindings'] = array_column($folded->bindings, 'label');
+            $generated = $semantics->analyze('CREATE TABLE generation (recorded INTEGER GENERATED ALWAYS AS (computed) STORED, source INTEGER, computed INTEGER AS (source))');
+            $details['generatedColumns'] = [];
+            foreach ($generated->columns as $slot => $field) {
+                $rule = $field->generated;
+                if ($rule === null) {
+                    continue;
+                }
+                if ($rule::class !== $namespace . 'Ir\\Schema\\Generation\\ColumnGeneration'
+                    || $rule->mode::class !== $namespace . 'Ir\\Schema\\Generation\\Storage'
+                    || $rule->expression::class !== $namespace . 'Ir\\ColumnReference' || $rule->expression->source !== 0) {
+                    throw new RuntimeException('Installed SQLite generation lost a resolved slot or storage role.');
+                }
+                $details['generatedColumns'][] = [$slot, $rule->mode->value, $rule->expression->slot];
+            }
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\View\\CreateView') {
+            $shadow = $semantics->context(['CREATE TABLE main.accounts (id INTEGER)', 'CREATE TEMP TABLE accounts (id TEXT)'], true);
+            $view = $semantics->analyze($sql, $shadow);
+            if ($view::class !== $namespace . 'Ir\\Schema\\View\\CreateView' || $view->query::class !== $namespace . 'Ir\\Select'
+                || $view->query->source === null || $view->query->source::class !== $namespace . 'Ir\\TableSource') {
+                throw new RuntimeException('Installed SQLite view lost the checked definition and external table occurrence.');
+            }
+            $details['createView'] = [$view->schema->value, $view->view->value, array_column($view->columns, 'value'),
+                [$view->query->source->schema->value, $view->query->source->table->value], $view->ifNotExists];
+            $groupContext = $semantics->context(['CREATE TABLE main.accounts (id INTEGER, code TEXT)'], true);
+            $group = $semantics->analyze('CREATE VIEW view_group AS SELECT id, count(code) AS n FROM accounts GROUP BY id', $groupContext);
+            if ($group::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $group->query::class !== $namespace . 'Ir\\Aggregation\\GroupedSelect'
+                || $group->query->columns[1]->value::class !== $namespace . 'Ir\\Aggregation\\Count'
+                || $group->query->columns[1]->value->argument === null) {
+                throw new RuntimeException('Installed SQLite grouped view lost its checked aggregate and grouping roles.');
+            }
+            $details['groupedView'] = [array_column($group->columns, 'value'), $group->query->keys[0]->column->slot,
+                $group->query->columns[1]->value->argument->slot, $group->query->keys[0]->collation->value, $group->profileId()];
+            $merged = $semantics->analyze('CREATE VIEW view_set(selected) AS VALUES(4),(4) UNION ALL SELECT 2 AS item');
+            if ($merged::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $merged->query::class !== $namespace . 'Ir\\Rows\\Compound'
+                || $merged->query->first::class !== $namespace . 'Ir\\Rows\\ValuesQuery'
+                || $merged->query->steps[0]->query::class !== $namespace . 'Ir\\Select') {
+                throw new RuntimeException('Installed SQLite compound view lost its checked arm roles.');
+            }
+            $details['compoundView'] = [array_column($merged->columns, 'value'), $merged->query->steps[0]->operator->value, $merged->toString()];
+            $localView = $semantics->analyze('CREATE VIEW view_local AS WITH pair(n) AS (VALUES(4),(9)) SELECT a.n AS first, b.n AS second FROM pair a CROSS JOIN pair b');
+            if ($localView::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $localView->query::class !== $namespace . 'Ir\\Select'
+                || $localView->query->source === null || $localView->query->source::class !== $namespace . 'Ir\\Rows\\LocalSource') {
+                throw new RuntimeException('Installed SQLite view lost its local source role.');
+            }
+            $details['localView'] = [array_column($localView->columns, 'value'),
+                $localView->query->source === $localView->query->joins[0]->source,
+                $localView->query->columns[0]->expression->source, $localView->query->columns[1]->expression->source,
+                substr_count($localView->toString(), 'WITH ')];
+            $inputs = $semantics->context([
+                'CREATE TABLE main.merge_left (Key TEXT COLLATE NOCASE)',
+                'CREATE TABLE main.merge_right (key TEXT COLLATE BINARY)',
+            ]);
+            $full = $semantics->analyze('CREATE VIEW merged_result AS SELECT Key, a.Key AS original, b.key AS other FROM merge_left a FULL JOIN merge_right b USING (key)', $inputs);
+            $right = $semantics->analyze('SELECT a.*, a.Key AS original FROM merge_left a RIGHT JOIN merge_right b USING (key)', $inputs);
+            if ($full::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $full->query::class !== $namespace . 'Ir\\Select'
+                || $full->query->columns[0]->expression::class !== $namespace . 'Ir\\Expression\\Nulls\\Coalesce'
+                || $right::class !== $namespace . 'Ir\\Select') {
+                throw new RuntimeException('Installed SQLite joins lost their resolved merge or result roles.');
+            }
+            $operands = [];
+            foreach ($full->query->columns[0]->expression->arguments as $argument) {
+                if ($argument->expression::class !== $namespace . 'Ir\\ColumnReference') {
+                    throw new RuntimeException('Installed SQLite FULL merge operand is not a resolved column.');
+                }
+                $operands[] = [$argument->expression->source, $argument->expression->slot];
+            }
+            $details['mergedJoins'] = [
+                $full->query->joins[0]->kind->value, array_column($full->columns, 'value'), $operands,
+                $right->joins[0]->kind->value,
+                array_map(static fn ($field) => [$field->name->value, $field->expression->source], $right->columns),
+            ];
+        }
+        if ($role === 'Schema\\DropView') {
+            $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Alter\\RenameTable') {
+            $details['mysqlRenameMoves'] = [];
+            foreach ($result->moves as $move) {
+                if ($move::class !== $namespace . 'Ir\\Schema\\Alter\\TableRename') {
+                    throw new RuntimeException('The installed rename lost its checked move role.');
+                }
+                $details['mysqlRenameMoves'][] = array_map(static fn ($name): array => [$name->schema->value, $name->table->value],
+                    [$move->from, $move->to, $move->origin]);
+            }
+        }
+        if ($platform === 'MySql' && $role === 'Select') {
+            $shadowing = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);
+            $projection = $semantics->analyze('SELECT id, accounts.id FROM app.accounts', $shadowing);
+            $insert = $semantics->analyze('INSERT INTO app.accounts (id) VALUES (3)', $shadowing);
+            $rename = $semantics->analyze('RENAME TABLE app.accounts TO app.archived', $shadowing);
+            $details['mysqlSessionTableSources'] = [$projection->source->schema->value, $projection->source->table->value, $projection->source->kind->value,
+                $projection->columns[0]->expression->slot, $projection->columns[1]->expression->slot, $insert->target->kind->value];
+            $move = $rename->moves[0];
+            $details['mysqlSessionRename'] = [$move->origin->schema->value, $move->origin->table->value, $move->to->table->value];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\View\\DropView') {
+            $viewNamespaces = $semantics->context([
+                'CREATE VIEW app.shadowed_view AS SELECT 1 AS id',
+                'CREATE TEMPORARY TABLE app.shadowed_view (id int)',
+                'CREATE TEMPORARY TABLE app.session_only (id int)',
+            ]);
+            $shadowed = $semantics->analyze('DROP VIEW app.shadowed_view', $viewNamespaces);
+            $absent = $semantics->analyze('DROP VIEW IF EXISTS app.session_only', $viewNamespaces);
+            $details['mysqlShadowedViewRemoval'] = array_map(
+                static fn ($drop): array => [$drop->targets[0]->schema->value, $drop->targets[0]->view->value, $drop->ifExists, $drop->toString()],
+                [$shadowed, $absent]
+            );
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\DropTable') {
+            $temporary = $semantics->context([
+                'CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)',
+                'CREATE TABLE app.retained (id int)',
+            ]);
+            $mixed = $semantics->analyze('DROP TABLE app.accounts, app.retained', $temporary);
+            $local = $semantics->analyze('DROP TEMPORARY TABLE IF EXISTS app.accounts, app.retained', $temporary);
+            $details['mysqlSessionDrop'] = array_map(
+                static fn ($drop): array => [$drop->temporaryOnly, $drop->ifExists,
+                    array_map(static fn ($target): string => isset($target->kind) ? $target->kind->value : 'absent', $drop->targets),
+                    $drop->toString()],
+                [$result, $mixed, $local]
+            );
+            $declarations = [
+                'CREATE TABLE app.drop_parent (id INT PRIMARY KEY)',
+                'CREATE TABLE app.drop_child (pid INT, FOREIGN KEY (pid) REFERENCES drop_parent(id))',
+            ];
+            $modern = new SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44');
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44');
+            $modernCatalog = $modern->context($declarations);
+            $legacyCatalog = $legacy->context($declarations);
+            $shadowed = $modern->context([...$declarations, 'CREATE TEMPORARY TABLE app.drop_child (id INT)']);
+            $parentsFirst = 'DROP TABLE app.drop_parent, app.drop_child';
+            $childrenFirst = 'DROP TABLE app.drop_child, app.drop_parent';
+            $group = $modern->analyze($parentsFirst, $modernCatalog);
+            $parent = $group->targets[0];
+            $child = $group->targets[1];
+            $edge = new SqlSemantics\Platform\MySql\Ir\Schema\DropDependency\TableDropReference($child, $parent);
+            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\DropTable($group->targets, [$edge], release: $group->release);
+            $refusals = [];
+            try {
+                new SqlSemantics\Platform\MySql\Ir\Schema\DropTable([$parent], [$edge], release: $group->release);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            foreach ([
+                [$modern, $modernCatalog, 'DROP TABLE app.drop_parent'],
+                [$legacy, $legacyCatalog, $parentsFirst],
+                [$modern, $shadowed, $childrenFirst],
+            ] as [$dialect, $catalog, $dropSql]) {
+                try {
+                    $dialect->analyze($dropSql, $catalog);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $refusals[] = $error->getMessage();
+                }
+            }
+            $details['mysqlDropTableDependencies'] = [
+                $group->toString(), $rebuilt->toString(), $legacy->analyze($childrenFirst, $legacyCatalog)->toString(), ...$refusals,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\CreateIndex') {
+            $indexContext = $semantics->context([
+                'CREATE TABLE app.session_index (permanent_field INT NOT NULL)',
+                'CREATE TEMPORARY TABLE app.session_index (a INT NOT NULL, b INT NOT NULL, UNIQUE INDEX prior_identity (b)) ENGINE=InnoDB',
+            ]);
+            $indexed = $semantics->analyze('CREATE UNIQUE INDEX test_ix ON app.session_index (a DESC) INVISIBLE LOCK=NONE ALGORITHM=COPY', $indexContext);
+            $priorName = new SqlSemantics\Platform\MySql\Ir\Identifier('prior_identity');
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
+                $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, true, [$priorName], $indexed->policy,
+            );
+            $rejected = null;
+            try {
+                new SqlSemantics\Platform\MySql\Ir\Schema\Index\CreateIndex(
+                    $indexed->target, $indexed->name, $indexed->columns, true, false, $indexed->release, false, [], $indexed->policy,
+                );
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage();
+            }
+            $details['mysqlBtreeIndex'] = [$indexed->target->kind->value, $indexed->target->columnTypes[0]->value,
+                $indexed->role->value, $direct->role->value, $indexed->columns[0]->descending, $indexed->visible,
+                $indexed->toString(), $direct->toString(), $rejected];
+            $occupied = null;
+            try {
+                $semantics->analyze('CREATE INDEX PRIOR_IDENTITY ON app.session_index (a)', $indexContext);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $occupied = $error->getMessage();
+            }
+            $details['mysqlIndexNamespace'] = [
+                $indexed->policy->algorithm->value, $indexed->policy->lock->value, $occupied,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndex') {
+            $catalog = $semantics->context([
+                'CREATE TABLE app.drop_owner (other INT, KEY persistent_only (other))',
+                'CREATE TEMPORARY TABLE app.drop_owner (`Élan` INT NOT NULL, other INT, INDEX `élan`(other), UNIQUE (`Élan`))',
+                'CREATE TABLE app.primary_drop (n INT PRIMARY KEY)',
+            ]);
+            $drop = $semantics->analyze('DROP INDEX `éLAN_2` ON app.drop_owner LOCK=NONE ALGORITHM=COPY', $catalog);
+            $primary = $semantics->analyze('DROP INDEX `PRİMARY` ON app.primary_drop', $catalog);
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(new $binding($drop->target, null), [], $drop->release, $drop->policy);
+            $rejected = null;
+            try {
+                $semantics->analyze('DROP INDEX persistent_only ON app.drop_owner', $catalog);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage();
+            }
+            $details['mysqlDropIndex'] = [$drop->target->owner->kind->value, $drop->target->name->value, $drop->target->role->value,
+                $drop->toString(), $direct->toString(), $primary->target->role->value, $primary->toString(), $rejected];
+            $created = $semantics->analyze('CREATE INDEX `Élan_plus` ON app.drop_owner (`éLAN` DESC)', $catalog);
+            $details['mysqlNativeIndexCase'] = [$created->target->columns[0]->value, $created->toString()];
+            $unsupported = null;
+            try {
+                $semantics->analyze('DROP INDEX ' . chr(96) . 'PRIMARY' . chr(96) . ' ON app.primary_drop ALGORITHM=INPLACE', $catalog);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $unsupported = $error->getMessage();
+            }
+            $details['mysqlIndexRemovalPolicy'] = [$drop->policy->algorithm->value, $drop->policy->lock->value, $unsupported];
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+            $legacyCatalog = $legacy->context(['CREATE TEMPORARY TABLE app.legacy_drop (n INT NOT NULL, INDEX ordered_key (n))']);
+            $legacyDrop = $legacy->analyze(
+                'ALTER IGNORE TABLE app.legacy_drop LOCK=SHARED, DROP KEY app.legacy_drop.ordered_key, LOCK=NONE, ALGORITHM=COPY',
+                $legacyCatalog,
+            );
+            $legacyDirect = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
+                new $binding($legacyDrop->target, null), [], $legacyDrop->release, $legacyDrop->policy, $legacyDrop->ignore,
+            );
+            $details['mysqlAlterIndexRemoval'] = [
+                $legacyDrop->target->owner->kind->value, $legacyDrop->ignore, $legacyDrop->target->name->value,
+                $legacyDrop->toString(), $legacyDirect->toString(),
+            ];
+            $sequenceCatalog = $semantics->context([
+                'CREATE TABLE app.keeps_value (a INT AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY (a), KEY retains_a (a,b))',
+                'CREATE TABLE app.last_support (a INT AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY (a), KEY wrong_order (b,a))',
+            ]);
+            $preserved = $semantics->analyze('ALTER TABLE app.keeps_value DROP PRIMARY KEY', $sequenceCatalog);
+            $protected = null;
+            try {
+                $semantics->analyze('ALTER TABLE app.last_support DROP PRIMARY KEY', $sequenceCatalog);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $protected = $error->getMessage();
+            }
+            $advance = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $id = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $alternate = new $advance(new $id('a'), [new $id('retains_a')]);
+            $directSequence = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex(
+                new $binding($preserved->target, $alternate), [], $preserved->release, $preserved->policy,
+            );
+            $changedNames = $semantics->context([
+                'CREATE TABLE app.keeps_value (a INT AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY (a), KEY other_support (a,b))',
+            ]);
+            $sameRemoval = $semantics->analyze('ALTER TABLE app.keeps_value DROP PRIMARY KEY', $changedNames);
+            $details['mysqlIndexAutoIncrement'] = [
+                $preserved->target->name->value, $preserved->target->role->value,
+                !property_exists($preserved->target, 'autoIncrement'), $preserved == $sameRemoval,
+                $preserved->toString(), $directSequence->toString(), $protected,
+            ];
+            $definitions = [
+                'CREATE TABLE app.fk_index_parent (a INT NOT NULL, b INT NOT NULL, z INT PRIMARY KEY, UNIQUE KEY first_key (a), KEY by_b (b), KEY loose_support (a))',
+                'CREATE TABLE other_app.fk_index_child (x INT NOT NULL, KEY child_key (x), FOREIGN KEY (x) REFERENCES app.fk_index_parent (a))',
+            ];
+            $oldDialect = new SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44');
+            $newDialect = new SqlSemantics\Platform\MySql\Semantics('mysql-8.4.7');
+            $oldContext = $oldDialect->context($definitions);
+            $newContext = $newDialect->context($definitions);
+            $sourceDrop = 'DROP INDEX first_key ON app.fk_index_parent';
+            $kept = $oldDialect->analyze($sourceDrop, $oldContext);
+            $factory = SqlSemantics\Platform\MySql\Ir\Schema\Index\Dependency\IndexForeignKeyRequirement::class;
+            $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $dropType = SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndex::class;
+            $alternate = new $identifier('loose_support');
+            $requirement = new $factory($kept->target->owner, [$kept->target->name, &$alternate]);
+            $alternate = new $identifier('wrong_key');
+            $rebuilt = new $dropType(new $binding($kept->target, null), [$requirement], $kept->release);
+            $failures = [];
+            try {
+                new $dropType(new $binding($kept->target, null), [new $factory($kept->target->owner, [$kept->target->name])], $kept->release);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $failures[] = $error->getMessage();
+            }
+            foreach ([
+                [$newDialect, $newContext, $sourceDrop],
+                [$oldDialect, $oldContext, 'ALTER TABLE app.fk_index_parent DROP KEY first_key, DROP KEY loose_support'],
+            ] as [$dialect, $indexCatalog, $dropSql]) {
+                try {
+                    $dialect->analyze($dropSql, $indexCatalog);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $failures[] = $error->getMessage();
+                }
+            }
+            $changed = $oldDialect->analyze('ALTER TABLE app.fk_index_parent DROP INDEX first_key, RENAME INDEX loose_support TO moved', $oldContext);
+            $details['mysqlIndexForeignRequirements'] = [
+                $kept->toString(), $rebuilt->toString(), $requirement->keys[1]->value, $changed->toString(), $failures,
+            ];
+            $declared = $semantics->context([
+                'CREATE TABLE app.generated_parent (a INT PRIMARY KEY)',
+                'CREATE TABLE app.generated_child (A INT, b INT, z INT PRIMARY KEY, KEY decoy (b), CONSTRAINT Actual_Fk FOREIGN KEY written_key (a) REFERENCES generated_parent(a))',
+                'CREATE TABLE app.generated_copy LIKE app.generated_child',
+            ]);
+            $copy = $semantics->analyze('DROP INDEX actual_fk ON app.generated_copy', $declared);
+            $copyDirect = new $dropType(new $binding($copy->target, null), [], $copy->release);
+            $hide = $semantics->analyze('ALTER TABLE app.generated_child ALTER INDEX actual_fk INVISIBLE', $declared);
+            $unavailable = [];
+            foreach ([
+                'DROP INDEX actual_fk ON app.generated_child',
+                'CREATE INDEX actual_fk ON app.generated_child (b)',
+            ] as $query) {
+                try {
+                    $semantics->analyze($query, $declared);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $unavailable[] = $error->getMessage();
+                }
+            }
+            $details['mysqlImplicitForeignIndexes'] = [
+                $copy->target->name->value, $copy->toString(), $copyDirect->toString(), $hide->toString(), $unavailable,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\DropIndexes') {
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $advance = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $id = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $first = new $binding($result->targets[0], new $advance(new $id('a'), [new $id('by_a'), new $id('keeps_a')]));
+            $second = new $binding($result->targets[1], new $advance(new $id('a'), [new $id('PRIMARY'), new $id('keeps_a')]));
+            $keys = [&$first, $second];
+            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\Index\DropIndexes($keys, [], $result->release, $result->policy);
+            $first = $second;
+            $rejected = null;
+            try {
+                $semantics->analyze(
+                    'ALTER TABLE app.batch_index DROP PRIMARY KEY, DROP KEY by_a, DROP INDEX keeps_a',
+                    $activeContext,
+                );
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = $error->getMessage();
+            }
+            $details['mysqlAtomicIndexRemoval'] = [
+                array_map(static fn ($key): string => $key->name->value, $rebuilt->targets),
+                array_map(static fn ($key): string => $key->role->value, $rebuilt->targets),
+                !property_exists($rebuilt->targets[0], 'autoIncrement'),
+                $rebuilt->toString(), $rejected,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\Rename\\RenameIndexes') {
+            $moves = $result->moves;
+            $unmoved = [new SqlSemantics\Platform\MySql\Ir\Identifier('by_c')];
+            $first = $moves[0];
+            $moves[0] = &$first;
+            $untouched = $unmoved[0];
+            $unmoved[0] = &$untouched;
+            $roleType = SqlSemantics\Platform\MySql\Ir\Schema\Index\Rename\RenameIndexes::class;
+            $rebuilt = new $roleType($result->owner, $moves, $unmoved, $result->release, $result->policy);
+            $first = $moves[1];
+            $untouched = $first->source;
+            $occupied = $legacyDirect = $legacyAnalysis = null;
+            try {
+                $semantics->analyze('ALTER TABLE app.index_rename_probe RENAME INDEX by_a TO by_c', $activeContext);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $occupied = $error->getMessage();
+            }
+            $unavailable = SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651;
+            try {
+                new $roleType($result->owner, $result->moves, [new SqlSemantics\Platform\MySql\Ir\Identifier('by_c')], $unavailable);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $legacyDirect = $error->getMessage();
+            }
+            $legacy = new SqlSemantics\Platform\MySql\Semantics($unavailable->value);
+            try {
+                $legacy->analyze(
+                    'ALTER TABLE app.index_rename_probe RENAME INDEX by_a TO by_c',
+                    $legacy->context(['CREATE TABLE app.index_rename_probe (a INT, KEY by_a (a))']),
+                );
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException $error) {
+                $legacyAnalysis = str_contains($error->getMessage(), "Unexpected 'INDEX'");
+            }
+            $details['mysqlIndexRename'] = [
+                array_map(static fn ($move): array => [$move->source->value, $move->destination->value], $rebuilt->moves),
+                $rebuilt->toString(), $occupied, $legacyDirect, $legacyAnalysis,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\Change\\AlterIndexes') {
+            $inputs = $result->actions;
+            $first = $inputs[0];
+            $inputs[0] = &$first;
+            $class = SqlSemantics\Platform\MySql\Ir\Schema\Index\Change\AlterIndexes::class;
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $advance = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $id = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $unmoved = [new $id('keeps_a')];
+            $original = [new $binding($result->actions[0]->operation, new $advance(new $id('a'), [new $id('by_a'), $unmoved[0]]))];
+            $rebuilt = new $class($result->owner, $inputs, $original, $unmoved, [], $result->release, $result->policy);
+            $first = $inputs[1];
+            $removed = $rebuilt->actions[0]->operation;
+            $renamed = $rebuilt->actions[1]->operation;
+            $overlap = $legacy = null;
+            try {
+                $semantics->analyze('ALTER TABLE app.batch_index DROP INDEX by_a, RENAME INDEX by_a TO alias_name', $activeContext);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $overlap = $error->getMessage();
+            }
+            try {
+                new $class($result->owner, $result->actions, $original, $unmoved, [], SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $legacy = $error->getMessage();
+            }
+            $details['mysqlMixedIndexAlteration'] = [
+                $removed->name->value,
+                !property_exists($removed, 'autoIncrement'),
+                [$renamed->source->value, $renamed->destination->value],
+                $rebuilt->toString(), $overlap, $legacy,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Exchange\\AlterForeignKeys') {
+            [$drop, $add] = $result->actions;
+            $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $native = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey::class;
+            $term = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyKeyColumn::class;
+            $key = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity::class;
+            $roleType = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::class;
+            $facts = [
+                new $native(new $key($add->parent, new $identifier('PRIMARY'), $roleType::Primary),
+                    [new $term(new $identifier('a'))], true),
+                new $native(new $key($add->parent, new $identifier('both_fields'), $roleType::Unique),
+                    [new $term(new $identifier('a')), new $term(new $identifier('b'))], true),
+                new $native(new $key($result->owner, new $identifier('pid'), $roleType::Ordinary),
+                    [new $term(new $identifier('pid'))], true, implicitForeignKey: true),
+            ];
+            $identity = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyConstraintIdentity::class;
+            $symbols = [new $identity($result->owner, new $identifier('exchange_child_ibfk_1'))];
+            $detachedAction = $drop;
+            $actions = [&$detachedAction, $add];
+            $rebuilt = new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
+                $result->owner, $actions, $facts, $symbols, $result->release, $result->policy,
+            );
+            $detachedAction = $add;
+            $details['mysqlForeignKeyExchange'] = [
+                $drop->name->value, $add->symbol->value, $add->createdIndex->value,
+                array_column($result->removedIndexes, 'value'), array_column($rebuilt->removedIndexes, 'value'),
+                $result->toString(), $rebuilt->toString(),
+            ];
+            $mixed = $semantics->analyze('ALTER TABLE app.indexed_exchange ADD KEY pid(spare), '
+                . 'ADD FOREIGN KEY(pid) REFERENCES exchange_parent(a)', $activeContext);
+            [$addedKey, $addedEdge] = $mixed->actions;
+            $mixedRole = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\IndexAddition::class;
+            $heading = new SqlSemantics\Platform\MySql\Ir\TableSource(
+                new $identifier('app'), new $identifier('indexed_exchange'), [new $identifier('spare'), new $identifier('pid')],
+            );
+            $startingKeys = [$facts[0], new $native(new $key($mixed->owner, new $identifier('PRIMARY'), $roleType::Primary),
+                [new $term(new $identifier('rid'))], true)];
+            $directMixed = new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
+                $mixed->owner, [new $mixedRole($addedKey->key, $heading), $addedEdge], $startingKeys, [], $mixed->release,
+            );
+            $details['mysqlMixedSupportingKeys'] = [$addedKey->key->identity->name->value, $addedKey->key->identity->role->value,
+                $addedKey->automatic, array_map(static fn ($field): string => $field->field->value, $addedKey->key->fields),
+                $addedEdge->symbol->value, $addedEdge->createdIndex->value,
+                $mixed->toString(), $directMixed->toString()];
+            $sequenceContext = $semantics->context([
+                'CREATE TABLE app.sequence_parent (id INT PRIMARY KEY)',
+                'CREATE TABLE app.sequence_child (rid INT PRIMARY KEY, seq INT AUTO_INCREMENT, KEY old_seq(seq))',
+            ]);
+            $command = 'ALTER TABLE app.sequence_child DROP KEY old_seq, '
+                . 'ADD CONSTRAINT replacement_edge FOREIGN KEY(seq) REFERENCES sequence_parent(id)';
+            $exchange = $semantics->analyze($command, $sequenceContext);
+            [$explicit, $edge] = $exchange->actions;
+            $removal = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $generating = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexAutoIncrement::class;
+            $priorKeys = [
+                new $native(new $key($exchange->owner, new $identifier('PRIMARY'), $roleType::Primary), [new $term(new $identifier('rid'))], true),
+                new $native($explicit, [new $term(new $identifier('seq'))], true),
+                new $native(new $key($edge->parent, new $identifier('PRIMARY'), $roleType::Primary), [new $term(new $identifier('id'))], true),
+            ];
+            $target = new $removal($explicit, new $generating(new $identifier('seq'), []));
+            $directExchange = new SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Exchange\AlterForeignKeys(
+                $exchange->owner, [$target, $edge], $priorKeys, [], $exchange->release, remainingSides: [],
+            );
+            $details['mysqlMixedPhysicalExchange'] = [
+                $explicit->name->value, $explicit->role->value, !property_exists($explicit, 'autoIncrement'),
+                $edge->createdIndex->value, $exchange->removedIndexes, $exchange->toString(), $directExchange->toString(),
+            ];
+            $rebuiltContext = $semantics->context([
+                'CREATE TABLE app.upstream (id INT PRIMARY KEY)',
+                'CREATE TABLE app.rebuilt (id INT PRIMARY KEY, cand INT NOT NULL, hid INT NOT NULL, probe INT, '
+                    . 'UNIQUE KEY source(cand,hid), KEY fallback(cand), UNIQUE KEY retained(hid))',
+                'CREATE TABLE app.dependant (lc INT, lh INT, CONSTRAINT Incoming FOREIGN KEY(lc,lh) REFERENCES rebuilt(cand,hid))',
+            ]);
+            $recluster = $semantics->analyze('ALTER TABLE app.rebuilt DROP PRIMARY KEY, DROP KEY source, '
+                . 'ADD UNIQUE KEY substitute(cand,hid), ADD CONSTRAINT Outgoing FOREIGN KEY(probe) REFERENCES upstream(id)', $rebuiltContext);
+            $details['mysqlMixedClusteredReplacement'] = [
+                $recluster->clusteredReplacement->name->value, $recluster->clusteredReplacement->role->value,
+                $recluster->actions[2]->key->clusterEligible, $recluster->toString(),
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
+            $one = $result->additions[0];
+            $two = $result->additions[1];
+            $identifier = SqlSemantics\Platform\MySql\Ir\Identifier::class;
+            $physical = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexIdentity::class;
+            $key = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyNativeKey::class;
+            $term = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Catalog\ForeignKeyKeyColumn::class;
+            $roles = SqlSemantics\Platform\MySql\Ir\Schema\Index\IndexRole::class;
+            $native = [
+                new $key(new $physical($one->parent, new $identifier('PRIMARY'), $roles::Primary), [new $term(new $identifier('a'))], true),
+                new $key(new $physical($one->parent, new $identifier('b'), $roles::Unique), [new $term(new $identifier('b'))], true),
+                new $key(new $physical($result->owner, new $identifier('Earlier'), $roles::Ordinary), [new $term(new $identifier('y'), true)], true),
+            ];
+            $type = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\AddForeignKeys::class;
+            $held = $one;
+            $edits = [&$held, $two];
+            $rebuilt = new $type($result->owner, $edits, $native, [], $result->release);
+            $held = $two;
+            $batch = $semantics->analyzeAll($queries[$role], $context);
+            $refusals = [];
+            try {
+                new $type($result->owner, $result->additions, $native, [], $result->release,
+                    new SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexChangePolicy(
+                        SqlSemantics\Platform\MySql\Ir\Schema\Index\Policy\IndexAlgorithm::InPlace
+                    )
+                );
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            $details['mysqlAddForeignKeys'] = [
+                $one->parent->quoted(), $two->parent->quoted(), $one->pairs[0]->domain->storage->value, $two->pairs[0]->descending,
+                $one->effects->match->value, $two->effects->match->value, $one->symbol->value, $two->symbol->value,
+                $one->createdIndex?->value, $two->createdIndex?->value, $two->indexName?->value,
+                $result->toString(), $rebuilt->toString(), array_map(static fn ($part): string => $part->toString(), $batch),
+                $refusals,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
+            $strings = $semantics->context([
+                'CREATE TABLE app.storage_parent (p CHAR(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY, q BINARY(4) NOT NULL UNIQUE)',
+                'CREATE TABLE app.storage_child (x VARCHAR(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci, y VARBINARY(8)) ROW_FORMAT=COMPACT',
+                'CREATE TABLE app.capacity_parent (p VARBINARY(8) PRIMARY KEY)',
+                'CREATE TABLE app.original_capacity (x VARBINARY(768)) ROW_FORMAT=COMPACT',
+                'CREATE TABLE app.copied_capacity LIKE app.original_capacity',
+            ]);
+            $capacity = $semantics->analyze('ALTER TABLE app.storage_child '
+                . 'ADD CONSTRAINT Text_Link FOREIGN KEY (x) REFERENCES storage_parent(p), '
+                . 'ADD CONSTRAINT Byte_Link FOREIGN KEY (y) REFERENCES storage_parent(q)', $strings);
+            $types = [];
+            foreach ($capacity->additions as $addition) {
+                $domain = $addition->pairs[0]->domain;
+                $types[] = [
+                    $domain->child->kind->value, $domain->child->length, $domain->child->collation?->value,
+                    $domain->parent->kind->value, $domain->parent->length, $domain->parent->collation?->value,
+                    $domain->childKeyBytes(),
+                ];
+            }
+            $compactRefusal = [];
+            try {
+                $semantics->analyze('ALTER TABLE app.copied_capacity ADD FOREIGN KEY (x) REFERENCES capacity_parent(p)', $strings);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $compactRefusal[] = $error->getMessage();
+            }
+            $details['mysqlForeignKeyStringDomains'] = [$types, $capacity->toString(), $compactRefusal];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
+            $scalars = $semantics->context([
+                'CREATE TABLE app.scalar_parent (p DECIMAL(9,0) NOT NULL PRIMARY KEY, q MEDIUMINT NOT NULL UNIQUE, r TIME(2) NOT NULL UNIQUE)',
+                'CREATE TABLE app.scalar_child (x VARBINARY(4), y DATE, z TIME(1))',
+            ]);
+            $value = $semantics->analyze('ALTER TABLE app.scalar_child '
+                . 'ADD CONSTRAINT Packed_Link FOREIGN KEY (x) REFERENCES scalar_parent(p), '
+                . 'ADD CONSTRAINT Date_Link FOREIGN KEY (y) REFERENCES scalar_parent(q), '
+                . 'ADD CONSTRAINT Time_Link FOREIGN KEY (z) REFERENCES scalar_parent(r)', $scalars);
+            [$packed, $date, $clock] = array_map(static fn ($addition) => $addition->pairs[0]->domain, $value->additions);
+            $scalarKind = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\Add\Domain\ForeignKeyScalarKind::class;
+            $details['mysqlForeignKeyScalarDimensions'] = array_map(
+                static fn ($kind): array => [$kind->value, $kind->dimensions()],
+                $scalarKind::cases(),
+            );
+            $details['mysqlForeignKeyScalarDomains'] = [
+                [$packed->child->kind->value, $packed->child->length, $packed->parent->kind->value, $packed->parent->precision,
+                    $packed->parent->scale, $packed->childKeyBytes()],
+                [$date->child->kind->value, $date->parent->storage->value, $date->parent->unsigned, $date->childKeyBytes()],
+                [$clock->child->kind->value, $clock->child->precision, $clock->parent->kind->value,
+                    $clock->parent->precision, $clock->childKeyBytes()],
+                $value->toString(),
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\Add\\AddForeignKeys') {
+            $labels = $semantics->context([
+                'CREATE TABLE app.label_parent (p TINYINT UNSIGNED PRIMARY KEY, q SMALLINT UNSIGNED NOT NULL UNIQUE)',
+                "CREATE TABLE app.label_child (x ENUM('green ', ' red', ''), y SET('a','b','c','d','e','f','g','h','i'))"
+                    . ' DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin',
+            ]);
+            $value = $semantics->analyze('ALTER TABLE app.label_child '
+                . 'ADD CONSTRAINT Ordinal_Link FOREIGN KEY (x) REFERENCES label_parent(p), '
+                . 'ADD CONSTRAINT Mask_Link FOREIGN KEY (y) REFERENCES label_parent(q)', $labels);
+            $observed = [];
+            foreach ($value->additions as $addition) {
+                $domain = $addition->pairs[0]->domain;
+                $observed[] = [$domain->child->kind->value, array_column($domain->child->members, 'value'),
+                    $domain->child->collation->value, $domain->parent->storage->value, $domain->childKeyBytes()];
+            }
+            $details['mysqlForeignKeyEnumerationDomains'] = [$observed, $value->toString()];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\ForeignKey\\DropForeignKeys') {
+            $runtimeType = SqlSemantics\Platform\MySql\Ir\Schema\ForeignKey\DropForeignKeys::class;
+            $binding = SqlSemantics\Platform\MySql\Model\Statement\Declaration\IndexRemovalTarget::class;
+            $first = new $binding($result->actions[0], null);
+            $choices = $result->actions;
+            $choices[0] = &$first;
+            $rebuilt = new $runtimeType($result->owner, $choices, [], $result->release, $result->policy);
+            $first = $choices[1];
+            $batch = $semantics->analyzeAll($queries[$role] . '; ALTER TABLE app.fk_drop_child DROP FOREIGN KEY owner_link', $context);
+            $refusals = [];
+            try {
+                new $runtimeType($result->owner, [$choices[1], $choices[1]], [], $result->release);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            $legacy = new $analyzer('5.7.44');
+            $shadow = $legacy->context([
+                'CREATE TABLE app.fk_drop_child (a INT)',
+                'CREATE TEMPORARY TABLE app.fk_drop_child (b INT)',
+            ]);
+            $ignored = $legacy->analyze('ALTER TABLE app.fk_drop_child DROP FOREIGN KEY `untouched `', $shadow);
+            $details['mysqlDropForeignKeys'] = [
+                $result->owner->kind->value, $rebuilt->actions[0]->name->value, $rebuilt->actions[0]->role->value,
+                $rebuilt->actions[1]->name->value, $rebuilt->actions[1]->kind->value, $result->toString(), $rebuilt->toString(),
+                array_map(static fn ($member): string => $member->toString(), $batch),
+                $ignored->owner->kind->value, $ignored->actions[0]->name, $ignored->actions[0]->kind->value,
+                $ignored->toString(), $refusals,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Index\\Visibility\\SetIndexVisibility') {
+            $runtimeType = SqlSemantics\Platform\MySql\Ir\Schema\Index\Visibility\SetIndexVisibility::class;
+            $first = $result->edits[0];
+            $edits = $result->edits;
+            $edits[0] = &$first;
+            $rebuilt = new $runtimeType($result->owner, $edits, $result->release, $result->policy);
+            $first = $edits[1];
+            $refusals = [];
+            try {
+                new $runtimeType($result->owner, $result->edits, SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5744);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            $implicit = $semantics->context(['CREATE TABLE app.implicit_visibility (a INT NOT NULL, UNIQUE KEY native_primary (a))']);
+            try {
+                $semantics->analyze('ALTER TABLE app.implicit_visibility ALTER INDEX native_primary VISIBLE', $implicit);
+            } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                $refusals[] = $error->getMessage();
+            }
+            $details['mysqlIndexVisibility'] = [
+                $result->owner->kind->value,
+                array_map(static fn ($edit): array => [$edit->index->value, $edit->kind->value, $edit->visible], $rebuilt->edits),
+                $result->toString(), $rebuilt->toString(), $refusals,
+            ];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
+            $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);
+            $local = $semantics->analyze('TRUNCATE app.accounts', $temporary);
+            $details['mysqlTruncate'] = [$result->target->name->schema->value, $result->target->name->table->value,
+                $result->target->kind->value, $local->target->kind->value];
+            $parent = 'CREATE TABLE app.fk_parent (id INT PRIMARY KEY)';
+            $tableReference = 'CREATE TABLE app.fk_child (pid INT, FOREIGN KEY (pid) REFERENCES fk_parent(id))';
+            $inlineReference = 'CREATE TABLE app.fk_child (pid INT REFERENCES fk_parent(id))';
+            $truncateParent = 'TRUNCATE TABLE app.fk_parent';
+            $checked = new SqlSemantics\Platform\MySql\Semantics('mysql-9.0.1');
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-8.4.7');
+            $dependencies = [$checked->context([$parent, $tableReference]), $checked->context([$parent, $inlineReference])];
+            $errors = [];
+            foreach ($dependencies as $known) {
+                try {
+                    $checked->analyze($truncateParent, $known);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $errors[] = $error->getMessage();
+                }
+            }
+            $earlier = $legacy->analyze($truncateParent, $legacy->context([$parent, $inlineReference]));
+            $shadow = $checked->analyze($truncateParent, $checked->context([$parent, $tableReference, 'CREATE TEMPORARY TABLE app.fk_parent (id INT)']));
+            $type = SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable::class;
+            $child = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+                new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+                    new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('fk_child')
+                ), SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable
+            );
+            $unsafe = [[null, []], [$earlier->target, [$child]]];
+            foreach ($unsafe as [$target, $referrers]) {
+                try {
+                    new $type($target, $referrers);
+                } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+                    $errors[] = $error->getMessage();
+                }
+            }
+            $details['mysqlTruncateDependencies'] = [$earlier->toString(), $shadow->target->kind->value, $errors];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Truncate\\TruncateTable') {
+            $details['postgresTruncate'] = [$result->restartIdentity, $result->cascade, []];
+            foreach ($result->targets as $target) {
+                if ($target::class !== $namespace . 'Ir\\Schema\\Truncate\\TruncateTarget') {
+                    throw new RuntimeException('The installed truncation lost its checked target role.');
+                }
+                $details['postgresTruncate'][2][] = [$target->table->schema->value, $target->table->table->value, $target->only];
+            }
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Alter\\RenameTable') {
+            $details['postgresRenameTable'] = [$result->target->schema->value, $result->target->table->value,
+                $result->destination->value, $result->ifExists];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Alter\\RenameColumn') {
+            $details['postgresRenameColumn'] = [$result->target->schema->value, $result->target->table->value,
+                $result->column->value, $result->destination->value, $result->only, $result->ifExists];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\RenameTable') {
+            $details['rename'] = [$result->schema->value, $result->table->value, $result->destination->value];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\RenameColumn') {
+            $details['rename'] = [$result->schema->value, $result->table->value, $result->column->value,
+                $result->destination->value, $result->quoteReferences];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddColumn') {
+            $first = new SqlSemantics\Platform\Sqlite\Ir\Identifier('id');
+            $heading = [&$first];
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn($result->schema, $result->table, $heading, $result->strict, $result->column);
+            $first = $result->column->name;
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn($result->schema, $result->table, [$first], $result->strict, $result->column);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction) {
+                $refused = true;
+            }
+            $details['addColumn'] = [$result->schema->value, $result->table->value, $direct->slot, observeSqliteAppendBindings($direct),
+                $result->strict, $result->column->name->value, $result->column->type->value, $result->column->collation->value,
+                $result->column->default->value, $refused, $direct->toString()];
+            $alter = $semantics->analyze('ALTER TABLE main.accounts ADD total INTEGER DEFAULT (7 - (5 - 2))', $context);
+            $create = $semantics->analyze('CREATE TABLE main.calculated (amount TEXT DEFAULT (2 + 3))');
+            $altered = $alter->column->default;
+            $declared = $create->columns[0]->default;
+            if (!$altered instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression
+                || !$declared instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression
+                || !$altered->expression instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic
+                || !$declared->expression instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic
+                || !$altered->expression->right instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic) {
+                throw new RuntimeException('The installed computed defaults lost their operand roles.');
+            }
+            $details['computedDefaults'] = [$altered->expression->operator->value, $altered->expression->right->operator->value,
+                $declared->expression->operator->value, $alter->toString(), $create->toString()];
+            $checked = $semantics->analyze(
+                'ALTER TABLE main.accounts ADD total INTEGER DEFAULT 7 CONSTRAINT "minimum" CHECK (total > id)',
+                $context,
+            );
+            $firstCheck = $checked->checks[0];
+            $checks = [&$firstCheck];
+            $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn(
+                $checked->schema, $checked->table, [new SqlSemantics\Platform\Sqlite\Ir\Identifier('id')], $checked->strict, $checked->column, $checks,
+            );
+            $firstCheck = new SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint(
+                new SqlSemantics\Platform\Sqlite\Ir\Identifier('other'),
+                new SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0),
+                1,
+            );
+            $condition = $detached->checks[0];
+            if (!$condition->label instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$condition->condition instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison
+                || !$condition->condition->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$condition->condition->right instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed ordinary addition lost its checked slots.');
+            }
+            $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
+                $condition->condition->right->slot, observeSqliteAppendBindings($detached), $detached->toString()];
+            $implicit = $semantics->analyze('ALTER TABLE main.accounts ADD total INTEGER CHECK (TOTAL >= 007)', $context);
+            $condition = $implicit->checks[0];
+            if (!$condition->label instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel
+                || !$condition->condition instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison
+                || !$condition->condition->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed implicit comparison lost its checked source slot.');
+            }
+            $details['implicitAppendedCheck'] = [$condition->label->columnName->value, $condition->label->token->value,
+                $condition->label->leadingZeroes, $condition->condition->left->slot, observeSqliteAppendBindings($implicit), $implicit->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\AddGeneratedColumn') {
+            $generation = $result->column->generated;
+            if (!$generation instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration
+                || !$generation->expression instanceof SqlSemantics\Platform\Sqlite\Ir\Arithmetic
+                || !$generation->expression->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$generation->expression->right instanceof SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral) {
+                throw new RuntimeException('The installed generated column addition lost its checked input roles.');
+            }
+            $first = new SqlSemantics\Platform\Sqlite\Ir\Identifier('id');
+            $heading = [&$first];
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn(
+                $result->schema, $result->table, $heading, $result->strict, $result->column,
+            );
+            $first = $result->column->name;
+            $details['addGeneratedColumn'] = [$result->schema->value, $result->table->value, $direct->slot, observeSqliteAppendBindings($direct),
+                $result->strict, $result->column->name->value, $generation->mode->value, $generation->expression->operator->value,
+                $generation->expression->left->slot, $generation->expression->right->decimal, $direct->toString()];
+            $checked = $semantics->analyze(
+                'ALTER TABLE main.accounts ADD total INTEGER AS (id + 7) VIRTUAL CONSTRAINT "large" CHECK (total > id)',
+                $context,
+            );
+            $condition = $checked->checks[0];
+            if (!$condition->label instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$condition->condition instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison
+                || !$condition->condition->left instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$condition->condition->right instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed generated addition lost its checked slots.');
+            }
+            $details['appendedChecks'] = [$condition->label->value, $condition->column, $condition->condition->left->slot,
+                $condition->condition->right->slot, observeSqliteAppendBindings($checked), $checked->toString()];
+            $carried = $semantics->analyze(
+                'ALTER TABLE main.accounts ADD total AS (id + 7) CONSTRAINT range CHECK (total > id) CHECK (total < 100)',
+                $context,
+            );
+            $details['carriedAppendedChecks'] = [$carried->checks[0]->label->value, $carried->checks[1]->label->value, $carried->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\DropColumn') {
+            $member = SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropMember::class;
+            $identifier = SqlSemantics\Platform\Sqlite\Ir\Identifier::class;
+            $selected = new $member(new $identifier('old'));
+            $heading = [new $member(new $identifier('id'), protected: true),
+                new $member(new $identifier('keep'), protected: true), &$selected,
+                new $member(new $identifier('total'), generated: true)];
+            $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropColumn($result->schema, $result->table, $heading, $result->slot);
+            $selected = new SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropMember(new SqlSemantics\Platform\Sqlite\Ir\Identifier('other'));
+            $protected = false;
+            try {
+                $semantics->analyze('ALTER TABLE removable DROP keep', $activeContext);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $protected = str_contains($error->getMessage(), 'declaration-local removal restriction');
+            }
+            $details['dropColumn'] = [$result->schema->value, $result->table->value, $result->slot,
+                [$result->column->value, $result->generated], [$detached->column->value, $detached->generated],
+                $protected, $detached->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Connection\\Attach') {
+            $file = $result->file->values[0];
+            $key = $result->key?->values[0];
+            if (!$file instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter
+                || !$result->name instanceof SqlSemantics\Platform\Sqlite\Ir\Connection\AttachmentName
+                || !$key instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter) {
+                throw new RuntimeException('The installed ATTACH lost its typed filename, name or key.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Connection\Attach($result->file, $result->name, $result->key);
+            $details['connectionAttach'] = [$file->label, $result->name->name->value, $key->label, $rebuilt->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Connection\\Detach') {
+            $target = $result->target;
+            $dynamic = $semantics->analyze('DETACH ?005', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Connection\DetachTarget
+                || !$dynamic instanceof SqlSemantics\Platform\Sqlite\Ir\Connection\Detach
+                || !$dynamic->target instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter) {
+                throw new RuntimeException('The installed DETACH lost the attachment identity or numbered selector.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Connection\Detach($target);
+            $details['connectionDetach'] = [$target->schema->value, $target->name->name->value, $rebuilt->toString(),
+                $dynamic->target->label, $dynamic->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Vacuum\\Vacuum') {
+            $skipped = $semantics->analyze('VACUUM temp INTO (missing + ?011)', $activeContext);
+            $operand = $result->destination;
+            if (!$operand instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumDestination
+                || !$operand->expression->values[0] instanceof SqlSemantics\Platform\Sqlite\Ir\Parameter
+                || !$skipped instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum
+                || !$skipped->destination instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumRegistrations) {
+                throw new RuntimeException('The installed VACUUM lost an evaluated operand or inert registration.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum($result->schema, $operand);
+            $default = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum();
+            $details['vacuum'] = [$result->schema->value, $operand->expression->values[0]->label, $rebuilt->toString(),
+                $default->toString(), $skipped->schema->value, $skipped->destination->bindings[0]->label, $skipped->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger) {
+            $target = $result->target;
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference) {
+                throw new RuntimeException('The installed DROP TRIGGER lost its installed target.');
+            }
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger(
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference(
+                    $target->schema, $target->name, $target->watchedSchema, $target->watchedName,
+                ),
+            );
+            $absences = [];
+            foreach (['absent', 'archive.absent', 'unknown.absent'] as $selector) {
+                $absent = $semantics->analyze('DROP TRIGGER IF EXISTS ' . $selector, $activeContext);
+                if (!$absent->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\MissingTrigger) {
+                    throw new RuntimeException('The installed DROP TRIGGER lost its verified absence.');
+                }
+                $absences[] = [$absent->target->verification->value, $absent->toString()];
+            }
+            $details['dropTrigger'] = [$target->schema->value, $target->name->value, $target->watchedSchema->value,
+                $target->watchedName->value, $direct->toString(), $absences];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger) {
+            $step = $result->program[0];
+            $old = $step->rows[0]->fields[0]->value;
+            $new = $step->rows[0]->fields[1]->value;
+            $future = $result->selectors[1]->selector;
+            if (!$old instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField
+                || !$new instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField
+                || !$future instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier) {
+                throw new RuntimeException('The installed trigger lost its image or update selector roles.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $result->schema, $result->name, $result->placement, $result->watched, $result->timing, $result->event,
+                $result->program, $result->selectors, $result->condition, $result->ifNotExists,
+            );
+            $details['auditTrigger'] = [$result->watched->schema->value, $step->destination->table->schema->value,
+                $old->image->value, $old->column, $new->image->value, $new->column,
+                $result->selectors[0]->selector, $future->value, $result->condition?->isNull, $copy->toString()];
+            $mutation = $semantics->analyze(
+                'CREATE TRIGGER archive.alter_journal AFTER UPDATE ON watched BEGIN UPDATE OR IGNORE journal SET prior=OLD.payload, current=NEW.payload WHERE current=OLD.payload; DELETE FROM journal WHERE NEW.payload=journal.prior; END',
+                $activeContext,
+            );
+            if (!$mutation instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger) {
+                throw new RuntimeException('The installed trigger mutation was not published.');
+            }
+            [$update, $delete] = $mutation->program;
+            if (!$update instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate
+                || !$delete instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete
+                || !$update->where instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerEquality
+                || !$delete->where instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerEquality) {
+                throw new RuntimeException('The installed trigger mutation lost its ordered action or equality roles.');
+            }
+            $actions = [
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate(
+                    $update->destination, $update->assignments, $update->where, $update->conflict,
+                ),
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete($delete->destination, $delete->where),
+            ];
+            $mutationCopy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $mutation->schema, $mutation->name, $mutation->placement, $mutation->watched,
+                $mutation->timing, $mutation->event, $actions,
+            );
+            $details['mutationTrigger'] = [$update->destination->table->schema->value, $update->conflict->value,
+                $update->where->target->column, $update->where->targetFirst, $delete->where->target->column, $delete->where->targetFirst,
+                $delete->where->image->image->value, $delete->where->image->column, $mutation->toString(), $mutationCopy->toString()];
+            $batch = $semantics->analyze(
+                'CREATE TRIGGER archive.batch_journal AFTER UPDATE ON watched BEGIN INSERT OR FAIL INTO journal(current, prior) VALUES (NEW.payload, OLD.payload), (NULL, OLD.payload); END',
+                $activeContext,
+            );
+            if (!$batch instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger
+                || count($batch->program) !== 1
+                || !$batch->program[0] instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert) {
+                throw new RuntimeException('The installed batch was not published as one insertion.');
+            }
+            $insert = $batch->program[0];
+            $tuples = array_map(
+                static fn ($row) => new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow($row->fields),
+                $insert->rows,
+            );
+            $batchCopy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $batch->schema, $batch->name, $batch->placement, $batch->watched, $batch->timing, $batch->event,
+                [new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert($insert->destination, $tuples, $insert->conflict)],
+            );
+            $details['batchTrigger'] = [$insert->conflict->value, array_map(static fn ($tuple) => array_map(static fn ($field) => $field->column, $tuple->fields), $tuples),
+                $batch->toString(), $batchCopy->toString()];
+            $interrupt = $semantics->analyze(
+                'CREATE TRIGGER archive.interrupt_journal AFTER UPDATE ON watched BEGIN SELECT RAISE(FAIL, OLD.payload) WHERE NEW.payload IS NOT NULL; END',
+                $activeContext,
+            );
+            if (!$interrupt instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger
+                || !$interrupt->program[0] instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise) {
+                throw new RuntimeException('The installed trigger interruption was not published.');
+            }
+            $control = $interrupt->program[0];
+            if (!$control->message instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField || $control->where === null) {
+                throw new RuntimeException('The installed trigger interruption lost its checked image fields.');
+            }
+            $interruptCopy = new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger(
+                $interrupt->schema, $interrupt->name, $interrupt->placement, $interrupt->watched,
+                $interrupt->timing, $interrupt->event,
+                [new SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise($control->policy, $control->message, $control->where)],
+            );
+            $details['interruptTrigger'] = [$control->policy->value, $control->message->image->value,
+                $control->message->column, $control->where->field->image->value, $control->where->field->column,
+                $control->where->isNull, $interrupt->toString(), $interruptCopy->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize) {
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize($result->schema, $result->amount);
+            $details['cacheSize'] = [$copy->schema->value, $copy->amount?->value, $copy->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize) {
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize($result->schema, $result->capacity);
+            $details['defaultCacheSize'] = [$copy->schema->value, $copy->capacity?->pages, $copy->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill) {
+            $disabled = $semantics->analyze('PRAGMA ARCHIVE.cache_spill(256)', $activeContext);
+            if (!$result->change instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillThreshold
+                || !$disabled instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill
+                || !$disabled->change instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillThreshold) {
+                throw new RuntimeException('The installed cache spill threshold lost its independent effect.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill($result->schema, $result->change);
+            $details['cacheSpill'] = [$result->schema->value, $result->change->amount->value, $result->change->mode->value,
+                $copy->toString(), $disabled->change->amount->value, $disabled->change->mode->value, $disabled->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum) {
+            $reset = $semantics->analyze('PRAGMA auto_vacuum(3)', $activeContext);
+            if (!$reset instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum) {
+                throw new RuntimeException('The installed auto-vacuum lost its explicit mode request.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum($result->schema, $result->mode);
+            $details['autoVacuum'] = [$result->schema->value, $result->mode?->value, $copy->toString(), $reset->mode?->value, $reset->toString()];
+        }
+        if ($result instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum) {
+            $default = $semantics->analyze('PRAGMA temp.incremental_vacuum(-1)', $activeContext);
+            if (!$default instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum) {
+                throw new RuntimeException('The installed incremental vacuum lost its native maximum.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum($result->schema, $result->limit);
+            $details['incrementalVacuum'] = [$result->schema->value, $result->limit->pages, $copy->toString(), $default->limit->pages, $default->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Page\\PagePragma') {
+            $pending = $semantics->analyze('PRAGMA temp.page_size(DEFAULT)', $activeContext);
+            $count = $semantics->analyze('PRAGMA archive.page_count(17)', $activeContext);
+            if (!$result->value instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PageLimit
+                || !$pending instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma
+                || !$pending->value instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\RequestedPageSize
+                || !$count instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma) {
+                throw new RuntimeException('The installed pager pragma lost its native argument role.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma($result->kind, $result->schema, $result->value);
+            $details['pagePragma'] = [$result->schema->value, $result->value->decimal, $copy->toString(),
+                $pending->schema->value, $pending->value->bytes, $pending->toString(), $count->value, $count->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Header\\HeaderPragma') {
+            $readonly = $semantics->analyze("PRAGMA temp.data_version('ignored')", $activeContext);
+            if (!$readonly instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma) {
+                throw new RuntimeException('The installed header pragma lost its read-only field.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma($result->field, $result->schema, $result->value);
+            $details['headerPragma'] = [$result->field->value, $result->schema->value, $result->value?->value,
+                $rebuilt->toString(), $readonly->field->value, $readonly->schema->value,
+                $readonly->value?->value, $readonly->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Integrity\\IntegrityAudit') {
+            $target = $result->target;
+            $bounded = $semantics->analyze('PRAGMA main.integrity_check(-2)', $activeContext);
+            $catalog = $semantics->analyze('PRAGMA quick_check(sqlite_temp_schema)', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$bounded instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit
+                || !$bounded->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityLimit
+                || !$catalog instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit
+                || !$catalog->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable) {
+                throw new RuntimeException('The installed integrity audit lost its native target or budget.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit($result->kind, $target, $result->schema);
+            $details['integrityAudit'] = [$result->kind->value, $target->schema->value, $target->name->value, $result->schema?->value,
+                $rebuilt->toString(), $bounded->target->value, $bounded->toString(),
+                $catalog->target->schema->value, $catalog->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\ForeignKeyAudit') {
+            $target = $result->target;
+            $default = $semantics->analyze('PRAGMA foreign_key_check', $activeContext);
+            $catalog = $semantics->analyze('PRAGMA foreign_key_check(sqlite_temp_schema)', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$default->target instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$catalog->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable) {
+                throw new RuntimeException('The installed foreign-key audit lost its selected native scope.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit($target);
+            $details['foreignKeyAudit'] = [$target->schema->value, $target->name->value, $rebuilt->toString(), $default->target->value,
+                $default->toString(), $catalog->target->schema->value, $catalog->catalogAccess?->value, $catalog->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\IndexInspection') {
+            $target = $result->target;
+            $named = $semantics->analyze('PRAGMA main.index_xinfo(sqlite_autoindex_storage_table_2)', $activeContext);
+            $empty = $semantics->analyze('PRAGMA temp.index_info(absent)', $activeContext);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
+                || !$named->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
+                || !$empty->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\EmptyIndexMetadata) {
+                throw new RuntimeException('The installed index metadata query lost its physical selector.');
+            }
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection($result->kind, $target);
+            $details['indexMetadata'] = [$target->schema->value, $target->name->value, $target->table->value,
+                $named->target->name->value, $copy->toString(), $empty->target->schema?->value, $empty->target->name?->value, $empty->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableInspection') {
+            $target = $result->target;
+            $catalog = $semantics->analyze('PRAGMA table_info(sqlite_temp_schema)', $activeContext);
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection($result->kind, $target, $result->schema);
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$catalog->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable) {
+                throw new RuntimeException('The installed metadata query lost its table role.');
+            }
+            $details['tableInspection'] = [$result->kind->value, $target->schema->value, $target->name->value, $result->schema?->value,
+                $catalog->target->schema->value, $catalog->toString(), $rebuilt->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Metadata\\TableListing') {
+            $empty = $semantics->analyze("PRAGMA temp.table_list('')", $activeContext);
+            $details['tableListing'] = [$result->schema?->value, $result->nameFilter?->value, $empty->nameFilter?->value, $empty->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Inventory\\InventoryPragma') {
+            $all = $semantics->analyze("PRAGMA PRAGMA_LIST('ignored')", $activeContext);
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma($result->kind, $result->schema);
+            $details['connectionInventory'] = [$result->kind->value, $result->schema?->value, $rebuilt->toString(),
+                $all->kind->value, $all->schema?->value, $all->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\FlagPragma') {
+            $disabled = $semantics->analyze('PRAGMA automatic_index(256)', $activeContext);
+            $read = $semantics->analyze('PRAGMA MAIN.FOREIGN_KEYS', $activeContext);
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma($result->name, $result->change, $result->schema);
+            $rejected = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma(
+                    SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagName::ForeignKeys,
+                    SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagChange::Reset,
+                );
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $rejected = str_contains($error->getMessage(), 'Only writable_schema');
+            }
+            $details['flagPragma'] = [$result->name->value, $result->change?->value, $result->schema?->value, $copy->toString(),
+                $disabled->change?->value, $disabled->toString(), $read->change, $read->toString(), $rejected];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Analyze') {
+            $index = $result->target;
+            $schema = $semantics->analyze('ANALYZE EXTENSION', $activeContext);
+            $view = $semantics->analyze('ANALYZE main.stats_view', $activeContext);
+            if (!$index instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
+                || !$schema->target instanceof SqlSemantics\Platform\Sqlite\Ir\Identifier
+                || !$view->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget) {
+                throw new RuntimeException('The installed statistics operation lost its resolved target role.');
+            }
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze(
+                new SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget($index->schema, $index->name, $index->table),
+            );
+            $details['analyzeStatistics'] = [$index->schema->value, $index->name->value, $index->table->value,
+                $schema->target->value, $schema->toString(), $view->target->kind->value, $view->toString(), $rebuilt->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Maintenance\\Reindex') {
+            $relation = $result->target;
+            $builtin = $semantics->analyze('REINDEX NoCase', $activeContext);
+            $index = $semantics->analyze('REINDEX temp.names', $activeContext);
+            if (!$relation instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget
+                || !$index->target instanceof SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget
+                || !$builtin->target instanceof SqlSemantics\Platform\Sqlite\Ir\Collation) {
+                throw new RuntimeException('The installed rebuild did not retain native namespace precedence.');
+            }
+            $bound = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget(
+                $index->target->schema, $index->target->name, $index->target->table,
+            );
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex($bound);
+            $details['reindex'] = [
+                $relation->schema->value, $relation->name->value, $relation->kind->value,
+                $builtin->target->value, $builtin->toString(), $bound->table->value, $index->toString(), $rebuilt->toString(),
+            ];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\DropIndex') {
+            $target = $result->target;
+            if (!$target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexReference) {
+                throw new RuntimeException('The installed DROP INDEX lost its absolute index target.');
+            }
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex(
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexReference(
+                    new SqlSemantics\Platform\Sqlite\Ir\Identifier('temp'),
+                    new SqlSemantics\Platform\Sqlite\Ir\Identifier('tAg'),
+                    new SqlSemantics\Platform\Sqlite\Ir\Identifier('local_rows'),
+                ),
+            );
+            $absent = $semantics->analyze('DROP INDEX IF EXISTS ""."later"', $activeContext);
+            $unqualified = $semantics->analyze('DROP INDEX IF EXISTS "later"', $activeContext);
+            if (!$absent->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex
+                || !$unqualified->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex) {
+                throw new RuntimeException('The installed DROP INDEX lost the guarded absence.');
+            }
+            $refused = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex($absent->target);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $refused = str_contains($error->getMessage(), 'requires IF EXISTS');
+            }
+            $details['dropIndex'] = [$target->schema->value, $target->name->value, $target->table->value,
+                $direct->toString(), $absent->target->schema?->value, $absent->toString(),
+                $unqualified->target->schema?->value, $unqualified->toString(), $refused];
+            $constraints = $semantics->context([
+                'CREATE TABLE main.known_index (id INTEGER PRIMARY KEY, code TEXT UNIQUE) WITHOUT ROWID',
+            ]);
+            $missing = $semantics->analyze('DROP INDEX IF EXISTS main.sqlite_autoindex_known_index_3', $constraints);
+            $protected = false;
+            try {
+                $semantics->analyze('DROP INDEX IF EXISTS main.sqlite_autoindex_known_index_2', $constraints);
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $protected = str_contains($error->getMessage(), 'cannot drop a UNIQUE or PRIMARY KEY constraint index');
+            }
+            $details['constraintIndexNames'] = [
+                $missing->target instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex,
+                $missing->toString(), $protected,
+            ];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Index\\CreateIndex') {
+            $term = $result->terms[0];
+            $keys = [&$term];
+            $code = new SqlSemantics\Platform\Sqlite\Ir\Identifier('code');
+            $heading = [new SqlSemantics\Platform\Sqlite\Ir\Identifier('id'), &$code, new SqlSemantics\Platform\Sqlite\Ir\Identifier('ignored')];
+            $detached = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex(
+                $result->schema, $result->index, $result->table, $heading, $keys,
+                $result->where, $result->unique, $result->ifNotExists,
+            );
+            $code = new SqlSemantics\Platform\Sqlite\Ir\Identifier('wrong');
+            $details['sqliteIndexOperandBindings'] = [
+                array_keys($result->bindings), array_column($result->bindings, 'value'),
+                array_keys($detached->bindings), array_column($detached->bindings, 'value'),
+            ];
+            $term = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm(new SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0));
+            $expression = $detached->terms[0]->expression;
+            if (!$expression instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference
+                || !$detached->where instanceof SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership) {
+                throw new RuntimeException('The installed index lost its key and predicate roles.');
+            }
+            $details['createIndex'] = [$result->schema->value, $result->index->value, $result->table->value,
+                $expression->slot, $detached->terms[0]->descending, $detached->unique, $detached->ifNotExists,
+                array_column($detached->where->bindings, 'label'), $detached->toString()];
+            $named = $semantics->analyze('CREATE INDEX native_cast ON indexed_rows(IFNULL(CAST(id AS int), 0))', $activeContext);
+            $function = $named->terms[0]->expression;
+            if (!$function instanceof SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce) {
+                throw new RuntimeException('The installed index lost the native builtin.');
+            }
+            $cast = $function->arguments[0]->expression;
+            if (!$cast instanceof SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression || $cast->typeName === null
+                || !$cast->operand instanceof SqlSemantics\Platform\Sqlite\Ir\ColumnReference) {
+                throw new RuntimeException('The installed index lost the native CAST name or its bound input.');
+            }
+            $type = new SqlSemantics\Platform\Sqlite\Ir\Expression\CastTypeName('int');
+            $scope = new SqlSemantics\Platform\Sqlite\Ir\ColumnReference(0);
+            $copy = new SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression($type->target(), $scope, $type);
+            $direct = new SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce([
+                new SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument($copy),
+                new SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument(new SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral('0')),
+            ], true);
+            $rebuilt = new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex(
+                $named->schema, $named->index, $named->table,
+                [$heading[0], new SqlSemantics\Platform\Sqlite\Ir\Identifier('code'), $heading[2]],
+                [new SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm($direct)],
+            );
+            $mismatched = false;
+            try {
+                new SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression(
+                    SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget::Blob, $scope, $type,
+                );
+            } catch (SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction $error) {
+                $mismatched = str_contains($error->getMessage(), 'select the effective CAST target');
+            }
+            $details['sqliteIndexExpressionSpelling'] = [$function->ifNull, $cast->typeName->value,
+                $cast->target->value, $cast->operand->slot, $mismatched, $named->toString(), $rebuilt->toString()];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
+            $columns = $result->columns();
+            if (count($columns) !== 1 || $columns[0]::class !== $namespace . 'Ir\\Schema\\Query\\CreatedColumn') {
+                throw new RuntimeException('The installed CREATE TABLE AS derives an unexpected column.');
+            }
+            $details['column'] = [$columns[0]->name->value, $columns[0]->type->value];
+        }
+        echo json_encode([
+            'probe' => 'publication',
+            'platform' => $platform,
+            'role' => $role,
+            'profile' => $result->profileId(),
+            'path' => (new ReflectionClass($result))->getFileName(),
+            'input' => $sql,
+            'sql' => $result->toString(),
+            ...$details,
+        ], JSON_THROW_ON_ERROR) . "\n";
+    }
+}

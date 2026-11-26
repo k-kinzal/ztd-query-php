@@ -1,0 +1,55 @@
+{
+  "revision": "SemanticsIR/mysql-external-view-read-names-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "extends": ["mysql-external-views-v1.json", "mysql-create-view-output-names-v2.json", "mysql-native-local-column-names-v1.json"],
+  "scope": "Read signed INT fields from an externally declared persistent view over a checked native base relation. Cover explicitly declared and inherited UTF-8 result names, qualified and unqualified references, and typed detached projection.",
+  "constructors": {
+    "TableSource": {
+      "role": "The resolved persistent view identity and observed input columns in one source occurrence.",
+      "structure": "Absolute schema and relation identifiers, external view kind, ordered consumed column names and their checked storage types.",
+      "conditions": "A view input may have a valid BMP name empty or up to 256 native bytes. No two consumed slots may denote the same name under native simple lowercase. An ordinary table retains its independently checked name rules.",
+      "meaning": "Each consumed name identifies one actual view column under the same native declaration. No analysis object or original SQL is retained.",
+      "externalInterpretation": "Use the same view with the declared result headings in a stock MySQL server. Interpret name case with the measured native system table for the fixed UTF-8 profile.",
+      "sql": "Quote the absolute source and each resolved field name. Use the owning occurrence to identify the input, including for the empty name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "ColumnReference": {
+      "role": "One signed field from an already bound view occurrence.",
+      "structure": "Ordinal of a consumed column and ordinal of the source occurrence.",
+      "conditions": "The owner supplies the resulting type and ordinal. Qualification and native case variants of the same observed field resolve to the same ordinal.",
+      "meaning": "Return the value of that field in the current view row. Retain independent result name and native type observations.",
+      "externalInterpretation": "The supplied signed INT fields have different values across slots and rows. The immutable IR carries the consumed slot identity independently of the analytic catalog.",
+      "sql": "Emit a quoted reference to the canonical field name, with an alias when required by the visible result heading.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "Compare qualified and unqualified reads of an identical column including UTF-8 native case variants, exact accented and ligature names, source placement, values, duplicates, types and output names.",
+    "An older explicit heading is assigned before lookup. A modern explicit heading is exact. A valid inherited alias uses the effective heading after body assignment on each release.",
+    "An empty inherited heading is a native readable field. An older declared heading can exceed the catalog display width and retains trailing whitespace when the installed effect does.",
+    "Unaliased output must reproduce the native observed name under the same fixture rather than assume textual qualification is observable."
+  ],
+  "finite": {
+    "headingShapes": ["exact-utf8", "explicit-leading", "inherited-leading", "inherited-empty"],
+    "legacyAdditionalShapes": ["over-display-width", "explicit-empty", "trailing-whitespace"],
+    "references": ["canonical", "folded", "twice-mixed"],
+    "qualification": ["bare", "alias"],
+    "routes": ["direct", "analyze"],
+    "allowedExclusions": [],
+    "complete": "Recover all independent structural coordinates and native admissible rejections by release and owning binding."
+  },
+  "exploration": {
+    "seeds": [7129, 19777, 38891],
+    "casesPerSeed": 20,
+    "directCasesPerSeed": 20,
+    "timeoutSecondsPerRelease": 600,
+    "shape": "Vary requested and effective UTF-8 headings, relation name forms, consumed field order, repetitions, and output aliases on distinct signed values.",
+    "allowedExclusions": []
+  },
+  "negative": ["Reject a spelling that names no assigned field.", "Reject a detached source with duplicate consumed native view names.", "Reject a detached source name that exceeds the view byte boundary."],
+  "faults": ["Look up a written heading before its native assignment.", "Resolve view column names with ASCII-only case folding.", "Read a different bound field when emitting SQL.", "Ignore an exact visible result heading mismatch."],
+  "trust": ["Stock native UTF-8 case table and persistent column assignment. The underlying schema and assigned data are supplied through the observer and catalog independently."],
+  "open": ["The native field types of arbitrary view expressions, generated labels of additional expressions, wider signed reads, scope of views over other views, and additional SQL modes remain separately tracked."]
+}

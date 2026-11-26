@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * that word is kept so it is written back the way the grammar reads it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.
  *
- * @visibility public
- * @example Reading the input of LOAD DATA
- *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("LOAD DATA LOCAL INFILE 'f.csv' INTO TABLE t");
- *     [$load->statement->input->local, $load->statement->input->source, $load->statement->input->file->value] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, 'f.csv']
+ * @visibility SqlSemantics
  */
 final class LoadInput implements Node
 {

@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-spatial-reference-system.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing a spatial reference system
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('drop spatial reference system if exists 13000');
- *     [$drop->toString(), $drop->statement->ifExists] // => ['DROP SPATIAL REFERENCE SYSTEM IF EXISTS 13000', true]
+ * @visibility SqlSemantics
  */
 final class DropSpatialReference implements Statement
 {

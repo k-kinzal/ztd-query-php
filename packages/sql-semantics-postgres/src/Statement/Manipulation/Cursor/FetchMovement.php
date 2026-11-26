@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
  * of the grammar. The counted movements take a count.
  * Source: https://www.postgresql.org/docs/17/sql-fetch.html.
  *
- * @visibility public
- * @example Reading a movement
- *     $fetch = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('FETCH BACKWARD 5 FROM c');
- *     [$fetch->statement->movement, $fetch->statement->count->magnitude->digits] // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::BackwardCount, '5']
+ * @visibility SqlSemantics
  */
 enum FetchMovement
 {

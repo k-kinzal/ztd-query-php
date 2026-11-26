@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem;
  *
  * Source: https://www.postgresql.org/docs/17/sql-syntax-calling-funcs.html#SQL-SYNTAX-CALLING-FUNCS-MIXED.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of a repeated parameter name
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblemKind::RepeatedName->value // => 'argument name "%s" used more than once'
  */

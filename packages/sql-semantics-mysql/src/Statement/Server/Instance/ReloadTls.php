@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * unless NO ROLLBACK ON ERROR is written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-instance.html.
  *
- * @visibility public
- * @example Reloading the TLS context of the administrative interface
- *     $reload = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_admin NO ROLLBACK ON ERROR');
- *     [$reload->statement->action->channel?->value, $reload->statement->action->noRollbackOnError] // => ['mysql_admin', true]
+ * @visibility SqlSemantics
  */
 final class ReloadTls implements InstanceAction
 {

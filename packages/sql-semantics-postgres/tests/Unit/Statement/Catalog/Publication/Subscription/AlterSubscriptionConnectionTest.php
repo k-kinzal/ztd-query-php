@@ -14,11 +14,11 @@ final class AlterSubscriptionConnectionTest extends TestCase
 {
     public function testRenderWritesTheConnection(): void
     {
-        self::assertSame('ALTER SUBSCRIPTION s CONNECTION \'host=b\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s CONNECTION \'host=b\'')->toString());
+        self::assertSame('ALTER SUBSCRIPTION s CONNECTION \'host=b\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s CONNECTION \'host=b\'')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s CONNECTION \'host=b\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s CONNECTION \'host=b\'')->facts->diagnostics);
     }
 }

@@ -1,0 +1,86 @@
+{
+  "revision": "SemanticsIR/postgres-anonymous-catalog-index-1",
+  "approval": "pending-human-review",
+  "profile": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "references": {
+    "postgres-automatic-btree-name-v1.json": "6b631a80acf72bf208b75fe35fad02f8ece2cbdfcd7d66027511e08578392208",
+    "postgres-index-catalog-binding-v1.json": "c2f6d6e7a8f4e72cc90fc15daef3d6d3204538ec836ddece4c9a9453467ca128",
+    "postgres-index-operand-bindings-v1.json": "bfc9d7a71baaec9cfeb8c8e6f8817e4ab7027c82ad22c686e088cd26f7f285b2",
+    "postgres-schema-indexes-v1.json": "c4008fd5e064005908b46fd3d40170f1de7afd6cd1b932452d8897deaadd0205"
+  },
+  "scope": "Ordered declarations of anonymous direct-column ordinary B-trees in complete PostgreSQL application or temporary namespaces and fresh CREATE SCHEMA member phases.",
+  "rules": [
+    "Use the supplied context declarations in their written order, with the native CREATE SCHEMA member order within a schema input.",
+    "An anonymous B-tree declaration whose ordinary table and physical column occurrences are resolved contributes the exact allocated name to the index namespace. Earlier relation and index names in the same namespace affect allocation, including a prior anonymous declaration.",
+    "Use the same ordered labels and byte clipping as complete CREATE INDEX semantics. Preserve only the allocated index identity, owner and native kind in the declaration ledger.",
+    "An open or opaque namespace cannot supply conclusive anonymous occupancy. An unresolved direct field, expression key, unsupported durable name, partition hierarchy or unknown declaration must leave its namespace opaque.",
+    "A following completed DROP INDEX or REINDEX INDEX binds the same absolute declared owner and allocated index name as if it were supplied explicitly. A following completed CREATE INDEX uses the first remaining available candidate for its exact table and operands.",
+    "The final operations carry their resolved coordinates and operation-specific semantic operands. They do not retain the declaration input or reconstruction history."
+  ],
+  "finite": {
+    "coordinates": 54,
+    "axes": {
+      "layout": [
+        "single",
+        "key-order",
+        "includes",
+        "label-collisions",
+        "asymmetric-utf8",
+        "equal-utf8-bytes"
+      ],
+      "placement": [
+        "permanent",
+        "temporary",
+        "schema-member"
+      ],
+      "occupiedPrefixLength": [
+        0,
+        1,
+        3
+      ]
+    },
+    "initialUnnamedIndexesPerCase": 2,
+    "subsequentOperations": [
+      "REINDEX INDEX",
+      "DROP INDEX",
+      "CREATE INDEX"
+    ],
+    "allowedExclusions": []
+  },
+  "observations": [
+    "The two original allocated names in native catalog order, the exact remaining prior and newly allocated index after the selected operation, and survival of a same-named decoy in another schema.",
+    "The replacement file belongs to the selected REINDEX target, the unguarded DROP removes the intended index, and neither changes the confirmed owner rows.",
+    "Direct completed values and analyzed results agree on their exact resolved roles. Open and unrecognized declarations are rejected at a typed analysis boundary where resolving absence or occupancy would be unsound."
+  ],
+  "faults": [
+    "Use a later namespace prefix without checking it",
+    "Forget an earlier anonymous declaration",
+    "Swap the target of DROP or REINDEX with the same-name decoy",
+    "Publish with an opaque namespace"
+  ],
+  "calibration": {
+    "generate.py": "d11ea607fcf6cba1403a23f2ac28101deb69f07c7f798feffa0421b22e070695",
+    "index_names.py": "934ddc537567e47ae945baa2dcce0989e43c3c995ea99c502d53b6ee02eaebd8",
+    "observe.sql": "c380ed0caedec30decbd569312de7aef6e3060ea8036a2a75883cad9433a9901",
+    "inputs.jsonl": "5b4002f59fb23f285df4c81420c4a5a3d9be303602f550818d276ed9221c4a18"
+  },
+  "trust": [
+    "Pinned PostgreSQL images, the immutable analysis catalog, the registered lexical binding rules and the independently observed native index relation names."
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ]
+}

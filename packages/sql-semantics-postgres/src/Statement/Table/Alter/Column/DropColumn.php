@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * written.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Dropping a column
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t DROP COLUMN IF EXISTS c CASCADE');
- *     $statement->toString() // => 'ALTER TABLE t DROP IF EXISTS c CASCADE'
+ * @visibility SqlSemantics
  */
 final class DropColumn implements AlterCommand
 {

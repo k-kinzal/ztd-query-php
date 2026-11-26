@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Table\Key\Option;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(KeyBlockSize::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class KeyBlockSizeTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) KEY_BLOCK_SIZE = 8)');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT, KEY (a) KEY_BLOCK_SIZE = 8)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

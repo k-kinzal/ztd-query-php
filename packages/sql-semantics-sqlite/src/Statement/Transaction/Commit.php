@@ -18,9 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * written as COMMIT. SQLite reads a name after TRANSACTION and ignores it.
  * Source: https://sqlite.org/lang_transaction.html. Status: Implemented.
  *
- * @visibility public
- * @example Writing END as COMMIT
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('END TRANSACTION')->toString() // => 'COMMIT'
+ * @visibility SqlSemantics
  */
 final class Commit implements Statement
 {

@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
@@ -21,6 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorArity;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(AlterOperator::class)]
 #[Medium]
@@ -28,13 +28,13 @@ final class AlterOperatorTest extends TestCase
 {
     public function testDeriveStatementReportsAPostfixOperator(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR ! (int4, NONE) SET (restrict = NONE)');
+        $operation = (new Inspection())->diagnose('ALTER OPERATOR ! (int4, NONE) SET (restrict = NONE)');
         self::assertEquals([new RoutineProblem(RoutineProblemKind::PostfixOperator)], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheAttributes(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join = eqjoinsel, hashes)');
+        $operation = (new Inspection())->diagnose('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join = eqjoinsel, hashes)');
         self::assertSame('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join = eqjoinsel, hashes)', $operation->toString());
     }
 
@@ -52,7 +52,7 @@ final class AlterOperatorTest extends TestCase
 
     public function testDeriveStatementReportsTheAttributesTheCommandRefuses(): void
     {
-        $operation = (new Semantics('pg-16.6'))->inspect('ALTER OPERATOR = (int4, int4) SET (commutator = =, leftarg = int4, sort1 = <)');
+        $operation = (new Inspection('pg-16.6'))->diagnose('ALTER OPERATOR = (int4, int4) SET (commutator = =, leftarg = int4, sort1 = <)');
         self::assertSame([
             'operator attribute "commutator" cannot be changed',
             'operator attribute "leftarg" cannot be changed',

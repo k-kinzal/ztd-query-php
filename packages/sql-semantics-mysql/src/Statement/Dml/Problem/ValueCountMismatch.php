@@ -16,9 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html (ER_WRONG_VALUE_COUNT_ON_ROW,
  * ER_WRONG_VALUE_COUNT).
  *
- * @visibility public
- * @example Reading a row with too many values
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a) VALUES (1), (2, 3)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column count doesn't match value count at row 2
+ * @visibility SqlSemantics
  */
 final class ValueCountMismatch implements Diagnostic
 {

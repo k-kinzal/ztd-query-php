@@ -14,47 +14,47 @@ final class CreateSchemaTest extends TestCase
 {
     public function testRenderWritesTheAuthorization(): void
     {
-        self::assertSame('CREATE SCHEMA IF NOT EXISTS AUTHORIZATION joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA IF NOT EXISTS AUTHORIZATION joe')->toString());
+        self::assertSame('CREATE SCHEMA IF NOT EXISTS AUTHORIZATION joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA IF NOT EXISTS AUTHORIZATION joe')->toString());
     }
 
     public function testRenderWritesTheElements(): void
     {
-        self::assertSame('CREATE SCHEMA s CREATE TABLE t (a int4) CREATE VIEW v AS SELECT 1', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA s CREATE TABLE t (a int4) CREATE VIEW v AS SELECT 1')->toString());
+        self::assertSame('CREATE SCHEMA s CREATE TABLE t (a int4) CREATE VIEW v AS SELECT 1', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA s CREATE TABLE t (a int4) CREATE VIEW v AS SELECT 1')->toString());
     }
 
     public function testDeriveStatementReportsElementsWithIfNotExists(): void
     {
-        self::assertSame('CREATE SCHEMA IF NOT EXISTS cannot include schema elements', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA IF NOT EXISTS s CREATE TABLE t (a int4)')->facts->diagnostics[0]->message());
+        self::assertSame('CREATE SCHEMA IF NOT EXISTS cannot include schema elements', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA IF NOT EXISTS s CREATE TABLE t (a int4)')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementReportsAReservedName(): void
     {
-        self::assertSame('unacceptable schema name "pg_app"', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA pg_app')->facts->diagnostics[0]->message());
+        self::assertSame('unacceptable schema name "pg_app"', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA pg_app')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementReportsAnElementOfAnotherSchema(): void
     {
-        self::assertSame('CREATE specifies a schema (x) different from the one being created (s)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA s CREATE TABLE x.t (a int4)')->facts->diagnostics[0]->message());
+        self::assertSame('CREATE specifies a schema (x) different from the one being created (s)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA s CREATE TABLE x.t (a int4)')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementDeclaresInTheNewSchema(): void
     {
-        self::assertSame('s', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA s CREATE TABLE t (a int4)')->declarations()[0]->name->schema?->value);
+        self::assertSame('s', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA s CREATE TABLE t (a int4)')->declarations()[0]->name->schema?->value);
     }
 
     public function testDeriveStatementReadsTheElementsWithTheNewSchemaSearchedFirst(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE TABLE s.t (x int4)', [])->declarations()[0], $semantics->inspect('CREATE TABLE public.t (y int4)', [])->declarations()[0]];
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE TABLE s.t (x int4)', [])->declarations()[0], $semantics->diagnose('CREATE TABLE public.t (y int4)', [])->declarations()[0]];
         self::assertSame(['x', 'y'], [
-            $semantics->inspect('CREATE SCHEMA s CREATE VIEW v AS SELECT * FROM t', $context)->declarations()[0]->columns[0]->name->value,
-            $semantics->inspect('CREATE VIEW v AS SELECT * FROM t', $context)->declarations()[0]->columns[0]->name->value,
+            $semantics->diagnose('CREATE SCHEMA s CREATE VIEW v AS SELECT * FROM t', $context)->declarations()[0]->columns[0]->name->value,
+            $semantics->diagnose('CREATE VIEW v AS SELECT * FROM t', $context)->declarations()[0]->columns[0]->name->value,
         ]);
     }
 
     public function testDeriveStatementLetsAnElementSeeTheRelationsOfEarlierSteps(): void
     {
-        $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM x CREATE TABLE x (a int4)', []);
+        $operation = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM x CREATE TABLE x (a int4)', []);
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame(['x', 'v'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table $table): string => $table->name->name->value, $operation->declarations()));
         self::assertTrue($operation->declarations()[1]->complete);
@@ -62,13 +62,13 @@ final class CreateSchemaTest extends TestCase
 
     public function testDeriveStatementRunsViewsInTheOrderWritten(): void
     {
-        $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM w CREATE VIEW w AS SELECT 1 AS a', []);
+        $operation = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM w CREATE VIEW w AS SELECT 1 AS a', []);
         self::assertSame('Relation w does not exist.', $operation->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementDeclaresNothingForASessionOwner(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA AUTHORIZATION CURRENT_USER CREATE TABLE t (a int4)')->declarations());
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE SCHEMA AUTHORIZATION CURRENT_USER CREATE TABLE t (a int4)')->declarations());
     }
 
     public function testRejectsASchemaWithoutNameOrOwner(): void

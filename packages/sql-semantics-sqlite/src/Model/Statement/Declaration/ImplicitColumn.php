@@ -15,11 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * it is not part of `*`. When it is another name for a declared column, the
  * reference resolves to that declared column.
  *
- * @visibility public
- * @example Declaring an implicit row identifier
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a TEXT)')->declarations()[0];
- *     $table->implicit[0]->names[0]->value // => 'rowid'
+ * @visibility SqlSemantics
  */
 final class ImplicitColumn
 {

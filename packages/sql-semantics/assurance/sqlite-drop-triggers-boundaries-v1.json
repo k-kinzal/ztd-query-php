@@ -1,0 +1,71 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-triggers-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Freeze the checked installed and absent roles, lookup order, external scope and SQL emission.",
+  "rules": {
+    "Schema/Trigger/DropTrigger::__construct": {
+      "common": [
+        "Check::input($ifExists || $target instanceof TriggerReference, 'An absent DROP TRIGGER target requires IF EXISTS.');"
+      ]
+    },
+    "Schema/Trigger/DropTrigger::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Schema/Trigger/DropTrigger::toString": {
+      "common": [
+        "return 'DROP TRIGGER ' . ($this->ifExists ? 'IF EXISTS ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Trigger/Removal/MissingTrigger::__construct": {
+      "common": [
+        "Check::input(($schema === null) === ($verification === TriggerVerification::SearchPath), 'Trigger verification requires an exact qualifier only for a qualified scope.');",
+        "Check::input($verification !== TriggerVerification::UnknownSchema || $schema !== null && $schema->key() !== 'main' && $schema->key() !== 'temp', 'The main and temp trigger schemas are always known.');"
+      ]
+    },
+    "Schema/Trigger/Removal/MissingTrigger::quoted": {
+      "common": [
+        "return ($this->schema === null ? '' : $this->schema->quoted() . '.') . $this->name->quoted();"
+      ]
+    },
+    "Schema/Trigger/Removal/TriggerReference::__construct": {
+      "common": [
+        "Check::input(!str_starts_with($name->key(), 'sqlite_'), 'An ordinary trigger cannot belong to the reserved SQLite namespace.');",
+        "Check::input($schema->key() === 'temp' || $schema->key() === $watchedSchema->key(), 'A stored trigger must watch a relation in its own schema.');"
+      ]
+    },
+    "Schema/Trigger/Removal/TriggerReference::quoted": {
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->name->quoted();"
+      ]
+    },
+    "Schema/Trigger/Binding/DropTriggerLowering::lower": {
+      "common": [
+        "Check::input($drop->object === SchemaObjectKind::Trigger, 'A trigger removal requires the DROP TRIGGER operation.');",
+        "$context = $operation->context;",
+        "$names = new TriggerNamespace();",
+        "$names->validatePath($context);",
+        "$schema = $drop->name->schema;",
+        "$known = $schema === null ? null : $names->known($context, $schema);",
+        "$path = $schema === null ? $context->searchPath : ($known === null ? [] : [$known]);",
+        "foreach ($path as $location) {",
+        "    $matches = $context->triggersAt($drop->name->name, $location);",
+        "    Check::input(count($matches) <= 1, 'Conflicting declared triggers share the selected coordinate.');",
+        "    if ($matches !== []) {",
+        "        $trigger = $matches[0];",
+        "        return new DropTrigger(new TriggerReference(new Identifier($trigger->schema->value), new Identifier($trigger->name->value), new Identifier($trigger->watchedSchema->value), new Identifier($trigger->watchedName->value)), $drop->ifExists);",
+        "    }",
+        "    Check::input($schema !== null || $context->complete, 'Unqualified DROP TRIGGER cannot skip an open schema.');",
+        "}",
+        "Check::input($context->complete && $drop->ifExists, 'DROP TRIGGER requires a resolved trigger or a known guarded absence.');",
+        "$verification = match (true) {",
+        "    $schema === null => TriggerVerification::SearchPath,",
+        "    $known !== null => TriggerVerification::KnownSchema,",
+        "    default => TriggerVerification::UnknownSchema,",
+        "};",
+        "return new DropTrigger(new MissingTrigger(new Identifier($drop->name->name->value), $verification, $schema === null ? null : new Identifier($schema->value)), true);"
+      ]
+    }
+  }
+}

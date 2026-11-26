@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * object as the bare name.
  * Source: https://www.postgresql.org/docs/17/sql-droptype.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the type name
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('mood')])));
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\TypeReference($type))->type === $type // => true

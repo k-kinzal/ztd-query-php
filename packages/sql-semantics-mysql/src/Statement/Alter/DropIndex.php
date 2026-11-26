@@ -19,17 +19,14 @@ use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
  *
  * Mirrors PT_drop_index_stmt. Rule: MYSQL-DROP-INDEX-001. The table resolves
  * by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact of the
- * statement node; `PRIMARY` names the primary key. A declaration context
- * holds no indexes, so the index name is kept unresolved. The ALGORITHM and
+ * statement node. The completed MySQL IR resolves the physical index name
+ * against the resolved owner's declaration. The ALGORITHM and
  * LOCK options are kept in the order written. The statement changes no
  * declaration and provides none.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-index.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Removing an index while allowing reads
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP INDEX i ON t LOCK SHARED');
- *     [$drop->statement->index->value, $drop->toString()] // => ['i', 'DROP INDEX i ON t LOCK = SHARED']
+ * @visibility SqlSemantics
  */
 final class DropIndex implements Statement
 {

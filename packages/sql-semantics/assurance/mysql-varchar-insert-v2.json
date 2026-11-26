@@ -1,0 +1,38 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-insert-2",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["server-insert-v1.json", "mysql-varchar-slots-v2.json", "mysql-varchar-assignment-v3.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "amends": "mysql-varchar-insert-v1.json",
+  "amendmentReason": "Native comparison found release-specific INSERT diagnostic continuation and required NULL aggregation. Keep all diagnostic observations and add original-SQL witnesses while retaining every previous finite identity and seed.",
+  "scope": "Ordinary MySQL INSERT VALUES with an explicit, ordered list of signed INT or stock utf8mb4_bin VARCHAR destination fields and one or more rows of native literals or NULL.",
+  "constructors": {
+    "Mutation/InsertCell": {
+      "role": "One explicit literal value in an INSERT row.",
+      "structure": "A signed integer literal, a plain UTF-8 text literal or the NULL alternative.",
+      "conditions": "An integer cell occupies a signed INT slot. A text cell occupies a declared VARCHAR slot. NULL may occupy either slot. The owning INSERT matches each cell to the physical destination at the same position.",
+      "meaning": "Supply the exact literal to the ordinary native insert. The resolved destination interprets capacity and nullable policy for the statement row count.",
+      "sql": "Render the signed literal, exact quoted UTF-8 text or the NULL keyword."
+    }
+  },
+  "existingRoles": ["From/Varchar", "TableSource", "Literal/TextLiteral", "Mutation/InsertRow", "Mutation/Insert"],
+  "structure": "An absolute physical relation identity and an ordered, duplicate-free write layout. Every row has one cell for each destination in the same order.",
+  "conditions": "The typed target must resolve before publication. The list names only writable fields. The direct and analyzed paths check width, position and role. A single-row required-NULL error is a defined native statement effect.",
+  "meaning": "Store explicit values in the exact named fields, applying native VARCHAR length and nullability behavior. Ordinary single-row INSERT rejects NULL in a required field with SQLSTATE 23000 and vendor code 1048. For multiple rows under empty sql_mode it substitutes the implicit empty string and emits Warning 1048. The same external table supplies constraints and omitted destinations. In the fixed AFTER INSERT fixture, 5.6.51 and 5.7.44 can report truncations from later cells on the same row after a required NULL is encountered. The remaining pinned releases stop at the failing cell. Starting with 5.7.44, multi-row required NULL diagnostics are aggregated per destination, and truncation diagnostics still preserve their multiplicity.",
+  "sql": "Emit ordinary INSERT with its explicit destinations and every row in order. Use the stock literal forms so the server applies the same storage conversion and effects.",
+  "observations": ["Exact rows, values, NULL, duplicates and trigger events", "Changed-row count and zero result columns", "Whole-statement rollback on the exact required-NULL or duplicate-key error", "Diagnostic severity, code, destination and multiplicity, with complete raw warning records", "The order of the source rows where it is observed by the insertion trigger"],
+  "finite": {"headings": ["natural", "reordered"], "rowCounts": [1, 2], "textValues": ["fitting", "wide", "padding", "ascii-whitespace", "unicode-whitespace", "null"], "testedField": ["nullable", "required", "zero-capacity"], "identities": 72, "completeness": "Recover heading order, row count, exact tested destination and literal class from each constructed INSERT."},
+  "exploration": {"seeds": [4637, 14723, 36809], "casesPerSeed": 20, "timeoutSecondsPerRelease": 300, "allowedExclusions": [], "requiredForms": "Vary heading permutations, singleton and multiple row lengths, repeated text and NULL rows, duplicates in registered key roles, binary-safe literals and aliases accepted by the grammar."},
+  "analysis": ["Single VARCHAR literal", "Permuted columns and several text rows", "Same text records and distinct identities", "One required NULL", "Required NULL across multiple rows", "Named duplicate key with rollback", "Required NULL before two overflowing cells in a single row", "Two required NULL rows and two independent truncations"],
+  "negative": ["Text is assigned to an integer destination", "An integer is assigned to a VARCHAR destination", "Cell width differs from the explicit layout", "A destination is repeated", "Declared collation is unresolved or has a different interpretation", "An explicit generated field is written"],
+  "faults": ["Swap two independently named text columns", "Drop the last inserted row", "Reverse row order", "Trim literal trailing space", "Replace a VARCHAR NULL with an empty string"],
+  "evidence": {
+    "P01": "Retain the physical identity, ordered write slots and exact literal domains.", "P02": "Reject mismatched cells and layout before publishing.", "P03": "Store only semantic literals and native destinations.", "P04": "Compose ordered rows under their typed write interpretation.", "P05": "Check readonly cells and copied row lists.", "P06": "Compare exact stored state, SQL diagnostics, events and native failure effects.",
+    "Q01": "Reject the specified wrong constructor roles and scope.", "Q02": "Exhaust all 72 finite identities and traverse the seeded forms.", "Q03": "Check heading uniqueness and each positional type correspondence.", "Q04": "Verify native row values and effects with an independent meaning evaluator.", "Q05": "Identify the distributed PHP, exact controller, profile and both installation layouts."
+  },
+  "open": ["Computed values, implicit defaults as explicit operands, parameter values and other collations", "INSERT SELECT with VARCHAR targets and conflict policies", "Other grammar families and lexical modes"],
+  "trust": ["Native stock VARCHAR storage and ordinary single or multiple row INSERT under empty sql_mode", "Equivalence of the supplied external definition and the disposable InnoDB fixture", "Independent row, diagnostics and trigger sequence model"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/insert.html", "https://dev.mysql.com/doc/refman/8.4/en/char.html", "https://dev.mysql.com/doc/refman/8.4/en/trigger-syntax.html", "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_base.cc#L9079-L9095", "https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/field.cc#L11525-L11570", "https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/sql_base.cc#L9549-L9564"]
+}

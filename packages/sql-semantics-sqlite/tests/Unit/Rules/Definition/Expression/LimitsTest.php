@@ -12,12 +12,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedConstruct;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Limits::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class LimitsTest extends TestCase
 {
     public function testNodesWalksTheExpressionInOrderWithoutEnteringASubquery(): void
     {
-        $expression = (new Semantics())->inspect('SELECT a + (SELECT b + ? FROM t) - c')->field(0)->expression;
+        $expression = (new Inspection())->diagnose('SELECT a + (SELECT b + ? FROM t) - c')->field(0)->expression;
 
         self::assertNotNull($expression);
         $classes = array_map(static fn (object $node): string => substr($node::class, (int) strrpos($node::class, '\\') + 1), (new Limits())->nodes($expression));
@@ -35,7 +35,7 @@ final class LimitsTest extends TestCase
 
     public function testClassifyNamesEachRejectedNode(): void
     {
-        $row = (new Semantics())->inspect('SELECT (?, (SELECT 1), 1 IN t, t.a, random(), RANDOMBLOB(1), CURRENT_TIME, abs(1), a + 1, EXISTS (SELECT 1), a IN (SELECT 1))')->field(0)->expression;
+        $row = (new Inspection())->diagnose('SELECT (?, (SELECT 1), 1 IN t, t.a, random(), RANDOMBLOB(1), CURRENT_TIME, abs(1), a + 1, EXISTS (SELECT 1), a IN (SELECT 1))')->field(0)->expression;
         $limits = new Limits();
 
         self::assertInstanceOf(RowExpression::class, $row);
@@ -47,7 +47,7 @@ final class LimitsTest extends TestCase
 
     public function testRejectedAnswersWhatThePositionRejectsOnceEach(): void
     {
-        $query = (new Semantics())->inspect('SELECT t.a + ? + ? + random() + (SELECT 1) + current_date');
+        $query = (new Inspection())->diagnose('SELECT t.a + ? + ? + random() + (SELECT 1) + current_date');
         $expression = $query->field(0)->expression;
         $limits = new Limits();
 
@@ -60,8 +60,8 @@ final class LimitsTest extends TestCase
 
     public function testReportRecordsOneDiagnosticPerRejectedConstruct(): void
     {
-        $semantics = new Semantics();
-        $expression = $semantics->inspect('SELECT a > ? AND b IN (SELECT 1)')->field(0)->expression;
+        $semantics = new Inspection();
+        $expression = $semantics->diagnose('SELECT a > ? AND b IN (SELECT 1)')->field(0)->expression;
         $derivation = new Derivation($semantics->context());
 
         self::assertNotNull($expression);
@@ -76,11 +76,11 @@ final class LimitsTest extends TestCase
 
     public function testNonConstantFindsWhatADefaultMayNotContain(): void
     {
-        $row = (new Semantics())->inspect('SELECT (?, (SELECT 1), 1 IN t, a, "a", RAISE(IGNORE), random() + abs(1), CASE WHEN 1 THEN 2 END, TRUE, CURRENT_TIME)')->field(0)->expression;
+        $row = (new Inspection())->diagnose('SELECT (?, (SELECT 1), 1 IN t, a, "a", RAISE(IGNORE), random() + abs(1), CASE WHEN 1 THEN 2 END, TRUE, CURRENT_TIME, (?7 + a) NOT IN ())')->field(0)->expression;
         $limits = new Limits();
 
         self::assertInstanceOf(RowExpression::class, $row);
         $constant = array_map(static fn (Scalar $item): bool => $limits->nonConstant($item), $row->items);
-        self::assertSame([true, true, true, true, true, true, false, false, false, false], $constant);
+        self::assertSame([true, true, true, true, true, true, false, false, false, false, false], $constant);
     }
 }

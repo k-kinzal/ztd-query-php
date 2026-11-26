@@ -1,0 +1,152 @@
+{
+  "revision": "SemanticsIR/mysql-implicit-foreign-index-evidence-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-implicit-foreign-index-names-v1.json",
+    "mysql-index-foreign-keys-evidence-v1.json",
+    "mysql-index-visibility-evidence-v2.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Ordinary persistent InnoDB, native parameter and name comparison settings, default foreign_key_checks=1. No user partitioning or SQL-generated invisible primary keys.",
+  "constructors": {},
+  "existingRoles": [
+    "Schema/Index/DropIndex",
+    "Schema/Index/Dependency/IndexForeignKeyRequirement",
+    "Schema/Index/Visibility/SetIndexVisibility"
+  ],
+  "finite": {
+    "names": [
+      "first field",
+      "written key",
+      "constraint symbol",
+      "both"
+    ],
+    "coverage": [
+      "absent",
+      "explicit former",
+      "explicit latter",
+      "wrong direction",
+      "wrong order",
+      "whole longer"
+    ],
+    "requiredIndependentExamples": [
+      "Repeated equal signatures",
+      "Strictly longer signature both orders",
+      "Canonical name case",
+      "Both collision orders",
+      "Visible and invisible eligible explicit key",
+      "Implicit backing with AUTO_INCREMENT",
+      "Legacy ignored inline versus active MySQL 9",
+      "Physical copy through LIKE"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": [],
+    "actions": [
+      "required",
+      "unrelated",
+      "copied"
+    ]
+  },
+  "finiteIdentities": 72,
+  "exploration": {
+    "seeds": [
+      181,
+      1217,
+      1553
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Native typed last-key removal in both public paths",
+    "Unresolved physical key and open catalog before root publication"
+  ],
+  "observations": [
+    "Native qualified relation and lifetime",
+    "Exact names and named policy families",
+    "Physical ordered fields, direction and duplicate name refusal",
+    "Generated reference identity and ordered field pairings",
+    "Resolved drop, create and visibility effects under independent fixture replay",
+    "Preserved rows and native constraints or declared copying effects"
+  ],
+  "evidence": {
+    "P01": "Observe exact declared and generated field and index spelling, schema ownership, placement and physical index policy.",
+    "P02": "Materialize settled native key facts before publication. Refuse loss of the last support and release-specific source restrictions.",
+    "P03": "The published operation retains the resolved original target. Allocation rules and catalog definitions remain transient.",
+    "P04": "Compose the final native name set from compatible explicit prefixes and retained generated candidates in element order.",
+    "P05": "The closed clause types, checked constructor inputs and immutable physical identity are used by every tested route.",
+    "P06": "Observe original and emitted operations, preserving copied index identities and active native foreign-key enforcement."
+  },
+  "obligations": {
+    "Q01": "Audit the actual native allocation functions and mutation witnesses and measure precise invalid complete roots.",
+    "Q02": "Keep all applicable native positive and negative finite, explored and authored cases.",
+    "Q03": "Track per-element explicit and implicit key roles, exact ordered prefix elimination and native name allocation.",
+    "Q04": "Measure the original source and copied key metadata, before and after operation, plus actual constraints and data.",
+    "Q05": "Link PHP source fingerprints, installed public roots, exact release cases and independent replay."
+  },
+  "faults": [
+    "Lose a physically present generated key in the copied catalog.",
+    "Forget to observe the enforced native constraint.",
+    "Remove a copied decoy instead of the selected generated key."
+  ],
+  "supplementalCalibration": {
+    "description": "Independent declaration calibration for equal and longer proposals, suffix collisions, AUTO_INCREMENT backing, physical LIKE copies and inline release behavior. These raw comparisons are additional evidence. The executable finite run below focuses on single named FK prefixes and their operation effects.",
+    "extendedNativeTsvSha256": {
+      "5.6.51": "e448f127281b426daf193b2b39f71914ab988330669402b8e170370a8c9f37b4",
+      "8.0.44": "2990a2c100236546902fe8cfcebb740468eed43bc3e12337642e890d2e0b163e",
+      "9.1.0": "14513c5b21d9c45b6f14bf6c6c9294462d9aa1739695403a0447bd74c9b36d9c"
+    }
+  },
+  "trackedBeyondThisSlice": [
+    "User partitioning and non-InnoDB foreign-key engines",
+    "Dynamic ALTER declarations and configuration profiles",
+    "Generated physical names in external table snapshots not represented by supported declaration inputs",
+    "Protected repeated-constraint declaration matrix and additional affected index operations"
+  ],
+  "trust": [
+    "Complete and correctly interpreted external native declarations",
+    "Pinned source fingerprint comparisons, native observer and release-specific rule data"
+  ],
+  "admitted": {
+    "mysql-5.6.51": 48,
+    "mysql-5.7.44": 48,
+    "mysql-8.0.44": 52,
+    "mysql-8.1.0": 52,
+    "mysql-8.2.0": 52,
+    "mysql-8.3.0": 52,
+    "mysql-8.4.7": 52,
+    "mysql-9.0.1": 52,
+    "mysql-9.1.0": 52
+  },
+  "negativeCount": {
+    "mysql-5.6.51": 90,
+    "mysql-5.7.44": 90,
+    "mysql-8.0.44": 50,
+    "mysql-8.1.0": 50,
+    "mysql-8.2.0": 50,
+    "mysql-8.3.0": 50,
+    "mysql-8.4.7": 50,
+    "mysql-9.0.1": 50,
+    "mysql-9.1.0": 50
+  },
+  "publicationContracts": {
+    "mysql-index-removal-construction-facts-v1.json": "0a0b00b9f59a18adc6776398770fb7d43ab3e742f5a39e7f0a581e5e30772308",
+    "mysql-implicit-foreign-index-evidence-v1.json": "2415d321aff6b3f886eb46ad353b5b80923e470c0d0784d2decd59817a341b84"
+  },
+  "change": "Retain the complete original finite design, native observations and faults, and verify that generation support is transient at every physical removal boundary."
+}

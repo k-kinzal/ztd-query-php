@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Invocation;
 
 use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Lookup\StockLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
@@ -179,12 +180,6 @@ final class CallTyping
      */
     public function catalogFirst(AnalysisContext $context): bool
     {
-        foreach ($context->searchPath as $schema) {
-            if ($schema->value !== 'pg_temp') {
-                return $schema->value === 'pg_catalog';
-            }
-        }
-
-        return false;
+        return StockLookup::firstCatalog($context->searchPath);
     }
 }

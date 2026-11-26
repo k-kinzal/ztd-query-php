@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
  * Each case holds the keyword; TIMESTAMP and DATETIME give the same formats.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_get-format.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Temporal\TemporalFormat::DateTime->value // => 'DATETIME'
  */

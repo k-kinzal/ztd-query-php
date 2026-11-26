@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * no row. The result column is named `json_objectagg`.
  * Source: https://www.postgresql.org/docs/17/functions-aggregate.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     $pair = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonPair(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()));
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonObjectAggregate($pair))->outputName()->value // => 'json_objectagg'

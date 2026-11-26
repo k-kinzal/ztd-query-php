@@ -8,14 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(WindowDefinition::class)]
 #[Medium]
@@ -23,9 +23,9 @@ final class WindowDefinitionTest extends TestCase
 {
     public function testReadsTheNameAndTheSpecification(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a), v AS (w PARTITION BY b)', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a), v AS (w PARTITION BY b)', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -41,16 +41,16 @@ final class WindowDefinitionTest extends TestCase
 
     public function testRenderWritesTheNameAndTheParenthesizedSpecification(): void
     {
-        $operation = (new Semantics())->analyze('select rank() over w AS c1 from t window w as (order by a), v as (), u as (w partition by b rows unbounded preceding)');
+        $operation = (new Inspection())->inspect('select rank() over w AS c1 from t window w as (order by a), v as (), u as (w partition by b rows unbounded preceding)');
 
         self::assertSame('SELECT rank() OVER w AS c1 FROM t WINDOW w AS (ORDER BY a), v AS (), u AS (w PARTITION BY b ROWS UNBOUNDED PRECEDING)', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltDefinition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $definition = new WindowDefinition(new Name('w'), new WindowSpec(new Name('v'), [new IntegerLiteral('1')]));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('rank'), [], false, null, [], null, new Name('w')))], null, null, [], null, [$definition]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('rank'), [], false, null, [], null, new Name('w')))], null, null, [], null, [$definition]));
 
         self::assertSame('SELECT rank() OVER w WINDOW w AS (v PARTITION BY 1)', $operation->toString());
     }

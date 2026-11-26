@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferentialA
  * (PG-FOREIGN-KEY-001) and is the relation fact of this constraint.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-PARMS-REFERENCES.
  *
- * @visibility public
- * @example Reading a foreign key
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)');
- *     $create->toString() // => 'CREATE TABLE t (a INT, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)'
+ * @visibility SqlSemantics
  */
 final class ForeignKey implements Constraint
 {

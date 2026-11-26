@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  * not a role.
  * Source: https://www.postgresql.org/docs/17/sql-drop-owned.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the roles and the behavior
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP OWNED BY joe, CURRENT_USER CASCADE');
- *     [count($operation->statement->roles), $operation->statement->behavior?->value] // => [2, 'CASCADE']
+ * @visibility SqlSemantics
  */
 final class DropOwned implements Statement
 {

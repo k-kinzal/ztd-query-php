@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Literal;
  *
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-BIT-STRINGS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the prefix of the hexadecimal notation
  *     \SqlSemantics\Platform\PostgreSql\Statement\Literal\BitStringRadix::Hexadecimal->value // => 'x'
  */

@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
  * and always written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-add-drop-column.
  *
- * @visibility public
- * @example Adding a column after the first one
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD b INT AFTER a');
- *     [$alter->statement->commands[0]->column->name->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t ADD COLUMN b INT AFTER a']
+ * @visibility SqlSemantics
  */
 final class AddColumn implements AlterCommand
 {

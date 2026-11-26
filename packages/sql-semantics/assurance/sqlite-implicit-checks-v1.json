@@ -1,0 +1,241 @@
+{
+  "revision": "SemanticsIR/sqlite-implicit-checks-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with default expression name resolution and normal ALTER TABLE rename semantics.",
+  "scope": "A native implicit CHECK label from one unqualified declared column, a comparison symbol and a nonnegative decimal integer.",
+  "constructors": {
+    "Schema/Predicate/ImplicitCheckLabel": {
+      "role": "The presentation of a failure label derived from an unnamed comparison.",
+      "structure": "An identifier spelling and quote mode, a comparison glyph, whitespace around the glyph and the decimal zero prefix count.",
+      "conditions": "The owning CHECK matches the token with the resolved comparison of one local column and a nonnegative signed-range decimal. The owning table matches the spelling to the referenced slot. The layout stores only checked name, spacing and numeric presentation values.",
+      "meaning": "Bare identifiers display the checked comparison spelling. Quoted leading identifiers display the decoded name. Later native column rename updates the implicit label through the comparison tokens.",
+      "externalInterpretation": "Use the resolved declared column and the same SQLite native schema rewrite.",
+      "sql": "Emit an unnamed CHECK with the resolved operands and their checked diagnostic presentation.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Predicate/ComparisonSpelling": {
+      "role": "One native comparison glyph and its resolved operation.",
+      "structure": "Exactly eight glyphs for equality, inequality and ordered comparisons.",
+      "conditions": "The comparison token must name the same operation as the checked condition.",
+      "meaning": "Equality and inequality aliases have the same operation and retain distinct diagnostic spellings.",
+      "externalInterpretation": "Use native SQLite comparison semantics for the recorded operation.",
+      "sql": "Emit the selected glyph.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/Predicate/CheckConstraint",
+    "Schema/CreateTable",
+    "ColumnReference",
+    "Predicate/Comparison"
+  ],
+  "lexicalDomain": {
+    "keywordCount": 147,
+    "bareRejected": [
+      "ADD",
+      "ALL",
+      "ALTER",
+      "AND",
+      "AS",
+      "AUTOINCREMENT",
+      "BETWEEN",
+      "CASE",
+      "CAST",
+      "CHECK",
+      "COLLATE",
+      "COMMIT",
+      "CONSTRAINT",
+      "CREATE",
+      "CURRENT_DATE",
+      "CURRENT_TIME",
+      "CURRENT_TIMESTAMP",
+      "DEFAULT",
+      "DEFERRABLE",
+      "DELETE",
+      "DISTINCT",
+      "DROP",
+      "ELSE",
+      "ESCAPE",
+      "EXCEPT",
+      "EXISTS",
+      "FOREIGN",
+      "FROM",
+      "GROUP",
+      "HAVING",
+      "IN",
+      "INDEX",
+      "INSERT",
+      "INTERSECT",
+      "INTO",
+      "IS",
+      "ISNULL",
+      "JOIN",
+      "LIMIT",
+      "NOT",
+      "NOTHING",
+      "NOTNULL",
+      "NULL",
+      "ON",
+      "OR",
+      "ORDER",
+      "PRIMARY",
+      "RAISE",
+      "REFERENCES",
+      "RETURNING",
+      "SELECT",
+      "SET",
+      "TABLE",
+      "THEN",
+      "TO",
+      "TRANSACTION",
+      "UNION",
+      "UNIQUE",
+      "UPDATE",
+      "USING",
+      "VALUES",
+      "WHEN",
+      "WHERE"
+    ],
+    "comparisonSymbols": [
+      "=",
+      "==",
+      "!=",
+      "<>",
+      "<",
+      "<=",
+      ">",
+      ">="
+    ],
+    "maximumGapBytes": 128,
+    "maximumLeadingZeroes": 32,
+    "quoteKinds": [
+      "bare",
+      "quoted"
+    ],
+    "normalizedQuotedTokens": [
+      "double-quote",
+      "backtick",
+      "bracket"
+    ],
+    "spaces": [
+      "",
+      " ",
+      "  ",
+      "\t",
+      "\n"
+    ]
+  },
+  "observations": [
+    "Compare the exact native constraint label, success and persisted rows for different typed inputs, including NULL.",
+    "Compare original, bare-renamed and quoted-renamed table effects. An independent fixture distinguishes the referenced and owning slots.",
+    "Probe all 147 native keywords for the bare identifier role. For analyzed cases compare both original and rendered SQL."
+  ],
+  "finite": {
+    "owner": [
+      "inline",
+      "table"
+    ],
+    "spelling": [
+      "bare",
+      "quoted"
+    ],
+    "symbols": [
+      "=",
+      "==",
+      "!=",
+      "<>",
+      "<",
+      "<=",
+      ">",
+      ">="
+    ],
+    "layouts": [
+      {
+        "before": "",
+        "after": "",
+        "zeroes": 0
+      },
+      {
+        "before": " ",
+        "after": "  ",
+        "zeroes": 2
+      },
+      {
+        "before": "\t",
+        "after": "\n",
+        "zeroes": 1
+      }
+    ],
+    "values": [
+      "0",
+      "1"
+    ],
+    "identity": "Exhaust all owner, spelling, glyph, layout and literal combinations for 192 distinct constructors. Each one observes original, bare rename and quoted rename effects."
+  },
+  "exploration": {
+    "seeds": [
+      10459,
+      30841,
+      50383
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 200,
+    "allowedExclusions": [],
+    "structure": "Vary column names, owners and referenced slots, glyphs, quote modes, whitespace, integer width and native rename effects. Include empty and UTF-8 quoted names and the signed endpoint."
+  },
+  "negative": [
+    "A bare spelling does not denote a checked column",
+    "A layout contains non-whitespace SQL",
+    "The label names another declared column than the resolved operand",
+    "The glyph names another operation",
+    "The right operand is negative or has another scalar role",
+    "An analyzed first or last token has comment text outside the admitted presentation"
+  ],
+  "faults": [
+    "Quote a bare operand",
+    "Replace a comparison alias with the canonical symbol",
+    "Lose the decimal zero prefix",
+    "Use an explicit label that persists after rename"
+  ],
+  "predecessorCheck": "Retain newly admitted original unnamed CHECK cases as analyzed positives. Keep the previous rejection checks and budgets using an unnamed CHECK with unresolved comment layout.",
+  "open": [
+    "Implicit labels for other expressions, keyword operators, qualification, comments, unary signs and presentation outside the stated envelope."
+  ],
+  "trust": [
+    "SQLite CHECK parsing, dequoting and native rename rules",
+    "Independent label, comparison and rename observations",
+    "Exact PHP value closure and binding checks"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createtable.html#check_constraints",
+    "https://sqlite.org/lang_altertable.html",
+    "https://www.sqlite.org/2024/sqlite-amalgamation-3470200.zip"
+  ]
+}

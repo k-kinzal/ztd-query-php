@@ -1,0 +1,65 @@
+{
+  "revision": "SemanticsIR/sqlite-group-filter-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with the scalar, count, collation and external table profiles in sqlite-grouped-v1.json, sqlite-scalars-v1.json, sqlite-case-v1.json and sqlite-cast-v1.json.",
+  "existingRoles": ["Aggregation/GroupedSelect", "Aggregation/Count", "Aggregation/GroupKey", "Predicate/ComparisonOperator", "IntegerLiteral", "NullLiteral", "Parameter"],
+  "constructors": {
+    "CountComparison": {
+      "type": "Aggregation/CountComparison",
+      "role": "The ordered comparison evaluated on the formed group",
+      "structure": ["count", "operator", "threshold with integer, NULL or numbered binding role", "whether the threshold is on the left"],
+      "conditions": "All types are closed. The owning grouped query checks the count argument against the same input occurrence as counts in the result and checks the threshold as a scalar.",
+      "meaning": "Evaluate a builtin COUNT over the rows admitted to the group. Compare its INTEGER result with the exact typed threshold, with no implicit column affinity on either operand. The ordered comparison uses the standard SQLite NULL or IS and IS NOT result rules. The group is kept when the result is true.",
+      "externalInterpretation": "Use the same builtin count, collation registry, declared table and numbered parameter bindings.",
+      "sql": "Render the count and threshold on the specified sides of the operator after HAVING. Render the count argument by its resolved slot with its effective distinct collation if present.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "admission": [
+    "WHERE admits the closed scalar expression family with the usual expression height and expansion budgets and all column occurrences checked against the sole visible table or the empty scalar scope.",
+    "An optional HAVING compares one count of rows, field values, or distinct field values with an integer, NULL, or numbered binding. Either operand can be the count. The count need not appear in the results."
+  ],
+  "observations": [
+    "Distinct effects of rejecting input rows before grouping and rejecting formed groups.",
+    "Global count over zero admitted rows and keyed grouping over zero admitted rows.",
+    "Ordered results fields, exact labels, result multiplicity, storage classes, same-row key representatives, numbered bindings in SQL clause order, and absence of writes."
+  ],
+  "finite": {
+    "relations": ["bag", "empty"],
+    "partitions": ["global", "key"],
+    "filters": ["absent", "nonnull second slot", "first slot equal to integer one"],
+    "operators": ["=", "<>", "<", "<=", ">", ">=", "IS", "IS NOT"],
+    "thresholds": ["integer one", "NULL"],
+    "operandOrders": ["count-left", "count-right"],
+    "identity": "Recover all six axes from actual values and require each of the 384 combinations exactly once."
+  },
+  "exploration": {
+    "seeds": [8053, 13033, 26393],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 150,
+    "allowedExclusions": [],
+    "structure": "Vary scope, key and result lists, mixed-value count argument, operator, direction, parameter label with repeated numbered slot, row filter depth and lifted count role."
+  },
+  "negative": [
+    "Row filter referring to an absent slot",
+    "Row filter referring to a different occurrence",
+    "HAVING count argument outside the owning layout",
+    "Analysis HAVING with an arithmetic expression containing a count",
+    "Analysis HAVING comparing two counts",
+    "A row filter with expanded height beyond the admitted limit"
+  ],
+  "faults": [
+    "Remove the group filter",
+    "Swap the count and threshold",
+    "Use the wrong COUNT field in HAVING",
+    "Drop the row filter before grouping"
+  ],
+  "open": ["General aggregate expressions in HAVING, additional aggregates, additional sources, ordering and bounds."],
+  "trust": [
+    "Independent grouping and typed comparison observations over fixed datasets",
+    "Scalar evaluation for the bounded generated predicate family",
+    "Pinned native SQLite C observer and closed authorizer policy"
+  ],
+  "sources": ["https://sqlite.org/lang_select.html#resultset", "https://sqlite.org/lang_aggfunc.html#count", "https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes"]
+}

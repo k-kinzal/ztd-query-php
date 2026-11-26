@@ -1,0 +1,142 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-insert-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Bind and preserve the ordered native write heading, match the VALUES cell domains and emit the two literal types and NULL.",
+  "rules": {
+    "Mutation/Insert::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');",
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "    foreach ($row->values as $position => $cell) {",
+        "        Check::input(",
+        "            $cell->value === null || ($cell->value instanceof TextLiteral) === ($target->columnTypes[$position] instanceof Varchar),",
+        "            'An INSERT value must match its native destination type.',",
+        "        );",
+        "    }",
+        "}"
+      ]
+    },
+    "Mutation/Insert::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$target = $this->target;",
+        "$columns = [];",
+        "foreach ($target->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "$rows = [];",
+        "foreach ($this->rows as $row) {",
+        "    $rows[] = $row->toString();",
+        "}",
+        "return 'INSERT INTO ' . $target->schema->quoted() . '.' . $target->table->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $rows);"
+      ]
+    },
+    "Mutation/InsertCell::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$value = $this->value;",
+        "return match (true) {",
+        "    $value instanceof TextLiteral => $value->toString(),",
+        "    $value instanceof IntegerLiteral => $value->decimal,",
+        "    $value === null => 'NULL',",
+        "};"
+      ]
+    },
+    "Mutation/InsertLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The INSERT requires the native language profile.');",
+        "Check::input($profile->lexical->equals(new LexicalSettings()), 'This INSERT profile requires the default lexical settings.');",
+        "$into = $statement->into;",
+        "Check::input(!$into->replace && !$into->ignore && $into->priority === null && $statement->alias === null",
+        "    && $statement->onDuplicate === [], 'A complete INSERT requires the ordinary VALUES operation.');",
+        "$target = (new InsertTargetBinding())->lower($operation, $into);",
+        "$expression = new ExpressionLowering();",
+        "$text = new TextLiteralLowering();",
+        "$empty = new SourceBinding($operation, null);",
+        "$rows = [];",
+        "foreach ($statement->rows as $row) {",
+        "    $values = [];",
+        "    foreach ($row->values as $value) {",
+        "        $item = $text->lower($value) ?? $expression->lower($value, $empty);",
+        "        Check::input($item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof NullLiteral, 'A supplied INSERT value requires an integer, text or NULL literal.');",
+        "        $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);",
+        "    }",
+        "    $rows[] = new InsertRow($values);",
+        "}",
+        "return new Insert($target, $rows, $profile->grammar);"
+      ]
+    },
+    "Mutation/InsertTargetBinding::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($into->columns !== null && $into->columns->columns !== [], 'An INSERT requires explicit target columns.');",
+        "$names = [];",
+        "foreach ($into->columns->columns as $column) {",
+        "    Check::input($column instanceof ColumnUse, 'An INSERT column must name a declared target slot.');",
+        "    $names[] = $column->name->value;",
+        "}",
+        "return (new SourceBinding($operation, $into->table))->writeTarget($names);"
+      ]
+    },
+    "SourceBinding::writeTarget": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$target = $this->source();",
+        "Check::input($target !== null, 'An INSERT requires a resolved write target.');",
+        "$columns = [];",
+        "$types = [];",
+        "foreach ($names as $name) {",
+        "    [$column, $type] = $this->writableColumn($name);",
+        "    $columns[] = new Identifier($column->name->value);",
+        "    $types[] = $type;",
+        "}",
+        "return new TableSource($target->schema, $target->table, $columns, $types);"
+      ]
+    },
+    "SourceBinding::updateField": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "[$column, $type] = $this->writableColumn($name);",
+        "$slot = $this->allocate($column, $type);",
+        "return $type instanceof Varchar ? new TextColumnReference($slot) : new ColumnReference($slot);"
+      ]
+    },
+    "SourceBinding::writableColumn": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$column = $this->writeDeclaration($name);",
+        "return $column->type instanceof Character",
+        "    ? [$column, (new VarcharLowering())->lower($column)]",
+        "    : [$this->signedWrite($column), ColumnKind::SignedInt];"
+      ]
+    }
+  }
+}

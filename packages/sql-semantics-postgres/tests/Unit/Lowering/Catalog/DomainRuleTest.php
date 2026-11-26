@@ -14,7 +14,7 @@ final class DomainRuleTest extends TestCase
 {
     public function testStatementLowersADomain(): void
     {
-        self::assertSame('CREATE DOMAIN d text COLLATE "C"', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DOMAIN d AS text COLLATE "C"')->toString());
+        self::assertSame('CREATE DOMAIN d text COLLATE "C"', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE DOMAIN d AS text COLLATE "C"')->toString());
     }
 
     public function testConstraintKeepsTheName(): void

@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Program;
  * Each case holds its keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-handler.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of an action
  *     \SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction::Exit->value // => 'EXIT'
  */

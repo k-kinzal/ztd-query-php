@@ -25,12 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * reported (`"t" is not a sequence`, PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
- * @example Reading the table a privilege is granted on
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE items (id int4, price int4)');
- *     $operation = $semantics->analyze('GRANT SELECT ON items TO joe', [$table]);
- *     $operation->facts->relation($operation->statement->target->relations[0])->table->table === $table->declarations()[0] // => true
+ * @visibility SqlSemantics
  */
 final class RelationsTarget implements PrivilegeTarget
 {

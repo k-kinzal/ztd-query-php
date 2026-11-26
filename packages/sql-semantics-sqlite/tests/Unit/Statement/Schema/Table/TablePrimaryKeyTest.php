@@ -9,13 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TablePrimaryKey::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class TablePrimaryKeyTest extends TestCase
 {
     public function testDeriveConstraintResolvesTheKeyColumns(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, b, PRIMARY KEY (b, a))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a, b, PRIMARY KEY (b, a))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -37,7 +37,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testDeriveConstraintReportsAMissingKeyColumn(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (zz))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a, PRIMARY KEY (zz))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -45,7 +45,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testDeriveConstraintReportsATermThatIsNoColumnName(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (a + 1))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a, PRIMARY KEY (a + 1))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(PrimaryKeyProblem::class, $operation->facts->diagnostics[0]);
@@ -54,7 +54,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testRenderWritesAutoincrementInsideTheParentheses(): void
     {
-        $operation = (new Semantics())->inspect('create table t (id integer, primary key (id desc autoincrement) on conflict replace)');
+        $operation = (new Inspection())->diagnose('create table t (id integer, primary key (id desc autoincrement) on conflict replace)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

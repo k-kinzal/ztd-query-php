@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/postgres-create-text-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "extends": ["server-create-table-v1.json", "postgres-text-declarations-v2.json", "postgres-text-insert-query-v2.json"],
+  "profiles": ["pg-16.6/utf8/standard-conforming-strings/native", "pg-17.2/utf8/standard-conforming-strings/native"],
+  "scope": "An ordinary persistent PostgreSQL CREATE TABLE with builtin pg_catalog.text columns and literal defaults, optionally combined with checked integer columns.",
+  "constructors": {
+    "Schema/CharacterStorage": {
+      "role": "A resolved native character-storage kind of a persistent PostgreSQL table column.",
+      "structure": "A closed Text case denoting pg_catalog.text with no type modifier and the database default collation.",
+      "conditions": "Accept pg_catalog.text or an unqualified text name that resolves to that builtin. The owning TableColumn checks default compatibility.",
+      "meaning": "Declare native text storage using the database default collation. Preserve exact strings and NULL.",
+      "sql": "Use pg_catalog.text to select the builtin type independently of a search-path shadow.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "existingRoles": ["Schema/CreateTable", "Schema/TableColumn", "Expression/TextLiteral"],
+  "externalInterpretation": "Use the same resolved database and schema. Run with the native heap method, UTF-8 and stock casts without a replacement from int4 to text. If an existing object occupies the target, preserve that exact object according to IF NOT EXISTS.",
+  "conditions": "A native text storage column accepts no default, explicit NULL, an immutable native text literal or a signed int4 literal with the stock assignment conversion. A native integer column rejects text. Limit both kinds to the existing nullability and literal default attribute roles.",
+  "meaning": "Create columns in the declared order. Preserve native text type identity, default collation, nullability, catalog default presence and the value obtained through a native default insertion. PostgreSQL may omit a catalog default expression for explicit DEFAULT NULL. DDL remains transactional.",
+  "sql": "Render an absolute persistent table, the checked heap method, explicit nullability and the exact default. Emit DEFAULT NULL for the explicit null role, quote native text exactly and use standard signed decimal for checked int4.",
+  "observations": ["Ordered column names, native type, default collation and nullability", "Catalog default presence and exact typed default value", "Execute INSERT DEFAULT VALUES and distinguish text bytes, signed decimal text, NULL and NOT NULL rejection", "Preserve pre-existing objects, SQLSTATE 42P07 and rollback effects"],
+  "finite": {
+    "forms": ["absent", "null", "empty", "quoted", "multibyte", "required-text", "signed-min", "signed-zero", "required-absent"],
+    "ifNotExists": [false, true],
+    "priorTarget": [false, true],
+    "identities": 36,
+    "completeness": "Recover the exact storage, nullability, default input and existence policy from the measured graph. Check each actual identity once for both release fixtures."
+  },
+  "exploration": {"seeds": [433, 15139, 55849], "casesPerSeed": 24, "timeoutSecondsPerRelease": 200, "allowedExclusions": [], "requiredForms": "Vary mixed storage classes, signed and text defaults, nullable and required fields, ordinal positions, widths and all pre-existing target policies."},
+  "analysis": ["Publish a qualified builtin with a doubled quote in its default.", "Publish a bare text type and a UTF-8 text default under a closed search path.", "Publish mixed int4 and text columns including the native signed assignment default.", "Publish a named nullable text column with an explicit DEFAULT NULL and IF NOT EXISTS."],
+  "negative": ["Put a native text literal in a signed integer default slot", "Declare a composite type named text in place of the builtin", "Declare an explicit text collation outside the current role", "Declare a generated text column outside the current role"],
+  "faults": ["Replace a nonempty default with empty text", "Make a required text column nullable", "Drop the observed text default from the emitted definition", "Reverse the mixed column order"],
+  "evidence": {
+    "P01": "Resolve exact storage, nullability and default roles.", "P02": "Close the paired native defaults and constructor scope before publication.", "P03": "Store only decoded type, name, literal and nullability semantics.", "P04": "Compose the checked ordered columns and native creation policy.", "P05": "Audit the final readonly value and check installed role identity.", "P06": "Compare native catalog and insertion effects and restore the fixture.",
+    "Q01": "Require exact typed rejection of disallowed default roles and static type or qualifier choices.", "Q02": "Require each of the 36 finite identities and all registered analyzed cases and seeds.", "Q03": "Compare composed ordered definitions, default values and occupied target behavior.", "Q04": "Measure catalog entries and actual INSERT DEFAULT VALUES under both native releases.", "Q05": "Record the source boundary templates, observer identity, runtime and exact candidate digests."
+  },
+  "open": ["Other character types, explicit collation, type modifiers, general computed and generated defaults and advanced CREATE TABLE variants"],
+  "trust": ["Native PostgreSQL catalogue type and default assignment rules", "Pinned UTF-8 profile and effective heap method", "Independent catalog and effect oracle"],
+  "sources": ["https://www.postgresql.org/docs/16/sql-createtable.html", "https://www.postgresql.org/docs/17/sql-createtable.html", "https://www.postgresql.org/docs/17/sql-createcast.html"]
+}

@@ -36,10 +36,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
  * does for derived column names. Terminates: no child. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/insert-on-duplicate.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the alias of the new row
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a, b) VALUES (1, 2) AS new (m, n) ON DUPLICATE KEY UPDATE a = m + n');
- *     [$insert->statement->alias->name->value, count($insert->statement->alias->columns)] // => ['new', 2]
+ * @visibility SqlSemantics
  */
 final class RowAlias implements Relation
 {

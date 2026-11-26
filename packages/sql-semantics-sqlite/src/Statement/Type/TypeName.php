@@ -21,11 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
  * Source: https://sqlite.org/datatype3.html#determination_of_column_affinity.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the target type of a CAST
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CAST(1 AS UNSIGNED BIG INT(10))');
- *     $target = $query->statement->columns[0]->expression->target;
- *     [count($target->words), $target->text(), $target->affinity()] // => [3, 'UNSIGNED BIG INT', \SqlSemantics\Platform\Sqlite\Statement\Type\Affinity::Integer]
+ * @visibility SqlSemantics
  */
 final class TypeName implements Node
 {

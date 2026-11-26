@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * `conditionname` is null for every channel. Facts: none.
  * Source: https://www.postgresql.org/docs/17/sql-unlisten.html. Status: Implemented.
  *
- * @visibility public
- * @example Leaving every channel
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UNLISTEN *');
- *     [$operation->statement->channel, $operation->toString()] // => [null, 'UNLISTEN *']
+ * @visibility SqlSemantics
  */
 final class Unlisten implements Statement
 {

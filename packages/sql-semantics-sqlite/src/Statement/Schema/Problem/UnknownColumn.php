@@ -16,11 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * by the expression itself as a missing column.
  * Source: https://sqlite.org/lang_altertable.html, https://sqlite.org/foreignkeys.html.
  *
- * @visibility public
- * @example Reporting a dropped column that does not exist
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a, b)');
- *     $semantics->analyze('ALTER TABLE t DROP COLUMN c', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column c does not exist in the table.
+ * @visibility SqlSemantics
  */
 final class UnknownColumn implements Diagnostic
 {

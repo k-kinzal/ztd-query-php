@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Server\Spatial;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DropSpatialReference::class)]
 #[Medium]
@@ -17,12 +17,12 @@ final class DropSpatialReferenceTest extends TestCase
 {
     public function testRenderWritesTheIdentifier(): void
     {
-        self::assertSame('DROP SPATIAL REFERENCE SYSTEM 9', (new Semantics())->inspect('drop spatial reference system 9')->toString());
+        self::assertSame('DROP SPATIAL REFERENCE SYSTEM 9', (new Inspection())->diagnose('drop spatial reference system 9')->toString());
     }
 
     public function testDeriveStatementReportsIdentifierZero(): void
     {
-        $operation = (new Semantics())->inspect('DROP SPATIAL REFERENCE SYSTEM 0');
+        $operation = (new Inspection())->diagnose('DROP SPATIAL REFERENCE SYSTEM 0');
 
         self::assertInstanceOf(SpatialProblem::class, $operation->facts->diagnostics[0]);
     }

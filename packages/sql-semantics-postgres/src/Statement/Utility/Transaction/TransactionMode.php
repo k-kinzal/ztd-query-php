@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * a characteristic is in effect.
  * Source: https://www.postgresql.org/docs/17/sql-set-transaction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the parameter an item sets
  *     \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode::ReadOnly->parameter() // => 'transaction_read_only'
  */

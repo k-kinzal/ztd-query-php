@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/postgres-output-order-names-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Pinned native PostgreSQL under the builtin ordering rules for resolved scalar projections.",
+  "extends": ["server-result-v1.json", "postgres-boolean-fields-v1.json", "postgres-int8-fields-v1.json"],
+  "constructors": {},
+  "existingRoles": ["Select", "ResultColumn", "Ordering/Order", "Ordering/Limit", "From/BooleanColumnReference", "From/WideIntegerColumnReference"],
+  "structure": "A simple ORDER BY output name or positional reference selects one exact one-based result position. The result stores direction and effective NULL placement with the position.",
+  "conditions": "Bind the exact name to the same query's closed projection. A simple name prefers an output label to a conflicting physical input name. Reject differently resolved output expressions that use the same name. Repeated reads of the same resolved field with the same label may select the first matching output position. Grouped output-name uses preserve that lookup.",
+  "meaning": "Apply native ordering to the selected result value with the recorded NULL placement. Equal keys permit ties, except where later selected keys determine the order. DISTINCT retains native duplicate handling before sorting. LIMIT and OFFSET apply after ordering.",
+  "sql": "Emit the checked result position with effective direction and NULL ordering without re-resolving the input name.",
+  "observations": ["Resolved ordinal, ordered output names and native result types", "Complete ordered tuples, including NULL and duplicate rows", "Raw SQL equivalence of output names and corresponding ordinals", "Exact distinction between typed ambiguous, missing, and out-of-bounds inputs"],
+  "finite": {
+    "form": ["ordinary", "quoted", "grouped"],
+    "direction": ["ascending", "descending"],
+    "nulls": ["implicit", "first", "last"],
+    "distinct": [false, true],
+    "kind": ["int8", "boolean"],
+    "identities": 72,
+    "completeness": "Recover raw spelling and explicit option choices from the recorded analyzed statement and validate the resulting typed ordinal and effective ordering. Additionally exercise each canonical direct construction independently."
+  },
+  "analysis": ["The output alias shadows a same-named physical input", "Repeated bare and qualified readings share one output-name resolution", "A grouped projected reference shares that same output role", "Multiple named keys preserve precedence and NULL placement", "An implicitly named wildcard member selects its output position", "A quoted case-sensitive output alias selects its own key", "A named order followed by LIMIT and OFFSET", "A disabled predicate preserves empty typed output metadata"],
+  "exploration": {
+    "seeds": [3061, 15773, 43951],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Generate canonical positional orders directly. Vary native kinds, fields, key order, ASC and DESC, implicit and explicit NULL order, aliases, duplicate result values and LIMIT or OFFSET."
+  },
+  "negative": ["Ambiguous alias over two different columns", "Missing output and input name", "Positional sort key outside the projected width", "Output alias with a different quoted spelling", "Direct order with an absent result position"],
+  "faults": ["Select the wrong output position", "Obey the input instead of the output name", "Reverse the direction", "Reverse explicit NULL order", "Drop a later order key"],
+  "evidence": {
+    "P01": "Reduce input spelling to a closed result position and exact direction and NULL policy.",
+    "P02": "Check projection ownership, key bounds and ambiguity before publishing the ordered result.",
+    "P03": "Retain positions and native order, with no input name lookup or raw SQL.",
+    "P04": "Derive the output order from the sequence of immutable projected values and sort keys.",
+    "P05": "Store the immutable owned ordering list and exact choices.",
+    "P06": "Preserve selected value, key precedence, NULL order, and effects of the row bound.",
+    "Q01": "Reject ambiguity, absence and incompatible positions at the binding or owning boundary.",
+    "Q02": "Exhaust the named grid and exercise all corresponding directly constructed ordinal forms.",
+    "Q03": "Compose output binding with native type, duplicates, rows and bounds.",
+    "Q04": "Compare exact deterministic order and metadata against native execution and an independent relation model.",
+    "Q05": "Link the bound field facts and published ordinal to the actual distribution."
+  },
+  "open": ["Hidden SORT expressions that have no result position", "Explicit sort operators and user-defined collation profiles", "Ordering for other result roles"],
+  "trust": ["Pinned native output naming and precedence", "Exact projection field identity from the binder", "Independent fixed signed and Boolean ordering with explicit NULL placement", "Checked installed native order roles"],
+  "sources": ["https://www.postgresql.org/docs/17/queries-order.html", "https://www.postgresql.org/docs/17/sql-select.html#SQL-ORDERBY", "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_clause.c"]
+}

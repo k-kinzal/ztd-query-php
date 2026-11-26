@@ -1,0 +1,182 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-index-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2, UTF-8, native ASCII identifier comparison, named attached schema order, default rollback journal, ordinary application-defined indexes.",
+  "scope": "Resolved DROP INDEX for an ordinary explicit index or an observed absent target under IF EXISTS. Preserve the verification scope of a guarded absence.",
+  "additionalPublicRoots": [
+    "Schema/Index/DropIndex"
+  ],
+  "constructors": {
+    "Schema/Index/DropIndex": {
+      "role": "Remove one bound SQLite application-defined index or execute a guarded no-op with its resolved verification scope.",
+      "structure": "One IndexReference or MissingIndex target and the explicit IF EXISTS policy.",
+      "conditions": "A resolved installed index has an absolute owner. A MissingIndex requires IF EXISTS. No unresolved index name or source text is retained.",
+      "meaning": "Remove only the selected index and its SQLite statistics while retaining table data. An absent index is a write-classified no-op that verifies the requested schema, every attached schema for an unqualified absence, or zero schemas for an unknown qualifier.",
+      "externalInterpretation": "The external catalog has the same absolute index coordinate, ordinary index kind and owner, or the same checked absence through the same schema search scope.",
+      "sql": "Emit DROP INDEX, the guard, and an explicitly quoted absolute target or the checked absence selector.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/IndexReference": {
+      "role": "Fully bound name of an ordinary application-defined SQLite index.",
+      "structure": "Schema, index name and table name as immutable decoded Identifier values.",
+      "conditions": "The schema coordinate is explicit and may be the empty string for a named attachment. The index does not belong to SQLite’s internal namespace. The binding boundary establishes the owner and rejects conflicting definitions.",
+      "meaning": "Resolve the given index on the recorded owner in the absolute schema regardless of any sibling with the same case-folded name.",
+      "externalInterpretation": "SQLite reads schemas and index names by ASCII case-insensitive comparison. The native declaration selects exact catalog spelling and the given absolute owner.",
+      "sql": "Quote the schema and the index name separately. Use the owner as a semantic coordinate rather than a SQL operand.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Index/MissingIndex": {
+      "role": "An observed absent SQLite index at one schema qualifier or in the entire configured search path.",
+      "structure": "Decoded index name and optional decoded schema qualifier.",
+      "conditions": "The lookup boundary establishes absence. The enclosing operation must be guarded. An empty schema identifier is distinct from an absent qualifier.",
+      "meaning": "Execute SQLite's guarded no-op with the corresponding schema verification scope.",
+      "externalInterpretation": "Use the exact qualifier, which can denote a known schema or an unknown schema, and assume the stated absence in the external catalog.",
+      "sql": "Quote the optional qualifier and identifier independently. Emit no schema when the scope is the entire path.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Identifier",
+    "Schema/Index/CreateIndex"
+  ],
+  "rules": [
+    "Ordinary CREATE INDEX declarations supplied by the caller contribute binding by the exact index, table and schema identity. They are read with the declared table scope. Public analysis does not execute changes to any supplied context.",
+    "An index name is searched in temp before main, then attached schemas in declaration order. Qualified selection considers exactly its schema. Resolve using SQLite ASCII identifier equivalence, rejecting conflicts.",
+    "Use a declaration found in an open context only when the selector cannot be shadowed, such as an explicitly qualified name or an unqualified temp index. Require a closed scope to infer absence. Unknown or incomplete binding is a typed failure before IR publication.",
+    "An optional absent drop remains write-classified and retains the exact optional qualifier. An unknown qualifier can produce a successful guarded absence with no schema verification. The representation must not convert this no-op into a read or drop any matching sibling.",
+    "Reject a bare absence, a known internal constraint index, and an attempt to forge an unqualified installed index."
+  ],
+  "observations": [
+    "Native opcode-level transaction verification scopes for guarded absence, write classification and no parameter or result columns.",
+    "Exact authorization coordinates, removal of only the selected catalog entry and statistics, unaffected sibling indexes and table headings and values.",
+    "Independent duplicate partial-key insertion before or after removal, NULL cases, successful rollback and exact restored state.",
+    "Verify direct and analyzed drop of an exact index in an attached SQLite schema whose name is the empty string."
+  ],
+  "finite": {
+    "coordinates": [
+      "temp-required",
+      "main-required",
+      "extension-required",
+      "temp-guarded",
+      "main-guarded",
+      "extension-guarded",
+      "temp-absence",
+      "main-absence",
+      "extension-absence",
+      "unknown-absence",
+      "all-absence"
+    ],
+    "names": [
+      "Tag",
+      "quote \"列\"",
+      ""
+    ],
+    "siblings": [
+      "none",
+      "earlier",
+      "later",
+      "both"
+    ],
+    "statistics": [
+      "uncollected",
+      "collected"
+    ],
+    "identity": "Enumerate all 264 coordinate/name/sibling/statistics choices in printed axis order. Recover the coordinates from the built target and the other axes from observed native fixture states. In absent-all cases use separately named installed siblings so distinct coordinates remain observable."
+  },
+  "exploration": {
+    "seeds": [
+      19079,
+      52223,
+      91573
+    ],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 360,
+    "allowedExclusions": [],
+    "domain": "Vary exact native identifiers, Unicode, empty and quoted components, guard and occurrence selection, owner and key data, namespaces, statistics, sibling index layouts and later duplicate-key writes."
+  },
+  "negative": [
+    "Use a missing-index role without IF EXISTS",
+    "Use an internal constraint index as an application-defined index",
+    "Use a null schema for an installed index",
+    "Use a non-identifier as a target component"
+  ],
+  "analysisNegative": [
+    "Unconditional absence",
+    "Optional absence in an open context",
+    "Unqualified main index lacks knowledge of temp",
+    "Coordinate with conflicting catalog declarations",
+    "Wrong SQLite context profile",
+    "Actual reserved UNIQUE constraint index used under IF EXISTS"
+  ],
+  "faults": [
+    "Use the other schema for a resolved index",
+    "Use an adjacent index instead of the selected name",
+    "Lose the IF EXISTS policy",
+    "Convert all-schema absence into main-schema verification",
+    "Confuse an absent qualified selector with an all-schema absence",
+    "Bypass the guard check on a missing target"
+  ],
+  "open": [
+    "Native constraints in an opaque virtual module require independent namespace rules. Ordinary constraint index names and guarded absence are checked by the linked contract.",
+    "The finite schedule covers the declared external profiles and bounded identifier roles. Other grammar alternatives and native name length and mode profiles remain in the source inventory."
+  ],
+  "trust": [
+    "Pinned SQLite engine, catalog and native planner ABI.",
+    "Pinned checked binder and immutable identifier and child value roles.",
+    "Independent effect prediction, authorized SQL observation, comparer sensitivity and candidate/observer separation."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "nativeCases": "11fe80b7a914b77f8dfb7ee67b7eaf4ff97be189817ce5c3f5547d071196c247",
+    "driver": "95e3fee8f15fc7f8e45fcf305ce5d8e5e889e66e3cfdf13ac73b6a9fe670a565",
+    "pinnedEngineRoutines": [
+      "sqlite3FindIndex",
+      "sqlite3DropIndex",
+      "sqlite3CodeVerifyNamedSchema"
+    ],
+    "emptyAttachmentDriver": "28b11435db15bfd26e6d8d77ef55d27ff4e5e2f85cae5470017e66c78b26193c",
+    "emptyAttachmentCases": "fe1ac729560d955bda5f63e86af6b9e4a784140f18c4252f5850dce2d762c168"
+  },
+  "extends": "sqlite-drop-index-v2.json",
+  "change": "Admit guarded missing automatic-index names under the linked constraint index contract. Retain the witnessed rejection of an installed native constraint index with its exact typed reason.",
+  "constraintIndexContract": "sqlite-constraint-index-names-v2.json"
+}

@@ -1,0 +1,207 @@
+{
+  "revision": "SemanticsIR/server-grouped-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql",
+    "PostgreSql"
+  ],
+  "additionalPublicRoots": [
+    "Aggregation/GroupedSelect"
+  ],
+  "profiles": "The pinned releases and language settings of server-projection-v1.json. The aggregate roles consume signed INT or int4 table fields. PostgreSQL names resolve to pg_catalog and the emitted calls are qualified.",
+  "scope": "Grouping and integral COUNT, SUM, MIN and MAX over one absolute ordinary table occurrence. The query contains optional integer and three-valued WHERE, explicit simple grouping fields, and ordered group-key or aggregate result fields with owned names. An empty grouping list selects the global aggregate over all admitted rows.",
+  "open": [
+    "Joined and local aggregate inputs, grouping expressions, rollup, cube and grouping sets",
+    "Having, window aggregates, aggregate filters, aggregate input ordering and several arguments",
+    "Other routine identities, argument types, casts and collation-dependent aggregate domains",
+    "Output ordering and bounds for grouped results, explicit MySQL 5.x grouping directions, grouped projections in combined queries"
+  ],
+  "constructors": {
+    "GroupedSelect": {
+      "type": "Aggregation/GroupedSelect",
+      "role": "Complete grouping boundary over one absolute table occurrence",
+      "fields": [
+        "source",
+        "keys",
+        "columns",
+        "where",
+        "release"
+      ],
+      "invariants": [
+        "Owned ordered list of zero to sixteen key references and one to 1024 output fields",
+        "All key and aggregate argument slots exist on the single occurrence",
+        "Each result key belongs to the group-key list. A global query therefore has at least one aggregate.",
+        "WHERE references close over the input occurrence and run before grouping"
+      ],
+      "externalInterpretation": "The absolute base identity resolves to the same signed native slots and inherited row policy under the fixed release.",
+      "meaning": "Partition admitted rows by the ordered key tuple, where NULL equals NULL for grouping. An empty input produces zero ordinary groups and one empty global group. Evaluate each projected group-key or aggregate in the declared order.",
+      "sql": "Emit the ordered named projection, absolute aliased source, checked WHERE and the qualified grouping list. MySQL 5.x retains the release's implicit grouping behavior. PostgreSQL aggregates explicitly target pg_catalog.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "Aggregate": {
+      "type": "Aggregation/Aggregate",
+      "role": "An aggregate with a builtin identity and an optional checked input slot",
+      "fields": [
+        "operator",
+        "argument",
+        "distinct"
+      ],
+      "invariants": [
+        "Only COUNT accepts an absent argument. DISTINCT requires an argument.",
+        "An argument addresses the single input occurrence."
+      ],
+      "meaning": "COUNT(*) counts all rows. COUNT(field) counts nonnull fields. SUM, MIN and MAX consume nonnull fields and return NULL for an empty argument bag. DISTINCT reduces equal nonnull arguments to one before transition.",
+      "sql": "Emit the builtin name with * or its qualified slot and an optional DISTINCT modifier.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "AggregateOperator": {
+      "type": "Aggregation/AggregateOperator",
+      "role": "Closed builtin operator identity for the native overload",
+      "values": [
+        "count",
+        "sum",
+        "min",
+        "max"
+      ],
+      "meaning": "COUNT yields MySQL LONGLONG or PostgreSQL int8. SUM of the signed field uses exact decimal in MySQL and int8 in PostgreSQL. MIN and MAX yield the signed field type.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "GroupColumn": {
+      "type": "Aggregation/GroupColumn",
+      "role": "One ordered named result carrying a grouped key or aggregate",
+      "fields": [
+        "value",
+        "name"
+      ],
+      "meaning": "Take the common key for this group or evaluate the aggregate over its admitted rows.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Use the checked bound relation and slot facts for the WHERE, group keys and arguments. Distinguish COUNT(*) from COUNT(field) and check the actual PostgreSQL routine lookup profile. Preserve the observed output labels and the requested argument quantifier. Unqualified PostgreSQL COUNT(field) needs pg_catalog as the sole routine lookup schema, because another visible exact int4 overload can win over its polymorphic catalog signature.",
+  "observations": [
+    "Ordered output labels, exact native type tags and exact decimal values, including NULL",
+    "Multiplicity of grouped result rows even when the group key is omitted from the result",
+    "Implicit MySQL 5.x ascending key sequence on the ordered fixture and equality as a bag when the release does not require it",
+    "The difference between empty global and empty keyed groups, and the effect of duplicate and NULL arguments",
+    "Read-only execution",
+    "The same child field passed through qualified and unqualified PostgreSQL calls can resolve to different routine identities when a separate schema supplies an exact overload."
+  ],
+  "finite": {
+    "relations": [
+      "ordinary with NULL, duplicate and unequal values",
+      "empty"
+    ],
+    "keyLayouts": [
+      [],
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "argumentPolicies": [
+      "count rows",
+      "count slot",
+      "count distinct slot",
+      "sum slot",
+      "sum distinct slot",
+      "min slot",
+      "max slot"
+    ],
+    "filters": [
+      "all rows",
+      "reject all"
+    ],
+    "completeness": "Identify the exact cross product from observed source identity, slot list, aggregate form and filter. The output argument is the second fixture slot when an argument is present according to the fixed selection rule."
+  },
+  "exploration": {
+    "seeds": [
+      6121,
+      10957,
+      14747
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 210,
+    "allowedExclusions": [],
+    "constructors": "Reorder, duplicate and omit keys; repeat and reorder result fields; vary the signed field, aggregate and DISTINCT role; include all-NULL, empty and filtered row bags and inherited table rows in PostgreSQL."
+  },
+  "negative": [
+    "Distinct count rows",
+    "Sum without an argument",
+    "Aggregate argument outside the input slot layout",
+    "Result reads an ungrouped input",
+    "A group key outside the input slot layout",
+    "Global projection of a raw input",
+    "A grouped clause with a non-key expression",
+    "Aggregate window call at the grouped entry path",
+    "Seventeen grouping keys",
+    "1,025 projected aggregate fields",
+    "Aggregate references another scan occurrence"
+  ],
+  "faults": [
+    "Erase the DISTINCT argument policy",
+    "Count admitted rows instead of nonnull arguments",
+    "Use another key as the grouping operand",
+    "Omit WHERE before grouping"
+  ],
+  "trust": [
+    "Pinned declaration and signed input profile",
+    "Independent tuple partition and integer aggregate rules",
+    "Pinned native numeric transport that preserves exact DECIMAL text"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/order-by-optimization.html",
+    "https://www.postgresql.org/docs/17/functions-aggregate.html",
+    "https://www.postgresql.org/docs/17/typeconv-func.html"
+  ],
+  "additionalPostgreSqlNegatives": [
+    "Nonexclusive runtime lookup of unqualified polymorphic COUNT"
+  ],
+  "dialectFaults": {
+    "postgres": [
+      "Omit pg_catalog qualification in the presence of a competing overload"
+    ],
+    "mysql": [
+      "Trim a physical grouped field by forcing an explicit alias"
+    ]
+  },
+  "observers": "The base observations include output aliases and physically named fields. MySQL emits a grouped field with a leading space through its intrinsic name.",
+  "additionalMySqlNegatives": [
+    "A leading-space output alias over COUNT",
+    "A leading-space result different from its physical grouping field"
+  ]
+}

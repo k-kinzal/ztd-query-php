@@ -26,6 +26,7 @@ final class Environment
      * @param list<VisibleRelation> $relations The relation occurrences visible at this position
      * @param list<CommonBinding> $commonTables The common tables introduced at this level; later bindings shadow earlier ones
      * @param list<Field> $aliases The output fields this position may refer to by alias
+     * @param Name|null $relationSchema The owning schema of a persistent view definition
      */
     public function __construct(
         public readonly AnalysisContext $context,
@@ -33,7 +34,22 @@ final class Environment
         public readonly array $relations = [],
         public readonly array $commonTables = [],
         public readonly array $aliases = [],
+        public readonly ?Name $relationSchema = null,
     ) {
+    }
+
+    /**
+     * Finds the enclosing persistent view's schema for unqualified relations.
+     */
+    public function owningSchema(): ?Name
+    {
+        for ($scope = $this; $scope !== null; $scope = $scope->outer) {
+            if ($scope->relationSchema !== null) {
+                return $scope->relationSchema;
+            }
+        }
+
+        return null;
     }
 
     /**

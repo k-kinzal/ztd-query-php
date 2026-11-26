@@ -23,10 +23,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
  * Source: https://sqlite.org/lang_createtrigger.html#the_raise_function.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the message of a RAISE
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(FAIL, 'no'); END");
- *     $trigger->statement->steps[0]->columns[0]->expression->message->value // => 'no'
+ * @visibility SqlSemantics
  * @example Refusing a message for IGNORE
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Raise(\SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction::Ignore, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('x')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing a missing message for fail

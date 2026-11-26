@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Rule: PG-ALTERDB-002. Mirrors `AlterDatabaseStmt` with the single option
  * `tablespace`. Source: https://www.postgresql.org/docs/17/sql-alterdatabase.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the new tablespace
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d SET TABLESPACE fast');
- *     $operation->statement->tablespace->value // => 'fast'
+ * @visibility SqlSemantics
  */
 final class MoveDatabase implements Statement
 {

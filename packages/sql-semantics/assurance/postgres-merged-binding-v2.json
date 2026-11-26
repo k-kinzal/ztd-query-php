@@ -1,0 +1,23 @@
+{
+  "revision": "SemanticsIR/postgres-merged-binding-2",
+  "extends": "postgres-merged-binding-v1.json",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Rules/Resolution/Joining.php": {
+      "sha256": "bc7f6b66bd7b2765f2af28b59e9ba0097008bcef9954fcfacd3e45ca20bfbc2b",
+      "role": "Declares merged heading order and the surviving occurrence under RIGHT JOIN. A FULL heading carries both physical origins."
+    },
+    "src/Rules/Resolution/Visibility.php": {
+      "sha256": "b02675a9ccb590c15c4c5fa52c60ebd644a066ef4637b49137263c650160bdba",
+      "role": "Expands the visible field list with its original slot identities."
+    },
+    "src/Rules/Expression/WholeRows.php": {
+      "sha256": "6d8390706b9f42005e7d24a5237e3b3f7009b78c149437820953763c29dd0e94",
+      "role": "Resolves the merged USING alias and ordinary qualified stars."
+    },
+    "src/Model/Statement/Shape/OutputSlot.php": {
+      "sha256": "a15d66ac5d12b31d785a527831a4c576a52c1234aa7f9ad71cb5ae605a76422c",
+      "role": "A transient slot carries its primary and alternate physical origins for a FULL merged output."
+    }
+  }
+}

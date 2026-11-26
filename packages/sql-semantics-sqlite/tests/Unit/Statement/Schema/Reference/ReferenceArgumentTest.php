@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Schema\Reference;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\MatchName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceAction;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceArgument;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversNothing]
 #[Medium]
@@ -20,7 +20,7 @@ final class ReferenceArgumentTest extends TestCase
 {
     public function testRenderWritesEveryKindOfClauseInWrittenOrder(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE c (p REFERENCES parent ON UPDATE CASCADE MATCH simple ON DELETE RESTRICT)');
+        $operation = (new Inspection())->inspect('CREATE TABLE c (p REFERENCES parent ON UPDATE CASCADE MATCH simple ON DELETE RESTRICT)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

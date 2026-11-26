@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnStorage;
  * Mirrors `AT_SetStorage` and `AT_SetCompression`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Changing the storage of a column
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET STORAGE external');
- *     $statement->statement->commands[0]->setting->method->value // => 'external'
+ * @visibility SqlSemantics
  */
 final class ColumnStorageChange implements AlterCommand
 {

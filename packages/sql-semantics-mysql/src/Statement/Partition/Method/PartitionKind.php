@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Partition\Method;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-range.html,
  * https://dev.mysql.com/doc/refman/8.4/en/partitioning-list.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::List->value // => 'LIST'
  */

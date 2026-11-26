@@ -14,11 +14,11 @@ final class DomainNotNullTest extends TestCase
 {
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL')->toString());
+        self::assertSame('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL')->toString());
     }
 
     public function testDeriveClauseReportsNotValid(): void
     {
-        self::assertSame('NOT NULL constraints cannot be marked NOT VALID', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD NOT NULL NOT VALID')->facts->diagnostics[0]->message());
+        self::assertSame('NOT NULL constraints cannot be marked NOT VALID', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER DOMAIN d ADD NOT NULL NOT VALID')->facts->diagnostics[0]->message());
     }
 }

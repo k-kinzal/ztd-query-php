@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa recover convert xid");
- *     [$xa->toString(), $xa->statement->convertXid] // => ["XA RECOVER CONVERT XID", true]
+ * @visibility SqlSemantics
  */
 final class XaRecover implements Statement
 {

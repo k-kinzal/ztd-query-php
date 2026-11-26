@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-indexes-keys,
  * https://dev.mysql.com/doc/refman/8.4/en/create-index.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading an index definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, b INT, UNIQUE KEY ab (a, b))');
- *     [$create->statement->elements[2]->kind, $create->statement->elements[2]->name->column->value, count($create->statement->elements[2]->parts)] // => [\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Unique, 'ab', 2]
+ * @visibility SqlSemantics
  */
 final class IndexDefinition implements TableElement
 {

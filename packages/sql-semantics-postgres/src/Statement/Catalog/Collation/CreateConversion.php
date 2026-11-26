@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * default conversion, name, source and destination encodings and function.
  * Source: https://www.postgresql.org/docs/17/sql-createconversion.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the encodings of a conversion
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE DEFAULT CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc");
- *     [$operation->statement->isDefault, $operation->statement->source->value, $operation->statement->target->value] // => [true, 'UTF8', 'LATIN1']
+ * @visibility SqlSemantics
  */
 final class CreateConversion implements Statement
 {

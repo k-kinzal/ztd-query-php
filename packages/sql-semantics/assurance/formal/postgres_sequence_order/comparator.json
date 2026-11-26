@@ -1,0 +1,7 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Solution",
+  "theorem_names": ["SignedDecimal.decimalOrder", "SignedDecimal.representativeDomain"],
+  "definition_names": ["SignedDecimal.value", "SignedDecimal.lexBefore", "SignedDecimal.magnitudeBefore", "SignedDecimal.before", "SignedDecimal.signed", "SignedDecimal.SignCoherent"],
+  "permitted_axioms": ["propext"]
+}

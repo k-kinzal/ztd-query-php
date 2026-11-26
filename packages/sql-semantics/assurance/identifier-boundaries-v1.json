@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/identifier-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "The exact published identifier admission, quoting, and ASCII folding rules at constructor and emission boundaries.",
+  "rules": {
+    "Identifier::__construct": {
+      "common": [],
+      "mysql": [
+        "Check::input(",
+        "    preg_match('/\\A[^\\x00\\x{10000}-\\x{10FFFF}]{0,256}\\z/u', $value) === 1,",
+        "    'A MySQL IR label must have up to 256 BMP characters and no NUL.',",
+        ");"
+      ],
+      "postgres": [
+        "Check::input(",
+        "    $value !== '' && strlen($value) <= 63 && !str_contains($value, \"\\0\") && preg_match('//u', $value) === 1,",
+        "    'A PostgreSQL IR name must be nonempty UTF-8, without NUL, and at most 63 bytes.',",
+        ");"
+      ],
+      "sqlite": [
+        "Check::input(",
+        "    strlen($value) <= 255 && !str_contains($value, \"\\0\") && preg_match('//u', $value) === 1,",
+        "    'An IR name must be UTF-8, without NUL, and at most 255 bytes.',",
+        ");"
+      ]
+    },
+    "Identifier::quoted": {
+      "common": [],
+      "mysql": [
+        "return '`' . str_replace('`', '``', $this->value) . '`';"
+      ],
+      "postgres": [
+        "return '\"' . str_replace('\"', '\"\"', $this->value) . '\"';"
+      ],
+      "sqlite": [
+        "return '\"' . str_replace('\"', '\"\"', $this->value) . '\"';"
+      ]
+    },
+    "Identifier::key": {
+      "dialects": [
+        "mysql",
+        "sqlite"
+      ],
+      "common": [
+        "return NameComparison::AsciiInsensitive->fold($this->value);"
+      ]
+    }
+  },
+  "trust": [
+    "PHP string and PCRE UTF-8 semantics",
+    "The pinned ASCII comparison primitive",
+    "Independent dialect identifier and result-name observations"
+  ]
+}

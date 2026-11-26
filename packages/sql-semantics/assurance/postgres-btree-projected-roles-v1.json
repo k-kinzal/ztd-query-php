@@ -1,0 +1,52 @@
+{
+  "revision": "SemanticsIR/postgres-btree-projected-roles-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "mode": "Native UTF-8 and standard conforming strings for 16.6 and 17.2.",
+  "releases": [
+    "16.6",
+    "17.2"
+  ],
+  "constructors": {
+    "Schema/Index/Btree/Binding/IndexTarget": {
+      "role": "The ordinary table coordinate with its exact inheritance or session role.",
+      "structure": "Absolute schema, table name and ONLY flag.",
+      "conditions": "Application schemas or pg_temp, with system schemas and physical session internals excluded.",
+      "meaning": "The concrete ordinary owner whose checked columns are indexed.",
+      "sql": "Quote both table identifier components and preserve ONLY."
+    },
+    "Schema/Index/Btree/Binding/IndexField": {
+      "role": "One exact resolved physical column operand.",
+      "structure": "Canonical Identifier and checked integer or Boolean native kind. A completed root identifies its original physical ordinal.",
+      "conditions": "Only int4, int8 and Boolean kinds are admitted at a selected operand slot.",
+      "meaning": "The field from the exact external table declared for use in keys, included payload or a checked index condition.",
+      "sql": "Quote the resolved identifier in each repeated operand position."
+    },
+    "Schema/Index/Btree/CreateIndex": {
+      "role": "A complete named B-tree declaration.",
+      "structure": "Exact owner, sparse ordered slot bindings, ordered key and included parts, typed condition and physical flags.",
+      "conditions": "Validate every key and covering slot, and every condition leaf, before retaining the detached sorted bindings.",
+      "meaning": "Matches the same native construction and later writes for the fixed profile and exact external definitions.",
+      "sql": "Emit the exact operand names and preserve key order, NULL policy, grouped predicate and target interpretation."
+    }
+  },
+  "reference": {
+    "file": "postgres-index-operand-bindings-v1.json",
+    "sha256": "bfc9d7a71baaec9cfeb8c8e6f8817e4ab7027c82ad22c686e088cd26f7f285b2"
+  },
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "revision": "SemanticsIR/postgres-text-conversion-1",
+  "extends": [
+    "postgres-text-literal-v1.json",
+    "postgres-builtin-casts-v3.json",
+    "postgres-typed-parameters-v1.json"
+  ],
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "requiredScope": "The fixed required language and runtime comparison scope remains in force.",
+  "constructors": {
+    "Expression/BuiltinCast": {
+      "role": "An explicit conversion of an existing signed integer, Boolean, typed text or NULL to built-in text.",
+      "structure": "A resolved text destination and a checked operand of the admitted value closure.",
+      "conditions": "The target is the scalar built-in text type. A known text operand can keep its type in this domain. Conversion from that text into a numeric or Boolean type requires its own checked role.",
+      "meaning": "The exact signed decimal spelling represents an integer, true or false represents the Boolean value, the contents of a text value are unchanged, and NULL keeps its null state while acquiring text metadata.",
+      "sql": "Emit the checked operand with an explicit CAST to pg_catalog.text."
+    },
+    "Binding/Parameter": {
+      "role": "A positional input with the built-in text role.",
+      "structure": "One native one-based ordinal and the explicit text input type.",
+      "conditions": "The owning root checks a contiguous signature and a consistent input type for each reused position. The observer binds valid UTF-8 text or NULL.",
+      "meaning": "Every reference to the same position consumes the same input. The first resolving occurrence fixes its native type.",
+      "sql": "Emit the explicit text cast on the same numbered native marker."
+    }
+  },
+  "externalInterpretation": "Use the same native release, UTF-8 SQL settings, resolved declared column types and text bindings. An observer prepares original and emitted SQL without supplying inferred input types.",
+  "observations": [
+    "Exact output names, positions, native text metadata and value bytes",
+    "Signed decimal outputs, both Boolean values and typed NULL",
+    "Native ordered prepared parameter OIDs and NULL versus empty text",
+    "Exact positional correspondence in repeated and reordered projections"
+  ],
+  "finite": {
+    "literalInputs": [
+      "null",
+      "false",
+      "true",
+      "int4-min",
+      "int4-zero",
+      "int4-max",
+      "int8-min",
+      "int8-max",
+      "empty-text",
+      "quote-text"
+    ],
+    "literalWidths": [
+      1,
+      2
+    ],
+    "parameterInputs": [
+      null,
+      "",
+      "a'b",
+      "値",
+      "a\\b"
+    ],
+    "parameterLayouts": [
+      "single",
+      "repeated",
+      "reversed"
+    ],
+    "identities": 35,
+    "completeness": "Independently recover the literal operand role, binding vector and result layout from the emitted graph. Require all twenty literal and fifteen parameter identities."
+  },
+  "exploration": {
+    "seeds": [
+      8663,
+      32003,
+      46769
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 230,
+    "allowedExclusions": [],
+    "requiredForms": "Vary native integer limits, text bytes, nested identity casts, widths and repeated or distinct bind references."
+  },
+  "analysis": [
+    "Explicit numeric, Boolean and NULL conversions preserve the resolved text target.",
+    "A typed text operand stays text through an outer text cast.",
+    "Native text marker syntax resolves its input and output OID.",
+    "Mixed text and int4 positional inputs preserve their original input order.",
+    "Two independently typed casts of a reused text position consume the same single binding.",
+    "A complete declaration context resolves an unqualified text target to the same native marker type."
+  ],
+  "negative": [
+    "A closed root uses the same input position with distinct direct input types.",
+    "A root contains a hole in its text binding signature.",
+    "A text value is offered to a cast requiring the existing numeric or Boolean input role."
+  ],
+  "faults": [
+    "Emit a different native text type.",
+    "Replace a typed NULL with empty text.",
+    "Swap native text input positions.",
+    "Change the inferred input OID while preserving the output text."
+  ],
+  "evidence": {
+    "P01": "Observe resolved type, operand domain and exact native input positions.",
+    "P02": "Verify role closure and checked signature rules before publication.",
+    "P03": "Retain only typed operands and binding coordinates.",
+    "P04": "Compose each operand, cast, slot and outer projection by their explicit rules.",
+    "P05": "Connect immutable values to the staged package and checked PHP storage.",
+    "P06": "Compare native typed values and inferred signatures for original and emitted statements.",
+    "Q01": "Apply typed role and signature negatives and exact code-shape checks.",
+    "Q02": "Require every fixed finite and exploration identity.",
+    "Q03": "Exercise nested casts and repeated bindings.",
+    "Q04": "Compare independent expected text data, NULL, metadata and input OIDs.",
+    "Q05": "Bind the relevant PHP source and selected run and replay tools by digest."
+  },
+  "open": [
+    "General conversion from text into other native types, text columns, text functions and collations require further evidence."
+  ],
+  "trust": [
+    "Pinned built-in PostgreSQL cast rules",
+    "Read-only native observer with separately measured input signatures",
+    "Reviewed semantic oracle and exact distributed PHP"
+  ],
+  "faultExplanation": "The mandatory NULL fault changes the value. Dropping the cast alone can yield the same native text output through the SELECT default."
+}

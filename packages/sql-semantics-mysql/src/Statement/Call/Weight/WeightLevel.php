@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
  *
  * Source: https://dev.mysql.com/doc/refman/5.7/en/string-functions.html#function_weight-string.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a descending, reversed level
  *     $level = new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2'), \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending, true);
  *     [$level->number->text, $level->direction, $level->reverse] // => ['2', \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending, true]

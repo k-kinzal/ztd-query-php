@@ -1,0 +1,110 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-boundaries-3",
+  "approval": "pending-human-review",
+  "extends": "mysql-truncate-boundaries-v2.json",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Keep the same persistent identity and explicitly retain the native namespace for a resolved temporary truncation. Check the exact MySQL native foreign dependency and target presence before construction.",
+  "rules": {
+    "Schema/Identity/TableIdentity::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($kind->isTable(), 'A resolved table identity requires a persistent or temporary table.');"
+      ]
+    },
+    "Schema/Identity/TableIdentity::quoted": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->name->quoted();"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target !== null, 'TRUNCATE TABLE requires a resolved base table.');",
+        "$dependencies = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($referrers, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity::class, 'TRUNCATE TABLE requires a checked list of referencing tables.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Truncate\\TruncationDependents())->check($target, $dependencies);",
+        "$this->target = $target;"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/foreign-key-checks=1';"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'TRUNCATE TABLE ' . $this->target->quoted();"
+      ]
+    },
+    "Schema/Truncate/TruncateLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native && $profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) && $context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'TRUNCATE TABLE requires the default native profile.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Reference\\Table\\DeclaredTable && $resolution->table->kind === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Declaration\\RelationKind::BaseTable && $resolution->table->name->catalog === null, 'TRUNCATE TABLE requires a resolved base table.');",
+        "$name = $resolution->table->name;",
+        "$schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'TRUNCATE TABLE needs an absolute table identity.');",
+        "$kind = $resolution->table->temporary ? \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable : \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable;",
+        "$target = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($name->name->value));",
+        "$identity = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity($target, $kind);",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Truncate\\TruncateTable($identity, $this->referrers($context, $identity), $profile->grammar);"
+      ]
+    },
+    "Schema/Truncate/TruncateLowering::referrers": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($target->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::TemporaryTable) {",
+        "    return [];",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($context->complete, 'A persistent truncation needs a complete catalog of referencing tables.');",
+        "$database = $target->name->schema->value;",
+        "$table = $target->name->table->value;",
+        "$children = [];",
+        "foreach ($context->foreignKeys as $edge) {",
+        "    $parentSchema = $edge->parent->schema?->value;",
+        "    if ($edge->parent->name->value !== $table || $parentSchema !== $database && $parentSchema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED) {",
+        "        continue;",
+        "    }",
+        "    $childSchema = $edge->child->schema?->value;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($parentSchema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED && $childSchema !== null && $childSchema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED, 'The foreign-key dependency needs an absolute child and parent namespace.');",
+        "    $name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($childSchema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($edge->child->name->value));",
+        "    $children[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Identity\\TableIdentity($name, \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable);",
+        "}",
+        "return $children;"
+      ]
+    },
+    "Schema/Truncate/TruncationDependents::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable || $referrers === [], 'A temporary truncation cannot have native foreign keys.');",
+        "foreach ($referrers as $child) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($child->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable && $child->name->schema->value === $target->name->schema->value && $child->name->table->value === $target->name->table->value, 'TRUNCATE TABLE is blocked by a foreign key from another table.');",
+        "}"
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "revision": "SemanticsIR/sqlite-connection-commands-binding-1",
+  "approval": "pending-human-review",
+  "scope": "Fix the root identifier's native name conversion and source-free scalar derivation before command publication.",
+  "artifacts": {
+    "src/Lowering/Definition/ConnectionRule.php": {
+      "methods": [
+        "command",
+        "operand",
+        "key"
+      ],
+      "sha256": "73cacaefcf159c2af2656aa860befac301ef63dd65b254713c2cf59bae2ffb7e"
+    },
+    "src/Statement/Connection/Attach.php": {
+      "methods": [
+        "deriveStatement"
+      ],
+      "sha256": "dc97a8e798181d2f882a9f5c64da1e32bd60334fd3123b17ab1db26bea2d0e49"
+    },
+    "src/Statement/Connection/Detach.php": {
+      "methods": [
+        "deriveStatement"
+      ],
+      "sha256": "446df322fdcff58855c129ce31d52b58b0a33eea467acd81446d8b7a72d7c816"
+    },
+    "src/Statement/Connection/NameOperand.php": {
+      "methods": [
+        "deriveScalar"
+      ],
+      "sha256": "b4f913a564f112b6fd3634f187877d2acefa90b0cb0d0797d1eb5c73485eaebf"
+    }
+  }
+}

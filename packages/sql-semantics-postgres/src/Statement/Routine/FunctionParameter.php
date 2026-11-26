@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * parameters take part in calls; output parameters form the result row.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a named output parameter
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('text')])));
  *     $parameter = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter($type, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('label'), \SqlSemantics\Platform\PostgreSql\Statement\Routine\ParameterMode::Out);

@@ -11,13 +11,13 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ExternalBody::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class ExternalBodyTest extends TestCase
 {
     public function testRenderKeepsAQuotedCode(): void
     {
-        $create = (new Semantics())->analyze("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
+        $create = (new Inspection())->inspect("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
@@ -55,12 +55,12 @@ final class ExternalBodyTest extends TestCase
     #[DataProvider('providerRenderWritesAsAndTheCode')]
     public function testRenderWritesAsAndTheCode(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedBody(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $quoted = new Output(new Codec($semantics->profile()->grammar));
         (new ExternalBody(new Text("it's")))->render($quoted);
         $dollar = new Output(new Codec($semantics->profile()->grammar));

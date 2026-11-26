@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Routine;
  * without a mode is an input parameter.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the input modes
  *     [\SqlSemantics\Platform\PostgreSql\Statement\Routine\ParameterMode::InAndOut->input(), \SqlSemantics\Platform\PostgreSql\Statement\Routine\ParameterMode::Out->input()] // => [true, false]
  */

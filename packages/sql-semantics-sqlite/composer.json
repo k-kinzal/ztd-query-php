@@ -90,7 +90,8 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Bench\\": "bench/",
-            "Fuzz\\": "fuzz/"
+            "Fuzz\\": "fuzz/",
+            "SqlSemantics\\Testing\\Sqlite\\": "fuzz/Grammar/"
         }
     },
     "scripts": {
@@ -140,7 +141,11 @@
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=1G",
-        "test": "paratest --processes=auto",
+        "test": [
+            "paratest --processes=auto",
+            "@test:grammar"
+        ],
+        "test:grammar": "phpunit tests/Grammar",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
@@ -167,6 +172,7 @@
         "loc-guard": "Check file size limits.",
         "phpstan": "Run PHPStan.",
         "test": "Run all test suites in parallel.",
+        "test:grammar": "Check the development grammar fixtures.",
         "test:coverage": "Run the unit tests in parallel and write the coverage and JUnit reports to build/.",
         "test:unit": "Run the unit tests.",
         "tree-guard": "Check the directory structure rules."

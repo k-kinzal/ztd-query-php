@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Dialect::class)]
 #[Medium]
@@ -22,9 +22,9 @@ final class DialectTest extends TestCase
 
     public function testDatabaseSelectsTheSqliteGrammarForAnalysis(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('sqlite', $semantics->profile()->grammar->database());
-        self::assertSame('SELECT 42', $semantics->analyze('select   42')->toString());
+        self::assertSame('SELECT 42', $semantics->inspect('select   42')->toString());
     }
 }

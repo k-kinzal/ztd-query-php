@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * already open is the state of the session.
  * Source: https://www.postgresql.org/docs/17/sql-begin.html, https://www.postgresql.org/docs/17/sql-start-transaction.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the modes of a BEGIN
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('BEGIN WORK ISOLATION LEVEL SERIALIZABLE, READ ONLY');
- *     [count($operation->statement->modes), $operation->toString()] // => [2, 'BEGIN ISOLATION LEVEL SERIALIZABLE READ ONLY']
+ * @visibility SqlSemantics
  */
 final class Begin implements Statement
 {

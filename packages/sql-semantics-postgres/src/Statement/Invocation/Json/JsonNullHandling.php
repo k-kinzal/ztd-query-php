@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json;
  * (ABSENT ON NULL), so the clause written is kept.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the clause that leaves NULL values out
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling::Absent->value // => 'ABSENT'
  */

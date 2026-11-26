@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * parses it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Problem\BucketCountOutOfRange(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')))->message() // => 'Number of buckets 0 is out of range in ANALYZE TABLE: it is 1 to 1024.'
  */

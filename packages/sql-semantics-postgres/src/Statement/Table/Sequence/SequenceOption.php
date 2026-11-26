@@ -13,10 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * group of options with the same operand.
  * Source: https://www.postgresql.org/docs/17/sql-createsequence.html.
  *
- * @visibility public
- * @example Reading the options of a sequence
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s INCREMENT BY 2 NO CYCLE');
- *     count($create->statement->options) // => 2
+ * @visibility SqlSemantics
  */
 interface SequenceOption extends Clause
 {

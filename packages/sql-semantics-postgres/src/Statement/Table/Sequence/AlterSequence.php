@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * PostgreSQL 17 (PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-altersequence.html.
  *
- * @visibility public
- * @example Changing a sequence
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SEQUENCE IF EXISTS s RESTART WITH 1 NO MAXVALUE');
- *     $statement->toString() // => 'ALTER SEQUENCE IF EXISTS s RESTART 1 NO MAXVALUE'
+ * @visibility SqlSemantics
  */
 final class AlterSequence implements Statement, Relation
 {
@@ -61,9 +58,12 @@ final class AlterSequence implements Statement, Relation
     public function deriveStatement(Derivation $derivation): void
     {
         $kinds = new RelationKinds();
-        $kind = $kinds->of($derivation->relation($this, $derivation->environment()));
+        $fact = $derivation->relation($this, $derivation->environment());
+        $kind = $kinds->of($fact);
         $kinds->require($derivation, $kind, $this->name->name, [RelationKind::Sequence], $derivation->context->profile->grammar === GrammarRelease::PostgreSql166 ? KindRule::NotSequence : KindRule::OpenSequence);
-        (new Sequences())->options($this->options, $derivation);
+        if ($fact->table !== null) {
+            (new Sequences())->options($this->options, $derivation);
+        }
     }
 
     /**

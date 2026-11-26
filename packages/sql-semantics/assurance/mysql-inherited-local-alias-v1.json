@@ -1,0 +1,155 @@
+{
+  "revision": "SemanticsIR/mysql-inherited-local-alias-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "scope": "Nonrecursive CTEs and independent derived sources on MySQL 8.0 and later. A written projection of signed integer literals can export requested ASCII aliases without a separate column list. Include empty labels, clipped alias bytes and case folding, and resolve selected columns before publishing.",
+  "constructors": {
+    "Rows/LocalProjection": {
+      "role": "Independent derived read with an inherited alias list.",
+      "structure": "Resolved source definition and ordered output positions.",
+      "conditions": "The retained child has exact signed literal operands with ordered effective ASCII labels when a written alias alters its native heading. Its inherited output names must be unique under ASCII case-insensitive comparison. Unchanged names retain their exact case when a result name is derived from the written use. An analysis without an explicit list binds against the trimmed and clipped names, and reports duplicate or absent names.",
+      "meaning": "Reads use their resolved definition, occurrence and field positions. Hold the exact requested alias when it causes a native warning. Creating the independent source and its consumer preserves the values and native result metadata.",
+      "externalInterpretation": "Registered MySQL point release using native utf8mb4, empty SQL mode, lower_case_table_names=0 and derived_merge=on. Compare both native prepared and text execution.",
+      "sql": "Output the diagnostic-producing child aliases intact. Provide a separate generated list for coordinate-based reads and emit checked result names in the authored output order. This generated local list is legal for every admitted profile.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/DerivedSource": {
+      "role": "Independent signed derived input with an inherited alias list.",
+      "structure": "Resolved source definition and each separately identified occurrence.",
+      "conditions": "The retained child has exact signed literal operands with ordered effective ASCII labels when a written alias alters its native heading. Its inherited output names must be unique under ASCII case-insensitive comparison. Unchanged names retain their exact case when a result name is derived from the written use. An analysis without an explicit list binds against the trimmed and clipped names, and reports duplicate or absent names.",
+      "meaning": "Reads use their resolved definition, occurrence and field positions. Hold the exact requested alias when it causes a native warning. Creating the independent source and its consumer preserves the values and native result metadata.",
+      "externalInterpretation": "Registered MySQL point release using native utf8mb4, empty SQL mode, lower_case_table_names=0 and derived_merge=on. Compare both native prepared and text execution.",
+      "sql": "Output the diagnostic-producing child aliases intact. Provide a separate generated list for coordinate-based reads and emit checked result names in the authored output order. This generated local list is legal for every admitted profile.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Rows/With/WithDefinition": {
+      "role": "Nonrecursive definition exporting its SELECT aliases, including an independent nested WITH.",
+      "structure": "Closed value with ordered result slots. The consumer retains only an exact definition ordinal and field ordinal.",
+      "conditions": "The retained child has exact signed literal operands with ordered effective ASCII labels when a written alias alters its native heading. Its inherited output names must be unique under ASCII case-insensitive comparison. Unchanged names retain their exact case when a result name is derived from the written use. An analysis without an explicit list binds against the trimmed and clipped names, and reports duplicate or absent names.",
+      "meaning": "Reads use their resolved definition, occurrence and field positions. Hold the exact requested alias when it causes a native warning. Creating the independent source and its consumer preserves the values and native result metadata.",
+      "externalInterpretation": "Registered MySQL point release using native utf8mb4, empty SQL mode, lower_case_table_names=0 and derived_merge=on. Compare both native prepared and text execution.",
+      "sql": "Output the diagnostic-producing child aliases intact. Provide a separate generated list for coordinate-based reads and emit checked result names in the authored output order. This generated local list is legal for every admitted profile.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "ASCII aliases remove leading bytes 0x00–0x20 and 0x7f, then retain at most 256 bytes as an inherited name. The syntax string contains no NUL. An empty inherited name can be read with a quoted empty identifier. ASCII case folding preserves trailing spaces and control bytes.",
+    "Compare typed values, exact result metadata, column names and positions, native warnings and phase in both protocols. Exercise two distinct derived occurrences and scopes with dummy definitions, nested readers and repeated or reordered output positions.",
+    "Negative source cases retain the native unknown-column or duplicate-column failure category and the exact submitted SQL. The candidate must refuse before publishing. Generate a direct refusal with a nonexistent output slot."
+  ],
+  "finite": {
+    "aliasShapes": [
+      "plain",
+      "trim",
+      "control",
+      "delimiter",
+      "wide-ascii",
+      "empty"
+    ],
+    "placement": [
+      "local",
+      "nested",
+      "with-local",
+      "join",
+      "definition",
+      "nested-definition"
+    ],
+    "layout": [
+      "in-order",
+      "reverse",
+      "repeat"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "coordinatesPerRoute": 108,
+    "complete": "Recover the alias, lexical scope, occurrence and position layout independently from the completed graph. Require the exact source and direct products and both native protocols.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      5147,
+      9703,
+      30103
+    ],
+    "casesPerSeed": 18,
+    "directCasesPerSeed": 18,
+    "timeoutSecondsPerRelease": 600,
+    "shape": "Vary local sources and widths from two to four, signed numeric operands, lexical labels and their case, and reordered or repeated bindings.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Authored alias with leading space is not the resolved name.",
+    "The trimmed labels with ASCII case differences are duplicates.",
+    "A direct field position beyond the definition must fail."
+  ],
+  "faults": [
+    "Keep the written alias as the inherited lookup name.",
+    "Drop requested aliases when emitting the local source.",
+    "Discard the lookup failure or a native warning in the comparison."
+  ],
+  "trust": [
+    "The native lexical name, independent coordinate schedules and signed integer oracle are separate from candidate derivation.",
+    "The closed PHP IR and explicit generated local names preserve the independently observed slots. Human review of the fixed native rules and runner is pending."
+  ],
+  "open": [
+    "MySQL 5.6 and 5.7 can read inherited aliases in derived tables but need a renderer that does not use the modern separate column list.",
+    "Unicode identifier case tables and incomplete bytes of a clipped multibyte sequence need a separate binding rule.",
+    "Recursive CTEs, non-scalar projections and additional source operations remain separate."
+  ],
+  "referenceSources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/with.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_view.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/strings/ctype-utf8.cc"
+  ]
+}

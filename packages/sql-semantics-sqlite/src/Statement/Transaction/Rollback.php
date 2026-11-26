@@ -18,9 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * ignores it. Rolling back to a savepoint is a different request, RollbackTo.
  * Source: https://sqlite.org/lang_transaction.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a rollback
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ROLLBACK TRANSACTION')->toString() // => 'ROLLBACK'
+ * @visibility SqlSemantics
  */
 final class Rollback implements Statement
 {

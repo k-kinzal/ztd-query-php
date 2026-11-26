@@ -42,10 +42,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable;
  * it to a string to allow things like SET table_type=MYISAM;").
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a word assigned to a system variable
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET @@sql_mode = TRADITIONAL');
- *     [$set->statement->items[0]->value->word->value, $set->facts->scalar($set->statement->items[0]->value)->type->descriptor->name()] // => ['TRADITIONAL', 'VARCHAR']
+ * @visibility SqlSemantics
  */
 final class BareName implements Scalar
 {

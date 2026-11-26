@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * temporary tables it drops belong to the session, not to a declaration context.
  * Source: https://www.postgresql.org/docs/17/sql-discard.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading what is discarded
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DISCARD TEMPORARY');
- *     [$operation->statement->target->temporary(), $operation->toString()] // => [true, 'DISCARD TEMPORARY']
+ * @visibility SqlSemantics
  */
 final class Discard implements Statement
 {

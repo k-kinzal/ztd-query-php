@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
  * index is ascending without one. Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-column-prefixes,
  * https://dev.mysql.com/doc/refman/8.4/en/descending-indexes.html.
  *
- * @visibility public
- * @example Reading a prefix key part
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TEXT, KEY (a(10) DESC))');
- *     [$create->statement->elements[1]->parts[0]->column->value, $create->statement->elements[1]->parts[0]->length->text] // => ['a', '10']
+ * @visibility SqlSemantics
  */
 final class ColumnPart implements KeyPart
 {

@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * a number, a boolean, `*`, DEFAULT (PostgreSQL 17) or a parenthesized list.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html.
  *
- * @visibility public
- * @example Reading the options of COPY
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY t TO STDOUT (FORMAT csv, FORCE_QUOTE *, HEADER)");
- *     [$copy->statement->options[0]->name->value, $copy->statement->options[2]->argument, $copy->toString()] // => ['format', null, 'COPY t TO STDOUT (format csv, force_quote *, header)']
+ * @visibility SqlSemantics
  */
 final class CopyOption implements Node
 {

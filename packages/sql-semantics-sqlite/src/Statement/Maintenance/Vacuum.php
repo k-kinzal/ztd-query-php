@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Maintenance;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -17,14 +18,11 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * Rule: SQLITE-VACUUM-001. The optional name is a schema name; without it the
  * main schema is rebuilt. The INTO operand is an expression that yields the
- * file name; it is derived at a position that sees no relation, so a column
- * name in it is a missing column.
+ * file name. The temporary database ignores the operand. Everywhere else
+ * the expression is derived at a position that sees no relation.
  * Source: https://sqlite.org/lang_vacuum.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the schema and the target of a vacuum
- *     $vacuum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VACUUM main INTO 'backup.db'");
- *     [$vacuum->statement->schema?->value, $vacuum->statement->into !== null] // => ['main', true]
+ * @visibility SqlSemantics
  */
 final class Vacuum implements Statement
 {
@@ -43,9 +41,17 @@ final class Vacuum implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        if ($this->into !== null) {
+        if ($this->into !== null && !$this->ignoresDestination()) {
             $derivation->scalar($this->into, $derivation->environment());
         }
+    }
+
+    /**
+     * Identifies SQLite's temporary database no-op.
+     */
+    public function ignoresDestination(): bool
+    {
+        return $this->schema !== null && Comparison::AsciiInsensitive->fold($this->schema->value) === 'temp';
     }
 
     /**

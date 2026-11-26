@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * a context). Terminates: a leaf.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/use.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading USE
- *     $use = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('use `my db`');
- *     [$use->statement->database->value, $use->toString()] // => ['my db', 'USE `my db`']
+ * @visibility SqlSemantics
  */
 final class UseDatabase implements Statement
 {

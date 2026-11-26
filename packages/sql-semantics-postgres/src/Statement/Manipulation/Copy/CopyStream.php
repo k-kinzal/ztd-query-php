@@ -14,10 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  * connection, whichever the direction. The spelling is kept.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html.
  *
- * @visibility public
- * @example Copying to the client
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT');
- *     $copy->statement->file // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout
+ * @visibility SqlSemantics
  */
 enum CopyStream: string implements Node
 {

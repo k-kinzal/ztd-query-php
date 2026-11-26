@@ -12,11 +12,11 @@ use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RowAlias::class)]
 #[Medium]
@@ -24,9 +24,9 @@ final class RowAliasTest extends TestCase
 {
     public function testDeriveRelationNamesTheWrittenColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('INSERT INTO t (a, b) VALUES (1, 2) AS n (m, k) ON DUPLICATE KEY UPDATE b = n.m + k', [$t]);
+        $operation = $semantics->diagnose('INSERT INTO t (a, b) VALUES (1, 2) AS n (m, k) ON DUPLICATE KEY UPDATE b = n.m + k', [$t]);
         self::assertInstanceOf(InsertRows::class, $operation->statement);
         self::assertNotNull($operation->statement->alias);
         $shape = $operation->facts->relation($operation->statement->alias)->shape;
@@ -38,16 +38,16 @@ final class RowAliasTest extends TestCase
 
     public function testDeriveRelationReportsAnotherColumnCount(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('INSERT INTO t VALUES (1, 2) AS n (m) ON DUPLICATE KEY UPDATE b = m', [$t]);
+        $operation = $semantics->diagnose('INSERT INTO t VALUES (1, 2) AS n (m) ON DUPLICATE KEY UPDATE b = m', [$t]);
 
         self::assertSame('In definition of view, derived table or common table expression, SELECT list and column names list have different column counts (2 and 1).', $operation->facts->diagnostics[0]->message());
     }
 
     public function testDeriveRelationDependsOnAnUndeclaredTable(): void
     {
-        $operation = (new Semantics())->inspect('INSERT INTO t VALUES (1) AS n ON DUPLICATE KEY UPDATE a = n.a');
+        $operation = (new Inspection())->diagnose('INSERT INTO t VALUES (1) AS n ON DUPLICATE KEY UPDATE a = n.a');
         self::assertInstanceOf(InsertRows::class, $operation->statement);
         self::assertNotNull($operation->statement->alias);
 
@@ -56,6 +56,6 @@ final class RowAliasTest extends TestCase
 
     public function testRenderWritesTheAliasAndColumns(): void
     {
-        self::assertSame('INSERT INTO t VALUES (1) AS `new` (m) ON DUPLICATE KEY UPDATE a = m', (new Semantics())->inspect('insert into t values (1) as new (m) on duplicate key update a = m')->toString());
+        self::assertSame('INSERT INTO t VALUES (1) AS `new` (m) ON DUPLICATE KEY UPDATE a = m', (new Inspection())->diagnose('insert into t values (1) as new (m) on duplicate key update a = m')->toString());
     }
 }

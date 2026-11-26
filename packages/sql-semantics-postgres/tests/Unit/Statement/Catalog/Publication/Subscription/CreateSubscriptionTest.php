@@ -14,11 +14,11 @@ final class CreateSubscriptionTest extends TestCase
 {
     public function testRenderWritesThePublications(): void
     {
-        self::assertSame('CREATE SUBSCRIPTION s CONNECTION \'host=a\' PUBLICATION p1, p2 WITH (enabled = FALSE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SUBSCRIPTION s CONNECTION \'host=a\' PUBLICATION p1, p2 WITH (enabled = false)')->toString());
+        self::assertSame('CREATE SUBSCRIPTION s CONNECTION \'host=a\' PUBLICATION p1, p2 WITH (enabled = FALSE)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE SUBSCRIPTION s CONNECTION \'host=a\' PUBLICATION p1, p2 WITH (enabled = false)')->toString());
     }
 
     public function testDeriveStatementDerivesTheParameters(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SUBSCRIPTION s CONNECTION \'x\' PUBLICATION p')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE SUBSCRIPTION s CONNECTION \'x\' PUBLICATION p')->facts->diagnostics);
     }
 }

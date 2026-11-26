@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * single attribute `from`.
  * Source: https://www.postgresql.org/docs/17/sql-createcollation.html.
  *
- * @visibility public
- * @example Reading the copied collation
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE COLLATION german FROM "de_DE"');
- *     $operation->statement->source->last()->value // => 'de_DE'
+ * @visibility SqlSemantics
  */
 final class CopyCollation implements Statement
 {

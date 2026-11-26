@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
  * are diagnostics (PG-DOMAIN-CHECK-001).
  * Source: https://www.postgresql.org/docs/17/sql-alterdomain.html.
  *
- * @visibility public
- * @example Reading the attributes of an added check
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NOT VALID');
- *     $operation->statement->constraint->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::NotValid]
+ * @visibility SqlSemantics
  */
 final class DomainCheck implements Clause
 {

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(DependentField::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class DependentFieldTest extends TestCase
 {
     public function testCandidatesAreTheKnownFieldsAndMissingNamesTheStarInputs(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT *, 1 AS a FROM t')->lookupField('a');
+        $lookup = (new Inspection())->inspect('SELECT *, 1 AS a FROM t')->lookupField('a');
 
         self::assertInstanceOf(DependentField::class, $lookup);
         self::assertSame('a', $lookup->name);
@@ -29,7 +29,7 @@ final class DependentFieldTest extends TestCase
 
     public function testCandidatesMayBeEmptyWhileMissingIsNot(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT * FROM t')->lookupField('a');
+        $lookup = (new Inspection())->inspect('SELECT * FROM t')->lookupField('a');
 
         self::assertInstanceOf(DependentField::class, $lookup);
         self::assertSame([], $lookup->candidates);

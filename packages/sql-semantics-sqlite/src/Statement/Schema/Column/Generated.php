@@ -34,10 +34,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownStorage;
  * column without the word is VIRTUAL.
  * Source: https://sqlite.org/gencol.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a generated column
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b GENERATED ALWAYS AS (a + 1) VIRTUAL)');
- *     [$create->statement->columns[1]->constraints[0]->storage(), $create->toString()] // => [\SqlSemantics\Platform\Sqlite\Statement\Schema\Column\GeneratedStorage::Virtual, 'CREATE TABLE t (a, b GENERATED ALWAYS AS (a + 1) VIRTUAL)']
+ * @visibility SqlSemantics
  */
 final class Generated implements ColumnConstraint
 {

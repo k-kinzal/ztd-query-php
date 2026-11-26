@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
@@ -27,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(LiteralRule::class)]
 #[Medium]
@@ -44,7 +44,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testLiteralLowersEveryLiteralForm(): void
     {
-        $operation = (new Semantics('mysql-8.4.7'))->analyze("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'");
+        $operation = (new Inspection('mysql-8.4.7'))->inspect("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -70,7 +70,7 @@ final class LiteralRuleTest extends TestCase
         $rule = new LiteralRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
         $number = new Node('NUM_literal', 0, [new Node('int64_literal', 0, [new Token(0, 'NUM', '7', 0)])]);
         $negative = $rule->constant(new Form(new Node('signed_literal', 2, [new Token(0, '-', '-', 0), $number]), 'signed_literal: - NUM_literal'));
-        $introduced = (new Semantics())->analyze("SELECT _latin1 X'4142', _utf8mb4 0b1")->statement;
+        $introduced = (new Inspection())->inspect("SELECT _latin1 X'4142', _utf8mb4 0b1")->statement;
 
         self::assertInstanceOf(SignedLiteral::class, $negative);
         self::assertTrue($negative->negative);
@@ -99,7 +99,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testStringLowersAdjacentSegmentsIntroducersAndTheNationalPrefix(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze("SELECT 'a' 'b' \"c\", _utf8mb4 'x' 'y', N'n' 'm'");
+        $operation = (new Inspection('mysql-5.7.44'))->inspect("SELECT 'a' 'b' \"c\", _utf8mb4 'x' 'y', N'n' 'm'");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -180,7 +180,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testParameterLowersAMarkerOfEitherStyle(): void
     {
-        self::assertSame('SELECT ?', (new Semantics())->analyze('SELECT ?')->toString());
-        self::assertSame('SELECT :id', (new Semantics(null, null, ParameterStyle::Named))->analyze('SELECT :id')->toString());
+        self::assertSame('SELECT ?', (new Inspection())->inspect('SELECT ?')->toString());
+        self::assertSame('SELECT :id', (new Inspection(null, null, ParameterStyle::Named))->inspect('SELECT :id')->toString());
     }
 }

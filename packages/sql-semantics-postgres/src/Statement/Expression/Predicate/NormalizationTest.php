@@ -28,10 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-string.html#FUNCTIONS-STRING-SQL. Status: Implemented.
  *
- * @visibility public
- * @example Reading the normal form of a test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' IS NOT NFKC NORMALIZED");
- *     [$query->field(0)->expression->form, $query->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Option\NormalForm::Nfkc, "SELECT 'a' IS NOT NFKC NORMALIZED"]
+ * @visibility SqlSemantics
  */
 final class NormalizationTest implements Scalar
 {

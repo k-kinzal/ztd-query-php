@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
  * ROLE_ALL).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-role.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the selection of all roles
  *     \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All->name // => 'All'
  */

@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(UniqueField::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class UniqueFieldTest extends TestCase
 {
     public function testFieldIsTheOnlyFieldWithTheName(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 AS a, 2 AS b');
+        $operation = (new Inspection())->inspect('SELECT 1 AS a, 2 AS b');
 
         $lookup = $operation->lookupField('b');
 

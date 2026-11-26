@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\CreateOperatorClass;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(CreateOperatorClass::class)]
 #[Medium]
@@ -20,13 +20,13 @@ final class CreateOperatorClassTest extends TestCase
 {
     public function testDeriveStatementRecordsNothingForAPlainClass(): void
     {
-        $operation = (new Semantics())->analyze('CREATE OPERATOR CLASS c FOR TYPE int4 USING btree AS STORAGE int4', []);
+        $operation = (new Inspection())->inspect('CREATE OPERATOR CLASS c FOR TYPE int4 USING btree AS STORAGE int4', []);
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderDropsRecheck(): void
     {
-        $operation = (new Semantics())->analyze('CREATE OPERATOR CLASS c DEFAULT FOR TYPE int4 USING gist FAMILY f AS OPERATOR 1 < (int4, int4) FOR SEARCH RECHECK, FUNCTION 1 (int4) f(int4)');
+        $operation = (new Inspection())->inspect('CREATE OPERATOR CLASS c DEFAULT FOR TYPE int4 USING gist FAMILY f AS OPERATOR 1 < (int4, int4) FOR SEARCH RECHECK, FUNCTION 1 (int4) f(int4)');
         self::assertSame('CREATE OPERATOR CLASS c DEFAULT FOR TYPE int4 USING gist FAMILY f AS OPERATOR 1 < (int4, int4) FOR SEARCH, FUNCTION 1 (int4) f (int4)', $operation->toString());
     }
 

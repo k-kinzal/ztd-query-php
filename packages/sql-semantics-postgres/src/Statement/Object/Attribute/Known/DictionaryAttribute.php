@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * template's initialization function reads.
  * Source: https://www.postgresql.org/docs/17/sql-createtsdictionary.html, `DefineTSDictionary` in `src/backend/commands/tsearchcmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\DictionaryAttribute::from('template')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::TextSearchTemplate
  */

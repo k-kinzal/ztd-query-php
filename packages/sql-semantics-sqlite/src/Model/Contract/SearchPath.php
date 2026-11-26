@@ -10,8 +10,8 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
  * The schemas a session searches for an unqualified relation name, in precedence order.
  *
  * @visibility public
- * @example Selecting the MySQL current database
- *     (new \SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('shop'))->schemas // => ['shop']
+ * @example Selecting SQLite main and an unnamed attachment
+ *     (new \SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath('main', ''))->schemas // => ['main', '']
  */
 final class SearchPath
 {
@@ -21,12 +21,12 @@ final class SearchPath
     public readonly array $schemas;
 
     /**
-     * @param string ...$schemas The schema names in precedence order; at least one, none empty
+     * @param string ...$schemas The schema names in precedence order; at least one
      */
     public function __construct(string ...$schemas)
     {
         $names = array_values($schemas);
-        Check::input($names !== [] && !in_array('', $names, true), 'A search path names at least one schema and no empty name.');
+        Check::input($names !== [], 'A search path names at least one schema.');
         $this->schemas = $names;
     }
 }

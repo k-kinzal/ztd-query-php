@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\OptionChecks;
  * CREATE DATABASE, and TABLESPACE only alone (PG-CATALOG-OPTION-001).
  * Source: https://www.postgresql.org/docs/17/sql-alterdatabase.html. Status: Implemented.
  *
- * @visibility public
- * @example Changing the connection limit
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d CONNECTION LIMIT 10');
- *     $operation->toString() // => 'ALTER DATABASE d WITH CONNECTION LIMIT = 10'
+ * @visibility SqlSemantics
  */
 final class AlterDatabase implements Statement
 {

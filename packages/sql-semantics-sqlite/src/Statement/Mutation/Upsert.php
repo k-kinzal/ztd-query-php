@@ -19,10 +19,7 @@ use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
  * DO UPDATE SET, optionally restricted by a predicate.
  * Source: https://sqlite.org/lang_upsert.html.
  *
- * @visibility public
- * @example Reading an upsert clause
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE a < 5');
- *     [count($insert->statement->upserts[0]->assignments), $insert->statement->upserts[0]->where !== null] // => [1, true]
+ * @visibility SqlSemantics
  * @example Refusing a predicate on DO NOTHING
  *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\Upsert(null, [], new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */

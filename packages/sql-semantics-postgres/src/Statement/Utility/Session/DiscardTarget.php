@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
  * written is kept. The value is the keyword.
  * Source: https://www.postgresql.org/docs/17/sql-discard.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that both spellings release temporary tables
  *     [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\DiscardTarget::Temp->temporary(), \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\DiscardTarget::Temporary->temporary()] // => [true, true]
  */

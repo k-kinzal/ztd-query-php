@@ -1,0 +1,190 @@
+{
+  "revision": "SemanticsIR/mysql-lexical-with/2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "requiredBaseline": "contract-v1.json",
+  "extends": [
+    "mysql-with-projection-v1.json",
+    "mysql-ansi-projection-v2.json",
+    "mysql-ansi-projection-v3.json"
+  ],
+  "constructors": {},
+  "existingRoles": [
+    "Binding/ProjectionMode",
+    "Rows/With/WithProjection",
+    "Rows/With/WithDefinition",
+    "Rows/With/WithRead",
+    "Rows/LocalProjection",
+    "Select"
+  ],
+  "counterexample": "Under ANSI_QUOTES, a valid ordinary WITH whose first definition references a double-quoted field is refused by 678c9402c7af59461f62ddcccf8092f3544c0fd5 because its owner reports empty sql_mode.",
+  "profiles": [
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "rejectedReleases": [
+    "mysql-5.6.51",
+    "mysql-5.7.44"
+  ],
+  "admission": "Apply the native ordinary WITH restrictions and prefix visibility from mysql-with-projection-v1. Concrete query members use the owning native grammar release and lexical mode. Lexical reads use only slots of a preceding definition and cannot select a separate language mode. A direct owner and an analyzed owner establish the same conditions.",
+  "structure": "An ordered nonempty definition list and final body. Each local read retains its definition and output ordinals. The owner retains its fixed release and lexical mode. Every concrete child shares that release and mode, including nested WITH and derived queries.",
+  "meaning": "A read of definition k evaluates the checked prefix value at k and projects its selected slots in result order. Definitions are evaluated with native duplicate and NULL semantics. Native positional bindings follow emitted lexical order even when the selected read uses only part of the lexical prefix.",
+  "rendering": "Render ordered definitions and positional reads with quoted generated names. Each selected expression uses the mode of its owning SELECT. Preserve quoted headings, decoded UTF-8 including NUL and backslashes, native field metadata and definition order.",
+  "observations": [
+    "Native lexical mode",
+    "Definition and field ordinals",
+    "Ordered result names and native field types",
+    "Typed row multisets including NULL and duplicate multiplicity",
+    "Native binding correspondence across CTE members",
+    "Decoded literal bytes surviving nested scope evaluation under both verbatim modes"
+  ],
+  "finite": {
+    "definitions": [
+      2,
+      3,
+      4
+    ],
+    "slotSelection": [
+      "rotate",
+      "repeat"
+    ],
+    "read": [
+      "first",
+      "last"
+    ],
+    "labels": [
+      "plain",
+      "quoted"
+    ],
+    "identities": 24,
+    "order": [
+      "definitions",
+      "slotSelection",
+      "read",
+      "labels"
+    ],
+    "recovery": "Recover the definition count, the first dependent selection, the final definition ordinal and exact headings from recorded graphs. Reconcile every combination with a separate finite-coordinate calculation."
+  },
+  "analysis": [
+    "ordered-prefix",
+    "quoted-names",
+    "nested-shadow",
+    "physical-and-local",
+    "signed-binding-order",
+    "derived-with",
+    "verbatim-cte-native-nul",
+    "verbatim-ansi-cte-nested",
+    "verbatim-cte-marker-binding"
+  ],
+  "negative": [
+    "mixed-mode-definition",
+    "mixed-mode-nested-query",
+    "mixed-mode-final-body",
+    "legacy-owner",
+    "mixed-verbatim-definition",
+    "mixed-verbatim-consumer"
+  ],
+  "exploration": {
+    "seeds": [
+      39019,
+      49121
+    ],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 900,
+    "dimensions": [
+      "Number of definitions",
+      "Selected definition ordinals",
+      "Selected column ordinals and widths",
+      "Quoted headings",
+      "Underlying row shape",
+      "Nested WITH owners",
+      "Verbatim text bytes and collation-neutral literal evaluation",
+      "Both verbatim modes with or without ANSI_QUOTES",
+      "Local text-slot reads compared against a physically distinct integer slot"
+    ],
+    "directCasesPerSeed": 32
+  },
+  "budgets": {
+    "attemptSeconds": 15
+  },
+  "faults": [
+    "detach-with-mode",
+    "skip-with-profile-matching",
+    "substitute-definition-ordinal"
+  ],
+  "requiredProperties": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ],
+  "obligations": {
+    "Q01": "Closed native owner and checked child profile, prefix and slot constraints.",
+    "Q02": "Preserve all ANSI and empty-mode schedules. Add valid native prefix, text bytes, quoted headings and mixed-mode refusals for both verbatim modes.",
+    "Q03": "Use the ordinary WITH scope relation at each level and compare actual resolved ordinals.",
+    "Q04": "Compare constructed and analyzed SQL and independent typed predictions with the native engine. Preserve the effect of reading an earlier definition.",
+    "Q05": "Check exact PHP composition shapes and installed construction under the explicit mode."
+  },
+  "fixture": "Use the MySQL projection mode fixture from mysql-ansi-projection-v2.json.",
+  "trust": [
+    "The independently fixed ordinary CTE rule and row evaluator",
+    "Pinned SQL server profiles, UTF-8 and native PDO bindings",
+    "Reviewed checker selection and distribution linking"
+  ],
+  "exclusions": [],
+  "remainingBaseline": "Recursive WITH, other lexical modes, named markers and other statement roles remain required separately.",
+  "versionedFrom": {
+    "path": "mysql-ansi-with-v1.json",
+    "sha256": "12556b2fcf97ddfec738f4666ac6d767a885bb7ddb2f3ad10bbf09711d9dbccd"
+  },
+  "lexicalModes": [
+    "ANSI_QUOTES",
+    "NO_BACKSLASH_ESCAPES",
+    "ANSI_QUOTES,NO_BACKSLASH_ESCAPES"
+  ],
+  "nestedShadowWireType": {
+    "smallInteger": "LONG",
+    "logicalType": "integer",
+    "value": 5,
+    "reason": "The nested native CTE read exposes the stored-width field of the small literal, with LONG metadata.",
+    "sourceCandidate": "fdb5fbda29aa39de933c073dcd69b0ba6e76b083",
+    "coordinate": "analysis/nested-shadow",
+    "archiveSha256": "87b2cbacb8489de1fd4ddb266bb60445ab3fc430f0d69ff6dd285a7459064fce"
+  },
+  "verbatimFinite": {
+    "modes": [
+      "NO_BACKSLASH_ESCAPES",
+      "ANSI_QUOTES,NO_BACKSLASH_ESCAPES"
+    ],
+    "utf8": [
+      "a\\nb",
+      "x\\'é",
+      "a\u0000棚😀"
+    ],
+    "nested": [
+      false,
+      true
+    ],
+    "slotSelection": [
+      "rotate",
+      "repeat"
+    ],
+    "order": [
+      "modes",
+      "utf8",
+      "nested",
+      "slotSelection"
+    ],
+    "identities": 24,
+    "recovery": "Recover the mode from the observed profile, the literal from the lowest definition, the nested owner edge and the dependence on the chosen position."
+  }
+}

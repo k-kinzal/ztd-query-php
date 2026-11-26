@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * the vocabulary of its statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a typed option value
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3306'));
  *     $option->kind->value // => 'SOURCE_PORT'

@@ -1,0 +1,107 @@
+{
+  "revision": "SemanticsIR/postgres-values-compound-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Bind PostgreSQL set-arm dispatch and the common type, grouping and placement checks to the observed VALUE operands.",
+  "rules": {
+    "Rows/CompoundLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query, $inputTypes),",
+        "    $query instanceof ValuesList => (new ValuesLowering())->lower($operation, $query),",
+        "    $query instanceof ParenthesizedQuery => $this->lower($operation, $query->query, $inputTypes),",
+        "    $query instanceof SetOperation => new Compound(",
+        "        $this->lower($operation, $query->left, $inputTypes),",
+        "        CompoundOperator::from($query->operator->value),",
+        "        $query->quantifier === SetQuantifier::All,",
+        "        $this->lower($operation, $query->right, $inputTypes),",
+        "    ),",
+        "    default => throw new InvalidConstruction('A native compound requires checked SELECT or VALUES arms.'),",
+        "};"
+      ]
+    },
+    "Rows/CompoundShape::width": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $query instanceof Compound => self::width($query->left),",
+        "    $query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesQuery => count($query->rows[0]->cells),",
+        "    $query instanceof Select => count($query->columns),",
+        "};"
+      ]
+    },
+    "Rows/CompoundShape::depth": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if (!$query instanceof Compound) {",
+        "    return 0;",
+        "}",
+        "$left = self::depth($query->left);",
+        "$right = self::depth($query->right);",
+        "",
+        "return 1 + ($left > $right ? $left : $right);"
+      ]
+    },
+    "Rows/CompoundShape::arms": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $query instanceof Compound ? self::arms($query->left) + self::arms($query->right) : 1;"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position));",
+        "}",
+        "if ($query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesQuery) {",
+        "    return match ($query->columnKind($position)) {",
+        "        ColumnKind::Int4 => ResultKind::Integer,",
+        "        ColumnKind::Int8 => ResultKind::WideInteger,",
+        "        ColumnKind::Boolean => ResultKind::Boolean,",
+        "        ColumnKind::Text => ResultKind::Text,",
+        "    };",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "",
+        "return match (true) {",
+        "    $column instanceof BuiltinCast, $column instanceof Parameter => match ($column instanceof BuiltinCast ? $column->target : $column->input) {",
+        "        CastDestination::Integer => ResultKind::Integer,",
+        "        CastDestination::WideInteger => ResultKind::WideInteger,",
+        "        CastDestination::Boolean => ResultKind::Boolean,",
+        "        CastDestination::Text => ResultKind::Text,",
+        "    },",
+        "    $column instanceof WideIntegerLiteral, $column instanceof WideIntegerColumnReference => ResultKind::WideInteger,",
+        "    $column instanceof TextLiteral, $column instanceof TextColumnReference, $column instanceof CollatedText => ResultKind::Text,",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof BooleanLiteral, $column instanceof BooleanColumnReference, $column instanceof IntegerComparison, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison => ResultKind::Boolean,",
+        "    $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral => ResultKind::Integer,",
+        "};"
+      ]
+    },
+    "Rows/CompoundShape::sql": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$sql = $query->toString();",
+        "",
+        "return $query instanceof Compound ? '(' . $sql . ')' : $sql;"
+      ]
+    }
+  }
+}

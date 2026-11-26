@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * expression is derived in the scope of the partitioned table.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-hash.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a hash partitioning
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')));
  *     [$method->linear, $method->expression->name->value] // => [false, 'id']

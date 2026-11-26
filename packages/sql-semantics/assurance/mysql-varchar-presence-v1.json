@@ -1,0 +1,28 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-presence-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["mysql-varchar-slots-v2.json", "server-truth-v2.json", "server-join-v2.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "scope": "Test a resolved native VARCHAR field for SQL NULL or presence. Compose as a SELECT output field, a WHERE filter or a local ordinary join ON predicate.",
+  "constructors": {},
+  "existingRoles": ["Predicate/NullTest", "From/TextColumnReference", "ResultColumn", "Select", "From/Join", "Predicate/LogicalPredicate", "Aggregation/GroupedSelect", "Mutation/Update", "Mutation/Delete"],
+  "structure": "A native NULL-test polarity and a checked operand. A VARCHAR read uses its native type and owned occurrence slot.",
+  "conditions": "The tested text slot belongs to the visible physical scope, including null extension on an outer join. A projection carries the test as a native truth result. Runtime filters admit only true.",
+  "meaning": "IS NULL observes whether the selected SQL operand is NULL. IS NOT NULL reverses the result. Empty strings, NUL, nonempty whitespace and other exact VARCHAR values are all present. The native integer result is always zero or one.",
+  "sql": "Preserve the test polarity and render the exact qualified field. Parenthesize the test within Boolean and projection roles.",
+  "observations": ["Native truth type and exact ordered labels", "Exact zero or one in the result, including nullable and null-extended fields", "Exact per-occurrence filtering and duplicate and null-extended rows in WHERE and ON"],
+  "finite": {"source": ["ordinary", "left", "right"], "placement": ["result", "where", "on"], "operands": ["label", "alternate", "empty_value"], "polarity": ["null", "not-null"], "identities": 48, "completeness": "Enumerate the full product except ON over a single source. Recover operand identity, observed OWNER and polarity from each constructed value."},
+  "exploration": {"seeds": [2699, 8513, 27143], "casesPerSeed": 20, "timeoutSecondsPerRelease": 200, "allowedExclusions": [], "requiredForms": "Use nullable and empty values, both polarities and source occurrences, LEFT and RIGHT null extension, mixed signed projection and nested Boolean filters."},
+  "analysis": ["Project a native text presence result", "Filter through text NULL in WHERE", "Test the nullable join occurrence in ON", "Read qualified and unqualified fields through nested null tests"],
+  "negative": ["Project a text NULL test over a signed slot", "Filter through a missing text occurrence", "Use a text operand beyond the local ON scope", "Resolve a VARCHAR field with an unsupported collation"],
+  "faults": ["Invert the null-test polarity", "Read the other nullable VARCHAR field", "Read the first rather than the later occurrence", "Drop the SELECT filter"],
+  "evidence": {
+    "P01": "Resolve both field identity and the comparison polarity before publication.", "P02": "Check the field's native kind and owning occurrence for each placement.", "P03": "Store the native reference and Boolean choice only.", "P04": "Compose using exact SQL NULL semantics in scalar and Boolean owners.", "P05": "Reuse the audited closed value graph and detached layouts.", "P06": "Compare native type, Boolean values and nullable join outputs.",
+    "Q01": "Reject the named scope and type errors.", "Q02": "Exhaust 48 finite identities and exercise the complete scheduled exploration.", "Q03": "Require both references and declared native kinds within the owning statement.", "Q04": "Independently evaluate SQL NULL presence and nested Boolean admission.", "Q05": "Pin the constructor, compiled PHP and release evidence."
+  },
+  "open": ["Other scalar operands, type conversions and unresolved collations", "Independent VARCHAR-presence effect witnesses for UPDATE and DELETE"],
+  "trust": ["Pinned native MySQL truth type", "Same stock fixture VARCHAR declarations", "Independent null and enclosing row semantics"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_is-null", "https://dev.mysql.com/doc/refman/8.4/en/working-with-null.html"]
+}

@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
@@ -22,6 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateFunction::class)]
 #[Medium]
@@ -29,9 +29,9 @@ final class CreateFunctionTest extends TestCase
 {
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $create = $semantics->inspect('CREATE FUNCTION f(x INT) RETURNS INT BEGIN DECLARE y INT; '
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $create = $semantics->diagnose('CREATE FUNCTION f(x INT) RETURNS INT BEGIN DECLARE y INT; '
             . 'SELECT a INTO y FROM t WHERE a = x LIMIT 1; UPDATE t SET b = x WHERE a = y; INSERT INTO t (a) VALUES (x); '
             . 'DELETE FROM t WHERE b = y; SET @v = x + y; RETURN x + y; END', [$table]);
 
@@ -40,16 +40,16 @@ final class CreateFunctionTest extends TestCase
 
     public function testDeriveStatementReportsAnUnknownNameInACompleteContext(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $create = $semantics->inspect('CREATE FUNCTION f(x INT) RETURNS INT BEGIN UPDATE t SET b = x WHERE a = zz; RETURN x; END', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $create = $semantics->diagnose('CREATE FUNCTION f(x INT) RETURNS INT BEGIN UPDATE t SET b = x WHERE a = zz; RETURN x; END', [$table]);
 
         self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
     public function testDeriveStatementReportsADuplicateParameter(): void
     {
-        $create = (new Semantics())->inspect('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
+        $create = (new Inspection())->diagnose('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
         $problem = $create->facts->diagnostics[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
@@ -60,7 +60,7 @@ final class CreateFunctionTest extends TestCase
 
     public function testDeriveStatementReportsAMissingReturn(): void
     {
-        $create = (new Semantics())->inspect('CREATE FUNCTION shop.f(x INT) RETURNS INT BEGIN SET @a = x; END');
+        $create = (new Inspection())->diagnose('CREATE FUNCTION shop.f(x INT) RETURNS INT BEGIN SET @a = x; END');
         $problem = $create->facts->diagnostics[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
@@ -83,12 +83,12 @@ final class CreateFunctionTest extends TestCase
     #[DataProvider('providerDeriveStatementFindsAReturnAnywhereInTheBody')]
     public function testDeriveStatementFindsAReturnAnywhereInTheBody(string $body): void
     {
-        self::assertSame([], (new Semantics())->inspect('CREATE FUNCTION f(x INT) RETURNS INT ' . $body)->facts->diagnostics);
+        self::assertSame([], (new Inspection())->diagnose('CREATE FUNCTION f(x INT) RETURNS INT ' . $body)->facts->diagnostics);
     }
 
     public function testDeriveStatementLeavesAnExternalBodyOpaque(): void
     {
-        $create = (new Semantics('mysql-9.1.0'))->inspect('CREATE FUNCTION f(x INT) RETURNS INT LANGUAGE JAVASCRIPT AS $$ return zz $$');
+        $create = (new Inspection('mysql-9.1.0'))->diagnose('CREATE FUNCTION f(x INT) RETURNS INT LANGUAGE JAVASCRIPT AS $$ return zz $$');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
@@ -120,21 +120,21 @@ final class CreateFunctionTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredFunctionMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredFunctionMayNotContain(string $statement, string $message): void
     {
-        $create = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS INT BEGIN ' . $statement . '; RETURN 1; END');
+        $create = (new Inspection())->diagnose('CREATE FUNCTION f() RETURNS INT BEGIN ' . $statement . '; RETURN 1; END');
 
         self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
     public function testDeriveStatementAcceptsAQueryThatWritesIntoVariables(): void
     {
-        $create = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 INTO @a; (SELECT 2 INTO @b); RETURN @a; END');
+        $create = (new Inspection())->diagnose('CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 INTO @a; (SELECT 2 INTO @b); RETURN @a; END');
 
         self::assertSame([], $create->facts->diagnostics);
     }
 
     public function testDeriveStatementReportsAResultSetAndAMissingReturnTogether(): void
     {
-        $create = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS INT SELECT 1');
+        $create = (new Inspection())->diagnose('CREATE FUNCTION f() RETURNS INT SELECT 1');
 
         self::assertSame(
             ['Not allowed to return a result set from a function', 'No RETURN found in FUNCTION f'],
@@ -172,7 +172,7 @@ final class CreateFunctionTest extends TestCase
     #[DataProvider('providerRenderWritesTheDefinition')]
     public function testRenderWritesTheDefinition(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     public function testAParameterWithADirectionIsRejected(): void

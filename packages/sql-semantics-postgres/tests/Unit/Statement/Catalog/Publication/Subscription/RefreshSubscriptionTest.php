@@ -14,11 +14,11 @@ final class RefreshSubscriptionTest extends TestCase
 {
     public function testRenderWritesTheOptions(): void
     {
-        self::assertSame('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = FALSE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = false)')->toString());
+        self::assertSame('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = FALSE)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = false)')->toString());
     }
 
     public function testDeriveStatementDerivesTheOptions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s REFRESH PUBLICATION')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s REFRESH PUBLICATION')->facts->diagnostics);
     }
 }

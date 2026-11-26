@@ -13,10 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
  *
  * Two occurrences of the same declared table are two relations.
  *
- * @visibility public
- * @example Reading the input relation of a query
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t');
- *     $operation->inputRelation() instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Relation // => true
+ * @visibility SqlSemantics
  */
 interface Relation extends Node
 {

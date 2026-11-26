@@ -14,22 +14,22 @@ final class XmlTableTest extends TestCase
 {
     public function testDeriveRelationHasTheColumns(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM XMLTABLE (XMLNAMESPACES ('u' AS x, DEFAULT 'v'), '/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' DEFAULT 'z' NOT NULL, b int) AS x");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT * FROM XMLTABLE (XMLNAMESPACES ('u' AS x, DEFAULT 'v'), '/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' DEFAULT 'z' NOT NULL, b int) AS x");
         self::assertSame(['n:NotNull', 'a:NotNull', 'b:Nullable'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field $field): string => ($field->name->value ?? '') . ':' . $field->nullability->name, $query->fields()->items ?? []));
     }
 
     public function testDeriveRelationReportsAnUnrecognizedOption(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text foo 'a')");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text foo 'a')");
         self::assertSame('unrecognized column option "foo"', $query->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheNamespacesAndColumns(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM LATERAL XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY)");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT * FROM LATERAL XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY)");
         self::assertSame("SELECT * FROM LATERAL XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY)", $query->toString());
     }
 }

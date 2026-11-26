@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * Source: https://www.postgresql.org/docs/17/functions-conditional.html#FUNCTIONS-CASE,
  * https://www.postgresql.org/docs/17/typeconv-union-case.html. Status: Implemented.
  *
- * @visibility public
- * @example Typing a CASE without ELSE
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT CASE 1 WHEN 1 THEN 2 WHEN 2 THEN 3.5 END');
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability, $query->field(0)->name->value] // => ['numeric', \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, 'case']
+ * @visibility SqlSemantics
  */
 final class CaseExpression implements Scalar, OutputNaming
 {

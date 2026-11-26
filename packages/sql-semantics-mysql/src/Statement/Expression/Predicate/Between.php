@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_between.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the bounds
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a BETWEEN 1 AND 9');
- *     [$query->statement->where->low->text, $query->statement->where->high->text] // => ['1', '9']
+ * @visibility SqlSemantics
  */
 final class Between implements Scalar
 {

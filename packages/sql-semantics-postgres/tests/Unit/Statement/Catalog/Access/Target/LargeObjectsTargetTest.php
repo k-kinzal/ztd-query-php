@@ -19,17 +19,17 @@ final class LargeObjectsTargetTest extends TestCase
 
     public function testDeriveTargetAcceptsAnObjectIdentifier(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT SELECT, UPDATE ON LARGE OBJECT 16385 TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('GRANT SELECT, UPDATE ON LARGE OBJECT 16385 TO joe', [])->facts->diagnostics));
     }
 
     public function testDeriveTargetReportsANumberThatIsNoObjectIdentifier(): void
     {
-        self::assertSame(['invalid input syntax for type oid: "16385.5"'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT SELECT ON LARGE OBJECT 16385.5 TO joe')->facts->diagnostics));
+        self::assertSame(['invalid input syntax for type oid: "16385.5"'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('GRANT SELECT ON LARGE OBJECT 16385.5 TO joe')->facts->diagnostics));
     }
 
     public function testRenderWritesTheIdentifiers(): void
     {
-        self::assertSame('GRANT SELECT ON LARGE OBJECT 1, 2 TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT SELECT ON LARGE OBJECT 1, +2 TO joe')->toString());
+        self::assertSame('GRANT SELECT ON LARGE OBJECT 1, 2 TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('GRANT SELECT ON LARGE OBJECT 1, +2 TO joe')->toString());
     }
 
     public function testRejectsNoIdentifier(): void

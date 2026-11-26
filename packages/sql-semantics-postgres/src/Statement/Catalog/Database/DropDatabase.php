@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * order written, repetitions included; the optional WITH before them is not kept.
  * Source: https://www.postgresql.org/docs/17/sql-dropdatabase.html. Status: Implemented.
  *
- * @visibility public
- * @example Dropping a database while it is in use
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP DATABASE IF EXISTS d (FORCE)');
- *     [$operation->statement->ifExists, $operation->toString()] // => [true, 'DROP DATABASE IF EXISTS d WITH (FORCE)']
+ * @visibility SqlSemantics
  */
 final class DropDatabase implements Statement
 {

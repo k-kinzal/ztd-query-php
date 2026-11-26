@@ -14,9 +14,10 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword;
+use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
-use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
+use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 
 /**
  * Lowers the administration commands VACUUM, PRAGMA, REINDEX and ANALYZE.
@@ -51,7 +52,7 @@ final class MaintenanceRule
             'cmd: VACUUM nm vinto' => new Vacuum($this->lowering->names->name($form->node(1)), $this->into($form->node(2))),
             'cmd: PRAGMA nm dbnm' => new Pragma($this->lowering->names->scoped($form->node(1), $form->node(2))),
             'cmd: PRAGMA nm dbnm EQ nmnum', 'cmd: PRAGMA nm dbnm LP nmnum RP' => new Pragma($this->lowering->names->scoped($form->node(1), $form->node(2)), $this->value($form->node(4))),
-            'cmd: PRAGMA nm dbnm EQ minus_num', 'cmd: PRAGMA nm dbnm LP minus_num RP' => new Pragma($this->lowering->names->scoped($form->node(1), $form->node(2)), $this->lowering->typeNames->minusNumber($form->node(4))),
+            'cmd: PRAGMA nm dbnm EQ minus_num', 'cmd: PRAGMA nm dbnm LP minus_num RP' => new Pragma($this->lowering->names->scoped($form->node(1), $form->node(2)), $this->number($form->node(4))),
             'cmd: REINDEX' => new Reindex(),
             'cmd: REINDEX nm dbnm' => new Reindex($this->lowering->names->scoped($form->node(1), $form->node(2))),
             'cmd: ANALYZE' => new Analyze(),
@@ -81,17 +82,34 @@ final class MaintenanceRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function value(Node $value): SignedNumber|Name|PragmaKeyword
+    public function value(Node $value): PragmaNumber|Name|PragmaKeyword
     {
         $form = $this->lowering->productions->form($value);
 
         return match ($form->signature) {
-            'nmnum: plus_num' => $this->lowering->typeNames->plusNumber($form->node(0)),
+            'nmnum: plus_num' => $this->number($form->node(0)),
             'nmnum: nm' => $this->lowering->names->name($form->node(0)),
             'nmnum: ON' => PragmaKeyword::On,
             'nmnum: DELETE' => PragmaKeyword::Delete,
             'nmnum: DEFAULT' => PragmaKeyword::Default,
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Records the signed numeric token as a text argument instead of evaluating it as a scalar expression.
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function number(Node $value): PragmaNumber
+    {
+        $form = $this->lowering->productions->form($value);
+        $number = match ($form->signature) {
+            'plus_num: number' => new PragmaNumber(null, $form->token(0)->text),
+            'plus_num: PLUS number' => new PragmaNumber(NumberSign::Plus, $form->token(1)->text),
+            'minus_num: MINUS number' => new PragmaNumber(NumberSign::Minus, $form->token(1)->text),
+            default => throw ImplementationGap::production($form),
+        };
+
+        return $this->lowering->leaves->record($number);
     }
 }

@@ -14,8 +14,8 @@ final class LimitCountTest extends TestCase
 {
     public function testRenderWritesAllOrTheCount(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT 1 LIMIT ALL OFFSET 1');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect('SELECT 1 LIMIT ALL OFFSET 1');
         self::assertSame('SELECT 1 LIMIT ALL OFFSET 1', $query->toString());
     }
 }

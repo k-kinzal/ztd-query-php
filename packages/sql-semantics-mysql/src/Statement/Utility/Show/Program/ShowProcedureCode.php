@@ -27,9 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-procedure-code.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PROCEDURE CODE shop.p') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The statement is available in debug builds of the server only
+ * @visibility SqlSemantics
  */
 final class ShowProcedureCode implements Statement
 {

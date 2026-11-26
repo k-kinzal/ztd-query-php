@@ -23,9 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
  * Source: the `show_parse_tree_stmt` rule of sql/sql_yacc.yy (8.1), checked
  * against a release build of 8.4.7. Status: Implemented.
  *
- * @visibility public
- * @example Reading the inspected statement
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PARSE_TREE SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The statement is available in debug builds of the server only
+ * @visibility SqlSemantics
  */
 final class ShowParseTree implements Statement
 {

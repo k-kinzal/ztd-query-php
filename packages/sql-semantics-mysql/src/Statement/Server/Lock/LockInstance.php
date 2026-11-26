@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/lock-instance-for-backup.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('lock instance for backup')->toString() // => 'LOCK INSTANCE FOR BACKUP'
+ * @visibility SqlSemantics
  */
 final class LockInstance implements Statement
 {

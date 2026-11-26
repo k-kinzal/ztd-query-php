@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
  * Source: https://sqlite.org/lang_createtable.html#the_primary_key,
  * https://sqlite.org/autoinc.html, https://sqlite.org/withoutrowid.html.
  *
- * @visibility public
- * @example Naming the flaw of a definition with two primary keys
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a PRIMARY KEY, b PRIMARY KEY)');
- *     $create->facts->diagnostics[0]->flaw // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw::Repeated
+ * @visibility SqlSemantics
  */
 enum PrimaryKeyFlaw: string
 {

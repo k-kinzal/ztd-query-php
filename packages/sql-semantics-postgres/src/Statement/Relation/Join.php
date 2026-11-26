@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
  * is refused. The facts follow PG-JOIN-001.
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-JOIN. Status: Implemented.
  *
- * @visibility public
- * @example Reading a join
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM a NATURAL LEFT OUTER JOIN b');
- *     [$query->statement->from->kind->value, $query->statement->from->natural, $query->toString()] // => ['LEFT', true, 'SELECT 1 FROM a NATURAL LEFT JOIN b']
+ * @visibility SqlSemantics
  * @example Refusing a qualified join without a condition
  *     $a = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'))));
  *     $b = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'))));

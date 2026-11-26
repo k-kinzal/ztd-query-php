@@ -1,0 +1,83 @@
+{
+  "revision": "SemanticsIR/postgres-create-schema-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": ["Schema/Namespace/CreateSchema"],
+  "profile": "Native markers, UTF-8, standard-conforming strings, case-sensitive decoded names, ordinary standalone SQL under the stock server configuration.",
+  "scope": "A namespace declaration with an optional existing-namespace guard and with no subordinate schema elements. Keep ownership and name derivation explicit.",
+  "sources": {
+    "16.6": ["https://www.postgresql.org/docs/16/sql-createschema.html", "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/schemacmds.c", "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/include/catalog/pg_authid.dat"],
+    "17.2": ["https://www.postgresql.org/docs/17/sql-createschema.html", "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/schemacmds.c", "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/include/catalog/pg_authid.dat"]
+  },
+  "constructors": {
+    "SchemaSessionRole": {
+      "type": "Schema/Namespace/SchemaSessionRole",
+      "role": "The owner relation to the executing session.",
+      "structure": "Exactly the effective role or the session authorization role.",
+      "invariants": ["The effective role and session authorization remain distinct input positions."],
+      "meaning": "CURRENT_ROLE, CURRENT_USER and omitted authorization resolve to the effective role. SESSION_USER resolves to the session authorization role."
+    },
+    "CreateSchema": {
+      "type": "Schema/Namespace/CreateSchema",
+      "role": "One namespace declaration.",
+      "structure": "An explicit decoded Identifier or a role-derived namespace name, one owner chosen from an absolute role Identifier and a SchemaSessionRole, a guard bit and a GrammarRelease.",
+      "invariants": [
+        "A static declared name must have a legal decoded length, valid UTF-8 and no reserved pg_ prefix.",
+        "A named owner always denotes a single role, never PUBLIC or NONE.",
+        "The exact release rejects nonexistent stock role names.",
+        "Omission of the namespace name uses the selected owner's decoded name. For a named owner, the constructor makes the derived name explicit."
+      ],
+      "meaning": "Resolve the owner first. Declare the named namespace with that owner and its default ACL. Preserve a conflicting namespace and owner under IF NOT EXISTS with a native diagnostic. Otherwise report the duplicate-namespace error. An active transaction can roll the effect back.",
+      "sql": "Delimit explicit decoded namespace and named owner independently. Emit the equivalent authorization token for session roles. Omit the name precisely for role-derived session naming. Preserve the guard bit.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "binding": [
+    "Resolve a named owner by exact name from the explicit cluster-role declarations or the fixed stock role catalog for the grammar version, including when the namespace already exists.",
+    "A bootstrap principal has no universal name. Only the selected session input or an explicit declaration supplies its identity.",
+    "An owner named by session position is intentionally supplied by the execution session. Its identity role and name computation are determined structurally.",
+    "Owner admissibility and privilege checks execute before the guarded duplicate outcome. Privileges and extension membership come from the same external interpretation.",
+    "The release distinguishes stock roles such as pg_maintain introduced in PostgreSQL 17. A reserved derived namespace name is invalid even if the role exists."
+  ],
+  "finite": {
+    "ownerCoordinates": ["effective-implicit/explicit", "current-user/explicit", "current-role/explicit", "session/explicit", "named/explicit", "current-user/derived", "current-role/derived", "session/derived", "named/derived"],
+    "occupied": [false, true],
+    "guarded": [false, true],
+    "transactional": [false, true],
+    "bound": "72 analyzed spelling and state coordinates per release, and the same 72 direct constructions with equivalent effective-role normalization."
+  },
+  "exploration": {
+    "seeds": [2539, 14591, 74869],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Vary owner roles and name sources, explicit names and declarations with case, multibyte and embedded delimiters, catalog occupancy, effect timing and guard choices. Keep session and effective owners distinguishable."
+  },
+  "observations": [
+    "Publication type, exact decoded declared identifier or role-derived name, resolved owner position or identity, existence guard and release.",
+    "Exact namespace row, owner, ACL, changed and unchanged namespace coordinates, and a pre-existing relation in the guarded namespace.",
+    "Native SQLSTATE, duplicate notice and command status. Temporary transaction state and rollback or atomic failure effects."
+  ],
+  "negative": [
+    "A direct reserved schema name",
+    "A direct named owner equal to the PUBLIC or NONE grammar designator",
+    "An explicit owner that is missing even when the target namespace would be guarded",
+    "A reserved namespace name derived from a known stock role",
+    "A CREATE SCHEMA subordinate statement awaiting its own composition contract"
+  ],
+  "edges": [
+    "A case-sensitive named role introduced by CREATE USER or CREATE GROUP",
+    "A stock owner selectable on both releases under the fixture superuser",
+    "pg_maintain resolves on 17.2 and refuses on 16.6",
+    "Empty declaration list with a fixed session owner input"
+  ],
+  "faults": [
+    "Render the effective role in place of the session authorization",
+    "Drop the duplicate guard",
+    "Use the owner name in place of the independent explicit namespace"
+  ],
+  "trust": ["The fixed schema creation rules and stock role inventory", "Native privileges and their resolution order in the same database fixture", "Checked PHP construction, profile and emitted SQL", "The independent catalog observer and expectation model"],
+  "open": ["Embedded schema elements, extension membership and nonstandard system-name overrides remain separately accountable."]
+}

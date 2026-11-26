@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
  * simultaneous connections. A limit of 0 means no limit.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-resource-limits.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a limit
  *     \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceKind::UserConnections->value // => 'MAX_USER_CONNECTIONS'
  */

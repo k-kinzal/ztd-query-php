@@ -10,11 +10,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A type that is one of several known types, decided by values at run time.
  *
- * @visibility public
- * @example Holding two possible types
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $type = $semantics->analyze("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
- *     $type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice // => true
+ * @visibility SqlSemantics
  */
 final class Choice implements TypeFact
 {

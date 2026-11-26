@@ -20,8 +20,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(QueryFact::class)]
 #[Medium]
@@ -54,7 +54,7 @@ final class QueryFactTest extends TestCase
 
     public function testFieldsOfAnAnalyzedOpenStarStayNull(): void
     {
-        $fact = (new Semantics())->analyze('SELECT *, 1 AS one FROM t')->facts->output;
+        $fact = (new Inspection())->inspect('SELECT *, 1 AS one FROM t')->facts->output;
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);

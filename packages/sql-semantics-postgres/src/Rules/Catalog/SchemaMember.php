@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Catalog;
 
 use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\SchemaMemberScope;
 use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
@@ -79,26 +80,7 @@ final class SchemaMember implements Statement
      */
     public function context(AnalysisContext $outer, array $provided = []): AnalysisContext
     {
-        $tables = $outer->tables;
-        foreach ($provided as $table) {
-            if (!in_array($table, $tables, true)) {
-                $tables[] = $table;
-            }
-        }
-        $path = [];
-        $placed = false;
-        foreach ($outer->searchPath as $searched) {
-            if (!$placed && $searched->value !== 'pg_temp' && $searched->value !== 'pg_catalog') {
-                $path[] = $this->schema;
-                $placed = true;
-            }
-            $path[] = $searched;
-        }
-        if (!$placed) {
-            $path[] = $this->schema;
-        }
-
-        return new AnalysisContext($outer->profile, $path, $tables, $outer->complete, $outer->relationNames, $outer->columnNames, $outer->declarationSchema);
+        return (new SchemaMemberScope())->bind($outer, $this->schema, $provided);
     }
 
     /**

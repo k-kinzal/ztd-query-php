@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramFacts;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Loop;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ProgramFacts::class)]
 #[Medium]
@@ -55,7 +55,7 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerRoutineResolvesTheParametersInTheBody')]
     public function testRoutineResolvesTheParametersInTheBody(string $release, string $sql): void
     {
-        self::assertSame([], (new Semantics($release))->inspect($sql)->facts->diagnostics);
+        self::assertSame([], (new Inspection($release))->diagnose($sql)->facts->diagnostics);
     }
 
     /**
@@ -76,7 +76,7 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerRoutineReportsTheBrokenRule')]
     public function testRoutineReportsTheBrokenRule(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -100,7 +100,7 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerRoutineAcceptsAFunctionWithAReturnAnywhere')]
     public function testRoutineAcceptsAFunctionWithAReturnAnywhere(string $sql): void
     {
-        self::assertSame([], (new Semantics())->inspect($sql)->facts->diagnostics);
+        self::assertSame([], (new Inspection())->diagnose($sql)->facts->diagnostics);
     }
 
     /**
@@ -122,7 +122,7 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerRoutineDerivesNothingFromExternalCode')]
     public function testRoutineDerivesNothingFromExternalCode(string $sql, array $messages): void
     {
-        $operation = (new Semantics('mysql-9.1.0'))->inspect($sql);
+        $operation = (new Inspection('mysql-9.1.0'))->diagnose($sql);
         self::assertInstanceOf(CreateFunction::class, $operation->statement);
         self::assertInstanceOf(ExternalBody::class, $operation->statement->body);
 
@@ -140,7 +140,7 @@ final class ProgramFactsTest extends TestCase
 
     public function testRoutineReportsAProgramProblem(): void
     {
-        $operation = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS INT BEGIN END');
+        $operation = (new Inspection())->diagnose('CREATE FUNCTION f() RETURNS INT BEGIN END');
 
         self::assertEquals([new ProgramProblem(ProgramRule::MissingReturn, 'f')], $operation->facts->diagnostics);
     }
@@ -151,8 +151,8 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerTriggerDerivesTheBodyWithTheRowsOfTheTable')]
     public function testTriggerDerivesTheBodyWithTheRowsOfTheTable(string $sql, array $messages): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -173,8 +173,8 @@ final class ProgramFactsTest extends TestCase
 
     public function testTriggerDerivesTheTable(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON u FOR EACH ROW SET @x = 1', [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON u FOR EACH ROW SET @x = 1', [$semantics->diagnose('CREATE TABLE t (a INT)')]);
 
         self::assertSame(['Relation u does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -185,8 +185,8 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerEventDerivesTheScheduleAndTheBody')]
     public function testEventDerivesTheScheduleAndTheBody(string $sql, array $messages): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -210,10 +210,10 @@ final class ProgramFactsTest extends TestCase
 
     public function testTriggerRefusesAView(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $view = $semantics->inspect('CREATE VIEW v AS SELECT a FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', [$table, $view])->facts->diagnostics));
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', [$table, $view])->facts->diagnostics));
     }
 }

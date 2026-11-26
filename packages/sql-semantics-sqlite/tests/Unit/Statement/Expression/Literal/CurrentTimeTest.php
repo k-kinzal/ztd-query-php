@@ -7,15 +7,15 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CurrentTime::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class CurrentTimeTest extends TestCase
 {
     public function testDeriveScalarGivesTextThatIsNeverNull(): void
     {
-        $operation = (new Semantics())->analyze('SELECT CURRENT_TIME, CURRENT_DATE, CURRENT_TIMESTAMP', []);
+        $operation = (new Inspection())->inspect('SELECT CURRENT_TIME, CURRENT_DATE, CURRENT_TIMESTAMP', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -41,13 +41,13 @@ final class CurrentTimeTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        self::assertSame('SELECT CURRENT_TIME AS c1, CURRENT_DATE AS c2, CURRENT_TIMESTAMP AS c3', (new Semantics())->analyze('select current_time AS c1, Current_Date AS c2, current_timestamp AS c3')->toString());
+        self::assertSame('SELECT CURRENT_TIME AS c1, CURRENT_DATE AS c2, CURRENT_TIMESTAMP AS c3', (new Inspection())->inspect('select current_time AS c1, Current_Date AS c2, current_timestamp AS c3')->toString());
     }
 
     public function testRenderWritesANewlyBuiltKeyword(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new CurrentTime(TimeKeyword::Timestamp))]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new CurrentTime(TimeKeyword::Timestamp))]));
 
         self::assertSame('SELECT CURRENT_TIMESTAMP', $operation->toString());
     }

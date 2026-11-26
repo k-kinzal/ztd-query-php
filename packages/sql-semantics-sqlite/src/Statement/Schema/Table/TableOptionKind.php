@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Table;
  *
  * Source: https://sqlite.org/withoutrowid.html, https://sqlite.org/stricttables.html.
  *
- * @visibility public
- * @example Reading the kind of a table option
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID');
- *     $create->statement->options[0]->kind() // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind::WithoutRowid
+ * @visibility SqlSemantics
  */
 enum TableOptionKind
 {

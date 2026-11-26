@@ -1,0 +1,55 @@
+{
+  "revision": "SemanticsIR/sqlite-pattern-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 in UTF-8 with native numbered bindings, the default built-in ASCII-insensitive LIKE and case-sensitive GLOB, no overrides of those functions, and without SQLITE_LIKE_DOESNT_MATCH_BLOBS.",
+  "scope": "The infix LIKE and GLOB pattern predicates, including their negated forms and a scalar ESCAPE argument for LIKE.",
+  "constructors": {
+    "Predicate/Pattern/PatternKind": {
+      "role": "The resolved built-in pattern operation.",
+      "structure": "A closed enum of ASCII-insensitive LIKE and case-sensitive GLOB.",
+      "conditions": "The selected language profile assigns the built-in operation to each enum case.",
+      "meaning": "LIKE uses percent and underscore wildcards with ASCII-only case folding. GLOB uses asterisk, question mark and code-point sets or ranges with case-sensitive matching.",
+      "externalInterpretation": "Use the fixed SQLite built-ins with the recorded compilation and connection profile.",
+      "sql": "Emit LIKE or GLOB for the corresponding checked enum case.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Predicate/Pattern/PatternTest": {
+      "role": "One nullable integer pattern predicate.",
+      "structure": "The operation, subject, pattern, negation and optional LIKE escape operand. Its children are closed SQLite scalars.",
+      "conditions": "GLOB has no ESCAPE operand. All contained references and parameters belong to the owning scalar scope. An ESCAPE operand evaluates to one Unicode character or SQL NULL. Other evaluated lengths produce the specified native evaluation error.",
+      "meaning": "Coerce the tested native storage values into strings. Use the operation's wildcards, escape role and case policy. Negation reverses INTEGER zero and one and preserves NULL. An invalid escape length raises the same native evaluation error.",
+      "externalInterpretation": "Use the same source slots, numbered bindings, scalar conversion and fixed built-in pattern profile.",
+      "sql": "Emit a parenthesized subject and pattern test with an explicit keyword and optional negation and ESCAPE. Keep nested operands and lexical binding order.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "Compare exact INTEGER or NULL, ordered result labels, duplicated output and input rows, parameter slots and lexical labels.",
+    "Test distinguishing ASCII case, non-ASCII case, Unicode wildcards, ranges and malformed sets, NUL-terminated converted operands, BLOB conversion, and an escaped wildcard.",
+    "Observe the native SQLite error code and message for a non-NULL escape of invalid length. This outcome is compared to the independent result and remains part of the execution ledger.",
+    "Authorize only the two registered function names for this native observer extension. Preserve the inherited observer policy and check a deliberate denial and recovery."
+  ],
+  "finite": {
+    "subjects": [["null"], ["text", ""], ["text", "a"], ["text", "A"], ["text", "é"], ["text", "_"], ["text", "abc"], ["blob", "41"], ["text", "a\u0000b"]],
+    "like": [["text", "a"], ["text", "A%"], ["text", "_"], ["text", "a%b"], ["text", "%é%"], ["text", ""], ["null"], ["text", "a\u0000b"]],
+    "escapedLike": [["text", "!_"], ["text", "!%"], ["text", "!"], ["text", "a!a"], ["text", "é_"], ["text", "%"], ["text", "%%"]],
+    "escapes": [["text", "!"], ["text", "é"], ["text", "%"], ["null"]],
+    "glob": [["text", "a"], ["text", "A*"], ["text", "?"], ["text", "[a-z]"], ["text", "[^a]"], ["text", "[]]"], ["text", "["], ["text", "a*b"], ["null"]],
+    "negated": [false, true],
+    "identities": 810,
+    "completeness": "Cross the nine subjects and two negation states with the eight LIKE, twenty-eight escaped LIKE and nine GLOB shapes. Verify identities reconstructed from the actual direct construction."
+  },
+  "exploration": {
+    "seeds": [7261, 14821, 33911],
+    "casesPerSeed": 30,
+    "timeoutSeconds": 175,
+    "allowedExclusions": [],
+    "structure": "Explore SELECT with a bound source or no source and VALUES. Generate nested scalar operands in the subject, pattern and escape roles, with NULL, TEXT, BLOB, numeric values and numbered bindings."
+  },
+  "negative": ["Invisible subject slot", "Invisible pattern slot", "Invisible escape slot", "GLOB with ESCAPE", "REGEXP without a resolved profile", "MATCH without a resolved profile"],
+  "faults": ["Reverse subject and pattern", "Replace LIKE with GLOB", "Omit LIKE ESCAPE", "Omit negation"],
+  "open": ["Application-defined pattern routines and mode overrides, non-default BLOB compile profiles, invalid UTF-8 inside a GLOB set, and large pattern boundaries."],
+  "trust": ["Fixed SQLite C source and inspected compilation profile", "Independent code-point pattern grammar and evaluator", "Scoped observer authorization and exact binding comparisons"],
+  "sources": ["https://sqlite.org/lang_expr.html#the_like_glob_regexp_match_and_extract_operators", "https://sqlite.org/compile.html#like_doesnt_match_blobs"]
+}

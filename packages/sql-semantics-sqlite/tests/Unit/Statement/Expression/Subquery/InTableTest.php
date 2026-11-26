@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
@@ -17,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
@@ -27,6 +25,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(InTable::class)]
 #[Medium]
@@ -34,9 +34,9 @@ final class InTableTest extends TestCase
 {
     public function testDeriveScalarReadsADeclaredTableAndIsNotNullWhenNothingCanBeNull(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)');
-        $query = $semantics->inspect('SELECT 1 IN t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL)');
+        $query = $semantics->diagnose('SELECT 1 IN t', [$create]);
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
@@ -52,9 +52,9 @@ final class InTableTest extends TestCase
 
     public function testDeriveScalarCanBeNullWhenTheOperandOrTheColumnCan(): void
     {
-        $semantics = new Semantics();
-        $nullable = $semantics->inspect('SELECT 1 IN u', [$semantics->inspect('CREATE TABLE u (a INTEGER)')]);
-        $operand = $semantics->inspect('SELECT NULL IN t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)')]);
+        $semantics = new Inspection();
+        $nullable = $semantics->diagnose('SELECT 1 IN u', [$semantics->diagnose('CREATE TABLE u (a INTEGER)')]);
+        $operand = $semantics->diagnose('SELECT NULL IN t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL)')]);
 
         self::assertSame(Nullability::Nullable, $nullable->field(0)->nullability);
         self::assertSame(Nullability::Nullable, $operand->field(0)->nullability);
@@ -62,10 +62,10 @@ final class InTableTest extends TestCase
 
     public function testDeriveScalarReportsATableOfAnotherWidth(): void
     {
-        $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $single = $semantics->inspect('SELECT 1 IN t', [$create]);
-        $row = $semantics->inspect('SELECT (1, 2) IN t', [$create]);
+        $semantics = new Inspection();
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $single = $semantics->diagnose('SELECT 1 IN t', [$create]);
+        $row = $semantics->diagnose('SELECT (1, 2) IN t', [$create]);
 
         self::assertCount(1, $single->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $single->facts->diagnostics[0]);
@@ -77,7 +77,7 @@ final class InTableTest extends TestCase
 
     public function testDeriveScalarReadsACommonTable(): void
     {
-        $query = (new Semantics())->inspect('WITH c AS (SELECT 1 AS x) SELECT 1 IN c');
+        $query = (new Inspection())->diagnose('WITH c AS (SELECT 1 AS x) SELECT 1 IN c');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
@@ -88,7 +88,7 @@ final class InTableTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredTable(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1 IN x');
+        $query = (new Inspection())->diagnose('SELECT 1 IN x');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
@@ -101,7 +101,7 @@ final class InTableTest extends TestCase
 
     public function testDeriveScalarDependsOnTheRoutineOfATableValuedFunction(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1 IN json_each(1)', []);
+        $query = (new Inspection())->diagnose('SELECT 1 IN json_each(1)', []);
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
@@ -115,7 +115,7 @@ final class InTableTest extends TestCase
 
     public function testDeriveScalarReportsAMissingTableInACompleteContext(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1 IN x', []);
+        $query = (new Inspection())->diagnose('SELECT 1 IN x', []);
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
@@ -126,9 +126,9 @@ final class InTableTest extends TestCase
 
     public function testRenderWritesTheNegationTheSchemaAndTheArguments(): void
     {
-        $semantics = new Semantics();
-        $qualified = $semantics->inspect('select a not in main.t AS c1 from t');
-        $call = $semantics->inspect('SELECT 1 IN json_each(1, 2) AS c1');
+        $semantics = new Inspection();
+        $qualified = $semantics->diagnose('select a not in main.t AS c1 from t');
+        $call = $semantics->diagnose('SELECT 1 IN json_each(1, 2) AS c1');
         $test = $qualified->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
@@ -140,9 +140,9 @@ final class InTableTest extends TestCase
 
     public function testRenderWritesANewlyBuiltTest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $test = new InTable(new IntegerLiteral('1'), new QualifiedName(new Name('t'), new Name('temp')), null, true);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($test)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn($test)]));
 
         self::assertSame('SELECT 1 NOT IN `temp`.t', $operation->toString());
     }

@@ -17,15 +17,15 @@ final class FromScopeTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT * FROM t, ROWS FROM (f(t.a) AS (x integer))', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT * FROM t, ROWS FROM (f(t.a) AS (x integer))', [$t, $u]);
         self::assertSame([], $query->facts->diagnostics);
     }
 
     public function testVisibleNamesXmltableWithoutAlias(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT xmltable.a FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text)");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose("SELECT xmltable.a FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text)");
         self::assertSame([], $query->facts->diagnostics);
     }
 
@@ -34,20 +34,20 @@ final class FromScopeTest extends TestCase
         $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT 1 FROM t, u JOIN (SELECT 1 AS z) AS w ON t.a = w.z', [$t, $u]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->diagnose('SELECT 1 FROM t, u JOIN (SELECT 1 AS z) AS w ON t.a = w.z', [$t, $u]);
         self::assertCount(1, $query->facts->diagnostics);
     }
 
     public function testEnterBarsTheLeftSideOfARightJoinForLateralItems(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM (SELECT 1 AS a) AS t RIGHT JOIN generate_series(1, t.a) AS g ON true', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('SELECT * FROM (SELECT 1 AS a) AS t RIGHT JOIN generate_series(1, t.a) AS g ON true', []);
         self::assertSame('invalid reference to FROM-clause entry for table "t"', $query->facts->diagnostics[0]->message());
     }
 
     public function testEnterKeepsEarlierCommaItemsReachableFromARightJoin(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM (SELECT 1 AS a) AS t, (SELECT 2 AS b) AS u RIGHT JOIN LATERAL (SELECT t.a AS x) AS s ON true', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('SELECT * FROM (SELECT 1 AS a) AS t, (SELECT 2 AS b) AS u RIGHT JOIN LATERAL (SELECT t.a AS x) AS s ON true', []);
         self::assertSame([], $query->facts->diagnostics);
     }
 }

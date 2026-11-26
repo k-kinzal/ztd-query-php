@@ -15,9 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * datatype must be INT, INTEGER, REAL, TEXT, BLOB or ANY.
  * Source: https://sqlite.org/stricttables.html.
  *
- * @visibility public
- * @example Reporting a type a STRICT table does not allow
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a VARCHAR(10)) STRICT') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a of a STRICT table has the unknown datatype VARCHAR(10).
+ * @visibility SqlSemantics
  */
 final class StrictTypeViolation implements Diagnostic
 {

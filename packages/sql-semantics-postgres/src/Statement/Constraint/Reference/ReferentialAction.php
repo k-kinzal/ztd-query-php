@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
  * column list only for ON DELETE, which is a diagnostic of the constraint.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-PARMS-REFERENCES.
  *
- * @visibility public
- * @example Reading the columns SET NULL sets
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, b int, FOREIGN KEY (a, b) REFERENCES u ON DELETE SET NULL (b))');
- *     $create->statement->definition->elements[2]->actions[0]->columns[0]->value // => 'b'
+ * @visibility SqlSemantics
  * @example Refusing a column list for an action that sets nothing
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferentialAction(\SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferenceEvent::Delete, \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferenceAction::Cascade, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

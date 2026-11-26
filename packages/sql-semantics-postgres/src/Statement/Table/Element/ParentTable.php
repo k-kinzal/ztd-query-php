@@ -17,9 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * relation fact of this node.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Resolving a parent table
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t () INHERITS (p)', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation p does not exist.
+ * @visibility SqlSemantics
  */
 final class ParentTable implements Node
 {

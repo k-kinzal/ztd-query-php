@@ -14,7 +14,7 @@ final class CatalogMisuseRuleTest extends TestCase
 {
     public function testRuleOfARejectedEnumDrop(): void
     {
-        $problem = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER TYPE t DROP VALUE 'a'")->facts->diagnostics[0];
+        $problem = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose("ALTER TYPE t DROP VALUE 'a'")->facts->diagnostics[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse::class, $problem);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule::EnumValueDrop, $problem->rule);
     }

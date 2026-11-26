@@ -16,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AnalysisContext::class)]
 #[Medium]
@@ -109,13 +110,56 @@ final class AnalysisContextTest extends TestCase
 
     public function testDeclaredFindsTheTableAStatementProvidedToTheFacade(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0];
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
 
         $context = $semantics->context([$table]);
 
         self::assertTrue($context->complete);
         self::assertSame([$table], $context->declared(new QualifiedName(new Name('T')), new Name('main')));
         self::assertFalse($semantics->context()->complete);
+    }
+
+    public function testIndexesAtUsesTheRequestedSchemaAndNativeNameMatching(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context([
+            'CREATE TABLE main.items(code TEXT)',
+            'CREATE TABLE temp.records(code TEXT)',
+            'CREATE INDEX main.Tag ON items(code)',
+            'CREATE INDEX temp.TAG ON records(code)',
+        ]);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+        $matches = $context->indexesAt(new Name('Tag'), new Name('TEMP'));
+
+        self::assertCount(1, $matches);
+        self::assertSame('records', $matches[0]->table->value);
+        self::assertSame('TAG', $matches[0]->name->value);
+    }
+
+    public function testKnowsConstraintIndexesLimitsAnOpaqueModuleToItsOwnSchema(): void
+    {
+        $context = (new Semantics())->context(['CREATE VIRTUAL TABLE temp.terms USING fts5(term)']);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+
+        self::assertTrue($context->knowsConstraintIndexes(new Name('main')));
+        self::assertFalse($context->knowsConstraintIndexes(new Name('TEMP')));
+        self::assertFalse($context->knowsConstraintIndexes(null));
+    }
+
+    public function testTriggersAtFindsEveryMatchingDeclarationButOnlyInTheSelectedSchema(): void
+    {
+        $context = (new Semantics())->context([
+            'CREATE TABLE watched (id)',
+            'CREATE TRIGGER main.audit AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END',
+            'CREATE TEMP TRIGGER audit AFTER INSERT ON main.watched BEGIN SELECT NEW.id; END',
+        ]);
+        self::assertInstanceOf(AnalysisContext::class, $context);
+        $matches = $context->triggersAt(new Name('AUDIT'), new Name('TEMP'));
+
+        self::assertCount(1, $matches);
+        self::assertSame('temp', $matches[0]->schema->value);
+        self::assertSame('main', $matches[0]->watchedSchema->value);
+        self::assertSame([], $context->triggersAt(new Name('absent'), new Name('main')));
     }
 }

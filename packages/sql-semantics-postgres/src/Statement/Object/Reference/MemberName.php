@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  * name of at most three parts; the form is kept.
  * Source: https://www.postgresql.org/docs/17/sql-droptrigger.html, https://www.postgresql.org/docs/17/sql-comment.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a trigger of a table
  *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\MemberName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('audit'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('orders')));
  *     [$member->name->value, $member->table()?->name->value] // => ['audit', 'orders']

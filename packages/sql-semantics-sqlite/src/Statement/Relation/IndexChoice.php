@@ -15,10 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * Source: https://sqlite.org/lang_indexedby.html.
  *
- * @visibility public
- * @example Reading the demanded index
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t INDEXED BY i');
- *     $query->statement->from->index->index->value // => 'i'
+ * @visibility SqlSemantics
  */
 final class IndexChoice implements Node
 {

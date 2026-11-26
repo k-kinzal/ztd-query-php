@@ -15,14 +15,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * The collation written among the constraints of a column or a domain.
  *
  * Mirrors the `CollateClause` that `ColQualList` collects into the column's
- * `collClause`. The collation is looked up by the server; a version 1 context
- * declares no collations.
+ * `collClause`. This clause carries the written name for the declaration rules to resolve.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/collation.html.
  *
- * @visibility public
- * @example Reading the collation of a column
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text COLLATE "C")');
- *     $create->statement->definition->elements[0]->qualifiers[0]->collation->last()->value // => 'C'
+ * @visibility SqlSemantics
  */
 final class ColumnCollation implements Clause
 {

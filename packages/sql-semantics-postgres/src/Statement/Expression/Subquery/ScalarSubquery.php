@@ -31,9 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * query names its first column.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-SCALAR-SUBQUERIES. Status: Implemented.
  *
- * @visibility public
- * @example A scalar subquery can be NULL
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (SELECT 1)')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable
+ * @visibility SqlSemantics
  */
 final class ScalarSubquery implements Scalar, OutputNaming
 {

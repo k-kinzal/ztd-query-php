@@ -19,6 +19,6 @@ final class RoleValidityTest extends TestCase
 
     public function testRenderWritesTheTime(): void
     {
-        self::assertSame('CREATE ROLE r VALID UNTIL \'May 4 12:00:00 2030 +1\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE r VALID UNTIL \'May 4 12:00:00 2030 +1\'')->toString());
+        self::assertSame('CREATE ROLE r VALID UNTIL \'May 4 12:00:00 2030 +1\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE ROLE r VALID UNTIL \'May 4 12:00:00 2030 +1\'')->toString());
     }
 }

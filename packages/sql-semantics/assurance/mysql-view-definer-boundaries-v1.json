@@ -1,0 +1,201 @@
+{
+  "revision": "SemanticsIR/mysql-view-definer-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-create-view-v9.json",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910, 'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.');",
+        "$definer?->checkRelease($query->release);",
+        "$bounds = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewQueryBounds();",
+        "$bounds->check($query, $name);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($checkOption === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::None || $query->source !== null && !$query->distinct && $algorithm !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::TempTable, 'A view check option requires a mergeable base-table projection.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($checkOption === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::None || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 || $bounds->hasWritableField($query), 'A MySQL view check option requires a writable base-table field on this release.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($columns) <= 4096, 'A MySQL view permits at most 4096 result columns.');",
+        "$heading = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading())->check($heading, $query);",
+        "$seen = [];",
+        "$names = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "foreach ($heading as $column) {",
+        "    $key = $names->key($column->name->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'The view heading cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $heading;",
+        "$this->installedAlgorithm = $algorithm === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::Merge && ($query->source === null || $query->distinct) ? \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::Undefined : $algorithm;"
+      ]
+    },
+    "Schema/View/CreateView::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$start = $this->policy === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Replace ? 'CREATE OR REPLACE' : 'CREATE';",
+        "$preserve = $this->policy === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve ? 'IF NOT EXISTS ' : '';",
+        "$definer = $this->definer === null ? '' : ' DEFINER=' . $this->definer->accountSql();",
+        "$target = $start . ' ALGORITHM=' . $this->algorithm->value . $definer . ' SQL SECURITY ' . $this->security->value . ' VIEW ' . $preserve . $this->name->quoted();",
+        "$renderer = new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectSql();",
+        "$guard = $this->checkOption === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::None ? '' : ' WITH ' . $this->checkOption->value . ' CHECK OPTION';",
+        "if ((new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading())->usesImplicit($this->columns, $this->query->release)) {",
+        "    $names = [];",
+        "    foreach ($this->columns as $position => $column) {",
+        "        $name = $this->query->columns[$position]->name;",
+        "        $names[] = $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias ? $name : $column->name;",
+        "    }",
+        "    return $target . ' AS ' . $renderer->render($this->query, viewNames: $names) . $guard;",
+        "}",
+        "$names = [];",
+        "foreach ($this->columns as $column) {",
+        "    $name = $column->name;",
+        "    $names[] = $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias ? $name->aliasSql() : $name->quoted();",
+        "}",
+        "return $target . ' (' . implode(', ', $names) . ') AS ' . $renderer->render($this->query, true, true) . $guard;"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definition = $statement->definition;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!($statement->orReplace && $definition->ifNotExists), 'CREATE VIEW needs one admitted creation policy.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'A checked view requires one ordinary SELECT block.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($operation->context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE VIEW requires the native case-sensitive relation profile.');",
+        "$schema = ($definition->name->schema ?? $operation->context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED && $definition->name->catalog === null, 'CREATE VIEW requires an absolute view identity.');",
+        "$name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($definition->name->name->value));",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewProjectionAliases();",
+        "foreach ($definition->query->items as $item) {",
+        "    if ($item instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression && $item->alias !== null) {",
+        "        $aliases->check($item->alias->value);",
+        "    }",
+        "}",
+        "$query = (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->lower($operation, $definition->query);",
+        "$columns = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewHeadingLowering())->lower($operation, $definition, $query);",
+        "$policy = match (true) {",
+        "    $statement->orReplace => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Replace,",
+        "    $definition->ifNotExists => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve,",
+        "    default => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::RequireNew,",
+        "};",
+        "$check = match ($definition->check) {",
+        "    null => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::None,",
+        "    \\SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption::Local => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::Local,",
+        "    \\SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption::Unqualified, \\SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption::Cascaded => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::Cascaded,",
+        "};",
+        "$account = $definition->definer;",
+        "$definer = match (true) {",
+        "    $account === null, $account instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\CurrentUser => null,",
+        "    $account instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName => new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewDefiner($account->user->value, $account->host->value ?? '%'),",
+        "    default => throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('A view definer must select the current user or a named account.'),",
+        "};",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\CreateView($name, $query, $columns, $policy, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::from($definition->algorithm->value ?? 'UNDEFINED'), \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewSecurity::from($definition->security->value ?? 'DEFINER'), $check, $definer);"
+      ]
+    },
+    "Schema/View/ViewHeadingLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$columns = [];",
+        "if ($definition->columns !== null) {",
+        "    $names = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading();",
+        "    foreach ($definition->columns as $column) {",
+        "        $columns[] = $names->explicit($column->value, $query->release);",
+        "    }",
+        "    return $columns;",
+        "}",
+        "$fact = $operation->facts->query($definition->query);",
+        "$fields = (new \\SqlSemantics\\Platform\\MySql\\Rules\\TableDefinition\\TableDeclaration())->settled($fact);",
+        "$assign = new \\SqlSemantics\\Platform\\MySql\\Rules\\TableDefinition\\ViewColumns($operation->context->profile);",
+        "$generated = $assign->generated($definition->query, $fields);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($generated) === count($query->columns), 'A view heading must resolve every result position.');",
+        "$labels = array_map(static fn(\\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn $column): string => $column->name->value, $query->columns);",
+        "foreach ($assign->allocate($labels, $generated) as $label) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($label !== null, 'A view heading must resolve every result name.');",
+        "    $columns[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($label));",
+        "}",
+        "return $columns;"
+      ]
+    },
+    "Schema/View/ViewDefiner::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$user = trim($user, ' ');",
+        "$host = trim($host, ' ');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[\\x{1}-\\x{FFFF}]{0,32}\\z/uD', $user) === 1, 'A view definer user requires at most 32 BMP characters without NUL.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[\\x{1}-\\x{FFFF}]{0,255}\\z/uD', $host) === 1, 'A view definer host requires at most 255 BMP characters without NUL.');",
+        "$this->user = $user;",
+        "$this->host = (new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames())->key($host);"
+      ]
+    },
+    "Schema/View/ViewDefiner::checkRelease": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || preg_match('/\\A.{0,16}\\z/usD', $this->user) === 1, 'A MySQL 5.6 view definer user permits at most 16 characters.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 || preg_match('/\\A.{0,60}\\z/usD', $this->host) === 1, 'A MySQL 5.6 or 5.7 view definer host permits at most 60 characters.');"
+      ]
+    },
+    "Schema/View/ViewDefiner::accountSql": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return (new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral($this->user))->toString() . '@' . (new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral($this->host))->toString();"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query->orderBy === [] && $query->limit === null, 'A checked view requires an unbounded projection without ordering.');",
+        "$source = $query->source;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source === null || $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource && $source->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable, 'A checked view reads one persistent base table or an independent literal projection.');",
+        "if ($source !== null) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source->schema->value !== $target->schema->value || $source->table->value !== $target->view->value, 'A view cannot read its own target identity.');",
+        "}",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewProjectionAliases();",
+        "foreach ($query->columns as $column) {",
+        "    if ($column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        $aliases->check($column->name->requested);",
+        "    }",
+        "    $value = $column->expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral, 'A checked view result must read a native field or a literal without parameters.');",
+        "}"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::hasWritableField": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ($query->columns as $column) {",
+        "    if ($column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $column->expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference) {",
+        "        return true;",
+        "    }",
+        "}",
+        "return false;"
+      ]
+    }
+  },
+  "composesWith": {
+    "path": "mysql-literal-merge-fallback-boundaries-v3.json",
+    "sha256": "1bf608216ced82d6508beb3c2962f2392c2bd88c394957c11c2700c6ad3d947a"
+  },
+  "versionedFrom": {
+    "path": "mysql-create-view-check-option-boundaries-v3.json",
+    "sha256": "a79238c5b44c5209ee3d1f305353fbf6e98ee218f4cfb681fd2e9742c63309e4"
+  }
+}

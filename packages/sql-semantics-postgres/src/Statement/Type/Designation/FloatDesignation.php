@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * precision`. The grammar rejects any other precision. Facts: `Known`.
  * Source: https://www.postgresql.org/docs/17/datatype-numeric.html#DATATYPE-FLOAT. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type a float precision selects
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT float(24) '1'");
- *     $query->field(0)->type->descriptor->name() // => 'real'
+ * @visibility SqlSemantics
  * @example Rejecting a precision the grammar does not accept
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\FloatDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('54')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

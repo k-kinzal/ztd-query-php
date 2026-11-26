@@ -12,13 +12,13 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StatementDiagnostics::class)]
 #[Medium]
@@ -37,7 +37,7 @@ final class StatementDiagnosticsTest extends TestCase
 
     public function testRenderWritesTheAnalyzedInformation(): void
     {
-        $get = (new Semantics('mysql-5.6.51'))->analyze('get diagnostics @r = row_count, @n = number');
+        $get = (new Inspection('mysql-5.6.51'))->inspect('get diagnostics @r = row_count, @n = number');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         self::assertInstanceOf(StatementDiagnostics::class, $statement->information);

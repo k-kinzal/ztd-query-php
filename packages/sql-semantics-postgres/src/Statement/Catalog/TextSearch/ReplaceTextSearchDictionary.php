@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * REPLACE_DICT (no token types: every mapping) or REPLACE_DICT_FOR_TOKEN.
  * Source: https://www.postgresql.org/docs/17/sql-altertsconfig.html. Status: Implemented.
  *
- * @visibility public
- * @example Replacing a dictionary everywhere
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish');
- *     [$operation->statement->tokens, $operation->statement->replacement->last()->value] // => [[], 'swedish']
+ * @visibility SqlSemantics
  */
 final class ReplaceTextSearchDictionary implements Statement
 {

@@ -15,9 +15,9 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RelationKinds::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class RelationKindsTest extends TestCase
 {
     public function testKindAnswersTheKindOfADeclarationMySqlHas(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $profile = $semantics->context()->profile;
         $name = new QualifiedName(new Name('t'));
 
@@ -38,7 +38,7 @@ final class RelationKindsTest extends TestCase
 
     public function testRequireReportsADeclarationOfTheOtherKind(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context());
         $name = new QualifiedName(new Name('t'));
         $table = new DeclaredTable(new Table($name, $semantics->context()->profile, []));
@@ -50,7 +50,7 @@ final class RelationKindsTest extends TestCase
 
     public function testRefuseViewReportsADeclaredView(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context());
         $name = new QualifiedName(new Name('v'));
         (new RelationKinds())->refuseView($derivation, $name, new DeclaredTable(new Table($name, $semantics->context()->profile, [])), KindRefusal::NoSuchTable);
@@ -61,13 +61,13 @@ final class RelationKindsTest extends TestCase
 
     public function testRefusalsFollowLiveServers(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $view = $semantics->inspect('CREATE VIEW v AS SELECT a FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
         $context = [$table, $view];
 
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($d): string => $d->message(), $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', $context)->facts->diagnostics));
-        self::assertSame(['t is not VIEW.'], array_map(static fn ($d): string => $d->message(), $semantics->inspect('CREATE OR REPLACE VIEW t AS SELECT 1', $context)->facts->diagnostics));
-        self::assertSame([], $semantics->inspect('CREATE OR REPLACE VIEW v AS SELECT 1', $context)->facts->diagnostics);
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($d): string => $d->message(), $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', $context)->facts->diagnostics));
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($d): string => $d->message(), $semantics->diagnose('CREATE OR REPLACE VIEW t AS SELECT 1', $context)->facts->diagnostics));
+        self::assertSame([], $semantics->diagnose('CREATE OR REPLACE VIEW v AS SELECT 1', $context)->facts->diagnostics);
     }
 }

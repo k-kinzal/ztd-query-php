@@ -16,9 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * structure keeps both operands and the query reports the problem.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-LIMIT.
  *
- * @visibility public
- * @example Reporting LIMIT with a comma
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 LIMIT 1, 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: LIMIT #,# syntax is not supported
+ * @visibility SqlSemantics
  */
 final class CommaLimit implements Node
 {

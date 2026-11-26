@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Overriding;
  * and values. A value may be DEFAULT.
  * Source: https://www.postgresql.org/docs/17/sql-merge.html.
  *
- * @visibility public
- * @example Reading an insert action
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)');
- *     [count($merge->statement->clauses[0]->action->values), $merge->toString()] // => [1, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)']
+ * @visibility SqlSemantics
  * @example Refusing an insert without value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert([], null, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

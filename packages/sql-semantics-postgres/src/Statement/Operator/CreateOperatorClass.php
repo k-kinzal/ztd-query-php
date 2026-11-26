@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * Mirrors PostgreSQL's `CreateOpClassStmt` and `CreateOpClassItem`.
  * Source: https://www.postgresql.org/docs/17/sql-createopclass.html.
  *
- * @visibility public
- * @example Reading the access method
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR CLASS c DEFAULT FOR TYPE int4 USING btree AS OPERATOR 1 <, FUNCTION 1 btint4cmp(int4, int4)');
- *     [$operation->statement->method->value, $operation->statement->isDefault, count($operation->statement->items)] // => ['btree', true, 2]
+ * @visibility SqlSemantics
  */
 final class CreateOperatorClass implements Statement
 {

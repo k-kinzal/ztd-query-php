@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-extrema-2",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["mysql-varchar-extrema-v1.json", "mysql-varchar-count-v1.json", "mysql-varchar-comparison-v1.json", "mysql-explicit-text-collation-v1.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native/grouped",
+  "scope": "Native MIN and MAX over an exact physical stock utf8mb4_bin VARCHAR slot, with global or signed-key grouping and optional DISTINCT.",
+  "constructors": {
+    "Aggregation/Aggregate": {
+      "role": "A scoped numeric, count or native text aggregate.",
+      "structure": "A closed operator, a typed argument or the COUNT(*) role, and an explicit DISTINCT flag.",
+      "conditions": "MIN and MAX accept a native VARCHAR slot. SUM requires its signed numeric role. The owning grouped input validates every occurrence and physical type.",
+      "meaning": "Discard NULL operands. Under stock PAD SPACE ordering, choose an actual representative from the least or greatest equivalence class. With no usable operands, return SQL NULL, with the declared result collation.",
+      "sql": "Emit the native MIN or MAX function over the exact qualified argument, including its written DISTINCT option."
+    }
+  },
+  "existingRoles": ["Aggregation/AggregateOperator", "Aggregation/GroupedSelect", "Aggregation/GroupColumn", "From/TextColumnReference", "From/Varchar", "TableSource"],
+  "structure": "The ordered result fields may combine signed group keys, counts and text extrema over the same filtered physical source.",
+  "conditions": "A returned extremum must retain its actual stored bytes including trailing spaces. Compare guaranteed legacy grouping order. For later releases, match the observed and expected rows bijectively so duplicate rows remain observable.",
+  "meaning": "Two strings equivalent under utf8mb4_bin PAD SPACE may both be valid representatives of the same extremum. Compare candidate outputs against the exact set of available representatives for each position and group, including NULL-only groups. No representative outside the extremum class or outside the input is admitted.",
+  "sql": "Preserve the order of projected fields, exact group key and the filtered source. Let the native aggregate select its permitted representative.",
+  "observations": ["Exact result labels and positions, native VARCHAR versus bigint metadata and effective collation", "Extrema under padded UTF-8 codepoint order, including case, NULL and embedded NUL", "Original bytes of actual tied representatives, empty results and required legacy group order", "Result row multiplicity under exact bijection in unordered profiles"],
+  "countCoercibility": {"mysql-5.6.51": 4, "mysql-5.7.44": 4, "mysql-8.0.44": 5, "mysql-8.1.0": 5, "mysql-8.2.0": 5, "mysql-8.3.0": 5, "mysql-8.4.7": 5, "mysql-9.0.1": 5, "mysql-9.1.0": 5},
+  "change": "Count projections embedded in the extrema fixtures retain bigint metadata, the binary charset and collation, and the release-specific native COUNT coercibility. Compare 4 in MySQL 5.6.51 and 5.7.44 and 5 in the newer profiles, regardless of physical source cardinality. Check this with separately authored native SQL on both populated and empty sources before comparing any candidate. Signed column coercibility remains 5. Preserve all scheduled inputs, observations, budgets and fault obligations.",
+  "counterexample": {"candidate": "87aad31e3643", "releases": ["mysql-5.6.51", "mysql-5.7.44"], "observed": "The original verifier expected coercibility 5 at the COUNT position alongside a typed NULL extremum. Both legacy engines independently emitted 4. Native tests of COUNT alone and in mixed aggregates over populated, filtered and empty InnoDB sources show the same legacy derivation."},
+  "finite": {"operators": ["min", "max"], "fields": ["label", "alternate"], "distinct": [false, true], "grouping": ["global", "by-bucket"], "filters": ["all", "tie", "empty"], "identities": 48, "completeness": "Recover the operator, physical argument, quantifier, grouping and filter from each constructed value."},
+  "exploration": {"seeds": [4813, 13963, 37997], "casesPerSeed": 20, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Vary arguments, filters, global and keyed groups, duplicate aliases, text extrema composition with COUNT, extreme ties and NULL-only groups."},
+  "analysis": ["Qualified native MIN", "Distinct native MAX", "MIN and MAX of a padded tie", "Grouped text extrema with a signed result key", "Empty global group yields typed NULL", "Empty keyed group yields no rows"],
+  "negative": ["A text extremum reads a signed slot through a VARCHAR reference", "A signed extremum reads a VARCHAR slot through a signed reference", "An extremum reads a different occurrence", "SUM uses a native VARCHAR argument", "A nonbinary field cannot use the stock bin collation role"],
+  "faults": ["Exchange MIN and MAX", "Read the adjacent physical argument", "Replace a NULL result with empty text", "Compare under a case-insensitive collation"],
+  "evidence": {
+    "P01": "Resolve the exact native operand, operation and role.", "P02": "Check the typed aggregate and the owning selection scope.", "P03": "Retain only native semantic fields.", "P04": "Compose with filters, grouping and the surrounding typed projection.", "P05": "Audit the immutable retained graph.", "P06": "Compare actual typed extrema, per-position collation and row multiplicity independently.",
+    "Q01": "Reject the named invalid positions and roles.", "Q02": "Exhaust the fixed 48 identities and inspect seeded combinations.", "Q03": "Verify grouping composition and physical scope.", "Q04": "Compare extremal representatives, result metadata and ordered or unordered rows as specified.", "Q05": "Pin the distribution and all verification sources."
+  },
+  "open": ["Text GROUP BY keys, computed extrema arguments and other collations", "Other aggregate functions, aggregate clause positions and profiles"],
+  "trust": ["Native grouping and stock PAD SPACE comparison", "The bounded independent admissible representative and row matching relation", "Exact metadata observation under the same physical field and releases"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html", "https://dev.mysql.com/doc/refman/8.0/en/order-by-optimization.html", "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/item_sum.h#L649-L670", "https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/item_sum.h#L679-L699", "https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/item_sum.h#L897-L925", "https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/item.h#L1316-L1325"]
+}

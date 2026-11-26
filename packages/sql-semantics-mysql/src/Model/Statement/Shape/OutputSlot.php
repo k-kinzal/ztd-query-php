@@ -19,11 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
  * column; a slot a join re-exposes refers to the input slot it comes from and
  * carries its own NULL fact, so an outer join never changes a declaration.
  *
- * @visibility public
- * @example Reading the slot of a query field
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
- *     $semantics->analyze('SELECT a FROM t', [$table])->field('a')->slot->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 final class OutputSlot
 {

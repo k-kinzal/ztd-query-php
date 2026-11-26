@@ -1,0 +1,40 @@
+{
+  "revision": "SemanticsIR/sqlite-reindex-binding-5",
+  "approval": "pending-human-review",
+  "scope": "Connect each emitted selector to the parser production, closed namespace comparison and exact declarations.",
+  "artifacts": {
+    "src/Statement/Maintenance/Reindex.php": {
+      "sha256": "8f4aaae8a6541e194a353a556aa1f7c0b0649eacff4ff2b29add38d2203b2e5c",
+      "role": "Transient parsed selector makes syntax and optional qualification explicit."
+    },
+    "src/Lowering/Definition/MaintenanceRule.php": {
+      "sha256": "73a8b686773a372812144d91ef5fc9fd6d5c6a1370fe8cfba9abb1cac8cdb66d",
+      "role": "Lower named and all-target maintenance requests, including disjoint checked PRAGMA operand roles."
+    },
+    "src/Rules/Definition/ObjectNames.php": {
+      "sha256": "05f6d3b0f670a4a2dcd8584b5cc5570ce86e8fed38f1697e82bf966b5523a0c0",
+      "role": "Write parsed identifier roles independently; keep catalog qualification transparent."
+    }
+  },
+  "sharedBindings": {
+    "src/Model/Facade/Catalog.php": {
+      "sha256": "4e55f3d2e4c6e648fcf3578d05fbed159be9a0e36353023aa2fd6ddc582b8ff9",
+      "contract": "sqlite-drop-column-binding-v6.json"
+    },
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "c5994a6a2b915f3f1272d08ed6669a6f8208a0752c625b2223763f79a338b29f",
+      "contract": "sqlite-drop-index-binding-v6.json"
+    },
+    "src/Model/Statement/Declaration/Index.php": {
+      "sha256": "45272e5ecbbcdb61e457065a005201339bc24a995f1bd7e3c41c1364696d3cc8",
+      "contract": "sqlite-drop-index-binding-v6.json"
+    },
+    "src/Platform.php": {
+      "sha256": "9155ac8850b3300971fcca7eb3120453f03c3c0ded91f10420bafd3f00b964f6",
+      "contract": "sqlite-folded-binding-sources-v11.json"
+    }
+  },
+  "revises": "sqlite-reindex-binding-v3.json",
+  "extends": "sqlite-reindex-binding-v4.json",
+  "change": "Extend the catalog to carry resolved trigger identities while retaining every existing binding source and dependency."
+}

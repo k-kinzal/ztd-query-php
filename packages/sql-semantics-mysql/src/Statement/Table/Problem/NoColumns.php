@@ -12,9 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
- * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t ENGINE = InnoDB') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A table must have at least 1 column.
+ * @visibility SqlSemantics
  */
 final class NoColumns implements Diagnostic
 {

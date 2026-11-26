@@ -41,15 +41,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind;
  * constraints.
  * Source: https://sqlite.org/lang_createtable.html. Status: Implemented.
  *
- * @visibility public
- * @example Providing a declaration to a context
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');
- *     $table = $create->declarations()[0];
- *     [count($table->columns), $table->columns[1]->nullability, $table->implicit[0]->column === $table->columns[0]] // => [2, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull, true]
- * @example The relation fact of the statement resolves to the declaration it provides
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b CHECK (a > 0))');
- *     $check = $create->statement->columns[1]->constraints[0];
- *     [$create->facts->relation($create->statement)->table->table === $create->declarations()[0], $create->facts->scalar($check->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0]] // => [true, true]
+ * @visibility SqlSemantics
  */
 final class CreateTable implements Statement, Relation
 {

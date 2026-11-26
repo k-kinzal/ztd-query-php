@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
  *
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling which bounds take an offset
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind::OffsetPreceding->offset() // => true
  */

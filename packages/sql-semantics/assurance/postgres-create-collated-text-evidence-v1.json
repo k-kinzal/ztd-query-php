@@ -1,0 +1,111 @@
+{
+  "revision": "SemanticsIR/postgres-create-collated-text-evidence-1",
+  "approval": "pending-human-review",
+  "profiles": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createtable.html",
+    "https://www.postgresql.org/docs/17/sql-createtable.html",
+    "https://www.postgresql.org/docs/16/collation.html",
+    "https://www.postgresql.org/docs/17/sql-createschema.html"
+  ],
+  "scope": "Explicit stock C collation on a native TEXT slot of an ordinary persistent heap table and its use by an index in the same fresh CREATE SCHEMA value.",
+  "rules": [
+    "A native TEXT column may select the absolute stock pg_catalog.C collation. The compiled column records that declared collation separately from its type, literal default and NULL policy.",
+    "Non-text storage cannot declare the text collation. Only the exact stock identity is compiled in this domain. Other collation choices and resolving unqualified collation names remain separate full-language obligations.",
+    "A plain text column still selects the database default. Field order and the default expression must remain intact when a preceding or following slot declares a stock collation.",
+    "A fresh schema composed with a text index binds to its own preceding table slot. An inherited text key selects that declared collation and emits it explicitly in the completed index.",
+    "The compiled heap and schema graph contains just declared type, collation, boundaries, downstream key and the other operands used by their effects."
+  ],
+  "finite": {
+    "composition": [
+      "standalone",
+      "schema-index"
+    ],
+    "headings": [
+      "one-text",
+      "text-between-integers",
+      "adjacent-text"
+    ],
+    "default": [
+      "omitted",
+      "null",
+      "quoted-text"
+    ],
+    "nullability": [
+      "nullable",
+      "required"
+    ],
+    "coordinates": 36,
+    "routes": [
+      "direct",
+      "analyze"
+    ],
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      40693,
+      51803,
+      69931
+    ],
+    "casesPerSeed": 20,
+    "directCasesPerSeed": 20,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare exact ordered field names, storage types and collation identities, defaults and NULL policy, final absolute table and index coordinates, and effective comparison opclasses.",
+    "Read pg_attribute, pg_attrdef, pg_collation, and pg_index against the stock native database, and observe typed rows, deterministic order, omitted-default inserts, and failure of required NULL values.",
+    "Observe declared stock C separately from the native default on an otherwise comparable neighboring slot. For a fresh schema, verify local ownership despite an external namesake."
+  ],
+  "negative": [
+    "A direct non-text declaration carries a stock text collation",
+    "An analyzed non-text declaration specifies a collation",
+    "A text declaration chooses an out-of-profile collation",
+    "A collation placed on a different physical table slot cannot be substituted for the indexed key's collation"
+  ],
+  "faults": [
+    "Omit the declared column collation when rendering CREATE TABLE",
+    "Treat an unresolved column collation as known stock C",
+    "Remove the storage-role condition from the column constructor"
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "dialects": [
+    "PostgreSql"
+  ],
+  "constructors": {},
+  "existingRoles": [
+    "Schema/CreateTable",
+    "Schema/TableColumn",
+    "Schema/Namespace/CreateSchema"
+  ],
+  "reference": {
+    "file": "postgres-create-collated-text-v1.json",
+    "sha256": "c0018a1482ce5ab83198a2a6414071c2ff5eef785d3f0734becc6317b6a533f4"
+  },
+  "calibration": {
+    "generate.py": "fdc92b92108fb88c2d201eca6d0446c36c5e54abdd4191197c82250aa1012190",
+    "inputs.jsonl": "795f77f0f6ba564bafe6919c471ef92c1c620108e8eaf2190a9da626dd231afd",
+    "16.6.stdout": "bd7039b5010941c8e034d2d1ee4af61d027bcb266775345ed9a67f12c2b82113",
+    "17.2.stdout": "0a98b24c0deb05f23805fcbe0afcd33c3a87b04696549b165747f48ba2bec925",
+    "rendered-16.6.stdout": "bd7039b5010941c8e034d2d1ee4af61d027bcb266775345ed9a67f12c2b82113",
+    "rendered-17.2.stdout": "0a98b24c0deb05f23805fcbe0afcd33c3a87b04696549b165747f48ba2bec925",
+    "defaults-16.6.stdout": "bb95a8be561211124cf5f1a2e118b58c7e84367ce6bbe7d410345f3e2902bd87",
+    "defaults-17.2.stdout": "5e72250f3688023097fbcc2074e7f438fc2d577efc922154fcbe11a3ef3a54d8"
+  }
+}

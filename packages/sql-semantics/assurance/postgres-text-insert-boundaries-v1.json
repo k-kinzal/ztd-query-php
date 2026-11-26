@@ -1,0 +1,150 @@
+{
+  "revision": "SemanticsIR/postgres-text-insert-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Protect the native write coordinate, exact row widths and ordered scalar kinds before publication.",
+  "rules": {
+    "Mutation/Insert/WriteSlot::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($slot >= 0, 'An INSERT write slot must be nonnegative.');",
+        "Check::input($occurrence === 0, 'An INSERT write slot must belong to the target.');"
+      ]
+    },
+    "Mutation/Insert/Destination::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($written) >= 1 && count($written) <= 1024, 'An INSERT needs between one and 1024 target columns.');",
+        "Check::input(!$relation->only, 'An INSERT target has no ONLY policy.');",
+        "$checked = Check::listOf($written, WriteSlot::class, 'An INSERT needs checked target slots.', 1);",
+        "$seen = [];",
+        "foreach ($checked as $column) {",
+        "    Check::input($relation->columnKind($column->slot) === $column->kind, 'An INSERT write slot must belong to the target.');",
+        "    Check::input(!isset($seen[$column->slot]), 'An INSERT cannot repeat a write slot.');",
+        "    $seen[$column->slot] = true;",
+        "}",
+        "$this->written = $checked;"
+      ]
+    },
+    "Mutation/Insert::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$width = count($target->written);",
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "    foreach ($row->values as $index => $cell) {",
+        "        Check::input(",
+        "            $cell->value === null || ($cell->value instanceof TextLiteral) === ($target->written[$index]->kind === ColumnKind::Text),",
+        "            'An inserted cell must match its target native kind.',",
+        "        );",
+        "    }",
+        "}",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target->relation, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/InsertCell::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $this->value instanceof IntegerLiteral => 'CAST(' . $this->value->decimal . ' AS pg_catalog.int4)',",
+        "    $this->value instanceof TextLiteral => $this->value->toString(),",
+        "    $this->value === null => 'NULL',",
+        "};"
+      ]
+    },
+    "Mutation/InsertLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The INSERT requires the native language profile.');",
+        "Check::input(",
+        "    $statement->with === null && $statement->overriding === null && $statement->conflict === null,",
+        "    'A complete INSERT requires the ordinary VALUES operation.'",
+        ");",
+        "[$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);",
+        "$searchPath = $operation->context->searchPath;",
+        "$catalogFirst = ($searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value) === 'pg_catalog';",
+        "$expression = new ExpressionLowering();",
+        "$empty = new SourceBinding($operation, null);",
+        "$rows = [];",
+        "foreach ($statement->rows->rows() as $row) {",
+        "    Check::input(count($row->values) === count($target->written), 'Every inserted row must match the target width.');",
+        "    $values = [];",
+        "    foreach ($row->values as $index => $value) {",
+        "        $text = $target->written[$index]->kind === ColumnKind::Text;",
+        "        $item = $expression->lower($value, $empty, $catalogFirst, $text);",
+        "        Check::input(",
+        "            $item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof NullLiteral,",
+        "            'A supplied INSERT value requires an explicit native literal or NULL.',",
+        "        );",
+        "        $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);",
+        "    }",
+        "    $rows[] = new InsertRow($values);",
+        "}",
+        "",
+        "return new Insert($target, $rows, $profile->grammar, $returning);"
+      ]
+    },
+    "Mutation/InsertTargetBinding::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($statement->columns !== [], 'An INSERT requires explicit target columns.');",
+        "$binding = new SourceBinding($operation, $statement->target);",
+        "$written = [];",
+        "foreach ($statement->columns as $column) {",
+        "    Check::input($column->steps === [], 'An INSERT column must name a declared target slot.');",
+        "    $slot = $binding->writeReference($column->column->value);",
+        "    $written[] = new WriteSlot($slot->slot, $slot instanceof TextColumnReference ? ColumnKind::Text : ColumnKind::Int4);",
+        "}",
+        "$returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);",
+        "$relation = $binding->source();",
+        "Check::input($relation !== null, 'An INSERT requires a resolved write target.');",
+        "",
+        "return [new Destination($relation, $written), $returning];"
+      ]
+    },
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$width = count($target->written);",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $position => $column) {",
+        "    Check::input($target->written[$position]->kind === ColumnKind::Int4, 'A query INSERT requires a signed integer target.');",
+        "    $value = $column->expression;",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerCase || $value instanceof IntegerLiteral || $value instanceof NullLiteral,",
+        "        'Each query INSERT field requires a signed value or NULL.',",
+        "    );",
+        "}",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'A query INSERT needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target->relation, $checked);",
+        "$this->returning = $checked;"
+      ]
+    }
+  }
+}

@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
  * follow MYSQL-UPDATE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/update.html.
  *
- * @visibility public
- * @example Reading an UPDATE
- *     $update = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10');
- *     [count($update->statement->assignments), $update->statement->where !== null, $update->toString()] // => [1, true, 'UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10']
+ * @visibility SqlSemantics
  */
 final class Update implements Statement
 {

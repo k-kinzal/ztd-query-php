@@ -24,9 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * number other than 2 or 3 is reported (MYSQL-ACCOUNT-NUMBER-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-registration. Status: Implemented.
  *
- * @visibility public
- * @example Starting the registration of a device
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter user user() 2 factor initiate registration')->toString() // => 'ALTER USER USER() 2 FACTOR INITIATE REGISTRATION'
+ * @visibility SqlSemantics
  */
 final class AlterRegistration implements Statement
 {

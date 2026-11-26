@@ -27,10 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  * the statement is used for following assignments that have no modifier
  * specified"). Status: Implemented.
  *
- * @visibility public
- * @example Reading the scope an assignment inherits
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET GLOBAL a = 1, b = ON');
- *     [$set->statement->scopeOf(1), $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'SET GLOBAL a = 1, b = ON']
+ * @visibility SqlSemantics
  */
 final class SetVariables implements Statement
 {

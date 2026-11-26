@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * DROP_MAPPING with `missing_ok`.
  * Source: https://www.postgresql.org/docs/17/sql-altertsconfig.html. Status: Implemented.
  *
- * @visibility public
- * @example Dropping a mapping if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word');
- *     $operation->statement->ifExists // => true
+ * @visibility SqlSemantics
  */
 final class DropTextSearchMapping implements Statement
 {

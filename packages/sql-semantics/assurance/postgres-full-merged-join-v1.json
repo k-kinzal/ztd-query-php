@@ -1,0 +1,90 @@
+{
+  "revision": "SemanticsIR/postgres-full-merged-join-1",
+  "extends": ["server-join-v2.json", "postgres-merged-join-v2.json", "postgres-int4-case-v1.json"],
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "requiredScope": "The fixed grammar, profile and complete-model obligations remain in force.",
+  "constructors": {
+    "From/Join": {
+      "role": "A binary FULL join and the ordered equality predicate of its merged int4 keys.",
+      "structure": "Two ordered ordinary input occurrences and a pruned Boolean equality tree.",
+      "conditions": "All USING or NATURAL merge keys resolve exactly once in both inputs and have the native built-in int4 type and equality operator. A direct FULL condition is a nonempty conjunction of opposite-side field equalities or the constant TRUE. Input and expression budgets are checked before publication.",
+      "meaning": "Keep matched pairs with all key equalities true and separately keep each unmatched occurrence row with the other side extended with NULL. A disjoint NATURAL merge starts with a true condition.",
+      "sql": "Emit FULL JOIN with OPERATOR(pg_catalog.=) scoped to the physical inputs of each equality, or ON TRUE for a disjoint NATURAL join."
+    },
+    "Expression/IntegerCase": {
+      "role": "The scalar of a merged int4 output in a FULL join.",
+      "structure": "One searched CASE arm testing the physical left field for IS NOT NULL, the same left field as its result, and the physical right field as ELSE.",
+      "conditions": "Both references use their own checked occurrence and column positions. Qualified original fields still resolve to their own physical occurrences.",
+      "meaning": "Return the left integer when it is present, and otherwise return the right integer or NULL. Matched integer keys agree by the equality predicate.",
+      "sql": "Emit the existing typed CASE expression under the exact merged heading."
+    }
+  },
+  "externalInterpretation": "Both observations use the same PostgreSQL int4 declarations, inherited rows and database fixtures.",
+  "observations": [
+    "Result ordinals, names, int4 metadata and typed NULL",
+    "Matched duplicates and each unmatched side including NULL keys",
+    "Declared/NATURAL versus explicit USING order and merged alias",
+    "Distinct physical values alongside the synthesized merged field",
+    "Empty and populated disjoint input and occurrence-local ONLY"
+  ],
+  "finite": {
+    "keys": ["one", "two", "none"],
+    "orientation": ["left-first", "right-first"],
+    "projection": ["merged", "physical-reversed"],
+    "secondary": ["populated", "empty"],
+    "inheritance": ["include", "only"],
+    "identities": 48,
+    "completeness": "Compare exact native metadata and typed row bags for every actual product identity, requiring each once. The physical projection puts the second occurrence first so it stays distinguishable even for a disjoint join."
+  },
+  "exploration": {
+    "seeds": [431, 9967, 23321],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary key order, operand direction, conjunction association, physical and merged expressions, repeated slots, empty and populated sources and ONLY flags."
+  },
+  "analysis": [
+    "A FULL USING (id) publishes a two-origin merged int4 value.",
+    "A reversed two-key USING list preserves the written output ordering.",
+    "A NATURAL FULL join uses the left declaration ordering.",
+    "A FULL USING alias exposes the merged keys beside both physical fields.",
+    "A qualified wildcard reads both original headings with NULL extension.",
+    "Disjoint NATURAL FULL with an empty right input retains the left.",
+    "Disjoint NATURAL FULL with a filled right input evaluates the product.",
+    "ONLY on a merged FULL scan suppresses child rows on that occurrence."
+  ],
+  "negative": [
+    "A FULL condition admits OR in place of a conjunction.",
+    "A conjunction term reads two fields of the same side.",
+    "A FALSE condition has no role in this registered domain.",
+    "A merged result refers to a nonexistent slot.",
+    "A FULL merge consumes a non-int4 key."
+  ],
+  "faults": [
+    "Use the left field in both branches of the merged CASE.",
+    "Drop the second equality.",
+    "Discard right-only rows.",
+    "Remove the first projected merge field."
+  ],
+  "evidence": {
+    "P01": "Check both origins and the operation that chooses the merged int4 value.",
+    "P02": "Reject inadmissible predicate trees, key types and references at their owner.",
+    "P03": "Publish only explicit typed CASE and join values with immutable resolved slots.",
+    "P04": "Independently pair retained rows and evaluate the ordered scalar arms.",
+    "P05": "Use the static closure of the registered immutable join, CASE and slot roles.",
+    "P06": "Compare both original and emitted SQL to the reference evaluator.",
+    "Q01": "Check condition and scope code shapes and typed boundary refusals.",
+    "Q02": "Demand both releases and all actual finite, seed and analyzed identities.",
+    "Q03": "Check the checked conjunction and two-origin scalar as coupled but separable roles.",
+    "Q04": "Compare int4 output names/types and every retained row against each native engine.",
+    "Q05": "Record exact distributions, source patches, runtimes and archived comparator digests."
+  },
+  "open": [
+    "Full merged fields in consumers with a physical-only operand role require further admission rules and evidence.",
+    "Non-int4 keys, joins over merged prefixes and whole-join aliases remain open."
+  ],
+  "trust": ["Pinned PostgreSQL FULL join and int4 equality", "Independent relational evaluator for matched and extended rows", "Checked CASE value and SQL renderer"],
+  "sources": ["https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-JOIN"]
+}

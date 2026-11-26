@@ -14,11 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
  *
  * Resolved references point to this object itself; it is never copied.
  *
- * @visibility public
- * @example Reaching the declared column from a query field
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
- *     $semantics->analyze('SELECT a FROM t', [$table])->field('a')->column() === $table->columns[0] // => true
+ * @visibility SqlSemantics
  */
 final class Column
 {
@@ -29,12 +25,18 @@ final class Column
      * @param TypeDescriptor $type The declared type
      * @param Nullability $nullability Whether the column can hold NULL
      * @param bool $generated Whether the column is computed from other columns of its row and cannot be written
+     * @param Name|null $collation The resolved column collation when available
+     * @param bool $usesViewHeading Whether an unaliased read uses the stored view field name
+     * @param bool $readTypeResolved Whether the declaration establishes the field type exposed on read
      */
     public function __construct(
         public readonly Name $name,
         public readonly TypeDescriptor $type,
         public readonly Nullability $nullability = Nullability::Nullable,
         public readonly bool $generated = false,
+        public readonly ?Name $collation = null,
+        public readonly bool $usesViewHeading = false,
+        public readonly bool $readTypeResolved = true,
     ) {
     }
 }

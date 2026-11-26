@@ -28,12 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * from this position on otherwise (PG-TABLE-DECLARATION-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Copying the columns of a declared table
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $source = $semantics->analyze('CREATE TABLE u (id int NOT NULL, name text)', []);
- *     $copy = $semantics->analyze('CREATE TABLE t (LIKE u INCLUDING DEFAULTS, extra boolean)', $source->declarations());
- *     array_map(static fn ($column) => $column->name->value, $copy->declarations()[0]->columns) // => ['id', 'name', 'extra']
+ * @visibility SqlSemantics
  */
 final class LikeClause implements Clause
 {

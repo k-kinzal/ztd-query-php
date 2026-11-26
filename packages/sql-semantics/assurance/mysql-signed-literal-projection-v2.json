@@ -1,0 +1,145 @@
+{
+  "revision": "SemanticsIR/mysql-signed-literal-projection-2",
+  "approval": "pending-human-review",
+  "reference": {
+    "file": "mysql-signed-literal-projection-v1.json",
+    "sha256": "a0294a1e33ddc757efd780fae5e99196109bc420663263676ddfeff3536471ee"
+  },
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-5.7.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.0.44/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.2.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.3.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.0.1/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+    "mysql-9.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native"
+  ],
+  "scope": "Extend pure signed integer projections to transparent parentheses and unary plus, with at most one effective unary minus. Keep every previous direct and analyzed construction coordinate, negative case, fault, and native observation.",
+  "binding": {
+    "role": "Remove transparent wrappers before allocating the same projected signed integer role. Qualify the completed value using its significant sign, exact digits and owned output name.",
+    "transparent": "Parentheses and unary plus preserve the exact signed literal value, digit extent and native integer type. The single minus fixes the significant sign, including negative zero. Parentheses and unary plus can occur outside and inside that minus.",
+    "heading": "A bare nonnegative result is named by the underlying digit sequence. A bare negative result is named by the first 255 ASCII bytes of the written select item position, including significant parentheses, plus signs, spacing and comments. Treat that label as result data and render it with a checked identifier when required. Preserve explicit aliases."
+  },
+  "finite": {
+    "spellingValues": [
+      "-9223372036854775808",
+      "-9223372036854775807",
+      "-2147483649",
+      "-2147483648",
+      "-2147483647",
+      "-1",
+      "-0",
+      "0",
+      "1",
+      "2147483647",
+      "2147483648",
+      "9223372036854775807"
+    ],
+    "padding": [
+      0,
+      1,
+      31,
+      32,
+      33,
+      68,
+      255,
+      256,
+      512,
+      4096
+    ],
+    "headings": [
+      "literal_value",
+      "intrinsic"
+    ],
+    "routes": [
+      "direct",
+      "analyze"
+    ],
+    "coordinatesPerRoute": 240,
+    "complete": "Observe the preexisting Cartesian grid on both routes and the independent wrapped product on analysis. Confirm exact source command identity for each distinct syntax coordinate and recover the numeric type, sign, digit extent and heading from the constructed value graph on every coordinate. All wrappers map to the same checked direct roles.",
+    "allowedExclusions": [],
+    "wrappedValues": [
+      "-9223372036854775808",
+      "-2147483649",
+      "-1",
+      "-0",
+      "0",
+      "1",
+      "2147483648",
+      "9223372036854775807"
+    ],
+    "wrappedPadding": [
+      0,
+      33,
+      256,
+      4096
+    ],
+    "wrappedStyles": [
+      "group",
+      "trivia",
+      "outer-plus",
+      "inner-plus",
+      "magnitude",
+      "sign-comment",
+      "nested-plus"
+    ],
+    "wrappedAnalyzeCoordinates": 448,
+    "analyzeCoordinates": 688,
+    "directCoordinates": 240
+  },
+  "exploration": {
+    "seeds": [
+      27803,
+      39821,
+      62597
+    ],
+    "casesPerSeed": 64,
+    "directCasesPerSeed": 32,
+    "timeoutSecondsPerRelease": 480,
+    "shape": "Compose one to four ordered independently signed atoms in each projection, with wide values, repeated values, wide extent and distinguishable or repeated labels. Use size boundaries from the finite grid and intervening lengths. Vary transparent wrapper composition in seeded source requests, including source-free explicit and intrinsic result names.",
+    "allowedExclusions": [],
+    "predecessorCasesPerSeed": 32,
+    "predecessorCheck": "Run all 32 original analysis cases before 32 additional wrapped cases for each seed. Keep the direct budget unchanged."
+  },
+  "negative": [
+    "Construct an exact integer token with a decimal separator",
+    "Construct a positive token above signed64",
+    "Construct a negative token below signed64",
+    "Construct a long intrinsic heading that differs from its owned token",
+    "Construct a long intrinsic heading around an ordinary narrow atom",
+    "Analyze an exact integral token outside the admitted signed64 role"
+  ],
+  "faults": [
+    "Drop padding while preserving the mathematical value",
+    "Replace a wide result atom with a different signed value",
+    "Force an ordinary alias for an intrinsic long numeric heading",
+    "Ignore a changed visible width with an unchanged integer value"
+  ],
+  "sourceFaults": [
+    "discard-mysql-projected-signed-wrapper-polarity"
+  ],
+  "observations": [
+    "Compare the exact ordered heading sequence, including every native field label, signed integer type, nullability and display extent.",
+    "Compare original and generated native statements and the exact type and value of every observed scalar. Preserve independently predicted negative zero display extent and all effective leading digits.",
+    "The unsigned spelling of a nonnegative unaliased literal is its native heading even at long extent. A bare negative heading can use the native 255-character prefix of the signed source spelling. The numeric token retains every digit separately.",
+    "Same-length or same-value errors remain visible via independent native labels, exact signed values, or the extent observation.",
+    "Compare the native heading text of every wrapped negative item by exact byte sequence. The independently predicted value and wire width preserve the underlying digits and signed polarity."
+  ],
+  "trust": [
+    "Exact native pinned release and stock session profile",
+    "Named PHP native observer with sufficient 65536-byte mysqlnd metadata command buffer",
+    "Fixed lexical integer grammar, source-linked PHP shape and exact out-of-domain guards",
+    "Independently checked result observations and human review pending"
+  ],
+  "unmetAdjacentAreas": [
+    "Long explicit aliases require a separate requested-label role and the observed diagnostic behavior for truncated aliases.",
+    "Declarations, INSERT, derived materialization and arbitrary composed arithmetic or inferred headings over general expressions require their own literal-width composition evidence.",
+    "Unsigned and exact DECIMAL beyond signed64, approximate, hex and bit-value input are distinct semantic domains.",
+    "Repeated effective unary minus, including overflow paths, and other unary arithmetic have separate native types and analysis rules."
+  ]
+}

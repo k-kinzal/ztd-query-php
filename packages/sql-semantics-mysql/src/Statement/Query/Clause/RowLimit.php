@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * The statement that holds the clause derives its operands, which see no
  * column. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
- * @visibility public
- * @example Reading the row count and the offset
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t LIMIT 10 OFFSET 5');
- *     [$query->statement->limit->count->text, $query->statement->limit->offset->text] // => ['10', '5']
+ * @visibility SqlSemantics
  * @example Refusing an expression as a row count
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.5')) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

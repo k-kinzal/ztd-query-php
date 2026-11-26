@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RenameTable::class)]
 #[Medium]
@@ -17,10 +17,10 @@ final class RenameTableTest extends TestCase
 {
     public function testDeriveStatementFollowsTheRenamesInOrder(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (a INT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INT)');
-        $rename = $semantics->analyze('RENAME TABLE t TO tmp, u TO t, tmp TO u', [$t, $u]);
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (a INT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INT)');
+        $rename = $semantics->inspect('RENAME TABLE t TO tmp, u TO t, tmp TO u', [$t, $u]);
 
         self::assertInstanceOf(RenameTable::class, $rename->statement);
         self::assertSame([], $rename->facts->diagnostics);
@@ -29,6 +29,6 @@ final class RenameTableTest extends TestCase
 
     public function testRenderWritesTheRenames(): void
     {
-        self::assertSame('RENAME TABLE a TO b, c TO d', (new Semantics('mysql-5.7.44'))->analyze('rename tables a to b, c to d')->toString());
+        self::assertSame('RENAME TABLE a TO b, c TO d', (new Inspection('mysql-5.7.44'))->inspect('rename tables a to b, c to d')->toString());
     }
 }

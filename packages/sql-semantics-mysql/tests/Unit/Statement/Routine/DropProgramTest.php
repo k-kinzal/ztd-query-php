@@ -13,9 +13,9 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DropProgram::class)]
 #[Medium]
@@ -23,9 +23,9 @@ final class DropProgramTest extends TestCase
 {
     public function testDeriveStatementChangesNoContext(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $drop = $semantics->analyze('DROP TRIGGER IF EXISTS shop.tr', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $drop = $semantics->inspect('DROP TRIGGER IF EXISTS shop.tr', [$table]);
 
         self::assertSame([], $drop->facts->diagnostics);
         self::assertSame([], $drop->facts->declarations);
@@ -46,7 +46,7 @@ final class DropProgramTest extends TestCase
     #[DataProvider('providerDeriveStatementReadsTheDroppedProgram')]
     public function testDeriveStatementReadsTheDroppedProgram(string $sql, ProgramKind $kind, bool $ifExists, ?string $schema, string $name): void
     {
-        $statement = (new Semantics())->analyze($sql)->statement;
+        $statement = (new Inspection())->inspect($sql)->statement;
         self::assertInstanceOf(DropProgram::class, $statement);
 
         self::assertSame($kind, $statement->kind);
@@ -70,12 +70,12 @@ final class DropProgramTest extends TestCase
     #[DataProvider('providerRenderWritesTheDrop')]
     public function testRenderWritesTheDrop(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedDrop(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new DropProgram(ProgramKind::Event, new QualifiedName(new Name('e'), new Name('shop')), true))->render($out);
 

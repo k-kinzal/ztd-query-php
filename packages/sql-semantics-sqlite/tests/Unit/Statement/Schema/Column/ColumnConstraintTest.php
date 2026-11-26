@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnConstraint;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Generated;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversNothing]
 #[Medium]
@@ -22,7 +22,7 @@ final class ColumnConstraintTest extends TestCase
 {
     public function testDeriveConstraintDerivesEachKindOfOperandInItsOwnScope(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a CHECK (rowid > 0), b AS (rowid), c DEFAULT (a))', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a CHECK (rowid > 0), b AS (rowid), c DEFAULT (a))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

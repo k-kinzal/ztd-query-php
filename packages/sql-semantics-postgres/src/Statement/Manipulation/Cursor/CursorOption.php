@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor;
  * combined either. The value is the keyword sequence.
  * Source: https://www.postgresql.org/docs/17/sql-declare.html.
  *
- * @visibility public
- * @example Reading the options of a cursor
- *     $declare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DECLARE c BINARY NO SCROLL CURSOR FOR SELECT 1');
- *     $declare->statement->options // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::NoScroll]
+ * @visibility SqlSemantics
  */
 enum CursorOption: string
 {

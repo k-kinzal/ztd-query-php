@@ -18,11 +18,11 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ResultReferences::class)]
 #[Medium]
@@ -30,9 +30,9 @@ final class ResultReferencesTest extends TestCase
 {
     public function testFindPrefersAGroupByColumnToASelectListItem(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL, b INT)');
-        $operation = $semantics->inspect('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT NOT NULL, b INT)');
+        $operation = $semantics->diagnose('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
@@ -45,10 +45,10 @@ final class ResultReferencesTest extends TestCase
 
     public function testGroupingSkipsAColumnOfAnotherOccurrenceAndReportsTwoDifferentColumns(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL)');
-        $other = $semantics->inspect('SELECT u.a AS a FROM t, t AS u GROUP BY t.a HAVING u.a > 0', [$table]);
-        $ambiguous = $semantics->inspect('SELECT 1 FROM t, t AS u GROUP BY t.a, u.a HAVING a > 0', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT NOT NULL)');
+        $other = $semantics->diagnose('SELECT u.a AS a FROM t, t AS u GROUP BY t.a HAVING u.a > 0', [$table]);
+        $ambiguous = $semantics->diagnose('SELECT 1 FROM t, t AS u GROUP BY t.a, u.a HAVING a > 0', [$table]);
         $select = $other->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
@@ -67,12 +67,12 @@ final class ResultReferencesTest extends TestCase
 
     public function testSelectedResolvesAColumnItemToItsColumnAndAnotherItemToTheItem(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL, b INT)');
-        $column = $semantics->inspect('SELECT a AS x FROM t HAVING x > 0', [$table]);
-        $computed = $semantics->inspect('SELECT a + 1 AS x FROM t HAVING x > 0', [$table]);
-        $hidden = $semantics->inspect('SELECT t.a AS x FROM t HAVING a > 0', [$table]);
-        $ambiguous = $semantics->inspect('SELECT a, b AS a FROM t HAVING a > 0', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT NOT NULL, b INT)');
+        $column = $semantics->diagnose('SELECT a AS x FROM t HAVING x > 0', [$table]);
+        $computed = $semantics->diagnose('SELECT a + 1 AS x FROM t HAVING x > 0', [$table]);
+        $hidden = $semantics->diagnose('SELECT t.a AS x FROM t HAVING a > 0', [$table]);
+        $ambiguous = $semantics->diagnose('SELECT a, b AS a FROM t HAVING a > 0', [$table]);
         $columnSelect = $column->statement;
         $computedSelect = $computed->statement;
         $hiddenSelect = $hidden->statement;
@@ -94,8 +94,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testNamedComparesTheColumnNameByTheColumnComparisonOfTheContext(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a FROM t', [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT a FROM t', [$semantics->diagnose('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('a')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $environment = new Environment($operation->context);
@@ -106,8 +106,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testAdmittedTellsWhetherTheQualifierFindsTheColumn(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a FROM t', [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT a FROM t', [$semantics->diagnose('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('a')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $environment = new Environment($operation->context, null, [new VisibleRelation($resolution->relation, $operation->facts->relation($resolution->relation)->shape, null, new QualifiedName(new Name('t')))]);
@@ -118,8 +118,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testSameComparesTheOccurrenceAndTheSlot(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a, b FROM t', [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT a, b FROM t', [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
         $first = $operation->field('a')->resolution;
         $second = $operation->field('b')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $first);
@@ -131,8 +131,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testDeeperCountsTheQueriesBetweenTheUseAndTheColumn(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a FROM t', [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT a FROM t', [$semantics->diagnose('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('a')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
@@ -144,8 +144,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testUnaliasedMatchesAColumnItemByItsColumnInAnAdmittedOccurrence(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a AS x FROM t', [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT a AS x FROM t', [$semantics->diagnose('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('x')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $environment = new Environment($operation->context, null, [new VisibleRelation($resolution->relation, $operation->facts->relation($resolution->relation)->shape, null, new QualifiedName(new Name('t')))]);
@@ -158,8 +158,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testChosenPrefersTheAliasedMatchAndReportsTwoDifferentUnaliasedOnes(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a, b FROM t', [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT a, b FROM t', [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
         $first = $operation->field('a')->resolution;
         $second = $operation->field('b')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $first);
@@ -176,9 +176,9 @@ final class ResultReferencesTest extends TestCase
 
     public function testSelectedIsConditionalWhileAnItemWithoutADecidedNameCouldHaveTheName(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, q INT)')->declarations();
-        $operation = $semantics->inspect("SELECT 'é', a AS q, 1 AS r FROM t HAVING q > 0 AND r > 0", $table);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, q INT)')->declarations();
+        $operation = $semantics->diagnose("SELECT 'é', a AS q, 1 AS r FROM t HAVING q > 0 AND r > 0", $table);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $having = $select->having;
@@ -197,8 +197,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testUnnamedStopsAtTheItemTheNameNames(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect("SELECT 'é', 1 AS r, 'ü' FROM DUAL HAVING r > 0");
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose("SELECT 'é', 1 AS r, 'ü' FROM DUAL HAVING r > 0");
         $output = $operation->facts->output;
         self::assertNotNull($output);
         $row = new GroupedRow($output->projection, [], false);
@@ -211,8 +211,8 @@ final class ResultReferencesTest extends TestCase
 
     public function testUndecidedKeepsAResolvedMatchAsCandidate(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT 1 AS r FROM DUAL');
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('SELECT 1 AS r FROM DUAL');
         $alias = new AliasTarget($operation->field(0));
         $missing = [new SessionState('character_set_client')];
 

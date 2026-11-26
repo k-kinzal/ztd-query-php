@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-databases.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the column named by the pattern
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW SCHEMAS LIKE 'a%'");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Database (a%)', "SHOW DATABASES LIKE 'a%'"]
+ * @visibility SqlSemantics
  */
 final class ShowDatabases implements Statement, Relation
 {

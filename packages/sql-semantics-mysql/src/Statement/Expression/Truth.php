@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  * UNKNOWN is the truth value of NULL. Each case holds the keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_is.
  *
- * @visibility public
- * @example Reading the tested truth value
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a IS NOT UNKNOWN');
- *     $query->statement->where->truth // => \SqlSemantics\Platform\MySql\Statement\Expression\Truth::Unknown
+ * @visibility SqlSemantics
  */
 enum Truth: string
 {

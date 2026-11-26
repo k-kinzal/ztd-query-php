@@ -1,0 +1,20 @@
+{
+  "revision": "SemanticsIR/postgres-query-write-admission-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "constructors": {},
+  "existingRoles": ["Mutation/InsertQuery"],
+  "extends": ["server-insert-query-v2.json", "postgres-text-insert-query-v1.json"],
+  "changes": {
+    "previous": "The signed suite expected the target binder to reject any text field declaration.",
+    "required": "Native text columns participate in the text query-write domain. An explicitly typed text projection cannot occupy an int4 target position. Reject the mismatched operand at the composed query-write boundary.",
+    "counterexample": "Candidate 70d6ac793c32 reached the new typed operand check on both releases for the former witness. Its original transcripts remain available in the PostgreSQL insert-query artifacts.",
+    "remaining": "Integer-to-text assignment conversion is a separate PostgreSQL obligation. The text query-write contract still admits native text and NULL in a text target position."
+  },
+  "negative": {
+    "sql": "INSERT INTO {schema}.ir_insert_target (id) SELECT CAST('not an integer' AS pg_catalog.text) AS p0",
+    "exception": "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction",
+    "message": "Each query INSERT field requires a signed value or NULL."
+  },
+  "preserved": "The signed suite keeps its full finite domain, seed budget, effect observations, per-release rejection count and fault schedule. The MySQL witness is unchanged."
+}

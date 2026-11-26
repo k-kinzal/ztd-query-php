@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Locking;
  * table list and no NOWAIT or SKIP LOCKED.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html.
  *
- * @visibility public
- * @example Reading the strength of a locking read
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t FOR SHARE');
- *     $query->statement->locking[0]->strength // => \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share
+ * @visibility SqlSemantics
  */
 enum LockStrength
 {

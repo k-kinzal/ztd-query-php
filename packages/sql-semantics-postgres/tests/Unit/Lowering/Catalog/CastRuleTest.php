@@ -14,7 +14,7 @@ final class CastRuleTest extends TestCase
 {
     public function testStatementLowersDropCast(): void
     {
-        self::assertSame('DROP CAST (a AS b) RESTRICT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP CAST (a AS b) RESTRICT')->toString());
+        self::assertSame('DROP CAST (a AS b) RESTRICT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP CAST (a AS b) RESTRICT')->toString());
     }
 
     public function testContextOfNoContext(): void

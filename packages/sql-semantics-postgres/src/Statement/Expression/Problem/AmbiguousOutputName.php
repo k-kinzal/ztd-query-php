@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-ORDERBY.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\AmbiguousOutputName('a'))->message() // => 'Output column reference a is ambiguous.'
  */

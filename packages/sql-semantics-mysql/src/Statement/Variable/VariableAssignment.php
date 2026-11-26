@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/assignment-operators.html#operator_assign-value.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading an assignment
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = @n := 5');
- *     [$query->statement->where->right->target->name->value, $query->statement->where->right->value->text] // => ['n', '5']
+ * @visibility SqlSemantics
  */
 final class VariableAssignment implements Scalar
 {

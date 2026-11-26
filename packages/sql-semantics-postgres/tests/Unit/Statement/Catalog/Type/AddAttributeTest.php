@@ -14,11 +14,11 @@ final class AddAttributeTest extends TestCase
 {
     public function testRenderWritesTheCollationAndBehavior(): void
     {
-        self::assertSame('ALTER TYPE pair ADD ATTRIBUTE c text COLLATE "C" CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c text COLLATE "C" CASCADE')->toString());
+        self::assertSame('ALTER TYPE pair ADD ATTRIBUTE c text COLLATE "C" CASCADE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair ADD ATTRIBUTE c text COLLATE "C" CASCADE')->toString());
     }
 
     public function testDeriveClauseDerivesTheType(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c numeric(4, 2)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair ADD ATTRIBUTE c numeric(4, 2)')->facts->diagnostics);
     }
 }

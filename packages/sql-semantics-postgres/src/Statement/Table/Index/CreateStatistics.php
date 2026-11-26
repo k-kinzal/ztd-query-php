@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * (PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-createstatistics.html.
  *
- * @visibility public
- * @example Creating statistics
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE STATISTICS IF NOT EXISTS s (ndistinct) ON a, (a + b) FROM t');
- *     $statement->toString() // => 'CREATE STATISTICS IF NOT EXISTS s (ndistinct) ON a, (a + b) FROM t'
+ * @visibility SqlSemantics
  */
 final class CreateStatistics implements Statement
 {

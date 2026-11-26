@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Routine;
  * written back with the same tokens.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the equals sign
  *     \SqlSemantics\Platform\PostgreSql\Statement\Routine\DefaultSpelling::EqualsSign->value // => '='
  */

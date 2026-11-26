@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
  * Source: https://www.postgresql.org/docs/17/sql-droprole.html, https://www.postgresql.org/docs/17/sql-dropuser.html,
  * https://www.postgresql.org/docs/17/sql-dropgroup.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the removed roles
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP ROLE IF EXISTS joe, ann');
- *     [$operation->statement->ifExists, $operation->statement->roles[1]->name?->value] // => [true, 'ann']
+ * @visibility SqlSemantics
  */
 final class DropRole implements Statement
 {

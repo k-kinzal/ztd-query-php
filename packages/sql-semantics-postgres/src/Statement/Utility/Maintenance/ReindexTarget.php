@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
  * Mirrors PostgreSQL's `ReindexObjectType`. The value is the keyword.
  * Source: https://www.postgresql.org/docs/17/sql-reindex.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling which targets are named by a relation name
  *     [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Table->relation(), \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Schema->relation()] // => [true, false]
  */

@@ -1,0 +1,70 @@
+{
+  "revision": "SemanticsIR/sqlite-reclaim-pragmas-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Fix the closed write mode, positive step cap, native decoding branches and the resolved scope in the emitted operations.",
+  "rules": {
+    "Maintenance/Reclaim/AutoVacuum::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Reclaim/AutoVacuum::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Reclaim/AutoVacuum::toString": {
+      "common": [
+        "$argument = $this->mode === null ? '' : '(' . $this->mode->value . ')';",
+        "return 'PRAGMA ' . $this->schema->quoted() . '.auto_vacuum' . $argument;"
+      ]
+    },
+    "Maintenance/Reclaim/IncrementalVacuum::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Reclaim/IncrementalVacuum::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Reclaim/IncrementalVacuum::toString": {
+      "common": [
+        "$argument = $this->limit->pages === PageReclaimLimit::MAXIMUM ? '' : '(' . $this->limit->pages . ')';",
+        "return 'PRAGMA ' . $this->schema->quoted() . '.incremental_vacuum' . $argument;"
+      ]
+    },
+    "Maintenance/Reclaim/PageReclaimLimit::__construct": {
+      "common": [
+        "Check::input($pages >= 1 && $pages <= self::MAXIMUM, 'An incremental vacuum limit must be a positive signed 32-bit integer.');"
+      ]
+    },
+    "Maintenance/Reclaim/ReclaimPragmaLowering::automatic": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema) ?? new Identifier('main');",
+        "$value = $statement->value;",
+        "if ($value === null) {",
+        "    return new AutoVacuum($schema);",
+        "}",
+        "$text = $value instanceof PragmaNumber ? $value->nativeText() : $value->value;",
+        "$mode = match (NameComparison::AsciiInsensitive->fold($text)) {",
+        "    'none' => VacuumMode::None,",
+        "    'full' => VacuumMode::Full,",
+        "    'incremental' => VacuumMode::Incremental,",
+        "    default => VacuumMode::tryFrom((string) (new NativePragmaInteger())->parse($text)) ?? VacuumMode::None,",
+        "};",
+        "return new AutoVacuum($schema, $mode);"
+      ]
+    },
+    "Maintenance/Reclaim/ReclaimPragmaLowering::incremental": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema) ?? new Identifier('main');",
+        "$value = $statement->value;",
+        "$text = $value instanceof PragmaNumber ? $value->nativeText() : $value->value ?? '';",
+        "$limit = (new NativePragmaInteger())->parse($text);",
+        "return new IncrementalVacuum($schema, new PageReclaimLimit($limit !== null && $limit > 0 ? $limit : PageReclaimLimit::MAXIMUM));"
+      ]
+    }
+  }
+}

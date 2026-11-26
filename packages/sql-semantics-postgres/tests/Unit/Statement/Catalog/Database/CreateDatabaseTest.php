@@ -14,26 +14,26 @@ final class CreateDatabaseTest extends TestCase
 {
     public function testRenderWritesTheOptions(): void
     {
-        self::assertSame('CREATE DATABASE d WITH OWNER = app ENCODING = \'UTF8\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d WITH OWNER = app ENCODING \'UTF8\'')->toString());
+        self::assertSame('CREATE DATABASE d WITH OWNER = app ENCODING = \'UTF8\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d WITH OWNER = app ENCODING \'UTF8\'')->toString());
     }
 
     public function testRenderWithoutOptions(): void
     {
-        self::assertSame('CREATE DATABASE d', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d')->toString());
+        self::assertSame('CREATE DATABASE d', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d')->toString());
     }
 
     public function testDeriveStatementReportsAnUnknownOption(): void
     {
-        self::assertSame('option "foo" not recognized', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d foo = 1')->facts->diagnostics[0]->message());
+        self::assertSame('option "foo" not recognized', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d foo = 1')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementAcceptsTheBuiltinLocaleOf17(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->facts->diagnostics);
     }
 
     public function testDeriveStatementRejectsTheBuiltinLocaleOf16(): void
     {
-        self::assertSame('option "builtin_locale" not recognized', (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-16.6'))->inspect('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->facts->diagnostics[0]->message());
+        self::assertSame('option "builtin_locale" not recognized', (new \SqlSemantics\Testing\PostgreSql\Inspection('pg-16.6'))->diagnose('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->facts->diagnostics[0]->message());
     }
 }

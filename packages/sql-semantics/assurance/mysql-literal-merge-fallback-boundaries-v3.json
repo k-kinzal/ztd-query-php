@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/mysql-literal-merge-fallback-boundaries-3",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-create-view-v4.json",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910, 'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewQueryBounds())->check($query, $name);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($columns) <= 4096, 'A MySQL view permits at most 4096 result columns.');",
+        "$heading = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading())->check($heading, $query);",
+        "$seen = [];",
+        "$names = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "foreach ($heading as $column) {",
+        "    $key = $names->key($column->name->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'The view heading cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $heading;",
+        "$this->installedAlgorithm = $algorithm === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::Merge && ($query->source === null || $query->distinct) ? \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::Undefined : $algorithm;"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query->orderBy === [] && $query->limit === null, 'A checked view requires an unbounded projection without ordering.');",
+        "$source = $query->source;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source === null || $source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\TableSource && $source->kind === \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ExternalRelationKind::BaseTable, 'A checked view reads one persistent base table or an independent literal projection.');",
+        "if ($source !== null) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($source->schema->value !== $target->schema->value || $source->table->value !== $target->view->value, 'A view cannot read its own target identity.');",
+        "}",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewProjectionAliases();",
+        "foreach ($query->columns as $column) {",
+        "    if ($column->name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        $aliases->check($column->name->requested);",
+        "    }",
+        "    $value = $column->expression;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral, 'A checked view result must read a native field or a literal without parameters.');",
+        "}"
+      ]
+    }
+  },
+  "versionedFrom": {
+    "path": "mysql-literal-merge-fallback-boundaries-v2.json",
+    "sha256": "4e0d6d64b7243722040fa94211a1cd716a55c7d9ecd01d06708bdae420bea7eb"
+  }
+}

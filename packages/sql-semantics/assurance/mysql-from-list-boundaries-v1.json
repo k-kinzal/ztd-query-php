@@ -1,0 +1,48 @@
+{
+  "revision": "SemanticsIR/mysql-from-list-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Ordered comma association and checked ownership before publication.",
+  "rules": {
+    "From/JoinBinding::bind": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = self::ungroup($source);",
+        "if (!$source instanceof TableList) {",
+        "    return $source instanceof ParsedJoin ? new self($operation, $source) : new SourceBinding($operation, $source);",
+        "}",
+        "",
+        "$members = $source->members;",
+        "Check::input(count($members) <= 61, 'A FROM list can have at most 61 input occurrences.');",
+        "$input = $members[0];",
+        "foreach (array_slice($members, 1) as $member) {",
+        "    $input = new ParsedJoin($input, JoinOperator::Cross, $member);",
+        "}",
+        "Check::invariant($input instanceof ParsedJoin, 'A FROM list contains at least two inputs.');",
+        "",
+        "return new self($operation, $input);"
+      ]
+    },
+    "From/DerivedBinding::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(!$input->lateral, 'A derived join input cannot be lateral.');",
+        "$query = $input->query;",
+        "while ($query instanceof ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "Check::input($query instanceof ParsedSelect, 'A derived join input requires a SELECT definition.');",
+        "$from = JoinBinding::ungroup($query->from);",
+        "Check::input(!$from instanceof ParsedJoin && !$from instanceof DerivedTable && !$from instanceof TableList, 'A derived join input must be independent of any joined input.');",
+        "$this->value = new DerivedSource((new SelectLowering())->lower($operation, $query));"
+      ]
+    }
+  }
+}

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
  * query as the source.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert-select.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the source of an INSERT ... SELECT
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a) SELECT b FROM u');
- *     [$insert->statement->source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $insert->toString()] // => [true, 'INSERT INTO t (a) SELECT b FROM u']
+ * @visibility SqlSemantics
  */
 final class InsertQuery implements Statement
 {

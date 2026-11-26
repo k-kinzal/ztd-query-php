@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * Mirrors `AT_SetRelOptions` and `AT_ResetRelOptions`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Setting storage parameters
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t SET (fillfactor = 70)');
- *     $statement->toString() // => 'ALTER TABLE t SET (fillfactor = 70)'
+ * @visibility SqlSemantics
  */
 final class RelationOptions implements AlterCommand
 {

@@ -14,8 +14,8 @@ final class TriggerArgumentTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f(42, 1.5e3, \'text\', "Word")', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f(42, 1.5e3, \'text\', "Word")', []);
         self::assertSame('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f(42, 1.5e3, \'text\', "Word")', $statement->toString());
     }
 }

@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * `json`; NULL over no row. The result column is named `json_arrayagg`.
  * Source: https://www.postgresql.org/docs/17/functions-aggregate.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayAggregate(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral())))->outputName()->value // => 'json_arrayagg'
  */

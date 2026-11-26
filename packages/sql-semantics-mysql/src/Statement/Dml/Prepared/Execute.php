@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * session values. Terminates: one pass over the variables. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/execute.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading an EXECUTE
- *     $execute = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('EXECUTE stmt USING @a, @b');
- *     [count($execute->statement->variables), $execute->toString()] // => [2, 'EXECUTE stmt USING @a, @b']
+ * @visibility SqlSemantics
  */
 final class Execute implements Statement
 {

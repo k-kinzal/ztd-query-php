@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
 
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\TypeNameAffinity;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Lexical;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\Sqlite\Rendering\Codec;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
-use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
 
@@ -25,10 +28,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
  * operand stays NULL, so the NULL fact is that of the operand.
  * Source: https://sqlite.org/lang_expr.html#castexpr. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of a CAST
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CAST(a AS VARCHAR(10)) FROM t');
- *     [$query->statement->columns[0]->expression->target->text(), $query->field(0)->type->descriptor] // => ['VARCHAR', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
+ * @visibility SqlSemantics
  */
 final class Cast implements Scalar
 {
@@ -38,8 +38,34 @@ final class Cast implements Scalar
      * @param Scalar $operand The converted expression
      * @param TypeName|null $target The type name; null when none is written
      */
-    public function __construct(public readonly Scalar $operand, public readonly ?TypeName $target = null)
+    public function __construct(
+        public readonly Scalar $operand,
+        public readonly ?TypeName $target = null,
+        public readonly ?Layout $typeLayout = null,
+    ) {
+    }
+
+    /**
+     * Answers the decoded type token SQLite compares, including its observed internal spelling.
+     */
+    public function nativeType(): string
     {
+        if ($this->target === null) {
+            return '';
+        }
+        $first = $this->target->words[0];
+        if (!$first->bare()) {
+            return $first->name->value;
+        }
+
+        if ($this->typeLayout !== null) {
+            return $this->typeLayout->text();
+        }
+
+        $output = new Output(new Codec());
+        $this->target->render($output);
+
+        return (new Lexical())->join($output->pieces());
     }
 
     /**
@@ -54,12 +80,12 @@ final class Cast implements Scalar
         if ($fact->type instanceof NullOnly) {
             return new ScalarFact($fact->type, $fact->nullability);
         }
-        $storages = match ($this->target?->affinity() ?? Affinity::Numeric) {
-            Affinity::Integer => [Storage::Integer],
-            Affinity::Text => [Storage::Text],
-            Affinity::Blob => [Storage::Blob],
-            Affinity::Real => [Storage::Real],
-            Affinity::Numeric => [Storage::Integer, Storage::Real],
+        $storages = match ((new TypeNameAffinity())->conversion($this->nativeType())) {
+            'INTEGER' => [Storage::Integer],
+            'TEXT' => [Storage::Text],
+            'BLOB' => [Storage::Blob],
+            'REAL' => [Storage::Real],
+            'NUMERIC' => [Storage::Integer, Storage::Real],
         };
 
         return new ScalarFact((new Storages())->fact($storages), $fact->nullability);
@@ -70,6 +96,10 @@ final class Cast implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->keyword('CAST')->glue()->symbol('(')->node($this->operand)->keyword('AS')->node($this->target)->symbol(')');
+        $out->keyword('CAST')->glue()->symbol('(')->node($this->operand)->keyword('AS');
+        if ($this->target !== null) {
+            $out->layout($this->typeLayout, $this->target);
+        }
+        $out->symbol(')');
     }
 }

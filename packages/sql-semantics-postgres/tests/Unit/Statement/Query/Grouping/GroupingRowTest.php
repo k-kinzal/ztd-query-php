@@ -14,13 +14,13 @@ final class GroupingRowTest extends TestCase
 {
     public function testRenderWritesTheMembersInParentheses(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a, 2 AS b GROUP BY ((a, 1)), CUBE ((b, (a, 2)))', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SELECT 1 AS a, 2 AS b GROUP BY ((a, 1)), CUBE ((b, (a, 2)))', []);
         self::assertSame('SELECT 1 AS a, 2 AS b GROUP BY ((a, 1)), CUBE ((b, (a, 2)))', $query->toString());
     }
 
     public function testMembersKeepTheWrittenOrder(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a GROUP BY (a, 1)', []);
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SELECT 1 AS a GROUP BY (a, 1)', []);
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $row = $select->groupBy[0];

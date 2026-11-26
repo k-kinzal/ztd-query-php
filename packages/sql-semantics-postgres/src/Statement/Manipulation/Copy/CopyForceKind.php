@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
  * Each sets the generic option `force_quote`, `force_not_null` or `force_null`.
  * Source: https://www.postgresql.org/docs/17/sql-copy.html#id-1.9.3.55.10.
  *
- * @visibility public
- * @example Reading the kind of a FORCE option
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t FROM STDIN CSV FORCE NOT NULL a');
- *     $copy->statement->legacy[1]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForceKind::NotNull
+ * @visibility SqlSemantics
  */
 enum CopyForceKind
 {

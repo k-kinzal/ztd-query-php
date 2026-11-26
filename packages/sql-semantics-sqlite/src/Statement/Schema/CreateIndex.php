@@ -43,17 +43,12 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * A string literal written as a term, under parentheses and at most one
  * COLLATE clause, is the name of an indexed column (LiteralColumn,
  * SQLITE-LITERAL-COLUMN-001); a plain string literal term is refused at
- * construction. Indexes are not part of a declaration context: the statement
- * provides no declaration, and whether the index name is free is not a fact.
+ * construction. The catalog can register a bound index by its absolute index
+ * and owner names. The statement itself leaves the context unchanged.
  * Source: https://sqlite.org/lang_createindex.html, https://sqlite.org/partialindex.html,
  * https://sqlite.org/expridx.html. Status: Implemented.
  *
- * @visibility public
- * @example Resolving the indexed table and an indexed column
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a, b)');
- *     $index = $semantics->analyze('CREATE UNIQUE INDEX i ON t (b DESC) WHERE a IS NOT NULL', [$table]);
- *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->scalar($index->statement->terms[0]->expression)->resolution->slot->column === $table->declarations()[0]->columns[1]] // => [true, true]
+ * @visibility SqlSemantics
  */
 final class CreateIndex implements Statement, Relation
 {

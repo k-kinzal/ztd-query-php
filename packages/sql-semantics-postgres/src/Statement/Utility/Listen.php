@@ -17,9 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Rule: PG-LISTEN-001. Mirrors PostgreSQL's `ListenStmt`. Facts: none.
  * Source: https://www.postgresql.org/docs/17/sql-listen.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the channel listened to
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('LISTEN Jobs')->statement->channel->value // => 'jobs'
+ * @visibility SqlSemantics
  */
 final class Listen implements Statement
 {

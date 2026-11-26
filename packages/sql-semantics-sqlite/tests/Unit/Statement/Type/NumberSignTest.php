@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Type;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(NumberSign::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class NumberSignTest extends TestCase
 {
     public function testEachSignIsReadFromItsSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT CAST(1 AS DECIMAL(+10, -2)), CAST(1 AS DECIMAL(3))');
+        $query = (new Inspection())->inspect('SELECT CAST(1 AS DECIMAL(+10, -2)), CAST(1 AS DECIMAL(3))');
         $signed = $query->field(0)->expression;
         $unsigned = $query->field(1)->expression;
 

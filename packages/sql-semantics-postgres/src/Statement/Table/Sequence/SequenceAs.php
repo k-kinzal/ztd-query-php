@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * The server accepts smallint, integer and bigint.
  * Source: https://www.postgresql.org/docs/17/sql-createsequence.html.
  *
- * @visibility public
- * @example Reading the data type of a sequence
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s AS smallint');
- *     $create->statement->options[0]->type->catalogName()->value // => 'int2'
+ * @visibility SqlSemantics
  */
 final class SequenceAs implements SequenceOption
 {

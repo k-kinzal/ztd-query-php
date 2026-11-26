@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * follow MYSQL-HANDLER-READ-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/handler.html.
  *
- * @visibility public
- * @example Reading an index seek of a handler
- *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ idx >= (1, 2) LIMIT 3');
- *     [$read->statement->comparison, count($read->statement->values), $read->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::GreaterOrEqual, 2, 'HANDLER h READ idx >= (1, 2) LIMIT 3']
+ * @visibility SqlSemantics
  */
 final class HandlerIndexSeek implements Statement
 {

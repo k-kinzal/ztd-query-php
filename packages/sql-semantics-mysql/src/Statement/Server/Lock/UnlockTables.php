@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('unlock table')->toString() // => 'UNLOCK TABLES'
+ * @visibility SqlSemantics
  */
 final class UnlockTables implements Statement
 {

@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
  * option change is written. NO HANDLER and NO VALIDATOR remove the function.
  * Source: https://www.postgresql.org/docs/17/sql-alterforeigndatawrapper.html. Status: Implemented.
  *
- * @visibility public
- * @example Removing the validator
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR');
- *     $operation->statement->functions[0]->function // => null
+ * @visibility SqlSemantics
  */
 final class AlterFdw implements Statement
 {

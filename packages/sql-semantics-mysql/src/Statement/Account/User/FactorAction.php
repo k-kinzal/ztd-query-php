@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-multifactor.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of an action
  *     \SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction::Modify->value // => 'MODIFY'
  */

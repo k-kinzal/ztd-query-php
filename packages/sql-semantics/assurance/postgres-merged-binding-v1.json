@@ -1,0 +1,18 @@
+{
+  "revision": "SemanticsIR/postgres-merged-binding-1",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Rules/Resolution/Joining.php": {
+      "sha256": "0e0c26f6c99f33e3d3cfdd6f1ff0809eb9c0aad04ebfc7d43c05bffd5ac389a0",
+      "role": "Declares merged heading order and the surviving occurrence under RIGHT JOIN."
+    },
+    "src/Rules/Resolution/Visibility.php": {
+      "sha256": "b02675a9ccb590c15c4c5fa52c60ebd644a066ef4637b49137263c650160bdba",
+      "role": "Expands the visible field list with its original slot identities."
+    },
+    "src/Rules/Expression/WholeRows.php": {
+      "sha256": "6d8390706b9f42005e7d24a5237e3b3f7009b78c149437820953763c29dd0e94",
+      "role": "Resolves the merged USING alias and ordinary qualified stars."
+    }
+  }
+}

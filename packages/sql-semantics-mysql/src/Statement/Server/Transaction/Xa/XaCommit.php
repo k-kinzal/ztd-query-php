@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa commit 'g' one phase");
- *     [$xa->toString(), $xa->statement->onePhase] // => ["XA COMMIT 'g' ONE PHASE", true]
+ * @visibility SqlSemantics
  */
 final class XaCommit implements Statement
 {

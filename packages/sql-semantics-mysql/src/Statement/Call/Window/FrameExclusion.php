@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Window;
  * clause; the server does not support it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-frames.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameExclusion::NoOthers->value // => 'NO OTHERS'
  */

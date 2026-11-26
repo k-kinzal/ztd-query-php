@@ -32,11 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * such as a number where it expects a name.
  * Source: https://www.postgresql.org/docs/17/sql-createoperator.html, `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading a recognized attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
- *     $attribute = $operation->statement->definition[2];
- *     [$attribute->known, $attribute->value->kind] // => [\SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute::Function, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Function]
+ * @visibility SqlSemantics
  * @example Rejecting a recognized attribute whose value is left as written although the command reads it
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('function'), \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute::Function, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('int4eq')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

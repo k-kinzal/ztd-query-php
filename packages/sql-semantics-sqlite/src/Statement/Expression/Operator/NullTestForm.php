@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
  *
  * Source: https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes.
  *
- * @visibility public
- * @example Reading the spelling of a NULL test
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a NOT NULL FROM t');
- *     $query->statement->columns[0]->expression->form // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::NotNullWords
+ * @visibility SqlSemantics
  */
 enum NullTestForm
 {

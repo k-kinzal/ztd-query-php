@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Rule: PG-TABLESPACE-002. Mirrors `DropTableSpaceStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-droptablespace.html. Status: Implemented.
  *
- * @visibility public
- * @example Dropping a tablespace if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP TABLESPACE IF EXISTS fast');
- *     [$operation->statement->ifExists, $operation->toString()] // => [true, 'DROP TABLESPACE IF EXISTS fast']
+ * @visibility SqlSemantics
  */
 final class DropTablespace implements Statement
 {

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * column is named `merge_action`.
  * Source: https://www.postgresql.org/docs/17/functions-merge-support.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\MergeAction())->outputName()->value // => 'merge_action'
  */

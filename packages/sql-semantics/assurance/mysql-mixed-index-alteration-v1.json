@@ -1,0 +1,121 @@
+{
+  "revision": "SemanticsIR/mysql-mixed-index-alteration-1",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-multiple-index-removal-v1.json",
+    "mysql-index-renames-v1.json",
+    "mysql-index-rename-statistics-v1.json"
+  ],
+  "requiredGrammar": [
+    "One MySQL ALTER TABLE containing both native DROP INDEX, DROP KEY or DROP PRIMARY KEY clauses and RENAME INDEX or RENAME KEY clauses.",
+    "Admit supported native algorithm and lock options. Resolve legacy table qualifiers using the same owner rules as the single action.",
+    "Apply to one declared ordinary stock InnoDB table with a complete physical B-tree namespace, including temporary and temporary-shadow owners."
+  ],
+  "supportedReleases": [
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "legacyRefusal": "MySQL 5.6 has no index rename grammar. Direct construction must refuse the mixed role under the same release.",
+  "profile": "Native parameters, SQL mode empty, lower_case_table_names=0, utf8mb4, 16 KiB InnoDB pages.",
+  "rule": {
+    "operands": "Ordered closed removal and rename actions, absolute session or persistent owner, unmoved names, grammar release and physical policy.",
+    "initial": "Removed, renamed and untouched original names partition the checked physical namespace of at most 64 keys. Each name denotes one physically consistent original key and every move and removal targets this owner.",
+    "final": "Exclude all removed names. Apply rename destinations simultaneously to the original moved keys. Keep untouched names. The resulting names must be distinct under native folding. A destination may take the name of a removed key. A moved source cannot be removed by the same statement.",
+    "invariants": "All dropped physical keys satisfy the combined native policy. At least one original backing key remains when the target keys support AUTO_INCREMENT. Renaming a surviving supporting index does not drop its physical support. All supplied backing names must resolve within the complete original namespace.",
+    "sql": "Emit one ALTER TABLE, preserving written action order and native final algorithm and lock. Preserve the selected absolute table and every exact source and destination name.",
+    "statistics": "For persistent inplace variants, first remove the dropped index names from the native statistics namespace, then apply renames in their written relative order. Compare the ordered warnings when a rename encounters a still-occupied statistics name.",
+    "failure": "An absent or repeated removal (1091), a rename of a removed or missing source (1176), a duplicate final name (1061) and the loss of the last AUTO_INCREMENT support (1075) leave the original index catalog and rows intact."
+  },
+  "observations": [
+    "Compare exact ordered IR actions, accepted input SQL and emitted SQL under the same native profile, key roles, names, ordered columns, direction, visibility, data, actual implicit commit and generated identities.",
+    "Observe the removal and renaming effects separately on the same initial native table and confirm no transient intermediate name or new reference is published.",
+    "Compare copied row counts and complete ordered native warnings whenever provided by the fixed fixture.",
+    "A persistent sibling with a different key layout and data remains unaffected when a temporary table shadows it."
+  ],
+  "finite": {
+    "lifetimes": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "totalCoordinates": [
+      2,
+      3,
+      8,
+      63,
+      64
+    ],
+    "composition": [
+      "free-removed-label",
+      "fresh-destination",
+      "open-chain"
+    ],
+    "actionOrder": [
+      "remove-first",
+      "rename-first"
+    ],
+    "boundaryCases": [
+      "remove-and-move-same-key",
+      "duplicate-removal",
+      "final-collision",
+      "leading-support-renamed",
+      "no-support-remains",
+      "more-than-64-physical-names"
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      1097,
+      5179,
+      16411
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "criteria": {
+    "P01": "Require the exact original physical reference, corresponding destination, source operation tag and one absolute owner.",
+    "P02": "Reject invalid initial or final namespace, release, formation, lifetime, policy and backing-index composition.",
+    "P03": "Store only the resolved immutable roles, native policy and checked namespace inputs.",
+    "P04": "Use separate namespace and backing-index rules on the ordered closed action list.",
+    "P05": "Detach every stored input list and inspect all value and publication paths.",
+    "P06": "Require one total faithful ALTER statement using all typed actions. Compare native rows, effects and diagnostics.",
+    "Q01": "Audit the owning constructor and direct negative cases against the fixed rules.",
+    "Q02": "Require independently enumerated accepted coordinate evidence in analysis and direct construction.",
+    "Q03": "Check the initial disjoint namespace, final injectivity and retained generation under all selected operations.",
+    "Q04": "Compare independent predictions and exercise omission faults on both operation kinds.",
+    "Q05": "Measure and replay identified PHP and both staged layouts against the independently selected verifier."
+  },
+  "faults": [
+    "Bind a rename source in the evolving rather than original namespace.",
+    "Permit renaming an index also selected for removal.",
+    "Forget the only retained backing key because its name changes.",
+    "Accept a resulting duplicate or forbid the reuse of a removed native name.",
+    "Drop one operation from output and require the specific native effect mismatch."
+  ],
+  "calibration": {
+    "scriptDigest": "67b4b82e282580d51ebe954171f3d2253f599b45b491dde9498b20d8a1544d8f",
+    "transcriptDigests": {
+      "5.7.44": "6d8f528adda0ecd382d26caf9cfa80eb542806acdc9d71a8a12fade3a14b3c71",
+      "8.0.44": "b3c9339ccdfb9c91aeccf0a94b5c539237cf8f4a8a8c5cad4d72eb0c48f1e9d7",
+      "9.1.0": "7a54299b1298eb30dca62f9422075b5311e7490c363c1ed776afb7dda0f7ca72"
+    }
+  },
+  "remainingDomains": [
+    "Mixed additions, visibility changes or table column changes and foreign-key-backed owners remain separate domains.",
+    "Partitioned, prefix, expression, FULLTEXT and SPATIAL index variants remain separate domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://dev.mysql.com/worklog/task/?id=6555"
+  ]
+}

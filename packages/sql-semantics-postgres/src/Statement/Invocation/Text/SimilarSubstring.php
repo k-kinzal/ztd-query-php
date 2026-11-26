@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * place there is rejected.
  * Source: https://www.postgresql.org/docs/17/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the result column
  *     $null = static fn () => new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral();
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\SimilarSubstring($null(), $null(), $null()))->outputName()->value // => 'substring'

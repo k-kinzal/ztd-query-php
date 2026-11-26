@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * commands read as true.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a storage parameter
  *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Option\Definition(
  *         new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('fillfactor'),

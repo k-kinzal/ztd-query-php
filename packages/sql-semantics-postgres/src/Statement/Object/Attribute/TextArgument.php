@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * type.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, `defGetString` in `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading the locale of a collation
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE COLLATION german (locale = 'de_DE')");
- *     $operation->statement->definition[0]->value->text->value // => 'de_DE'
+ * @visibility SqlSemantics
  */
 final class TextArgument implements AttributeArgument
 {

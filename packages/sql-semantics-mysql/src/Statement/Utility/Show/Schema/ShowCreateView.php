@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-view.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE VIEW v');
- *     [$show->field(0)->name?->value, $show->toString()] // => ['View', 'SHOW CREATE VIEW v']
+ * @visibility SqlSemantics
  */
 final class ShowCreateView implements Statement
 {

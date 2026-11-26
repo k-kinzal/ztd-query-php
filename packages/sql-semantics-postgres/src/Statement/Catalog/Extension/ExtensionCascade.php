@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createextension.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the option
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionCascade::Cascade->value // => 'CASCADE'
  */

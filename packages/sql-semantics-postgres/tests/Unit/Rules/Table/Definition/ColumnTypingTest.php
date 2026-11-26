@@ -14,8 +14,8 @@ final class ColumnTypingTest extends TestCase
 {
     public function testSerialAnswersTheIntegerType(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a bigserial, b public.serial)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a bigserial, b public.serial)');
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -37,8 +37,8 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorIsNullForATypeNameThatIsAnError(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a int, c serial[], d int)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a int, c serial[], d int)');
         self::assertSame([
           0 => 'a integer Nullable',
         ], array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns));
@@ -46,8 +46,8 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorNamesATypeTheContextCannotIdentify(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a int, b mood, c text NOT NULL, d app.money[], e int)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a int, b mood, c text NOT NULL, d app.money[], e int)');
         self::assertSame([
           0 => 'a integer Nullable',
           1 => 'b mood Nullable',
@@ -60,8 +60,8 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorIsTheCatalogTypeInACompleteContext(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (c text, d date[])', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (c text, d date[])', []);
         self::assertSame([
           0 =>
           \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text,
@@ -71,10 +71,23 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorOfAnotherStatementKeepsItsShape(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (a int)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE n (a int)');
         self::assertSame([
           0 => 'a integer Nullable',
         ], array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns));
+    }
+
+    public function testCollationBindsOnlyTheAbsoluteStockIdentity(): void
+    {
+        $analyzer = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $context = $analyzer->context(['CREATE TABLE public.colors '
+            . '(absolute text COLLATE pg_catalog."C", inherited text, unrelated text COLLATE pg_catalog."POSIX")']);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext::class, $context);
+        $columns = $context->tables[0]->columns;
+        self::assertSame(\SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\DeclaredTextCollation::StockC, $columns[0]->collation);
+        self::assertNull($columns[1]->collation);
+        self::assertNull($columns[2]->collation);
     }
 }

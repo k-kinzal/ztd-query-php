@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(InformationItem::class)]
 #[Medium]
@@ -41,7 +41,7 @@ final class InformationItemTest extends TestCase
 
     public function testRenderWritesTheTargetsOfAProgram(): void
     {
-        $create = (new Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
+        $create = (new Inspection())->inspect('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
 
         self::assertSame([], $create->facts->diagnostics);
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END', $create->toString());
@@ -49,7 +49,7 @@ final class InformationItemTest extends TestCase
 
     public function testRenderWritesTheTargetsOfAStatement(): void
     {
-        $get = (new Semantics())->analyze('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
+        $get = (new Inspection())->inspect('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         $item = $statement->information->items[1];

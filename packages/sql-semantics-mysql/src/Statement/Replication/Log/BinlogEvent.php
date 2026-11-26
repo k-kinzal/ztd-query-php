@@ -19,9 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/binlog.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Holding the encoded events
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("binlog 'AAAA'")->statement->events->value // => 'AAAA'
+ * @visibility SqlSemantics
  */
 final class BinlogEvent implements Statement
 {

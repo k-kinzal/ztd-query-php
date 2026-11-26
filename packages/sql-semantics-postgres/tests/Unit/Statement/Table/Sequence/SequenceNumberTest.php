@@ -14,16 +14,16 @@ final class SequenceNumberTest extends TestCase
 {
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE SEQUENCE s MAXVALUE 10', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE SEQUENCE s MAXVALUE 10', []);
         self::assertSame([
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE SEQUENCE s MINVALUE -10 MAXVALUE 10 START 0', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE SEQUENCE s MINVALUE -10 MAXVALUE 10 START 0', []);
         self::assertSame('CREATE SEQUENCE s MINVALUE - 10 MAXVALUE 10 START 0', $statement->toString());
     }
 }

@@ -14,12 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * A shape is open when missing inputs prevent listing every position. The
  * known positions are then still exact, but more may exist.
  *
- * @visibility public
- * @example Reading a complete shape
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $operation = $semantics->analyze('SELECT * FROM t', [$table]);
- *     [$operation->shape()->complete(), count($operation->shape()->slots)] // => [true, 2]
+ * @visibility SqlSemantics
  */
 final class RowShape
 {
@@ -38,8 +33,9 @@ final class RowShape
     /**
      * @param list<OutputSlot> $slots The known positions in order
      * @param list<MissingInput> $missing The inputs whose absence leaves the shape open
+     * @param bool $nativeColumnNames Whether the relation exposes native local identifier keys
      */
-    public function __construct(array $slots, array $missing = [])
+    public function __construct(array $slots, array $missing = [], public readonly bool $nativeColumnNames = false)
     {
         $this->slots = Check::listOf($slots, OutputSlot::class, 'A row shape holds an ordered list of output slots.');
         $this->missing = Check::listOf($missing, MissingInput::class, 'An open row shape names missing inputs.');

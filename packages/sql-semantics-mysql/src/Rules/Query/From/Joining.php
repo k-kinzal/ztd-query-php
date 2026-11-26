@@ -29,8 +29,8 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
  * there; a qualified name still reaches the column of either operand. `*`
  * selects the merged columns first, in the order of the operand they are
  * taken from, then the other columns of that operand, then those of the
- * other operand (a RIGHT join is read as the LEFT join of its swapped
- * operands). A USING column that an operand certainly lacks, or selects
+ * other operand (a merged RIGHT join takes its right heading first). An ordinary RIGHT join
+ * keeps the written heading order. A USING column that an operand certainly lacks, or selects
  * twice, is reported. The common columns of a NATURAL join are not known
  * while an operand has undeclared columns, so nothing is merged then.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/join.html ("Natural joins
@@ -53,9 +53,10 @@ final class Joining
         foreach ($right->star as [$relation, $position]) {
             $second[] = [$relation + $offset, $position];
         }
-        if ($join->operator->keepsRight()) {
+        if ($join->operator->keepsRight() && ($join->operator->natural() || $join->using !== [])) {
             [$first, $second] = [$second, $first];
         }
+        $heading = $first;
         $merged = [];
         foreach ($this->names($derivation, $join, $left, $right) as $name) {
             $kept = $this->locate($derivation, $visible, $first, $name, $join->operator->keepsRight() ? $right : $left);
@@ -76,7 +77,9 @@ final class Joining
             $extended[] = $outer ? $this->extend($relation) : $relation;
         }
 
-        return JoinedInput::of($extended, [...$merged, ...$first, ...$second]);
+        $ordered = array_filter($heading, static fn (array $field): bool => in_array($field, $merged, true));
+
+        return JoinedInput::of($extended, [...$ordered, ...$first, ...$second]);
     }
 
     /**
@@ -151,7 +154,7 @@ final class Joining
             $implicit[] = new ImplicitSlot($slot->names, $this->nullable($slot->slot));
         }
 
-        return new VisibleRelation($relation->relation, new RowShape($slots, $relation->shape->missing), $relation->alias, $relation->name, $relation->hidden, $implicit);
+        return new VisibleRelation($relation->relation, new RowShape($slots, $relation->shape->missing, $relation->shape->nativeColumnNames), $relation->alias, $relation->name, $relation->hidden, $implicit);
     }
 
     /**

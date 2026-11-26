@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
  * Each case holds the keywords it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-storage-engine-index-types.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm::Hash->value // => 'HASH'
  */

@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AliasTarget::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class AliasTargetTest extends TestCase
 {
     public function testFieldIsTheOutputFieldTheAliasNames(): void
     {
-        $query = (new Semantics())->analyze('SELECT 1 AS x, 2 AS y ORDER BY y');
+        $query = (new Inspection())->inspect('SELECT 1 AS x, 2 AS y ORDER BY y');
         $statement = $query->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -29,9 +29,9 @@ final class AliasTargetTest extends TestCase
 
     public function testFieldIsNotUsedWhenTheNameIsAColumnOfTheInput(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER, x INTEGER)');
-        $query = $semantics->analyze('SELECT a AS x FROM t ORDER BY x', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER, x INTEGER)');
+        $query = $semantics->inspect('SELECT a AS x FROM t ORDER BY x', [$table]);
         $statement = $query->statement;
 
         self::assertInstanceOf(Select::class, $statement);

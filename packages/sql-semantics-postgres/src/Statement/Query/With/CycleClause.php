@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * clause derives the values, which see no column.
  * Source: https://www.postgresql.org/docs/17/queries-with.html#QUERIES-WITH-CYCLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a cycle clause
  *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('id')], new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('is_cycle'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('path'));
  *     [$clause->mark->value, $clause->path->value, $clause->markValue] // => ['is_cycle', 'path', null]

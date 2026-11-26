@@ -14,11 +14,11 @@ final class AlterSubscriptionPublicationsTest extends TestCase
 {
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER SUBSCRIPTION s SET PUBLICATION p3, p4 WITH (refresh = FALSE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s SET PUBLICATION p3, p4 WITH (refresh = false)')->toString());
+        self::assertSame('ALTER SUBSCRIPTION s SET PUBLICATION p3, p4 WITH (refresh = FALSE)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s SET PUBLICATION p3, p4 WITH (refresh = false)')->toString());
     }
 
     public function testDeriveStatementDerivesTheOptions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s DROP PUBLICATION p')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s DROP PUBLICATION p')->facts->diagnostics);
     }
 }

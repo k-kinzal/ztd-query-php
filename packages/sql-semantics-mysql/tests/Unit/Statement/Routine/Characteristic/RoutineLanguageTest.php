@@ -12,11 +12,11 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RoutineLanguage::class)]
 #[Medium]
@@ -35,7 +35,7 @@ final class RoutineLanguageTest extends TestCase
     #[DataProvider('providerRenderWritesTheKeywordSql')]
     public function testRenderWritesTheKeywordSql(string $release): void
     {
-        $alter = (new Semantics($release))->analyze('alter procedure p language sql');
+        $alter = (new Inspection($release))->inspect('alter procedure p language sql');
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -57,7 +57,7 @@ final class RoutineLanguageTest extends TestCase
     #[DataProvider('providerRenderWritesTheNameOfAnExternalLanguage')]
     public function testRenderWritesTheNameOfAnExternalLanguage(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create function f() returns int language javascript as $$ return 1 $$');
+        $create = (new Inspection($release))->inspect('create function f() returns int language javascript as $$ return 1 $$');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -69,7 +69,7 @@ final class RoutineLanguageTest extends TestCase
 
     public function testRenderQuotesALanguageNameThatNeedsQuoting(): void
     {
-        $create = (new Semantics())->analyze("create procedure p() language `java script` as 'x'");
+        $create = (new Inspection())->inspect("create procedure p() language `java script` as 'x'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -81,7 +81,7 @@ final class RoutineLanguageTest extends TestCase
 
     public function testRenderWritesAConstructedCharacteristic(): void
     {
-        $codec = new Codec((new Semantics())->profile()->grammar);
+        $codec = new Codec((new Inspection())->profile()->grammar);
         $sql = new Output($codec);
         (new RoutineLanguage())->render($sql);
         $external = new Output($codec);

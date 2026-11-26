@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  * an exponent is a float node.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, `defGetInt32` in `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading the state size of an aggregate
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4, sspace = 16)');
- *     $operation->statement->definition[2]->value->value() // => 16
+ * @visibility SqlSemantics
  * @example Rejecting a number that is not a 32-bit integer
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\IntegerArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('2147483648'))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * parser's functions. Any other attribute is an error.
  * Source: https://www.postgresql.org/docs/17/sql-createtsparser.html, `DefineTSParser` in `src/backend/commands/tsearchcmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\ParserAttribute::from('gettoken')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Function
  */

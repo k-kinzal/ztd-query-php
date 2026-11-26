@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * (PG-PUBLICATION-TABLE-001); the list is read and checked by
  * PG-PUBLICATION-LIST-001. Source: https://www.postgresql.org/docs/17/sql-createpublication.html. Status: Implemented.
  *
- * @visibility public
- * @example Publishing every table
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')");
- *     [$operation->statement->allTables, $operation->toString()] // => [true, "CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')"]
+ * @visibility SqlSemantics
  */
 final class CreatePublication implements Statement
 {

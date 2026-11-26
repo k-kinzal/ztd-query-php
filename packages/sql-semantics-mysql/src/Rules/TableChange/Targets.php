@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\TableChange;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\IncompleteMembers;
@@ -45,9 +46,9 @@ final class Targets
     /**
      * Resolves a table name and answers its facts.
      */
-    public function target(Derivation $derivation, QualifiedName $name): RelationFact
+    public function target(Derivation $derivation, QualifiedName $name, TableNamespace $namespace = TableNamespace::Visible): RelationFact
     {
-        $resolution = $derivation->table($name, $derivation->environment());
+        $resolution = $derivation->table($name, $derivation->environment(), $namespace);
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {
@@ -66,9 +67,9 @@ final class Targets
     /**
      * Resolves a table name that IF EXISTS allows to be absent.
      */
-    public function optional(Derivation $derivation, QualifiedName $name, bool $ifExists): RelationFact
+    public function optional(Derivation $derivation, QualifiedName $name, bool $ifExists, TableNamespace $namespace = TableNamespace::Visible): RelationFact
     {
-        $fact = $this->target($derivation, $name);
+        $fact = $this->target($derivation, $name, $namespace);
 
         return $ifExists && $fact->table instanceof MissingTable ? new RelationFact(new RowShape([]), new AbsentTable($name)) : $fact;
     }

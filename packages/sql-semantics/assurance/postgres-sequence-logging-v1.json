@@ -1,0 +1,68 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-logging-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": ["Schema/Sequence/Alter/SetSequenceLogging"],
+  "scope": "Native ALTER SEQUENCE commands consisting solely of an ordered nonempty list of logging assignments and the optional existence guard.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-altersequence.html",
+    "https://www.postgresql.org/docs/17/sql-altersequence.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/tablecmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/tablecmds.c"
+  ],
+  "constructors": {
+    "SetSequenceLogging": {
+      "type": "Schema/Sequence/Alter/SetSequenceLogging",
+      "role": "Change the logging mode of an absolute persistent sequence, or report checked guarded absence.",
+      "structure": "SequenceSelector, detached ordered list of exact SequenceLogging cases, IF EXISTS, pinned native release.",
+      "conditions": "A present selector needs a persistent sequence, one or more actions, and equal assignments in the entire proper prefix. The prefix can be empty. With an absent selector the guard is required and the action list is empty. Check release stock occupancy.",
+      "meaning": "Given the same existing relation and native logging state, the statement succeeds exactly when all actions before the last request the preexisting mode. A successful last action writes only a changed mode. The native 0A000 failure preserves the original state. A guarded absent selection never executes an action.",
+      "sql": "Emit the exact qualified selector and ordered, comma-separated SET LOGGED or SET UNLOGGED actions. A guarded absent selector uses an inert SET LOGGED spelling."
+    },
+    "SequenceLogging": {
+      "type": "Schema/Sequence/Alter/SequenceLogging",
+      "role": "Choose one exact PostgreSQL logging assignment.",
+      "structure": "Closed logged and unlogged modes.",
+      "conditions": "The containing operation checks the sequence and its complete action order.",
+      "meaning": "Request persistent logged or persistent unlogged storage for the resolved sequence. The existing state determines whether the action requests a change.",
+      "sql": "Emit SET LOGGED or SET UNLOGGED."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "roles": ["local", "other", "missing-scoped", "missing-bare", "missing-namespace"],
+    "actions": ["logged", "unlogged"],
+    "length": [1, 2, 3],
+    "guard": [false, true],
+    "transactional": [false, true],
+    "bound": "280 coordinates per release. Require 164 analyzed and 164 direct accepts. Require typed refusals for all 32 impossible-prefix and all 84 unguarded absent coordinates in each route and compare one native rejection for every such coordinate."
+  },
+  "exploration": {
+    "seeds": [1853, 26003, 93581],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 260,
+    "allowedExclusions": [],
+    "structure": "Vary persistent source mode, search precedence, selector guard, quoted identities, catalog qualification, transaction, owner/default dependencies and up to eight ordered logging assignments. Include lists with different last modes and valid requests that encounter an incompatible current mode."
+  },
+  "observations": [
+    "Exact persistence, generator type and parameters, tuple values, unchanged physical identity and conditional filenode replacement.",
+    "Correct mode and physical storage after transaction rollback, typed errors, notice, and command tag.",
+    "Automatic owning-column dependency, consumer default OID, unchanged same-name sequences in the decoy and temporary namespaces, and consumer row values including duplicates and NULL."
+  ],
+  "negative": [
+    "Impossible proper prefix, unguarded absence, absence in an open context, undeclared cross-catalog selector and wrong relation kind.",
+    "Temporary source, empty present action list, user-defined action value, absent source carrying an action, and stock non-sequence source."
+  ],
+  "faults": [
+    "Render the same-named decoy selector.",
+    "Drop the preceding no-op request, thereby skipping its runtime state constraint.",
+    "Reverse the requested action order.",
+    "Remove the existence guard."
+  ],
+  "trust": [
+    "Exact declared source identity and evaluation under the same mutable catalog, runtime sequence state and authorization.",
+    "Physical persistence, file identity and transaction outcomes from the pinned PostgreSQL installations. Crash or power-loss persistence remains outside this observation."
+  ]
+}

@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
  *
  * Source: https://www.postgresql.org/docs/17/sql-alterextension.html, https://www.postgresql.org/docs/17/sql-altergroup.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the removing choice
  *     \SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop::Drop->value // => 'DROP'
  */

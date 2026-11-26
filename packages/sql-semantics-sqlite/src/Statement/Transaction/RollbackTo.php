@@ -20,10 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * connection state, so whether the name exists is not a fact of the model.
  * Source: https://sqlite.org/lang_savepoint.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the savepoint a rollback returns to
- *     $rollback = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ROLLBACK TO SAVEPOINT before_import');
- *     [$rollback->statement->savepoint->value, $rollback->toString()] // => ['before_import', 'ROLLBACK TO before_import']
+ * @visibility SqlSemantics
  */
 final class RollbackTo implements Statement
 {

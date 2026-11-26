@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query;
  * Source: https://www.postgresql.org/docs/17/queries-union.html,
  * https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-GROUPING-SETS.
  *
- * @visibility public
- * @example Reading the quantifier of UNION ALL
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 UNION ALL SELECT 2');
- *     $query->statement->quantifier // => \SqlSemantics\Platform\PostgreSql\Statement\Query\SetQuantifier::All
+ * @visibility SqlSemantics
  */
 enum SetQuantifier: string
 {

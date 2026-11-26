@@ -1,0 +1,126 @@
+{
+  "revision": "SemanticsIR/postgres-merged-join-2",
+  "extends": [
+    "postgres-merged-join-v1.json",
+    "server-join-v2.json",
+    "wildcard-projection-v2.json"
+  ],
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": "PostgreSQL 16.6 and 17.2, the fixed UTF-8 native profile, and pg_catalog first for names of equality operators.",
+  "requiredScope": "All previously required engine releases, modes and syntax remain in scope.",
+  "constructors": {
+    "From/Join": {
+      "role": "Normalize a PostgreSQL binary NATURAL or USING join of ordinary declared inputs.",
+      "structure": "An ordinary INNER, LEFT or RIGHT join with ordered operands and a checked optional predicate.",
+      "conditions": "Each named key resolves once in both inputs and both declared types are built-in int4. The profile resolves equality to pg_catalog. The owner enforces occurrence-local visibility. NULL-extended sides and ONLY remain tied to their own occurrences.",
+      "meaning": "Compare named keys in USING order or common keys in left heading order for NATURAL. Absent common keys use an unfiltered INNER or a true outer predicate.",
+      "sql": "Emit an ordinary join with qualified slots and OPERATOR(pg_catalog.=) for each equality."
+    },
+    "ResultColumn": {
+      "role": "A resolved PostgreSQL physical or merged output slot.",
+      "structure": "Ordered result label and a column reference identifying a physical occurrence.",
+      "conditions": "Both input slots have one resolved int4 type. An alias on the USING clause applies to its merged columns; physical aliases remain independent.",
+      "meaning": "USING and NATURAL put merged fields first in key order, then left and right survivors in written input order. A merged RIGHT field comes from the right occurrence. Qualified stars expose their original headings.",
+      "sql": "Emit the selected occurrence slot under its exact fixed output label."
+    }
+  },
+  "externalInterpretation": "Both observers use the same declared int4 headings, absolute base tables, inherited child rows and pg_catalog int4 equality. Analysis state is transient.",
+  "observations": [
+    "Observe result labels and order, built-in int4 metadata, typed NULL, duplicate rows and distinct operand identities.",
+    "USING list order versus NATURAL left heading order, including RIGHT joins.",
+    "The USING alias supplies the merged keys only and leaves both physical qualifiers addressable.",
+    "ONLY chooses the specified ordinary table occurrence without reading its descendants."
+  ],
+  "finite": {
+    "joinKinds": [
+      "INNER",
+      "LEFT",
+      "RIGHT"
+    ],
+    "keys": [
+      "id",
+      "lane",
+      "both"
+    ],
+    "orientation": [
+      "left-first",
+      "right-first"
+    ],
+    "projection": [
+      "visible",
+      "physical"
+    ],
+    "completeness": "Check each of 36 combinations exactly once from the actual published graph for both releases."
+  },
+  "exploration": {
+    "seeds": [
+      2917,
+      14543,
+      51151
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "structure": "Vary key and source order, signed INT projections, exact occurrence aliases, NULL-extension alternatives, field labels, repeated references and self joins."
+  },
+  "analysis": [
+    "INNER USING in reversed written order preserves that leading column order.",
+    "NATURAL INNER preserves the left heading's key order.",
+    "NATURAL RIGHT preserves right values and left-first result ordering.",
+    "RIGHT explicit ON retains both physical headings.",
+    "NATURAL LEFT with qualified stars exposes both physical headings.",
+    "NATURAL RIGHT with qualified stars exposes both physical headings.",
+    "RIGHT USING alias exposes just the merged keys and preserves original qualified fields.",
+    "LEFT NATURAL with no common keys retains rows of a nonempty left input paired with an empty right input.",
+    "A NATURAL merge over ONLY does not scan the inherited child.",
+    "A NATURAL merge across the same ordinary inheritance parent does include its child.",
+    "A qualified named use on a null-extended physical field is still bound to its physical occurrence."
+  ],
+  "negative": [
+    "A direct predicate references an unavailable occurrence.",
+    "One projected field is outside a declared occurrence.",
+    "A binary merge includes a joined prefix.",
+    "A merge names an absent declared key.",
+    "An int8/other key would require a different typed merge.",
+    "A USING clause repeats a key.",
+    "A FULL-merged key in a predicate that requires a physical int4 operand."
+  ],
+  "faults": [
+    "Address the wrong occurrence.",
+    "Remove the second merged equality.",
+    "Discard right-only rows.",
+    "Drop a result field."
+  ],
+  "evidence": {
+    "P01": "Check reference identity, heading order and built-in operator selection from the actual graph.",
+    "P02": "Verify direct constructors and the analyzed publishing boundary using explicit obligations.",
+    "P03": "Retain only closed slots, names and typed operations in the completed graph.",
+    "P04": "Compute row pairs, metadata and unmatched effects independently.",
+    "P05": "Connect the normalized immutable value closure to installed packages.",
+    "P06": "Compare original and emitted statements in both pinned PostgreSQL releases.",
+    "Q01": "Exercise invalid scopes and wrong type roles at the checked boundary.",
+    "Q02": "Require every finite identity, analyzed case and seed trial in both releases.",
+    "Q03": "Observe origin tracking and stable output types for matched and unmatched rows.",
+    "Q04": "Use exact database row bags and reproducibly detected semantic faults.",
+    "Q05": "Bind all observations and patches to validated distribution sources."
+  },
+  "open": [
+    "Non-int4 keys, merged prefixes, derived headings and aliases on whole joined relations require their own evidence. The initial FULL projection role has a separate contract."
+  ],
+  "trust": [
+    "Pinned PostgreSQL modes and pg_catalog int4 operator identity",
+    "Independent fixture and evaluator",
+    "Selected archived controller and exact source bytes"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-JOIN"
+  ],
+  "admissionChange": {
+    "positive": "An ordinary binary FULL JOIN USING (id) now exports a two-origin int4 choice in the result.",
+    "check": "postgres-full-merged-join-v1.json",
+    "replacement": "The same join with a merged key used as an operand of WHERE still reaches the checked physical-operand boundary."
+  }
+}

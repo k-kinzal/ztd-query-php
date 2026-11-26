@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Literal;
  * implement this interface.
  * Source: https://www.postgresql.org/docs/17/datatype.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the integer a constant denotes
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('10')))->integerValue() // => '10'
  */

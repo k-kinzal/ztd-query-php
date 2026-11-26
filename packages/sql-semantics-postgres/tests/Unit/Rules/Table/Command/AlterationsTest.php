@@ -14,10 +14,10 @@ final class AlterationsTest extends TestCase
 {
     public function testDeriveDerivesEachAction(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t ALTER zz DROP DEFAULT, ADD CHECK (yy)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t ALTER zz DROP DEFAULT, ADD CHECK (yy)', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
           1 => 'Column yy does not exist.',
@@ -26,19 +26,19 @@ final class AlterationsTest extends TestCase
 
     public function testWidenedAddsTheNewColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t ADD n int NOT NULL CHECK (n > a)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t ADD n int NOT NULL CHECK (n > a)', $context);
         self::assertSame(0, count($statement->facts->diagnostics));
     }
 
     public function testColumnReportsAColumnTheTableLacks(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t ALTER zz SET STORAGE plain', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t ALTER zz SET STORAGE plain', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -51,18 +51,18 @@ final class AlterationsTest extends TestCase
 
     public function testDeriveReportsTheKindOfTheRelation(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE TABLE t (a int)'), $semantics->inspect('CREATE SEQUENCE s')];
-        self::assertSame(['"t" is not a materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER MATERIALIZED VIEW t SET (fillfactor = 70)', $context)->facts->diagnostics));
-        self::assertSame(['ALTER action ADD COLUMN cannot be performed on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE s ADD COLUMN c int', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE s SET LOGGED', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE TABLE t (a int)'), $semantics->diagnose('CREATE SEQUENCE s')];
+        self::assertSame(['"t" is not a materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER MATERIALIZED VIEW t SET (fillfactor = 70)', $context)->facts->diagnostics));
+        self::assertSame(['ALTER action ADD COLUMN cannot be performed on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE s ADD COLUMN c int', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE s SET LOGGED', $context)->facts->diagnostics));
     }
 
     public function testIdentityRequiresANotNullColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE TABLE t (a int, b int, c int NOT NULL)')];
-        self::assertSame(['column "a" of relation "t" must be declared NOT NULL before identity can be added'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY', $context)->facts->diagnostics));
-        self::assertSame([], $semantics->inspect('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY, ALTER a SET NOT NULL, ALTER b ADD GENERATED BY DEFAULT AS IDENTITY, ADD PRIMARY KEY (b), ALTER c ADD GENERATED ALWAYS AS IDENTITY', $context)->facts->diagnostics);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE TABLE t (a int, b int, c int NOT NULL)')];
+        self::assertSame(['column "a" of relation "t" must be declared NOT NULL before identity can be added'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY', $context)->facts->diagnostics));
+        self::assertSame([], $semantics->diagnose('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY, ALTER a SET NOT NULL, ALTER b ADD GENERATED BY DEFAULT AS IDENTITY, ADD PRIMARY KEY (b), ALTER c ADD GENERATED ALWAYS AS IDENTITY', $context)->facts->diagnostics);
     }
 }

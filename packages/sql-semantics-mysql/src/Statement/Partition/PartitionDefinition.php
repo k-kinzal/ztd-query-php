@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionBound;
  * is written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a range partition
  *     $partition = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('p0'), new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\LessThan(null), [], []);
  *     [$partition->name->value, $partition->values?->row] // => ['p0', null]

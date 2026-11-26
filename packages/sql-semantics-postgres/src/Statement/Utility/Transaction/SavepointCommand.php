@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Source: https://www.postgresql.org/docs/17/sql-savepoint.html, https://www.postgresql.org/docs/17/sql-release-savepoint.html,
  * https://www.postgresql.org/docs/17/sql-rollback-to.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a release of a savepoint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RELEASE SAVEPOINT s');
- *     [$operation->statement->name->value, $operation->toString()] // => ['s', 'RELEASE s']
+ * @visibility SqlSemantics
  */
 final class SavepointCommand implements Statement
 {

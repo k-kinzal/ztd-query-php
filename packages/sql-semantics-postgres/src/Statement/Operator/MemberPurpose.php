@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * family that sorts its results.
  * Source: https://www.postgresql.org/docs/17/sql-createopclass.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling a search operator
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Operator\MemberPurpose())->sortFamily // => null
  */

@@ -16,9 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * least one non-generated column".
  * Source: https://sqlite.org/gencol.html#limitations.
  *
- * @visibility public
- * @example Reporting a table made of generated columns only
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a AS (1))') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: A table must have at least one column that is not generated.
+ * @visibility SqlSemantics
  */
 final class GeneratedColumnProblem implements Diagnostic
 {

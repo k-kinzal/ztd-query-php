@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Model\Resolution;
 
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\NativeLocalNames;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 
@@ -46,8 +47,14 @@ final class LookupLevel
                 continue;
             }
             $matches = [];
+            $native = $relation->shape->nativeColumnNames ? new NativeLocalNames() : null;
+            $key = $native?->key($column->value);
             foreach ($relation->shape->slots as $position => $slot) {
-                if ($slot->name !== null && $names->equal($slot->name->value, $column->value) && ($qualifier !== null || !in_array($position, $relation->hidden, true))) {
+                if ($slot->name === null || ($qualifier === null && in_array($position, $relation->hidden, true))) {
+                    continue;
+                }
+                $equal = $native === null ? $names->equal($slot->name->value, $column->value) : $native->key($slot->name->value) === $key;
+                if ($equal) {
                     $matches[] = new ResolvedColumn($relation->relation, $slot, $depth);
                 }
             }

@@ -35,10 +35,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-SELECT-LIST,
  * https://www.postgresql.org/docs/17/typeconv-select.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the field of an unnamed constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a'");
- *     [$query->field(0)->name->value, $query->field(0)->type->descriptor->name()] // => ['?column?', 'text']
+ * @visibility SqlSemantics
  */
 final class ExpressionTarget implements Target
 {

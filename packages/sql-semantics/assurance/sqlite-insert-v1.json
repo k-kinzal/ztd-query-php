@@ -1,0 +1,37 @@
+{
+  "revision": "SemanticsIR/sqlite-insert-1",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "All earlier obligations remain in force. Other write, conflict and source forms remain open.",
+  "additionalPublicRoots": ["Mutation/Insert"],
+  "constructors": {
+    "Mutation/Insert": {
+      "role": "Insert ordered value rows into one resolved ordinary base table.",
+      "structure": "An absolute table identity with ordered writable declared column slots, a checked VALUES query, and a conflict policy.",
+      "boundary": "The target list is nonempty and unique, and its width equals that of each value row. The analysis path resolves every target slot against the complete table and rejects generated and implicit columns.",
+      "meaning": "Evaluate each row in lexical order without a local table scope. Write the corresponding column slots. The same external schema supplies defaults, affinities, constraints, generated values and triggers. Preserve both successful and failing statement effects under the selected conflict policy.",
+      "sql": "Emit a schema-qualified table and the explicit ordered target list before the VALUES query. Emit OR ABORT or OR IGNORE only when selected.",
+      "assurance": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Mutation/InsertConflict": {
+      "role": "Closed choice of SQLite INSERT conflict policy.",
+      "structure": "Inherit the external schema policy, explicitly ABORT, or explicitly IGNORE.",
+      "boundary": "An explicit policy is attached to the complete INSERT statement. Inherit carries no statement-level override.",
+      "meaning": "Observe insertions, skipped rows, errors and statement rollback according to the selected SQLite policy and matching external schema.",
+      "sql": "Emit the SQLite operation spelling for each explicit override."
+    }
+  },
+  "analysis": "Resolve an INSERT of VALUES with an explicit column list and no WITH, RETURNING or UPSERT. Support a plain INSERT, OR ABORT, and OR IGNORE. Omitted target columns use their existing database behavior. REPLACE, FAIL, ROLLBACK and other source forms remain open.",
+  "observations": ["Absolute target identity", "Written column and operand order", "Typed rows, defaults, generated values and duplicates", "Trigger order and effects", "Native parameter labels and count", "Change counts and specific constraint rollback"],
+  "finite": {
+    "targets": ["main", "temp"],
+    "policies": ["inherit", "abort", "ignore"],
+    "width": 2,
+    "atoms": ["0", "1", "NULL"],
+    "completeness": "Each target and policy must return every pair of operand indices in the single-row domain."
+  },
+  "exploration": {"seeds": [417, 1731, 1999], "casesPerSeed": 32, "timeoutSeconds": 240, "allowedExclusions": []},
+  "negative": ["Missing target columns", "Repeated target column", "Target width mismatch", "Generated target slot", "Unresolved target slot"],
+  "faults": ["Reverse target column order", "Override inherited conflict policy with OR ABORT", "Lose chosen target schema"],
+  "sources": ["https://sqlite.org/lang_insert.html", "https://sqlite.org/lang_conflict.html"]
+}

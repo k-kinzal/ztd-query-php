@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * is locked.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FOR-UPDATE-SHARE.
  *
- * @visibility public
- * @example Reading a locking clause
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM t FOR SHARE OF t SKIP LOCKED');
- *     [$query->statement->options->locking[0]->strength->value, $query->statement->options->locking[0]->relations[0]->name->value, $query->statement->options->locking[0]->wait->value] // => ['SHARE', 't', 'SKIP LOCKED']
+ * @visibility SqlSemantics
  */
 final class LockingClause implements Node
 {

@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator;
  *
  * Source: https://www.postgresql.org/docs/17/functions-matching.html.
  *
- * @visibility public
- * @example Reading the operator of a pattern match
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' ILIKE 'A'");
- *     $query->field(0)->expression->operator // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\PatternOperator::ILike
+ * @visibility SqlSemantics
  */
 enum PatternOperator
 {

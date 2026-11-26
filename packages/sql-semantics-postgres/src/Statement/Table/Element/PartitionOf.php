@@ -18,12 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionBound;
  * NULL facts (PG-TABLE-DECLARATION-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/ddl-partitioning.html.
  *
- * @visibility public
- * @example A partition has the columns of its parent
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $parent = $semantics->analyze('CREATE TABLE p (id int NOT NULL, day date) PARTITION BY RANGE (day)', []);
- *     $part = $semantics->analyze("CREATE TABLE p1 PARTITION OF p FOR VALUES FROM ('2024-01-01') TO (MAXVALUE)", $parent->declarations());
- *     array_map(static fn ($column) => $column->name->value, $part->declarations()[0]->columns) // => ['id', 'day']
+ * @visibility SqlSemantics
  */
 final class PartitionOf implements TableForm
 {

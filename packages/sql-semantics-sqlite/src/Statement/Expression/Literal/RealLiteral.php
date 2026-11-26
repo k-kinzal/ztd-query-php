@@ -23,11 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a floating point literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1.50E-3 AS r');
- *     $literal = $query->statement->columns[0]->expression;
- *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3 AS r']
+ * @visibility SqlSemantics
  * @example Refusing a literal with neither a decimal point nor an exponent
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, null) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing a point without any digit
@@ -45,13 +41,19 @@ final class RealLiteral implements Scalar
      * @param string $whole The digits before the decimal point; empty when the literal starts with the point
      * @param string|null $fraction The digits after the decimal point; null when the literal has no point
      * @param string|null $exponent The exponent digits with their optional sign; null when the literal has no exponent
+     * @param bool $uppercaseExponent Whether the exponent marker is capitalized
      */
-    public function __construct(public readonly string $whole, public readonly ?string $fraction, public readonly ?string $exponent = null)
-    {
+    public function __construct(
+        public readonly string $whole,
+        public readonly ?string $fraction,
+        public readonly ?string $exponent = null,
+        public readonly bool $uppercaseExponent = false,
+    ) {
         Check::input(preg_match('/\A[0-9]*\z/', $whole) === 1 && preg_match('/\A[0-9]*\z/', $fraction ?? '') === 1, 'The parts of a floating point literal are decimal digits.');
         Check::input($whole !== '' || ($fraction !== null && $fraction !== ''), 'A floating point literal has a digit before or after its decimal point.');
         Check::input($fraction !== null || $exponent !== null, 'A floating point literal has a decimal point or an exponent.');
         Check::input($exponent === null || preg_match('/\A[+-]?[0-9]+\z/', $exponent) === 1, 'An exponent is an optionally signed sequence of decimal digits.');
+        Check::input(!$uppercaseExponent || $exponent !== null, 'An uppercase exponent marker needs exponent digits.');
     }
 
     /**
@@ -67,6 +69,7 @@ final class RealLiteral implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->spelled($this->whole . ($this->fraction === null ? '' : '.' . $this->fraction) . ($this->exponent === null ? '' : 'e' . $this->exponent));
+        $exponent = $this->exponent === null ? '' : ($this->uppercaseExponent ? 'E' : 'e') . $this->exponent;
+        $out->spelled($this->whole . ($this->fraction === null ? '' : '.' . $this->fraction) . $exponent);
     }
 }

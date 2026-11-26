@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Problem;
 
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\WarningDiagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
@@ -13,12 +13,9 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createoperator.html, https://www.postgresql.org/docs/17/sql-createaggregate.html.
  *
- * @visibility public
- * @example Reading the message of an unrecognized operator attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (rightarg = int4, function = int4eq, colour = red)');
- *     [$operation->facts->diagnostics[0]->message(), $operation->facts->diagnostics[0]->warning()] // => ['operator attribute "colour" not recognized', true]
+ * @visibility SqlSemantics
  */
-final class AttributeProblem implements Diagnostic
+final class AttributeProblem implements WarningDiagnostic
 {
     use Snapshot;
 

@@ -1,0 +1,20 @@
+{
+  "revision": "SemanticsIR/postgres-btree-temp-session-reset-1",
+  "approval": "pending-human-review",
+  "scope": "The checked PostgreSQL B-tree native observer for 16.6 and 17.2.",
+  "priorObserver": "a8bf9c41ceadff6dbfebf50c39bf277011cc7c7d0acfeaa91bf9bdfd84f63c5b",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-discard.html",
+    "https://www.postgresql.org/docs/17/sql-discard.html"
+  ],
+  "protocol": [
+    "Use a dedicated stock native session for all temporary-table cases. Confirm that both observer sessions have the same reported version and language settings.",
+    "Before each temporary case require an idle session, discard its temporary tables and independently query its native temporary catalog for leftover relations. Refuse a nonempty catalog before any SQL is observed.",
+    "The trusted initialization re-creates the declared temporary table, fixture rows and competitors on each new comparison. A different physical pg_temp schema number names the same session-local role under the existing contract.",
+    "Preserve the same fixed requests, comparison counts, independent comparison rules, observed effects, fault fixtures and execution budgets. Preserve failures from the prior session protocol."
+  ],
+  "calibration": {
+    "sameInputs": "Run the previous and revised observers against the same fixed SQL and native fixture release. Require equal complete observation transcripts and use nonempty catalog and non-idle session negative controls.",
+    "performance": "Measure wall time separately. Report a native lane as incomplete if its fixed deadline expires."
+  }
+}

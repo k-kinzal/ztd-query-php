@@ -27,9 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * keep its place before IS (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-MISC. Status: Implemented.
  *
- * @visibility public
- * @example Testing a string for a JSON object
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '{}' IS NOT JSON OBJECT")->toString() // => "SELECT '{}' IS NOT JSON OBJECT"
+ * @visibility SqlSemantics
  */
 final class JsonTest implements Scalar
 {

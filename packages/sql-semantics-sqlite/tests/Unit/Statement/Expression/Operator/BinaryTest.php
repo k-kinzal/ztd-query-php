@@ -7,14 +7,12 @@ namespace Tests\Unit\Statement\Expression\Operator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -28,6 +26,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Binary::class)]
 #[Medium]
@@ -35,8 +35,8 @@ final class BinaryTest extends TestCase
 {
     public function testDeriveScalarComparisonsAreIntegerAndNullWhenAnOperandCanBe(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a = b, a < 1, a & 1, a << b, a == 1, 1 = NULL FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a = b, a < 1, a & 1, a << b, a == 1, 1 = NULL FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -50,8 +50,8 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarIsFamilyIsNeverNull(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT b IS NULL, b IS NOT NULL, b IS DISTINCT FROM NULL, NULL IS NOT DISTINCT FROM NULL FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT b IS NULL, b IS NOT NULL, b IS DISTINCT FROM NULL, NULL IS NOT DISTINCT FROM NULL FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $nullability = array_map(static fn (Field $field): Nullability => $field->nullability, $query->fields()->items ?? []);
 
         self::assertSame([Nullability::NotNull, Nullability::NotNull, Nullability::NotNull, Nullability::NotNull], $nullability);
@@ -61,8 +61,8 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarLogicalOperatorsAreIntegerAndCanBeNullWhenAnOperandCan(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a AND 1, a OR b, 1 AND NULL FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a AND 1, a OR b, 1 AND NULL FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -75,8 +75,8 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarArithmeticIsIntegerOrRealUnlessAnOperandIsCertainlyReal(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a + b, a - 1, a * 1, a + 1.5, 9223372036854775808 + 1, NULL + 1 FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a + b, a - 1, a * 1, a + 1.5, 9223372036854775808 + 1, NULL + 1 FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Choice::class, $query->field(0)->type);
         self::assertSame([Storage::Integer, Storage::Real], $query->field(0)->type->alternatives);
@@ -94,8 +94,8 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarDivisionAndRemainderCanAlwaysBeNull(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a / 2, a % 2, 1.5 / 2, NULL / 2 FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a / 2, a % 2, 1.5 / 2, NULL / 2 FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Choice::class, $query->field(0)->type);
         self::assertSame([Storage::Integer, Storage::Real], $query->field(0)->type->alternatives);
@@ -110,8 +110,8 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarConcatenationIsTextUnlessAnOperandIsNull(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect("SELECT a || b, 'a' || 1, 1 || NULL FROM t", [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose("SELECT a || b, 'a' || 1, 1 || NULL FROM t", [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Text, $query->field(0)->type->descriptor);
@@ -122,8 +122,8 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarJsonExtractionYieldsNullableTextOrAValue(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect("SELECT b -> 'x', b ->> 'x', NULL ->> 'x', 'a' -> NULL FROM t", [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose("SELECT b -> 'x', b ->> 'x', NULL ->> 'x', 'a' -> NULL FROM t", [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Text, $query->field(0)->type->descriptor);
@@ -137,8 +137,8 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarRecordsTheFactsOfBothOperands(): void
     {
-        $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a + b FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Inspection();
+        $query = $semantics->diagnose('SELECT a + b FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $sum = $query->field(0)->expression;
 
         self::assertInstanceOf(Binary::class, $sum);
@@ -151,7 +151,7 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUnboundParameter(): void
     {
-        $query = (new Semantics())->inspect('SELECT ? + 1');
+        $query = (new Inspection())->diagnose('SELECT ? + 1');
 
         self::assertInstanceOf(Choice::class, $query->field(0)->type);
         self::assertSame(Nullability::Dependent, $query->field(0)->nullability);
@@ -159,7 +159,7 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarAdmitsRowsOfOneWidthInComparisons(): void
     {
-        $query = (new Semantics())->inspect('SELECT (1, 2) < (1, 3), (1, 2) IS (1, 2), (SELECT 1, 2) = (1, 2)', []);
+        $query = (new Inspection())->diagnose('SELECT (1, 2) < (1, 3), (1, 2) IS (1, 2), (SELECT 1, 2) = (1, 2)', []);
 
         self::assertSame([], $query->facts->diagnostics);
         self::assertInstanceOf(Known::class, $query->field(0)->type);
@@ -169,7 +169,7 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarReportsARowValueBesideASingleValue(): void
     {
-        $query = (new Semantics())->inspect('SELECT (1, 2) = 3', []);
+        $query = (new Inspection())->diagnose('SELECT (1, 2) = 3', []);
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
@@ -179,7 +179,7 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarReportsRowsOfDifferentWidths(): void
     {
-        $query = (new Semantics())->inspect('SELECT (1, 2) = (1, 2, 3)', []);
+        $query = (new Inspection())->diagnose('SELECT (1, 2) = (1, 2, 3)', []);
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
@@ -190,9 +190,9 @@ final class BinaryTest extends TestCase
 
     public function testDeriveScalarReportsARowValueOperandOfAnyOtherOperator(): void
     {
-        $semantics = new Semantics();
-        $sum = $semantics->inspect('SELECT (1, 2) + 1', []);
-        $conjunction = $semantics->inspect('SELECT (1, 2) AND 1', []);
+        $semantics = new Inspection();
+        $sum = $semantics->diagnose('SELECT (1, 2) + 1', []);
+        $conjunction = $semantics->diagnose('SELECT (1, 2) AND 1', []);
 
         self::assertCount(1, $sum->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $sum->facts->diagnostics[0]);
@@ -203,16 +203,16 @@ final class BinaryTest extends TestCase
 
     public function testRenderWritesWordedOperatorsAsKeywordsAndOthersAsSymbols(): void
     {
-        $query = (new Semantics())->inspect('select a is not distinct from b AS c1, a<>1 AS c2, a->>\'x\' AS c3, a and b or 1 AS c4 from t');
+        $query = (new Inspection())->diagnose('select a is not distinct from b AS c1, a<>1 AS c2, a->>\'x\' AS c3, a and b or 1 AS c4 from t');
 
         self::assertSame('SELECT a IS NOT DISTINCT FROM b AS c1, a <> 1 AS c2, a ->> \'x\' AS c3, a AND b OR 1 AS c4 FROM t', $query->toString());
     }
 
     public function testRenderKeepsTheWrittenAssociation(): void
     {
-        $semantics = new Semantics();
-        $tight = $semantics->inspect('SELECT 1 + 2 * 3');
-        $grouped = $semantics->inspect('SELECT (1 + 2) * 3');
+        $semantics = new Inspection();
+        $tight = $semantics->diagnose('SELECT 1 + 2 * 3');
+        $grouped = $semantics->diagnose('SELECT (1 + 2) * 3');
         $expression = $tight->field(0)->expression;
 
         self::assertInstanceOf(Binary::class, $expression);
@@ -224,9 +224,9 @@ final class BinaryTest extends TestCase
 
     public function testRenderWritesANewlyBuiltOperation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $product = new Binary(BinaryOperator::Multiply, new IntegerLiteral('2'), new IntegerLiteral('3'));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Binary(BinaryOperator::Add, new IntegerLiteral('1'), $product))]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new Binary(BinaryOperator::Add, new IntegerLiteral('1'), $product))]));
 
         self::assertSame('SELECT 1 + 2 * 3', $operation->toString());
         self::assertInstanceOf(Choice::class, $operation->field(0)->type);

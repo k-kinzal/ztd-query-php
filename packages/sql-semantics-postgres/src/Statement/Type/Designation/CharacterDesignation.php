@@ -28,10 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * `character varying`, unlimited without a length. A length is 1 to 10485760.
  * Source: https://www.postgresql.org/docs/17/datatype-character.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of a national character constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT N'abc'");
- *     [$query->statement->targets[0]->expression->type->designation->keyword->value, $query->field(0)->type->descriptor->name()] // => ['NCHAR', 'character']
+ * @visibility SqlSemantics
  * @example Rejecting VARYING after VARCHAR
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\CharacterDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\CharacterKeyword::Varchar, true) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

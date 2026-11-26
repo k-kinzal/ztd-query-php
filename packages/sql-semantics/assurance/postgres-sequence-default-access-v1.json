@@ -1,0 +1,79 @@
+{
+  "revision": "SemanticsIR/postgres-sequence-default-access-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "additionalPublicRoots": [
+    "Schema/Sequence/Defaults/GrantSequenceDefaults",
+    "Schema/Sequence/Defaults/RevokeSequenceDefaults"
+  ],
+  "scope": "ALTER DEFAULT PRIVILEGES with ON SEQUENCES, for creator roles and the database-wide or named persistent schema scope. Other object kinds and physical temporary namespace defaults remain open.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-alterdefaultprivileges.html",
+    "https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/catalog/aclchk.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/catalog/aclchk.c"
+  ],
+  "constructors": {
+    "GrantSequenceDefaults": {
+      "type": "Schema/Sequence/Defaults/GrantSequenceDefaults",
+      "role": "Grant initial privileges for future objects of the selected creator and schema scope.",
+      "structure": "A SequenceDefaultPolicy with a grant-option flag.",
+      "conditions": "A grant option requires individual recipients. This constraint also applies to a rule-only request in the default ACL pathway.",
+      "meaning": "In each selected creator and schema entry, add default sequence rights, optionally with the ability to grant those rights. Future objects made by that creator receive the composed policy.",
+      "sql": "Emit ALTER DEFAULT PRIVILEGES, the creator and schema scopes, GRANT with exact rights and recipients, and the optional WITH GRANT OPTION."
+    },
+    "RevokeSequenceDefaults": {
+      "type": "Schema/Sequence/Defaults/RevokeSequenceDefaults",
+      "role": "Remove initial privileges or only their grant options from future sequences.",
+      "structure": "A SequenceDefaultPolicy, an option-only flag and the native grant dependency behavior.",
+      "conditions": "The omitted dependency behavior means RESTRICT. Use the policy's ordered creator, schema and recipient operands.",
+      "meaning": "Change the selected default ACL entries. Removal from a namespace layer preserves the independent global defaults. An entry equal to its baseline is absent. The action leaves existing objects unchanged.",
+      "sql": "Emit the scope prefix, REVOKE, optional GRANT OPTION FOR, the privilege and recipient lists, and CASCADE or RESTRICT."
+    },
+    "SequenceDefaultPolicy": {
+      "type": "Schema/Sequence/Defaults/SequenceDefaultPolicy",
+      "role": "Carry the checked creator roles, schema selection, rights and recipients of a default sequence ACL.",
+      "structure": "Detached ordered creator, schema, right and recipient lists, plus the exact grammar release. The empty creator list selects the effective role, the empty schema list the global layer, and the empty right list all sequence rights.",
+      "conditions": "Analyze resolves each named creator and recipient and each schema spelling. Direct construction checks the allowable roles, nonempty recipients, exact release and concrete scope. Native pg_temp alias lookup fails for default ACLs and does not select the session namespace here. Duplicate limiting clauses fail before publication.",
+      "meaning": "Choose the ordered finite sets of creator and schema coordinates for future-object privileges. Runtime role choice, schema existence in matching external state and authority to change another creator's defaults are explicit premises or native effects. Object creation consults the actual creator's defaults.",
+      "sql": "Independently delimit each decoded schema and nominal role and emit native session and public role tokens. Omit the creator or schema clause only for the designated implicit role or global layer."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "operations": ["grant", "grant-option", "revoke", "revoke-option"],
+    "scopes": ["implicit-global", "effective-local", "two-creators-global", "session-creator-two-schemas"],
+    "rights": ["usage", "ordered-select-update", "all", "rule"],
+    "transactional": [false, true],
+    "bound": "128 exact coordinates per release for each construction path. Compare the normalized direct facts, emitted SQL effects and written SQL effects and account for all typed refusal cases separately."
+  },
+  "exploration": {
+    "seeds": [7091, 19231, 58937],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "structure": "Vary creator lists, quoted and native session roles, recipient lists, global and schema-specific layers, repeated coordinates, privilege lists, prior policy, transaction state and independent existing and future objects."
+  },
+  "observations": [
+    "The exact default ACL object kind, scope, role, bits and grant options and the applicable dependency edges. Track omitted entries versus explicit catalog rows.",
+    "The resulting ACL on future sequences created using the selected and decoy roles and schemas. Include global and local compositions, and an older sequence and a future table as effect controls.",
+    "Parent authorization, native notices and controlled errors, atomic failure and rollback."
+  ],
+  "negative": [
+    "Unknown creator, recipient or schema. PUBLIC creator, temp alias, duplicated limiting clause, non-sequence privilege or column privilege.",
+    "Foreign value in any input list, empty recipient list, release-inapplicable stock role, and a grant option for PUBLIC including RULE-only default changes."
+  ],
+  "faults": [
+    "Replace the selected creator with the authenticated role.",
+    "Remove the schema scope and change the global default.",
+    "Remove WITH GRANT OPTION from a grant.",
+    "Remove GRANT OPTION FOR from a revoke.",
+    "Replace the selected recipient with the universal role."
+  ],
+  "trust": [
+    "The language profile is pinned. The supported external schema and application role identities refer to the same objects at analysis and execution.",
+    "The native decision about authorization and the catalog occupancy follows the pinned server. Independent evidence computes each layer and observes which future sequences actually receive its rights."
+  ]
+}

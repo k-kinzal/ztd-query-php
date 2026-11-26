@@ -17,10 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * from it.
  * Source: https://dev.mysql.com/doc/refman/9.1/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading the code of an external body
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics('mysql-9.1.0'))->analyze('CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS $$ return 1 $$');
- *     $create->statement->body->code->text // => ' return 1 '
+ * @visibility SqlSemantics
  */
 final class ExternalBody implements Node
 {

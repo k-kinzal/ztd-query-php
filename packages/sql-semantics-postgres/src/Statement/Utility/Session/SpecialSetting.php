@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
  * Source: https://www.postgresql.org/docs/17/sql-set.html, https://www.postgresql.org/docs/17/sql-set-role.html,
  * https://www.postgresql.org/docs/17/sql-set-session-authorization.html, https://www.postgresql.org/docs/17/sql-set-transaction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the parameter SET SCHEMA changes
  *     \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::Schema->parameter() // => 'search_path'
  */

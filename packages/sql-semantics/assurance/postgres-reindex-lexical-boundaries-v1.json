@@ -1,0 +1,19 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-lexical-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Fix the shared absolute table-name delimiter used by the PostgreSQL partition rebuild renderer.",
+  "rules": {
+    "Schema/TableName::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->table->quoted();"
+      ]
+    }
+  }
+}

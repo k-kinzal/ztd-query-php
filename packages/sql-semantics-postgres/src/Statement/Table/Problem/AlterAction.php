@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Problem;
  * Mirrors `alter_table_type_to_string` in `tablecmds.c`, which names SET ( attribute options ) and the SET
  * options of an identity column alike.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the action of an ADD COLUMN
  *     \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\AlterAction::AddColumn->value // => 'ADD COLUMN'
  */

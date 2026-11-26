@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Maintenance;
  *
  * Source: https://sqlite.org/syntax/pragma-value.html.
  *
- * @visibility public
- * @example Reading a keyword value
- *     $pragma = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('PRAGMA journal_mode = DELETE');
- *     $pragma->statement->value // => \SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword::Delete
+ * @visibility SqlSemantics
  */
 enum PragmaKeyword: string
 {

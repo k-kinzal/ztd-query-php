@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that dropping an attribute is an attribute change
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\DropAttribute(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'))) instanceof \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\AttributeChange // => true
  */

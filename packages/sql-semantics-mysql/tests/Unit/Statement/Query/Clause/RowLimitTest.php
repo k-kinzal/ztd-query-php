@@ -8,12 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RowLimit::class)]
 #[Medium]
@@ -21,16 +21,16 @@ final class RowLimitTest extends TestCase
 {
     public function testRenderWritesTheOperandsInTheirSpelling(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        self::assertSame('SELECT a FROM t LIMIT 5, 10', $semantics->analyze('select a from t limit 5,10')->toString());
-        self::assertSame('SELECT a FROM t LIMIT 10 OFFSET 5', $semantics->analyze('select a from t limit 10 offset 5')->toString());
-        self::assertSame('SELECT a FROM t LIMIT ?', $semantics->analyze('select a from t limit ?')->toString());
+        self::assertSame('SELECT a FROM t LIMIT 5, 10', $semantics->inspect('select a from t limit 5,10')->toString());
+        self::assertSame('SELECT a FROM t LIMIT 10 OFFSET 5', $semantics->inspect('select a from t limit 10 offset 5')->toString());
+        self::assertSame('SELECT a FROM t LIMIT ?', $semantics->inspect('select a from t limit ?')->toString());
     }
 
     public function testOperandsAreTheCountAndTheOffset(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t LIMIT 5, 10');
+        $operation = (new Inspection())->inspect('SELECT a FROM t LIMIT 5, 10');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);

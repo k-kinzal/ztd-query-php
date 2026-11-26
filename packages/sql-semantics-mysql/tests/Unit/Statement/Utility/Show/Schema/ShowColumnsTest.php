@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ShowColumns::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class ShowColumnsTest extends TestCase
 {
     public function testDeriveStatementResolvesTheTable(): void
     {
-        $show = (new Semantics())->analyze('SHOW COLUMNS FROM t');
+        $show = (new Inspection())->inspect('SHOW COLUMNS FROM t');
         self::assertInstanceOf(ShowColumns::class, $show->statement);
         self::assertSame(6, count($show->fields() ?? []));
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\UndeclaredTable::class, $show->facts->relation($show->statement->table)->table);
@@ -24,13 +24,13 @@ final class ShowColumnsTest extends TestCase
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
-        $show = (new Semantics())->analyze('SHOW COLUMNS FROM t');
+        $show = (new Inspection())->inspect('SHOW COLUMNS FROM t');
         self::assertInstanceOf(ShowColumns::class, $show->statement);
         self::assertSame('Field', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW COLUMNS FROM t', (new Semantics())->analyze('SHOW COLUMNS FROM t')->toString());
+        self::assertSame('SHOW COLUMNS FROM t', (new Inspection())->inspect('SHOW COLUMNS FROM t')->toString());
     }
 }

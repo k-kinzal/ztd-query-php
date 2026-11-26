@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Table\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\EngineAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(EngineAttribute::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class EngineAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -33,6 +33,6 @@ final class EngineAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE \'{}\')', (new Semantics())->analyze('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')')->toString());
+        self::assertSame('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE \'{}\')', (new Inspection())->inspect('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')')->toString());
     }
 }

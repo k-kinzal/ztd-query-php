@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
  * name. Source: https://dev.mysql.com/doc/refman/8.4/en/nested-join-optimization.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a nested join
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM t LEFT JOIN (u, v) ON t.a = u.a');
- *     $query->statement->from->right->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList // => true
+ * @visibility SqlSemantics
  */
 final class NestedRelation implements Relation
 {

@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow;
  * `INSERT INTO t (VALUES (1))` requests the same as `INSERT INTO t VALUES (1)`.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html.
  *
- * @visibility public
- * @example Keeping the parentheses around VALUES
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t (VALUES (DEFAULT))');
- *     [count($insert->statement->rows->rows()), $insert->toString()] // => [1, 'INSERT INTO t (VALUES (DEFAULT))']
+ * @visibility SqlSemantics
  */
 final class ParenthesizedRows implements Node
 {

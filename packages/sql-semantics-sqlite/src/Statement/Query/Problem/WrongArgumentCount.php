@@ -11,9 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A call of a built-in function with a number of arguments the function does not accept.
  *
- * @visibility public
- * @example Reading the problem of a call with too many arguments
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT abs(1, 2)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: wrong number of arguments to function abs()
+ * @visibility SqlSemantics
  */
 final class WrongArgumentCount implements Diagnostic
 {

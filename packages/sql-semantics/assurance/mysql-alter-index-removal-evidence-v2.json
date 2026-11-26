@@ -1,0 +1,157 @@
+{
+  "revision": "SemanticsIR/mysql-alter-index-removal-evidence-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-alter-index-removal-v1.json",
+    "mysql-drop-native-index-evidence-v3.json",
+    "mysql-native-index-policy-evidence-v2.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "The nine pinned native MySQL profiles and their fixed stock InnoDB settings.",
+  "scope": "An ALTER TABLE statement with one DROP INDEX, DROP KEY or DROP PRIMARY KEY action and native ALGORITHM and LOCK modifiers. Include persistent, session-temporary and shadowed ownership. Include ALTER IGNORE TABLE in the 5.6.51 grammar and table or database qualification of the dropped key in 5.6.51 and 5.7.44.",
+  "constructors": {
+    "DropIndex": {
+      "role": "Resolve one physical key removal through a single ALTER TABLE action while retaining the native legacy IGNORE effect.",
+      "type": "Schema/Index/DropIndex",
+      "structure": "The absolute native table and its exact physical index identity, the effective bounded DDL algorithm and lock, the grammar release, and the legacy IGNORE choice.",
+      "conditions": "One physical key action names exactly one index on its resolved target. Unqualified and correctly qualified references select the same key. The native explicit PRIMARY role is required for DROP PRIMARY KEY. Implicit cluster identity remains a named unique key. Qualifiers on key names are supported by the two legacy grammars. The native 5.6.51 release alone admits IGNORE. Validate every written spelling in the grammar profile, then apply the final known algorithm and lock independently. Check that the final requested policy is compatible with the resolved target and removal operation.",
+      "meaning": "Remove the selected physical key and its enforcement policy. Preserve the matched table ownership, other indexes and rows, and the implicit commit. Repeated supported option directives update the same native request. Keep the legacy IGNORE behavior and its deprecation warning.",
+      "sql": "Normal removal uses the existing absolute standalone DROP INDEX form. Legacy IGNORE renders ALTER IGNORE TABLE with the absolute name, exact physical index and comma-separated options."
+    }
+  },
+  "finite": {
+    "forms": [
+      "drop-index",
+      "drop-key",
+      "drop-primary-key"
+    ],
+    "ownership": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "orderedDirectives": [
+      "no-options",
+      "action-before-options",
+      "action-after-options",
+      "action-between-options",
+      "last-algorithm-wins",
+      "last-lock-wins",
+      "recognized-overridden-instant"
+    ],
+    "qualifications": [
+      "unqualified",
+      "actual-table",
+      "actual-database-and-table",
+      "foreign-table",
+      "foreign-database"
+    ],
+    "ignoreDirectives": [
+      "no-options",
+      "last-algorithm-wins"
+    ]
+  },
+  "finiteOrder": "Independently identify the Cartesian core, qualification and legacy IGNORE subdomains. The nameless PRIMARY action has no index qualifier. Cross every syntax form with its physical roles in the core and IGNORE grids. Qualify every named form with each applicable physical role in the separate qualification grid. Enumerate the direct values by resolved role, owner, effective policy and the IGNORE choice.",
+  "analysisCoordinates": 339,
+  "directCoordinates": 72,
+  "analysisAdmitted": {
+    "5.6.51": 232,
+    "5.7.44": 178,
+    "default": 157
+  },
+  "directAdmitted": {
+    "5.6.51": 52,
+    "default": 26
+  },
+  "negativeCount": {
+    "mysql-5.6.51": 130,
+    "mysql-5.7.44": 210,
+    "default": 231
+  },
+  "negative": [
+    "Observe each wrong qualifier on both parser release families and compare native syntax or placement errors before commit.",
+    "An explicitly named primary key is absent in a table with only an implicit clustered unique identity.",
+    "Ignore is unavailable in every later grammar or direct value.",
+    "An unknown syntax spelling or algorithm cannot be hidden by a later legitimate directive.",
+    "Native order-dependent effective policies still close against the actual table and physical key role."
+  ],
+  "exploration": {
+    "timeoutSecondsPerRelease": 480,
+    "seeds": [
+      1721,
+      7499,
+      14021
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare parsed SQL and emitted SQL against independent ordered key, row, type, enforcement, and transaction effects.",
+    "Compare analyzed and direct immutable shapes, including the effective option directives and the legacy IGNORE role.",
+    "Observe native 1103 and 1102 before implicit commit for incorrect legacy table and database qualifiers, native syntax refusal for qualifiers in modern grammars, native 1091 for an absent physical PRIMARY, and native 1681 for the emitted legacy IGNORE.",
+    "Keep the accepted ALGORITHM and LOCK cases when modifiers change positions. Observe legacy unknown INSTANT, modern recognized INSTANT overridden by a supported final choice, and an unknown spelling in a position that a later choice would otherwise override."
+  ],
+  "faults": [
+    "Ignore absence of the legacy deprecation warning.",
+    "Change the observable native effect of the release-specific index removal witness."
+  ],
+  "renderFaultAvailability": {
+    "erase-mysql-alter-ignore": [
+      "5.6.51"
+    ],
+    "remove-unrelated-mysql-alter-index": [
+      "5.7.44",
+      "8.0.44",
+      "8.1.0",
+      "8.2.0",
+      "8.3.0",
+      "8.4.7",
+      "9.0.1",
+      "9.1.0"
+    ]
+  },
+  "evidence": {
+    "P01": "Check the measured physical owner and exact key role, last effective options and explicit legacy syntax effect.",
+    "P02": "Exhaust both admitted and refused coordinate sets for the scoped role. Compare the fixed typed constructor and source boundaries.",
+    "P03": "Retain absolute owner, index role, name, native policy and grammar profile.",
+    "P04": "Derive the native DDL operand and every emitted option from those retained children.",
+    "P05": "Check readonly closed value dependencies and the standard forbidden restoration paths.",
+    "P06": "Independently compare native rows, catalog, physical enforcement, implicit commit and legacy warnings of written and emitted SQL."
+  },
+  "obligations": {
+    "Q01": "Check a single key action and the exact policy and qualifier boundary.",
+    "Q02": "Reach every admitted and rejected finite coordinate plus the fixed seeded cases.",
+    "Q03": "Bind the physical owner before applying the key policy and preserve the named clustered role.",
+    "Q04": "Replay native effects and warning receipts and detect SQL fault injection.",
+    "Q05": "Link actual candidate bytes to the checked shape, distribution and independent replay."
+  },
+  "trust": "Pinned native grammar profiles, typed binding facts, detached verified shape and the frozen independent native observer.",
+  "trackedBeyondThisSlice": [
+    "General ordered multi-action ALTER TABLE, foreign and check constraint removal, ALGORITHM and LOCK outside this index profile, VALIDATION modifiers, and dependency-aware effects remain separate required grammar and semantic domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/sql_yacc.yy",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/sql_yacc.yy",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.4.7/sql/sql_yacc.yy"
+  ],
+  "publicationContracts": {
+    "mysql-index-removal-construction-facts-v1.json": "0a0b00b9f59a18adc6776398770fb7d43ab3e742f5a39e7f0a581e5e30772308",
+    "mysql-alter-index-removal-evidence-v1.json": "a3d9f469bdf68a59640d35e9840c8a41c3c2a841b44e5592db85c4786ed7af3c"
+  },
+  "change": "Retain the complete original finite design, native observations and faults, and verify that generation support is transient at every physical removal boundary."
+}

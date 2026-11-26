@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
  * have without the command; the value is the keyword.
  * Source: https://www.postgresql.org/docs/17/sql-set.html.
  *
- * @visibility public
- * @example Reading the keyword of SET TIME ZONE LOCAL
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET TIME ZONE LOCAL');
- *     $operation->statement->zone // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ZoneKeyword::Local
+ * @visibility SqlSemantics
  */
 enum ZoneKeyword: string
 {

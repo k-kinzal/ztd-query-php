@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignatu
  * attribute without a value.
  * Source: https://www.postgresql.org/docs/17/sql-alteroperator.html.
  *
- * @visibility public
- * @example Reading the changed attributes
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
- *     $operation->statement->attributes[0]->attribute->name->value // => 'restrict'
+ * @visibility SqlSemantics
  */
 final class AlterOperator implements Statement
 {

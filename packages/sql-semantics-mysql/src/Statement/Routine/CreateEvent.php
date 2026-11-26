@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * context. The facts follow MYSQL-EVENT-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
  *
- * @visibility public
- * @example Reading an event definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO DELETE FROM log");
- *     [$create->statement->completion, $create->statement->status, $create->statement->comment->value] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion::Preserve, \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Disable, 'nightly']
+ * @visibility SqlSemantics
  */
 final class CreateEvent implements Statement
 {

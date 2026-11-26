@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  * Mirrors the `AlterTableCmd` AT_DropColumn of a composite type.
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html.
  *
- * @visibility public
- * @example Dropping an attribute if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b');
- *     $operation->statement->changes[0]->ifExists // => true
+ * @visibility SqlSemantics
  */
 final class DropAttribute implements AttributeChange
 {

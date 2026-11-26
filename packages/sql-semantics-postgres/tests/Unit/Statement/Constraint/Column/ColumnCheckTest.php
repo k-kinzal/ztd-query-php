@@ -14,8 +14,8 @@ final class ColumnCheckTest extends TestCase
 {
     public function testKindIsCheck(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int CHECK (a > 0))', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int CHECK (a > 0))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -29,8 +29,8 @@ final class ColumnCheckTest extends TestCase
 
     public function testDeriveClauseResolvesTheConditionAgainstTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int CHECK (a > 0))', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int CHECK (a > 0))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -50,8 +50,8 @@ final class ColumnCheckTest extends TestCase
 
     public function testDeriveClauseReportsAConditionThatIsNotBoolean(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int CHECK (a + 1))', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int CHECK (a + 1))', []);
         self::assertSame([
           0 => 'argument of CHECK must be type boolean',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -59,8 +59,8 @@ final class ColumnCheckTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int CONSTRAINT c CHECK (a > 0) NO INHERIT)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE t (a int CONSTRAINT c CHECK (a > 0) NO INHERIT)', []);
         self::assertSame('CREATE TABLE t (a INT CONSTRAINT c CHECK (a > 0) NO INHERIT)', $statement->toString());
     }
 }

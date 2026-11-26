@@ -1,0 +1,124 @@
+{
+  "revision": "SemanticsIR/mysql-native-index-binding-15",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "3d39b51ab9fccada01607ec0094e887df646f8aab4c0a55103161c5e18cbd69c",
+      "role": "Carries known table engine, namespace and the prior eligible identity."
+    },
+    "src/Rules/TableDefinition/TableDeclaration.php": {
+      "sha256": "b90ee33cdfa225c222e2c7319c5202dc88507c278cc060ced0670c85104c1c34",
+      "role": "Derives the native engine and identity from the originating checked table declaration."
+    },
+    "src/Rules/TableDefinition/Index/TableIdentityKeys.php": {
+      "sha256": "83253fac0bad55a5c0e16787bb09dad10b79ca240087a950315244be883bb87e",
+      "role": "Recognizes explicit primary identity and the earlier eligible visible unique roles."
+    },
+    "src/Rules/TableDefinition/ColumnFlags.php": {
+      "sha256": "23f959097c0ebb86fe49bf1e496b874e7995f4c026d49a11011ad560c7580fe0",
+      "role": "Resolves the effective declared nullability and inline primary field markers."
+    },
+    "src/Statement/Table/CreateIndex.php": {
+      "sha256": "f94f413e2769ca670170a9850a54b4f203ec7c22f6ce2857dfd5748e7bca2b20",
+      "role": "Binds the indexed relation and complete visible column facts before lowering."
+    },
+    "src/Rules/TableDefinition/Index/InlineIdentityKey.php": {
+      "role": "Recognize inline required identities before building a completed native index.",
+      "sha256": "87f7cfd5775cc43f9fb6c0f7ef81b9a1152c657715f4c1066da6e7f23c008acf"
+    },
+    "src/Rules/TableDefinition/DeclaredTableStorage.php": {
+      "role": "Resolve the declared engine and the fixed default.",
+      "sha256": "fc8e78652b57ff919efb40a8f7901cfdd4036200401a41105ed2be88bd38233b"
+    },
+    "src/Model/Statement/Declaration/IndexDeclaration.php": {
+      "role": "Bind native key layout, directional prefixes and whether the key was generated for a foreign reference.",
+      "sha256": "c1c8f58f7eb1d3d331c8dea6094247cbfe648ad1439bb2f5ca20974dbb487ec6"
+    },
+    "src/Model/Statement/Identifier/NativeIdentifierCase.php": {
+      "role": "Compose the pinned native BMP lowercase map without dynamic input or locale.",
+      "sha256": "5a9b345e21ba318be9ce1b73c6e2f5cc8e132b297ab02c459905149193a266e1"
+    },
+    "src/Model/Statement/Identifier/CaseTable/LatinGreekCase.php": {
+      "role": "Fixed native scalar results below U+0400.",
+      "sha256": "96d7530b7dadf0c24658edc16565c7f71d2b5d9518aa4537d1845ecce86736c4"
+    },
+    "src/Model/Statement/Identifier/CaseTable/CyrillicArmenianCase.php": {
+      "role": "Fixed native scalar results at U+0400 through U+0FFF.",
+      "sha256": "6aaeeefec9e23061bb351eed0f081f2cc6a3eade6657cdca859c8fa462c6f0ed"
+    },
+    "src/Model/Statement/Identifier/CaseTable/ExtendedBmpCase.php": {
+      "role": "Fixed native scalar results from U+1000.",
+      "sha256": "f85700248adaea6f357e4fa57f49c7bed0c93870fc1db1141d96134c328bb3e3"
+    },
+    "src/Rules/TableDefinition/Index/IndexNameAllocation.php": {
+      "role": "Allocate the first free ordered numeric suffix with the release-specific native byte limit.",
+      "sha256": "0f215ae30172d34929b64e99301eb7829d8b65a373c369ff50d836e71e184f9a"
+    },
+    "src/Rules/TableDefinition/Index/TableIndexCandidates.php": {
+      "role": "Read full leading canonical child fields and native directions, explicit name choices, AUTO_INCREMENT backing and eligible clustered roles.",
+      "sha256": "e380e7d5d08de4d9ac6c7dccd793f13546c8960434fb404280425cd0ef87d4f2"
+    },
+    "src/Rules/TableDefinition/Index/TableIndexDeclarations.php": {
+      "role": "Join explicit and retained native generated candidates in original element order before allocating names, settling clustered identity and checking native capacity.",
+      "sha256": "b1d84c78d161fe2dabc04c04efbb7f8096a501723a015abadc9c0a611bcef0c0"
+    },
+    "src/Statement/Alter/DropIndex.php": {
+      "role": "Derive the selected native table fact and the syntax-checked alteration policies.",
+      "sha256": "b15d7c76af69eb2ffd0287df573204688bf84edc626a65af8b35aed98f6d6066"
+    },
+    "src/Model/Statement/Declaration/PhysicalIndexKind.php": {
+      "role": "Closed catalog roles detached from parser statement types.",
+      "sha256": "0d7466d1056b07180e2c8e1428a277e64225c1626f4e93aabac36b5f20149fef"
+    },
+    "src/Rules/TableDefinition/Index/AutoIncrementColumn.php": {
+      "sha256": "20b100960a717ff0b6f922e0d6f9b6d2b40b5ae026f9042f58c017ab09f507fb",
+      "role": "Recognize every admitted generating declaration before selecting the native leading backing keys."
+    },
+    "src/Rules/TableDefinition/Index/IndexKeyCoverage.php": {
+      "role": "Uses native case matching and ordered fields. Applies exact unique and calculated clustered prefix policies.",
+      "sha256": "5bdd25f0a78fd7760cf5f3253979cd12f7c4ceee6a2e8ef155eb69614a1a1721"
+    },
+    "src/Rules/TableDefinition/Index/IndexCandidate.php": {
+      "role": "Materialize the checked native name and origin of each physical key proposal.",
+      "sha256": "2d8c1f227e41fe83689568b5df85315046ebf73901a93e5e512bf7629599614d"
+    },
+    "src/Rules/TableDefinition/Index/ImplicitForeignIndexCandidates.php": {
+      "role": "Check every enforced native foreign-key input, remove covered child prefixes before allocating names and retain the later equivalent or longer compatible proposal.",
+      "sha256": "364a2a40b4c9281b8ea98a3eaf624eff03c238db0a6ea971b2db30f0cc2c5d67"
+    },
+    "src/Rules/TableDefinition/TableTargets.php": {
+      "role": "Binds the supplied native table namespace under the fixed declaration context.",
+      "sha256": "90b9d6bfd48f5bbc123180b9b086f77960ba29b70ba96f56845cf31f79188b0e"
+    },
+    "src/Statement/Alter/AlterTable.php": {
+      "role": "Supplies the physical child database to table-level foreign-key binding.",
+      "sha256": "81dfca75a6819348fbcccda5d4e00b8fe379aab825a1c6b0815875032c8fb327"
+    },
+    "src/Statement/Alter/Command/AddConstraint.php": {
+      "role": "Forwards the ALTER child database only to native foreign-key references.",
+      "sha256": "104189428deefa841a4ebc092bf75eeaa7e368570345271e65dc5569c8c979b1"
+    },
+    "src/Statement/Table/Key/References.php": {
+      "role": "Binds the qualified referenced relation in the persistent dictionary.",
+      "sha256": "e4f284135b10fc59dad0b067c3b7233d182576a5c5d43c24e5c62040a50b0e16"
+    },
+    "src/Model/Contract/InnoDbKeyLimit.php": {
+      "role": "Pins the exact stock per-term capacities used by the checked native InnoDB string index group.",
+      "sha256": "5f30fd7182fd231f38b351963e55e67fb07bfcfd8398b36bb28ec439492e9037"
+    },
+    "src/Model/Statement/Declaration/IndexRemovalTarget.php": {
+      "role": "Checks the complete typed original removal facts before the finished identity is published.",
+      "sha256": "6cef98e27a3ba1c85eb5aca5bd3d524fb230f17836f898a6fbd83345f195d2aa"
+    },
+    "src/Model/Statement/Declaration/ForeignKeyIndexSide.php": {
+      "role": "Checks the retained original ordered side facts outside the completed IR.",
+      "sha256": "d83d3afb1161b272af09417a2ea1a46e4ea9e64bfbeab8d0e94121df8d7cd0c7"
+    }
+  },
+  "revises": "mysql-native-index-binding-v9.json",
+  "extends": "mysql-native-index-binding-v12.json",
+  "versionedFrom": {
+    "path": "mysql-native-index-binding-v14.json",
+    "sha256": "6424893e648ce402a2d8064cd681bf539fd707ff2738462e392aa9d7bb19e1d2"
+  }
+}

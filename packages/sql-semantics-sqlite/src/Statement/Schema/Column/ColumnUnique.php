@@ -19,10 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
  * Source: https://sqlite.org/lang_createtable.html#unique_constraints.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a UNIQUE column constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a UNIQUE ON CONFLICT REPLACE)');
- *     $create->statement->columns[0]->constraints[0]->conflict?->value // => 'REPLACE'
+ * @visibility SqlSemantics
  */
 final class ColumnUnique implements ColumnConstraint
 {

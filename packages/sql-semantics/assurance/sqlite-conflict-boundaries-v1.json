@@ -1,0 +1,60 @@
+{
+  "revision": "SemanticsIR/sqlite-conflict-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Require exhaustive statement conflict lowering and normalize the REPLACE verb.",
+  "rules": {
+    "Mutation/InsertLowering::lower": {
+      "common": [
+        "$into = $statement->into;",
+        "Check::input(",
+        "    $into->with === null && ($statement instanceof InsertDefaults || $statement->upserts === []),",
+        "    'Complete SQLite INSERT does not support WITH or UPSERT.',",
+        ");",
+        "$policy = match ($into->replace ? ConflictResolution::Replace : $into->resolution) {",
+        "    null => InsertConflict::Inherit,",
+        "    ConflictResolution::Abort => InsertConflict::Abort,",
+        "    ConflictResolution::Ignore => InsertConflict::Ignore,",
+        "    ConflictResolution::Fail => InsertConflict::Fail,",
+        "    ConflictResolution::Rollback => InsertConflict::Rollback,",
+        "    ConflictResolution::Replace => InsertConflict::Replace,",
+        "};",
+        "$binding = new SourceBinding($operation, $into->target);",
+        "$writes = (new InsertTargetLowering())->lower($binding, $into, $statement instanceof InsertDefaults);",
+        "$returning = (new ReturningLowering())->lower($operation, $statement->returning, $binding);",
+        "$target = $binding->source();",
+        "Check::invariant($target instanceof TableSource, 'A resolved INSERT has one external target.');",
+        "",
+        "return new Insert($target, $writes, $this->input($operation, $statement), $policy, $returning);"
+      ]
+    },
+    "Mutation/UpdateLowering::lower": {
+      "common": [
+        "Check::input(",
+        "    $statement->with === null && $statement->from === null,",
+        "    'Complete SQLite UPDATE requires one table without WITH or FROM.',",
+        ");",
+        "$conflict = match ($statement->resolution) {",
+        "    null => UpdateConflict::Inherit,",
+        "    ConflictResolution::Abort => UpdateConflict::Abort,",
+        "    ConflictResolution::Ignore => UpdateConflict::Ignore,",
+        "    ConflictResolution::Fail => UpdateConflict::Fail,",
+        "    ConflictResolution::Rollback => UpdateConflict::Rollback,",
+        "    ConflictResolution::Replace => UpdateConflict::Replace,",
+        "};",
+        "$binding = new SourceBinding($operation, $statement->target);",
+        "$lowering = new ExpressionLowering();",
+        "$assignments = [];",
+        "foreach ($statement->assignments as $assignment) {",
+        "    Check::input($assignment instanceof Assignment, 'Complete SQLite UPDATE currently requires scalar assignments.');",
+        "    $assignments[] = new UpdateAssignment($binding->write($assignment->column), $lowering->lower($assignment->value, $binding));",
+        "}",
+        "$where = (new QueryClauses())->predicate($statement->where, $binding);",
+        "$returning = (new ReturningLowering())->lower($operation, $statement->returning, $binding);",
+        "$target = $binding->source();",
+        "Check::invariant($target instanceof TableSource, 'A resolved UPDATE has one external target.');",
+        "",
+        "return new Update($target, $assignments, $where, $conflict, $returning);"
+      ]
+    }
+  }
+}

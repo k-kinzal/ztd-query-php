@@ -1,0 +1,129 @@
+{
+  "revision": "SemanticsIR/sqlite-strict-tables-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with ordinary rowid tables and the built-in declared type rules. The strictness flag is local to the table declaration.",
+  "scope": "CREATE TABLE for a rowid table with optional STRICT storage, closed declared types, and the independently admitted nullability and literal-default roles.",
+  "constructors": {},
+  "existingRoles": [
+    "Schema/CreateTable",
+    "Schema/TableColumn",
+    "Schema/DeclaredDatatypeName",
+    "Schema/NotNullConflict"
+  ],
+  "structure": "The table retains a required storage-mode decision with an ordinary default. INT and INTEGER are distinct declaration names, and ANY is distinct from an untyped column. The mode and type select a unique native column-domain rule.",
+  "conditions": [
+    "A STRICT declaration requires one of INT, INTEGER, REAL, TEXT, BLOB or ANY on every column. Other declarations keep the earlier untyped role and the same six explicit types.",
+    "The table continues to check qualified identity, column order and uniqueness, size and literal scope. An incompatible literal default may fail when assigned, after successful declaration.",
+    "Analyze accepts the STRICT table option, including native duplicate occurrences with the same meaning. Unknown options fail analysis. The independent primary-key contract specifies keyed storage."
+  ],
+  "meaning": "The declaration retains SQLite rowid behavior and controls storage coercion and type rejection on subsequent writes. STRICT ANY preserves each SQLite storage class and value exactly. Ordinary ANY uses numeric affinity. Strict typed columns report the datatype constraint error for incompatible non-NULL values after native coercion. Retain default assignment, NOT NULL behavior, and IF NOT EXISTS through composition.",
+  "externalInterpretation": "Use the same SQLite version, schema location, connection settings, existing objects and sequence of probe writes.",
+  "sql": "Render the ordered closed declarations at the resolved schema. Emit STRICT after the closing parenthesis only when selected. Preserve each type keyword, or no type for an admitted ordinary column.",
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "observations": [
+    "Compare schema table identity, catalog mode and rowid, ordered names and type spellings, NOT NULL and explicit default presence.",
+    "Measure native effects of omitted values and of explicit integer, real, numeric TEXT, nonnumeric TEXT, BLOB and NULL storage samples. Retain insertion order, resulting typed rows, exact errors and change counts.",
+    "Run original DDL separately for analyzed inputs. Measure that the guarded declaration does not make an existing ordinary table strict."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "types": [
+      "",
+      "INT",
+      "INTEGER",
+      "REAL",
+      "TEXT",
+      "BLOB",
+      "ANY"
+    ],
+    "modes": [
+      "ordinary",
+      "strict"
+    ],
+    "nullability": [
+      false,
+      true
+    ],
+    "guards": [
+      false,
+      true
+    ],
+    "defaults": [
+      null,
+      [
+        "text",
+        "0007"
+      ],
+      [
+        "blob",
+        "00FF"
+      ]
+    ],
+    "samples": [
+      "omitted",
+      "integer",
+      "integral-real",
+      "fractional-real",
+      "numeric-text",
+      "fractional-text",
+      "nonnumeric-text",
+      "blob",
+      "null"
+    ],
+    "identity": "The strict untyped combination is independently rejected in the direct and analyzed boundary checks. All other combinations yield 312 measured declaration identities, with all nine write observations each."
+  },
+  "exploration": {
+    "seeds": [
+      33091,
+      41557,
+      70229
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Produce one to five differently typed and ordered columns with distinct quoted names, affinity-sensitive values, named schema selection, separate defaults, nullable and nonnullable operands, and guarded reuse of a funded relation in either schema."
+  },
+  "negative": [
+    "Direct STRICT table with an untyped column",
+    "Analyze STRICT table with an untyped column",
+    "Analyze STRICT table with an unknown data type",
+    "Analyze WITHOUT ROWID without a primary key"
+  ],
+  "faults": [
+    "Drop every STRICT suffix",
+    "Render the declared ANY type as TEXT, changing the stored integer storage class",
+    "Rewrite INT as INTEGER and erase the declared type distinction",
+    "Render STRICT for an ordinary ANY declaration"
+  ],
+  "open": [
+    "Other ordinary type names, alternative column constraints and AUTOINCREMENT."
+  ],
+  "trust": [
+    "An independent coercion and storage model for the written fixture values.",
+    "Pinned SQLite schema catalog and type and error observations.",
+    "The closed runtime declaration, typed literal, and pure emission checks."
+  ],
+  "sources": [
+    "https://sqlite.org/stricttables.html",
+    "https://sqlite.org/datatype3.html#affinity"
+  ],
+  "changeFromV1": "The previous valid WITHOUT ROWID declaration is a required analyzed positive of sqlite-primary-keys-v1.json. The substitute negative exercises the missing-key condition. Finite cases, exploration and observations remain the same."
+}

@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Query\Clause;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(WindowDefinition::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class WindowDefinitionTest extends TestCase
 {
     public function testRenderWritesTheNameAndTheWindow(): void
     {
-        $operation = (new Semantics())->inspect('select a from t window w as (), v as (w)');
+        $operation = (new Inspection())->diagnose('select a from t window w as (), v as (w)');
 
         self::assertSame('SELECT a FROM t WINDOW w AS (), v AS (w)', $operation->toString());
         self::assertInstanceOf(Select::class, $operation->statement);
@@ -28,7 +28,7 @@ final class WindowDefinitionTest extends TestCase
 
     public function testANameDefinedTwiceIsReported(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM t WINDOW w AS (), W AS ()');
+        $operation = (new Inspection())->diagnose('SELECT a FROM t WINDOW w AS (), W AS ()');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);

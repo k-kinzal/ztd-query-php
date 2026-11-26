@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * unaliased result column is named after the catalog name of the type.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-GENERIC. Status: Implemented.
  *
- * @visibility public
- * @example Reading a typed constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT date '2024-01-01'", []);
- *     [$query->statement->targets[0]->expression->value->value, $query->field(0)->type->descriptor->name(), $query->field(0)->name->value] // => ['2024-01-01', 'date', 'date']
+ * @visibility SqlSemantics
  * @example Rejecting a set-returning type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation(), true),

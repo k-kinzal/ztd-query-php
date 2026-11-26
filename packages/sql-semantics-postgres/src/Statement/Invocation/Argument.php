@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * the older `name := value`.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-calling-funcs.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the contract a call argument fulfils
  *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Argument::class, \SqlSemantics\Platform\PostgreSql\Statement\Clause::class) // => true
  */

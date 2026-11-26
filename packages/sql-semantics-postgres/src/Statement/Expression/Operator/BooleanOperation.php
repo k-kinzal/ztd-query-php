@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * place without parentheses (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-logical.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a disjunction
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT true OR false AND false');
- *     $query->field(0)->expression->right->operator // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperator::And
+ * @visibility SqlSemantics
  */
 final class BooleanOperation implements Scalar
 {

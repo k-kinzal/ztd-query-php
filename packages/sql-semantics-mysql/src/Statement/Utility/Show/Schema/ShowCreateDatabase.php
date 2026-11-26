@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-database.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE SCHEMA IF NOT EXISTS shop');
- *     [$show->field(1)->name?->value, $show->toString()] // => ['Create Database', 'SHOW CREATE DATABASE IF NOT EXISTS shop']
+ * @visibility SqlSemantics
  */
 final class ShowCreateDatabase implements Statement
 {

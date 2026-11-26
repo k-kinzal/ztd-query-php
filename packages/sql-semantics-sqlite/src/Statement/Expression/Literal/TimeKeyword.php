@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Literal;
  *
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  *
- * @visibility public
- * @example Reading which keyword an expression is
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT current_date');
- *     $query->statement->columns[0]->expression->keyword // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword::Date
+ * @visibility SqlSemantics
  */
 enum TimeKeyword: string
 {

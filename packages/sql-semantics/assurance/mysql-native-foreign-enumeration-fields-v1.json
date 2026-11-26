@@ -1,0 +1,96 @@
+{
+  "revision": "SemanticsIR/mysql-native-foreign-enumeration-fields-1",
+  "approval": "pending-human-review",
+  "extends": {
+    "mysql-native-foreign-scalar-fields-v3.json": "ae27a6035d83b9f41606e208340253e3fb2d657006c5c337d23f0983801c2745",
+    "mysql-native-foreign-string-fields-v3.json": "f8e763f689a851c3cca878963d3a41e60b8921bfae5b676af0fda42e43b07e9d"
+  },
+  "language": {
+    "dialect": "MySql",
+    "mode": "Stock InnoDB storage, utf8mb4, empty sql_mode, foreign_key_checks=1, native markers, 16 KiB pages.",
+    "releases": [
+      "5.6.51",
+      "5.7.44",
+      "8.0.44",
+      "8.1.0",
+      "8.2.0",
+      "8.3.0",
+      "8.4.7",
+      "9.0.1",
+      "9.1.0"
+    ]
+  },
+  "sources": {
+    "enum": "https://dev.mysql.com/doc/refman/8.4/en/enum.html",
+    "set": "https://dev.mysql.com/doc/refman/8.4/en/set.html",
+    "physicalWidth": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.h#L270",
+    "compatibility": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/storage/innobase/handler/ha_innodb.cc#L7691",
+    "declaredSetLimit": "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_table.cc#L3798"
+  },
+  "rules": {
+    "members": "Hold the ordered settled member labels. Strip trailing U+0020 at declaration lowering. Keep a distinct role for a declared empty member, its position, the implicit ENUM ordinal zero, and SQL NULL. Keep ordinal slots of repeated labels in the fixed non-strict mode. Commas are rejected in a SET member but can belong to an ENUM member.",
+    "encoding": "An ENUM stores a one-based ordinal using one byte for up to 255 declared labels and two from 256. Allow at most 65535 declaration positions. A SET stores a bitmask in declared label order. The first 8, 16, 24 and 32 positions require 1, 2, 3 and 4 bytes respectively. Larger admitted lists require 8 bytes.",
+    "setDistinct": "Native SET admits up to 64 distinct labels under the native collation. Repeated slots still count for calculating the physical layout. The initial verified construction includes all lists of at most 64 slots and larger lists whose exact byte-distinct count is at most 64. Collation-only reduction of a larger list beyond this check is a tracked proof and input-domain gap.",
+    "collation": "Retain the known utf8mb4 input collation for both independently ordered label domains. Different collations and labels are compatible by InnoDB ordinal/mask comparison when physical widths agree. Same-width unsigned integral and YEAR fields share native compatibility. YEAR is one byte. Signed integral fields, packed bytes and DATE do not match the unsigned family.",
+    "runtime": "Compare the stored ordinal or mask, not the rendered member label. A physical cascade copies the native value, including an ENUM ordinal above its declared labels and a SET mask with additional bits. A projected ENUM label can be empty while the retained ordinal is nonzero. A projected SET label lists defined bits only while numeric access retains the whole mask. Observe both projections and NULL.",
+    "scope": "The external tables have the same actual native declarations and the accepted previously settled local key facts. Complete CREATE TABLE validation, legacy table-file size budgets and collation-dependent label equivalence are independent obligations."
+  },
+  "observations": [
+    "Relative member positions and effective collation on each physical field",
+    "Ordered native foreign-key coordinates, physical backing key, exact outcomes and diagnostic codes",
+    "Stored value and byte projection alongside numeric ordinal or mask before and after native updates and deletes",
+    "ENUM one-byte/two-byte transition; SET one-, two-, three-, four- and eight-byte width boundaries"
+  ],
+  "authorCalibration": {
+    "recipeSha256": "3ebf555bbb0efe0d1f0f6ac377aaeb0d3d2030d9edd4bad368f0ae660f2606bc",
+    "casesPerRelease": 473,
+    "releases": {
+      "5.6.51": {
+        "stdout": "0e05908588742e65c6fecae562c03a4fe40ca2851d346488ea0082cb7b6c420e",
+        "stderr": "b33c6ba29eaaf53041e1502b11b6b076757cbed6c907776d8aa4400dedfffbdd"
+      },
+      "5.7.44": {
+        "stdout": "394262b8515e534c15b728612894f6d6f56969490237f4a275497f36546be6b9",
+        "stderr": "b33c6ba29eaaf53041e1502b11b6b076757cbed6c907776d8aa4400dedfffbdd"
+      },
+      "8.0.44": {
+        "stdout": "233acd3972cdf9eee15f32a5b0c7e0c94bab64492ace75af8389e2637d47cb74",
+        "stderr": "0cd902521c8a681da6b5c8a3fb421f5faee4579dab4eff6dc58e6415e29d7740"
+      },
+      "8.4.7": {
+        "stdout": "5d7069dc720b7e781bbbe419b91f61f4f5b1f2165de872b81223f35c1a4647a7",
+        "stderr": "0cd902521c8a681da6b5c8a3fb421f5faee4579dab4eff6dc58e6415e29d7740"
+      },
+      "9.1.0": {
+        "stdout": "37482bb33b373746172239d89a2a5f0893e9c6d9c27c36814c66a26e9afcb9bb",
+        "stderr": "e45ea753b362b92aed957ccfdab93bcc953b93933a58a8947ad1a414d96ca0ad"
+      }
+    }
+  },
+  "limitCalibration": {
+    "recipeSha256": "2893771aeb3a5178ebb95334e71d282f7f0d7259f9db17851b8c8e08d1667b6b",
+    "casesPerRelease": 32,
+    "releases": {
+      "5.6.51": {
+        "stdout": "6f14b93aee8319f7d2a7bc89b561e7d4415b4708aefc9b07bf7a0d3dfac05369",
+        "stderr": "0ed757d1d3b0f0781c80358631747a84aa71fefd0893b469e1e145ed9e2df60d"
+      },
+      "5.7.44": {
+        "stdout": "a3f91943bca9a5e7da102f2d14674d1abae4af76dc5f70b62f6edea455718af0",
+        "stderr": "0ed757d1d3b0f0781c80358631747a84aa71fefd0893b469e1e145ed9e2df60d"
+      },
+      "8.0.44": {
+        "stdout": "89575a40d84aa47b98d319aee36e1c1e72b9aa7cf4fcd35ec7c3ff3cac1a1570",
+        "stderr": "eba77d8458a4727f8c2185ac6d319b8fa75268b59a3c4df0e6c66d851526540b"
+      },
+      "8.4.7": {
+        "stdout": "35841d5672fc6bf0f50332c479a24e0756ddba3408acf0e81b0bb4112a6c8ca4",
+        "stderr": "eba77d8458a4727f8c2185ac6d319b8fa75268b59a3c4df0e6c66d851526540b"
+      }
+    }
+  },
+  "remaining": [
+    "Collation-only folding of large SET duplicates, other inferred collations and legacy native table-file interval capacity.",
+    "Embedded NUL, four-byte label metadata and other SQL whole-grammar obligations."
+  ]
+}

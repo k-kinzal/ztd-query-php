@@ -18,9 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * ROLLBACK TO finds the most recent savepoint with the name.
  * Source: https://sqlite.org/lang_savepoint.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a savepoint name
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SAVEPOINT "before import"')->statement->name->value // => 'before import'
+ * @visibility SqlSemantics
  */
 final class Savepoint implements Statement
 {

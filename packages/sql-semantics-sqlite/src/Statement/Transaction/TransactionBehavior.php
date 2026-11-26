@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Transaction;
  *
  * Source: https://sqlite.org/lang_transaction.html#deferred_immediate_and_exclusive_transactions.
  *
- * @visibility public
- * @example Reading the behavior a transaction start requests
- *     $begin = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('BEGIN IMMEDIATE');
- *     $begin->statement->behavior // => \SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior::Immediate
+ * @visibility SqlSemantics
  */
 enum TransactionBehavior: string
 {

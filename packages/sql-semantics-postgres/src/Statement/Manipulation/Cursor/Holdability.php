@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor;
  * the first keyword.
  * Source: https://www.postgresql.org/docs/17/sql-declare.html.
  *
- * @visibility public
- * @example Reading the holdability of a cursor
- *     $declare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DECLARE c CURSOR WITH HOLD FOR SELECT 1');
- *     $declare->statement->hold // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Holdability::With
+ * @visibility SqlSemantics
  */
 enum Holdability: string
 {

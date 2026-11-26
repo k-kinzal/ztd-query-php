@@ -14,9 +14,9 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Explain;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Explain::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class ExplainTest extends TestCase
 {
     public function testDeriveStatementPublishesThePlanRowInsteadOfTheRowsOfTheStatement(): void
     {
-        $operation = (new Semantics())->inspect('EXPLAIN SELECT 1 AS a, 2 AS b');
+        $operation = (new Inspection())->diagnose('EXPLAIN SELECT 1 AS a, 2 AS b');
         self::assertSame([1, 'QUERY PLAN'], [count($operation->shape()->slots ?? []), $operation->field(0)->name?->value]);
     }
 
@@ -33,7 +33,7 @@ final class ExplainTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
         self::assertSame(
             ['Column b does not exist.'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect('EXPLAIN ANALYZE UPDATE t SET a = b', [$table])->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Inspection())->diagnose('EXPLAIN ANALYZE UPDATE t SET a = b', [$table])->facts->diagnostics),
         );
     }
 
@@ -41,16 +41,16 @@ final class ExplainTest extends TestCase
     {
         self::assertSame(
             ['unrecognized EXPLAIN option "fast"', 'costs requires a Boolean value'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect('EXPLAIN (fast, costs 5) SELECT 1')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Inspection())->diagnose('EXPLAIN (fast, costs 5) SELECT 1')->facts->diagnostics),
         );
     }
 
     public function testRenderWritesEachSyntax(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             ['EXPLAIN ANALYSE VERBOSE SELECT 1', 'EXPLAIN VERBOSE VALUES (1)', 'EXPLAIN (ANALYZE, FORMAT json) DELETE FROM t', 'EXPLAIN ("format" json, format text) EXECUTE p'],
-            [$semantics->inspect('explain analyse verbose select 1')->toString(), $semantics->inspect('EXPLAIN VERBOSE VALUES (1)')->toString(), $semantics->inspect('EXPLAIN (ANALYZE, FORMAT JSON) DELETE FROM t')->toString(), $semantics->inspect('EXPLAIN ("format" json, format text) EXECUTE p')->toString()],
+            [$semantics->diagnose('explain analyse verbose select 1')->toString(), $semantics->diagnose('EXPLAIN VERBOSE VALUES (1)')->toString(), $semantics->diagnose('EXPLAIN (ANALYZE, FORMAT JSON) DELETE FROM t')->toString(), $semantics->diagnose('EXPLAIN ("format" json, format text) EXECUTE p')->toString()],
         );
     }
 }

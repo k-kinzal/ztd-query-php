@@ -26,12 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferentialA
  * are the relation facts of this constraint.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-PARMS-REFERENCES.
  *
- * @visibility public
- * @example Resolving the referenced table
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $parent = $semantics->analyze('CREATE TABLE p (id int PRIMARY KEY)');
- *     $child = $semantics->analyze('CREATE TABLE c (p int REFERENCES p (id) ON DELETE CASCADE)', $parent->declarations());
- *     $child->facts->relation($child->statement->definition->elements[0]->qualifiers[0])->table->table === $parent->declarations()[0] // => true
+ * @visibility SqlSemantics
  */
 final class References implements Constraint
 {

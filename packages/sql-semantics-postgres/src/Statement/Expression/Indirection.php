@@ -35,10 +35,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-SUBSCRIPTS,
  * https://www.postgresql.org/docs/17/sql-expressions.html#FIELD-SELECTION. Status: Implemented.
  *
- * @visibility public
- * @example Selecting a field of a row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (ROW(1, 2)).f2');
- *     [$query->field(0)->name->value, $query->field(0)->type->descriptor->name()] // => ['f2', 'integer']
+ * @visibility SqlSemantics
  * @example Rejecting a field step that the dotted name would absorb
  *     $a = new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]);
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Indirection($a, [new \SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

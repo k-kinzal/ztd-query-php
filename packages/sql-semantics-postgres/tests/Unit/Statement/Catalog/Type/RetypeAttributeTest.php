@@ -14,11 +14,11 @@ final class RetypeAttributeTest extends TestCase
 {
     public function testRenderDropsSetData(): void
     {
-        self::assertSame('ALTER TYPE pair ALTER ATTRIBUTE a TYPE int8 COLLATE x CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ALTER ATTRIBUTE a SET DATA TYPE int8 COLLATE x CASCADE')->toString());
+        self::assertSame('ALTER TYPE pair ALTER ATTRIBUTE a TYPE int8 COLLATE x CASCADE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair ALTER ATTRIBUTE a SET DATA TYPE int8 COLLATE x CASCADE')->toString());
     }
 
     public function testDeriveClauseDerivesTheType(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ALTER ATTRIBUTE a TYPE varchar(10)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE pair ALTER ATTRIBUTE a TYPE varchar(10)')->facts->diagnostics);
     }
 }

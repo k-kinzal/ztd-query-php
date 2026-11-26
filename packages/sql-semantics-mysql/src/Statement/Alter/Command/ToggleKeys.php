@@ -16,9 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  * Mirrors PT_alter_table_enable_keys.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-index.
  *
- * @visibility public
- * @example Stopping index updates
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t DISABLE KEYS')->statement->commands[0]->enable // => false
+ * @visibility SqlSemantics
  */
 final class ToggleKeys implements AlterCommand
 {

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a condition name
  *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('gone')))->name->value // => 'gone'
  */

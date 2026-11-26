@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Rule: PG-ALTERDB-003. Mirrors `AlterDatabaseRefreshCollStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-alterdatabase.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the database
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d REFRESH COLLATION VERSION');
- *     $operation->statement->name->value // => 'd'
+ * @visibility SqlSemantics
  */
 final class RefreshDatabaseCollation implements Statement
 {

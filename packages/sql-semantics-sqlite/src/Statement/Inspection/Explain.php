@@ -23,13 +23,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ExplainRows;
  * Source: https://sqlite.org/lang_explain.html, https://sqlite.org/eqp.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the columns of a query plan report
- *     $explain = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('EXPLAIN QUERY PLAN SELECT 1');
- *     [count($explain->fields()), $explain->field(3)->name?->value, $explain->toString()] // => [4, 'detail', 'EXPLAIN QUERY PLAN SELECT 1']
- * @example Inspecting a definition without declaring it
- *     $explain = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('EXPLAIN CREATE TABLE t (a)');
- *     [$explain->declarations(), count($explain->fields())] // => [[], 8]
+ * @visibility SqlSemantics
  */
 final class Explain implements Statement
 {

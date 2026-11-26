@@ -8,10 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -20,6 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSo
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SourceSettings::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class SourceSettingsTest extends TestCase
 {
     public function testOptionsDerivesTheHeartbeatPeriod(): void
     {
-        $change = (new Semantics())->inspect('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 2.5');
+        $change = (new Inspection())->diagnose('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 2.5');
 
         self::assertInstanceOf(ChangeReplicationSource::class, $change->statement);
         self::assertInstanceOf(NumberLiteral::class, $change->statement->options[0]->value);
@@ -38,8 +38,8 @@ final class SourceSettingsTest extends TestCase
     {
         $this->expectExceptionMessage('NETWORK_NAMESPACE is not an option of this release.');
 
-        new Operation(
-            (new Semantics('mysql-5.7.44'))->context([]),
+        new InspectedStatement(
+            (new Inspection('mysql-5.7.44'))->context([]),
             new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::NetworkNamespace, new Text('n'))]),
         );
     }
@@ -73,6 +73,6 @@ final class SourceSettingsTest extends TestCase
 
     public function testLineFeedReportsALineFeed(): void
     {
-        self::assertCount(1, (new Semantics())->inspect("STOP REPLICA FOR CHANNEL 'a\\nb'")->facts->diagnostics);
+        self::assertCount(1, (new Inspection())->diagnose("STOP REPLICA FOR CHANNEL 'a\\nb'")->facts->diagnostics);
     }
 }

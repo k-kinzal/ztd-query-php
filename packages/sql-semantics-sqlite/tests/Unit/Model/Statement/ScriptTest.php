@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Script;
 use SqlSemantics\Platform\Sqlite\Platform;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Script::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class ScriptTest extends TestCase
 {
     public function testDeriveStatementDerivesEveryMemberAgainstTheSameContext(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a INTEGER); INSERT INTO t (a) VALUES (1)', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a INTEGER); INSERT INTO t (a) VALUES (1)', []);
 
         self::assertInstanceOf(Script::class, $operation->statement);
         self::assertCount(2, $operation->statement->statements);
@@ -33,16 +33,16 @@ final class ScriptTest extends TestCase
 
     public function testDeriveStatementCollectsTheDeclarationsOfEveryMember(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE a (x INTEGER); CREATE TABLE b (y TEXT)');
+        $operation = (new Inspection())->diagnose('CREATE TABLE a (x INTEGER); CREATE TABLE b (y TEXT)');
 
         self::assertSame(['a', 'b'], array_map(static fn ($table): string => $table->name->name->value, $operation->declarations()));
     }
 
     public function testDeriveStatementOfAnEmptyInputHasNoMembers(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
-        $operation = $semantics->inspect('');
+        $operation = $semantics->diagnose('');
 
         self::assertInstanceOf(Script::class, $operation->statement);
         self::assertSame([], $operation->statement->statements);
@@ -52,9 +52,9 @@ final class ScriptTest extends TestCase
 
     public function testRenderSeparatesTheMembersWithTerminators(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $output = new Output(Platform::shared()->codec($semantics->profile()));
-        $operation = $semantics->inspect('select 1 ; delete from t ;');
+        $operation = $semantics->diagnose('select 1 ; delete from t ;');
 
         $operation->statement->render($output);
 
@@ -64,7 +64,7 @@ final class ScriptTest extends TestCase
 
     public function testRenderIsNotReachedForAScriptOfExactlyOneStatement(): void
     {
-        $statement = (new Semantics())->inspect('SELECT 1')->statement;
+        $statement = (new Inspection())->diagnose('SELECT 1')->statement;
 
         $this->expectExceptionMessage('A script holds no statement or several; one statement is its own root.');
 
@@ -73,7 +73,7 @@ final class ScriptTest extends TestCase
 
     public function testRenderIsNotReachedForANestedScript(): void
     {
-        $script = (new Semantics())->inspect('DELETE FROM t; DELETE FROM u')->statement;
+        $script = (new Inspection())->diagnose('DELETE FROM t; DELETE FROM u')->statement;
 
         self::assertInstanceOf(Script::class, $script);
         $this->expectExceptionMessage('A script does not nest.');

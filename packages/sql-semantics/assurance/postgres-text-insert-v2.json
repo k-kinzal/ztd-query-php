@@ -1,0 +1,132 @@
+{
+  "revision": "SemanticsIR/postgres-text-insert-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "server-insert-v1.json",
+    "postgres-text-returning-v2.json",
+    "postgres-typed-columns-v2.json",
+    "postgres-text-insert-v1.json",
+    "postgres-text-insert-query-v2.json"
+  ],
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "Mutation/Insert/WriteSlot": {
+      "role": "A writable native position in the single selected INSERT relation.",
+      "structure": "A nonnegative physical slot, its immutable int4 or text kind, and the single admitted occurrence zero.",
+      "conditions": "The owning destination checks the exact native kind at its physical position and rejects repeated write positions.",
+      "meaning": "Identifies the corresponding target for each row of supplied values.",
+      "sql": "Emit the owning relation's physical field name in the checked write order."
+    },
+    "Mutation/Insert/Destination": {
+      "role": "The absolute writable relation and checked ordered native targets.",
+      "structure": "One TableSource and a detached nonempty ordered list of WriteSlot values.",
+      "conditions": "Every position exists, with its declared native kind and a distinct coordinate. A matching external declaration supplies writable, ordinary columns.",
+      "meaning": "Match each supplied cell to exactly one native target field. Omitted fields retain their declared database behavior.",
+      "sql": "Render the canonical table and ordered quoted field names."
+    },
+    "Mutation/InsertCell": {
+      "role": "One explicit supplied native value in a literal VALUES row.",
+      "structure": "A signed int4 literal, a UTF-8 native text literal or explicit SQL NULL.",
+      "conditions": "An int4 destination admits an int4 literal or NULL. A text destination admits both typed literals and NULL.",
+      "meaning": "Store the native value of an exact-kind assignment. For a text destination, convert a signed int4 literal to its canonical decimal string in the stock assignment context.",
+      "sql": "Write exact native decimal or UTF-8 text, or the SQL NULL keyword."
+    }
+  },
+  "externalInterpretation": "Use the same ordinary physical table with native int4 and text positions, distinct nullable values and default declarations for omitted fields. Use the stock PostgreSQL int4-to-text assignment conversion, verified by the absence of an overriding pg_cast entry.",
+  "observations": [
+    "Preserve each written position and value independently of physical column order.",
+    "Distinguish explicit NULL, empty text, quotes, backslashes, multiline text and non-ASCII UTF-8.",
+    "Observe the affected count, returned native result labels and kinds, multiplicity, physical row state and restoration.",
+    "An omitted text field uses its database default. An explicitly supplied NULL remains NULL.",
+    "An int4 value assigned to text yields the exact signed decimal string. SQL NULL remains NULL."
+  ],
+  "finite": {
+    "layout": [
+      "text",
+      "integer-text",
+      "text-integer",
+      "two-text"
+    ],
+    "payload": [
+      "empty",
+      "nonempty",
+      "null",
+      "int4:-2147483648",
+      "int4:-27",
+      "int4:0",
+      "int4:38",
+      "int4:2147483647"
+    ],
+    "rows": [
+      "single",
+      "repeated"
+    ],
+    "identities": 64,
+    "completeness": "Recover native target order, exact signed value or text payload class, and row arity from the observed value. Preserve all original 24 identities."
+  },
+  "exploration": {
+    "seeds": [
+      11719,
+      43273,
+      83903
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 310,
+    "allowedExclusions": [],
+    "requiredForms": "Vary target order and omissions, row count, repeated rows, nullable typed cells, exact string bytes, return labels and positions. Observe int4-to-text assignments alongside the original typed text paths."
+  },
+  "analysis": [
+    "Write one bare text value and observe the omitted text default.",
+    "Insert mixed typed columns written in the opposite physical order, with repeated rows.",
+    "Preserve qualified text literals, SQL NULL and distinct output labels.",
+    "Return both text and integer columns through a target wildcard.",
+    "Write the signed int4 minimum and zero to text positions while preserving the explicit target order."
+  ],
+  "negative": [
+    "An explicit text cell writes a native int4 position.",
+    "A supplied int4 leaf exceeds the fixed signed 32-bit range.",
+    "A write position promises a kind different from its actual declaration.",
+    "A write position lies outside the target occurrence.",
+    "A write coordinate appears twice.",
+    "A VALUES row is narrower than its destination."
+  ],
+  "faults": [
+    "Reverse the two cells of a same-kind row without changing the write layout.",
+    "Render an empty text cell as SQL NULL.",
+    "Drop the second repeated row from the emitted insert.",
+    "Replace the int4 value in a text position by zero before the database assignment."
+  ],
+  "evidence": {
+    "P01": "Measure the actual writable native coordinates and same-kind explicit scalar cells.",
+    "P02": "Check local roles, owned write positions, each row's width and native correspondence.",
+    "P03": "Retain only the absolute relation, resolved positions, typed cells and returned fields.",
+    "P04": "Compose ordered rows and fields through the checked write layout.",
+    "P05": "Audit immutable scalar operands and detached ordered lists.",
+    "P06": "Observe equivalent inserted rows, native metadata and physical effects under both releases.",
+    "Q01": "Audit each checked boundary and reject the controlled mismatches.",
+    "Q02": "Recover each finite combination and require all exploratory and analyzed positives.",
+    "Q03": "Independently map cells by position and apply external defaults to omitted fields.",
+    "Q04": "Compare real database effects and expose the selected write and rendering faults.",
+    "Q05": "Capture exact installed runtime bytes, package roles and independent observation evidence."
+  },
+  "open": [
+    "Text-valued INSERT SELECT, explicit DEFAULT cells, conflicts and other native kinds retain their own obligations."
+  ],
+  "trust": [
+    "The matching declared physical target and native default behavior",
+    "Checked ordered storage",
+    "The independent transactional native observer"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/typeconv-query.html",
+    "https://www.postgresql.org/docs/17/sql-createcast.html"
+  ],
+  "changeFromV1": "Keep all budgets and prior observations. Add 40 signed literal identities and replace the raw int4-to-text rejection by rejection of an invalid direct int4 leaf."
+}

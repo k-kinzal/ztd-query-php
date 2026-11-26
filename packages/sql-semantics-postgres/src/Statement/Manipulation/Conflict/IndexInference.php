@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * The elements and the predicate see the target table only.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html#SQL-ON-CONFLICT.
  *
- * @visibility public
- * @example Reading the inferred index columns
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO NOTHING');
- *     count($insert->statement->conflict->target->elements) // => 1
+ * @visibility SqlSemantics
  * @example Refusing an empty list of index elements
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\IndexInference([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

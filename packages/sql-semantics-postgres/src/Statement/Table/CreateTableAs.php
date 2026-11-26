@@ -28,11 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
  * (PG-QUERY-TRAILING-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtableas.html.
  *
- * @visibility public
- * @example Declaring the table of a query
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TEMP TABLE t (n) AS SELECT 1, 'x' AS s WITH NO DATA");
- *     $table = $create->declarations()[0];
- *     [$table->name->schema->value, array_map(static fn ($column) => $column->name->value . ' ' . $column->type->name(), $table->columns)] // => ['pg_temp', ['n integer', 's text']]
+ * @visibility SqlSemantics
  */
 final class CreateTableAs implements Statement
 {

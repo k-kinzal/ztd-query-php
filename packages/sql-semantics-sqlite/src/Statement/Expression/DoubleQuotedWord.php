@@ -32,12 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * resolution and a dependent type.
  * Source: https://sqlite.org/quirks.html#dblquote. Status: Implemented.
  *
- * @visibility public
- * @example Reading a double-quoted word that is no column as text
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $query = $semantics->analyze('SELECT "a", "b" FROM t', [$table]);
- *     [$query->field(0)->column() === $table->declarations()[0]->columns[0], $query->field(1)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text, 'SELECT "a", "b" FROM t']
+ * @visibility SqlSemantics
  */
 final class DoubleQuotedWord implements Scalar
 {

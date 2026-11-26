@@ -1,0 +1,164 @@
+{
+  "revision": "SemanticsIR/mysql-ansi-projection-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-ansi-projection-v2.json",
+  "rules": {
+    "Select::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$results = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectBounds())->check($results, $source, $where, !$distinct && $orderBy === [] && $limit === null);",
+        "if ($source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join) {",
+        "    foreach ($source->inputs() as $input) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$input instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$input instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\DerivedSource || $input->definition->mode === $mode, 'A derived input must use its owning SELECT lexical mode.');",
+        "    }",
+        "}",
+        "$this->columns = $results;",
+        "$this->orderBy = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($orderBy, \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\Order::class, 'ORDER BY needs an owned list of output keys.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($this->orderBy) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');",
+        "foreach ($this->orderBy as $key) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($key->position <= count($results), 'An output order position must belong to the projection.');",
+        "}"
+      ]
+    },
+    "Select::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$optimization = $this->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 ? 'materialized' : 'derived-merge=on';",
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=' . $this->mode->value . '/native/' . $optimization;"
+      ]
+    },
+    "SelectLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native, 'The projection requires the native language profile.');",
+        "$mode = match (true) {",
+        "    $profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::Empty,",
+        "    $profile->lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings('ANSI_QUOTES')) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::AnsiQuotes,",
+        "    default => throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('A complete projection requires either empty sql_mode or ANSI_QUOTES.'),",
+        "};",
+        "$statement = $operand ?? $operation->statement;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'Complete MySQL IR currently supports a single projection SELECT.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement->groupBy === null && $statement->having === null && $statement->windows === [] && $statement->qualify === null && $statement->procedure === null && $statement->locking === [] && $statement->into === null && $statement->late === null && ($statement->options === [] || $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::All] || $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::Distinct]), 'Complete MySQL IR currently supports projections with positional result selection.');",
+        "$binding = \\SqlSemantics\\Platform\\MySql\\Ir\\From\\JoinBinding::bind($operation, $statement->from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual ? null : $statement->from);",
+        "$where = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\PredicateLowering())->lower($statement->where, $binding);",
+        "$results = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ProjectionColumns())->lower($operation, $statement, $binding);",
+        "$result = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultLowering();",
+        "$order = [];",
+        "foreach ($statement->orderBy as $key) {",
+        "    $order[] = $result->order($key);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Select($results, $binding->source(), $profile->grammar, $where, $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::Distinct], $order, $result->limit($statement->limit), $mode);"
+      ]
+    },
+    "Rows/Recursive/RecursiveSeriesLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$with = $statement->with;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($with instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\With && $with->recursive && count($with->tables) === 1 && $statement->orderBy === [] && $statement->limit === null, 'A recursive series requires one unmodified recursive WITH definition.');",
+        "$definition = $with->tables[0];",
+        "$query = $definition->query;",
+        "while ($query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperation && $query->operator === \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperator::Union && $query->left instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select && $query->right instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'A recursive series requires an anchor followed by one UNION step.');",
+        "$anchor = (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->lower($operation, $query->left);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($anchor->mode === \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::Empty, 'A recursive series requires empty sql_mode.');",
+        "$start = $anchor->columns[0]->expression;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($anchor->source === null && $anchor->where === null && !$anchor->distinct && $anchor->orderBy === [] && $anchor->limit === null && count($anchor->columns) === 1 && $start instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral, 'A recursive series needs one signed literal anchor.');",
+        "[$increment, $boundary, $comparison] = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Recursive\\RecursiveStepLowering())->lower($operation, $query->right, $definition);",
+        "$body = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalDefinition())->consumer($statement);",
+        "$binding = new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Recursive\\RecursiveBinding();",
+        "$source = $binding->source($operation, $body, $definition);",
+        "$fields = $operation->facts->query($body)->fields();",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($fields !== null, 'A recursive series needs named, resolved output fields.');",
+        "$columns = [];",
+        "foreach ($body->items as $ordinal => $output) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($output instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression, 'A recursive series requires explicit output columns.');",
+        "    $binding->read($operation, $output->expression, $source);",
+        "    $name = $fields->at($ordinal)->name;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($name !== null, 'A recursive series needs named, resolved output fields.');",
+        "    $columns[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalResultColumn(0, new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier(ltrim($name->value, \" \\t\\r\\n\\v\\f\")));",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\RecursiveSeries($start, $increment, $boundary, $comparison, $query->quantifier === \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetQuantifier::All, $columns, $anchor->release);"
+      ]
+    },
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query->mode === \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::Empty, 'A query INSERT requires empty sql_mode.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target->kind->isTable(), 'An INSERT target must be a base table.');",
+        "$width = count($target->columns);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$query->source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join && $query->orderBy === [] && $query->limit === null, 'The INSERT query must be independent, unbounded and unordered.');",
+        "foreach ($query->columns as $position => $column) {",
+        "    $value = $column->expression;",
+        "    $type = $target->columnTypes[$position];",
+        "    if ($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedText || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, 'A query INSERT VARCHAR field requires a native text value or NULL.');",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'An INSERT destination requires a writable signed INT or native VARCHAR slot.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Arithmetic || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, 'Each query INSERT field requires a signed value or NULL.');",
+        "}"
+      ]
+    },
+    "Schema/Query/CreateTableAs::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query->mode === \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::Empty, 'CREATE TABLE AS requires empty sql_mode.');",
+        "$columns = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($declaredColumns, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\TableColumn::class, 'CREATE TABLE AS requires an ordered list of explicit columns.');",
+        "$layout = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\Query\\CreateAsLayout();",
+        "$layout->query($query);",
+        "$layout->declaration($query, $columns);",
+        "$this->declaredColumns = $columns;"
+      ]
+    },
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($query->mode === \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::Empty, 'CREATE VIEW requires empty sql_mode.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($policy !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql910, 'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.');",
+        "$definer?->checkRelease($query->release);",
+        "$bounds = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewQueryBounds();",
+        "$bounds->check($query, $name);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($checkOption === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::None || $query->source !== null && !$query->distinct && $algorithm !== \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::TempTable, 'A view check option requires a mergeable base-table projection.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($checkOption === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::None || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 || $bounds->hasWritableField($query), 'A MySQL view check option requires a writable base-table field on this release.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($columns) <= 4096, 'A MySQL view permits at most 4096 result columns.');",
+        "$heading = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($columns, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');",
+        "(new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCatalogHeading())->check($heading, $query);",
+        "$seen = [];",
+        "$names = new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames();",
+        "foreach ($heading as $column) {",
+        "    $key = $names->key($column->name->value);",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'The view heading cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $heading;",
+        "$this->installedAlgorithm = $algorithm === \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::Merge && ($query->source === null || $query->distinct) ? \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::Undefined : $algorithm;"
+      ]
+    }
+  }
+}

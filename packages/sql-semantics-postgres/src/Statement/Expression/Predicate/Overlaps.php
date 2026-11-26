@@ -28,9 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * period of other than two fields is reported, as the parser rejects it.
  * Source: https://www.postgresql.org/docs/17/functions-datetime.html. Status: Implemented.
  *
- * @visibility public
- * @example Testing two periods
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT (date '2024-01-01', date '2024-02-01') OVERLAPS (date '2024-01-15', interval '1 day')")->field(0)->type->descriptor->name() // => 'boolean'
+ * @visibility SqlSemantics
  */
 final class Overlaps implements Scalar
 {

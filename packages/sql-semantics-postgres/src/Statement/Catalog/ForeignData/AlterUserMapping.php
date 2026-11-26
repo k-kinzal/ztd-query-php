@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
  * Rule: PG-USER-MAPPING-002. Mirrors `AlterUserMappingStmt`.
  * Source: https://www.postgresql.org/docs/17/sql-alterusermapping.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a user mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password 'x')");
- *     $operation->toString() // => "ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password 'x')"
+ * @visibility SqlSemantics
  */
 final class AlterUserMapping implements Statement
 {

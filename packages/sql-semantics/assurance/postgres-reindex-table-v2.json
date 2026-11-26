@@ -1,0 +1,108 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-table-2",
+  "approval": "pending-human-review",
+  "revises": "postgres-reindex-table-v1.json",
+  "additionalPublicRoots": ["Schema/Index/ReindexTable"],
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings and native parameters. Local standalone application tables and materialized views include session-local tables.",
+  "scope": "REINDEX TABLE with the ordinary or requested concurrent policy and explicitly resolved owner. The statement selects the physical indexes of the selected owner by the database-defined owner relation, including its TOAST index when present.",
+  "constructors": {
+    "Schema/Index/ReindexTable": {
+      "role": "Complete rebuild request for the indexes owned by the selected local relation.",
+      "structure": "One ReindexTableTarget, the effective IndexRebuildMode, and GrammarRelease.",
+      "conditions": "Uses the closed owner reference and the declared native PostgreSQL profile. The analyzer resolves the owner and checks the compatible relation kind and the nonpartitioned boundary. Ordered explicit concurrency options and the keyword determine the mode.",
+      "meaning": "Rebuild the selected relation's eligible indexes and its TOAST index; preserve the heap, logical index properties, rows, and unrelated owners. A concurrency request keeps its transaction restriction for temporary tables.",
+      "sql": "Emit REINDEX TABLE, optional CONCURRENTLY, and exactly one quoted schema-qualified owner. Standard mode emits no option or keyword.",
+      "externalInterpretation": "Use the same local standalone relation and its native index set, session/profile, and transaction state. A direct target is interpreted against an external owner of its declared kind at the named coordinate.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Schema/Index/ReindexTableTarget": {
+      "role": "The absolute local owner referenced by a relation-level index rebuild.",
+      "structure": "One decoded schema identifier, a decoded owner identifier, and one ReindexTableKind.",
+      "conditions": "Application schema or current-session pg_temp. A materialized-view target requires a persistent schema. Analyzed construction must resolve the exact local nonpartitioned owner; non-index-bearing view and foreign-table kinds, stock system scopes, different databases, and numbered session namespaces cannot stand for this role.",
+      "meaning": "Identify the declared owner and relation kind. Its current index set is part of the statement effect defined by PostgreSQL, while the owner coordinate and the selection of the index set are fixed.",
+      "sql": "Independently quote the schema alias and owner. Use pg_temp for the same session's temporary schema.",
+      "externalInterpretation": "The same indexed relation kind at the declared absolute local coordinate. The session alias denotes that session's temporary namespace.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Schema/Index/ReindexTableKind": {
+      "role": "Closed discriminant for a base table or a materialized view with a local index set.",
+      "structure": "Exactly BaseTable and MaterializedView.",
+      "conditions": "The discriminant is constrained by its target's schema and by the declared owner when analyzed.",
+      "meaning": "Retain the owner role used by relation and index-effect consumers.",
+      "sql": "PostgreSQL expresses both discriminants with the native TABLE selector.",
+      "externalInterpretation": "PostgreSQL relkind r and m in the named standalone fixture.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Schema/Index/IndexRebuildMode"],
+  "rules": [
+    "Use the exact already-resolved relation: another relation of the same spelling in a shadowed schema is not rebuilt.",
+    "Successful standard rebuilds change each eligible index's storage file while keeping its OID. A successful concurrent persistent rebuild can replace both. Native temporary relations use the standard physical transition even on a concurrent request.",
+    "A concurrent request in an active transaction fails with SQLSTATE 25001 before index or notice processing, including for an empty index set. Rolling back successful standard rebuilding restores each previous physical index identity.",
+    "Keep heap identity, rows, data types, index names, key slots, uniqueness, validity and unrelated owners. A TOAST-only owner still has one index to rebuild. An empty eligible index set succeeds and emits the exact mode-specific notice."
+  ],
+  "observations": [
+    "Closed owner kind and schema/name coordinate, grammar profile, and effective concurrency policy in the actual PHP value.",
+    "Native SQLSTATE, command tag, ordered notices and transaction state with before, during and settled physical phases.",
+    "Complete ordered observed user and TOAST index identities and metadata, heap identity and typed rows of the target and independent decoy."
+  ],
+  "finite": {
+    "owner": ["persistent-table", "temporary-table", "materialized-view"],
+    "concurrently": [false, true],
+    "active": [false, true],
+    "layout": ["empty-index-set", "one-index", "two-indexes", "toast-only", "toast-and-index"],
+    "spelling": ["qualified", "local"],
+    "identity": "All 120 lexicographic coordinates per release, with one direct constructor route and one original SQL analyzed route. Track the original spelling and the exact native transition of each visible and TOAST index."
+  },
+  "exploration": {
+    "seeds": [439, 1433, 92107],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": [],
+    "domain": "Vary the owner kind and names, local versus schema-qualified lookup, keyword and ordered Boolean concurrency forms, transaction state, one or two indexes, TOAST attachment and typed rows, and the shadowed owner. Seed-only coverage requires each owner kind, requested mode, all physical layouts, both transaction states and both runtime outcomes."
+  },
+  "negative": [
+    "An unknown owner cannot publish a complete rebuild",
+    "The catalog component of a foreign database name cannot be discarded",
+    "An ordinary view is not an eligible owner",
+    "A partitioned table does not inhabit the standalone owner profile",
+    "A numbered temporary namespace cannot stand for the current session",
+    "Qualified temporary materialized views cannot be directly constructed",
+    "Stock system namespaces cannot be directly constructed in this role",
+    "Explicit tablespace requires a different checked operation"
+  ],
+  "faults": [
+    "Emit the decoy namespace instead of the resolved owner",
+    "Lose the concurrent request and its transaction precondition",
+    "Reduce an owner-wide rebuild to the first visible index",
+    "Accept a TOAST-only owner as a no-op when its TOAST index should have been rebuilt"
+  ],
+  "sources": ["https://www.postgresql.org/docs/16/sql-reindex.html", "https://www.postgresql.org/docs/17/sql-reindex.html"],
+  "trust": [
+    "Closed immutable types and exact native construction-path and renderer audits, consistent supplied declarations, and native phase/metadata capture.",
+    "The independent transition rules check all named physical indexes and preserved relations in the fixed fixture. No unrestricted SQL theorem is claimed."
+  ],
+  "open": [
+    "Partitioned hierarchy, invalid or exclusion indexes, stock system relations and non-Boolean flags including tablespace and verbosity stay in the required whole-grammar inventory."
+  ],
+  "calibration": {
+    "driver": "6a9afb7bc4114f1ce5833da157981cfe39922ac2533ee6a097253bb9fc3074aa",
+    "queryPack": "0df4149a795cec75fb961581d537b517abc1e9244dccfc8f091a542c6ef6fc82",
+    "referenceComparison": "67e85c51b2773c881a8ef245bfc5fb2cecadd38661311a2102fe4e6df03ffe8d",
+    "nativeTransitions": "e9d9f650c873338c1fa37c1a3e77e5deeccdbb63384fdff1396300e9d3ff92f7",
+    "successfulStatements": 45,
+    "emptySetNotices": 9,
+    "indexFileRebuilds": 42,
+    "indexOidAndFileReplacements": 12,
+    "prohibitedInTransaction": 15,
+    "16.6": {
+      "stdout": "72ff38e3f308f488cee86cf70553ec2115089c2c96922cca5fe0c96918c0d66e",
+      "stderr": "e36325c9d7b3bc7afefcdbeefe42113fc09de522f78cacb0a00e9ed481cf7cfb"
+    },
+    "17.2": {
+      "stdout": "7e8ce5fda4cc676fa865a70c3a47f7e80bc34f50f2ed0724b314fa25a5892ed9",
+      "stderr": "3e6dfb6081db50835f80129ce95e92a196e7cc9f7efdd841ce506e21458bea90"
+    }
+  }
+}

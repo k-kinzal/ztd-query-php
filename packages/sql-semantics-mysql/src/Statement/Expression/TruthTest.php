@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_is.
  * Status: Implemented.
  *
- * @visibility public
- * @example Testing a comparison
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = 1 IS NOT TRUE');
- *     [$query->statement->where->negated, $query->statement->where->truth->value] // => [true, 'TRUE']
+ * @visibility SqlSemantics
  */
 final class TruthTest implements Scalar
 {

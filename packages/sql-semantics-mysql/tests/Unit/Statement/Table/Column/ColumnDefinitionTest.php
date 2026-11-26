@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ColumnDefinition::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class ColumnDefinitionTest extends TestCase
 {
     public function testDeriveElementDerivesTheSpecificationInTheTable(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, b INT AS (a * 2))');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT, b INT AS (a * 2))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -34,6 +34,6 @@ final class ColumnDefinitionTest extends TestCase
 
     public function testRenderWritesTheQualifiedNameAndTheSpecification(): void
     {
-        self::assertSame('CREATE TABLE t (t.a INT NOT NULL)', (new Semantics('5.7.44'))->analyze('CREATE TABLE t (t.a INT NOT NULL)')->toString());
+        self::assertSame('CREATE TABLE t (t.a INT NOT NULL)', (new Inspection('5.7.44'))->inspect('CREATE TABLE t (t.a INT NOT NULL)')->toString());
     }
 }

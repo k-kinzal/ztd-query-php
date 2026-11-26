@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RelationFact::class)]
 #[Medium]
@@ -19,9 +19,9 @@ final class RelationFactTest extends TestCase
 {
     public function testShapeAndTableResolutionOfANamedInput(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
-        $query = $semantics->analyze('SELECT a FROM t', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+        $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
         $fact = $query->facts->relation($query->singleNamedInput());
 
@@ -33,7 +33,7 @@ final class RelationFactTest extends TestCase
 
     public function testTableIsNullForAnOccurrenceWithoutAName(): void
     {
-        $query = (new Semantics())->analyze('SELECT x FROM (SELECT 1 AS x)');
+        $query = (new Inspection())->inspect('SELECT x FROM (SELECT 1 AS x)');
         $input = $query->inputRelation();
 
         self::assertInstanceOf(DerivedQuery::class, $input);

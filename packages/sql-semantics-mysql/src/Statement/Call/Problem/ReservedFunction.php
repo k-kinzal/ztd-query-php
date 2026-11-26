@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_no_access_to_native_fct.
  *
- * @visibility public
- * @example Reading the problem of a reserved function
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT internal_table_rows(1, 2, 3, 4, 5, 6, 7, 8)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Access to native function 'internal_table_rows' is rejected
+ * @visibility SqlSemantics
  */
 final class ReservedFunction implements Diagnostic
 {

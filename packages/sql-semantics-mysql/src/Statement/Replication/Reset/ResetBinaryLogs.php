@@ -29,9 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * https://dev.mysql.com/doc/refman/8.0/en/reset-master.html,
  * https://dev.mysql.com/doc/relnotes/mysql/8.2/en/news-8-2-0.html.
  *
- * @visibility public
- * @example Reading RESET MASTER as its synonym
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.3.0'))->analyze('reset master to 5')->toString() // => 'RESET BINARY LOGS AND GTIDS TO 5'
+ * @visibility SqlSemantics
  */
 final class ResetBinaryLogs implements ResetTarget
 {

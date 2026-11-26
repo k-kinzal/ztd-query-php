@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * note. It is not a diagnostic.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html.
  *
- * @visibility public
- * @example Resolving an absent table that IF EXISTS allows
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP TABLE IF EXISTS t', []);
- *     $drop->facts->relation($drop->statement->tables[0])->table instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable // => true
+ * @visibility SqlSemantics
  */
 final class AbsentTable implements TableResolution
 {

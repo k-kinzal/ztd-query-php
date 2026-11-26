@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Window;
  * not support FROM LAST.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-descriptions.html#function_nth-value.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge::Last->value // => 'FROM LAST'
  */

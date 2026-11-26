@@ -27,13 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  * table, so it is kept.
  * Source: https://www.postgresql.org/docs/17/sql-createpublication.html.
  *
- * @visibility public
- * @example Resolving a published table and its row filter
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $profile = new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
- *     $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4)]);
- *     $operation = $semantics->analyze('CREATE PUBLICATION p FOR TABLE t (a) WHERE (a > 0)', [$t]);
- *     [$operation->facts->relation($operation->statement->objects[0])->table->table === $t, $operation->facts->diagnostics] // => [true, []]
+ * @visibility SqlSemantics
  */
 final class PublicationTable implements PublicationMember, Relation
 {

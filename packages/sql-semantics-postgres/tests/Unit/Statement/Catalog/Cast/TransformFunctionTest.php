@@ -14,11 +14,11 @@ final class TransformFunctionTest extends TestCase
 {
     public function testRenderWritesTheDirection(): void
     {
-        self::assertSame('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f (internal))', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f(internal))')->toString());
+        self::assertSame('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f (internal))', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f(internal))')->toString());
     }
 
     public function testDeriveClauseDerivesTheSignature(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION f(numeric(4, 2)))')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION f(numeric(4, 2)))')->facts->diagnostics);
     }
 }

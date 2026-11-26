@@ -18,10 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * with old index syntax and rejects them when the statement is prepared.
  * Source: https://sqlite.org/syntax/indexed-column.html.
  *
- * @visibility public
- * @example Reading the column names of a common table expression
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('WITH c(x, y) AS (SELECT 1, 2) SELECT x FROM c');
- *     $query->statement->with->tables[0]->columns[1]->name->value // => 'y'
+ * @visibility SqlSemantics
  */
 final class ListedColumn implements Node
 {

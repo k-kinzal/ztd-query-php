@@ -1,0 +1,65 @@
+{
+  "revision": "SemanticsIR/mysql-create-primary-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native utf8mb4, empty SQL mode, lower_case_table_names=0, ordinary InnoDB and the pinned fixture's storage settings.",
+  "extends": ["mysql-create-signed-v2.json", "mysql-create-varchar-v1.json"],
+  "constructors": {
+    "PrimaryKey": {
+      "type": "Schema/PrimaryKey",
+      "role": "One ordinary full-column InnoDB primary index of the owning table.",
+      "structure": "An owned ordered list of 1 to 16 nonrepeating checked key columns.",
+      "conditions": "The owner must supply existing required signed columns with the native effective direction supported by the release.",
+      "meaning": "Constrain row identity to this ordered tuple of full signed values and expose the canonical native index PRIMARY.",
+      "sql": "Emit one PRIMARY KEY clause with the resolved column names and explicit descending directions."
+    },
+    "PrimaryKeyColumn": {
+      "type": "Schema/PrimaryKeyColumn",
+      "role": "A positioned reference to one declared primary column.",
+      "structure": "The zero-based column slot and its effective descending flag.",
+      "conditions": "The slot is nonnegative and within the declared column bounds. The completed table checks its existence and role.",
+      "meaning": "Use the exact resolved signed column at this key position.",
+      "sql": "Quote the owning field name and emit DESC where it affects the native index."
+    }
+  },
+  "existingRoles": ["Schema/CreateTable", "Schema/TableColumn", "Schema/IntegerStorage", "Schema/CharacterStorage"],
+  "scope": "Ordinary single and composite signed primary keys specified inline or at table level. Include resolved ascents and descents, names spelled with different ASCII case, ignored native PRIMARY aliases, and signed and VARCHAR nonkey fields within the checked declaration model.",
+  "conditions": "Require a single nonempty key with at most 16 distinct signed NOT NULL fields. Resolve terms against all columns before publishing. In the 5.6 and 5.7 profiles DESC in analyzed syntax resolves to ascending, and a direct descending key cannot be published. Reject nullability rules that the selected release does not admit.",
+  "releaseRules": {
+    "mysql-5.6.51": "A table-level key requires the field and supplies explicit zero as its effective default when the field was implicitly or explicitly nullable and had no default or an explicit NULL default. A preceding explicit NOT NULL keeps an omitted default omitted and rejects DEFAULT NULL. An inline key requires its field, preserves omitted defaults and rejects DEFAULT NULL, including with explicit NULL.",
+    "mysql-5.7.44+": "A key makes an unspecified field nullability required and preserves an omitted default. Explicit NULL or an explicit DEFAULT NULL is rejected. Descending order is effective from MySQL 8.0."
+  },
+  "observations": ["Ordered native primary-index positions, column names, uniqueness flag, named PRIMARY, native BTREE, direction and absence of a prefix", "Effective catalog column nullability and defaults, typed stored default values, creation and insertion diagnostics", "Duplicate-key rejection, exact occupied-target behavior, durable rows and the transaction marker"],
+  "finite": {
+    "termOrders": [[0], [1], [0, 1], [1, 0], [2, 0], [2, 1, 0], [3, 0, 2], [0, 1, 2, 3]],
+    "directions": {"legacy": ["ascending"], "current": ["ascending", "alternating-descending"]},
+    "defaults": ["required-absent", "literal"],
+    "ifNotExists": [false, true],
+    "occupied": [false, true],
+    "nonKey": ["signed", "varchar"],
+    "identities": {"legacy": 128, "current": 256},
+    "completeness": "Recover the ordered resolved slot vector and direction from the observed IR, along with defaults, existence policy and nonkey storage. Use the externally measured occupied fixture. Require each expected distinct vector exactly once."
+  },
+  "analysis": ["Inline primary with omitted default", "Named table key by ASCII case-insensitive column reference", "Table key with implicit nullability", "Table key over explicit NOT NULL with no default", "Table key with explicit NULL and no default on 5.6", "Table key with explicit DEFAULT NULL on 5.6", "Descending composite table key", "Ignored name of a primary index", "Maximum 16 signed key columns"],
+  "exploration": {"seeds": [3907, 17431, 42139], "casesPerSeed": 24, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Vary field storage width, operand selection, order, length, direction when supported, explicit defaults, column kind and existence policy."},
+  "negative": ["Empty key", "Seventeen key parts", "Negative term position", "Repeated term position", "Absent owning field", "Nullable owning field", "VARCHAR in the signed primary role", "Two primary declarations", "A key using a prefix"],
+  "negativeByRelease": {"mysql-5.6.51": ["Direct legacy descending index", "Inline primary with an explicit NULL default"], "mysql-5.7.44": ["Direct legacy descending index", "An explicit NULL primary column"], "default": ["An explicit NULL primary column"]},
+  "faults": ["Drop the primary index", "Swap the first two key positions", "Use a different required signed column", "Replace the effective key default"],
+  "evidence": {
+    "P01": "Expose field identity by owning position and the effective key direction and column defaults.",
+    "P02": "Enforce nonrepeating terms, role, release and owner constraints across construction paths.",
+    "P03": "Only key settings and immutable resolved field positions survive lowering.",
+    "P04": "The key effect follows the ordered parts and owning definition.",
+    "P05": "Own the exact nonempty term list and close all its retained fields and references.",
+    "P06": "Compare rendering against the native index catalog, exact defaults and constraint effects.",
+    "Q01": "Reject invalid local slot and whole-key roles before publishing a value.",
+    "Q02": "Exhaust the finite family with both construction paths and require all registered release profiles.",
+    "Q03": "Verify key layout, collation-independent signed equality and composition with nonkey native fields.",
+    "Q04": "Compare resolved output SQL and original analysis inputs against native effects and a separate finite interpretation.",
+    "Q05": "Trace source and staged distribution digests, constructor shapes and independent native receipts."
+  },
+  "open": ["Character or prefix primary fields", "Functional parts", "Explicit index options and additional constraint kinds", "AUTO_INCREMENT and additional engines or storage profiles"],
+  "trust": ["The pinned InnoDB fixture", "Exact ASCII field name comparison", "Effective nullability, default and direction rules of each registered release", "PDO native diagnostics and complete measured catalog and transaction effects"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/create-table.html", "https://dev.mysql.com/doc/refman/8.4/en/innodb-limits.html"]
+}

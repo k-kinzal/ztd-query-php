@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\TableChange;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConflictingTables;
@@ -23,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
  * name of a rename denotes, in this order: a table an earlier rename moved
  * to that name; nothing, when an earlier rename moved the table of that name
  * away (MissingTable); otherwise the table the context resolves
- * (MYSQL-CHANGE-TARGET-001). The new name of a rename already exists when a
+ * in the persistent namespace (MYSQL-CHANGE-TARGET-001). The new name of a rename already exists when a
  * moved table has it, or when the context declares a table of that name
  * (DeclaredTable or ConflictingTables) that no earlier rename moved away;
  * that is the diagnostic TableExists. Names are compared as by
@@ -56,7 +57,7 @@ final class Renamings
                 }
             }
             if ($fact === null) {
-                $fact = $this->vacated($vacated, $renaming->from, $derivation) ? new RelationFact(new RowShape([]), new MissingTable($renaming->from)) : $targets->target($derivation, $renaming->from);
+                $fact = $this->vacated($vacated, $renaming->from, $derivation) ? new RelationFact(new RowShape([]), new MissingTable($renaming->from)) : $targets->target($derivation, $renaming->from, TableNamespace::PersistentPreferred);
             }
             $derivation->target($renaming, $fact);
             if ($this->exists($moved, $vacated, $renaming->to, $derivation)) {
@@ -99,8 +100,9 @@ final class Renamings
         if ($this->vacated($vacated, $name, $derivation)) {
             return false;
         }
-        $resolution = $derivation->table($name, $derivation->environment());
+        $resolution = $derivation->table($name, $derivation->environment(), TableNamespace::PersistentPreferred);
 
-        return $resolution instanceof DeclaredTable || $resolution instanceof ConflictingTables;
+        return ($resolution instanceof DeclaredTable && !$resolution->table->temporary)
+            || ($resolution instanceof ConflictingTables && !$resolution->candidates[0]->temporary);
     }
 }

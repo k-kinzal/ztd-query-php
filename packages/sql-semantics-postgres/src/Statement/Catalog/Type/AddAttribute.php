@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
  * Mirrors the `AlterTableCmd` AT_AddColumn of a composite type.
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html.
  *
- * @visibility public
- * @example Reading the added attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c int8 CASCADE');
- *     $operation->statement->changes[0]->attribute->name->value // => 'c'
+ * @visibility SqlSemantics
  */
 final class AddAttribute implements AttributeChange
 {

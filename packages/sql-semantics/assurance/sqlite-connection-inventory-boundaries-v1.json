@@ -1,0 +1,23 @@
+{
+  "revision": "SemanticsIR/sqlite-connection-inventory-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Verify the closed inventory value and native operation output with the exact quoted database scope.",
+  "rules": {
+    "Maintenance/Inventory/InventoryPragma::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Inventory/InventoryPragma::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Inventory/InventoryPragma::toString": {
+      "common": [
+        "$qualifier = $this->schema === null ? '' : $this->schema->quoted() . '.';",
+        "return 'PRAGMA ' . $qualifier . $this->kind->value;"
+      ]
+    }
+  }
+}

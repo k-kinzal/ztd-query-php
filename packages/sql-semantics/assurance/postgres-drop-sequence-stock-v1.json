@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/postgres-drop-sequence-stock-1",
+  "approval": "pending-human-review",
+  "scope": "The full ordered native pg_catalog and information_schema pg_class name-and-kind census from both pinned image builds.",
+  "order": "Namespace and relation name ascending in C collation. Encode as UTF-8 compact JSON for SHA-256.",
+  "php": {
+    "StockIndexNames.php": "c077403df9c7e92165509f2f29e75c6c69de41c8950f8eee5f12033538e6bea2",
+    "InformationSchemaNames.php": "af10d11c7117742aa125b3d6d4906fa1bfa7ed508b1c2285c9f4f91c55bbb317"
+  },
+  "releases": {
+    "16.6": {
+      "count": 333,
+      "sha256": "bf21d3f2f9fe26fa78dc5f33a080b85ffee6171fd334224ce70ac38d9b049c68",
+      "builds": {
+        "amd64": {
+          "version": "PostgreSQL 16.6 (Debian 16.6-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+          "rawSha256": "be5004bebf101c128787ce3db9f872c4d2f6c35653f4ab6d81fba114195aea4f"
+        },
+        "arm64": {
+          "version": "PostgreSQL 16.6 (Debian 16.6-1.pgdg120+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+          "rawSha256": "fd0e7aba395dfdc12fda24cfdad0043e89d668a9897f0132f6e01bb7240152ed"
+        }
+      },
+      "checked": {
+        "match": 333,
+        "catalog": 264,
+        "information": 69
+      }
+    },
+    "17.2": {
+      "count": 335,
+      "sha256": "24f45b10b1d78ba344f5c0191b8df8b78077324ba9eb0369e9d5fb4c31345400",
+      "builds": {
+        "amd64": {
+          "version": "PostgreSQL 17.2 (Debian 17.2-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+          "rawSha256": "bb95e8b807b5019fdbd3114c2ca8d3f2a4cdaf2fd39eaef6d39eb43f2bf37503"
+        },
+        "arm64": {
+          "version": "PostgreSQL 17.2 (Debian 17.2-1.pgdg120+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+          "rawSha256": "c3db09423f25b4211e1b7aa24848a02004f24bd50dce11072cb6ccb78ce513e1"
+        }
+      },
+      "checked": {
+        "match": 335,
+        "catalog": 266,
+        "information": 69
+      }
+    }
+  }
+}

@@ -14,8 +14,8 @@ final class TruncateTableTest extends TestCase
 {
     public function testDeriveStatementResolvesEachTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('TRUNCATE t, u', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('TRUNCATE t, u', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\TruncateTable::class, $n1);
         $n2 = $statement->facts->relation($n1->tables[1])->table;
@@ -25,15 +25,15 @@ final class TruncateTableTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('TRUNCATE TABLE ONLY t, s.u CONTINUE IDENTITY RESTRICT', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('TRUNCATE TABLE ONLY t, s.u CONTINUE IDENTITY RESTRICT', []);
         self::assertSame('TRUNCATE ONLY t, s.u CONTINUE IDENTITY RESTRICT', $statement->toString());
     }
 
     public function testDeriveStatementReportsANonTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a'), $semantics->inspect('CREATE FOREIGN TABLE f (a int) SERVER x')];
-        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('TRUNCATE v, f', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a'), $semantics->diagnose('CREATE FOREIGN TABLE f (a int) SERVER x')];
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('TRUNCATE v, f', $context)->facts->diagnostics));
     }
 }

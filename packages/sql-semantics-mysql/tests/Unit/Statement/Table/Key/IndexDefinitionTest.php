@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Table\Key;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(IndexDefinition::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class IndexDefinitionTest extends TestCase
 {
     public function testDeriveElementDerivesTheKeyParts(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, UNIQUE KEY u USING HASH ((a * 2)) COMMENT \'x\')');
+        $create = (new Inspection())->inspect('CREATE TABLE t (a INT, UNIQUE KEY u USING HASH ((a * 2)) COMMENT \'x\')');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $index = $statement->elements[1];
@@ -33,6 +33,6 @@ final class IndexDefinitionTest extends TestCase
 
     public function testRenderWritesKindNameAlgorithmPartsAndOptions(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)', (new Semantics())->analyze('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)')->toString());
+        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)', (new Inspection())->inspect('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)')->toString());
     }
 }

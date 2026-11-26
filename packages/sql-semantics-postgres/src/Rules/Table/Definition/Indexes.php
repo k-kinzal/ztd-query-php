@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Conditions;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
@@ -44,7 +45,8 @@ final class Indexes
         $fact = $derivation->target($index, $targets->resolve($derivation, $name));
         $kinds = new RelationKinds();
         $kinds->require($derivation, $kinds->of($fact), $name->name, [RelationKind::BaseTable, RelationKind::MaterializedView], KindRule::IndexRelation);
-        $scope = $targets->scope($derivation, $index, $name, $fact->shape, $targets->implicit($fact));
+        $owner = $fact->table instanceof DeclaredTable ? $fact->table->table->name : $name;
+        $scope = $targets->scope($derivation, $index, $owner, $fact->shape, $targets->implicit($fact));
         foreach ([...$index->elements, ...$index->included] as $element) {
             $element->deriveClause($derivation, $scope);
         }

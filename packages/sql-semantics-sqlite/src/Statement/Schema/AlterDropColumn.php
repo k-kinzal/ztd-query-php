@@ -31,10 +31,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * Source: https://sqlite.org/lang_altertable.html#alter_table_drop_column.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a column removal
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t DROP COLUMN b');
- *     [$alter->statement->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t DROP b']
+ * @visibility SqlSemantics
  */
 final class AlterDropColumn implements Statement
 {

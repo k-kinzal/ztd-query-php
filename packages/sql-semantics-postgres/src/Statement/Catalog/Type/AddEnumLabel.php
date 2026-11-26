@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * than 63 bytes is a diagnostic.
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html. Status: Implemented.
  *
- * @visibility public
- * @example Adding a label before another
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER TYPE mood ADD VALUE IF NOT EXISTS 'calm' BEFORE 'happy'");
- *     [$operation->statement->label->value, $operation->statement->position?->after] // => ['calm', false]
+ * @visibility SqlSemantics
  */
 final class AddEnumLabel implements Statement
 {

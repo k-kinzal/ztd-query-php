@@ -14,10 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * An assignment of one value to one column of the written table.
  *
- * @visibility public
- * @example Reading an assignment
- *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('UPDATE t SET a = 1');
- *     [$update->statement->assignments[0]->column->value, $update->statement->assignments[0]->value->digits] // => ['a', '1']
+ * @visibility SqlSemantics
  */
 final class Assignment implements Node
 {

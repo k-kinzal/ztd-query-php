@@ -11,11 +11,11 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Spelled;
 use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Canonical::class)]
 #[Medium]
@@ -31,7 +31,7 @@ final class CanonicalTest extends TestCase
 
     public function testLayoutKeepsTheLayoutsNestedInTheNode(): void
     {
-        $query = (new Semantics())->analyze('SELECT (SELECT 1+1)');
+        $query = (new Inspection())->inspect('SELECT (SELECT 1+1)');
         self::assertInstanceOf(Select::class, $query->statement);
         $column = $query->statement->columns[0];
         self::assertInstanceOf(ResultColumn::class, $column);

@@ -31,10 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a temporal literal
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
- *     [$query->statement->where->right->form, $query->statement->where->right->text, $query->statement->where->right->type()->precision] // => [\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02 03:04:05.25', '2']
+ * @visibility SqlSemantics
  */
 final class TemporalLiteral implements Scalar
 {

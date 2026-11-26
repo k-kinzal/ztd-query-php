@@ -14,12 +14,12 @@ final class CreateLanguageTest extends TestCase
 {
     public function testRenderDropsProcedural(): void
     {
-        self::assertSame('CREATE OR REPLACE TRUSTED LANGUAGE l HANDLER h INLINE i VALIDATOR v.w', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE TRUSTED PROCEDURAL LANGUAGE l HANDLER h INLINE i VALIDATOR v.w')->toString());
+        self::assertSame('CREATE OR REPLACE TRUSTED LANGUAGE l HANDLER h INLINE i VALIDATOR v.w', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE OR REPLACE TRUSTED PROCEDURAL LANGUAGE l HANDLER h INLINE i VALIDATOR v.w')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE LANGUAGE l HANDLER h NO VALIDATOR')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE LANGUAGE l HANDLER h NO VALIDATOR')->facts->diagnostics);
     }
 
     public function testRejectsAHandlerClauseAsValidator(): void

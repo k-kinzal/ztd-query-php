@@ -22,10 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignatur
  * the server and not kept.
  * Source: https://www.postgresql.org/docs/17/sql-alterfunction.html.
  *
- * @visibility public
- * @example Reading the altered routine
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER FUNCTION f(int4) IMMUTABLE');
- *     [$operation->statement->kind->value, $operation->statement->signature->name->last()->value] // => ['FUNCTION', 'f']
+ * @visibility SqlSemantics
  */
 final class AlterRoutine implements Statement
 {

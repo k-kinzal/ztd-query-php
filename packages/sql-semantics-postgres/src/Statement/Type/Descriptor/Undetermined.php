@@ -21,11 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  * keeps the inputs.
  * Source: https://www.postgresql.org/docs/17/sql-createtableas.html.
  *
- * @visibility public
- * @example Reading the declared type of a column computed by an undeclared function
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $column = $semantics->analyze('CREATE TABLE t AS SELECT f(1) AS a', [])->declarations()[0]->columns[0];
- *     [$column->name->value, $column->type->name()] // => ['a', 'the type settled by the signature of routine f']
+ * @visibility SqlSemantics
  */
 final class Undetermined implements TypeDescriptor
 {

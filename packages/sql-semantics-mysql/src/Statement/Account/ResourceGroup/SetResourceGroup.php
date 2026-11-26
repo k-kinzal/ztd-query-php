@@ -22,9 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * (MYSQL-ACCOUNT-NUMBER-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-resource-group.html. Status: Implemented.
  *
- * @visibility public
- * @example Assigning two threads
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('set resource group batch for 14 15')->toString() // => 'SET RESOURCE GROUP batch FOR 14, 15'
+ * @visibility SqlSemantics
  */
 final class SetResourceGroup implements Statement
 {

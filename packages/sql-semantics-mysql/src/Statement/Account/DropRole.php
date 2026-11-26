@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * Mirrors PT_drop_role. Rule: MYSQL-DROP-ROLE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-role.html. Status: Implemented.
  *
- * @visibility public
- * @example Dropping a role
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('drop role if exists reader')->toString() // => 'DROP ROLE IF EXISTS reader'
+ * @visibility SqlSemantics
  */
 final class DropRole implements Statement
 {

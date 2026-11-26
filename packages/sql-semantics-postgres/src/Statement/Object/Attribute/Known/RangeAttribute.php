@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * an error.
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, `DefineRange` in `src/backend/commands/typecmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\RangeAttribute::from('multirange_type_name')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::CreatedType
  */

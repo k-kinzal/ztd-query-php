@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * warning and is ignored.
  * Source: https://www.postgresql.org/docs/17/sql-createtype.html, `DefineType` in `src/backend/commands/typecmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\BaseTypeAttribute::from('element')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Type
  */

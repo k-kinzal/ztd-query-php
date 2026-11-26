@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  * Mirrors PostgreSQL's `ObjectWithArgs` for aggregates.
  * Source: https://www.postgresql.org/docs/17/sql-dropaggregate.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the aggregate name
  *     $signature = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateSignature(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('total')]), new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments([]));
  *     [$signature->name->last()->value, $signature->arguments->star()] // => ['total', true]

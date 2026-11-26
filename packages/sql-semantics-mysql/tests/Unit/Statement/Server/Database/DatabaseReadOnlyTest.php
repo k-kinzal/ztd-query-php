@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Server\Database;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DatabaseReadOnly::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class DatabaseReadOnlyTest extends TestCase
 {
     public function testRenderWritesTheValue(): void
     {
-        self::assertSame('ALTER DATABASE d READ ONLY 0', (new Semantics())->analyze('alter database d read only 0')->toString());
+        self::assertSame('ALTER DATABASE d READ ONLY 0', (new Inspection())->inspect('alter database d read only 0')->toString());
     }
 
     public function testReadOnlyTellsWhetherTheNumberIsNotZero(): void

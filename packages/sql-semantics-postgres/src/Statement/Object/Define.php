@@ -35,10 +35,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArgume
  * https://www.postgresql.org/docs/17/sql-createtype.html, https://www.postgresql.org/docs/17/sql-createtsdictionary.html,
  * https://www.postgresql.org/docs/17/sql-createcollation.html.
  *
- * @visibility public
- * @example Reading an operator definition
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
- *     [$operation->statement->kind->value, count($operation->statement->definition ?? [])] // => ['OPERATOR', 3]
+ * @visibility SqlSemantics
  */
 final class Define implements Statement
 {

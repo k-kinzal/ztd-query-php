@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * Source: https://www.postgresql.org/docs/17/sql-alteropfamily.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the removed member
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('int4')])));
  *     $removal = new \SqlSemantics\Platform\PostgreSql\Statement\Operator\MemberRemoval(\SqlSemantics\Platform\PostgreSql\Statement\Operator\MemberKind::Operator, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'), [$type, $type]);

@@ -14,30 +14,30 @@ final class DatabaseOptionTest extends TestCase
 {
     public function testOptionOfAnIdentifier(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d is_template = true')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d is_template = true')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\CreateDatabase::class, $statement);
         self::assertSame('is_template', $statement->options[0]->option());
     }
 
     public function testOptionOfAKeywordSpelling(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d CONNECTION LIMIT 3')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d CONNECTION LIMIT 3')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\CreateDatabase::class, $statement);
         self::assertSame('connection_limit', $statement->options[0]->option());
     }
 
     public function testRenderKeepsTheKeywordSpelling(): void
     {
-        self::assertSame('CREATE DATABASE d WITH CONNECTION LIMIT = - 1 LOCATION = \'x\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d CONNECTION LIMIT -1 LOCATION \'x\'')->toString());
+        self::assertSame('CREATE DATABASE d WITH CONNECTION LIMIT = - 1 LOCATION = \'x\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d CONNECTION LIMIT -1 LOCATION \'x\'')->toString());
     }
 
     public function testDeriveClauseDerivesTheValue(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d WITH strategy = wal_log')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d WITH strategy = wal_log')->facts->diagnostics);
     }
 
     public function testRenderKeepsAnIdentifierSpelledLikeAKeywordQuoted(): void
     {
-        self::assertSame('CREATE DATABASE d WITH "owner" = x "template" = y OWNER = z', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d "owner" x "template" = y OWNER z')->toString());
+        self::assertSame('CREATE DATABASE d WITH "owner" = x "template" = y OWNER = z', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE DATABASE d "owner" x "template" = y OWNER z')->toString());
     }
 }

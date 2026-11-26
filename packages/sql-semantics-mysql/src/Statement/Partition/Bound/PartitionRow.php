@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * no visible relation, so a column name in it is a diagnostic.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-columns.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a row of partition values
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('10'), new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionMaximum()]);
  *     count($row->items) // => 2

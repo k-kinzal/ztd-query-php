@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Lock;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html,
  * https://dev.mysql.com/doc/refman/5.7/en/lock-tables.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::ReadLocal->value // => 'READ LOCAL'
  */

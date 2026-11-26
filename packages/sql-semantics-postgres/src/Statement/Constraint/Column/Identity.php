@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
  * NULL"); its type must be smallint, integer or bigint.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example An identity column is never NULL
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a bigint GENERATED ALWAYS AS IDENTITY (START WITH 10))');
- *     [$create->declarations()[0]->columns[0]->nullability, count($create->statement->definition->elements[0]->qualifiers[0]->options)] // => [\SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, 1]
+ * @visibility SqlSemantics
  */
 final class Identity implements Constraint
 {

@@ -1,0 +1,169 @@
+{
+  "revision": "SemanticsIR/mysql-generated-view-headings-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "extends": {
+    "path": "mysql-create-view-output-names-v2.json",
+    "sha256": "b46218c187468ced7737f36cf10240e2d9dbb0e5629400eb5c1458e09198830e"
+  },
+  "scope": "Checked persistent views over independent signed integer projections with generated and explicitly assigned output names. Include padded literals, collisions, an explicitly requested empty effective name and the native projection width limit.",
+  "constructors": {
+    "Schema/View/CreateView": {
+      "role": "Publish a persistent view with its fully assigned output heading.",
+      "structure": "A checked SELECT and the separately resolved ordered view heading. The body retains a requested alias when the request affects native diagnostics.",
+      "conditions": [
+        "Admit one through 4096 fields with distinct native effective names. Reject 4097 independently of the name assignment.",
+        "An unaliased generated name that fails the native column-name check is assigned Name_exp_N, where N is its one-based position. A resolved column name or written alias is fixed.",
+        "For a collision, rename the current generated field if possible, otherwise the earlier generated field. Check collisions against positions through the current field. Use the original generated name when it was previously replaced. The release prefixes are My_exp_ for 5.6 and 5.7 and Name_exp_ from 8.0. Try the unsuffixed prefix and then increasing numeric prefixes. Clip candidate names to the native release boundary.",
+        "For a modern persistent heading with an empty position, the emitted body must reproduce that position via its checked requested alias. Preserve any other requested aliases and give all other positions their final valid names."
+      ],
+      "meaning": "Install the resolved ordered result columns. The chosen projection alias spellings retain each warning phase. A generated label can differ from the SELECT's standalone heading.",
+      "externalInterpretation": "Stock MySQL UTF-8 under the fixed release profile and identical resolved source interpretation.",
+      "sql": "The declared heading gives each labeled output. A modern empty heading uses the valid body alias form because an explicit empty list member is refused.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Select": {
+      "role": "An ordinary, independent signed literal projection usable directly or as the body of a persistent view.",
+      "structure": "Ordered immutable result operands, release, and the ordinary SELECT clauses.",
+      "conditions": [
+        "Admit up to 4097 results when every result is a checked signed literal, with no source, filter, DISTINCT, order or limit.",
+        "The firm 4096-column CREATE VIEW limit belongs to the view. A bare SELECT at 4097 still yields its entire resolved heading.",
+        "Keep the previously checked 1024-column boundary for other SELECT shapes and for derived, WITH and compound consumers. The effective InnoDB table and query INSERT retain their respective destination limits."
+      ],
+      "meaning": "Return one ordered row of independent signed literals with the runtime's native types and padding.",
+      "externalInterpretation": "The fixed native MySQL release, UTF-8 and empty sql_mode.",
+      "sql": "Emit each checked operand and heading directly. Preserve ordinal position and native signed width.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "observations": [
+    "Compare candidate and authored source against separately assigned names, types, values, ordinal positions, stored policy, warning phase and catalog metadata.",
+    "Distinguish a legacy 191-byte generated duplicate label from its catalog display at 64 characters. A modern generated duplicate label is at most 64 characters.",
+    "For the maximum admitted width compare every position and reject the next width at construction. Record the exact native refusal and phase.",
+    "Direct and analyzed standalone SELECT at 4097 positions compare every result field with the same literal sequence. A direct standby of 4098 positions or a nonordinary wide shape is refused. Distinguish the independent child from the 4096-position view guard."
+  ],
+  "finite": {
+    "patterns": [
+      "same",
+      "same-three",
+      "fixed-earlier",
+      "fixed-later",
+      "counter-before",
+      "counter-after",
+      "other-release-prefix",
+      "generated-position-collision",
+      "empty-requested",
+      "empty-with-duplicate"
+    ],
+    "literalForms": [
+      "one",
+      "negative-one",
+      "unary-plus",
+      "padded-63",
+      "padded-64",
+      "padded-65",
+      "padded-257"
+    ],
+    "placements": [
+      "written",
+      "rotate"
+    ],
+    "routes": [
+      "analyze",
+      "direct"
+    ],
+    "complete": "Independently recover every admissible coordinate from the attempted graph and record distinct cross products for each release. Check the adjacent 4095, 4096 and 4097 width boundaries separately.",
+    "allowedExclusions": []
+  },
+  "exploration": {
+    "seeds": [
+      18181,
+      50287,
+      76487
+    ],
+    "casesPerSeed": 20,
+    "directCasesPerSeed": 20,
+    "timeoutSecondsPerRelease": 600,
+    "shape": "Explore ordered two-to-six-field projections with signed literals, name-width boundaries, earlier and later fixed collisions, and varying assignments.",
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Two fixed names collide after native assignment.",
+    "The final heading has one field beyond the native maximum.",
+    "A modern inherited empty position cannot be emitted without a matching checked requested alias.",
+    "A standalone direct projection exceeds its 4097-result limit.",
+    "A direct wide projection includes DISTINCT.",
+    "A direct wide projection includes an expression outside the checked signed literal class.",
+    "A resolved standalone wide literal list is used in a derived, WITH or compound role whose admission needs a separate contract."
+  ],
+  "faults": [
+    "Read the SELECT's original names as the installed names.",
+    "Leave the earlier generated name unchanged when a later explicit alias claims it.",
+    "Ignore the view width limit.",
+    "Discard the generated heading during modern implicit rendering.",
+    "Ignore a known ordered result heading mismatch."
+  ],
+  "trust": [
+    "Pinned server native padding and duplicate-name rules, PHP array order and exact string representation, native UTF-8 comparison table.",
+    "Independent finite and seeded comparisons do not establish a general statement-grammar theorem."
+  ],
+  "open": [
+    "Derivation for arbitrary expression-only generated headings, additional text charset conversion and source and privilege combinations are separate obligations."
+  ],
+  "referenceSources": [
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/sql_view.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_view.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_const.h"
+  ],
+  "versionedFrom": {
+    "path": "mysql-generated-view-headings-v1.json",
+    "sha256": "f83e4818dcc190c71cdf3f9775bf2d67628368b33a07f45112174fdab5ad7b0d"
+  },
+  "negativeCount": 7,
+  "compositionControls": [
+    "derived",
+    "local",
+    "with-definition",
+    "with-body",
+    "compound",
+    "insert-destination",
+    "innodb-record"
+  ]
+}

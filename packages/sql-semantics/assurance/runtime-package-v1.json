@@ -1,0 +1,15 @@
+{
+  "revision": "SemanticsIR/runtime-package-1",
+  "approval": "pending-human-review",
+  "packages": {
+    "sql-semantics": "SqlSemantics\\",
+    "sql-semantics-mysql": "SqlSemantics\\Platform\\MySql\\",
+    "sql-semantics-postgres": "SqlSemantics\\Platform\\PostgreSql\\",
+    "sql-semantics-sqlite": "SqlSemantics\\Platform\\Sqlite\\",
+    "sql-parser": "SqlParser\\"
+  },
+  "runtimeRequirements": {"php": "^8.1"},
+  "dialectRequirements": {"k-kinzal/sql-parser": "dev-main", "k-kinzal/sql-semantics": "dev-main"},
+  "checkedPaths": ["composer.json", "composer.lock", "src/", "resources/"],
+  "scope": "The locked runtime package graph publishes its classes through the recorded PSR-4 prefixes and contains no alternative Composer bootstrap path or symbolic links in the checked trees."
+}

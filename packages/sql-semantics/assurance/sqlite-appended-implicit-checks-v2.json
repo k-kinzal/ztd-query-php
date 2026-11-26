@@ -1,0 +1,182 @@
+{
+  "revision": "SemanticsIR/sqlite-appended-implicit-checks-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "Pinned SQLite 3.47.2, UTF-8, ordinary or strict rowid tables in main and temp, default name comparison, native ALTER and CHECK, legacy_alter_table, writable_schema and ignore_check_constraints disabled.",
+  "scope": "One or more named and implicit inline conditions attached to an ordinary or generated appended column. An implicit condition is a checked comparison from one declared prior or newly appended ordinal and a nonnegative decimal integer.",
+  "constructors": {
+    "Schema/Alter/AddColumn": {
+      "role": "Append an ordinary column whose inline CHECKs retain SQLite's named or implicit diagnostic semantics.",
+      "structure": "Resolved absolute table, effective STRICT mode, the appended slot, sparse ordered bindings for the exact column operands, the checked ordinary definition and owned ordered inline conditions.",
+      "conditions": "Check exact owner, scoped operands, the closed implicit presentation's actual source slot and legal explicit label ordering. Generation reads prior members only.",
+      "meaning": "Preserve the condition on prior and newly added typed slots, native existing-row refusal, future diagnostic effects and the relationship between a renamed member and an implicit label.",
+      "externalInterpretation": "The same declared table, SQLite profile, actual existing rows and subsequent statements.",
+      "sql": "Emit an absolute addition with all conditions in order. Explicit labels use quoted names. Implicit comparisons use the checked presentation and the actual typed operands.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Alter/AddGeneratedColumn": {
+      "role": "Append an generated column whose inline CHECKs retain SQLite's named or implicit diagnostic semantics.",
+      "structure": "Resolved absolute table, effective STRICT mode, the appended slot, sparse ordered bindings for the exact column operands, the checked generated column definition and owned ordered inline conditions.",
+      "conditions": "Check exact owner, scoped operands, the closed implicit presentation's actual source slot and legal explicit label ordering. Generation reads prior members only.",
+      "meaning": "Preserve the condition on prior and newly added typed slots, native existing-row refusal, future diagnostic effects and the relationship between a renamed member and an implicit label.",
+      "externalInterpretation": "The same declared table, SQLite profile, actual existing rows and subsequent statements.",
+      "sql": "Emit an absolute addition with all conditions in order. Explicit labels use quoted names. Implicit comparisons use the checked presentation and the actual typed operands.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Identifier",
+    "IntegerLiteral",
+    "ColumnReference",
+    "Predicate/Comparison",
+    "Schema/Predicate/ImplicitCheckLabel",
+    "Schema/Predicate/ComparisonSpelling",
+    "Schema/Predicate/CheckConstraint",
+    "Schema/TableColumn",
+    "Schema/CreateTable"
+  ],
+  "rules": [
+    "An implicit CHECK with a leading bare identifier exposes the comparison spelling in SQLite's failure diagnostic. A leading delimited identifier exposes its decoded spelling. The rebuilt expression preserves both the predicate and native diagnostic after a qualified ALTER TABLE RENAME COLUMN.",
+    "An explicit name stays in effect for later column constraints in the same declaration run. The lowering records each later CHECK's effective explicit name as an Identifier. An implicit direct label after a named CHECK in the same inline sequence cannot be rendered without altering its behavior and is rejected before publication. A different owning column or a separately emitted table constraint begins a new run.",
+    "Check owners are the appended ordinal. A checked column reference may address an earlier or the appended ordinal. Preserve all independent restrictions of ordinary DEFAULT and VIRTUAL or STORED generation. Check the diagnostic identifier against the reference's concrete slot before exposing the value.",
+    "SQLite can refuse the addition due to a stored row. The observation retains its native code and message, the before state, atomic refusal or accepted change, and transactional restoration. On later writes only zero fails the check among these typed scalar results. NULL passes."
+  ],
+  "observations": [
+    "Compare decoded labels, checked column slots, whitespace and leading decimal zeroes, evaluation order, numbered parameter effects where coexisting named predicates have them, native first-failure message, typed state and transactions.",
+    "Compare later writes before and after renaming the referenced prior or appended member using bare and delimited destinations, with an independently observed same-named shadow table.",
+    "For admitted SQL exercise the authored original and emitted SQL independently against the pinned engine. For every finite case construct directly.",
+    "Compare the appended position and exact selected slot bindings independently of the candidate projection. Continue to observe the complete native heading and the effects of the same prior table."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "columnForms": [
+      "ordinary-two",
+      "virtual",
+      "stored"
+    ],
+    "population": [
+      "empty",
+      "below",
+      "mixed",
+      "null"
+    ],
+    "referenceSlots": [
+      "prior",
+      "appended"
+    ],
+    "layouts": [
+      {
+        "quoted": false,
+        "before": " ",
+        "after": "",
+        "zeroes": 2,
+        "value": "0"
+      },
+      {
+        "quoted": true,
+        "before": "\t",
+        "after": " ",
+        "zeroes": 1,
+        "value": "2"
+      }
+    ],
+    "operators": [
+      "=",
+      "==",
+      "!=",
+      "<>",
+      "<",
+      "<=",
+      ">",
+      ">="
+    ],
+    "sequences": [
+      "implicit",
+      "implicit-then-named"
+    ],
+    "identity": "All 1,536 combinations in printed axis order. Recover indices from the built checked slots, condition and label, generated mode, condition order, and selected prior typed rows."
+  },
+  "exploration": {
+    "seeds": [
+      71203,
+      86243,
+      93491
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 360,
+    "allowedExclusions": [],
+    "domain": "Vary prior heading width, compared prior or newly added ordinal, data and nulls, name casing and quoting, whitespace and leading zeroes at both bounds, comparison, threshold, order and two native destination quote modes."
+  },
+  "negative": [
+    "Wrong owner",
+    "Missing defined operand",
+    "Spelling resolves to a different ordinal",
+    "Invalid glyph for the operation",
+    "Implicit label follows a named check in the same inline run",
+    "CREATE TABLE with the same impossible inline sequence"
+  ],
+  "analysisNegative": [
+    "Unsupported implicit expression tree",
+    "Unresolved operand",
+    "Live parameter in a CHECK"
+  ],
+  "faults": [
+    "Remove presentation's resolved name check",
+    "Remove the same-run explicit name guard",
+    "Quote a previously bare label",
+    "Remove the stored decimal padding",
+    "Freeze the label across native rename",
+    "Forget that a constraint name carries over in the same inline declaration"
+  ],
+  "open": [
+    "General implicit expressions, named constraints of other types, additional dependency topologies and SQLite version profiles remain under independent grammar scope."
+  ],
+  "trust": [
+    "Pinned SQLite resolver, ALTER implementation and C API",
+    "Independent typed state and diagnostic observer",
+    "Exact checked presentation and ordered rendering together with shipped PHP and Composer checks"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_altertable.html#alter_table_add_column",
+    "https://sqlite.org/lang_createtable.html#check_constraints",
+    "https://sqlite.org/src/file/src/build.c?ci=version-3.47.2"
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "bae5c79c293f136fb46b476e6c61313ffec00ed9b33a265f1dcdd94b879e3ac0",
+    "nativeCases": "07618d4658f3fd87807c4abcbe264e5c8d10fd51e773161c2df197fbe31700b8"
+  },
+  "publicationContracts": {
+    "sqlite-append-column-bindings-v1.json": "a0e76514694986a9651b08bb646f108bb8cccfa7912fceea17e097d14072342c",
+    "sqlite-appended-implicit-checks-v1.json": "8a3b2d3ffb466f8ca0087ca18bdcebd1a6e448ae2801ee79792bdc1626520e4f"
+  }
+}

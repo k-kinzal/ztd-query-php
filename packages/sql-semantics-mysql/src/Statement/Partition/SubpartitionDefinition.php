@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * string; both name the subpartition.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-subpartitions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a subpartition
  *     (new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('s0'), []))->name->value // => 's0'
  */

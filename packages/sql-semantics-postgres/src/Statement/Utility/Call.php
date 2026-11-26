@@ -26,10 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall;
  * arguments are derived once.
  * Source: https://www.postgresql.org/docs/17/sql-call.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the open result of a procedure call
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CALL app.p(1)');
- *     [$operation->statement->call->name->last()->value, $operation->shape()->complete(), $operation->shape()->missing[0]->describe()] // => ['p', false, 'the signature of routine p']
+ * @visibility SqlSemantics
  * @example Refusing a window call
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Call(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('p')]), [], false, false, false, [], false, null, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('w'))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

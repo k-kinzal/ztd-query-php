@@ -1,0 +1,139 @@
+{
+  "revision": "SemanticsIR/sqlite-cache-pragmas-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Fix the current, persistent and spill cache operations, closed scalar operands, exact native decoding and emission.",
+  "rules": {
+    "Maintenance/Cache/CacheSize::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Cache/CacheSize::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Cache/CacheSize::toString": {
+      "common": [
+        "$argument = $this->amount === null ? '' : '(' . $this->amount->value . ')';",
+        "return 'PRAGMA ' . $this->schema->quoted() . '.cache_size' . $argument;"
+      ]
+    },
+    "Maintenance/Cache/CacheSpill::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Cache/CacheSpill::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Cache/CacheSpill::toString": {
+      "common": [
+        "$change = $this->change;",
+        "$argument = match (true) {",
+        "    $change === null => '',",
+        "    $change instanceof SpillMode => '(' . $change->value . ')',",
+        "    $change instanceof SpillThreshold => '(' . $change->sqlArgument() . ')',",
+        "};",
+        "return 'PRAGMA ' . $this->schema->quoted() . '.cache_spill' . $argument;"
+      ]
+    },
+    "Maintenance/Cache/DefaultCacheSize::__construct": {
+      "common": [
+        ""
+      ]
+    },
+    "Maintenance/Cache/DefaultCacheSize::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters';"
+      ]
+    },
+    "Maintenance/Cache/DefaultCacheSize::toString": {
+      "common": [
+        "$argument = $this->capacity === null ? '' : '(' . $this->capacity->pages . ')';",
+        "return 'PRAGMA ' . $this->schema->quoted() . '.default_cache_size' . $argument;"
+      ]
+    },
+    "Maintenance/Cache/CacheAmount::__construct": {
+      "common": [
+        "Check::input($value >= -2147483648 && $value <= 2147483647, 'The cache amount must be a signed 32-bit integer.');"
+      ]
+    },
+    "Maintenance/Cache/DefaultCachePages::__construct": {
+      "common": [
+        "Check::input($pages >= 0 && $pages <= 2147483647, 'The persistent cache default needs a nonnegative signed 32-bit page count.');"
+      ]
+    },
+    "Maintenance/Cache/SpillThreshold::__construct": {
+      "common": [
+        "$value = $amount->value;",
+        "Check::input($value !== 0, 'A spill threshold update needs a nonzero quantity.');",
+        "Check::input($mode === SpillMode::Enabled || $value > 0 && ($value & 255) === 0, 'A disabled spill threshold needs a positive multiple of 256.');"
+      ]
+    },
+    "Maintenance/Cache/SpillThreshold::sqlArgument": {
+      "common": [
+        "$value = $this->amount->value;",
+        "return $this->mode === SpillMode::Enabled && $value > 0 && ($value & 255) === 0 ? \"'+\" . $value . \"'\" : (string) $value;"
+      ]
+    },
+    "Maintenance/Cache/CachePragmaLowering::capacity": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema) ?? new Identifier('main');",
+        "$value = $statement->value;",
+        "if ($value === null) {",
+        "    return new CacheSize($schema);",
+        "}",
+        "$text = $value instanceof PragmaNumber ? $value->nativeText() : $value->value;",
+        "return new CacheSize($schema, new CacheAmount((new NativePragmaInteger())->parse($text) ?? 0));"
+      ]
+    },
+    "Maintenance/Cache/CachePragmaLowering::persistent": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema) ?? new Identifier('main');",
+        "$value = $statement->value;",
+        "if ($value === null) {",
+        "    return new DefaultCacheSize($schema);",
+        "}",
+        "$text = $value instanceof PragmaNumber ? $value->nativeText() : $value->value;",
+        "$amount = (new NativePragmaInteger())->parse($text) ?? 0;",
+        "$pages = $amount === -2147483648 ? 2147483647 : abs($amount);",
+        "return new DefaultCacheSize($schema, new DefaultCachePages($pages));"
+      ]
+    },
+    "Maintenance/Cache/CachePragmaLowering::spilling": {
+      "common": [
+        "$schema = (new PragmaScope())->resolve($operation->context, $statement->name->schema) ?? new Identifier('main');",
+        "$value = $statement->value;",
+        "if ($value === null) {",
+        "    return new CacheSpill($schema);",
+        "}",
+        "$text = $value instanceof PragmaNumber ? $value->nativeText() : $value->value;",
+        "return new CacheSpill($schema, (new SpillArgument())->read($text));"
+      ]
+    },
+    "Maintenance/Cache/SpillArgument::read": {
+      "common": [
+        "$amount = (new NativePragmaInteger())->parse($text);",
+        "$enabled = match (NameComparison::AsciiInsensitive->fold($text)) {",
+        "    'on', 'yes', 'true' => true,",
+        "    'off', 'no', 'false' => false,",
+        "    default => preg_match('/\\A[0-9]/', $text) === 1 ? (($amount ?? 0) & 255) !== 0 : $amount !== 0,",
+        "};",
+        "$mode = $enabled ? SpillMode::Enabled : SpillMode::Disabled;",
+        "return $amount === null || $amount === 0 ? $mode : new SpillThreshold(new CacheAmount($amount), $mode);"
+      ]
+    },
+    "Maintenance/Cache/CachePragmaLowering::lower": {
+      "common": [
+        "return match ($name) {",
+        "    'cache_size' => $this->capacity($operation, $statement),",
+        "    'default_cache_size' => $this->persistent($operation, $statement),",
+        "    'cache_spill' => $this->spilling($operation, $statement),",
+        "};"
+      ]
+    }
+  }
+}

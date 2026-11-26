@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
  * names an unaliased select list expression after. Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html,
  * https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the tables of a locking clause
  *     $clause = new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'))], \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction::Nowait);
  *     [$clause->tables[0]->name->value, $clause->action] // => ['t', \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction::Nowait]

@@ -1,0 +1,119 @@
+{
+  "revision": "SemanticsIR/postgres-typed-parameters-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profile": "PostgreSQL 16.6 and 17.2 with native numbered markers and the registered catalog search path.",
+  "scope": "Explicitly cast positional markers in simple SELECT projections and in checked UNION ALL arms. Retain the inferred input binding type independently of conversions and output types.",
+  "constructors": {},
+  "existingRoles": [
+    "Binding/Parameter",
+    "Select",
+    "Rows/Compound",
+    "Expression/BuiltinCast",
+    "Expression/CastDestination"
+  ],
+  "structure": {
+    "parameter": "One positive slot and its resolved input type int4, int8 or bool. The cast role records an optional further conversion of the typed occurrence.",
+    "select": "Every position has a single input type. Its admitted positions form a contiguous prefix of one-based slots. Position labels and expression order are independent.",
+    "compound": "The query shares one parameter signature. A repeated position across arms must agree with the input type fixed for that position. Every admitted arm remains an independently valid projection."
+  },
+  "conditions": [
+    "The first explicit innermost cast occurrence in written projection and arm order fixes the corresponding slot input type for analyzed SQL. Values of other slots cannot change this type.",
+    "A later explicit type may differ when there is a native cast edge from the inferred input type. Subsequent nested casts compose in operand order.",
+    "Reject competing input types in directly composed values before exposing the owning SELECT or compound. Reject unsupported conversions including bool to or from int8. Retain all predecessor positive and negative budgets."
+  ],
+  "observations": [
+    "Compare the native inferred positional type signature obtained from an actual PREPARE with no supplied type list.",
+    "Check ordered labels, native result type metadata, each value and SQL NULL. For UNION ALL compare row multiplicity without asserting order.",
+    "Capture the exact SQLSTATE for modeled narrowing overflow. Preserve parameter position order and repeated use with unequal bindings.",
+    "For analyzed SQL compare the original and emitted result and inferred input signature independently."
+  ],
+  "finite": {
+    "inputs": {
+      "int4": [
+        -2147483648,
+        -1,
+        0,
+        1,
+        2147483647,
+        null
+      ],
+      "int8": [
+        -9223372036854775808,
+        -2147483649,
+        -2147483648,
+        0,
+        2147483647,
+        2147483648,
+        9223372036854775807,
+        null
+      ],
+      "bool": [
+        false,
+        true,
+        null
+      ]
+    },
+    "targets": {
+      "int4": [
+        "int4",
+        "int8",
+        "bool"
+      ],
+      "int8": [
+        "int8",
+        "int4"
+      ],
+      "bool": [
+        "bool",
+        "int4"
+      ]
+    },
+    "placements": [
+      "sole-projection",
+      "first-then-repeated",
+      "set-arms"
+    ],
+    "identity": "Each type, input value, legal output type and placement combination, with the initial slot type explicitly established both directly and in native observations. Reconcilable total 120 cells per release."
+  },
+  "exploration": {
+    "seeds": [
+      21019,
+      47581,
+      62057
+    ],
+    "casesPerSeed": 42,
+    "timeoutSecondsPerRelease": 200,
+    "allowedExclusions": [],
+    "structure": "Construct one to four distinct input slots and repeat them in varying projection positions. Choose lawful chains based on the previous type, from zero to four extra casts. Exercise nullable and distinct inputs, and occasionally independently composed UNION ALL arms with the same input signature."
+  },
+  "negative": [
+    "A SELECT uses one slot with different declared input types",
+    "A UNION ALL uses one slot with different declared input types across otherwise valid arms",
+    "A direct query leaves a hole in its slot numbering",
+    "An analyzed later Boolean conversion reads a bigint inferred by its first occurrence",
+    "An analyzed later bigint conversion reads a Boolean inferred by its first occurrence",
+    "An analyzed input uses an unsupported target type such as text"
+  ],
+  "faults": [
+    "Swap native binding positions in a two-slot output",
+    "Use int4 for the marker of an int8 input",
+    "Erase a narrowing conversion after an int8 input",
+    "Retain a wrong inferred signature with indistinguishable output values"
+  ],
+  "trust": [
+    "Pinned native PREPARE and pg_prepared_statements semantics",
+    "Exact checked PHP value and occurrence traversal forms",
+    "Independent cast graph and input validation"
+  ],
+  "open": [
+    "Markers in other placements, bare markers that rely on another expression for inference, non-contiguous select arms, statement kinds and native type families outside this domain."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-prepare.html",
+    "https://www.postgresql.org/docs/17/view-pg-prepared-statements.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_param.c"
+  ]
+}

@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
  * and KEY can subpartition.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-subpartitions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a subpartitioning by key
  *     $sub = new \SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')]), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2'));
  *     $sub->count?->text // => '2'

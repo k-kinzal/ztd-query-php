@@ -1,0 +1,149 @@
+{
+  "revision": "SemanticsIR/mysql-ordered-table-rename-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Stock MySQL native persistent InnoDB relation names with lower_case_table_names=0, default lexical mode and UTF-8. All external schemas and ordinary base tables have the same interpretation in the evaluator and observer.",
+  "extends": [
+    "server-drop-table-v1.json",
+    "server-create-table-v2.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Alter/RenameTable"
+  ],
+  "constructors": {
+    "TableRename": {
+      "type": "Schema/Alter/TableRename",
+      "role": "One ordered step with an exact current name, initial physical origin and new absolute name.",
+      "structure": "Three checked TableName values denoting the current coordinate, external origin and destination. The origin can equal its initial current name.",
+      "conditions": "The source and destination names differ. The enclosing statement checks that the origin is the binding of the current name at this step.",
+      "meaning": "Keep the pointed-to relation and its data while moving its visible name to the destination at this point in the statement.",
+      "sql": "Emit the current and destination absolute names in native old TO new positions."
+    },
+    "RenameTable": {
+      "type": "Schema/Alter/RenameTable",
+      "role": "A complete ordered native RENAME TABLE with the relation bindings induced by the earlier moves.",
+      "structure": "A nonempty immutable list of TableRename values and one native grammar release.",
+      "conditions": "Each vacated name is absent until an earlier move fills it, each produced name is occupied until an earlier move vacates it, and the current origin must match the one induced by the ordered moves. Analysis requires each origin to resolve to a known ordinary base table and qualifies both names before publication. Known session-temporary origins are rejected through declaration provenance.",
+      "meaning": "Execute the relocations left to right. Earlier destinations can become later sources, including swaps. In the fixed InnoDB fixture, a conflicting destination or missing source fails the rename as a whole. Native DDL transaction boundaries and the exact release diagnostic are observable.",
+      "sql": "Emit one native RENAME TABLE statement in the preserved order. Rendering only uses structured name and operation roles."
+    }
+  },
+  "existingRoles": [
+    "Schema/TableName",
+    "Identifier"
+  ],
+  "structure": "A directed sequence of moves with a stable external origin for every pair and a native profile.",
+  "conditions": "Reject intrinsically inconsistent internal transitions and unresolved initial identities. Accept a state-dependent collision or failure when the absolute external identity has a valid interpretation and the input constructor cannot know the evaluation state.",
+  "meaning": "Remap the native absolute table names in order and preserve row bags, exact column metadata and independently observed diagnostics and transaction effects.",
+  "sql": "Render with native backtick quoting and schema qualification for every operand.",
+  "observations": [
+    "Moved and unchanged absolute names, exact ordered field types and value bags",
+    "Same-named archive decoys and swaps carry the correct table's contents",
+    "No partial rename on failure in the admitted fixture, plus native SQLSTATE and server code",
+    "Implicit commit, durable marker state and attempted rollback"
+  ],
+  "finite": {
+    "fixture": [
+      "two",
+      "absent-second",
+      "blocked"
+    ],
+    "form": [
+      "single",
+      "chain",
+      "swap",
+      "cross-schema",
+      "independent"
+    ],
+    "placement": [
+      "ordinary",
+      "reversed"
+    ],
+    "identities": 30,
+    "completeness": "Recover the exact plan from loaded PHP and compare the native starting catalog against the independently defined fixture. Count each planned profile and finite identity once."
+  },
+  "analysis": [
+    "Fully qualified one-step rename",
+    "Current database resolves unqualified names",
+    "A chain referring to an earlier destination",
+    "A three-step swap",
+    "A cross-schema move",
+    "A cross-schema intermediate source",
+    "Two independent pairs",
+    "An identifier containing an escaped backtick"
+  ],
+  "negative": [
+    "Empty statement",
+    "Identical source and destination",
+    "Inconsistent recorded origin",
+    "A vacated source without recreation",
+    "A destination already occupied by an earlier step",
+    "Unresolved initial table",
+    "A known view used as base-table origin",
+    "An unqualified destination without a current database",
+    "A known session-temporary relation supplied as a persistent rename origin"
+  ],
+  "exploration": {
+    "seeds": [
+      3659,
+      12601,
+      68791
+    ],
+    "casesPerSeed": 26,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary statement length, independent or shared origins, return-to-vacated destinations, final namespaces, inferred or stated qualification, name boundaries, and native conflicts and missing sources."
+  },
+  "faults": [
+    "Redirect an absolute schema",
+    "Swap the positions of current and destination names",
+    "Drop a step",
+    "Visit steps in the wrong order",
+    "Emit a different valid destination",
+    "Admit a move with an inconsistent origin"
+  ],
+  "evidence": {
+    "P01": "Fix each source, stable origin, destination and operation order.",
+    "P02": "Enforce intrinsic local names and statement transitions at all constructors.",
+    "P03": "Retain only closed data with no original text or statement facts.",
+    "P04": "Derive each binding from the ordered earlier transitions and explicit initial identity.",
+    "P05": "Own the checked step list and all nested immutable names.",
+    "P06": "Emit one total native rename statement and preserve exact effects.",
+    "Q01": "Inspect PHP value and composition shape and independently derived negative cases.",
+    "Q02": "Consume every finite identity and named analysis request.",
+    "Q03": "Check an independent namespace transition model and native orbit of each physical origin.",
+    "Q04": "Compare exact row bags, metadata, native errors, transaction boundaries and rollback.",
+    "Q05": "Link boundary templates, staged installation and independent replay to the actual loaded package bytes."
+  },
+  "open": [
+    "Views and temporary objects, triggers and foreign keys, privilege transport, other storage engines and cross-volume failures",
+    "ALTER TABLE RENAME forms and modes or identifier profiles outside the named scope"
+  ],
+  "trust": [
+    "Truthful original catalog interpretation of the fixed profile",
+    "Observed native InnoDB semantics and release-specific diagnostics of each named fixture",
+    "Independently selected baseline and fixed distributed package digest"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/5.7/en/rename-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/rename-table.html"
+  ],
+  "amends": {
+    "file": "mysql-ordered-table-rename-v1.json",
+    "sha256": "516a08c74aae47689874665d40fece51515d7d4ad161ccb5739646385b6a8670",
+    "change": "Make rejection of a known session-temporary origin an explicit required case. Keep the same permanent operation and all prior cases."
+  }
+}

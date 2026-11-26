@@ -14,11 +14,11 @@ final class ResetTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET ALL')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('RESET ALL')->facts->diagnostics);
     }
 
     public function testRenderWritesEachForm(): void
     {
-        self::assertSame(['RESET ALL', 'RESET a.b', 'RESET TIME ZONE', 'RESET TRANSACTION ISOLATION LEVEL', 'RESET SESSION AUTHORIZATION'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET ALL')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET a.b')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET TIME ZONE')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET TRANSACTION ISOLATION LEVEL')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET SESSION AUTHORIZATION')->toString()]);
+        self::assertSame(['RESET ALL', 'RESET a.b', 'RESET TIME ZONE', 'RESET TRANSACTION ISOLATION LEVEL', 'RESET SESSION AUTHORIZATION'], [(new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('RESET ALL')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('RESET a.b')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('RESET TIME ZONE')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('RESET TRANSACTION ISOLATION LEVEL')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('RESET SESSION AUTHORIZATION')->toString()]);
     }
 }

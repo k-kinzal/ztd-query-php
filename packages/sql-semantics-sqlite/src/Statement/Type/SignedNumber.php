@@ -16,11 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral;
  *
  * Source: https://sqlite.org/syntax/signed-number.html.
  *
- * @visibility public
- * @example Reading a type argument
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CAST(1 AS DECIMAL(+10, 2))');
- *     $argument = $query->statement->columns[0]->expression->target->arguments[0];
- *     [$argument->sign, $argument->number->digits] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign::Plus, '10']
+ * @visibility SqlSemantics
  */
 final class SignedNumber implements Node
 {

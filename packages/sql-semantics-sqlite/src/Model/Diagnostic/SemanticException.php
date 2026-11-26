@@ -11,8 +11,9 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
  * Semantic problems established while analyzing grammatical SQL.
  *
  * @visibility public
- * @example Rejecting a query that names a missing relation
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT * FROM t', []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException
+ * @example Rejecting a relation absent from a complete catalog
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
+ *     $semantics->analyze('SELECT id FROM missing', $semantics->context([])) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException
  */
 final class SemanticException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

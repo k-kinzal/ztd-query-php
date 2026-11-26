@@ -32,14 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-TYPE-CASTS,
  * https://www.postgresql.org/docs/17/sql-createcast.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of a cast
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '1'::bigint");
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->name->value] // => ['bigint', 'int8']
- * @example Rejecting an operand that would need parentheses
- *     $sum = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 + 2')->field(0)->expression;
- *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword::Integer));
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast($sum, $type, \SqlSemantics\Platform\PostgreSql\Statement\Expression\CastSpelling::Operator) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class Cast implements Scalar, OutputNaming
 {

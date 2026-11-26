@@ -1,0 +1,48 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-tests-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "PostgreSQL 16.6 and 17.2 under the registered native Boolean and int4 predicate profiles.",
+  "scope": "The six IS [NOT] TRUE, FALSE and UNKNOWN forms over checked Boolean predicates.",
+  "constructors": {
+    "Predicate/TruthOperator": {
+      "role": "One of the six Boolean truth tests.",
+      "structure": "Exact selection of the TRUE, FALSE or UNKNOWN value with or without negation.",
+      "conditions": "The enum has exactly the six registered values. It is used with a checked Boolean operand.",
+      "meaning": "Compare the operand's three-valued truth result to the chosen truth value. Complement the result for a negated form.",
+      "externalInterpretation": "The built-in PostgreSQL Boolean domain and normal NULL semantics.",
+      "sql": "Emit the exact built-in IS [NOT] phrase.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Predicate/TruthTest": {
+      "role": "A Boolean result from testing one checked Boolean operand.",
+      "structure": "One truth operator and one operand from the closed Boolean and NULL roles. A nested truth test has the same Boolean result role.",
+      "conditions": "The enclosing scope checks all visible references and bounds all operand occurrences. The analyzer admits plain NULL, explicitly Boolean NULL and checked predicates.",
+      "meaning": "Test the operand exactly once. Every form yields true or false, including when the operand is NULL. A WHERE clause admits true rows.",
+      "externalInterpretation": "Interpret the operand using its fixed source slots and built-in Boolean and integer rules.",
+      "sql": "Parenthesize the child test with the checked IS phrase. A NULL leaf is a Boolean NULL in this position.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "ResultColumn", "Predicate/IntegerDistinctness", "Predicate/IntegerRange", "Predicate/IntegerComparison", "Predicate/LogicalPredicate", "Predicate/NullTest", "Expression/IntegerCaseArm"],
+  "observations": ["Exact bool metadata and aliases, all three input truth classes, duplicate and null-extended rows, filtering and nested predicate use."],
+  "finite": {
+    "sources": ["unit", "only", "inherited"],
+    "placements": ["projection", "where"],
+    "modes": ["IS TRUE", "IS NOT TRUE", "IS FALSE", "IS NOT FALSE", "IS UNKNOWN", "IS NOT UNKNOWN"],
+    "truth": [false, true, null],
+    "identity": "Observe all 108 source, placement, mode and truth-class combinations once per release."
+  },
+  "exploration": {
+    "seeds": [25179, 38723, 54371],
+    "casesPerSeed": 48,
+    "timeoutSecondsPerRelease": 160,
+    "allowedExclusions": [],
+    "structure": "Generate composed range, comparison, distinctness, NULL and logical operands with actual table references and nested truth tests. Vary result widths, WHERE placement and CASE context."
+  },
+  "negative": ["An invisible operand slot in projection", "An invisible operand occurrence in WHERE", "Depth above the shared predicate envelope", "A non-Boolean analyzed operand"],
+  "faults": ["Erase NOT in IS NOT TRUE", "Exchange TRUE and FALSE", "Treat UNKNOWN as FALSE", "Emit the operand without its truth test"],
+  "open": ["Further predicate operand categories and language profiles."],
+  "trust": ["The pinned PostgreSQL Boolean semantics", "Independent three-valued evaluator and reference observation", "The exact typed construction and scope templates"],
+  "sources": ["https://www.postgresql.org/docs/16/functions-comparison.html", "https://www.postgresql.org/docs/17/functions-comparison.html"]
+}

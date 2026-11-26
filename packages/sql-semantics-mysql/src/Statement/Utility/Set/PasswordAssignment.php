@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * https://dev.mysql.com/doc/refman/5.6/en/set-variable.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a password item of a list
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->analyze("SET @a = 1, PASSWORD FOR u = 'x'");
- *     [$set->statement->items[1]->user?->user->value, $set->toString()] // => ['u', "SET @a = 1, PASSWORD FOR u = 'x'"]
+ * @visibility SqlSemantics
  */
 final class PasswordAssignment implements SetItem
 {

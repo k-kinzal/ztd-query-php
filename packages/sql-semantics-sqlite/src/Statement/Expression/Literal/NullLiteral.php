@@ -20,10 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the facts of NULL
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT NULL');
- *     [$query->field(0)->type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly, $query->field(0)->nullability] // => [true, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
+ * @visibility SqlSemantics
  */
 final class NullLiteral implements Scalar
 {

@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * https://dev.mysql.com/doc/refman/5.7/en/change-master-to.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the options of the legacy spelling as their current synonyms
- *     $change = (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44'))->analyze("CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'");
- *     [$change->toString(), $change->statement->options[1]->kind] // => ["CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'h', SOURCE_PORT = 3307 FOR CHANNEL 'c'", \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port]
+ * @visibility SqlSemantics
  */
 final class ChangeReplicationSource implements Statement
 {

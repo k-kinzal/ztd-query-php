@@ -35,10 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/fulltext-search.html#function_match.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the searched columns
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)");
- *     [count($query->statement->where->columns), $query->toString()] // => [2, "SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)"]
+ * @visibility SqlSemantics
  */
 final class FullTextSearch implements Scalar
 {

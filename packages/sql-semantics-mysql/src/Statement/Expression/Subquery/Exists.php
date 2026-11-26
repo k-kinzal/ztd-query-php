@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/exists-and-not-exists-subqueries.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Testing for rows
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE EXISTS (SELECT 1)');
- *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 final class Exists implements Scalar
 {

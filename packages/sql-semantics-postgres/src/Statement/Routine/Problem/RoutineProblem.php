@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of a repeated parameter name
  *     $problem = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem(\SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind::DuplicateParameter, 'a');
  *     $problem->message() // => 'parameter name "a" used more than once'

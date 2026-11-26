@@ -14,11 +14,11 @@ final class TypeChecksTest extends TestCase
 {
     public function testLabelsAcceptsSixtyThreeBytes(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE e ADD VALUE \'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('ALTER TYPE e ADD VALUE \'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\'')->facts->diagnostics);
     }
 
     public function testAttributesReportsEachRepeatedNameOnce(): void
     {
-        self::assertCount(1, (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TYPE pair AS (a int4, a int4, a int4)')->facts->diagnostics);
+        self::assertCount(1, (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE TYPE pair AS (a int4, a int4, a int4)')->facts->diagnostics);
     }
 }

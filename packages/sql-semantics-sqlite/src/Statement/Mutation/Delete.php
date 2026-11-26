@@ -27,10 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
  * it, the enclosing environment; the rest follows SQLITE-MUTATION-SCOPE-001.
  * Source: https://sqlite.org/lang_delete.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a DELETE
- *     $delete = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DELETE FROM t WHERE a = 1 RETURNING a');
- *     [$delete->statement->target->name->name->value, $delete->statement->where !== null, $delete->field(0)->name->value] // => ['t', true, 'a']
+ * @visibility SqlSemantics
  */
 final class Delete implements Statement
 {

@@ -14,11 +14,11 @@ final class DropTablespaceTest extends TestCase
 {
     public function testRenderWritesIfExists(): void
     {
-        self::assertSame('DROP TABLESPACE IF EXISTS fast', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP TABLESPACE IF EXISTS fast')->toString());
+        self::assertSame('DROP TABLESPACE IF EXISTS fast', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP TABLESPACE IF EXISTS fast')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP TABLESPACE fast')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP TABLESPACE fast')->facts->diagnostics);
     }
 }

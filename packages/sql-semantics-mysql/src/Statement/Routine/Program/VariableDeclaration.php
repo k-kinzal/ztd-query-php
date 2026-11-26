@@ -34,11 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-local-variable.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the variables of a declaration
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE a, b INT DEFAULT 0; END');
- *     $declaration = $create->statement->body->declarations[0];
- *     [count($declaration->names), $declaration->type->name(), $declaration->default !== null] // => [2, 'INT', true]
+ * @visibility SqlSemantics
  */
 final class VariableDeclaration implements Declaration, Relation
 {

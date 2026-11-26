@@ -19,17 +19,17 @@ final class SchemaContentsTargetTest extends TestCase
 
     public function testDeriveTargetResolvesNothing(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe', [])->facts->diagnostics));
     }
 
     public function testRenderWritesThePluralOfTheKind(): void
     {
-        self::assertSame('GRANT ALL ON ALL PROCEDURES IN SCHEMA a, b TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT ALL ON ALL PROCEDURES IN SCHEMA a, b TO joe')->toString());
+        self::assertSame('GRANT ALL ON ALL PROCEDURES IN SCHEMA a, b TO joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT ALL ON ALL PROCEDURES IN SCHEMA a, b TO joe')->toString());
     }
 
     public function testRenderWritesSequences(): void
     {
-        self::assertSame('REVOKE usage ON ALL SEQUENCES IN SCHEMA a FROM joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE usage ON ALL SEQUENCES IN SCHEMA a FROM joe')->toString());
+        self::assertSame('REVOKE usage ON ALL SEQUENCES IN SCHEMA a FROM joe', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('REVOKE usage ON ALL SEQUENCES IN SCHEMA a FROM joe')->toString());
     }
 
     public function testRejectsAKindWithoutASchemaForm(): void

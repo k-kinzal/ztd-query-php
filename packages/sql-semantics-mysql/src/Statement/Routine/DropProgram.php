@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
  * https://dev.mysql.com/doc/refman/8.4/en/drop-event.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a DROP TRIGGER
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP TRIGGER IF EXISTS shop.tr');
- *     [$drop->statement->kind->value, $drop->statement->ifExists, $drop->statement->name->schema->value] // => ['TRIGGER', true, 'shop']
+ * @visibility SqlSemantics
  */
 final class DropProgram implements Statement
 {

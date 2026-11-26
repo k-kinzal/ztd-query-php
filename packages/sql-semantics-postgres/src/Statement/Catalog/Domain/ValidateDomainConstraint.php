@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * Rule: PG-DOMAIN-006. Mirrors `AlterDomainStmt` subtype 'V'.
  * Source: https://www.postgresql.org/docs/17/sql-alterdomain.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the validated constraint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d VALIDATE CONSTRAINT c');
- *     $operation->statement->constraint->value // => 'c'
+ * @visibility SqlSemantics
  */
 final class ValidateDomainConstraint implements Statement
 {

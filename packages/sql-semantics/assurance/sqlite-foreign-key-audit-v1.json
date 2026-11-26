@@ -1,0 +1,80 @@
+{
+  "revision": "SemanticsIR/sqlite-foreign-key-audit-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with UTF-8, native foreign-key introspection, stock comparison and stock VFS. Declared databases, foreign-key layouts and populations are external state.",
+  "scope": "PRAGMA foreign_key_check for one resolved schema, ordinary table or view, or a builtin schema catalog.",
+  "additionalPublicRoots": ["Maintenance/Metadata/ForeignKeyAudit"],
+  "constructors": {
+    "Maintenance/Metadata/ForeignKeyAudit": {
+      "role": "Read native foreign-key violations from the exact selected schema or relation.",
+      "structure": "A resolved schema Identifier, a resolved RelationTarget or a CatalogTable. A builtin table selection can additionally retain an explicit matching schema access.",
+      "conditions": "An omitted table selects the explicit schema or main. A named ordinary relation uses native temp, main and attached precedence when implicit. The bound scope and selected builtin table must agree. Only main and temp builtin catalogs are accessible without explicit qualification.",
+      "meaning": "Inspect only foreign keys declared by the audited child relations and report each violating row with exact child and parent names, foreign key ordinal and rowid or typed NULL. Do not change enforcement, rows or constraints. Expose the schema access and the native mismatch error of a reference without a matching parent key.",
+      "externalInterpretation": "Use the same database attachment order, matching schema and table definitions, native collations and parent key affinity, current row populations and connection state.",
+      "sql": "Emit PRAGMA foreign_key_check qualified by the resolved schema, and an exact quoted child argument for a resolved relation. For the builtin catalog, preserve the native access scope, including access without opening the temp database when implicit.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "Without a named relation, check one database. The implicit schema is main even when temp contains a child of the same name. With an unqualified relation argument, SQLite performs the ordinary temp, main and attached table lookup.",
+    "Bind a named child, view or builtin catalog before publication. A missing target in native foreign_key_check is a statement error. Open preceding scopes or unresolved module tables must not produce completed values.",
+    "Only ordinary children contribute foreign-key violations. For each constraint, any NULL child-key component suppresses the violation. A missing parent contributes a violation for each nonnull unmatched child key. A present parent with no matching unique key fails with the precise native mismatch message, even when enforcement is off.",
+    "Use the actual parent key column order, collation and affinity. Preserve the native ordinals of repeated or multiple child constraints; ordinals are given by the native reverse declaration sequence. Distinguish a nullable missing referenced-column name from a present explicit key.",
+    "The result columns are table, rowid, parent and fkid. WITHOUT ROWID children return typed NULL in rowid. Several equal typed violation rows may be present and their multiplicity is observable.",
+    "A builtin catalog or view can have no foreign keys. Native opening of temp via an explicit qualifier remains observable. The only normalization of record order is sorting the complete typed violation rows where the pragma defines no order."
+  ],
+  "observations": [
+    "Compare exact native result names, typed NULL and integer fields, duplicate row counts, unqualified and qualified physical selectors, native database slots, parameter shape and readOnly classification.",
+    "Compare the stock native mismatch prepare error with its fixed child and parent coordinates for structurally incompatible parent fixtures. Refuse unknown target names during analysis separately.",
+    "Compare child data, enforcement and attached databases before and after, including temporary opening and a main-versus-temp shadow witness."
+  ],
+  "finite": {
+    "selectors": ["implicit-schema", "explicit-main", "temporary-schema", "attachment-schema", "implicit-child", "main-child", "attachment-child", "visible-view", "implicit-temp-catalog", "attachment-catalog"],
+    "temp": ["unopened", "shadowed"],
+    "childStorage": ["rowid", "without-rowid"],
+    "parents": ["valid", "missing", "mismatched"],
+    "enforcement": [false, true],
+    "keyLayout": ["single", "composite"],
+    "identity": "All 480 selector/scope/child-mode/parent-mode/enforcement/key-layout coordinates. Infer each from the original native invocation and independent fixture readings."
+  },
+  "exploration": {
+    "seeds": [97577, 6841, 43781],
+    "casesPerSeed": 60,
+    "timeoutSeconds": 480,
+    "allowedExclusions": [],
+    "domain": "Vary empty and quoted database names, ordinary and composite keys, NULL component positions, numeric and text representations, collisions, declared order, duplicate typed violations and both construction routes."
+  },
+  "negative": [
+    "Unknown schema",
+    "Unknown named child or view",
+    "Unqualified lookup crossing an open namespace",
+    "Conflicting declared children",
+    "Direct catalog and explicit schema disagree",
+    "Direct implicit catalog in an attached schema",
+    "Catalog access field supplied to an ordinary relation scope"
+  ],
+  "faults": [
+    "Resolve the named child in main ahead of a temporary shadow",
+    "Audit all tables from a named relation value",
+    "Omit a qualified schema scope",
+    "Use a different bound child with distinguishable violations",
+    "Force an implicit temp catalog lookup to open temp",
+    "Publish a missing selector as a complete schema query"
+  ],
+  "open": [
+    "Unknown module tables and additional build profiles remain separately inventoried. Unsupported parent declaration forms and very long names remain governed by the fixed dialect profile."
+  ],
+  "trust": [
+    "Pinned SQLite engine and native child and parent metadata.",
+    "Independent typed parent-key matching and row-violation calculation.",
+    "Candidate binding, immutable target identity and exact distribution linkage."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "schemaDriver": "73aed5ea69e6bfa7709169be703d9fcda901dc6354d13e94b2818a09d57c2d77",
+    "schemaCases": "431331475bf4599dce2b6141d4feb65a27bbe22d37d64c581b17ae255ebeca60",
+    "compositeDriver": "9b5159dd66491b1463184c407c2fe2b9a271c5a99650176fa496643f1d40f4de",
+    "compositeCases": "bed0709e4c7178276a6cc6eab64693118540c71bcb02fe15ea2f7897f99075a1"
+  }
+}

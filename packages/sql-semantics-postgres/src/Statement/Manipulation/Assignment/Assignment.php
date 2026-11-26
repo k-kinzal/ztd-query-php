@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * DEFAULT. The facts follow PG-ASSIGNMENT-001.
  * Source: https://www.postgresql.org/docs/17/sql-update.html.
  *
- * @visibility public
- * @example Reading an assignment
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE t SET a = DEFAULT');
- *     $update->statement->assignments[0]->value instanceof \SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest // => true
+ * @visibility SqlSemantics
  */
 final class Assignment implements Node
 {

@@ -29,10 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * visible.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-EXCLUDE.
  *
- * @visibility public
- * @example Reading an exclusion constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH OPERATOR(pg_catalog.&&)) WHERE (c IS NOT NULL))');
- *     $create->toString() // => 'CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH OPERATOR (pg_catalog.&&)) WHERE (c IS NOT NULL))'
+ * @visibility SqlSemantics
  */
 final class Exclusion implements Constraint
 {

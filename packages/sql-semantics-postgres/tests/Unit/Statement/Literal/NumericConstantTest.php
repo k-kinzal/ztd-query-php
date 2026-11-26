@@ -17,6 +17,12 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
 #[Small]
 final class NumericConstantTest extends TestCase
 {
+    public function testIntegerDigitsReadsTheExactTokenValue(): void
+    {
+        self::assertSame('2147483648', (new NumericConstant('0x8000_0000'))->integerDigits());
+        self::assertNull((new NumericConstant('1e12'))->integerDigits());
+    }
+
     public function testRenderWritesTheTextAsWritten(): void
     {
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));

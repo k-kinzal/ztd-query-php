@@ -12,7 +12,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\ColumnTyping;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\DerivedAffinity;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
@@ -20,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ColumnTyping::class)]
 #[Medium]
@@ -39,9 +39,9 @@ final class ColumnTypingTest extends TestCase
 
     public function testTextReadsTheDeclaredTypeAColumnReferenceCarries(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (n, e "", t VARCHAR(5), i INTEGER)');
-        $query = $semantics->inspect('SELECT (t), t COLLATE nocase, n, e, rowid, (SELECT t FROM s UNION ALL SELECT i FROM s), 1, "t", zz FROM s', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE s (n, e "", t VARCHAR(5), i INTEGER)');
+        $query = $semantics->diagnose('SELECT (t), t COLLATE nocase, n, e, rowid, (SELECT t FROM s UNION ALL SELECT i FROM s), 1, "t", zz FROM s', [$table]);
         $select = $query->statement;
         $rule = new ColumnTyping();
 
@@ -52,9 +52,9 @@ final class ColumnTypingTest extends TestCase
 
     public function testResolvedReadsTheRightmostArmThroughADerivedTableAndACommonTable(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (t VARCHAR(5), t2 NVARCHAR(9))');
-        $query = $semantics->inspect('WITH c AS (SELECT t AS x FROM s UNION ALL SELECT t2 FROM s) SELECT d.x, c.x, s.t FROM (SELECT t AS x FROM s UNION ALL SELECT t2 FROM s) AS d, c, s', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE s (t VARCHAR(5), t2 NVARCHAR(9))');
+        $query = $semantics->diagnose('WITH c AS (SELECT t AS x FROM s UNION ALL SELECT t2 FROM s) SELECT d.x, c.x, s.t FROM (SELECT t AS x FROM s UNION ALL SELECT t2 FROM s) AS d, c, s', [$table]);
         $rule = new ColumnTyping();
         $derived = $query->field(0)->resolution;
         $common = $query->field(1)->resolution;
@@ -70,9 +70,9 @@ final class ColumnTypingTest extends TestCase
 
     public function testLeftmostReadsTheLeftmostArmOfADefiningQuery(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (t VARCHAR(5), t2 NVARCHAR(9))');
-        $query = $semantics->inspect('SELECT t AS x FROM s UNION ALL SELECT t2 FROM s', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE s (t VARCHAR(5), t2 NVARCHAR(9))');
+        $query = $semantics->diagnose('SELECT t AS x FROM s UNION ALL SELECT t2 FROM s', [$table]);
         $compound = $query->statement;
 
         self::assertInstanceOf(Compound::class, $compound);
@@ -93,10 +93,10 @@ final class ColumnTypingTest extends TestCase
 
     public function testArmReadsAnExpandedStarAndARowValue(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (t VARCHAR(5))');
-        $query = $semantics->inspect('SELECT * FROM s', [$table]);
-        $rows = $semantics->inspect('VALUES (1)');
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE s (t VARCHAR(5))');
+        $query = $semantics->diagnose('SELECT * FROM s', [$table]);
+        $rows = $semantics->diagnose('VALUES (1)');
         $values = $rows->statement;
         $select = $query->statement;
         $rule = new ColumnTyping();
@@ -111,9 +111,9 @@ final class ColumnTypingTest extends TestCase
 
     public function testFieldReadsTheExpressionOrTheColumnAnExpandedStarExposes(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (t VARCHAR(5))');
-        $query = $semantics->inspect('SELECT *, (t), 1 FROM s', [$table]);
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE s (t VARCHAR(5))');
+        $query = $semantics->diagnose('SELECT *, (t), 1 FROM s', [$table]);
         $rule = new ColumnTyping();
 
         self::assertSame('VARCHAR(5)', $rule->field($query->field(0), $query->facts));

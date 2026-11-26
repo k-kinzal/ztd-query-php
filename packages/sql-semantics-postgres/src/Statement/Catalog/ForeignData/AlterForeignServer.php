@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
  * `has_version`. At least a version or an option change is written.
  * Source: https://www.postgresql.org/docs/17/sql-alterserver.html. Status: Implemented.
  *
- * @visibility public
- * @example Clearing the version of a server
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s VERSION NULL');
- *     $operation->toString() // => 'ALTER SERVER s VERSION NULL'
+ * @visibility SqlSemantics
  */
 final class AlterForeignServer implements Statement
 {

@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  * PG-INSERT-001.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html. Status: Implemented.
  *
- * @visibility public
- * @example Inserting the defaults
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('insert into t default values returning *');
- *     $insert->toString() // => 'INSERT INTO t DEFAULT VALUES RETURNING *'
+ * @visibility SqlSemantics
  */
 final class InsertDefaults implements Modification
 {

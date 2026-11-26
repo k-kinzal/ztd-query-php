@@ -27,18 +27,13 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * context does not declare is a diagnostic, unless IF EXISTS is written, in
  * which case it is the resolution AbsentRelation. `DROP TABLE` of a declared
  * view and `DROP VIEW` of a declared table are diagnostics, with or without
- * IF EXISTS (SQLITE-RELATION-KIND-001). Indexes and triggers are not part of a declaration
- * context; their names are kept unresolved.
+ * IF EXISTS (SQLITE-RELATION-KIND-001). Index and trigger removals resolve
+ * at the complete IR boundary using the catalog's explicit declarations.
  * Source: https://sqlite.org/lang_droptable.html, https://sqlite.org/lang_dropview.html,
  * https://sqlite.org/lang_dropindex.html, https://sqlite.org/lang_droptrigger.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resolving the dropped table to its declaration
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a)');
- *     $drop = $semantics->analyze('DROP TABLE IF EXISTS main.t', [$table]);
- *     [$drop->statement->ifExists, $drop->facts->relation($drop->statement)->table->table === $table->declarations()[0]] // => [true, true]
+ * @visibility SqlSemantics
  */
 final class Drop implements Statement
 {

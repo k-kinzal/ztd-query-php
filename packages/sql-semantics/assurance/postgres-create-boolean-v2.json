@@ -1,0 +1,62 @@
+{
+  "revision": "SemanticsIR/postgres-create-boolean-2",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "UTF-8, standard_conforming_strings on, pg_catalog first, stock builtin Boolean input and default heap storage.",
+  "extends": ["postgres-create-boolean-v1.json", "server-create-table-v2.json", "postgres-create-signed-defaults-v1.json", "postgres-boolean-tests-v1.json"],
+  "constructors": {
+    "BooleanStorage": {
+      "type": "Schema/BooleanStorage",
+      "role": "The exact builtin PostgreSQL Boolean storage of one ordinary column.",
+      "structure": "The singleton pg_catalog.bool storage identity. The owning column carries nullability and its optional Boolean default.",
+      "conditions": "Match the builtin identity during analysis. Admit a checked Boolean or SQL NULL default, or omit the default.",
+      "meaning": "Store a native Boolean truth value or NULL and apply the owning required-column rule.",
+      "sql": "Write pg_catalog.bool and the owning column's exact TRUE, FALSE, NULL or absent DEFAULT clause."
+    }
+  },
+  "existingRoles": ["Schema/CreateTable", "Schema/TableColumn", "BooleanLiteral", "NullLiteral"],
+  "structure": "The ordered native column layout includes exact Boolean storage, nullable policy and an absent, Boolean or SQL NULL default. The published default owns its resolved Boolean value.",
+  "conditions": "Bind BOOLEAN or the builtin bool identity. A Boolean literal or SQL NULL is admitted. An untyped string literal assigned to bool, or explicitly typed with the builtin bool cast, resolves through the stock Boolean input language. Trim only ASCII whitespace and fold ASCII case. Reject malformed string inputs, incompatible typed values and arbitrary expressions before publishing a Boolean declaration.",
+  "meaning": "A decoded literal or builtin input conversion determines the stored default truth value during declaration. Default insertion returns its native Boolean type and value or SQLSTATE 23502 when the required field would be NULL. Target occupancy and PostgreSQL transactional DDL follow the base contract.",
+  "sql": "Use pg_catalog.bool, retain field order and required policy, and render the resolved constant with TRUE or FALSE, or the NULL or missing role.",
+  "observations": ["Ordered declared names, native Boolean storage and nullability", "Catalog default and exact Boolean type and value in the inserted row", "Required NULL mismatch, target occupancy and transaction marker and rollback"],
+  "finite": {
+    "defaults": ["absent", "null", "false", "true"],
+    "nullable": [false, true],
+    "ifNotExists": [false, true],
+    "occupied": [false, true],
+    "layout": ["single", "with-signed", "with-text"],
+    "identities": 96,
+    "completeness": "Recover the observed native Boolean policy, default, sibling layout and existence policy. Independently observe occupancy and require each combination exactly once."
+  },
+  "inputLanguage": {
+    "true": ["t", "tr", "tru", "true", "y", "ye", "yes", "on", "1"],
+    "false": ["f", "fa", "fal", "fals", "false", "n", "no", "of", "off", "0"],
+    "padding": ["", " ", "\t\n\r\f\u000b"],
+    "spelling": ["lowercase", "uppercase-or-escape-quote"],
+    "paths": ["implicit-assignment", "qualified-builtin-cast"],
+    "identities": 228,
+    "completeness": "Build every token, padding, case and source-path tuple. Check the emitted and original SQL, the admitted Boolean row and the expected identity count. Use an explicit escape quote for the alternate spelling of numeric textual tokens. This makes all 228 SQL requests distinct. Recover each identity from the original request and compare against the observed Boolean role."
+  },
+  "analysis": ["Keyword TRUE on BOOLEAN", "Keyword FALSE on builtin bool", "Required NULL default", "Typed NULL default", "Typed bool cast of Boolean TRUE", "A resolved BOOL field beside an int8 source default"],
+  "exploration": {"seeds": [2837, 27611, 62549], "casesPerSeed": 20, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Explore all default and nullable cases, both bool values, deeper mixed column order, both occupancy states, and explicit and absent defaults."},
+  "negative": ["Boolean in a different storage role", "Signed literal in Boolean storage", "Ambiguous Boolean prefix o", "Invalid Boolean token 00", "Unrecognized Unicode whitespace", "Typed non-Boolean string cast", "A nonliteral Boolean expression outside the declaration role"],
+  "faults": ["Reverse a Boolean literal", "Drop a Boolean default", "Discard the required field policy", "Reverse mixed column order"],
+  "evidence": {
+    "P01": "Bind the exact storage identity and preserve resolved truth value, NULL and absent default.",
+    "P02": "Enforce closed names, types and default roles.",
+    "P03": "Keep the resolved Boolean value and native storage only.",
+    "P04": "Combine owned typed fields and observe their ordered native effect.",
+    "P05": "Use immutable enums, truth values and owned lists.",
+    "P06": "Compare native typed default rows, exact effects and input acceptance.",
+    "Q01": "Reject known invalid default roles and malformed Boolean inputs.",
+    "Q02": "Exhaust both specified finite grids in both native releases.",
+    "Q03": "Observe mixed signed, text and Boolean field order and NULL interactions.",
+    "Q04": "Compare emitted and analyzed SQL with independently determined Boolean assignment and schema effects.",
+    "Q05": "Tie the checked native source, proof contracts and distribution probe to the observed evidence."
+  },
+  "open": ["General Boolean default expressions", "Boolean values assigned to other target types", "Additional casts, overrides or storage options", "Boolean references in other statement roles"],
+  "trust": ["Stock PostgreSQL bool input rules and ASCII primitives", "Pinned builtin type and storage identity", "Independent native catalog, data and failure observations", "Disposable PostgreSQL fixtures"],
+  "sources": ["https://www.postgresql.org/docs/17/datatype-boolean.html", "https://www.postgresql.org/docs/17/sql-createtable.html"]
+}

@@ -14,10 +14,10 @@ final class CreateStatisticsTest extends TestCase
 {
     public function testDeriveStatementResolvesTheKeysInTheFromItems(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE STATISTICS s ON a, (b + zz) FROM t', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE STATISTICS s ON a, (b + zz) FROM t', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -25,16 +25,16 @@ final class CreateStatisticsTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE STATISTICS IF NOT EXISTS x.s (ndistinct, mcv) ON a, (a + b), lower(c) FROM t', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE STATISTICS IF NOT EXISTS x.s (ndistinct, mcv) ON a, (a + b), lower(c) FROM t', []);
         self::assertSame('CREATE STATISTICS IF NOT EXISTS x.s (ndistinct, mcv) ON a, (a + b), lower(c) FROM t', $statement->toString());
     }
 
     public function testDeriveStatementReportsAView(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a'), $semantics->inspect('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['cannot define statistics for relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE STATISTICS st ON a, (a + 1) FROM v', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE STATISTICS st ON a, (a + 1) FROM m', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a'), $semantics->diagnose('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['cannot define statistics for relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE STATISTICS st ON a, (a + 1) FROM v', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE STATISTICS st ON a, (a + 1) FROM m', $context)->facts->diagnostics));
     }
 }

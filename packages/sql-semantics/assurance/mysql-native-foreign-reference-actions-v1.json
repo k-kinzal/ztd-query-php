@@ -1,0 +1,73 @@
+{
+  "revision": "SemanticsIR/mysql-native-foreign-reference-actions-1",
+  "approval": "pending-human-review",
+  "language": {
+    "dialect": "MySql",
+    "releases": [
+      "5.6.51",
+      "5.7.44",
+      "8.0.44",
+      "8.1.0",
+      "8.2.0",
+      "8.3.0",
+      "8.4.7",
+      "9.0.1",
+      "9.1.0"
+    ],
+    "conditions": "Ordinary persistent InnoDB with stock foreign_key_checks=1, utf8mb4 and empty sql_mode."
+  },
+  "rules": {
+    "scope": "One ordered collection of child/parent column pairs has one update action and one delete action. Its MATCH metadata is independent of those event roles.",
+    "legacyMatch": "On MySQL 5.6 and 5.7 explicit SIMPLE, FULL and PARTIAL discard both written actions before native validity checks. The result has no MATCH metadata and both effects use RESTRICT.",
+    "defaults": "Absent actions default to RESTRICT on MySQL 5.6 and 5.7 and NO ACTION on MySQL 8.0 and later. InnoDB checks references immediately for both metadata choices.",
+    "modernMatch": "On MySQL 8.0 and later explicit FULL and PARTIAL retain their exact metadata. SIMPLE has absent-match metadata. All preserve the effective update and delete actions.",
+    "nullAdmission": "A child row with at least one NULL field in the ordered reference passes the native parent-row check under every admitted MATCH mode. A wholly non-null child tuple looks up all parent fields in their checked order.",
+    "setNull": "An effective SET NULL action requires every child field to admit NULL and sets the complete child tuple to NULL for matching rows.",
+    "cascade": "A matching parent update propagates the resulting parent key values into the ordered referencing child fields. A matching parent deletion removes referencing child rows.",
+    "setDefault": "On MySQL 5.6 and 5.7 an effective SET DEFAULT fails static native admission. MySQL 8.0 and later admit and report SET DEFAULT. Under the measured stock InnoDB profile the registered change on a referenced parent row is refused and leaves both relation rows unchanged.",
+    "profile": "With foreign_key_checks=1, addition accepts DEFAULT and COPY with DEFAULT, SHARED or EXCLUSIVE locks. INPLACE, INSTANT and LOCK=NONE do not produce a complete addition value."
+  },
+  "observations": [
+    "Catalog MATCH_OPTION, UPDATE_RULE and DELETE_RULE for each exact named constraint",
+    "Rows read through ordered nullable pairs after INSERT, parent UPDATE and parent DELETE",
+    "Physical child keys, affected relation coordinates and exact static or state-dependent diagnostics"
+  ],
+  "faults": [
+    "Erase modern MATCH metadata",
+    "Reuse the update action for a delete",
+    "Accept SET NULL for a required child field",
+    "Treat SET DEFAULT as copying the child column default",
+    "Make partial-null admission use the written MATCH mode",
+    "Drop pre-8.0 MATCH action normalization"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/constraint-foreign-key.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html"
+  ],
+  "sourcePriority": "Use the native observations for exact release behavior where a broad manual statement and a stock release disagree. The executable evidence must check every registered release.",
+  "authorCalibrationSha256": {
+    "initial": {
+      "5.6.51": "0ade9a3c91490724112bcd5fbc63c9bc8940eabcb5fce79ed6911be0012a2593",
+      "5.7.44": "7a904faac6d2c8cc2f692cff716a4d9c8289d0276f697e4d1c72190cc9009ea9",
+      "8.0.44": "e922e7cbcac5ce08451ea77d7098ef690d8eb7992098c55838289be1ae25fadd",
+      "8.4.7": "6ad9ba2cae41afe087f26fa5ff081a1ffebf10936f207e0e5dbfcc1c83e4caad",
+      "9.1.0": "e0a19863c9b3eea0c9ebf391ff74eb574fee15af7b8c97fb2d0719df08818adf"
+    },
+    "referencePairs": {
+      "5.6.51": "ab74c03787b62fcee727bf3a763a7eb3113902a5b618db65031fd820ce69e5ef",
+      "5.7.44": "4d555ebe739af064b4923990ea7651f67623dc11fd9a55671fdaea687ca5afcc",
+      "8.0.44": "a1abedb16a63b30e5a364bf3d6fd34846f36d95d36c1e967f72f0235551754b5",
+      "8.1.0": "a1abedb16a63b30e5a364bf3d6fd34846f36d95d36c1e967f72f0235551754b5",
+      "8.4.7": "6e2336f565af8df24c7ece56ebac816ed8af996803742811734ab594f55fdc91"
+    },
+    "setDefault": {
+      "5.6.51": "1b7bca57b4e11ddeeef5fbe0a319f65e21034c1f6206fe050be639156daa248c",
+      "8.0.44": "9d66d2d305264ea103cea4e4e5f8a896018985d469572970005b15eb5a7dfc90"
+    }
+  },
+  "pending": [
+    "Full SQL grammar, generated fields, cascading cycles and cross-release catalog metadata outside the named laws",
+    "Human confirmation of the independent oracle, native fixture interpretation and protected acceptance"
+  ]
+}

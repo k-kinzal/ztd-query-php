@@ -12,11 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A name several visible slots have at the same precedence; none is chosen.
  *
- * @visibility public
- * @example Keeping every candidate of an ambiguous column
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE u (a INTEGER)')]);
- *     $semantics->analyze('SELECT a FROM t, u', $declarations) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a is ambiguous.
+ * @visibility SqlSemantics
  */
 final class AmbiguousColumn implements Resolution, Diagnostic
 {

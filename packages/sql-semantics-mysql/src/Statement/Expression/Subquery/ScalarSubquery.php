@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
  * https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Comparing with a scalar subquery
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = (SELECT 1)');
- *     $query->statement->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery // => true
+ * @visibility SqlSemantics
  */
 final class ScalarSubquery implements Scalar
 {

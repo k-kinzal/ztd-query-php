@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * Source: https://www.postgresql.org/docs/17/sql-prepare-transaction.html, https://www.postgresql.org/docs/17/sql-commit-prepared.html,
  * https://www.postgresql.org/docs/17/sql-rollback-prepared.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the identifier of a prepared transaction
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("PREPARE TRANSACTION 'tx-1'");
- *     [$operation->statement->identifier->value, $operation->toString()] // => ['tx-1', "PREPARE TRANSACTION 'tx-1'"]
+ * @visibility SqlSemantics
  */
 final class PreparedTransaction implements Statement
 {

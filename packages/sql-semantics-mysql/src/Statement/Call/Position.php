@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_position.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading both operands of POSITION()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT POSITION('b' IN 'abc')");
- *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
+ * @visibility SqlSemantics
  */
 final class Position implements Scalar
 {

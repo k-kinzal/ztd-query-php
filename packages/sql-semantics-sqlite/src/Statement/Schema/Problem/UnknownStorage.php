@@ -15,9 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
  * `virtual` and `stored` and rejects every other word, a quoted one included.
  * Source: https://sqlite.org/gencol.html.
  *
- * @visibility public
- * @example Reporting an unknown storage word
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b AS (a) PERSISTED)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Generated column storage PERSISTED is neither VIRTUAL nor STORED.
+ * @visibility SqlSemantics
  */
 final class UnknownStorage implements Diagnostic
 {

@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(With::class)]
 #[Medium]
@@ -20,8 +20,8 @@ final class WithTest extends TestCase
 {
     public function testBindSeesEarlierTablesAndTheTableItself(): void
     {
-        $semantics = new Semantics();
-        $operation = $semantics->inspect('WITH RECURSIVE a AS (SELECT 1 AS n), b AS (SELECT n FROM a UNION ALL SELECT n + 1 FROM b WHERE n < 3) SELECT n FROM b', []);
+        $semantics = new Inspection();
+        $operation = $semantics->diagnose('WITH RECURSIVE a AS (SELECT 1 AS n), b AS (SELECT n FROM a UNION ALL SELECT n + 1 FROM b WHERE n < 3) SELECT n FROM b', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Known::class, $operation->field('n')->type);
@@ -30,7 +30,7 @@ final class WithTest extends TestCase
 
     public function testBindReportsATableDefinedTwice(): void
     {
-        $operation = (new Semantics())->inspect('WITH a AS (SELECT 1), A AS (SELECT 2) SELECT 3');
+        $operation = (new Inspection())->diagnose('WITH a AS (SELECT 1), A AS (SELECT 2) SELECT 3');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
@@ -39,7 +39,7 @@ final class WithTest extends TestCase
 
     public function testRenderWritesTheKeywordsAndTheTables(): void
     {
-        self::assertSame('WITH RECURSIVE a AS (SELECT 1), b AS (SELECT 2) SELECT 3', (new Semantics())->inspect('with recursive a as (select 1), b as (select 2) select 3')->toString());
+        self::assertSame('WITH RECURSIVE a AS (SELECT 1), b AS (SELECT 2) SELECT 3', (new Inspection())->diagnose('with recursive a as (select 1), b as (select 2) select 3')->toString());
     }
 
     public function testAClauseWithoutTablesIsRejected(): void

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  * of the statement. The facts follow MYSQL-PROGRAM-CONDITIONS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/signal.html.
  *
- * @visibility public
- * @example Reading the statement
- *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'");
- *     [$signal->statement->condition->state->value, $signal->toString()] // => ['45000', "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no'"]
+ * @visibility SqlSemantics
  */
 final class Signal implements Statement, ProgramStatement
 {

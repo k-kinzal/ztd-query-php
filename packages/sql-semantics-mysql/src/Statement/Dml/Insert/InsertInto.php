@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
  * correlation name. The keyword INTO is optional and always written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html, https://dev.mysql.com/doc/refman/8.4/en/replace.html.
  *
- * @visibility public
- * @example Reading the head of a REPLACE
- *     $replace = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('REPLACE LOW_PRIORITY t VALUES (1)');
- *     [$replace->statement->into->replace, $replace->statement->into->priority, $replace->toString()] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, 'REPLACE LOW_PRIORITY INTO t VALUES (1)']
+ * @visibility SqlSemantics
  */
 final class InsertInto implements Node
 {

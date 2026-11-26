@@ -1,0 +1,74 @@
+{
+  "revision": "SemanticsIR/sqlite-default-boundaries-2",
+  "approval": "pending-human-review",
+  "scope": "Resolve and render literal defaults and NOT NULL policies and enforce the combined table budget.",
+  "rules": {
+    "Schema/CreateTable::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'A CREATE TABLE needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A CREATE TABLE cannot use the reserved SQLite namespace.');",
+        "$checked = Check::listOf($columns, TableColumn::class, 'A CREATE TABLE needs a nonempty ordered column list.', 1);",
+        "Check::input(count($checked) <= 2000, 'A CREATE TABLE can have at most 2000 columns in this profile.');",
+        "$seen = [];",
+        "$defaults = [];",
+        "foreach ($checked as $column) {",
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'A CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "    if ($column->default !== null) {",
+        "        $defaults[] = [$column->default, 0, 0];",
+        "    }",
+        "}",
+        "(new ExpressionScope())->check([], $defaults);",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Schema/TableColumn::toString": {
+      "common": [
+        "$type = $this->type === DeclaredDatatypeName::Untyped ? '' : ' ' . $this->type->value;",
+        "",
+        "$default = $this->default === null ? '' : ' DEFAULT ' . (new SelectSql())->expression($this->default, null);",
+        "",
+        "$constraint = match ($this->notNull) {",
+        "    null => '',",
+        "    NotNullConflict::Abort => ' NOT NULL',",
+        "    NotNullConflict::Fail => ' NOT NULL ON CONFLICT FAIL',",
+        "    NotNullConflict::Ignore => ' NOT NULL ON CONFLICT IGNORE',",
+        "    NotNullConflict::Replace => ' NOT NULL ON CONFLICT REPLACE',",
+        "    NotNullConflict::Rollback => ' NOT NULL ON CONFLICT ROLLBACK',",
+        "};",
+        "",
+        "return $this->name->quoted() . $type . $constraint . $default;"
+      ]
+    },
+    "Schema/CreateColumnLowering::lower": {
+      "common": [
+        "$notNull = null;",
+        "$default = null;",
+        "foreach ($column->constraints as $constraint) {",
+        "    if ($constraint instanceof NotNull) {",
+        "        Check::input($notNull === null, 'A checked CREATE TABLE column can declare one NOT NULL constraint.');",
+        "        $notNull = $constraint->conflict === null ? NotNullConflict::Abort : NotNullConflict::from($constraint->conflict->value);",
+        "        continue;",
+        "    }",
+        "    if ($constraint instanceof DefaultLiteral || $constraint instanceof DefaultExpression || $constraint instanceof DefaultWord) {",
+        "        Check::input($default === null, 'A checked CREATE TABLE column can declare one default.');",
+        "        $default = (new DefaultLowering())->lower($constraint, $operation);",
+        "        continue;",
+        "    }",
+        "",
+        "    throw new InvalidConstruction('This column constraint has no complete CREATE TABLE representation.');",
+        "}",
+        "$type = DeclaredDatatypeName::Untyped;",
+        "if ($column->type !== null) {",
+        "    Check::input(count($column->type->words) === 1 && $column->type->arguments === [], 'The declared type must be one supported type name.');",
+        "    $spelling = strtr($column->type->text(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');",
+        "    $type = DeclaredDatatypeName::tryFrom($spelling);",
+        "    Check::input($type !== null && $type !== DeclaredDatatypeName::Untyped, 'This declared type has no complete CREATE TABLE representation.');",
+        "}",
+        "",
+        "return new TableColumn(new Identifier($column->name->value), $type, $notNull, $default);"
+      ]
+    }
+  }
+}

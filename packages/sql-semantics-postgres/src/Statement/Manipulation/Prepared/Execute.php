@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Placement;
  * it.
  * Source: https://www.postgresql.org/docs/17/sql-execute.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a run of a prepared statement
- *     $execute = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("EXECUTE p (1, 'x')");
- *     [count($execute->statement->parameters), $execute->shape()->complete()] // => [2, false]
+ * @visibility SqlSemantics
  */
 final class Execute implements Statement
 {

@@ -1,0 +1,184 @@
+{
+  "revision": "SemanticsIR/postgres-table-rename-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "mode": "Native PostgreSQL effects for permanent ordinary tables and their columns, in case-sensitive resolved schemas. Use stock catalog naming rules, UTF-8 and the native transaction policy.",
+  "extends": [
+    "server-drop-table-v1.json",
+    "server-create-table-v2.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Alter/RenameTable",
+    "Schema/Alter/RenameColumn"
+  ],
+  "constructors": {
+    "RenameTable": {
+      "type": "Schema/Alter/RenameTable",
+      "role": "A name change for one persistent ordinary table in its own resolved schema.",
+      "structure": "An absolute TableName, an exact destination Identifier, the missing-target policy and the native release.",
+      "conditions": "A known target is a persistent base-table identity. A complete analysis catalog can establish an optional absence for a known explicit schema. A required same-name change is intrinsically invalid. An optional same-name change preserves the missing-owner and collision effects; conflicts with an independently existing destination are native state-dependent failures.",
+      "meaning": "Replace only the relation name. Its identity, descendants, stored rows, dependent views and column positions survive. An optional absent target is skipped. PostgreSQL's parsed ONLY flag has no effect on a table name change.",
+      "sql": "Emit ALTER TABLE with its optional IF EXISTS, absolute old name and ordinary RENAME TO with the exact new name."
+    },
+    "RenameColumn": {
+      "type": "Schema/Alter/RenameColumn",
+      "role": "A change to one user-defined named column in a persistent ordinary table, with the native descendant policy.",
+      "structure": "An absolute TableName, old and new user-column identifiers, descendant mode, missing-target policy and native release.",
+      "conditions": "The old column of a known target must resolve to one declared column, and the new name must avoid system columns and known duplicates. Optional known absence follows the table identity rule. A required missing target, missing old column and incompatible child metadata are classified at the analysis or evaluation boundary that has the facts. An optional same-name change succeeds for a known absent owner and observes the exact native failure if the owner later exists.",
+      "meaning": "Rename the exact attribute and apply native inheritance propagation or ONLY rejection. Keep ordinals, storage, dependent view field names and column values. The new name is local to the relation.",
+      "sql": "Emit exact absolute table and qualified descendant mode, then RENAME COLUMN with both identifiers."
+    }
+  },
+  "existingRoles": [
+    "Schema/TableName",
+    "Identifier"
+  ],
+  "structure": "Separate named table and column roles fix the operated object and required names without retaining a catalog description.",
+  "conditions": "Use permanent ordinary targets with exact names. Forward native IF EXISTS and ONLY where they influence observable effects. Check complete analysis facts before publishing a known relation or optional absolute absence.",
+  "meaning": "Native ALTER updates the catalog in place, keeps data and references, follows the recorded inheritance rule and participates in rollback.",
+  "sql": "Quote every identifier at its semantic position.",
+  "environment": {
+    "creationSchema": "public",
+    "writtenSearchPath": "public",
+    "effectiveSearchPath": [
+      "pg_catalog",
+      "public"
+    ],
+    "encoding": "UTF8",
+    "standardConformingStrings": "on"
+  },
+  "observations": [
+    "Exact native relation kind, absolute name, stable object identity, ordered column names and native type IDs",
+    "Retained own rows, inherited rows and dependent view result names and values",
+    "Known optional absence, conflicting destination, and ONLY rejection with descendants compared as distinct state effects",
+    "Same-named cross-schema decoy and exact transaction state and rollback"
+  ],
+  "finite": {
+    "table": {
+      "fixture": [
+        "absent",
+        "plain",
+        "inherited"
+      ],
+      "target": [
+        "main",
+        "decoy"
+      ],
+      "optional": [
+        false,
+        true
+      ],
+      "destination": [
+        "fresh",
+        "occupied"
+      ],
+      "identities": 24
+    },
+    "column": {
+      "fixture": [
+        "absent",
+        "plain",
+        "inherited"
+      ],
+      "target": [
+        "main",
+        "decoy"
+      ],
+      "optional": [
+        false,
+        true
+      ],
+      "destination": [
+        "fresh",
+        "occupied"
+      ],
+      "only": [
+        false,
+        true
+      ],
+      "identities": 48
+    },
+    "completeness": "Independently recover each axis from the observed complete value and native fixture before evaluating it."
+  },
+  "analysis": [
+    "A resolved unqualified ordinary table",
+    "A table rename with ONLY has the same native effect",
+    "A quoted table destination",
+    "An optional explicit absent table",
+    "A resolved ordinary column",
+    "An explicit ONLY column rename",
+    "An inherited rename without ONLY follows the descendants",
+    "An optional explicit absent column owner",
+    "An optional explicit absent table renamed to itself",
+    "An optional explicit absent column renamed to itself"
+  ],
+  "negative": [
+    "Direct identical table target and destination without IF EXISTS",
+    "Direct identical column identifiers without IF EXISTS",
+    "Direct system column source",
+    "Direct system column destination",
+    "Unqualified optional absent target without an exact schema",
+    "Required absent table",
+    "Wrong known relation kind",
+    "Missing declared column",
+    "Known duplicate destination column",
+    "Unsupported constraint rename"
+  ],
+  "exploration": {
+    "seeds": [
+      769,
+      11827,
+      62341
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary table and column roles, distinct name spellings, absolute identities, inheritance, collisions, absence, descendant policies and both protected fixture witnesses."
+  },
+  "faults": [
+    "Redirect the absolute relation to a decoy",
+    "Remove the optional absence policy",
+    "Drop ONLY from a column rename",
+    "Reverse column operand roles",
+    "Use a different admitted destination",
+    "Admit an inherently invalid same-name rename"
+  ],
+  "evidence": {
+    "P01": "Fix the absolute target, operation and both name roles.",
+    "P02": "Check placement, system names, direct distinctness and static relation and column lookup.",
+    "P03": "Retain value identifiers and explicit native choices.",
+    "P04": "Compose column and relation effects from a resolved identity and native propagation policy.",
+    "P05": "Require final immutable types and the shared checked name snapshot.",
+    "P06": "Compare exact dependent effects of emitted fully quoted SQL against native behavior.",
+    "Q01": "Audit the shape of each constructor and rejection boundary.",
+    "Q02": "Require every fixed identity and independently specified analyzed request.",
+    "Q03": "Evaluate catalog and live data effects independently, including propagation and transaction state.",
+    "Q04": "Compare native resulting metadata, data, exact failures and rollback.",
+    "Q05": "Tie observers, replay and both installed Composer layouts to the actual loaded PHP."
+  },
+  "open": [
+    "Partition-specific cases, temporary targets, foreign tables and object or constraint renames",
+    "Authorization checks outside the disposable ordinary native fixture",
+    "NOTICE delivery other than the required no-op effect"
+  ],
+  "trust": [
+    "Same interpretation of the absolute relation and column names",
+    "Native PostgreSQL and isolated typed catalog observer",
+    "Fixed independently selected verifier and exact distributed PHP"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-altertable.html",
+    "https://www.postgresql.org/docs/17/sql-altertable.html"
+  ],
+  "amends": {
+    "file": "postgres-table-rename-v1.json",
+    "sha256": "9001aae3002e5866ba13acf132c314519227dc99396b90fb5609e1ed58034a2b",
+    "change": "A required same-name request always fails. An optional same-name request can succeed when the owner is absent. Add observed admission for both optional placements and keep the required negatives."
+  }
+}

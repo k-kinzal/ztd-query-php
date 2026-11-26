@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * ADD_MAPPING or ALTER_MAPPING_FOR_TOKEN: token types and dictionaries in order.
  * Source: https://www.postgresql.org/docs/17/sql-altertsconfig.html. Status: Implemented.
  *
- * @visibility public
- * @example Adding a mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple');
- *     [count($operation->statement->tokens), $operation->toString()] // => [2, 'ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple']
+ * @visibility SqlSemantics
  */
 final class MapTextSearchTokens implements Statement
 {

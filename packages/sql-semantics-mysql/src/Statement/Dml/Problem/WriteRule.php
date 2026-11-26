@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
  * Each case holds the message of the server error it corresponds to.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
- * @example Reading which rule a statement breaks
- *     $values = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('VALUES ROW(DEFAULT)');
- *     $values->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::DefaultOutsideInsert
+ * @visibility SqlSemantics
  */
 enum WriteRule: string
 {

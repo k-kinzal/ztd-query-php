@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(DefaultWord::class)]
 #[Medium]
@@ -32,16 +32,16 @@ final class DefaultWordTest extends TestCase
 
     public function testDeriveConstraintNeverReadsTheWordAsAColumn(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a, b DEFAULT a)', []);
+        $operation = (new Inspection())->inspect('CREATE TABLE t (a, b DEFAULT a)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheQuotingThatDecidesTheMeaning(): void
     {
-        $semantics = new Semantics();
-        $truth = $semantics->analyze('create table t (a default true)');
-        $text = $semantics->analyze('create table t (a default "true")');
+        $semantics = new Inspection();
+        $truth = $semantics->inspect('create table t (a default true)');
+        $text = $semantics->inspect('create table t (a default "true")');
         $statement = $truth->statement;
         $other = $text->statement;
 

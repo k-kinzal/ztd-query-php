@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Query\Into;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDumpfile;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(IntoDumpfile::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class IntoDumpfileTest extends TestCase
 {
     public function testRenderWritesTheFile(): void
     {
-        $operation = (new Semantics())->analyze("select a from t into dumpfile 'a.bin'");
+        $operation = (new Inspection())->inspect("select a from t into dumpfile 'a.bin'");
 
         self::assertSame("SELECT a FROM t INTO DUMPFILE 'a.bin'", $operation->toString());
         self::assertInstanceOf(Select::class, $operation->statement);

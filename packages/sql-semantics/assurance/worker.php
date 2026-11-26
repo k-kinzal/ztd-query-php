@@ -1,0 +1,1817 @@
+<?php
+
+declare(strict_types=1);
+
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\Count;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\CountComparison;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupKey;
+use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
+use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Attach;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\AttachmentName;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\Detach;
+use SqlSemantics\Platform\Sqlite\Ir\Connection\DetachTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
+use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
+use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Analyze;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagChange;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagName;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\FlagPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Inventory\InventoryPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\CatalogTable;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\EmptyIndexMetadata;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheAmount;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\CacheSpill;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCachePages;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\DefaultCacheSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillMode;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Cache\SpillThreshold;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderCookie;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderInteger;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderPragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Header\HeaderReadField;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityAudit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Integrity\IntegrityLimit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\ForeignKeyAudit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspection;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\IndexInspectionKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\MissingMetadataTable;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspection;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableInspectionKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Metadata\TableListing;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PageLimit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragma;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\PagePragmaKind;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Page\RequestedPageSize;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\AutoVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\IncrementalVacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\PageReclaimLimit;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reclaim\VacuumMode;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\Vacuum;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumDestination;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Vacuum\VacuumRegistrations;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\Reindex;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\IndexTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Maintenance\RelationTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflictHandler;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\ReturnedColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateAssignment;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateConflict;
+use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
+use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundStep;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\AddGeneratedColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\DropMember;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\ColumnDefaultExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\CreateIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\DropIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexReference;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\IndexTerm;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Index\MissingIndex;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropView;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage as GeneratedStorage;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ComparisonSpelling;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\CreateTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\DropTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\MissingTrigger;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerAssignment;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerDelete;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerEquality;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerTargetField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerTargetNullTest;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Mutation\TriggerUpdate;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerReference;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Removal\TriggerVerification;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\RowImage;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaise;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\Program\TriggerRaisePolicy;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerCondition;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerDestination;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerEvent;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsert;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertField;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerInsertRow;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerPlacement;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerTiming;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Trigger\TriggerUpdateName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\View\CreateView;
+use SqlSemantics\Platform\Sqlite\Ir\Select;
+use SqlSemantics\Platform\Sqlite\Ir\TableSource;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\SavepointName;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\Transaction;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionCommand;
+use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Semantics;
+
+$root = $argv[1];
+$overlay = $argv[2] ?? '';
+spl_autoload_register(static function (string $class) use ($root, $overlay): void {
+    foreach (['SqlSemantics\\Platform\\Sqlite\\' => 'sql-semantics-sqlite', 'SqlSemantics\\' => 'sql-semantics', 'SqlParser\\' => 'sql-parser'] as $prefix => $package) {
+        if (str_starts_with($class, $prefix)) {
+            $relative = $package . '/src/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+            $patched = $overlay . '/' . $relative;
+            require $overlay !== '' && is_file($patched) ? $patched : $root . '/packages/' . $relative;
+            return;
+        }
+    }
+});
+
+function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+{
+    return match ($input[0]) {
+        'case' => new CaseExpression(
+            $input[1] === null ? null : operand($input[1]),
+            array_map(static fn (array $branch): CaseBranch => new CaseBranch(operand($branch[0]), operand($branch[1])), $input[2]),
+            $input[3] === null ? null : operand($input[3]),
+        ),
+        'coalesce', 'if-null' => new Coalesce(array_map(
+            static fn (array $value) => $value === ['wrong-argument'] ? new IntegerLiteral('3') : new CoalesceArgument(operand($value)),
+            $input[1],
+        ), $input[0] === 'if-null'),
+        'concat' => new Concatenation(operand($input[1]), operand($input[2])),
+        'pattern' => new PatternTest(
+            PatternKind::from($input[1]),
+            operand($input[3]),
+            operand($input[4]),
+            $input[2],
+            $input[5] === null ? null : operand($input[5])
+        ),
+        'collate' => new CollatedExpression(operand($input[2]), Collation::from($input[1])),
+        'cast' => new CastExpression(
+            CastTarget::from($input[1]),
+            operand($input[2]),
+            !isset($input[3]) ? null : new CastTypeName(is_array($input[3]) ? hex2bin($input[3][0]) : $input[3]),
+        ),
+        'unary' => new UnaryExpression(UnaryKind::from($input[1]), operand($input[2])),
+        'folded-membership' => new FoldedMembership($input[1], array_map(static fn (string $label): Parameter => new Parameter($label), $input[2])),
+        'membership' => new MembershipTest(
+            operand($input[2]),
+            array_map(static fn (array $item) => $item === ['nonmember'] ? new IntegerLiteral('3') : new MembershipItem(operand($item)), $input[3]),
+            $input[1],
+        ),
+        'between' => new BetweenTest(operand($input[2]), operand($input[3]), operand($input[4]), $input[1]),
+        'truth' => new TruthTest(operand($input[3]), $input[1], $input[2]),
+        'integer' => new IntegerLiteral($input[1]),
+        'text' => new TextLiteral($input[1]),
+        'text-bytes' => new TextLiteral(hex2bin($input[1])),
+        'blob' => new BlobLiteral($input[1]),
+        'real' => new RealLiteral($input[1], $input[2], $input[3], $input[4], $input[5] ?? false),
+        'hex' => new HexIntegerLiteral($input[1], $input[2]),
+        'null' => new NullLiteral(),
+        'parameter' => new Parameter($input[1]),
+        'column' => new ColumnReference($input[1], $input[2] ?? 0),
+        'comparison' => new Comparison(ComparisonOperator::from($input[1]), operand($input[2]), operand($input[3])),
+        'logical' => new Logical(LogicalOperator::from($input[1]), operand($input[2]), operand($input[3])),
+        'arithmetic' => new Arithmetic(ArithmeticOperator::from($input[1]), operand($input[2]), operand($input[3])),
+    };
+}
+
+function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
+{
+    return match (true) {
+        $value instanceof CaseExpression => [
+            'case',
+            $value->base === null ? null : observeOperand($value->base),
+            array_map(static fn (CaseBranch $branch): array => [observeOperand($branch->when), observeOperand($branch->then)], $value->branches),
+            $value->otherwise === null ? null : observeOperand($value->otherwise),
+        ],
+        $value instanceof Coalesce => [$value->ifNull ? 'if-null' : 'coalesce', array_map(
+            static fn (CoalesceArgument $argument): array => observeOperand($argument->expression),
+            $value->arguments,
+        )],
+        $value instanceof Concatenation => ['concat', observeOperand($value->left), observeOperand($value->right)],
+        $value instanceof PatternTest => ['pattern', $value->kind->value, $value->negated, observeOperand($value->subject),
+            observeOperand($value->pattern), $value->escape === null ? null : observeOperand($value->escape)],
+        $value instanceof CollatedExpression => ['collate', $value->collation->value, observeOperand($value->operand)],
+        $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand),
+            ...($value->typeName === null ? [] : [$value->typeName->value])],
+        $value instanceof UnaryExpression => ['unary', $value->kind->value, observeOperand($value->operand)],
+        $value instanceof FoldedMembership => ['folded-membership', $value->matches,
+            array_map(static fn (Parameter $binding): string => $binding->label, $value->bindings)],
+        $value instanceof MembershipTest => ['membership', $value->negated, observeOperand($value->operand),
+            array_map(static fn (MembershipItem $item): array => observeOperand($item->expression), $value->items)],
+        $value instanceof BetweenTest => ['between', $value->negated, observeOperand($value->operand), observeOperand($value->lower), observeOperand($value->upper)],
+        $value instanceof TruthTest => ['truth', $value->desired, $value->negated, observeOperand($value->operand)],
+        $value instanceof IntegerLiteral => ['integer', $value->decimal],
+        $value instanceof TextLiteral => ['text', $value->value],
+        $value instanceof BlobLiteral => ['blob', $value->hex],
+        $value instanceof RealLiteral => ['real', $value->whole, $value->fraction, $value->exponent, $value->negative,
+            ...($value->uppercaseExponent ? [true] : [])],
+        $value instanceof HexIntegerLiteral => ['hex', $value->digits, $value->negated],
+        $value instanceof NullLiteral => ['null'],
+        $value instanceof Parameter => ['parameter', $value->label],
+        $value instanceof ColumnReference => $value->source === 0 ? ['column', $value->slot] : ['column', $value->slot, $value->source],
+        $value instanceof Comparison => ['comparison', $value->operator->value, observeOperand($value->left), observeOperand($value->right)],
+        $value instanceof Logical => ['logical', $value->operator->value, observeOperand($value->left), observeOperand($value->right)],
+        $value instanceof Arithmetic => ['arithmetic', $value->operator->value, observeOperand($value->left), observeOperand($value->right)],
+    };
+}
+
+function source(array $specification): TableSource
+{
+    return new TableSource(new Identifier($specification[0]), new Identifier($specification[1]), array_map(
+        static fn (string $name): Identifier => new Identifier($name),
+        $specification[2],
+    ), ExternalRelationKind::from($specification[3] ?? 'table'));
+}
+
+function observeSource(TableSource $source): array
+{
+    return [$source->schema->value, $source->table->value, array_map(
+        static fn (Identifier $name): string => $name->value,
+        $source->columns,
+    ), ...($source->kind === ExternalRelationKind::View ? [$source->kind->value] : [])];
+}
+
+function directLocal(array $input): LocalSource
+{
+    return new LocalSource(directDefinition($input), array_map(
+        static fn (string $name): Identifier => new Identifier($name),
+        $input['names'],
+    ));
+}
+
+function directInput(array $input, array $definitions): TableSource|LocalSource
+{
+    return $input[0] === 'local' ? $definitions[$input[1]] : source($input);
+}
+
+function direct(array $input): Select
+{
+    $definitions = array_map(directLocal(...), $input['locals'] ?? []);
+    $from = $input['source'] === null ? null : directInput($input['source'], $definitions);
+    if (isset($input['local'])) {
+        $from = directLocal($input['local']);
+    }
+    $columns = array_map(
+        static fn (array $field): ResultColumn => new ResultColumn(operand($field[0]), new Identifier($field[1])),
+        $input['columns'],
+    );
+
+    $joins = array_map(static fn (array $step): Join => new Join(
+        JoinKind::from($step[0]),
+        directInput($step[1], $definitions),
+        $step[2] === null ? null : operand($step[2]),
+    ), $input['joins'] ?? []);
+    $orderBy = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy'] ?? []);
+    return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, directLimit($input));
+}
+
+function directDefinition(array $input): ValuesQuery|RecursiveDefinition
+{
+    $anchor = directValues($input);
+    if (!isset($input['step'])) {
+        return $anchor;
+    }
+
+    return new RecursiveDefinition($anchor, array_map(
+        static fn (array $expression): RecursiveColumn|Identifier => $expression[0] === 'identifier'
+            ? new Identifier($expression[1])
+            : new RecursiveColumn(operand($expression)),
+        $input['step'],
+    ), isset($input['where']) ? operand($input['where']) : null, $input['unionAll']);
+}
+
+function directLimit(array $input): ?Limit
+{
+    if (!isset($input['limit'])) {
+        return null;
+    }
+    [$count, $offset, $offsetFirst] = $input['limit'];
+
+    return new Limit(operand($count), $offset === null ? null : operand($offset), $offsetFirst);
+}
+
+function directCompound(array $input): Compound
+{
+    $first = directArm($input['first']);
+    $steps = array_map(
+        static fn (array $step): CompoundStep => new CompoundStep(CompoundOperator::from($step[0]), directArm($step[1])),
+        $input['steps'],
+    );
+    $orders = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy']);
+
+    return new Compound($first, $steps, $orders, directLimit($input));
+}
+
+function directArm(array $input): Select|ValuesQuery
+{
+    return match ($input['operation']) {
+        'select' => direct($input),
+        'values' => directValues($input),
+    };
+}
+
+function observeArm(Select|ValuesQuery $query): array
+{
+    if ($query instanceof ValuesQuery) {
+        return ['operation' => 'values', 'rows' => valueRows($query)];
+    }
+    $observed = observeSelect($query);
+    unset($observed['status'], $observed['profile'], $observed['sql']);
+
+    return ['operation' => 'select', ...$observed];
+}
+
+function observeCompound(Compound $query): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'compound',
+        'profile' => $query->profileId(),
+        'first' => observeArm($query->first),
+        'steps' => array_map(
+            static fn (CompoundStep $step): array => [$step->operator->value, observeArm($step->query)],
+            $query->steps,
+        ),
+        'orderBy' => array_map(static fn (Order $term): array => [$term->position, $term->descending, $term->nullsFirst], $query->orderBy),
+        'limit' => observeLimit($query->limit),
+        'sql' => $query->toString(),
+    ];
+}
+
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateTrigger|DropTrigger|CreateView|RenameTable|RenameColumn|AddColumn|AddGeneratedColumn|DropColumn|CreateIndex|DropIndex|Reindex|Analyze|FlagPragma|InventoryPragma|HeaderPragma|IntegrityAudit|ForeignKeyAudit|IndexInspection|TableInspection|TableListing|PagePragma|AutoVacuum|IncrementalVacuum|CacheSize|DefaultCacheSize|CacheSpill|Vacuum|Attach|Detach|Transaction
+{
+    $path = isset($input['searchPath']) ? new SearchPath(...$input['searchPath']) : null;
+    $semantics = new Semantics(searchPath: $path);
+    $catalogAnalyzer = ($input['foreignProfile'] ?? false)
+        ? new Semantics(parameters: ParameterStyle::Named, searchPath: $path)
+        : $semantics;
+    $context = isset($input['catalogComplete'])
+        ? $catalogAnalyzer->context($input['declarations'], $input['catalogComplete'])
+        : $catalogAnalyzer->context($input['declarations'] ?: null);
+
+    return $semantics->analyze($input['sql'], $context);
+}
+
+function directDelete(array $input): Delete
+{
+    return new Delete(
+        source($input['target']),
+        isset($input['where']) ? operand($input['where']) : null,
+        directReturning($input['returning'] ?? []),
+    );
+}
+
+function observeDelete(Delete $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'delete',
+        'profile' => $value->profileId(),
+        'target' => observeSource($value->target),
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'returning' => observeReturning($value->returning),
+        'sql' => $value->toString(),
+    ];
+}
+
+function directReturning(array $fields): array
+{
+    return array_map(static fn (array $field): ReturnedColumn => new ReturnedColumn(
+        new ColumnReference($field[0][1], $field[0][2] ?? 0),
+        new Identifier($field[1]),
+    ), $fields);
+}
+
+function observeReturning(array $fields): array
+{
+    return array_map(
+        static fn (ReturnedColumn $column): array => [observeOperand($column->reference), $column->name->value],
+        $fields,
+    );
+}
+
+function directInsert(array $input): Insert
+{
+    $rows = match (true) {
+        ($input['defaults'] ?? false) === true => new DefaultRow(),
+        isset($input['query']) => direct($input['query']),
+        default => directValues($input),
+    };
+
+    $target = source($input['target']);
+    $writes = $input['writes'] ?? array_map(static fn (int $slot): array => ['column', $slot], array_keys($target->columns));
+
+    return new Insert(
+        $target,
+        array_map(operand(...), $writes),
+        $rows,
+        InsertConflict::from($input['conflict']),
+        directReturning($input['returning'] ?? []),
+        InsertConflictHandler::from($input['handler'] ?? 'none'),
+    );
+}
+
+function observeInsert(Insert $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'insert',
+        'profile' => $value->profileId(),
+        'target' => observeSource($value->target),
+        'writes' => array_map(observeOperand(...), $value->writes),
+        'returning' => observeReturning($value->returning),
+        'conflict' => $value->conflict->value,
+        'handler' => $value->handler->value,
+        ...match (true) {
+            $value->input instanceof DefaultRow => ['defaults' => true],
+            $value->input instanceof Select => ['query' => observeArm($value->input)],
+            $value->input instanceof ValuesQuery => ['rows' => valueRows($value->input)],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
+function directUpdate(array $input): Update
+{
+    return new Update(
+        source($input['target']),
+        array_map(static fn (array $pair): UpdateAssignment => new UpdateAssignment($pair[0], operand($pair[1])), $input['assignments']),
+        isset($input['where']) ? operand($input['where']) : null,
+        UpdateConflict::from($input['conflict']),
+        directReturning($input['returning'] ?? []),
+    );
+}
+
+function observeUpdate(Update $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'update',
+        'profile' => $value->profileId(),
+        'target' => observeSource($value->target),
+        'conflict' => $value->conflict->value,
+        'assignments' => array_map(
+            static fn (UpdateAssignment $assignment): array => [$assignment->targetSlot, observeOperand($assignment->value)],
+            $value->assignments,
+        ),
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'returning' => observeReturning($value->returning),
+        'sql' => $value->toString(),
+    ];
+}
+
+function directValues(array $input): ValuesQuery
+{
+    return new ValuesQuery(array_map(static fn (array $row): ValueRow => new ValueRow(array_map(operand(...), $row)), $input['rows']));
+}
+
+function observeValues(ValuesQuery $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'values',
+        'profile' => $value->profileId(),
+        'rows' => valueRows($value),
+        'sql' => $value->toString(),
+    ];
+}
+
+function valueRows(ValuesQuery $value): array
+{
+    return array_map(static fn (ValueRow $row): array => array_map(observeOperand(...), $row->values), $value->rows);
+}
+
+function directTableKey(array $value): PrimaryKey|UniqueKey
+{
+    $terms = array_map(static fn (array $term): KeyTerm => new KeyTerm($term[0], $term[1], Collation::from($term[2])), $value['terms']);
+    $conflict = isset($value['conflict']) ? KeyConflict::from($value['conflict']) : null;
+
+    return match ($value['kind']) {
+        'primary' => new PrimaryKey($terms, $value['inline'], $conflict, $value['autoIncrement'] ?? false),
+        'unique' => new UniqueKey($terms, $value['inline'], $conflict),
+    };
+}
+
+function observeTableKey(PrimaryKey|UniqueKey $value): array
+{
+    return [
+        'kind' => $value instanceof PrimaryKey ? 'primary' : 'unique',
+        'terms' => array_map(static fn (KeyTerm $term): array => [$term->slot, $term->descending, $term->collation->value], $value->terms),
+        'inline' => $value->inline,
+        'conflict' => $value->conflict?->value,
+        ...($value instanceof PrimaryKey ? ['autoIncrement' => $value->autoIncrement] : []),
+    ];
+}
+
+function observePrimaryKey(?PrimaryKey $value): ?array
+{
+    if ($value === null) {
+        return null;
+    }
+    $key = observeTableKey($value);
+    unset($key['kind']);
+    $key['conflict'] ??= 'ABORT';
+
+    return $key;
+}
+
+function directCreateTable(array $input): CreateTable
+{
+    $keys = $input['keys'] ?? (isset($input['primaryKey']) ? [['kind' => 'primary', ...$input['primaryKey']]] : []);
+
+    return new CreateTable(
+        new Identifier($input['schema']),
+        new Identifier($input['table']),
+        array_map(directSchemaColumn(...), $input['columns']),
+        $input['ifNotExists'],
+        $input['strict'] ?? false,
+        $input['withoutRowid'] ?? false,
+        array_map(directTableKey(...), $keys),
+        array_map(directSchemaCheck(...), $input['checks'] ?? []),
+    );
+}
+
+function directSchemaCheck(array $check): CheckConstraint
+{
+    return new CheckConstraint(directCheckLabel($check['label']), operand($check['condition']), $check['column']);
+}
+
+function observeSchemaCheck(CheckConstraint $check): array
+{
+    return ['label' => observeCheckLabel($check->label), 'column' => $check->column, 'condition' => observeOperand($check->condition)];
+}
+
+function directCheckLabel(string|array $source): Identifier|ImplicitCheckLabel
+{
+    if (is_string($source)) {
+        return new Identifier($source);
+    }
+
+    return new ImplicitCheckLabel(
+        new Identifier($source['name']),
+        ComparisonSpelling::from($source['glyph']),
+        $source['quoted'],
+        $source['before'],
+        $source['after'],
+        $source['zeroes']
+    );
+}
+
+function observeCheckLabel(Identifier|ImplicitCheckLabel $label): string|array
+{
+    if ($label instanceof Identifier) {
+        return $label->value;
+    }
+
+    return [
+        'name' => $label->columnName->value, 'glyph' => $label->token->value,
+        'quoted' => $label->quoted, 'before' => $label->beforeOperator, 'after' => $label->afterOperator,
+        'zeroes' => $label->leadingZeroes,
+    ];
+}
+
+function observeCreateTable(CreateTable $value): array
+{
+    $generated = [];
+    foreach ($value->columns as $slot => $column) {
+        if ($column->generated !== null) {
+            $generated[] = [$slot, $column->generated->mode->value, observeOperand($column->generated->expression)];
+        }
+    }
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-table',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'columns' => array_map(
+            static fn (TableColumn $column): array => [
+                $column->name->value, $column->type->value,
+                match ($column->notNull) {
+                    null => false,
+                    NotNullConflict::Abort => true,
+                    default => $column->notNull->value,
+                },
+                ...($column->default === null ? [] : [observeSchemaDefault($column->default)]),
+            ],
+            $value->columns,
+        ),
+        'ifNotExists' => $value->ifNotExists,
+        'strict' => $value->strict,
+        'withoutRowid' => $value->withoutRowid,
+        'primaryKey' => observePrimaryKey($value->primaryKey),
+        'keys' => array_map(observeTableKey(...), $value->keys),
+        'checks' => array_map(observeSchemaCheck(...), $value->checks),
+        'collations' => array_map(static fn (TableColumn $column): string => $column->collation->value, $value->columns),
+        ...($generated === [] ? [] : ['generated' => $generated]),
+        'sql' => $value->toString(),
+    ];
+}
+
+function directCreateTableAs(array $input): CreateTableAs
+{
+    $query = $input['query'];
+    $value = ($query['operation'] ?? 'select') === 'values' ? directValues($query) : direct($query);
+
+    return new CreateTableAs(new Identifier($input['schema']), new Identifier($input['table']), $value, $input['ifNotExists']);
+}
+
+function observeCreateTableAs(CreateTableAs $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-as',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'ifNotExists' => $value->ifNotExists,
+        'query' => $value->query instanceof ValuesQuery ? observeValues($value->query) : observeSelect($value->query),
+        'columns' => array_map(static fn (CreatedColumn $column): array => [$column->name->value, $column->type->value], $value->columns()),
+        'sql' => $value->toString(),
+    ];
+}
+
+function directCreateView(array $input): CreateView
+{
+    return new CreateView(
+        new Identifier($input['schema']),
+        new Identifier($input['view']),
+        array_map(static fn (string $name): Identifier => new Identifier($name), $input['columns']),
+        match ($input['query']['operation']) {
+            'grouped' => directGrouped($input['query']),
+            'compound' => directCompound($input['query']),
+            'select', 'values' => directArm($input['query']),
+        },
+        $input['ifNotExists'],
+    );
+}
+
+function observeCreateView(CreateView $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-view',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'view' => $value->view->value,
+        'ifNotExists' => $value->ifNotExists,
+        'query' => observeViewBody($value->query),
+        'columns' => array_map(static fn (Identifier $name): string => $name->value, $value->columns),
+        'sql' => $value->toString(),
+    ];
+}
+
+function observeViewBody(Compound|GroupedSelect|Select|ValuesQuery $query): array
+{
+    $body = match (true) {
+        $query instanceof GroupedSelect => observeGrouped($query),
+        $query instanceof Compound => observeCompound($query),
+        $query instanceof Select, $query instanceof ValuesQuery => observeArm($query),
+    };
+    unset($body['status'], $body['profile'], $body['sql']);
+
+    return $body;
+}
+
+function directTransaction(array $input): Transaction
+{
+    $name = isset($input['nameHex']) ? hex2bin($input['nameHex']) : ($input['name'] ?? null);
+
+    return new Transaction(TransactionCommand::from($input['command']), $name === null ? null : new SavepointName($name));
+}
+
+function directCount(array $input): Count
+{
+    return new Count($input[1] === null ? null : operand($input[1]), $input[2] === null ? null : Collation::from($input[2]));
+}
+
+function observeCount(Count $value): array
+{
+    return ['count', $value->argument === null ? null : observeOperand($value->argument), $value->distinctCollation?->value];
+}
+
+function directGrouped(array $input): GroupedSelect
+{
+    $keys = [];
+    foreach ($input['keys'] as [$column, $collation]) {
+        $keys[] = new GroupKey(operand($column), Collation::from($collation));
+    }
+    $columns = [];
+    foreach ($input['columns'] as [$field, $name]) {
+        $value = $field[0] === 'count' ? directCount($field) : operand($field);
+        $columns[] = new GroupColumn($value, new Identifier($name));
+    }
+
+    $condition = $input['having'] ?? null;
+    return new GroupedSelect(
+        $input['source'] === null ? null : source($input['source']),
+        $keys,
+        $columns,
+        $input['where'] === null ? null : operand($input['where']),
+        $condition === null ? null : new CountComparison(
+            directCount($condition[0]),
+            ComparisonOperator::from($condition[1]),
+            operand($condition[2]),
+            $condition[3],
+        ),
+    );
+}
+
+function observeGrouped(GroupedSelect $query): array
+{
+    $columns = [];
+    foreach ($query->columns as $field) {
+        $value = $field->value;
+        $columns[] = [$value instanceof Count ? observeCount($value) : observeOperand($value), $field->name->value];
+    }
+
+    return [
+        'status' => 'constructed', 'operation' => 'grouped', 'profile' => $query->profileId(), 'sql' => $query->toString(),
+        'source' => $query->source === null ? null : observeSource($query->source),
+        'keys' => array_map(static fn (GroupKey $key): array => [observeOperand($key->column), $key->collation->value], $query->keys),
+        'columns' => $columns, 'where' => $query->where === null ? null : observeOperand($query->where),
+        'having' => $query->having === null ? null : [
+            observeCount($query->having->count), $query->having->operator->value,
+            observeOperand($query->having->threshold), $query->having->thresholdFirst,
+        ],
+    ];
+}
+
+function directRename(array $input): RenameTable|RenameColumn
+{
+    $schema = new Identifier($input['schema']);
+    $table = new Identifier($input['table']);
+    $destination = new Identifier($input['destination']);
+
+    return $input['column'] === null ? new RenameTable($schema, $table, $destination)
+        : new RenameColumn($schema, $table, new Identifier($input['column']), $destination, $input['quoteReferences']);
+}
+
+function observeSchemaDefault(object $value): array
+{
+    return $value instanceof ColumnDefaultExpression ? ['computed', observeOperand($value->expression)] : observeOperand($value);
+}
+
+function directSchemaColumn(array $slot): TableColumn
+{
+    $default = $slot[3] ?? null;
+
+    return new TableColumn(
+        new Identifier($slot[0]),
+        DeclaredDatatypeName::from($slot[1]),
+        match ($slot[2]) {
+            false => null,
+            true => NotNullConflict::Abort,
+            default => NotNullConflict::tryFrom($slot[2]) ?? $slot[2],
+        },
+        $default === null ? null : ($default[0] === 'computed' ? new ColumnDefaultExpression(operand($default[1])) : operand($default)),
+        Collation::from($slot[4] ?? 'BINARY'),
+        isset($slot[5]) ? new ColumnGeneration(GeneratedStorage::from($slot[5][0]), operand($slot[5][1])) : null,
+    );
+}
+
+function directCreateIndex(array $input): CreateIndex
+{
+    return new CreateIndex(
+        new Identifier($input['schema']),
+        new Identifier($input['index']),
+        new Identifier($input['table']),
+        array_map(static fn ($name) => is_string($name) ? new Identifier($name) : $name, $input['heading']),
+        array_map(static fn ($term) => is_array($term) ? new IndexTerm(operand($term[0]), $term[1]) : $term, $input['terms']),
+        $input['where'] === null ? null : operand($input['where']),
+        $input['unique'],
+        $input['ifNotExists'],
+    );
+}
+
+function observeCreateIndex(CreateIndex $value, bool $render): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-index',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'index' => $value->index->value,
+        'table' => $value->table->value,
+        'bindings' => observeColumnBindings($value->bindings),
+        'terms' => array_map(static fn (IndexTerm $term): array => [observeOperand($term->expression), $term->descending], $value->terms),
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'unique' => $value->unique,
+        'ifNotExists' => $value->ifNotExists,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
+function directFlagPragma(array $input): FlagPragma
+{
+    return new FlagPragma(
+        FlagName::from($input['flag']),
+        $input['change'] === null ? null : FlagChange::from($input['change']),
+        $input['schema'] === null ? null : new Identifier($input['schema']),
+    );
+}
+
+function observeFlagPragma(FlagPragma $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'flag-pragma',
+        'profile' => $value->profileId(),
+        'flag' => $value->name->value,
+        'change' => $value->change?->value,
+        'schema' => $value->schema?->value,
+        'sql' => $value->toString(),
+    ];
+}
+
+function observeInventoryPragma(InventoryPragma $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'connection-inventory',
+        'profile' => $value->profileId(),
+        'pragma' => $value->kind->value,
+        'schema' => $value->schema?->value,
+        'sql' => $value->toString(),
+    ];
+}
+
+function directPagePragma(array $input): PagePragma
+{
+    $argument = $input['value'];
+    $value = match ($argument[0]) {
+        'read' => null,
+        'size' => new RequestedPageSize($argument[1]),
+        'limit' => new PageLimit($argument[1]),
+    };
+
+    return new PagePragma(PagePragmaKind::from($input['kind']), new Identifier($input['schema']), $value);
+}
+
+function observePagePragma(PagePragma $value): array
+{
+    $argument = $value->value;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'page-pragma',
+        'profile' => $value->profileId(),
+        'kind' => $value->kind->value,
+        'schema' => $value->schema->value,
+        'value' => match (true) {
+            $argument === null => ['read'],
+            $argument instanceof RequestedPageSize => ['size', $argument->bytes],
+            $argument instanceof PageLimit => ['limit', $argument->decimal],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
+function triggerField(array $value): TriggerField
+{
+    return new TriggerField(RowImage::from($value[1]), $value[2]);
+}
+
+function triggerOperand(array $value): TriggerField|IntegerLiteral|TextLiteral|NullLiteral
+{
+    return match ($value[0]) {
+        'field' => triggerField($value),
+        'integer' => new IntegerLiteral($value[1]),
+        'text' => new TextLiteral($value[1]),
+        'null' => new NullLiteral(),
+    };
+}
+
+function directTriggerInsert(array $input): TriggerInsert
+{
+    $rows = $input['rows'] ?? [$input['fields']];
+    return new TriggerInsert(
+        new TriggerDestination(source($input['table']), $input['writable']),
+        array_map(static fn (array|string $row): TriggerInsertRow|NullLiteral => is_array($row)
+            ? new TriggerInsertRow(array_map(static fn (array $field): TriggerInsertField => new TriggerInsertField(
+                $field[0], triggerOperand($field[1]),
+            ), $row)) : new NullLiteral(), $rows),
+        InsertConflict::from($input['conflict']),
+    );
+}
+
+function triggerAssignmentOperand(array $spec): TriggerField|IntegerLiteral|TextLiteral|NullLiteral|TriggerTargetField
+{
+    return $spec[0] === 'local' ? new TriggerTargetField($spec[1]) : triggerOperand($spec);
+}
+
+function directTriggerFilter(?array $input): TriggerEquality|TriggerTargetNullTest|TriggerCondition|null
+{
+    if ($input === null) {
+        return null;
+    }
+
+    return match ($input[0]) {
+        'equal' => new TriggerEquality(new TriggerTargetField($input[1]), triggerField($input[2]), $input[3]),
+        'local-null' => new TriggerTargetNullTest(new TriggerTargetField($input[1]), $input[2]),
+        'image-null' => new TriggerCondition(triggerField($input[1]), $input[2]),
+    };
+}
+
+function directTriggerAction(array $input): TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise|NullLiteral
+{
+    return match ($input['action'] ?? 'insert') {
+        'insert' => directTriggerInsert($input),
+        'update' => new TriggerUpdate(
+            new TriggerDestination(source($input['table']), $input['writable']),
+            array_map(static fn (array $field): TriggerAssignment => new TriggerAssignment($field[0], triggerAssignmentOperand($field[1])), $input['assignments']),
+            directTriggerFilter($input['where']), UpdateConflict::from($input['conflict']),
+        ),
+        'delete' => new TriggerDelete(new TriggerDestination(source($input['table']), $input['writable']), directTriggerFilter($input['where'])),
+        'raise' => new TriggerRaise(
+            TriggerRaisePolicy::from($input['policy']),
+            $input['message'] === null ? null : triggerOperand($input['message']),
+            $input['where'] === null ? null : new TriggerCondition(triggerField($input['where'][0]), $input['where'][1]),
+        ),
+        'invalid' => new NullLiteral(),
+    };
+}
+
+function directTrigger(array $input): CreateTrigger
+{
+    $condition = $input['condition'];
+    $selectors = array_map(static fn (array $member): TriggerUpdateName => new TriggerUpdateName(match ($member[0]) {
+        'slot' => $member[1],
+        'absent' => new Identifier($member[1]),
+    }), $input['selectors']);
+
+    return new CreateTrigger(new Identifier($input['schema']), new Identifier($input['name']),
+        TriggerPlacement::from($input['placement']), source($input['watched']), TriggerTiming::from($input['timing']),
+        TriggerEvent::from($input['event']), array_map(directTriggerAction(...), $input['program']), $selectors,
+        $condition === null ? null : new TriggerCondition(triggerField($condition[0]), $condition[1]), $input['ifNotExists']);
+}
+
+function observeTriggerField(TriggerField $field): array
+{
+    return ['field', $field->image->value, $field->column];
+}
+
+function observeTriggerInsert(TriggerInsert $value): array
+{
+    $rows = [];
+    foreach ($value->rows as $row) {
+        $fields = [];
+        foreach ($row->fields as $field) {
+            $fields[] = [$field->column, observeTriggerAssignmentOperand($field->value)];
+        }
+        $rows[] = $fields;
+    }
+
+    return ['table' => observeSource($value->destination->table), 'writable' => $value->destination->writable,
+        ...(count($rows) === 1 ? ['fields' => $rows[0]] : ['rows' => $rows]), 'conflict' => $value->conflict->value];
+}
+
+function observeTriggerAssignmentOperand(TriggerField|IntegerLiteral|TextLiteral|NullLiteral|TriggerTargetField $operand): array
+{
+    return match (true) {
+        $operand instanceof TriggerField => observeTriggerField($operand),
+        $operand instanceof IntegerLiteral => ['integer', $operand->decimal],
+        $operand instanceof TextLiteral => ['text', $operand->value],
+        $operand instanceof NullLiteral => ['null'],
+        $operand instanceof TriggerTargetField => ['local', $operand->column],
+    };
+}
+
+function observeTriggerAction(TriggerInsert|TriggerUpdate|TriggerDelete|TriggerRaise $action): array
+{
+    if ($action instanceof TriggerInsert) {
+        return observeTriggerInsert($action);
+    }
+    if ($action instanceof TriggerRaise) {
+        return [
+            'action' => 'raise', 'policy' => $action->policy->value,
+            'message' => $action->message === null ? null : observeTriggerAssignmentOperand($action->message),
+            'where' => $action->where === null ? null : [observeTriggerField($action->where->field), $action->where->isNull],
+        ];
+    }
+    $filter = $action->where;
+    return [
+        'action' => $action instanceof TriggerUpdate ? 'update' : 'delete',
+        'table' => observeSource($action->destination->table), 'writable' => $action->destination->writable,
+        'where' => match (true) {
+            $filter === null => null,
+            $filter instanceof TriggerEquality => ['equal', $filter->target->column, observeTriggerField($filter->image), $filter->targetFirst],
+            $filter instanceof TriggerTargetNullTest => ['local-null', $filter->target->column, $filter->isNull],
+            $filter instanceof TriggerCondition => ['image-null', observeTriggerField($filter->field), $filter->isNull],
+        },
+        ...($action instanceof TriggerUpdate ? [
+            'assignments' => array_map(static fn (TriggerAssignment $field): array => [
+                $field->column, observeTriggerAssignmentOperand($field->value),
+            ], $action->assignments),
+            'conflict' => $action->conflict->value,
+        ] : []),
+    ];
+}
+
+function observeTrigger(CreateTrigger $value, bool $render): array
+{
+    $condition = $value->condition;
+    $selectors = [];
+    foreach ($value->selectors as $entry) {
+        $item = $entry->selector;
+        $selectors[] = is_int($item) ? ['slot', $item] : ['absent', $item->value];
+    }
+
+    return [
+        'status' => 'constructed', 'operation' => 'create-trigger', 'profile' => $value->profileId(),
+        'schema' => $value->schema->value, 'name' => $value->name->value, 'placement' => $value->placement->value,
+        'watched' => observeSource($value->watched), 'timing' => $value->timing->value, 'event' => $value->event->value,
+        'selectors' => $selectors, 'condition' => $condition === null ? null : [observeTriggerField($condition->field), $condition->isNull],
+        'program' => array_map(observeTriggerAction(...), $value->program), 'ifNotExists' => $value->ifNotExists,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
+function directSpillChange(?array $value): SpillMode|SpillThreshold|null
+{
+    if ($value === null) {
+        return null;
+    }
+
+    return match ($value[0]) {
+        'switch' => SpillMode::from($value[1]),
+        'threshold' => new SpillThreshold(new CacheAmount($value[1]), SpillMode::from($value[2])),
+    };
+}
+
+function directCachePragma(array $input): CacheSize|DefaultCacheSize|CacheSpill
+{
+    $schema = new Identifier($input['schema']);
+    $value = $input['value'];
+
+    return match ($input['kind']) {
+        'cache_size' => new CacheSize($schema, $value === null ? null : new CacheAmount($value)),
+        'default_cache_size' => new DefaultCacheSize($schema, $value === null ? null : new DefaultCachePages($value)),
+        'cache_spill' => new CacheSpill($schema, directSpillChange($value)),
+    };
+}
+
+function observeSpillChange(SpillMode|SpillThreshold|null $change): ?array
+{
+    return match (true) {
+        $change === null => null,
+        $change instanceof SpillMode => ['switch', $change->value],
+        $change instanceof SpillThreshold => ['threshold', $change->amount->value, $change->mode->value],
+    };
+}
+
+function observeCachePragma(CacheSize|DefaultCacheSize|CacheSpill $value): array
+{
+    [$name, $operand] = match (true) {
+        $value instanceof CacheSize => ['cache_size', $value->amount?->value],
+        $value instanceof DefaultCacheSize => ['default_cache_size', $value->capacity?->pages],
+        $value instanceof CacheSpill => ['cache_spill', observeSpillChange($value->change)],
+    };
+
+    return [
+        'status' => 'constructed', 'operation' => 'cache-pragma', 'profile' => $value->profileId(),
+        'kind' => $name, 'schema' => $value->schema->value, 'value' => $operand, 'sql' => $value->toString(),
+    ];
+}
+
+function directReclaimPragma(array $input): AutoVacuum|IncrementalVacuum
+{
+    $schema = new Identifier($input['schema']);
+    $value = $input['value'];
+
+    return match ($input['kind']) {
+        'auto_vacuum' => new AutoVacuum($schema, $value === null ? null : VacuumMode::from($value)),
+        'incremental_vacuum' => new IncrementalVacuum($schema, new PageReclaimLimit($value)),
+    };
+}
+
+function observeReclaimPragma(AutoVacuum|IncrementalVacuum $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'reclaim-pragma',
+        'profile' => $value->profileId(),
+        'kind' => $value instanceof AutoVacuum ? 'auto_vacuum' : 'incremental_vacuum',
+        'schema' => $value->schema->value,
+        'value' => $value instanceof AutoVacuum ? $value->mode?->value : $value->limit->pages,
+        'sql' => $value->toString(),
+    ];
+}
+
+function connectionName(array $raw): AttachmentName|Parameter
+{
+    $value = operand($raw);
+
+    return $value instanceof Parameter ? $value : new AttachmentName($value);
+}
+
+function directConnectionCommand(array $input): Attach|Detach
+{
+    $name = connectionName($input['nameOperand']);
+    if ($input['command'] === 'attach') {
+        $key = $input['keyOperand'] === null ? null : new ValueRow(array_map(operand(...), $input['keyOperand']));
+
+        return new Attach(new ValueRow(array_map(operand(...), $input['fileOperand'])), $name, $key);
+    }
+
+    return new Detach($name instanceof Parameter ? $name : new DetachTarget(new Identifier($input['resolved']), $name));
+}
+
+function observeConnectionCommand(Attach|Detach $value): array
+{
+    $name = $value instanceof Attach ? $value->name : ($value->target instanceof DetachTarget ? $value->target->name : $value->target);
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'connection-command',
+        'profile' => $value->profileId(),
+        'command' => $value instanceof Attach ? 'attach' : 'detach',
+        'nameOperand' => observeOperand($name instanceof AttachmentName ? $name->literal : $name),
+        'name' => $name instanceof AttachmentName ? $name->name->value : null,
+        'resolved' => $value instanceof Detach && $value->target instanceof DetachTarget ? $value->target->schema->value : null,
+        'fileOperand' => $value instanceof Attach ? array_map(observeOperand(...), $value->file->values) : null,
+        'keyOperand' => $value instanceof Attach && $value->key !== null ? array_map(observeOperand(...), $value->key->values) : null,
+        'sql' => $value->toString(),
+    ];
+}
+
+function directVacuum(array $input): Vacuum
+{
+    $role = $input['destination'];
+    $destination = match ($role[0]) {
+        'absent' => null,
+        'evaluated' => new VacuumDestination(new ValueRow(array_map(operand(...), $role[1]))),
+        'registrations' => new VacuumRegistrations(array_map(static fn (string $label): Parameter => new Parameter($label), $role[1])),
+        'wrong-registration' => new VacuumRegistrations([new TextLiteral('wrong')]),
+    };
+
+    return new Vacuum(new Identifier($input['schema']), $destination);
+}
+
+function observeVacuum(Vacuum $value): array
+{
+    $destination = $value->destination;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'vacuum',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'destination' => match (true) {
+            $destination === null => ['absent'],
+            $destination instanceof VacuumDestination => ['evaluated', array_map(observeOperand(...), $destination->expression->values)],
+            $destination instanceof VacuumRegistrations => ['registrations', array_map(static fn (Parameter $parameter): string => $parameter->label, $destination->bindings)],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
+function directHeaderPragma(array $input): HeaderPragma
+{
+    $field = HeaderCookie::tryFrom($input['field']) ?? HeaderReadField::from($input['field']);
+    $value = $input['value'];
+
+    return new HeaderPragma($field, new Identifier($input['schema']), $value === null ? null : new HeaderInteger($value));
+}
+
+function observeHeaderPragma(HeaderPragma $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'header-pragma',
+        'profile' => $value->profileId(),
+        'field' => $value->field->value,
+        'schema' => $value->schema->value,
+        'value' => $value->value?->value,
+        'sql' => $value->toString(),
+    ];
+}
+
+function directIntegrityAudit(array $input): IntegrityAudit
+{
+    $role = $input['target'];
+    $target = match ($role[0]) {
+        'limit' => new IntegrityLimit($role[1]),
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+        'catalog' => new CatalogTable(new Identifier($role[1])),
+    };
+    $schema = $input['schema'];
+
+    return new IntegrityAudit(IntegrityKind::from($input['pragma']), $target, $schema === null ? null : new Identifier($schema));
+}
+
+function observeIntegrityAudit(IntegrityAudit $value): array
+{
+    $target = $value->target;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'integrity-audit',
+        'profile' => $value->profileId(),
+        'pragma' => $value->kind->value,
+        'schema' => $value->schema?->value,
+        'target' => match (true) {
+            $target instanceof IntegrityLimit => ['limit', $target->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+            $target instanceof CatalogTable => ['catalog', $target->schema->value],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
+function directForeignKeyAudit(array $input): ForeignKeyAudit
+{
+    $role = $input['target'];
+    $target = match ($role[0]) {
+        'schema' => new Identifier($role[1]),
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+        'catalog' => new CatalogTable(new Identifier($role[1])),
+    };
+    $access = $role[0] === 'catalog' ? $role[2] : ($input['catalogAccess'] ?? null);
+
+    return new ForeignKeyAudit($target, $access === null ? null : new Identifier($access));
+}
+
+function observeForeignKeyAudit(ForeignKeyAudit $value): array
+{
+    $target = $value->target;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'foreign-key-audit',
+        'profile' => $value->profileId(),
+        'target' => match (true) {
+            $target instanceof Identifier => ['schema', $target->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+            $target instanceof CatalogTable => ['catalog', $target->schema->value, $value->catalogAccess?->value],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
+function directIndexMetadata(array $input): IndexInspection
+{
+    $role = $input['target'];
+    $target = match ($role[0]) {
+        'index' => new IndexTarget(new Identifier($role[1]), new Identifier($role[2]), new Identifier($role[3])),
+        'empty' => new EmptyIndexMetadata($role[1] === null ? null : new Identifier($role[1]), $role[2] === null ? null : new Identifier($role[2])),
+    };
+
+    return new IndexInspection(IndexInspectionKind::from($input['pragma']), $target);
+}
+
+function observeIndexMetadata(IndexInspection $value): array
+{
+    $target = $value->target;
+    return [
+        'status' => 'constructed',
+        'operation' => 'index-metadata',
+        'profile' => $value->profileId(),
+        'pragma' => $value->kind->value,
+        'target' => $target instanceof IndexTarget ? ['index', $target->schema->value, $target->name->value, $target->table->value]
+            : ['empty', $target->schema?->value, $target->name?->value],
+        'sql' => $value->toString(),
+    ];
+}
+
+function directTableMetadata(array $input): TableInspection|TableListing
+{
+    $schema = $input['schema'] === null ? null : new Identifier($input['schema']);
+    if ($input['pragma'] === 'table_list') {
+        return new TableListing($schema, $input['argument'] === null ? null : new Identifier($input['argument']));
+    }
+    $role = $input['target'];
+    $target = match ($role[0] ?? null) {
+        null => null,
+        'catalog' => new CatalogTable(new Identifier($role[1])),
+        'missing' => new MissingMetadataTable(new Identifier($role[1])),
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+    };
+
+    return new TableInspection(TableInspectionKind::from($input['pragma']), $target, $schema);
+}
+
+function observeTableMetadata(TableInspection|TableListing $value): array
+{
+    $target = $value instanceof TableInspection ? $value->target : null;
+    return [
+        'status' => 'constructed',
+        'operation' => 'table-metadata',
+        'profile' => $value->profileId(),
+        'pragma' => $value instanceof TableInspection ? $value->kind->value : 'table_list',
+        'schema' => $value->schema?->value,
+        'filter' => $value instanceof TableListing ? $value->nameFilter?->value : null,
+        'target' => match (true) {
+            $target === null => null,
+            $target instanceof CatalogTable => ['catalog', $target->schema->value],
+            $target instanceof MissingMetadataTable => ['missing', $target->name->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
+function maintenanceTarget(array $role): Identifier|Collation|RelationTarget|IndexTarget|null
+{
+    return match ($role[0]) {
+        'all' => null,
+        'schema' => new Identifier($role[1]),
+        'collation' => Collation::from($role[1]),
+        'relation' => new RelationTarget(new Identifier($role[1]), new Identifier($role[2]), ExternalRelationKind::from($role[3])),
+        'index' => new IndexTarget(new Identifier($role[1]), new Identifier($role[2]), new Identifier($role[3])),
+    };
+}
+
+function observeMaintenance(Reindex|Analyze $value): array
+{
+    $target = $value->target;
+    return [
+        'status' => 'constructed',
+        'operation' => $value instanceof Analyze ? 'analyze-statistics' : 'reindex',
+        'profile' => $value->profileId(),
+        'target' => match (true) {
+            $target === null => ['all'],
+            $target instanceof Identifier => ['schema', $target->value],
+            $target instanceof Collation => ['collation', $target->value],
+            $target instanceof RelationTarget => ['relation', $target->schema->value, $target->name->value, $target->kind->value],
+            $target instanceof IndexTarget => ['index', $target->schema->value, $target->name->value, $target->table->value],
+        },
+        'sql' => $value->toString(),
+    ];
+}
+
+function directDropIndex(array $input): DropIndex
+{
+    $name = new Identifier($input['name']);
+    $target = match ($input['targetRole']) {
+        'installed' => new IndexReference(new Identifier($input['schema']), $name, new Identifier($input['table'])),
+        'absent' => new MissingIndex($name, $input['schema'] === null ? null : new Identifier($input['schema'])),
+    };
+
+    return new DropIndex($target, $input['ifExists']);
+}
+
+function observeDropIndex(DropIndex $value, bool $render): array
+{
+    $target = $value->target;
+    return [
+        'status' => 'constructed',
+        'operation' => 'drop-index',
+        'profile' => $value->profileId(),
+        'targetRole' => $target instanceof IndexReference ? 'installed' : 'absent',
+        'schema' => $target->schema?->value,
+        'name' => $target->name->value,
+        'table' => $target instanceof IndexReference ? $target->table->value : null,
+        'ifExists' => $value->ifExists,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
+function directDropTrigger(array $input): DropTrigger
+{
+    $name = new Identifier($input['name']);
+    $target = match ($input['targetRole']) {
+        'installed' => new TriggerReference(new Identifier($input['schema']), $name,
+            new Identifier($input['watched'][0]), new Identifier($input['watched'][1])),
+        'absent' => new MissingTrigger($name, TriggerVerification::from($input['verification']),
+            $input['schema'] === null ? null : new Identifier($input['schema'])),
+    };
+
+    return new DropTrigger($target, $input['ifExists']);
+}
+
+function observeDropTrigger(DropTrigger $value, bool $render): array
+{
+    $target = $value->target;
+
+    return [
+        'status' => 'constructed',
+        'operation' => 'drop-trigger',
+        'profile' => $value->profileId(),
+        'targetRole' => $target instanceof TriggerReference ? 'installed' : 'absent',
+        'schema' => $target->schema?->value,
+        'name' => $target->name->value,
+        'watched' => $target instanceof TriggerReference ? [$target->watchedSchema->value, $target->watchedName->value] : null,
+        'verification' => $target instanceof MissingTrigger ? $target->verification->value : null,
+        'ifExists' => $value->ifExists,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
+function directDropColumn(array $input): DropColumn
+{
+    return new DropColumn(
+        new Identifier($input['schema']),
+        new Identifier($input['table']),
+        array_map(static fn ($member) => is_array($member) ? new DropMember(new Identifier($member[0]), $member[1], $member[2]) : $member, $input['heading']),
+        $input['slot'],
+    );
+}
+
+function observeDropColumn(DropColumn $value, bool $render): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'drop-column',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'column' => [$value->column->value, $value->generated],
+        'slot' => $value->slot,
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
+function directAddColumn(array $input): AddColumn|AddGeneratedColumn
+{
+    $schema = new Identifier($input['schema']);
+    $table = new Identifier($input['table']);
+    $heading = array_map(static fn ($part) => is_string($part) ? new Identifier($part) : $part, $input['priorHeading']);
+    $column = directSchemaColumn($input['column']);
+    $checks = array_map(static fn ($check) => is_array($check) ? directSchemaCheck($check) : $check, $input['checks'] ?? []);
+
+    return $input['operation'] === 'add-generated-column'
+        ? new AddGeneratedColumn($schema, $table, $heading, $input['strict'], $column, $checks)
+        : new AddColumn($schema, $table, $heading, $input['strict'], $column, $checks);
+}
+
+function observeColumnBindings(array $bindings): array
+{
+    $values = [];
+    foreach ($bindings as $slot => $name) {
+        $values[] = [$slot, $name->value];
+    }
+
+    return $values;
+}
+
+function observeAddColumn(AddColumn|AddGeneratedColumn $value, bool $render): array
+{
+    $column = $value->column;
+
+    return [
+        'status' => 'constructed',
+        'operation' => $value instanceof AddGeneratedColumn ? 'add-generated-column' : 'add-column',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'slot' => $value->slot,
+        'bindings' => observeColumnBindings($value->bindings),
+        'strict' => $value->strict,
+        'column' => [
+            $column->name->value, $column->type->value, $column->notNull?->value ?? false,
+            $column->default === null ? null : observeSchemaDefault($column->default), $column->collation->value,
+            ...($column->generated === null ? [] : [[$column->generated->mode->value, observeOperand($column->generated->expression)]]),
+        ],
+        'checks' => array_map(observeSchemaCheck(...), $value->checks),
+        ...($render ? ['sql' => $value->toString()] : []),
+    ];
+}
+
+function observeRename(RenameTable|RenameColumn $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'rename',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'column' => $value instanceof RenameColumn ? $value->column->value : null,
+        'destination' => $value->destination->value,
+        'quoteReferences' => $value instanceof RenameColumn ? $value->quoteReferences : null,
+        'sql' => $value->toString(),
+    ];
+}
+
+function runCase(array $input): array
+{
+    try {
+        $value = match (true) {
+            isset($input['sql']) => analyzed($input),
+            ($input['operation'] ?? null) === 'grouped' => directGrouped($input),
+            ($input['operation'] ?? null) === 'compound' => directCompound($input),
+            ($input['operation'] ?? null) === 'delete' => directDelete($input),
+            ($input['operation'] ?? null) === 'insert' => directInsert($input),
+            ($input['operation'] ?? null) === 'update' => directUpdate($input),
+            ($input['operation'] ?? null) === 'rename' => directRename($input),
+            in_array($input['operation'] ?? null, ['add-column', 'add-generated-column'], true) => directAddColumn($input),
+            ($input['operation'] ?? null) === 'create-index' => directCreateIndex($input),
+            ($input['operation'] ?? null) === 'connection-inventory' => new InventoryPragma(
+                InventoryKind::from($input['pragma']), $input['schema'] === null ? null : new Identifier($input['schema']),
+            ),
+            ($input['operation'] ?? null) === 'page-pragma' => directPagePragma($input),
+            ($input['operation'] ?? null) === 'reclaim-pragma' => directReclaimPragma($input),
+            ($input['operation'] ?? null) === 'cache-pragma' => directCachePragma($input),
+            ($input['operation'] ?? null) === 'create-trigger' => directTrigger($input),
+            ($input['operation'] ?? null) === 'connection-command' => directConnectionCommand($input),
+            ($input['operation'] ?? null) === 'vacuum' => directVacuum($input),
+            ($input['operation'] ?? null) === 'header-pragma' => directHeaderPragma($input),
+            ($input['operation'] ?? null) === 'integrity-audit' => directIntegrityAudit($input),
+            ($input['operation'] ?? null) === 'foreign-key-audit' => directForeignKeyAudit($input),
+            ($input['operation'] ?? null) === 'index-metadata' => directIndexMetadata($input),
+            ($input['operation'] ?? null) === 'table-metadata' => directTableMetadata($input),
+            ($input['operation'] ?? null) === 'flag-pragma' => directFlagPragma($input),
+            ($input['operation'] ?? null) === 'reindex' => new Reindex(maintenanceTarget($input['target'])),
+            ($input['operation'] ?? null) === 'analyze-statistics' => new Analyze(maintenanceTarget($input['target'])),
+            ($input['operation'] ?? null) === 'drop-index' => directDropIndex($input),
+            ($input['operation'] ?? null) === 'drop-trigger' => directDropTrigger($input),
+            ($input['operation'] ?? null) === 'drop-column' => directDropColumn($input),
+            ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
+            ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
+            ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
+            ($input['operation'] ?? null) === 'create-as' => directCreateTableAs($input),
+            ($input['operation'] ?? null) === 'create-view' => directCreateView($input),
+            ($input['operation'] ?? null) === 'transaction' => directTransaction($input),
+            ($input['operation'] ?? null) === 'values' => directValues($input),
+            default => direct($input),
+        };
+    } catch (InvalidConstruction $error) {
+        return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    } catch (SqlSemantics\AnalysisException $error) {
+        return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+
+    if ($value instanceof CreateIndex) {
+        return observeCreateIndex($value, ($input['probe'] ?? null) !== 'create-index-construction');
+    }
+    if ($value instanceof InventoryPragma) {
+        return observeInventoryPragma($value);
+    }
+    if ($value instanceof PagePragma) {
+        return observePagePragma($value);
+    }
+    if ($value instanceof CreateTrigger) {
+        return observeTrigger($value, ($input['probe'] ?? null) !== 'trigger-program-construction');
+    }
+    if ($value instanceof CacheSize || $value instanceof DefaultCacheSize || $value instanceof CacheSpill) {
+        return observeCachePragma($value);
+    }
+    if ($value instanceof AutoVacuum || $value instanceof IncrementalVacuum) {
+        return observeReclaimPragma($value);
+    }
+    if ($value instanceof Attach || $value instanceof Detach) {
+        return observeConnectionCommand($value);
+    }
+    if ($value instanceof Vacuum) {
+        return observeVacuum($value);
+    }
+    if ($value instanceof HeaderPragma) {
+        return observeHeaderPragma($value);
+    }
+    if ($value instanceof IntegrityAudit) {
+        return observeIntegrityAudit($value);
+    }
+    if ($value instanceof ForeignKeyAudit) {
+        return observeForeignKeyAudit($value);
+    }
+    if ($value instanceof IndexInspection) {
+        return observeIndexMetadata($value);
+    }
+    if ($value instanceof TableInspection || $value instanceof TableListing) {
+        return observeTableMetadata($value);
+    }
+    if ($value instanceof FlagPragma) {
+        return observeFlagPragma($value);
+    }
+    if ($value instanceof Reindex || $value instanceof Analyze) {
+        return observeMaintenance($value);
+    }
+    if ($value instanceof DropTrigger) {
+        return observeDropTrigger($value, ($input['probe'] ?? null) !== 'drop-trigger-construction');
+    }
+    if ($value instanceof DropIndex) {
+        return observeDropIndex($value, ($input['probe'] ?? null) !== 'drop-index-construction');
+    }
+    if ($value instanceof DropColumn) {
+        return observeDropColumn($value, ($input['probe'] ?? null) !== 'drop-column-construction');
+    }
+    if ($value instanceof AddColumn || $value instanceof AddGeneratedColumn) {
+        return observeAddColumn($value, !in_array($input['probe'] ?? null, ['add-generated-construction', 'computed-default-construction', 'appended-check-construction'], true));
+    }
+    if ($value instanceof RenameTable || $value instanceof RenameColumn) {
+        return observeRename($value);
+    }
+    if ($value instanceof GroupedSelect) {
+        return observeGrouped($value);
+    }
+    if ($value instanceof Compound) {
+        return observeCompound($value);
+    }
+    if ($value instanceof Delete) {
+        return observeDelete($value);
+    }
+    if ($value instanceof Insert) {
+        return observeInsert($value);
+    }
+    if ($value instanceof Update) {
+        return observeUpdate($value);
+    }
+    if ($value instanceof DropView) {
+        return [
+            'status' => 'constructed',
+            'operation' => 'drop-view',
+            'profile' => $value->profileId(),
+            'schema' => $value->schema->value,
+            'view' => $value->view->value,
+            'ifExists' => $value->ifExists,
+            'sql' => $value->toString(),
+        ];
+    }
+    if ($value instanceof DropTable) {
+        return [
+            'status' => 'constructed',
+            'operation' => 'drop-table',
+            'profile' => $value->profileId(),
+            'schema' => $value->schema->value,
+            'table' => $value->table->value,
+            'ifExists' => $value->ifExists,
+            'sql' => $value->toString(),
+        ];
+    }
+    if ($value instanceof CreateTable) {
+        return observeCreateTable($value);
+    }
+    if ($value instanceof CreateView) {
+        return observeCreateView($value);
+    }
+    if ($value instanceof CreateTableAs) {
+        return observeCreateTableAs($value);
+    }
+    if ($value instanceof Transaction) {
+        return [
+            'status' => 'constructed',
+            'operation' => 'transaction',
+            'profile' => $value->profileId(),
+            'command' => $value->command->value,
+            'name' => $value->name?->value,
+            'sql' => $value->toString(),
+        ];
+    }
+    if ($value instanceof ValuesQuery) {
+        return observeValues($value);
+    }
+
+    if (($input['probe'] ?? '') === 'snapshot') {
+        $actions = [
+            static fn () => clone $value,
+            static fn () => serialize($value),
+            static fn () => unserialize('O:' . strlen(Select::class) . ':"' . Select::class . '":0:{}'),
+            static fn () => $value->extra = true,
+        ];
+        $blocked = [];
+        foreach ($actions as $action) {
+            try {
+                $action();
+                $blocked[] = false;
+            } catch (InvalidConstruction) {
+                $blocked[] = true;
+            }
+        }
+        return ['status' => 'snapshot', 'blocked' => $blocked];
+    }
+
+    return observeSelect($value);
+}
+
+function observeLimit(?Limit $limit): ?array
+{
+    return $limit === null ? null : [
+        observeOperand($limit->count), $limit->offset === null ? null : observeOperand($limit->offset), $limit->offsetFirst,
+    ];
+}
+
+function observeLocal(LocalSource $source): array
+{
+    $query = $source->query;
+    $names = array_map(static fn (Identifier $name): string => $name->value, $source->columns);
+    if ($query instanceof ValuesQuery) {
+        return ['names' => $names, 'rows' => valueRows($query)];
+    }
+
+    return [
+        'names' => $names,
+        'rows' => valueRows($query->anchor),
+        'step' => array_map(static fn (RecursiveColumn $column): array => observeOperand($column->expression), $query->step),
+        'where' => $query->where === null ? null : observeOperand($query->where),
+        'unionAll' => $query->unionAll,
+    ];
+}
+
+function observeInput(TableSource|LocalSource $source, array &$ids, array &$definitions): array
+{
+    if ($source instanceof TableSource) {
+        return observeSource($source);
+    }
+    $identity = spl_object_id($source);
+    if (!isset($ids[$identity])) {
+        $ids[$identity] = count($definitions);
+        $definitions[] = observeLocal($source);
+    }
+
+    return ['local', $ids[$identity]];
+}
+
+function observeSelect(Select $value): array
+{
+    $source = $value->source;
+    $local = $source instanceof LocalSource && $value->joins === [] ? observeLocal($source) : null;
+    $ids = $definitions = $joins = [];
+    $first = $source === null || $local !== null ? null : observeInput($source, $ids, $definitions);
+    foreach ($value->joins as $join) {
+        $joins[] = [
+            $join->kind->value, observeInput($join->source, $ids, $definitions),
+            $join->on === null ? null : observeOperand($join->on),
+        ];
+    }
+
+    return [
+        'status' => 'constructed',
+        'profile' => $value->profileId(),
+        'source' => $first,
+        ...($local === null ? [] : ['local' => $local]),
+        ...($definitions === [] ? [] : ['locals' => $definitions]),
+        'joins' => $joins,
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'orderBy' => array_map(static fn (Order $order): array => [$order->position, $order->descending, $order->nullsFirst], $value->orderBy),
+        'distinct' => $value->distinct,
+        'limit' => observeLimit($value->limit),
+        'columns' => array_map(static fn (ResultColumn $field): array => [observeOperand($field->expression), $field->name->value], $value->columns),
+        'sql' => $value->toString(),
+    ];
+}
+
+echo json_encode(['php' => PHP_VERSION, 'intSize' => PHP_INT_SIZE], JSON_THROW_ON_ERROR) . "\n";
+while (($line = fgets(STDIN)) !== false) {
+    try {
+        $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+        $observed = array_is_list($input) ? array_map(runCase(...), $input) : runCase($input);
+        echo json_encode($observed, JSON_THROW_ON_ERROR) . "\n";
+    } catch (Throwable $error) {
+        echo json_encode(['status' => 'error', 'exception' => $error::class, 'message' => $error->getMessage()], JSON_THROW_ON_ERROR) . "\n";
+    }
+}

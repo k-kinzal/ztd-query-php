@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Rules\Query\ExpressionFacts;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ExpressionFacts::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class ExpressionFactsTest extends TestCase
 {
     public function testDeriveResolvesTheOrderingAgainstTheOutputAndBindsTheTables(): void
     {
-        $operation = (new Semantics())->inspect('WITH c AS (SELECT 1 AS x) (SELECT x FROM c) ORDER BY 1 LIMIT 1', []);
+        $operation = (new Inspection())->diagnose('WITH c AS (SELECT 1 AS x) (SELECT x FROM c) ORDER BY 1 LIMIT 1', []);
 
         self::assertInstanceOf(QueryExpression::class, $operation->statement);
         self::assertSame([], $operation->facts->diagnostics);
@@ -29,10 +29,10 @@ final class ExpressionFactsTest extends TestCase
 
     public function testOrderingSeesTheOutputColumnsButNoTableOfTheQuery(): void
     {
-        $semantics = new Semantics('mysql-5.6.51');
-        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL)');
-        $named = $semantics->inspect('SELECT (SELECT a AS x FROM t UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x)', [$table]);
-        $qualified = $semantics->inspect('SELECT (SELECT a AS x FROM t UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY t.a)', [$table]);
+        $semantics = new Inspection('mysql-5.6.51');
+        $table = $semantics->diagnose('CREATE TABLE t (a INT NOT NULL)');
+        $named = $semantics->diagnose('SELECT (SELECT a AS x FROM t UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x)', [$table]);
+        $qualified = $semantics->diagnose('SELECT (SELECT a AS x FROM t UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY t.a)', [$table]);
 
         self::assertSame([], $named->facts->diagnostics);
         self::assertCount(1, $qualified->facts->diagnostics);

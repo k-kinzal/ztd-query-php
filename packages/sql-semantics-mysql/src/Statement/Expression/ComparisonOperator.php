@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  * yields NULL.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html.
  *
- * @visibility public
- * @example Reading the operator of a comparison
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a != 1');
- *     $query->statement->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual
+ * @visibility SqlSemantics
  */
 enum ComparisonOperator: string
 {

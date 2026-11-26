@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
  *
- * @visibility public
- * @example Reading a one-time schedule
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DO SELECT 1");
- *     $create->statement->schedule->at->value() // => '2030-01-01 00:00:00'
+ * @visibility SqlSemantics
  */
 final class OnceSchedule implements Schedule
 {

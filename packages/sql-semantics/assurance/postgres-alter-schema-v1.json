@@ -1,0 +1,71 @@
+{
+  "revision": "SemanticsIR/postgres-alter-schema-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "profile": "Native UTF-8 PostgreSQL under the stock profile, with persistent namespace identities and exact decoded role names.",
+  "additionalPublicRoots": ["Schema/Namespace/RenameSchema", "Schema/Namespace/ChangeSchemaOwner"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-alterschema.html",
+    "https://www.postgresql.org/docs/17/sql-alterschema.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/commands/schemacmds.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/commands/schemacmds.c"
+  ],
+  "constructors": {
+    "RenameSchema": {
+      "type": "Schema/Namespace/RenameSchema",
+      "role": "Rename a resolved persistent namespace in the current database.",
+      "structure": "Two distinct decoded identifiers for source and destination and a fixed grammar release.",
+      "invariants": ["The source refers to a known schema. An explicit session-specific alias is outside the persistent role.", "The destination is distinct and does not start with pg_."],
+      "meaning": "Rename the namespace at the original identity. Keep ownership, ACL, relations, relation data and dependent references. An occupied destination produces 42P06 and leaves both namespaces unchanged.",
+      "sql": "Emit ALTER SCHEMA followed by the quoted source, RENAME TO and the separately quoted destination."
+    },
+    "ChangeSchemaOwner": {
+      "type": "Schema/Namespace/ChangeSchemaOwner",
+      "role": "Select another ownership identity for the resolved namespace.",
+      "structure": "A persistent decoded schema identifier, an exact named or session owner and a fixed grammar release.",
+      "invariants": ["The source refers to a known schema.", "The named owner denotes a single known cluster role for the release. The session role is either the effective role or the session authorization."],
+      "meaning": "Replace the namespace owner and adapt the owner identities in namespace ACL entries. Retain relation owners, view dependencies and stored data. Selecting the current owner preserves the schema state.",
+      "sql": "Emit ALTER SCHEMA followed by the quoted source, OWNER TO, and the quoted role name or fixed session role token."
+    }
+  },
+  "existingRoles": ["Schema/Namespace/SchemaSessionRole"],
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "binding": [
+    "Resolve the source by absolute decoded name using an explicit schema declaration, a checked relation declaration or the stock namespace catalog. The search path cannot switch the named schema.",
+    "The external interpretation supplies live catalog occupancy, current role, session role, privileges and dependencies. Ignore no static named owner or source binding."
+  ],
+  "finite": {
+    "rename": {"qualifiedSpelling": ["plain", "quoted"], "occupied": [false, true], "active": [false, true], "sourceData": ["nullable-bag", "distinct"]},
+    "owner": {"role": ["same", "named", "current-role", "current-user", "session"], "acl": [false, true], "active": [false, true]},
+    "bound": "16 rename cells and 20 ownership cells for each analyzed and direct construction route per release."
+  },
+  "exploration": {
+    "seeds": [1627, 7541, 44819],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 150,
+    "allowedExclusions": [],
+    "structure": "Vary rename and ownership operations, absolute decoded names, selected owner roles, colliding targets, initial ACL modes, duplicate and NULL data, named dependents and transaction scope."
+  },
+  "observations": [
+    "Exact published namespace, destination or owner identity, matching grammar release and positional roles.",
+    "Schema name and owner, owner with ACL grantor and grantee identities, relation owner, namespace and relation identifiers before and after, unchanged physical relation and external dependent view, typed data and NULL multiplicity.",
+    "Native command status, typed rejection or conflict SQLSTATE, unchanged decoys and rollback."
+  ],
+  "negative": [
+    "Undeclared source namespace",
+    "Session-specific source alias",
+    "Rename to the source name",
+    "Rename to a reserved destination",
+    "Undeclared named owner",
+    "A special SQL role keyword that cannot designate one owner"
+  ],
+  "faults": [
+    "Rename the other namespace or target a different unused name",
+    "Use the effective role instead of the session authorization",
+    "Collapse a named owner into the effective role"
+  ],
+  "open": ["Backend-numbered temporary namespace targets and installation-specific privilege or extension behaviors."],
+  "trust": ["The fixed PostgreSQL namespace and ACL rules", "The checked PHP ownership role and release correspondence", "The independent native catalog observer"]
+}

@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
  * A query nested in another statement may refer to the enclosing query; it is
  * not a statement root of its own.
  *
- * @visibility public
- * @example Reading the output fields of a query
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS one');
- *     $operation->field('one')->position // => 0
+ * @visibility SqlSemantics
  */
 interface Query extends Node
 {

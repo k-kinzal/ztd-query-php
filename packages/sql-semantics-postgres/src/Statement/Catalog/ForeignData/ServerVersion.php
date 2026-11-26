@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createserver.html, https://www.postgresql.org/docs/17/sql-alterserver.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Clearing the version
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\ServerVersion())->version // => null
  */

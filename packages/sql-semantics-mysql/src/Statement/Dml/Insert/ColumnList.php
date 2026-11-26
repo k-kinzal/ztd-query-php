@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
  * list, which the server does not expand and reports as an unknown column.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html.
  *
- * @visibility public
- * @example Reading the columns of an INSERT
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a, b) VALUES (1, 2)');
- *     count($insert->statement->into->columns->columns) // => 2
+ * @visibility SqlSemantics
  */
 final class ColumnList implements Node
 {

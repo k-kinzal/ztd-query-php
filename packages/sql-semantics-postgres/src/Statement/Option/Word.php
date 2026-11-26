@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * passes `public`.
  * Source: https://www.postgresql.org/docs/17/sql-set.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the text of a word value
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Option\Word(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('public')))->word->value // => 'public'
  */

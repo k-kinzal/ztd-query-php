@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
  *
- * @visibility public
- * @example Telling the kinds of schedule apart
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1');
- *     $create->statement->schedule instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule // => true
+ * @visibility SqlSemantics
  */
 interface Schedule extends Node
 {

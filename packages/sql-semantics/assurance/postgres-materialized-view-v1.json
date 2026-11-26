@@ -1,0 +1,112 @@
+{
+  "revision": "SemanticsIR/postgres-materialized-view-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native persistent PostgreSQL heap materialized views with default tablespace and ordinary nonconcurrent refresh.",
+  "extends": ["postgres-create-view-v1.json", "postgres-drop-view-v1.json", "postgres-external-source-kinds-v1.json", "postgres-values-v3.json"],
+  "additionalPublicRoots": ["Schema/View/CreateMaterializedView", "Schema/View/RefreshMaterializedView"],
+  "constructors": {
+    "CreateMaterializedView": {
+      "type": "Schema/View/CreateMaterializedView",
+      "role": "A persistent heap materialization declaration with its known defining query and ordered physical heading.",
+      "structure": "An absolute identity, immutable SELECT or VALUES body, distinct checked heading, absence policy and initial population policy.",
+      "conditions": "Require a complete parameter-free persistent definition, its exact heading width and at most 1600 fields. Admit ordinary heap storage and the default tablespace under this profile.",
+      "meaning": "Create the materialized view, retaining its defining operation and optionally storing the initial snapshot. IF NOT EXISTS preserves the existing object.",
+      "sql": "Emit the absolute name, complete heading, heap access, supported collision policy and exact WITH DATA or WITH NO DATA mode."
+    },
+    "RefreshMaterializedView": {
+      "type": "Schema/View/RefreshMaterializedView",
+      "role": "An ordinary nonconcurrent refresh of one resolved persistent materialized view.",
+      "structure": "An exact catalog identity, native release and population policy.",
+      "conditions": "The analysis target must resolve to the materialized relation kind and an absolute known persistent name. The body is provided by that stored external definition. Reject concurrent refresh and unresolved identity.",
+      "meaning": "Replace the stored snapshot by evaluating the referenced view's definition, or clear it and make it unscannable.",
+      "sql": "Emit the qualified native REFRESH MATERIALIZED VIEW with explicit data policy."
+    }
+  },
+  "existingRoles": ["Schema/View/ViewName", "Schema/View/CreateView", "Rows/Values/ValuesQuery", "Select", "Identifier", "TableSource"],
+  "structure": "Creation owns the immutable view query and catalog heading. Refresh owns the resolved target and explicit data mode.",
+  "conditions": "Accept persistent base-table projections, simple parameter-free SELECT constants and standalone typed VALUES. Use the native heap. Reject other access methods, temporary source references, unsupported storage options, and concurrent or unbound refresh.",
+  "meaning": "The view preserves the snapshot from the creation or refresh evaluation until another refresh, including duplicate and NULL rows. WITH NO DATA changes native scannability. Both operations are transactional.",
+  "sql": "Emit unambiguous qualified names and defining fields. Emit native heap and explicit data policies with no retained SQL text.",
+  "observations": [
+    "Exact materialized kind, heap access and typed catalog heading",
+    "Native population flag and the SQLSTATE of a read of an unpopulated relation",
+    "Rows before and after base changes without refresh",
+    "Snapshot replacement, explicit invalidation, effect on unrelated absolute names and rollback",
+    "Duplicate creation errors, optional collisions and required missing or wrong-kind refresh errors"
+  ],
+  "finite": {
+    "create": {
+      "fixture": ["absent", "populated", "unpopulated"],
+      "ifNotExists": [false, true],
+      "body": ["base", "values"],
+      "withData": [false, true],
+      "identities": 24
+    },
+    "refresh": {
+      "fixture": ["absent", "ordinary", "populated", "unpopulated"],
+      "target": ["main", "decoy"],
+      "withData": [false, true],
+      "identities": 16
+    },
+    "completeness": "Independently recover the operation, target, body kind and clause decisions from loaded values and compare the exact fixture state before each run."
+  },
+  "analysis": [
+    "Heap materialized view with inferred heading and default population",
+    "Materialized view from a resolved constant table with explicit heading",
+    "Heap materialized view WITH NO DATA",
+    "Optional materialized view creation when the name exists",
+    "Unqualified materialized refresh in the resolved schema",
+    "Qualified refresh WITH NO DATA",
+    "Qualified decoy refresh distinguishes identities",
+    "Materialized view with a partially supplied heading"
+  ],
+  "negative": [
+    "Incorrect creation width",
+    "Repeated creation heading",
+    "Creation with a projected parameter",
+    "Unsupported analyzed storage option",
+    "Concurrent analyzed refresh",
+    "An ordinary view is used as the analyzed refresh target",
+    "The analyzed refresh target is absent"
+  ],
+  "exploration": {
+    "seeds": [2081, 12263, 43661],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary creation or refresh, exact target schema, compatible and incompatible fixtures, typed defining values, duplicate and NULL rows, scannability and optional collision handling."
+  },
+  "faults": [
+    "Discard the creation population policy",
+    "Ignore an optional existing object",
+    "Change the defining output position",
+    "Redirect a refresh to the same-named decoy",
+    "Discard the refresh population policy",
+    "Accept an invalid defining heading"
+  ],
+  "evidence": {
+    "P01": "Fix the defining operation, qualified identity, operand kinds, heading and availability policy.",
+    "P02": "Enforce the declaration shape and resolved target for the applicable owning role.",
+    "P03": "Retain only value roles and explicit external references.",
+    "P04": "Derive creation from its defining query and refresh from the stored external relation identity.",
+    "P05": "Ensure immutable operands, checked headings and closed population choices.",
+    "P06": "Emit qualified native declarations and refresh with preserved snapshot effects.",
+    "Q01": "Observe closed target and definition restrictions at their exact boundaries.",
+    "Q02": "Consume the required finite direct requests and authored cases.",
+    "Q03": "Compare independently modeled population, invalidation and snapshot state.",
+    "Q04": "Compare native typed snapshots, catalog shape and transactions.",
+    "Q05": "Link exact installed source and protection evidence to each active role."
+  },
+  "open": [
+    "Concurrent refresh and its unique-index and already-populated preconditions",
+    "Nondefault access methods, storage parameters and tablespaces",
+    "Additional defining query roles, function effects and native authorization failures"
+  ],
+  "trust": ["Truthful static materialized relation identity", "Native heap configuration and independent catalog observer", "Fixed verified package bytes and checker"],
+  "sources": [
+    "https://www.postgresql.org/docs/17/sql-creatematerializedview.html",
+    "https://www.postgresql.org/docs/16/sql-refreshmaterializedview.html"
+  ]
+}

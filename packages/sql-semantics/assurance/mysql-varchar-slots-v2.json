@@ -1,0 +1,63 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-slots-2",
+  "approval": "pending-human-review",
+  "previous": {"path": "mysql-varchar-slots-v1.json", "sha256": "af17847d30791b40f0921d0fdac50fa0a54e703cdce1d34268a35bf6236d4a4e"},
+  "dialects": ["MySql"],
+  "extends": ["server-projection-v1.json", "server-join-v2.json", "wildcard-projection-v2.json", "mysql-text-literal-v1.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "scope": "Read ordinary native VARCHAR fields with an explicit stock utf8mb4_bin collation in SELECT projections. Resolve each field to the exact external table occurrence and native column slot before publication.",
+  "constructors": {
+    "From/ColumnKind": {
+      "role": "The exact signed INT native type for the checked numeric slot.",
+      "structure": "One closed enum case, SignedInt.",
+      "conditions": "A physical slot has the declared signed 32-bit native integer storage role.",
+      "meaning": "The field is the signed integer role used by the existing numeric owners.",
+      "sql": "Use the owning table occurrence and declared name when reading the field."
+    },
+    "From/Varchar": {
+      "role": "The native type of a declared nonbinary utf8mb4 VARCHAR column with explicit stock binary collation.",
+      "structure": "One length in characters and the resolved MySQL text collation.",
+      "conditions": "The length is an integer from zero through 16383. For analyzed definitions the ordinary type is VARCHAR or CHAR VARYING with an explicit utf8mb4_bin COLLATE, with explicit utf8mb4 charset or charset implied by that collation. The external declaration and table must actually agree.",
+      "meaning": "Read the exact stored string, including trailing spaces, NUL and supplementary characters, as nonbinary utf8mb4. The builtin database collation is PAD SPACE and the field has coercibility 2.",
+      "sql": "Use the resolved field directly so the external declaration supplies its storage type, collation and coercibility."
+    },
+    "From/TextCollation": {
+      "role": "The builtin utf8mb4_bin collation on a MySQL VARCHAR field.",
+      "structure": "One closed enum case for the stock collation.",
+      "conditions": "The external catalog has the stock collation identity for utf8mb4 in the selected release.",
+      "meaning": "Order UTF-8 character values with the native binary collation and its PAD SPACE equality.",
+      "sql": "Read the owning field without overriding its collation."
+    },
+    "From/TextColumnReference": {
+      "role": "A resolved projection read from one native VARCHAR slot.",
+      "structure": "One nonnegative declared slot and owning occurrence index.",
+      "conditions": "The owning SELECT exposes a physical input at that occurrence and the slot has the matching VARCHAR type. A signed operator or write role cannot consume this value.",
+      "meaning": "Read the original VARCHAR value or NULL at that exact position, including join null extension.",
+      "sql": "Quote the declared field under the emitted alias for its occurrence. Preserve the intrinsic field label when selected without alias."
+    }
+  },
+  "existingRoles": ["TableSource", "ColumnReference", "ResultColumn", "Select", "From/Join", "Aggregation/GroupedSelect", "Mutation/Insert", "Mutation/InsertQuery", "Mutation/Update"],
+  "observations": ["Exact native VAR_STRING and integer field metadata and ordered names", "Exact bytes, NULL, repeated labels, repeated rows and occurrence identity", "Native collation and coercibility of the fixture field and effects of PAD SPACE on DISTINCT and positional order"],
+  "finite": {"layouts": ["only-text", "mixed", "repeat", "join"], "quantifiers": ["all", "distinct"], "ordering": ["bag", "ascending", "descending"], "identities": 24, "completeness": "Recover operand kind, physical layout and occurrence, result names, distinct flag and order from each constructed graph."},
+  "exploration": {"seeds": [4673, 15959, 31547], "casesPerSeed": 18, "timeoutSecondsPerRelease": 220, "allowedExclusions": [], "requiredForms": "Exercise reordered fields, duplicate result names, text and signed integer slots, left and right join occurrences, and nullable and duplicate row values."},
+  "analysis": ["Resolve qualified and unqualified forms to the same VARCHAR slot", "Expand mixed wildcard output", "Use distinct physical VARCHAR columns with different lengths", "Read a null-extended right occurrence", "Read a field with charset determined by its explicit COLLATE"],
+  "negative": ["Read a signed slot as VARCHAR", "Read a VARCHAR slot as signed integer", "Use a missing occurrence", "Use an out-of-range slot", "Publish an incomplete native type list", "Use a negative VARCHAR length", "Use an excessive VARCHAR length", "Admit VARCHAR through a signed mutation slot", "Admit VARCHAR through a signed aggregate slot", "Resolve an omitted collation", "Resolve an unsupported collation"],
+  "faults": ["Redirect a VARCHAR reference to another physical slot", "Use the first occurrence instead of the later join input", "Drop text DISTINCT", "Rename a repeated output", "Coerce a VARCHAR field to another collation"],
+  "evidence": {
+    "P01": "Retain exact occurrence, column coordinate, VARCHAR length and builtin collation.",
+    "P02": "Enforce closed physical slot layouts and use the right native role in each owning statement.",
+    "P03": "Retain only immutable native type and reference values.",
+    "P04": "Compose in mixed results, wildcard output, and binary joins without analyzing SQL again.",
+    "P05": "Own the type list independently of input aliases, arrays and mutable references.",
+    "P06": "Compare native metadata, row bytes, nullable joins and collation-sensitive result policies.",
+    "Q01": "Reject the registered invalid constructor and static analysis witnesses.",
+    "Q02": "Require exhaustion of all 24 finite identities and seeded exploration on each pinned release.",
+    "Q03": "Check source ordering, owner restrictions and nullable reference effects in the distributed implementation.",
+    "Q04": "Preserve exact native bytes and labels. For PAD SPACE duplicates compare one actual representative per class from the admitted values, keeping NULL and cross-class order.",
+    "Q05": "Tie the PHP and controller digests to the pinned DB reports and installed packages."
+  },
+  "open": ["Implicit default and other collations", "Additional MySQL string storage types", "Computed or derived VARCHAR slots, or VARCHAR in scalar predicates and writes"],
+  "trust": ["Stock MySQL utf8mb4_bin", "Same external column definitions and native mode", "Independent row and metadata observer"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/charset-column.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html", "https://dev.mysql.com/doc/refman/8.4/en/char.html"]
+}

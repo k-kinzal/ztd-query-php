@@ -218,6 +218,10 @@ final class Derivation
             if ($common !== null) {
                 return new CommonTable($common->definition);
             }
+            $owningSchema = $environment->owningSchema();
+            if ($owningSchema !== null) {
+                $name = new QualifiedName($name->name, $owningSchema);
+            }
         }
 
         return (new TableLookup())->find($this->context, $name);

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(NullOnly::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class NullOnlyTest extends TestCase
 {
     public function testABareNullAndAnExpressionThatIsAlwaysNullHaveNoOtherType(): void
     {
-        $operation = (new Semantics())->analyze('SELECT NULL, NULL + 1');
+        $operation = (new Inspection())->inspect('SELECT NULL, NULL + 1');
 
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
         self::assertInstanceOf(NullOnly::class, $operation->field(1)->type);

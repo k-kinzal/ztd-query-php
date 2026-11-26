@@ -23,10 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
  * NULL fact is that of the elements combined.
  * Source: https://sqlite.org/rowvalue.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the elements of a row value
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT (a, b) = (1, 2) FROM t');
- *     count($query->statement->columns[0]->expression->left->items) // => 2
+ * @visibility SqlSemantics
  * @example Refusing a row of one element, which is a grouping
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */

@@ -15,10 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * relation does not exist, so the absence is a resolution and not a problem.
  * Source: https://sqlite.org/lang_droptable.html.
  *
- * @visibility public
- * @example Dropping a table that does not exist without a diagnostic
- *     $drop = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DROP TABLE IF EXISTS t', []);
- *     [$drop->facts->relation($drop->statement)->table->name->name->value, $drop->facts->diagnostics] // => ['t', []]
+ * @visibility SqlSemantics
  */
 final class AbsentRelation implements TableResolution
 {

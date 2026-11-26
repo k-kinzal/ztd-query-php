@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * Source: sql/sql_yacc.yy and sql/table.cc (`unpack_gcol_info`) of MySQL 5.7,
  * https://dev.mysql.com/doc/refman/5.7/en/create-table-generated-columns.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the expression
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('PARSE_GCOL_EXPR(1 + 2)');
- *     $statement->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn // => true
+ * @visibility SqlSemantics
  */
 final class ParseGeneratedColumn implements Statement
 {

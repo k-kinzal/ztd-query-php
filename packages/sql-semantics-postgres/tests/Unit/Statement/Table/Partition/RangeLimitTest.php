@@ -14,8 +14,8 @@ final class RangeLimitTest extends TestCase
 {
     public function testMaximumIsTrueForMaxvalue(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (MAXVALUE)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (MAXVALUE)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -40,8 +40,8 @@ final class RangeLimitTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (minvalue) TO (maxvalue)', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (minvalue) TO (maxvalue)', []);
         self::assertSame('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (minvalue) TO (maxvalue)', $statement->toString());
     }
 

@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator;
  *
  * Source: https://www.postgresql.org/docs/17/functions-logical.html.
  *
- * @visibility public
- * @example Reading the operator of a conjunction
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT true AND false');
- *     $query->field(0)->expression->operator // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperator::And
+ * @visibility SqlSemantics
  */
 enum BooleanOperator
 {

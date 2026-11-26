@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Designation;
  * written is kept.
  * Source: https://www.postgresql.org/docs/17/datatype-datetime.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the clause that selects the zone-aware type
  *     \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ZoneOption::WithTimeZone->value // => 'WITH TIME ZONE'
  */

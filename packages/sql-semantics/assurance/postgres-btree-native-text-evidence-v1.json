@@ -1,0 +1,125 @@
+{
+  "revision": "SemanticsIR/postgres-btree-native-text-evidence-1",
+  "approval": "pending-human-review",
+  "profiles": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "scope": "Direct PostgreSQL text columns as B-tree keys with an explicitly resolved stock C collation, INCLUDE columns, and row NULL predicates.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createindex.html",
+    "https://www.postgresql.org/docs/17/sql-createindex.html",
+    "https://www.postgresql.org/docs/16/collation.html",
+    "https://www.postgresql.org/docs/17/collation.html",
+    "https://www.postgresql.org/docs/17/indexes-opclass.html"
+  ],
+  "rules": [
+    "An explicitly selected stock pg_catalog.C text key resolves to byte ordering over UTF-8 and the stock text_ops operator class. The default text operator class and an explicit pg_catalog.text_ops denote the same checked role.",
+    "The exact collation is recorded on each key occurrence, independently of preceding keys, repeated text keys, null positioning, and sort direction. A numeric or Boolean key cannot supply a text collation.",
+    "A text field used only by INCLUDE or a row NULL test preserves its type and exact physical slot. The included value and a NULL predicate use no key collation.",
+    "A completed B-tree carrying text operands retains the same sparse physical projection used for numeric and Boolean operands. The declaring heading and table default collation remain external inputs.",
+    "Unresolved inherited default collations, unqualified collation or operator-class selectors, and other text operator classes are separate obligations in the full language inventory. Keep their admission failures explicit until their own binding rules are implemented."
+  ],
+  "sql": [
+    "Use an absolute table coordinate and a quoted identifier for every selected physical occurrence.",
+    "For every text key print COLLATE pg_catalog.\"C\" and the resolved pg_catalog.text_ops before ordering. Print covering text fields as column identifiers and row NULL tests as the corresponding grouped predicates."
+  ],
+  "finite": {
+    "textKeyLayouts": [
+      "text-first",
+      "mixed-int-first",
+      "two-text-keys"
+    ],
+    "auxiliaryTextLayouts": [
+      "text-include",
+      "text-null-test"
+    ],
+    "orders": [
+      "ASC NULLS LAST",
+      "ASC NULLS FIRST",
+      "DESC NULLS LAST",
+      "DESC NULLS FIRST"
+    ],
+    "uniqueness": [
+      "plain",
+      "distinct-null",
+      "equal-null"
+    ],
+    "textClassSpelling": [
+      "omitted",
+      "stock-qualified"
+    ],
+    "coordinates": 96,
+    "routes": [
+      "direct",
+      "analyze"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      19447,
+      77137,
+      257053
+    ],
+    "casesPerSeed": 18,
+    "directCasesPerSeed": 18,
+    "timeoutSecondsPerRelease": 420,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Compare absolute owner, sparse operand types and slots, per-key collation and operator class, stable result heading, key order and exact INCLUDE position.",
+    "Compare commands, raw SQLSTATEs, native pg_index arrays, qualified collation and operator-class identities, ordered typed values, row NULL predicates, and the outcomes of duplicate and NULL writes.",
+    "Use UTF-8 byte-distinct values, including case pairs, accent pairs, composed and decomposed Unicode, repeated rows and SQL NULL. Compare C ordering against an independent byte comparator."
+  ],
+  "negative": [
+    "A direct text key lacks a resolved collation",
+    "A direct non-text key carries a text collation",
+    "An analyzed text key specifies another stock collation",
+    "An analyzed text key specifies another stock operator class",
+    "An analyzed numeric key specifies the text collation"
+  ],
+  "faults": [
+    "Omit the C collation when rendering against a text column declared with a different default",
+    "Use the same key collation for a different physical slot",
+    "Ignore a native collation coordinate when comparing"
+  ],
+  "trust": [
+    "The pinned built-in PostgreSQL catalog and native UTF-8 settings",
+    "Exact checked PHP construction rules, independent B-tree observable definition, and separate native witness"
+  ],
+  "obligations": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05"
+  ],
+  "reference": {
+    "file": "postgres-btree-native-text-v1.json",
+    "sha256": "c986d6761847e9c12f92e6f2dc2500f21c2d97605169b517b0cff087e7162628"
+  },
+  "dialects": [
+    "PostgreSql"
+  ],
+  "constructors": {},
+  "existingRoles": [
+    "Schema/Index/Btree/CreateIndex",
+    "Schema/Index/Btree/IndexKey",
+    "Schema/Index/Btree/Binding/IndexField"
+  ],
+  "negativeCount": 5,
+  "calibration": {
+    "generate.py": "76925073e6c1a05d3c61ffcbe440262bcfdc5d2def4b345359fd39f28a727c3f",
+    "inputs.jsonl": "b903f90840b0c3546e334dc05ead18e123acccfbb9d1a5cfb72ab57597bbf958",
+    "16.6.stdout": "a522190f62bb96a1201664f21ea9e2967a4c2445e818a081e9ed21d7e0c50f8a",
+    "17.2.stdout": "904a5872273da2698bb42a5d94bbaacde470e2c3ce637ec2f899e788fe534715",
+    "rendered-16.6.stdout": "a522190f62bb96a1201664f21ea9e2967a4c2445e818a081e9ed21d7e0c50f8a",
+    "rendered-17.2.stdout": "904a5872273da2698bb42a5d94bbaacde470e2c3ce637ec2f899e788fe534715"
+  }
+}

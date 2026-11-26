@@ -40,12 +40,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#the_in_and_not_in_operators.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the relation of a membership test
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
- *     $query = $semantics->analyze('SELECT 1 IN t', [$table]);
- *     [$query->statement->columns[0]->expression->table->name->value, $query->facts->relation($query->statement->columns[0]->expression)->table->table === $table->declarations()[0], $query->field(0)->nullability] // => ['t', true, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  */
 final class InTable implements Scalar
 {

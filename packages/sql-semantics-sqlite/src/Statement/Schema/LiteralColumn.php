@@ -32,11 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
  * https://sqlite.org/lang_createindex.html (and `sqlite3StringToId()` in
  * build.c of the release). Status: Implemented.
  *
- * @visibility public
- * @example Resolving a string key term to the column it names
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("CREATE TABLE t (a INTEGER, PRIMARY KEY ('a'))");
- *     $term = $create->statement->constraints[0]->items[0]->terms[0]->expression;
- *     [$term->literal->value, $create->facts->scalar($term)->resolution->slot->column === $create->declarations()[0]->columns[0], $create->declarations()[0]->implicit[0]->column === $create->declarations()[0]->columns[0], $create->toString()] // => ['a', true, true, "CREATE TABLE t (a INTEGER, PRIMARY KEY ('a'))"]
+ * @visibility SqlSemantics
  */
 final class LiteralColumn implements Scalar
 {

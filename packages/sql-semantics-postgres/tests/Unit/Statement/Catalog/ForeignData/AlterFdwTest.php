@@ -14,12 +14,12 @@ final class AlterFdwTest extends TestCase
 {
     public function testRenderWritesTheChanges(): void
     {
-        self::assertSame('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR OPTIONS (SET a \'b\', DROP c)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR OPTIONS (SET a \'b\', DROP c)')->toString());
+        self::assertSame('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR OPTIONS (SET a \'b\', DROP c)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR OPTIONS (SET a \'b\', DROP c)')->toString());
     }
 
     public function testDeriveStatementAcceptsOneOfEach(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->facts->diagnostics);
     }
 
     public function testRejectsAnEmptyChange(): void

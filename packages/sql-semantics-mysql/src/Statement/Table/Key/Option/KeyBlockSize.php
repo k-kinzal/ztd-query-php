@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html.
  *
- * @visibility public
- * @example Reading an index option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) KEY_BLOCK_SIZE = 8)');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize // => true
+ * @visibility SqlSemantics
  */
 final class KeyBlockSize implements IndexOption
 {

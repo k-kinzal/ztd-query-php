@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Column;
  *
  * Source: https://sqlite.org/gencol.html#virtual_versus_stored_columns.
  *
- * @visibility public
- * @example Reading the storage of a generated column
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b AS (a + 1) STORED)');
- *     $create->statement->columns[1]->constraints[0]->storage() // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Column\GeneratedStorage::Stored
+ * @visibility SqlSemantics
  */
 enum GeneratedStorage
 {

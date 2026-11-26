@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json;
  *
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the encoding a name selects
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonEncoding::named('UTF8') // => \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonEncoding::Utf8
  */

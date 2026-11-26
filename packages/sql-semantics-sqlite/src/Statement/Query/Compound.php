@@ -30,13 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
  * Source: https://sqlite.org/lang_select.html#compound_select_statements.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the arms and the ordering of a compound query
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1');
- *     [count($query->statement->steps), count($query->statement->orderBy), $query->statement->steps[0]->query->orderBy, $query->toString()] // => [1, 1, [], 'SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1']
- * @example Refusing an ordering left on the last arm
- *     $ordered = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS a ORDER BY a')->statement;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Compound(new \SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause([new \SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()])]), [new \SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep(\SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator::Union, $ordered)]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class Compound implements Statement, Query
 {

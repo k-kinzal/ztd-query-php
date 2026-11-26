@@ -1,0 +1,83 @@
+{
+  "revision": "SemanticsIR/postgres-derived-text-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Derived join inputs export only checked integer and text columns through exact owned ordinals.",
+  "rules": {
+    "From/DerivedSource::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');",
+        "Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');",
+        "foreach ($definition->columns as $column) {",
+        "    Check::input(",
+        "        $column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference",
+        "            || $column->expression instanceof TextColumnReference,",
+        "        'A derived join field requires a signed literal or a signed column, or a native text column.'",
+        "    );",
+        "}"
+      ]
+    },
+    "From/DerivedSource::columnKind": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$column = $this->definition->columns[$slot] ?? null;",
+        "if ($column === null) {",
+        "    return null;",
+        "}",
+        "",
+        "return $column->expression instanceof TextColumnReference ? ColumnKind::Text : ColumnKind::Int4;"
+      ]
+    },
+    "From/DerivedBinding::resolved": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $resolution->depth === 0 && $resolution->relation === $this->input,",
+        "    'A derived reference must belong to its join input.'",
+        ");",
+        "$slots = $this->operation->facts->relation($this->input)->shape->slots;",
+        "$position = array_search($resolution->slot, $slots, true);",
+        "Check::input($position !== false && isset($this->value->definition->columns[$position]), 'A derived reference must resolve to a defined field.');",
+        "",
+        "return $this->value->columnKind($position) === ColumnKind::Text",
+        "    ? new TextColumnReference($position)",
+        "    : new ColumnReference($position);"
+      ]
+    },
+    "From/OccurrenceScope::column": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$input = $inputs[$column->occurrence] ?? null;",
+        "if ($column instanceof TextColumnReference) {",
+        "    Check::input(",
+        "        $input?->columnKind($column->slot) === ColumnKind::Text,",
+        "        $invalidSlot ?? 'A text slot must belong to the SELECT source with its native kind.'",
+        "    );",
+        "",
+        "    return;",
+        "}",
+        "Check::input($this->hasSlot($input, $column->slot), $invalidSlot ?? 'Column slot must belong to the SELECT source.');"
+      ]
+    },
+    "From/OccurrenceScope::hasSlot": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $input?->columnKind($slot) === ColumnKind::Int4;"
+      ]
+    }
+  }
+}

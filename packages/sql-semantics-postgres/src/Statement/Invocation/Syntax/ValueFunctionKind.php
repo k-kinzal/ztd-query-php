@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * Source: https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT,
  * https://www.postgresql.org/docs/17/functions-info.html#FUNCTIONS-INFO-SESSION.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the type of CURRENT_DATE
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\ValueFunctionKind::CurrentDate->builtin() // => \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Date
  */

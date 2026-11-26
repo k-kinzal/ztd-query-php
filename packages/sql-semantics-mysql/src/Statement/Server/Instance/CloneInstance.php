@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/clone.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Cloning a remote server into a directory
- *     $clone = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("clone instance from 'u'@'h':3306 identified by 'p' data directory '/d' require no ssl");
- *     [$clone->toString(), $clone->statement->port->text, $clone->statement->requireSsl] // => ["CLONE INSTANCE FROM u@h:3306 IDENTIFIED BY 'p' DATA DIRECTORY '/d' REQUIRE NO SSL", '3306', false]
+ * @visibility SqlSemantics
  */
 final class CloneInstance implements Statement
 {

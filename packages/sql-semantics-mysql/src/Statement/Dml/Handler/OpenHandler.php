@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * read sees the handler under its name. Terminates: no child. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/handler.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the handler of a read
- *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ FIRST');
- *     $read->statement->handler->name->value // => 'h'
+ * @visibility SqlSemantics
  */
 final class OpenHandler implements Relation
 {

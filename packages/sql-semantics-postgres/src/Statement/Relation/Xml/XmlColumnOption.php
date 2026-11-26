@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
  * `xmltable_column_option_el`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PROCESSING-XMLTABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an option written as an identifier
  *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlColumnOption(\SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlColumnOptionKind::Named, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('a')), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('path'));
  *     $option->word->value // => 'path'

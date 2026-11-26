@@ -17,11 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * hexadecimal digit stands for four bits.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-BIT-STRINGS.
  *
- * @visibility public
- * @example Reading a hexadecimal bit string
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT X'1F'");
- *     $value = $query->statement->targets[0]->expression->value;
- *     [$value->radix, $value->digits] // => [\SqlSemantics\Platform\PostgreSql\Statement\Literal\BitStringRadix::Hexadecimal, '1F']
+ * @visibility SqlSemantics
  */
 final class BitStringConstant implements Node
 {

@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * (ER_INVALID_USER_ATTRIBUTE_JSON), which the statement reports.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-comments-attributes.
  *
- * @visibility public
- * @example Reading a comment
- *     $comment = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER u COMMENT 'ops'")->statement->comment;
- *     [$comment?->kind, $comment?->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Comment, 'ops']
+ * @visibility SqlSemantics
  */
 final class UserComment implements Node
 {

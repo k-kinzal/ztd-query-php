@@ -16,10 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
  *
- * @visibility public
- * @example Reading a recurring schedule
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE EVENT e ON SCHEDULE EVERY 2 HOUR STARTS CURRENT_TIMESTAMP DO SELECT 1');
- *     [$create->statement->schedule->unit, $create->statement->schedule->ends] // => [\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Hour, null]
+ * @visibility SqlSemantics
  */
 final class RecurringSchedule implements Schedule
 {

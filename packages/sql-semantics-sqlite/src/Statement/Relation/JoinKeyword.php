@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
  *
  * Source: https://sqlite.org/lang_select.html#the_from_clause.
  *
- * @visibility public
- * @example Reading the keywords of a join
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t LEFT OUTER JOIN u');
- *     $query->statement->from->steps[0]->operator->words // => [\SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword::Left, \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword::Outer]
+ * @visibility SqlSemantics
  */
 enum JoinKeyword: string
 {

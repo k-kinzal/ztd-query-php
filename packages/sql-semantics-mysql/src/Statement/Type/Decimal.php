@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
  * a scale is written `DECIMAL(M)`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/fixed-point-types.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a fixed-point type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('10', '2');
  *     [$type->name(), $type->precision, $type->scale] // => ['DECIMAL', '10', '2']

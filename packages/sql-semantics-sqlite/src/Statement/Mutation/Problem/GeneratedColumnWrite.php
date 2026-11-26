@@ -17,11 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * as it is declared, as SQLite does in its message.
  * Source: https://sqlite.org/gencol.html.
  *
- * @visibility public
- * @example Reporting an UPDATE of a generated column
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a, b AS (a + 1))');
- *     $semantics->analyze('UPDATE t SET B = 1', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: cannot UPDATE generated column "b"
+ * @visibility SqlSemantics
  */
 final class GeneratedColumnWrite implements Diagnostic
 {

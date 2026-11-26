@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * letter case names no attribute.
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
- * @example Reading the attribute a word names
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe CREATEDB');
- *     $operation->statement->options[0]->flag() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleFlag::CreateDb
+ * @visibility SqlSemantics
  */
 final class RoleAttribute implements RoleOption
 {

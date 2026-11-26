@@ -1,0 +1,197 @@
+{
+  "revision": "SemanticsIR/postgres-reconfigure-sequence-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect every sequence assignment role and compilation route to the checked IR and pin the shared numeric width kernel.",
+  "rules": {
+    "Schema/Sequence/SequenceIntegerOrder::limits": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "[$floor, $ceiling] = match ($storage) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small => ['-32768', '32767'],",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard => ['-2147483648', '2147483647'],",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide => ['-9223372036854775808', '9223372036854775807'],",
+        "};",
+        "return [new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($floor), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($ceiling)];"
+      ]
+    },
+    "Schema/Sequence/SequenceParameters::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($increment->decimal !== '0', 'A sequence increment cannot be zero.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($cache->decimal !== '0' && !str_starts_with($cache->decimal, '-'), 'A sequence cache must be positive.');",
+        "[$first, $last] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::limits($storage);",
+        "$descending = str_starts_with($increment->decimal, '-');",
+        "$lower = $minimum ?? ($descending ? $first : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('1'));",
+        "$upper = $maximum ?? ($descending ? new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('-1') : $last);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($first, $lower) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($upper, $last) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $upper) < 0, 'Sequence limits must increase within the selected integer storage.');",
+        "$catalogStart = $start ?? ($descending ? $upper : $lower);",
+        "$restart = $initial ?? $catalogStart;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $catalogStart) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($catalogStart, $upper) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $restart) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($restart, $upper) <= 0, 'The sequence start and restart must be within its limits.');",
+        "$this->minimum = $lower;",
+        "$this->maximum = $upper;",
+        "$this->start = $catalogStart;",
+        "$this->initial = $restart;"
+      ]
+    },
+    "Schema/Sequence/Alter/SequenceChanges::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($storage !== null || $increment !== null || $minimum !== null || $maximum !== null || $start !== null || $restart !== null || $cache !== null || $cycle !== null || $owner !== null, 'A sequence change requires at least one assignment.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($increment?->decimal !== '0', 'A sequence increment cannot be zero.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($cache === null || \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($cache, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('0')) > 0, 'A sequence cache must be positive.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceChangeRules::checkLimits($storage, $increment, $minimum, $maximum, $start, $restart);"
+      ]
+    },
+    "Schema/Sequence/Alter/SequenceChanges::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->storage === null ? '' : ' AS ' . $this->storage->value) . ($this->increment === null ? '' : ' INCREMENT BY ' . $this->increment->decimal) . \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceChangeRules::bound('MINVALUE', $this->minimum) . \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceChangeRules::bound('MAXVALUE', $this->maximum) . ($this->start === null ? '' : ' START WITH ' . $this->start->decimal) . match (true) {",
+        "    $this->restart instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral => ' RESTART WITH ' . $this->restart->decimal,",
+        "    $this->restart === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceResetOperand::Native => ' RESTART',",
+        "    $this->restart === null => '',",
+        "} . ($this->cache === null ? '' : ' CACHE ' . $this->cache->decimal) . match ($this->cycle) {",
+        "    null => '',",
+        "    true => ' CYCLE',",
+        "    false => ' NO CYCLE',",
+        "} . match (true) {",
+        "    $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwner => ' OWNED BY ' . $this->owner->quoted(),",
+        "    $this->owner === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\ClearSequenceOwner::Remove => ' OWNED BY NONE',",
+        "    $this->owner === null => '',",
+        "};"
+      ]
+    },
+    "Schema/Sequence/Alter/SequenceChangeRules::checkLimits": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "[$floor, $ceiling] = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::limits($storage ?? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide);",
+        "$ascending = $increment === null ? null : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($increment, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('0')) > 0;",
+        "$lower = $minimum instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral ? $minimum : $floor;",
+        "if ($minimum === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceResetOperand::Native && $ascending === true && $storage === null) {",
+        "    $lower = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('1');",
+        "}",
+        "$upper = $maximum instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral ? $maximum : $ceiling;",
+        "if ($maximum === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceResetOperand::Native && $ascending === false && $storage === null) {",
+        "    $upper = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('-1');",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($floor, $lower) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($upper, $ceiling) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $upper) < 0, 'Sequence limits must increase within the selected integer storage.');",
+        "foreach ([$start, $restart] as $position) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$position instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral || \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $position) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($position, $upper) <= 0, 'The sequence start and restart must be within its limits.');",
+        "}"
+      ]
+    },
+    "Schema/Sequence/Alter/SequenceChangeRules::bound": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $operand instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral => ' ' . $keyword . ' ' . $operand->decimal,",
+        "    $operand === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceResetOperand::Native => ' NO ' . $keyword,",
+        "    $operand === null => '',",
+        "};"
+      ]
+    },
+    "Schema/Sequence/Alter/SequenceChangesLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$reader = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceOptionLowering();",
+        "$values = [];",
+        "foreach ($options as $option) {",
+        "    [$key, $operand] = $reader->lower($context, $option);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($values[$key]), 'A sequence option may be specified only once.');",
+        "    $values[$key] = $operand ?? match ($key) {",
+        "        'MINVALUE', 'MAXVALUE', 'RESTART' => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceResetOperand::Native,",
+        "        'OWNED BY' => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\ClearSequenceOwner::Remove,",
+        "        default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A sequence reset requires a supported assignment role.'),",
+        "    };",
+        "}",
+        "/** @var array{AS?: IntegerStorage, INCREMENT?: WideIntegerLiteral, MINVALUE?: WideIntegerLiteral|SequenceResetOperand,",
+        " *     MAXVALUE?: WideIntegerLiteral|SequenceResetOperand, START?: WideIntegerLiteral, RESTART?: WideIntegerLiteral|SequenceResetOperand,",
+        " *     CACHE?: WideIntegerLiteral, CYCLE?: bool, 'OWNED BY'?: SequenceOwner|ClearSequenceOwner} $values",
+        " */",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceChanges($values['AS'] ?? null, $values['INCREMENT'] ?? null, $values['MINVALUE'] ?? null, $values['MAXVALUE'] ?? null, $values['START'] ?? null, $values['RESTART'] ?? null, $values['CACHE'] ?? null, $values['CYCLE'] ?? null, $values['OWNED BY'] ?? null);"
+      ]
+    },
+    "Schema/Sequence/Alter/ReconfigureSequenceLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'ALTER SEQUENCE requires the native naming profile.');",
+        "$source = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceTargetLowering())->lower($context, $statement->name, $statement->ifExists);",
+        "$changes = $source->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing ? (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\SequenceChangesLowering())->lower($context, $statement->options) : null;",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\ReconfigureSequence($source, $changes, $statement->ifExists, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Sequence/Alter/ReconfigureSequence::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$source->checkProfile($release);",
+        "if ($source->presence === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePresence::Existing) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($changes !== null, 'A present sequence requires checked changes.');",
+        "    $owner = $changes->owner;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Ownership\\SequenceOwner || $owner->schema->value === $source->schema?->value, 'The sequence and its owning column must share a namespace.');",
+        "} else {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($ifExists, 'An absent sequence selector requires IF EXISTS.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($changes === null, 'An absent sequence cannot carry changes.');",
+        "}"
+      ]
+    },
+    "Schema/Sequence/Alter/ReconfigureSequence::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Sequence/Alter/ReconfigureSequence::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'ALTER SEQUENCE ' . ($this->ifExists ? 'IF EXISTS ' : '') . $this->source->quoted() . ($this->changes?->toString() ?? ' RESTART');"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\ChangeOwner, $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename && $statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaAlterLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\SetSchema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\MoveSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\AlterSequence => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\Alter\\ReconfigureSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Alter\\RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Truncate\\TruncateLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex => match ($statement->target) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndexLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Schema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSchemaLowering())->lower($operation, $statement),",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabaseLowering())->lower($operation, $statement),",
+        "    },",
+        "};"
+      ]
+    }
+  }
+}

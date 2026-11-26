@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * name the context does not declare, the columns depend on that fact.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the missing fact
  *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\TableOrView(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'))))->describe() // => 'whether t is a base table or a view'
  */

@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/sqlite-constraint-index-binding-2",
+  "approval": "pending-human-review",
+  "scope": "Verify native constraint index numbering, deduplication and physical WITHOUT ROWID primary storage.",
+  "artifacts": {
+    "src/Rules/Definition/PrimaryKeyRule.php": {
+      "sha256": "334966150646b83d6353a63d898d23a838124e7f48074bafd008e5245f750b2d",
+      "role": "Establish actual candidate rowid slot and primary key scope."
+    },
+    "src/Rules/Definition/KeyTerms.php": {
+      "sha256": "2ffa8581fac72c48363104a88f4a8f256183a074e22acb2f3c78cfc6faf03124",
+      "role": "Find a checked key operand by its semantic declaration identity."
+    },
+    "src/Statement/Type/ColumnDomain.php": {
+      "sha256": "b47f42e23d8f741239965d8bf4390bf7053059b655f20583c673e17657e6648d",
+      "role": "Use the exact declared INTEGER type for indexless rowid aliases."
+    },
+    "src/Rules/Definition/Index/ConstraintIndexes.php": {
+      "sha256": "708b21b784ef9281214ba2e7d5db64e5c87edbfa399f6956d1d776e2f1e4f8b7",
+      "role": "Deduplicate ordered typed column and collation signatures. Apply the actual native INTEGER rowid convention."
+    },
+    "src/Rules/Definition/Index/ConstraintIndexLayout.php": {
+      "sha256": "81111a4dfa8207af51f6e1c576ce9e240c6e56c99f1348f60625435639f0d40d",
+      "role": "Check the primary storage ordinal belongs to the contiguous native automatic index layout."
+    }
+  },
+  "sharedBindings": {
+    "src/Rules/Definition/TableDeclaration.php": {
+      "contract": "sqlite-folded-binding-sources-v9.json",
+      "sha256": "d332a6f287f09f13d250d1ea7f7fe801eb6912d394af6f3725a8be2aef86a030"
+    },
+    "src/Rules/Definition/TypeRecording.php": {
+      "contract": "sqlite-folded-binding-sources-v9.json",
+      "sha256": "31f8d30ac99de4bf94ee7ba9ce36d7ada84f713ce1c506b10c41853c8f48061c"
+    },
+    "src/Statement/Schema/Column/ColumnDefinition.php": {
+      "contract": "sqlite-folded-binding-sources-v9.json",
+      "sha256": "f6aedb7c228d71765dc024e876e40f77eecc7a2edd175d0e3d91275b840bdf5d"
+    },
+    "src/Platform.php": {
+      "contract": "sqlite-folded-binding-sources-v9.json",
+      "sha256": "0925530f639465a4ebffe2b7bd17b3a0b720c41bc0170330aad6c43b2df83a93"
+    },
+    "src/Model/Facade/Catalog.php": {
+      "contract": "sqlite-drop-column-binding-v5.json",
+      "sha256": "a17eb69e0fa1869e52d0a9f2f66e9a98f6823fd24be778c8db6c5cbdb247fd65"
+    },
+    "src/Model/Contract/AnalysisContext.php": {
+      "contract": "sqlite-drop-index-binding-v4.json",
+      "sha256": "968c8da20dbdcc6275200880a4f87845e16c7f2684862aa4bd54a6a47c40ccec"
+    },
+    "src/Model/Statement/Declaration/Index.php": {
+      "contract": "sqlite-drop-index-binding-v4.json",
+      "sha256": "45272e5ecbbcdb61e457065a005201339bc24a995f1bd7e3c41c1364696d3cc8"
+    }
+  },
+  "revises": "sqlite-constraint-index-binding-v1.json"
+}

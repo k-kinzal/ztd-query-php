@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Access;
  * language search followed by a second search.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/fulltext-search.html.
  *
- * @visibility public
- * @example Reading the boolean mode
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE MATCH (a) AGAINST ('x' IN BOOLEAN MODE)");
- *     $query->statement->where->mode // => \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextMode::Boolean
+ * @visibility SqlSemantics
  */
 enum FullTextMode
 {

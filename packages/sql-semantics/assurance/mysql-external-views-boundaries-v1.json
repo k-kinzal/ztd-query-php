@@ -1,0 +1,236 @@
+{
+  "revision": "SemanticsIR/mysql-external-views-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Tie absolute external kind, typed source storage, qualified emission and base-only write placement to the loaded MySQL PHP.",
+  "rules": {
+    "TableSource::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');",
+        "foreach ([$schema, $table] as $object) {",
+        "    Check::input(strpbrk($object->value, '/\\\\.') === false, 'A database or table name excludes path and dot separators.');",
+        "}",
+        "foreach ([$schema, $table, ...$names] as $object) {",
+        "    Check::input(",
+        "        preg_match('/\\A.{1,64}(?<! )\\z/us', $object->value) === 1,",
+        "        'A schema object name has 1 to 64 characters and no trailing space.',",
+        "    );",
+        "}",
+        "$seen = [];",
+        "foreach ($names as $name) {",
+        "    $key = $name->key();",
+        "    Check::input(!isset($seen[$key]), 'A table source cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$types = $columnTypes === [] ? array_fill(0, count($names), ColumnKind::SignedInt) : $columnTypes;",
+        "Check::input(array_is_list($types) && count($types) === count($names), 'A table source needs one native type per input slot.');",
+        "$owned = [];",
+        "foreach ($types as $type) {",
+        "    Check::input($type instanceof ColumnKind || $type instanceof Varchar, 'A table source needs checked native slot types.');",
+        "    $owned[] = $type;",
+        "}",
+        "$this->columns = $names;",
+        "$this->columnTypes = $owned;"
+      ]
+    },
+    "SourceBinding::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$resolution = null;",
+        "$kind = ExternalRelationKind::BaseTable;",
+        "if ($source !== null) {",
+        "    Check::input((($source instanceof TableReference && $source->indexHints === [] && $source->sample === null) || $source instanceof WriteTarget) && $source->partitions === [], 'The projection source must be an ordinary table input.');",
+        "    Check::input(",
+        "        $operation->context->relationNames === Comparison::Sensitive",
+        "            && $operation->context->columnNames === Comparison::AsciiInsensitive,",
+        "        'The declaration context must use MySQL name comparison.',",
+        "    );",
+        "    $resolution = $operation->facts->relation($source)->table;",
+        "    Check::input(",
+        "        $resolution instanceof DeclaredTable && $resolution->table->complete",
+        "            && $resolution->table->name->catalog === null,",
+        "        'The source requires a resolved, complete local relation declaration.',",
+        "    );",
+        "    $kind = match ($resolution->table->kind) {",
+        "        RelationKind::BaseTable => ExternalRelationKind::BaseTable,",
+        "        RelationKind::View => ExternalRelationKind::View,",
+        "        RelationKind::MaterializedView, RelationKind::ForeignTable, RelationKind::Sequence => throw new InvalidConstruction('The source requires an admitted external relation kind.'),",
+        "    };",
+        "    Check::input(!$source instanceof WriteTarget || $kind === ExternalRelationKind::BaseTable, 'A write requires a resolved base table.');",
+        "}",
+        "$this->table = $resolution?->table;",
+        "$this->kind = $kind;",
+        "Check::input(",
+        "    $this->table === null || $this->table->name->schema !== null || $operation->context->declarationSchema->value !== SessionDatabase::UNNAMED,",
+        "    'The table must resolve to a named MySQL database.',",
+        ");"
+      ]
+    },
+    "SourceBinding::source": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->table === null ? null : new TableSource(",
+        "    new Identifier(($this->table->name->schema ?? $this->operation->context->declarationSchema)->value),",
+        "    new Identifier($this->table->name->name->value),",
+        "    $this->names,",
+        "    $this->columnTypes,",
+        "    $this->kind,",
+        ");"
+      ]
+    },
+    "SourceBinding::mergedHeading": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($this->table !== null && $this->kind === ExternalRelationKind::BaseTable && $this->table->implicit === [], 'A merged join requires complete visible base-table headings.');",
+        "$heading = [];",
+        "foreach ($this->table->columns as $column) {",
+        "    $name = $column->name->value;",
+        "    $key = Comparison::AsciiInsensitive->fold($name);",
+        "    Check::input(preg_match('/\\A[\\x01-\\x7f]+\\z/D', $name) === 1 && !isset($heading[$key]), 'A merged join requires distinct ASCII field names.');",
+        "    $heading[$key] = $column;",
+        "}",
+        "",
+        "return $heading;"
+      ]
+    },
+    "SourceBinding::writeTarget": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$target = $this->source();",
+        "Check::input($target !== null && $target->kind === ExternalRelationKind::BaseTable, 'An INSERT requires a resolved write target.');",
+        "$columns = [];",
+        "$types = [];",
+        "foreach ($names as $name) {",
+        "    [$column, $type] = $this->writableColumn($name);",
+        "    $columns[] = new Identifier($column->name->value);",
+        "    $types[] = $type;",
+        "}",
+        "",
+        "return new TableSource($target->schema, $target->table, $columns, $types);"
+      ]
+    },
+    "SourceBinding::writeDeclaration": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($this->table !== null && $this->kind === ExternalRelationKind::BaseTable, 'A write requires a resolved base table.');",
+        "$matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);",
+        "Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');",
+        "return $matches[0];"
+      ]
+    },
+    "SelectSql::from": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($source instanceof DerivedSource) {",
+        "    return '(' . $this->render($source->definition, true) . ') AS ' . $this->alias($offset);",
+        "}",
+        "if ($source instanceof TableSource) {",
+        "    return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($offset);",
+        "}",
+        "$rightOffset = $offset + ($source->left instanceof Join ? count($source->left->inputs()) : 1);",
+        "$sql = '(' . $this->from($source->left, $offset) . ' ' . $source->kind->value . ' JOIN ' . $this->from($source->right, $rightOffset);",
+        "if ($source->on !== null) {",
+        "    $sql .= ' ON ' . $this->predicate($source->on, $source, $offset);",
+        "}",
+        "",
+        "return $sql . ')';"
+      ]
+    },
+    "Mutation/Insert::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($target->kind === ExternalRelationKind::BaseTable, 'An INSERT target must be a base table.');",
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');",
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "    foreach ($row->values as $position => $cell) {",
+        "        Check::input(",
+        "            $cell->value === null || ($cell->value instanceof TextLiteral) === ($target->columnTypes[$position] instanceof Varchar),",
+        "            'An INSERT value must match its native destination type.',",
+        "        );",
+        "    }",
+        "}"
+      ]
+    },
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($target->kind === ExternalRelationKind::BaseTable, 'An INSERT target must be a base table.');",
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $position => $column) {",
+        "    $value = $column->expression;",
+        "    if ($target->columnTypes[$position] instanceof Varchar) {",
+        "        Check::input(",
+        "            $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof CollatedText || $value instanceof NullLiteral,",
+        "            'A query INSERT VARCHAR field requires a native text value or NULL.',",
+        "        );",
+        "        continue;",
+        "    }",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,",
+        "        'Each query INSERT field requires a signed value or NULL.',",
+        "    );",
+        "}"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($target->kind === ExternalRelationKind::BaseTable, 'An UPDATE target must be a base table.');",
+        "Check::input(array_is_list($assignments) && $assignments !== [], 'An UPDATE needs a nonempty assignment list.');",
+        "Check::input(count($assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');",
+        "$scope = new OccurrenceScope();",
+        "$checked = [];",
+        "foreach ($assignments as $assignment) {",
+        "    Check::input($assignment instanceof UpdateAssignment || $assignment instanceof TextUpdateAssignment, 'An UPDATE needs a nonempty assignment list.');",
+        "    $scope->updateAssignment($assignment, $target);",
+        "    $checked[] = $assignment;",
+        "}",
+        "$scope->predicate($where, [$target]);",
+        "$this->assignments = $checked;"
+      ]
+    },
+    "Mutation/Delete::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($target->kind === ExternalRelationKind::BaseTable, 'A DELETE target must be a base table.');",
+        "(new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');"
+      ]
+    }
+  }
+}

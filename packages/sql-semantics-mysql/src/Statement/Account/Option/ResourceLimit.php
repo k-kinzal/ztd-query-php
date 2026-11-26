@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-resource-limits.
  *
- * @visibility public
- * @example Reading a limit
- *     $limit = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE USER u WITH MAX_QUERIES_PER_HOUR 10')->statement->resources[0];
- *     [$limit->kind, $limit->number->text] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceKind::QueriesPerHour, '10']
+ * @visibility SqlSemantics
  */
 final class ResourceLimit implements WithOption
 {

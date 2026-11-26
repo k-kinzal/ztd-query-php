@@ -19,9 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * Mirrors PT_alter_user_default_role. Rule: MYSQL-ALTER-DEFAULT-ROLE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-role. Status: Implemented.
  *
- * @visibility public
- * @example Setting every granted role as default
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter user u default role all')->statement->roles->set // => \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All
+ * @visibility SqlSemantics
  */
 final class AlterDefaultRole implements Statement
 {

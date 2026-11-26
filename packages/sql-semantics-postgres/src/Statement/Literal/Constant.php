@@ -31,10 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * https://www.postgresql.org/docs/17/typeconv-overview.html, `make_const` in
  * `src/backend/parser/parse_node.c` of PostgreSQL 17. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of an integer constant too large for 32 bits
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 3000000000');
- *     $query->field(0)->type->descriptor->name() // => 'bigint'
+ * @visibility SqlSemantics
  */
 final class Constant implements Scalar, OutputNaming, IntegerValued
 {

@@ -12,10 +12,10 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StatementSequence::class)]
 #[Medium]
@@ -23,10 +23,10 @@ final class StatementSequenceTest extends TestCase
 {
     public function testMembersKeepsProgramStatementsAndSqlStatementsInOrder(): void
     {
-        $semantics = new Semantics();
-        $procedure = $semantics->analyze('CREATE PROCEDURE p() BEGIN END')->statement;
+        $semantics = new Inspection();
+        $procedure = $semantics->inspect('CREATE PROCEDURE p() BEGIN END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
-        $select = $semantics->analyze('SELECT 1')->statement;
+        $select = $semantics->inspect('SELECT 1')->statement;
 
         self::assertSame([$procedure->body, $select], (new StatementSequence())->members([$procedure->body, $select], 1));
         self::assertSame([], (new StatementSequence())->members([]));
@@ -50,17 +50,17 @@ final class StatementSequenceTest extends TestCase
     {
         $this->expectExceptionMessage('A statement list holds statements.');
 
-        (new StatementSequence())->members(['first' => (new Semantics())->analyze('SELECT 1')->statement]);
+        (new StatementSequence())->members(['first' => (new Inspection())->inspect('SELECT 1')->statement]);
     }
 
     public function testMemberAcceptsAProgramStatementAndAnSqlStatement(): void
     {
-        $semantics = new Semantics();
-        $procedure = $semantics->analyze('CREATE PROCEDURE p() BEGIN END')->statement;
+        $semantics = new Inspection();
+        $procedure = $semantics->inspect('CREATE PROCEDURE p() BEGIN END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $block = $procedure->body;
         self::assertInstanceOf(Block::class, $block);
-        $select = $semantics->analyze('SELECT 1')->statement;
+        $select = $semantics->inspect('SELECT 1')->statement;
 
         self::assertSame($block, (new StatementSequence())->member($block));
         self::assertSame($select, (new StatementSequence())->member($select));
@@ -75,11 +75,11 @@ final class StatementSequenceTest extends TestCase
 
     public function testWriteEndsEveryStatementWithASemicolon(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $out = new Output(new Codec(GrammarRelease::MySql910));
-        (new StatementSequence())->write($out, [$semantics->analyze('SELECT 1')->statement, $semantics->analyze('SET @a = 1')->statement]);
+        (new StatementSequence())->write($out, [$semantics->inspect('SELECT 1')->statement, $semantics->inspect('SET @a = 1')->statement]);
 
         self::assertSame('SELECT 1; SET @a = 1;', (new Lexical())->join($out->pieces()));
-        self::assertSame('CREATE PROCEDURE p() BEGIN SELECT 1; BEGIN END; END', $semantics->analyze('create procedure p() begin select 1; begin end; end')->toString());
+        self::assertSame('CREATE PROCEDURE p() BEGIN SELECT 1; BEGIN END; END', $semantics->inspect('create procedure p() begin select 1; begin end; end')->toString());
     }
 }

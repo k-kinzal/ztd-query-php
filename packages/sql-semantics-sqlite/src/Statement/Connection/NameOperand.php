@@ -27,10 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_attach.html (and `resolveAttachExpr()` in
  * attach.c of the release). Status: Implemented.
  *
- * @visibility public
- * @example Reading a schema name written as an identifier
- *     $attach = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("ATTACH 'file.db' AS aux");
- *     [$attach->statement->schema->name->value, $attach->facts->scalar($attach->statement->schema)->type->descriptor] // => ['aux', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
+ * @visibility SqlSemantics
  */
 final class NameOperand implements Scalar
 {

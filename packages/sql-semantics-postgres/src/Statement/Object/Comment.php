@@ -24,10 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  * comment. A commented relation or column is resolved.
  * Source: https://www.postgresql.org/docs/17/sql-comment.html.
  *
- * @visibility public
- * @example Reading a comment on a column
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COMMENT ON COLUMN t.a IS 'key'");
- *     [$operation->statement->kind->value, $operation->statement->comment?->value] // => ['COLUMN', 'key']
+ * @visibility SqlSemantics
  */
 final class Comment implements Statement
 {

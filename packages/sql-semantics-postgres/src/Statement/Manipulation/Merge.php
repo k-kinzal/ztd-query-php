@@ -27,10 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  * follow PG-MERGE-001.
  * Source: https://www.postgresql.org/docs/17/sql-merge.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the clauses of a MERGE
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN UPDATE SET b = NULL WHEN NOT MATCHED THEN INSERT VALUES (u.a) RETURNING MERGE_ACTION(), t.a');
- *     [count($merge->statement->clauses), $merge->field(0)->name->value] // => [2, 'merge_action']
+ * @visibility SqlSemantics
  * @example Refusing MERGE without a WHEN clause
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')))), new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')))), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral(true), []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

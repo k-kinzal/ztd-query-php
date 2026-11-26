@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Trigger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TriggerTiming::class)]
 #[Medium]
@@ -23,10 +23,10 @@ final class TriggerTimingTest extends TestCase
 
     public function testCasesAreReadFromTheTimingWordsOrAbsent(): void
     {
-        $semantics = new Semantics();
-        $instead = $semantics->analyze('create trigger tr instead of insert on v begin select 1; end');
-        $before = $semantics->analyze('create trigger tr Before delete on t begin select 1; end');
-        $none = $semantics->analyze('create trigger tr delete on t begin select 1; end');
+        $semantics = new Inspection();
+        $instead = $semantics->inspect('create trigger tr instead of insert on v begin select 1; end');
+        $before = $semantics->inspect('create trigger tr Before delete on t begin select 1; end');
+        $none = $semantics->inspect('create trigger tr delete on t begin select 1; end');
 
         self::assertInstanceOf(CreateTrigger::class, $instead->statement);
         self::assertSame(TriggerTiming::InsteadOf, $instead->statement->timing);

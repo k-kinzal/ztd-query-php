@@ -1,0 +1,10 @@
+{
+  "revision": "SemanticsIR/mysql-session-create-fixture-reset-1",
+  "approval": "pending-human-review",
+  "extends": "mysql-session-create-table-v1.json",
+  "candidate": "77edee0c80be5ab9a1cf4d2a584e4ec9203eee49",
+  "archiveSha256": "4946ae2629cb0a4b81e2ad445e2e320f28163c42379df1998fcea68bb8fd5f57",
+  "observedFailure": "On 8.1.0, 8.2.0, 8.3.0, 9.0.1 and 9.1.0 the observer issued a multi-target DROP VIEW IF EXISTS while a decoy was a base table. It exited with HY000/1347 before comparison.",
+  "fixtureRule": "Before rebuilding each scenario, read the current definition of the two disposable coordinates on the catalog connection and drop each with the matching native object kind. A missing object requires the exact 42S02/1146 pair. The owner connection remains separate and each independently expected initial state must still match.",
+  "preserves": "Every required release, original input, observer field, finite identity, seed, fault, budget and expected comparison."
+}

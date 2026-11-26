@@ -25,9 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
  * the `NAMES_SYM equal expr` action of sql/sql_yacc.yy (5.7).
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the refusal
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("SET NAMES = 'utf8'") // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SET NAMES takes a character set name, not an expression
+ * @visibility SqlSemantics
  */
 final class NamesExpression implements SetItem
 {

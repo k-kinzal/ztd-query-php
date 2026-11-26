@@ -15,9 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * takes, or modifiers on a type that takes none.
  * Source: https://www.postgresql.org/docs/17/datatype.html.
  *
- * @visibility public
- * @example Reporting a precision the numeric type does not allow
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT numeric(0) '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Invalid type modifier for type numeric.
+ * @visibility SqlSemantics
  */
 final class ModifierProblem implements Diagnostic
 {

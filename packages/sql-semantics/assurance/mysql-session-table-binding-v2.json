@@ -1,0 +1,35 @@
+{
+  "revision": "SemanticsIR/mysql-session-table-binding-2",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "a983942178d81409bb7eaef9583d94db32e39ae775bc8e7606101f7b0e4c13d5",
+      "role": "Collect all matching declaration coordinates without collapsing separate definitions."
+    },
+    "src/Model/Construction/Derivation.php": {
+      "sha256": "5538a564e7ca7adf34226f61a55329699707e49d3df29d94ef490327f27ec839",
+      "role": "Route the CTE and native lookup precedence with retained lexical scope."
+    },
+    "src/Model/Resolution/TableLookup.php": {
+      "sha256": "336c2f4e388b954b4c75974658b97a7a5dee8e18c157bc5624d3821e0dd5e988",
+      "role": "Select the correct native namespace before classifying ambiguity or absence."
+    },
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "de3b4a3c2340add8e2d76ed6e033a5a249376b5e5a10cd9cdd4d0dbea010fbf1",
+      "role": "Require session-local provenance to belong to a checked base-table declaration."
+    },
+    "src/Rules/TableChange/Renamings.php": {
+      "sha256": "22ca3de6dbf820304bdbc71f8230bec965fb55d3d5df6b0c7d5a09a5e948694f",
+      "role": "Select the permanent origin and preserve left-to-right name changes under a temporary overlay."
+    },
+    "src/Rules/TableChange/Targets.php": {
+      "sha256": "4a6e3f2cb761504f8ac66885e8a3bc6844f1772cc3db181604829844c56b8870",
+      "role": "Expose the lookup policy while retaining resolved column bindings."
+    },
+    "src/Model/Resolution/TableNamespace.php": {
+      "sha256": "4be05859ce894aaf7de21a05ec1df464e2d8647ae53c40babfd4eb79a29a2338",
+      "role": "Close the operation-specific namespace selection policies."
+    }
+  },
+  "extends": "mysql-session-table-binding-v1.json"
+}

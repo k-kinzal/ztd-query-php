@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
  * rows of VALUES as the source; VALUE is a synonym of VALUES.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the rows of an INSERT
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("INSERT IGNORE INTO t (a, b) VALUE (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)");
- *     [count($insert->statement->rows), count($insert->statement->onDuplicate), $insert->toString()] // => [2, 1, "INSERT IGNORE INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)"]
+ * @visibility SqlSemantics
  */
 final class InsertRows implements Statement
 {

@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flow-control-functions.html#operator_case.
  * Status: Implemented.
  *
- * @visibility public
- * @example Typing a CASE by its results
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
- *     [$query->facts->scalar($query->statement->where)->type->descriptor->name(), $query->facts->scalar($query->statement->where)->nullability] // => ['VARCHAR', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  */
 final class CaseExpression implements Scalar
 {

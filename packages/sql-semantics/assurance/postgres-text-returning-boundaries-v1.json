@@ -1,0 +1,46 @@
+{
+  "revision": "SemanticsIR/postgres-text-returning-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "postgres-mutation-returning-boundaries-v2.json",
+    "sha256": "082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3"
+  },
+  "scope": "The target checks every ordered RETURNING position against its native field kind.",
+  "rules": {
+    "Mutation/ReturningLayout::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($fields) <= 1024, 'A mutation can return at most 1024 fields.');",
+        "foreach ($fields as $field) {",
+        "    $kind = $field->reference instanceof TextColumnReference ? ColumnKind::Text : ColumnKind::Int4;",
+        "    Check::input($target->columnKind($field->reference->slot) === $kind, 'A returned slot must belong to its target.');",
+        "}"
+      ]
+    },
+    "Mutation/ReturningLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = $output?->fields();",
+        "Check::input($fields !== null, 'RETURNING needs a closed target result layout.');",
+        "$returning = [];",
+        "foreach ($fields as $field) {",
+        "    $operand = $field->expression;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    Check::input($operand === null || $operand instanceof ParsedReturnColumn, 'RETURNING requires a resolved target column.');",
+        "    $resolution = $field->resolution;",
+        "    Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');",
+        "    $returning[] = new ReturnedColumn($binding->resolved($resolution), new Identifier($field->name->value));",
+        "}",
+        "Check::input($returning !== [], 'RETURNING needs at least one resolved target field.');",
+        "",
+        "return $returning;"
+      ]
+    }
+  }
+}

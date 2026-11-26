@@ -131,7 +131,7 @@ final class ResultNames
     public function resolved(ResultColumn $column, ColumnUse|DoubleQuotedWord|TruthWord $expression, ?Resolution $resolution): ?Name
     {
         if ($resolution instanceof ResolvedColumn) {
-            return $resolution->slot->name;
+            return $resolution->merge === null ? $resolution->slot->name : $this->span($column);
         }
         if ($expression instanceof ColumnUse) {
             return $resolution instanceof AliasTarget ? $resolution->field->name : $expression->name;

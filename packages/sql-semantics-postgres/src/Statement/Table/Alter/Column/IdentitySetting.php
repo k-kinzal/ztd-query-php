@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
  * Mirrors the `DefElem` a `SET SeqOptElem` adds to `AT_SetIdentity`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Setting a sequence option of an identity
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET CYCLE');
- *     $statement->statement->commands[0]->options[0]->option->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::Cycle
+ * @visibility SqlSemantics
  */
 final class IdentitySetting implements Node
 {

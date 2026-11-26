@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SqlState::class)]
 #[Medium]
@@ -69,7 +69,7 @@ final class SqlStateTest extends TestCase
     #[DataProvider('providerRenderDropsTheWordValue')]
     public function testRenderDropsTheWordValue(string $release): void
     {
-        $signal = (new Semantics($release))->analyze("signal sqlstate value '42S02'");
+        $signal = (new Inspection($release))->inspect("signal sqlstate value '42S02'");
         $statement = $signal->statement;
         self::assertInstanceOf(Signal::class, $statement);
         self::assertInstanceOf(SqlState::class, $statement->condition);

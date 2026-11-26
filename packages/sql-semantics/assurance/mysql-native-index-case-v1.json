@@ -1,0 +1,31 @@
+{
+  "revision": "SemanticsIR/mysql-native-index-case-1",
+  "approval": "pending-human-review",
+  "extends": ["mysql-create-btree-index-v1.json", "mysql-drop-native-index-v1.json"],
+  "releases": ["5.6.51", "5.7.44", "8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+  "scope": "Native comparison for decoded MySQL index names and the columns they name. The system identifier comparison is fixed independently of connection data collation and exact table/database names.",
+  "identityKeys": "Apply the stock utf8 general lowercase table to each valid BMP scalar. The selected names admit no NUL, surrogates or supplementary scalar. Retain exact declared spelling and never erase accents.",
+  "exhaustion": {
+    "order": "Ascending scalar from U+0001 through U+FFFF excluding U+D800 through U+DFFF.",
+    "points": 63487,
+    "changed": 696,
+    "mappingDigest": "679d907ea08ee31b679cab0ad2ebb76cb70a78750aca2252a0f2f25c4d72ea44",
+    "mappingEncoding": "UTF-8 compact JSON object in scalar order containing only changed pairs and literal Unicode.",
+    "rawArchiveDigest": "3a6e67a016e7fd3c75e3714d4951d8d3e19181a121e6578b74fcb694d3b2ef1b",
+    "conditions": "Require live pinned releases, each exact point, system utf8 charset, no scalar omission or duplicate, exact output byte sequences, and the distributed PHP case function over every point."
+  },
+  "nativeControls": [
+    "CREATE INDEX with the spelling PRİMARY resolves the reserved key role and is refused with error 1280.",
+    "A direct construction with PRİMARY in the ordinary index identity is rejected by the same name obligation.",
+    "Index field spellings éLAN and ΆΛΦΑ resolve to their stored accented mixed-case identifiers, independently of the unaccented field elan.",
+    "Using élan and ÉLAN as separate fields of the same index is rejected with error 1060.",
+    "DROP INDEX PRİMARY removes the physically named PRIMARY, without changing two unrelated accented and unaccented secondary indexes."
+  ],
+  "codeConnection": "Inspect the complete fixed PHP case table and strtr implementation. On valid UTF-8 BMP scalars the encoded keys cannot occur inside another scalar or overlap adjacent scalars, so whole-name replacement composes the scalar mapping without context-dependent decisions. Check the name resolver and case table byte identity against the installed distribution.",
+  "faults": ["Fall back to ASCII folding.", "Use accent-insensitive comparisons.", "Remove one mapped BMP scalar.", "Rewrite the declaration's stored output name.", "Stop before exhausting the scalar domain."],
+  "sources": [
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/strings/ctype-utf8.c",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/strings/ctype-utf8.cc",
+    "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/sql_table.cc"
+  ]
+}

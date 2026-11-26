@@ -12,11 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A name that no visible relation has, established by complete declarations.
  *
- * @visibility public
- * @example Establishing that a column does not exist
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $semantics->analyze('SELECT b FROM t', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column b does not exist.
+ * @visibility SqlSemantics
  */
 final class MissingColumn implements Resolution, Diagnostic
 {

@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(GeneralCondition::class)]
 #[Medium]
@@ -55,7 +55,7 @@ final class GeneralConditionTest extends TestCase
     #[DataProvider('providerRenderWritesTheClassesAHandlerNames')]
     public function testRenderWritesTheClassesAHandlerNames(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create procedure p() begin declare continue handler for sqlwarning, not   found, sqlexception begin end; end');
+        $create = (new Inspection($release))->inspect('create procedure p() begin declare continue handler for sqlwarning, not   found, sqlexception begin end; end');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;

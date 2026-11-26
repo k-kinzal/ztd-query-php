@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  * not a role, as an old or the new owner.
  * Source: https://www.postgresql.org/docs/17/sql-reassign-owned.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the new owner
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REASSIGN OWNED BY joe, ann TO boss');
- *     [count($operation->statement->owners), $operation->statement->newOwner->name?->value] // => [2, 'boss']
+ * @visibility SqlSemantics
  */
 final class ReassignOwned implements Statement
 {

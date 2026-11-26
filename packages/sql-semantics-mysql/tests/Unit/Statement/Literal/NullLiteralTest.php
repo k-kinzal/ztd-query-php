@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(NullLiteral::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class NullLiteralTest extends TestCase
 {
     public function testDeriveScalarAnswersTheNullOnlyTypeThatIsNullable(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = NULL');
+        $operation = (new Inspection())->inspect('SELECT a FROM t WHERE a = NULL');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -35,7 +35,7 @@ final class NullLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        $operation = (new Semantics())->analyze('select null');
+        $operation = (new Inspection())->inspect('select null');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];

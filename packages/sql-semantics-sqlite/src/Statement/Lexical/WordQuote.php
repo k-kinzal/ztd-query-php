@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Lexical;
  *
  * Source: https://sqlite.org/lang_keywords.html.
  *
- * @visibility public
- * @example Reading how a type word is quoted
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a "big int")');
- *     $create->statement->columns[0]->type->words[0]->quote // => \SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote::Double
+ * @visibility SqlSemantics
  */
 enum WordQuote
 {

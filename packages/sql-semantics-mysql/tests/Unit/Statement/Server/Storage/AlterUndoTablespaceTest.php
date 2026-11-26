@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Server\Storage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterUndoTablespace;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AlterUndoTablespace::class)]
 #[Medium]
@@ -17,12 +17,12 @@ final class AlterUndoTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('ALTER UNDO TABLESPACE u SET ACTIVE', (new Semantics())->inspect('alter undo tablespace u set active')->toString());
+        self::assertSame('ALTER UNDO TABLESPACE u SET ACTIVE', (new Inspection())->diagnose('alter undo tablespace u set active')->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect('ALTER UNDO TABLESPACE u SET ACTIVE ENGINE a ENGINE b');
+        $operation = (new Inspection())->diagnose('ALTER UNDO TABLESPACE u SET ACTIVE ENGINE a ENGINE b');
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

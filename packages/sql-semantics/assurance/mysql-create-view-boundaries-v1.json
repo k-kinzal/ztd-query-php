@@ -1,0 +1,159 @@
+{
+  "revision": "SemanticsIR/mysql-create-view-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect creation policies, heading storage, admitted persistent source, DUAL and the native SQL effect to loaded PHP.",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(",
+        "    $policy !== ViewCreationPolicy::Preserve || $query->release === GrammarRelease::MySql910,",
+        "    'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.'",
+        ");",
+        "(new ViewQueryBounds())->check($query, $name, $algorithm);",
+        "$heading = Check::listOf($columns, ViewColumn::class, 'CREATE VIEW needs an owned nonempty heading.', 1);",
+        "Check::input(count($heading) === count($query->columns), 'The view heading must match the query width.');",
+        "$seen = [];",
+        "foreach ($heading as $column) {",
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'The view heading cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $heading;"
+      ]
+    },
+    "Schema/View/CreateView::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->query->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/view-definition';"
+      ]
+    },
+    "Schema/View/CreateView::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$start = $this->policy === ViewCreationPolicy::Replace ? 'CREATE OR REPLACE' : 'CREATE';",
+        "$preserve = $this->policy === ViewCreationPolicy::Preserve ? 'IF NOT EXISTS ' : '';",
+        "$names = [];",
+        "foreach ($this->columns as $column) {",
+        "    $names[] = $column->name->quoted();",
+        "}",
+        "",
+        "return $start . ' ALGORITHM=' . $this->algorithm->value . ' SQL SECURITY ' . $this->security->value . ' VIEW '",
+        "    . $preserve . $this->name->quoted() . ' (' . implode(', ', $names) . ') AS ' . (new SelectSql())->render($this->query, true);"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definition = $statement->definition;",
+        "Check::input($definition->definer === null && $definition->check === null",
+        "    && !($statement->orReplace && $definition->ifNotExists), 'CREATE VIEW needs an implicit definer and one admitted creation policy without a check option.');",
+        "Check::input($definition->query instanceof ParsedSelect, 'A checked view requires one ordinary SELECT block.');",
+        "Check::input($operation->context->relationNames === Comparison::Sensitive, 'CREATE VIEW requires the native case-sensitive relation profile.');",
+        "$schema = ($definition->name->schema ?? $operation->context->declarationSchema)->value;",
+        "Check::input($schema !== SessionDatabase::UNNAMED && $definition->name->catalog === null, 'CREATE VIEW requires an absolute view identity.');",
+        "$name = new ViewName(new Identifier($schema), new Identifier($definition->name->name->value));",
+        "$query = (new SelectLowering())->lower($operation, $definition->query);",
+        "$columns = [];",
+        "if ($definition->columns === null) {",
+        "    foreach ($query->columns as $column) {",
+        "        $columns[] = new ViewColumn($column->name);",
+        "    }",
+        "} else {",
+        "    foreach ($definition->columns as $column) {",
+        "        $columns[] = new ViewColumn(new Identifier($column->value));",
+        "    }",
+        "}",
+        "$policy = match (true) {",
+        "    $statement->orReplace => ViewCreationPolicy::Replace,",
+        "    $definition->ifNotExists => ViewCreationPolicy::Preserve,",
+        "    default => ViewCreationPolicy::RequireNew,",
+        "};",
+        "",
+        "return new CreateView(",
+        "    $name,",
+        "    $query,",
+        "    $columns,",
+        "    $policy,",
+        "    ViewAlgorithm::from($definition->algorithm->value ?? 'UNDEFINED'),",
+        "    ViewSecurity::from($definition->security->value ?? 'DEFINER')",
+        ");"
+      ]
+    },
+    "Schema/View/ViewColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(preg_match('/\\A[\\x01-\\x7f]{1,64}(?<! )\\z/D', $name->value) === 1, 'A checked MySQL view field needs 1 to 64 ASCII characters without a trailing space.');"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(!$query->distinct && $query->orderBy === [] && $query->limit === null, 'A checked view requires an ordinary unbounded projection.');",
+        "$source = $query->source;",
+        "Check::input(",
+        "    $source === null || ($source instanceof TableSource && $source->kind === ExternalRelationKind::BaseTable),",
+        "    'A checked view reads one persistent base table or an independent literal projection.'",
+        ");",
+        "Check::input($source !== null || $algorithm !== ViewAlgorithm::Merge, 'A MERGE view requires a mergeable base-table projection.');",
+        "if ($source !== null) {",
+        "    Check::input(",
+        "        $source->schema->value !== $target->schema->value || $source->table->value !== $target->view->value,",
+        "        'A view cannot read its own target identity.'",
+        "    );",
+        "}",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->expression;",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof TextColumnReference",
+        "        || $value instanceof IntegerLiteral || $value instanceof TextLiteral || $value instanceof NullLiteral || $value instanceof BooleanLiteral,",
+        "        'A checked view result must read a native field or a literal without parameters.'",
+        "    );",
+        "}"
+      ]
+    },
+    "SelectSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();",
+        "    $label = $column->name->value;",
+        "    $alias = $localNames || $label === ltrim($label, \" \\t\\r\\n\\v\\f\") ? ' AS ' . $name : '';",
+        "    $items[] = $this->expression($column->expression, $source) . $alias;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "} elseif (($select->release === GrammarRelease::MySql5651 || $select->release === GrammarRelease::MySql5744)",
+        "    && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {",
+        "    $sql .= ' FROM DUAL';",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "",
+        "return $sql . (new ResultSql())->render($select);"
+      ]
+    }
+  }
+}

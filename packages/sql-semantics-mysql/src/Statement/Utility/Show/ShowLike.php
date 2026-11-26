@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * wildcards.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/extended-show.html.
  *
- * @visibility public
- * @example Reading the pattern
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW DATABASES LIKE 'shop%'");
- *     $show->statement->filter->pattern->value // => 'shop%'
+ * @visibility SqlSemantics
  */
 final class ShowLike implements Node
 {

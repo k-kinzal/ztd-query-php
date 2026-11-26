@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * Mirrors `ReplicaIdentityStmt`; an index is named only for USING INDEX.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Using an index as replica identity
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t REPLICA IDENTITY USING INDEX k');
- *     $statement->statement->commands[0]->index->value // => 'k'
+ * @visibility SqlSemantics
  */
 final class ReplicaIdentity implements AlterCommand
 {

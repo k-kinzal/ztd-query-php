@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/functions-logical.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\OperandMismatch('AND', 'boolean', 'integer'))->message() // => 'Argument of AND must be type boolean, not type integer.'
  */

@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createtransform.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the direction into the language
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\TransformDirection::FromSql->value // => 'FROM SQL'
  */

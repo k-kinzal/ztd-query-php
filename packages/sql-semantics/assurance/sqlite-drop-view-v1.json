@@ -1,0 +1,70 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-view-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "additionalPublicRoots": ["Schema/DropView"],
+  "constructors": {
+    "Schema/DropView": {
+      "role": "A top-level request to remove a view in an explicit SQLite schema.",
+      "structure": "An absolute schema identifier, a decoded view name and the IF EXISTS policy.",
+      "conditions": "The schema is nonempty and the view name is outside the reserved sqlite_ namespace. Analysis resolves a view against the checked catalog. It can record a known absence with an explicit known schema and IF EXISTS.",
+      "meaning": "Remove the resolved view and its owned triggers, and leave underlying data and other objects in place. Dependent views remain present and use the same native name resolution on a subsequent read. IF EXISTS suppresses a missing-view error and preserves a wrong-kind error.",
+      "externalInterpretation": "Use the same schema identity, view, trigger and catalog definitions. The checked analyzer binds temp before main under ASCII-insensitive names.",
+      "sql": "Write DROP VIEW, optional IF EXISTS and separately quoted schema and name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "The native outcome and result shape with zero parameters, original and rendered SQL, future writability of the underlying table and retained duplicate and NULL rows.",
+    "The exact catalog membership in each schema, owned triggers, a neighboring object's validity, and the effect of dropping the view read by a dependent view.",
+    "The resolved schema in the value and native temp/main shadowing. A wrong-kind relation at the selected name causes a distinct failure even with IF EXISTS."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "layouts": ["view", "owned-trigger", "shadow-view", "absent"],
+    "guard": [false, true],
+    "identity": "Independently check the 16 schema, fixture and IF EXISTS tuples using the actual returned structure and verified catalog before the statement."
+  },
+  "exploration": {
+    "seeds": [6727, 7159, 38453],
+    "casesPerSeed": 26,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary the decoded identifiers, other-schema relation kind, target presence, owned-trigger count, dependent-view chains and visible base data."
+  },
+  "negative": [
+    "Empty schema",
+    "Reserved view name",
+    "Unresolved unguarded view",
+    "Guarded unqualified absence",
+    "An explicit main table with the same name",
+    "An unqualified temp table that shadows a main view"
+  ],
+  "faults": [
+    "Erase IF EXISTS",
+    "Choose the other schema",
+    "Choose a distinct view that exists in the selected schema",
+    "Emit a read-only statement in place of the drop"
+  ],
+  "evidence": {
+    "Q01": "Check the exact native constructor shape and cause typed rejection on independently invalid direct structures.",
+    "Q02": "Finish the fixed direct product and positive analyzed fixtures.",
+    "Q03": "Check the resolved view location against native shadowing and typed relation facts.",
+    "Q04": "Independently compare both schema catalogs, trigger ownership, dependent reads and base rows. Compare the native missing error for an unguarded absent direct target.",
+    "Q05": "Verify the exact shipped role and publish it from the installed Composer entry point."
+  },
+  "open": [
+    "Attached schemas outside the pinned native fixture and additional dialects, unresolved definitions, and other schema object operations."
+  ],
+  "trust": [
+    "SQLite 3.47.2 schema and authorizer rules",
+    "Fixed native observation boundary and independent catalog prediction",
+    "The external database implements the resolved schema and catalog identities supplied to analysis"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_dropview.html",
+    "https://sqlite.org/lang_naming.html",
+    "https://www.sqlite.org/2024/sqlite-amalgamation-3470200.zip"
+  ]
+}

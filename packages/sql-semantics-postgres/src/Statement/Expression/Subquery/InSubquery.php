@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\Sublinks;
  * before IN (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-subquery.html#FUNCTIONS-SUBQUERY-IN. Status: Implemented.
  *
- * @visibility public
- * @example Reading a negated membership test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 NOT IN (SELECT 2)');
- *     [$query->field(0)->expression->negated, $query->field(0)->type->descriptor->name()] // => [true, 'boolean']
+ * @visibility SqlSemantics
  */
 final class InSubquery implements Scalar
 {

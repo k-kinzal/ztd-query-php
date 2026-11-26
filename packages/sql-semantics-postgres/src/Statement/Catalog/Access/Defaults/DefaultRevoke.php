@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  * roles, GRANT OPTION FOR and CASCADE or RESTRICT as written.
  * Source: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html.
  *
- * @visibility public
- * @example Reading a default revoke
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL ON FUNCTIONS FROM joe RESTRICT');
- *     [$operation->statement->action->grantOptionOnly, $operation->statement->action->behavior?->value] // => [true, 'RESTRICT']
+ * @visibility SqlSemantics
  */
 final class DefaultRevoke implements Node
 {

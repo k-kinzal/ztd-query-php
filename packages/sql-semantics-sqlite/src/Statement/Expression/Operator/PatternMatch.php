@@ -35,14 +35,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#the_like_glob_regexp_match_and_extract_operators.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a negated LIKE with an escape character
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT a NOT LIKE 'x!%' ESCAPE '!' FROM t");
- *     $match = $query->statement->columns[0]->expression;
- *     [$match->operator, $match->negated, $match->escape->value] // => [\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Like, true, '!']
- * @example Refusing a pattern that the rendered SQL would associate differently
- *     $or = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Like, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral(), $or) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class PatternMatch implements Scalar
 {

@@ -10,10 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 /**
  * An input relation that is one named table, view or common table, optionally renamed.
  *
- * @visibility public
- * @example Reading the name of a named input
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t AS x');
- *     [$query->singleNamedInput()->name()->name->value, $query->singleNamedInput()->alias()?->value] // => ['t', 'x']
+ * @visibility SqlSemantics
  */
 interface NamedRelation extends Relation
 {

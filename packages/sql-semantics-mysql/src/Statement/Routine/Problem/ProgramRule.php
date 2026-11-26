@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Problem;
  * stands for the name the problem is about.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message pattern of a rule
  *     \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::UndefinedCursor->value // => 'Undefined CURSOR: %s'
  */

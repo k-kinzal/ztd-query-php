@@ -28,10 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\TemporalResult;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-add.
  * Status: Implemented.
  *
- * @visibility public
- * @example Subtracting an interval
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE DATE '2024-01-31' - INTERVAL 1 MONTH");
- *     [$query->statement->where->subtract, $query->facts->scalar($query->statement->where)->type->descriptor->name()] // => [true, 'DATE']
+ * @visibility SqlSemantics
  */
 final class IntervalArithmetic implements Scalar
 {

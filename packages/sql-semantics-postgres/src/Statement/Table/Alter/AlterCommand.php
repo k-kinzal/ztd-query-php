@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * visible relation; it changes no declaration of the context.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Reading the actions of ALTER TABLE
- *     $alter = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD c int, DROP d');
- *     count($alter->statement->commands) // => 2
+ * @visibility SqlSemantics
  */
 interface AlterCommand extends Clause
 {

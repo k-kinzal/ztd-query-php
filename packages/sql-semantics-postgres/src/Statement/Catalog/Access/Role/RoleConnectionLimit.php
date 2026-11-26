@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  * rejected by the server, which the statement reports.
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
- * @example Reading the limit
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe CONNECTION LIMIT 5');
- *     $operation->statement->options[0]->magnitude->digits // => '5'
+ * @visibility SqlSemantics
  */
 final class RoleConnectionLimit implements RoleOption
 {

@@ -26,10 +26,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
  * can be NULL when a result can.
  * Source: https://sqlite.org/lang_expr.html#the_case_expression. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of a CASE
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT CASE a WHEN 1 THEN 'x' ELSE 2 END FROM t");
- *     [count($query->field(0)->type->alternatives), $query->field(0)->nullability] // => [2, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
+ * @visibility SqlSemantics
  * @example Refusing an expression without branches
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression(null, []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */

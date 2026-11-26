@@ -76,7 +76,7 @@ final class OptionRuleTest extends TestCase
 
     public function testWordsLowersOnlyTheWordsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        self::assertSame(['VACUUM FREEZE ANALYZE', 'VACUUM FULL VERBOSE'], [$semantics->analyze('VACUUM FREEZE ANALYZE')->toString(), $semantics->analyze('VACUUM FULL VERBOSE')->toString()]);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        self::assertSame(['VACUUM FREEZE ANALYZE', 'VACUUM FULL VERBOSE'], [$semantics->inspect('VACUUM FREEZE ANALYZE')->toString(), $semantics->inspect('VACUUM FULL VERBOSE')->toString()]);
     }
 }

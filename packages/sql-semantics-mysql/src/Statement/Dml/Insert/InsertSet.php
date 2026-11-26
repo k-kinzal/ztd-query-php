@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
  * assigned columns are the written columns and must be distinct.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the assignments of an INSERT ... SET
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t SET a = 1, b = a + 1');
- *     [count($insert->statement->assignments), $insert->toString()] // => [2, 'INSERT INTO t SET a = 1, b = a + 1']
+ * @visibility SqlSemantics
  */
 final class InsertSet implements Statement
 {

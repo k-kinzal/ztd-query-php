@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
  * The list may be empty: a table with no columns.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/ddl-inherit.html.
  *
- * @visibility public
- * @example Reading the parents of a table
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t () INHERITS (a, s.b)');
- *     [count($create->statement->definition->elements), $create->statement->definition->parents[1]->name->schema->value] // => [0, 's']
+ * @visibility SqlSemantics
  */
 final class ListedColumns implements TableForm
 {

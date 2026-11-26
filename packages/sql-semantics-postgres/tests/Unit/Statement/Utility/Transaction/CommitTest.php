@@ -14,17 +14,17 @@ final class CommitTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COMMIT')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('COMMIT')->facts->diagnostics);
     }
 
     public function testRenderWritesTheChaining(): void
     {
-        self::assertSame('END AND CHAIN', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('END WORK AND CHAIN')->toString());
+        self::assertSame('END AND CHAIN', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('END WORK AND CHAIN')->toString());
     }
 
     public function testChainingIsNullWhenNotWritten(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COMMIT')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('COMMIT')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Commit::class, $statement);
         self::assertSame(null, $statement->chaining);
     }

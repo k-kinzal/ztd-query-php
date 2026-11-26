@@ -18,9 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * Rule: MYSQL-REVOKE-PROXY-001. No relation is named.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html. Status: Implemented.
  *
- * @visibility public
- * @example Revoking a proxy
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('REVOKE PROXY ON root FROM app')->toString() // => 'REVOKE PROXY ON root FROM app'
+ * @visibility SqlSemantics
  */
 final class RevokeProxy implements Statement
 {

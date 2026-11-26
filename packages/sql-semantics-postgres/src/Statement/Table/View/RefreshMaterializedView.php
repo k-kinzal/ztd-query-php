@@ -28,9 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * relation declared as another kind is reported (PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-refreshmaterializedview.html.
  *
- * @visibility public
- * @example Resolving the refreshed view
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation m does not exist.
+ * @visibility SqlSemantics
  */
 final class RefreshMaterializedView implements Statement, Relation
 {

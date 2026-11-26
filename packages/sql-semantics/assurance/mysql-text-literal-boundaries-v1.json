@@ -1,0 +1,212 @@
+{
+  "revision": "SemanticsIR/mysql-text-literal-boundaries-1",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "approval": "pending-human-review",
+  "argument": "Only the plain decoded constant enlarges the projection union. The release fixes its connection collation, rendering encodes the original bytes, and query composition visits the new role explicitly.",
+  "rules": {
+    "Rows/CompoundShape::merge": {
+      "common": [
+        "if ($left === ResultKind::Text || $right === ResultKind::Text) {",
+        "    return ResultKind::Text;",
+        "}",
+        "if ($left === ResultKind::DecimalInteger || $right === ResultKind::DecimalInteger) {",
+        "    return ResultKind::DecimalInteger;",
+        "}",
+        "if ($left === ResultKind::UnsignedInteger || $right === ResultKind::UnsignedInteger) {",
+        "    if ($legacy) {",
+        "        return $left === ResultKind::UnsignedInteger ? ResultKind::UnsignedInteger : ResultKind::WideInteger;",
+        "    }",
+        "    $other = $left === ResultKind::UnsignedInteger ? $right : $left;",
+        "",
+        "    return match ($other) {",
+        "        ResultKind::Unknown, ResultKind::NullOnly, ResultKind::UnsignedInteger => ResultKind::UnsignedInteger,",
+        "        ResultKind::Integer, ResultKind::WideInteger => ResultKind::DecimalInteger,",
+        "    };",
+        "}",
+        "if ($left === ResultKind::WideInteger || $right === ResultKind::WideInteger) {",
+        "    return ResultKind::WideInteger;",
+        "}",
+        "",
+        "return $left === ResultKind::Integer || $right === ResultKind::Integer ? ResultKind::Integer : ResultKind::NullOnly;"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "common": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position), self::legacy($query));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "",
+        "return match (true) {",
+        "    $column instanceof TextLiteral => ResultKind::Text,",
+        "    $column instanceof UnsignedCast => ResultKind::UnsignedInteger,",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof ColumnReference => ResultKind::Integer,",
+        "    $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerRange, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,",
+        "};"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "SelectBounds::check": {
+      "common": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$position = 0;",
+        "foreach ($results as $result) {",
+        "    $label = $result->name->value;",
+        "    if ($label !== ltrim($label, \" \\t\\r\\n\\v\\f\")) {",
+        "        $reference = $result->expression;",
+        "        Check::invariant($reference instanceof ColumnReference, 'An intrinsic label belongs to a column reference.');",
+        "        $table = $inputs[$reference->occurrence] ?? null;",
+        "        Check::input(",
+        "            $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,",
+        "            'An intrinsic MySQL result name must equal its physical input field.'",
+        "        );",
+        "    }",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A range slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference => Check::input(",
+        "                $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),",
+        "                'Column slot must belong to the SELECT source.',",
+        "            ),",
+        "            $expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,",
+        "        };",
+        "    }",
+        "}"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "SelectSql::expression": {
+      "common": [
+        "if ($expression instanceof ColumnReference) {",
+        "    $inputs = $source instanceof Join ? $source->inputs() : [$source];",
+        "    $input = $inputs[$expression->occurrence] ?? null;",
+        "    if ($input instanceof DerivedSource) {",
+        "        Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');",
+        "        $name = $this->localColumn($expression->slot);",
+        "    } else {",
+        "        Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "        $name = $input->columns[$expression->slot]->quoted();",
+        "    }",
+        "",
+        "    return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',",
+        "    $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',",
+        "    $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => $expression->toString(),",
+        "    $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Ordering/ProjectionColumns::lower": {
+      "common": [
+        "$expressions = new ExpressionLowering();",
+        "$casts = new IntegralCastLowering();",
+        "$strings = new TextLiteralLowering();",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "$parameterPosition = 0;",
+        "$labels = new ProjectionLabel();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = $labels->lower($statement, $field, $name->value);",
+        "    $expression = $field->expression;",
+        "    if ($expression === null) {",
+        "        $resolution = $field->resolution;",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');",
+        "        $results[] = new ResultColumn($binding->resolved($resolution), $label);",
+        "        continue;",
+        "    }",
+        "    $parameter = $parameters->lower($expression, $parameterPosition + 1);",
+        "    if ($parameter !== null) {",
+        "        ++$parameterPosition;",
+        "    }",
+        "    $results[] = new ResultColumn(",
+        "        $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),",
+        "        $label,",
+        "    );",
+        "}",
+        "",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "",
+        "return $results;"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Literal/TextLiteral::__construct": {
+      "common": [
+        "Check::input(preg_match('//u', $value) === 1, 'A MySQL text literal requires valid UTF-8.');"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Literal/TextLiteral::toString": {
+      "common": [
+        "return \"'\" . strtr($this->value, [",
+        "    '\\\\' => '\\\\\\\\', \"'\" => \"''\", \"\\0\" => '\\\\0', \"\\x08\" => '\\\\b', \"\\t\" => '\\\\t',",
+        "    \"\\n\" => '\\\\n', \"\\r\" => '\\\\r', \"\\x1a\" => '\\\\Z',",
+        "]) . \"'\";"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    },
+    "Literal/TextLiteralLowering::lower": {
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if (!$expression instanceof StringLiteral) {",
+        "    return null;",
+        "}",
+        "Check::input(",
+        "    $expression->introducer === null && !$expression->national && $expression->escapes === EscapeRule::Backslash,",
+        "    'A text literal requires the plain utf8mb4 projection role.'",
+        ");",
+        "",
+        "return new TextLiteral($expression->value());"
+      ],
+      "dialects": [
+        "mysql"
+      ]
+    }
+  }
+}

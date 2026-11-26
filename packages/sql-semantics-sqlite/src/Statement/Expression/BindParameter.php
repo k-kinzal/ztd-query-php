@@ -23,10 +23,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
  * other prefixes. Its type and NULL fact depend on the bound value.
  * Source: https://sqlite.org/lang_expr.html#parameters. Status: Implemented.
  *
- * @visibility public
- * @example Reading a numbered parameter
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT ?2');
- *     [$query->statement->columns[0]->expression->label, $query->field(0)->type->missing[0]->marker] // => ['2', '?2']
+ * @visibility SqlSemantics
  * @example Refusing a label that would not be read back as one parameter
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter(\SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix::Colon, 'a b') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing letters after a question mark

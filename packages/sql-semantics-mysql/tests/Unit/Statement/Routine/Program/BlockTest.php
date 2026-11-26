@@ -11,13 +11,13 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Leave;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Block::class)]
 #[Medium]
@@ -25,14 +25,14 @@ final class BlockTest extends TestCase
 {
     public function testDeriveProgramResolvesAVariableDeclaredBefore(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y INT DEFAULT x + 1; SELECT y; END');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y INT DEFAULT x + 1; SELECT y; END');
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testDeriveProgramKeepsTheFirstMeaningOfADuplicateVariable(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE X CHAR(1); SELECT x; END');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE X CHAR(1); SELECT x; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -52,7 +52,7 @@ final class BlockTest extends TestCase
 
     public function testDeriveProgramHidesAParameterWithAVariableOfTheSameName(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(x INT) BEGIN DECLARE x CHAR(1); SELECT x; END');
+        $operation = (new Inspection())->diagnose('CREATE PROCEDURE p(x INT) BEGIN DECLARE x CHAR(1); SELECT x; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -76,7 +76,7 @@ final class BlockTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsTheBrokenRule')]
     public function testDeriveProgramReportsTheBrokenRule(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Inspection())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -104,7 +104,7 @@ final class BlockTest extends TestCase
     #[DataProvider('providerDeriveProgramAcceptsAWellFormedBlock')]
     public function testDeriveProgramAcceptsAWellFormedBlock(string $sql): void
     {
-        self::assertSame([], (new Semantics())->inspect($sql)->facts->diagnostics);
+        self::assertSame([], (new Inspection())->diagnose($sql)->facts->diagnostics);
     }
 
     /**
@@ -122,7 +122,7 @@ final class BlockTest extends TestCase
     #[DataProvider('providerRenderWritesTheBlock')]
     public function testRenderWritesTheBlock(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     /**

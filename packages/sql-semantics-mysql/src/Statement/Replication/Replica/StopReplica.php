@@ -26,9 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stop-replica.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Stopping the applier thread of a channel
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("stop slave sql_thread for channel 'c'")->toString() // => "STOP SLAVE SQL_THREAD FOR CHANNEL 'c'"
+ * @visibility SqlSemantics
  */
 final class StopReplica implements Statement
 {

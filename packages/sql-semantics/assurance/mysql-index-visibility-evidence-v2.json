@@ -1,0 +1,176 @@
+{
+  "revision": "SemanticsIR/mysql-index-visibility-evidence-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-index-visibility-v1.json",
+    "mysql-index-visibility-v2.json",
+    "mysql-index-visibility-evidence-v1.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "Ordinary InnoDB with native markers, empty sql_mode, utf8mb4, lower_case_table_names=0, foreign_key_checks=1 and sql_generate_invisible_primary_key=OFF.",
+  "constructors": {
+    "SetIndexVisibility": {
+      "type": "Schema/Index/Visibility/SetIndexVisibility",
+      "role": "Complete ordered optimizer visibility change on one resolved native InnoDB table.",
+      "structure": "Absolute table and lifetime, nonempty list of relative secondary index edits, selected release and effective algorithm and lock.",
+      "conditions": {
+        "scope": "One absolute resolved MySQL table and one or more native index visibility operations. A temporary table shadows the corresponding persistent table and must permit the referenced physical index kind. A table need not enumerate unrelated database objects, but its selected physical index namespace must be settled.",
+        "keys": "Resolve every target in the original native index namespace using the release's native system identifier values. Preserve canonical physical spelling. The physical primary index and the first implicit eligible unique primary index reject both requested directions. A secondary B-tree, prefix, functional, FULLTEXT or spatial index can change visibility where the owning table supports that physical kind. InnoDB cannot own FULLTEXT on a temporary table.",
+        "repetition": "Each occurrence remains an explicit native action. Multiple occurrences of a valid key apply in order and the final occurrence fixes its visibility. A refusal of any target rejects the group even when a later occurrence requests another flag.",
+        "policies": "Recognize final effective ALGORITHM and LOCK options. Persistent default or in-place accepts every lock setting. Persistent COPY accepts DEFAULT, SHARED and EXCLUSIVE. Temporary default or COPY accepts every lock setting. INSTANT always rejects and INPLACE rejects for a temporary table.",
+        "priorFlags": "An assignment may keep the existing optimizer visibility flag. A same-flag assignment remains a statement and uses the requested native algorithm, lock and transaction behavior.",
+        "catalog": "The direct value receives original native secondary key roles interpreted by the same external qualified table under the fixed native profile. The analyzed route derives those roles from settled table metadata, including clustered key selection. The value stores no DDL or catalog object."
+      },
+      "meaning": "Apply the ordered optimizer visibility assignments to the resolved native indexes. Preserve the physical index definition, maintenance, uniqueness, foreign-key support and existing data. Emission writes ALTER TABLE with the absolute quoted owner, each ordered ALTER INDEX action, and the checked trailing policy.",
+      "sql": "An ALTER TABLE with explicitly quoted qualified owner, all original assignments in order and the checked effective clauses."
+    },
+    "IndexVisibilityEdit": {
+      "type": "Schema/Index/Visibility/IndexVisibilityEdit",
+      "role": "One ordered native visibility assignment within the fixed owning table.",
+      "structure": "Exact native physical secondary index name, category and requested boolean flag.",
+      "conditions": "Valid physical index name and closed secondary kind. Exact storage coordinates and non-primary placement established under the same owner interpretation.",
+      "meaning": "Assign the named index's optimizer visibility while retaining its physical declaration and enforcement.",
+      "sql": "An ALTER INDEX with the exact quoted index name and explicit VISIBLE or INVISIBLE."
+    },
+    "SecondaryIndexKind": {
+      "type": "Schema/Index/Visibility/SecondaryIndexKind",
+      "role": "Closed native secondary physical categories.",
+      "structure": [
+        "ordinary",
+        "unique",
+        "fulltext",
+        "spatial"
+      ],
+      "conditions": "One of the listed secondary definitions. A temporary InnoDB owner cannot have a FULLTEXT index.",
+      "meaning": "Retain the exact physical category of the selected secondary index.",
+      "sql": "The native assignment names the original physical index. The kind constrains ownership."
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Index/Visibility/SetIndexVisibility"
+  ],
+  "finite": {
+    "lifetimes": [
+      "persistent",
+      "temporary"
+    ],
+    "algorithms": [
+      "default",
+      "copy",
+      "inplace",
+      "instant"
+    ],
+    "locks": [
+      "default",
+      "none",
+      "shared",
+      "exclusive"
+    ],
+    "flags": [
+      "visible",
+      "invisible"
+    ],
+    "disposition": "Observe all 64 authored coordinates. Successful cases use analysis and direct construction. Malformed policy coordinates compare their typed construction rejection against the native error and measured transactional state.",
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteIdentities": 64,
+  "admitted": 38,
+  "exploration": {
+    "seeds": [
+      941,
+      1319,
+      7099
+    ],
+    "casesPerSeed": 16,
+    "directCasesPerSeed": 16,
+    "domain": "Generate distinct names, input and output flags, repeated targets, ordered active lists, real native setting changes, supplemental declared key roles and both table lifetimes.",
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Each unavailable native option is refused along every valid PHP boundary and independently witnessed on the server.",
+    "Both primary directions, implicit primary, missing subsequent key, empty list and temporary fulltext are explicitly controlled."
+  ],
+  "observations": [
+    "Resolved absolute owner and life scope",
+    "Ordered original index identities and flag requests",
+    "Native metadata flags, key type, ordered fields, prefix lengths and uniqueness",
+    "Independent control table and session shadow metadata",
+    "Native warnings, SQLSTATE and vendor errors",
+    "Affected counts, transaction state, data, continued index enforcement"
+  ],
+  "evidence": {
+    "P01": "Check resolved physical spelling, current lifetime, fixed kind, ordered flag requests and native policy.",
+    "P02": "Enforce settled original key ownership, exact secondary roles, nonempty edits, supported release and native policy boundary.",
+    "P03": "All navigation and output use resolved immutable value identities and observed flags. Analysis state is transient.",
+    "P04": "Compose ordered assignments. Repeated valid indices retain every action and the final request determines the last flag.",
+    "P05": "Check detached ordered lists, a closed secondary kind and immutable owner and policy fields.",
+    "P06": "Compare original and emitted SQL against the independent native before-and-after state and mutation effects."
+  },
+  "obligations": {
+    "Q01": "Check the active root and fragment constructor shapes, the source-to-root relation change dispatch and exact invalid policy and index cases.",
+    "Q02": "Measure all fixed admission coordinates in both routes, independently witnessed refusals, explored groups and all registered physical key categories.",
+    "Q03": "Check every legal finite list preserves the order and includes the complete native policy and owner.",
+    "Q04": "Use an independent ordered-update interpreter, live native effect comparison and required defects in operand order and omission.",
+    "Q05": "Require source boundary checks, native evidence replay and installed Composer root, fragment and enum publication."
+  },
+  "faults": [
+    "Report the old flag after a visibility edit.",
+    "Forget the unaltered relation's keys.",
+    "Reverse two requests for the same physical key.",
+    "Omit an earlier distinct physical key request."
+  ],
+  "trust": [
+    "Exact native catalog and tested InnoDB profiles",
+    "Pinned independent Python model and PHP observer",
+    "Preserved bounded native receipts and source checks"
+  ],
+  "trackedBeyondThisSlice": [
+    "Combination with other ALTER operations",
+    "Index metadata changed from non-catalog DDL or general native declarations whose physical names remain unresolved",
+    "Non-InnoDB engines and nonstock profiles"
+  ],
+  "negativeCount": 63,
+  "functionalColumnName": {
+    "mysql-8.0.44": {
+      "persistent": null,
+      "temporary": null
+    },
+    "mysql-8.1.0": {
+      "persistent": null,
+      "temporary": ""
+    },
+    "mysql-8.2.0": {
+      "persistent": null,
+      "temporary": ""
+    },
+    "mysql-8.3.0": {
+      "persistent": null,
+      "temporary": ""
+    },
+    "mysql-8.4.7": {
+      "persistent": null,
+      "temporary": null
+    },
+    "mysql-9.0.1": {
+      "persistent": null,
+      "temporary": ""
+    },
+    "mysql-9.1.0": {
+      "persistent": null,
+      "temporary": null
+    }
+  }
+}

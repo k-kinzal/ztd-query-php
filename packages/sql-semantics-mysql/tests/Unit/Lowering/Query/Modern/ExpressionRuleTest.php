@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ExpressionRule;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -18,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ExpressionRule::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class ExpressionRuleTest extends TestCase
 {
     public function testStatementFoldsTheClausesIntoASingleBlock(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t ORDER BY a LIMIT 1 FOR UPDATE');
+        $operation = (new Inspection())->inspect('SELECT a FROM t ORDER BY a LIMIT 1 FOR UPDATE');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertCount(1, $operation->statement->locking);
@@ -34,7 +34,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testIntoLowersTheIntoAfterTheQuery(): void
     {
-        $operation = (new Semantics())->analyze('(SELECT a FROM t FOR UPDATE INTO @x)');
+        $operation = (new Inspection())->inspect('(SELECT a FROM t FOR UPDATE INTO @x)');
 
         self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->query);
@@ -43,7 +43,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testExpressionWrapsANonBlockBody(): void
     {
-        $operation = (new Semantics())->analyze('WITH c AS (SELECT 1) SELECT 1 UNION SELECT 2 ORDER BY 1 FOR UPDATE');
+        $operation = (new Inspection())->inspect('WITH c AS (SELECT 1) SELECT 1 UNION SELECT 2 ORDER BY 1 FOR UPDATE');
 
         self::assertInstanceOf(QueryStatement::class, $operation->statement);
         self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
@@ -52,7 +52,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testBodyBuildsALeftDeepChain(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 UNION SELECT 2 EXCEPT SELECT 3');
+        $operation = (new Inspection())->inspect('SELECT 1 UNION SELECT 2 EXCEPT SELECT 3');
 
         self::assertInstanceOf(SetOperation::class, $operation->statement);
         self::assertSame(SetOperator::Except, $operation->statement->operator);
@@ -61,7 +61,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testQuantifierLowersDistinctAndAll(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 UNION DISTINCT SELECT 2');
+        $operation = (new Inspection())->inspect('SELECT 1 UNION DISTINCT SELECT 2');
 
         self::assertInstanceOf(SetOperation::class, $operation->statement);
         self::assertSame(SetQuantifier::Distinct, $operation->statement->quantifier);
@@ -69,22 +69,22 @@ final class ExpressionRuleTest extends TestCase
 
     public function testParenthesizedKeepsEveryPair(): void
     {
-        self::assertSame('((SELECT 1)) UNION (SELECT 2)', (new Semantics('mysql-8.4.7'))->analyze('((select 1)) union (select 2)')->toString());
+        self::assertSame('((SELECT 1)) UNION (SELECT 2)', (new Inspection('mysql-8.4.7'))->inspect('((select 1)) union (select 2)')->toString());
     }
 
     public function testInnerAnswersTheQueryInsideTheOuterParentheses(): void
     {
-        self::assertSame('SELECT (SELECT 1) AS v, EXISTS ((SELECT 2)) AS w FROM t', (new Semantics('mysql-8.4.7'))->analyze('select (select 1) as v, exists ((select 2)) as w from t')->toString());
+        self::assertSame('SELECT (SELECT 1) AS v, EXISTS ((SELECT 2)) AS w FROM t', (new Inspection('mysql-8.4.7'))->inspect('select (select 1) as v, exists ((select 2)) as w from t')->toString());
     }
 
     public function testLockedLowersTheLockingClausesInParentheses(): void
     {
-        self::assertSame('(SELECT a FROM t FOR UPDATE) UNION SELECT 1', (new Semantics('mysql-8.4.7'))->analyze('(select a from t for update) union select 1')->toString());
+        self::assertSame('(SELECT a FROM t FOR UPDATE) UNION SELECT 1', (new Inspection('mysql-8.4.7'))->inspect('(select a from t for update) union select 1')->toString());
     }
 
     public function testSubqueryRemovesTheParenthesesOfTheSyntax(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 FROM (SELECT 1) AS d');
+        $operation = (new Inspection())->inspect('SELECT 1 FROM (SELECT 1) AS d');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(DerivedTable::class, $operation->statement->from);

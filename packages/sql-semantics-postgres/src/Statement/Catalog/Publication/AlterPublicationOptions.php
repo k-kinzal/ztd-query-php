@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  * Rule: PG-PUBLICATION-003. Mirrors `AlterPublicationStmt` with options.
  * Source: https://www.postgresql.org/docs/17/sql-alterpublication.html. Status: Implemented.
  *
- * @visibility public
- * @example Changing what is published
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER PUBLICATION p SET (publish = 'update')");
- *     $operation->statement->options[0]->name->value // => 'publish'
+ * @visibility SqlSemantics
  */
 final class AlterPublicationOptions implements Statement
 {

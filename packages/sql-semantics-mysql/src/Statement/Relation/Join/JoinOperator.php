@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation\Join;
  * a join in a subquery, after its text.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/join.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a join operator
  *     \SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::NaturalLeft->keywords() // => ['NATURAL', 'LEFT', 'JOIN']
  */

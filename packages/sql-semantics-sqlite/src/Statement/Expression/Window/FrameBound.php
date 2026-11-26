@@ -13,10 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * One boundary of a window frame.
  *
- * @visibility public
- * @example Reading the offset of a frame boundary
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT sum(a) OVER (ROWS 2 PRECEDING) FROM t');
- *     $query->statement->columns[0]->expression->over->frame->start->offset->digits // => '2'
+ * @visibility SqlSemantics
  * @example Refusing an offset on a boundary that takes none
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::CurrentRow, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing an offset on unbounded preceding

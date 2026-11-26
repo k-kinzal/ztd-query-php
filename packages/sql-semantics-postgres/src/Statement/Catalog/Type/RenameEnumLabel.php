@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * `newVal`. A new label longer than 63 bytes is a diagnostic.
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html. Status: Implemented.
  *
- * @visibility public
- * @example Renaming a label
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER TYPE mood RENAME VALUE 'sad' TO 'blue'");
- *     $operation->toString() // => "ALTER TYPE mood RENAME VALUE 'sad' TO 'blue'"
+ * @visibility SqlSemantics
  */
 final class RenameEnumLabel implements Statement
 {

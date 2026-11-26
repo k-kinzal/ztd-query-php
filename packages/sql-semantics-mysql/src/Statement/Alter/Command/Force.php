@@ -16,9 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  * Mirrors PT_alter_table_force.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
  *
- * @visibility public
- * @example Rebuilding a table
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter table t force')->toString() // => 'ALTER TABLE t FORCE'
+ * @visibility SqlSemantics
  */
 final class Force implements AlterCommand
 {

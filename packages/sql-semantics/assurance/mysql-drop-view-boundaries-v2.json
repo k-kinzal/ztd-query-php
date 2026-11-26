@@ -1,0 +1,47 @@
+{
+  "revision": "SemanticsIR/mysql-drop-view-boundaries-2",
+  "approval": "pending-human-review",
+  "extends": "mysql-drop-view-boundaries-v1.json",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Persistent MySQL DROP VIEW resolution must bypass a temporary table that shadows the same absolute name.",
+  "rules": {
+    "Schema/View/DropViewLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "    && $context->relationNames === Comparison::Sensitive, 'DROP VIEW requires the default native profile.');",
+        "$schemas = [$context->declarationSchema->value => true];",
+        "foreach ($context->tables as $table) {",
+        "    $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;",
+        "}",
+        "$lookup = new TableLookup();",
+        "$targets = [];",
+        "foreach ($statement->views as $target) {",
+        "    $resolution = $lookup->find($context, $target, TableNamespace::Persistent);",
+        "    if ($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::View && $resolution->table->complete) {",
+        "        $name = $resolution->table->name;",
+        "    } elseif ($statement->ifExists && $resolution instanceof MissingTable) {",
+        "        $name = $resolution->name;",
+        "    } else {",
+        "        throw new InvalidConstruction('DROP VIEW needs a declared view or a permitted known absence.');",
+        "    }",
+        "    $schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "    Check::input(",
+        "        $name->catalog === null && $schema !== SessionDatabase::UNNAMED && isset($schemas[$schema]),",
+        "        'DROP VIEW requires a known absolute view identity.'",
+        "    );",
+        "    $targets[] = new ViewName(new Identifier($schema), new Identifier($name->name->value));",
+        "}",
+        "",
+        "return new DropView($targets, $statement->ifExists, $profile->grammar);"
+      ]
+    }
+  }
+}

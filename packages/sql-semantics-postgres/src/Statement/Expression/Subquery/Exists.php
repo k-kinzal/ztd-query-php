@@ -27,9 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * named `exists`.
  * Source: https://www.postgresql.org/docs/17/functions-subquery.html#FUNCTIONS-SUBQUERY-EXISTS. Status: Implemented.
  *
- * @visibility public
- * @example Naming an EXISTS column
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT EXISTS (SELECT 1)')->field(0)->name->value // => 'exists'
+ * @visibility SqlSemantics
  */
 final class Exists implements Scalar, OutputNaming
 {

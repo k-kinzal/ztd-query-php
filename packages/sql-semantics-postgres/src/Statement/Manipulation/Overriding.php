@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation;
  * `OVERRIDING_SYSTEM_VALUE`); the value is the keyword between OVERRIDING and VALUE.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html.
  *
- * @visibility public
- * @example Reading the override of an INSERT
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t OVERRIDING SYSTEM VALUE VALUES (1)');
- *     $insert->statement->overriding // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Overriding::System
+ * @visibility SqlSemantics
  */
 enum Overriding: string
 {

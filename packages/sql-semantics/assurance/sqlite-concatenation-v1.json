@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/sqlite-concatenation-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 in UTF-8 with the checked scalar and numbered binding profiles.",
+  "scope": "Ordered SQLite scalar text concatenation.",
+  "constructors": {
+    "Expression/Concatenation": {
+      "role": "An ordered two-operand text concatenation.",
+      "structure": "One left scalar and one right scalar from the closed expression domain.",
+      "conditions": "Both operands satisfy their scalar role. The enclosing statement checks scope, bindings, and expanded expression limits.",
+      "meaning": "Return NULL if either scalar is NULL. Otherwise append the right TEXT conversion bytes to the left TEXT conversion bytes and return TEXT. Preserve SQLite's scalar formatting and arbitrary bytes. A nested collation annotation remains relevant to an enclosing comparison.",
+      "externalInterpretation": "Resolve the same numbered markers and external column slots. The engine profile fixes the TEXT encoding and numeric conversions.",
+      "sql": "Emit both operands in their own positions inside a parenthesized native concatenation.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "Rows/ValuesQuery", "Parameter", "Expression/CollatedExpression"],
+  "observations": [
+    "Exact TEXT bytes and resulting encoding validity, including embedded NUL, two split UTF-8 bytes forming a character, and invalid UTF-8 retained as TEXT. Preserve NULL and numeric formatting including REAL negative zero.",
+    "Ordered operands, named result positions, duplicates, parameter slot and first label. Check precedence relative to arithmetic and comparison and observe an enclosing explicit text comparison."
+  ],
+  "finite": {
+    "roots": ["select", "values"],
+    "atoms": [
+      ["null"], ["integer", "-12"], ["integer", "9223372036854775807"], ["real", "0", "0", null, true], ["real", "1", "25", null, false],
+      ["text", "a'"], ["text", "字"], ["blob", "C3"], ["blob", "A9"], ["parameter", "02"]
+    ],
+    "identity": "Cross the ten leaves in both ordered operand positions and the two roots. Exhaust all 200 identities."
+  },
+  "exploration": {
+    "seeds": [12391, 29009, 39239],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 165,
+    "allowedExclusions": [],
+    "structure": "Generate nested concatenation with text, numbers, blobs, bound values and NULL. Vary repeated binding labels, ordered columns and repeated VALUES rows."
+  },
+  "negative": ["Missing left source slot", "Missing right source slot", "A row-valued operand", "Expanded height above the checked limit"],
+  "faults": ["Reverse operands", "Remove the right operand", "Replace concatenation with numeric addition", "Replace a NULL operand with empty TEXT"],
+  "trust": ["Pinned SQLite C observation of exact TEXT bytes", "Independent TEXT conversion reference and byte concatenation", "Checked ordered rendering and graph traversal"],
+  "sources": ["https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes", "https://sqlite.org/datatype3.html"]
+}

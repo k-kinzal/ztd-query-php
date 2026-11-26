@@ -28,9 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * unaliased result column is named `array`.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-ARRAY-CONSTRUCTORS. Status: Implemented.
  *
- * @visibility public
- * @example Typing an array subquery
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ARRAY(SELECT 1)')->field(0)->type->descriptor->name() // => 'integer[]'
+ * @visibility SqlSemantics
  */
 final class ArraySubquery implements Scalar, OutputNaming
 {

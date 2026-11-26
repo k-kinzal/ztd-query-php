@@ -1,0 +1,44 @@
+{
+  "revision": "SemanticsIR/sqlite-update-1",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "All earlier obligations remain. Row assignments, UPDATE FROM, RETURNING, WITH, index choice and other conflict policies remain required outside this domain.",
+  "additionalPublicRoots": ["Mutation/Update"],
+  "constructors": {
+    "Mutation/UpdateAssignment": {
+      "role": "One assignment to a local target column slot.",
+      "structure": "A nonnegative slot and a closed scalar operand.",
+      "boundary": "Update closes the occurrence and slot scope before success.",
+      "meaning": "The addressed slot receives the rightmost assigned value, evaluated from the original row.",
+      "sql": "Render the target column followed by the scalar value in the stored position."
+    },
+    "Mutation/UpdateConflict": {
+      "role": "Conflict policy of a complete UPDATE.",
+      "structure": "Inherited policy, explicit ABORT, or explicit IGNORE.",
+      "boundary": "Every alternative has an explicit meaning and SQL rule at the UPDATE root.",
+      "meaning": "The external schema policy applies when inherited. The chosen statement policy overrides it otherwise.",
+      "sql": "Omit OR when inherited. Emit OR ABORT or OR IGNORE for the corresponding cases."
+    },
+    "Mutation/Update": {
+      "role": "Complete SQLite UPDATE of one resolved ordinary base table.",
+      "structure": "Absolute table identity with local column slots, a nonempty ordered assignment list, optional predicate and conflict policy.",
+      "boundary": "At most 2000 assignments. Every target slot exists and every operand and predicate reference resolves at occurrence zero. Expanded expression and parameter budgets apply to the full statement. The analysis path resolves assigned slots against the complete declaration and refuses implicit and generated columns.",
+      "meaning": "Select rows by SQL truth. Evaluate effective right-hand sides on the old row, and apply all effective assignments together. The rightmost assignment wins when repeated. The same external schema governs affinity, constraints, generated values and triggers.",
+      "sql": "Emit a schema-qualified target and local alias, then the full ordered assignments and predicate. Retain overwritten assignment operands in the emitted SQL to preserve native numbered parameter correspondence.",
+      "assurance": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "analysis": "Resolve a top-level UPDATE with scalar assignments and optional WHERE on one declared ordinary base table. Accept inherited, ABORT and IGNORE conflict policies. Resolve equivalent qualified and unqualified column uses to the exact same slot.",
+  "observations": ["Absolute target", "Parallel assignment and rightmost precedence", "Typed effects, duplicate rows and NULL", "Generated values", "Trigger OLD and NEW values", "Statement or trigger counts", "Native parameter count and first labels", "Constraint rollback for the fixed fixture"],
+  "finite": {
+    "targets": ["main", "temp"],
+    "policies": ["inherit", "abort", "ignore"],
+    "assignmentToLeft": ["NULL", "0", "copy right"],
+    "assignmentToRight": ["NULL", "0", "copy left"],
+    "completeness": "Observe all 54 unique identities in the product and derive their indices independently from the returned target, conflict and ordered assignment structure."
+  },
+  "exploration": {"seeds": [733, 3809, 5179], "casesPerSeed": 36, "timeoutSeconds": 240, "allowedExclusions": []},
+  "negative": ["No assignments", "Negative assignment slot", "Missing assignment slot", "Read from a different occurrence", "Read from a missing slot in WHERE", "Generated target slot in SQL", "Unresolved target slot in SQL"],
+  "faults": ["Keep only the first assignment", "Read the other column slot", "Override the inherited conflict policy", "Choose the other schema"],
+  "sources": ["https://sqlite.org/lang_update.html", "https://sqlite.org/lang_conflict.html"]
+}

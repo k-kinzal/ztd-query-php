@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * type, whatever the search path. Facts: `Known`.
  * Source: https://www.postgresql.org/docs/17/datatype.html#DATATYPE-TABLE. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type a keyword spelling denotes
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT bigint '1'");
- *     $query->field(0)->type->descriptor->name() // => 'bigint'
+ * @visibility SqlSemantics
  */
 final class KeywordDesignation implements TypeDesignation
 {

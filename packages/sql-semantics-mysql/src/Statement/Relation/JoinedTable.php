@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
  * MYSQL-FROM-SCOPE-001 and combined by MYSQL-JOIN-COLUMNS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/join.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a join
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM t LEFT JOIN u USING (a)');
- *     [$query->statement->from->operator, $query->statement->from->using[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left, 'a']
+ * @visibility SqlSemantics
  * @example Refusing a left join without a condition
  *     $t = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')));
  *     $u = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('u')));

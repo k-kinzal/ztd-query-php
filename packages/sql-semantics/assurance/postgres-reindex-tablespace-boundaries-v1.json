@@ -1,0 +1,218 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-tablespace-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-index-catalog-boundaries-v1.json",
+  "scope": "Preserve the destination through each resolved role, its readonly field and its typed option rendering.",
+  "rules": {
+    "Schema/Index/Placement/IndexTablespace::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name->value === 'pg_default' || !str_starts_with($name->value, 'pg_'), 'An index rebuild destination requires an application tablespace or pg_default.');"
+      ]
+    },
+    "Schema/Index/Placement/IndexTablespace::prefix": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'REINDEX (' . ($verbose ? 'VERBOSE, ' : '') . 'TABLESPACE ' . $this->name->quoted() . ') ';"
+      ]
+    },
+    "Schema/Index/Placement/IndexTablespaceLowering::resolve": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$name = $statement->tablespace();",
+        "if ($name === null) {",
+        "    return null;",
+        "}",
+        "$target = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Placement\\IndexTablespace(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name));",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->knowsTablespace($name), 'The index rebuild destination requires a declared tablespace.');",
+        "return $target;"
+      ]
+    },
+    "Schema/Index/ReindexIndex::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard || !$target instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ExclusionIndexReference || $target->schema->value === 'pg_temp', 'A persistent exclusion index requires a standard rebuild.');"
+      ]
+    },
+    "Schema/Index/ReindexIndex::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'INDEX ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Index/ReindexIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX INDEX requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Index && $statement->object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\QualifiedName, 'A complete REINDEX needs a named index target.');",
+        "$tablespace = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Placement\\IndexTablespaceLowering())->resolve($statement, $context);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexIndex((new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexTargetLowering())->resolveRebuild($context, $statement->object), $statement->requestsConcurrentBuild() ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard, $context->profile->grammar, $statement->reportsProgress(), $tablespace);"
+      ]
+    },
+    "Schema/Index/ReindexTable::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/ReindexTable::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'TABLE ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Index/ReindexTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX TABLE requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Table && $statement->object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\QualifiedName, 'REINDEX TABLE needs a qualified-name owner.');",
+        "$tablespace = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Placement\\IndexTablespaceLowering())->resolve($statement, $context);",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolution instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Table\\DeclaredTable, 'REINDEX TABLE requires a resolved index owner.');",
+        "$name = $resolution->table->name;",
+        "$kind = $resolution->table->kind;",
+        "$schema = $name->schema ?? $context->declarationSchema;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name->catalog === null && ($kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable || $kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::MaterializedView), 'REINDEX TABLE requires a local table or materialized view.');",
+        "$partition = $context->indexNamespace->partitionRole($schema, $name->name);",
+        "$namespace = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value);",
+        "$relation = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name->name->value);",
+        "$mode = $statement->requestsConcurrentBuild() ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard;",
+        "if ($partition !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable, 'A partition index owner requires a declared base table.');",
+        "    $scope = match ($partition) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\TablePartitionRole::Branch => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Partition\\PartitionRebuildKind::Branch,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\TablePartitionRole::Leaf => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Partition\\PartitionRebuildKind::Leaf,",
+        "    };",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Partition\\ReindexPartitionTable(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableName($namespace, $relation), $scope, $mode, $profile->grammar, $statement->reportsProgress(), $tablespace);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTable(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableTarget($namespace, $relation, $kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\RelationKind::BaseTable ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableKind::BaseTable : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\ReindexTableKind::MaterializedView), $mode, $profile->grammar, $statement->reportsProgress(), $tablespace);"
+      ]
+    },
+    "Schema/Index/Partition/ReindexPartitionTable::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::system($target->schema->value), 'A partition rebuild requires an application schema.');"
+      ]
+    },
+    "Schema/Index/Partition/ReindexPartitionTable::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'TABLE ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->target->quoted();"
+      ]
+    },
+    "Schema/Index/Scope/ReindexSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($schema->value !== 'pg_temp' && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::system($schema->value) && !\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A schema rebuild requires a persistent application namespace.');"
+      ]
+    },
+    "Schema/Index/Scope/ReindexSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'SCHEMA ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->schema->quoted();"
+      ]
+    },
+    "Schema/Index/Scope/ReindexSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX SCHEMA requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Schema && $statement->object instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name, 'REINDEX SCHEMA needs one schema name.');",
+        "$tablespace = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Placement\\IndexTablespaceLowering())->resolve($statement, $context);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input((new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding())->known($context, $statement->object), 'REINDEX SCHEMA requires a declared schema.');",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSchema(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->object->value), $statement->requestsConcurrentBuild() ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard, $profile->grammar, $statement->reportsProgress(), $tablespace);"
+      ]
+    },
+    "Schema/Index/Scope/ReindexDatabase::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/Scope/ReindexDatabase::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'DATABASE ' . ($this->mode === \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent ? 'CONCURRENTLY ' : '') . $this->database->quoted();"
+      ]
+    },
+    "Schema/Index/Scope/ReindexDatabaseLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'REINDEX requires the native PostgreSQL database profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::Database || $statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System, 'REINDEX requires a database or system selector.');",
+        "$database = $context->currentDatabase;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($database !== null, 'A database-wide rebuild requires a declared current database.');",
+        "$written = $statement->object;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($written === null || $written instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name && $written->value === $database->value, 'A database-wide rebuild must select the declared current database.');",
+        "$tablespace = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Placement\\IndexTablespaceLowering())->resolve($statement, $context);",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($database->value);",
+        "$concurrent = $statement->requestsConcurrentBuild();",
+        "if ($statement->target === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget::System) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$concurrent, 'A system catalog rebuild requires the standard mode.');",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexSystemCatalogs($name, $profile->grammar, $statement->reportsProgress(), $tablespace);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Scope\\ReindexDatabase($name, $concurrent ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Concurrent : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexRebuildMode::Standard, $profile->grammar, $statement->reportsProgress(), $tablespace);"
+      ]
+    },
+    "Schema/Index/Scope/ReindexSystemCatalogs::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "Schema/Index/Scope/ReindexSystemCatalogs::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->tablespace === null ? 'REINDEX ' . ($this->verbose ? '(VERBOSE) ' : '') : $this->tablespace->prefix($this->verbose)) . 'SYSTEM ' . $this->database->quoted();"
+      ]
+    }
+  }
+}

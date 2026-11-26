@@ -25,10 +25,10 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\RandomColumnName;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ColumnResolver::class)]
 #[Medium]
@@ -36,8 +36,8 @@ final class ColumnResolverTest extends TestCase
 {
     public function testFindResolvesUnqualifiedQualifiedAndImplicitNames(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $input = new TableInput(new QualifiedName(new Name('t')), new Name('x'));
         $fact = (new TableShapes())->fact($derivation, $input->name, $derivation->environment());
@@ -62,9 +62,9 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindReportsAmbiguityAndHonoursHiddenAndQualifiedOnlyRelations(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -95,9 +95,9 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindPrefersARelationColumnOverAnAliasAndAnAliasOverOuterScopes(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $outerInput = new TableInput(new QualifiedName(new Name('t')));
@@ -124,8 +124,8 @@ final class ColumnResolverTest extends TestCase
 
     public function testFindIsConditionalWhenAnOpenRelationMayHoldTheName(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
         $declared = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
@@ -150,7 +150,7 @@ final class ColumnResolverTest extends TestCase
 
     public function testAdmitsMatchesTheAliasOrTheNameWithAnOptionalSchema(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context());
         $environment = $derivation->environment();
         $input = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
@@ -176,8 +176,8 @@ final class ColumnResolverTest extends TestCase
 
     public function testMatchFindsSlotsOrImplicitNamesAndOtherwiseAnswersTheMissingInputs(): void
     {
-        $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $semantics = new Inspection();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $environment = $derivation->environment();
         $shapes = new TableShapes();
@@ -210,7 +210,7 @@ final class ColumnResolverTest extends TestCase
 
     public function testMatchAnswersTheInputsTheNameOfAnUnnamedColumnDependsOn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context([], false));
         $environment = $derivation->environment();
         $input = new TableInput(new QualifiedName(new Name('t')));

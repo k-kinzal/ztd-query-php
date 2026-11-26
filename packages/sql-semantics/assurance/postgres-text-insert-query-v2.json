@@ -1,0 +1,131 @@
+{
+  "revision": "SemanticsIR/postgres-text-insert-query-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "server-insert-query-v2.json",
+    "postgres-text-insert-v1.json",
+    "postgres-typed-columns-v2.json",
+    "postgres-text-insert-query-v1.json"
+  ],
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "Mutation/InsertQuery": {
+      "role": "An ordered write of the native cells produced by an independent checked SELECT.",
+      "structure": "One destination, one checked SELECT with explicitly typed output roles and one detached RETURNING layout.",
+      "conditions": "The output width matches the exact write layout. Each output has an admitted native assignment to its target kind. A text target accepts native text, signed int4 literal and physical field leaves, and NULL. Other int4 computed outputs remain in the signed-target domain. The independent definition is unbounded and unordered. The root verifies the return coordinates over the target.",
+      "meaning": "Evaluate the independent SELECT with its source, scope, predicate and duplicate policy. Apply each assignment to the targeted physical field in output order. At a text destination, the fixed built-in int4 output and text input conversion turns a nonnull int4 into its signed ASCII decimal representation and propagates NULL. Omitted destination slots use native defaults.",
+      "sql": "Emit the exact target layout and the producing SELECT with its original typed result roles. Leave the int4 conversion in the native assignment context, after DISTINCT. Type a bare NULL with the corresponding destination kind."
+    }
+  },
+  "externalInterpretation": "Use the same resolved ordinary input relations and the same writable destination. The input fixture has repeated, distinct and nullable native rows; the target fixture has known values and defaults. The stock pinned PostgreSQL catalog has no overriding pg_cast entry from int4 to text. Text-to-int4 assignment is rejected. The verifier measures the absence of a replacement cast.",
+  "observations": [
+    "Preserve text values, exact target position, native result metadata and affected rows.",
+    "Preserve input duplicate policy, source predicates and zero-row writes.",
+    "Preserve SQL NULL distinctly from empty text and omit fields with native defaults.",
+    "Observe the exact target before and after the statement and restore both input and output fixture relations.",
+    "Check signed decimal text at negative, zero, positive and signed range boundaries. Retain duplicate elimination before target assignment and compare typed RETURNING values."
+  ],
+  "finite": {
+    "source": [
+      "constant",
+      "table"
+    ],
+    "layout": [
+      "text",
+      "int-text",
+      "text-int"
+    ],
+    "mode": [
+      "value",
+      "nullable",
+      "no-row"
+    ],
+    "duplicates": [
+      "all",
+      "distinct"
+    ],
+    "identities": 84,
+    "completeness": "Recover origin, assignment kind, positional native layout, exact literal value or source mode and duplicate policy from the constructed value. Keep 36 same-kind identities, 30 signed literal identities and 18 signed table identities.",
+    "signedLiterals": [
+      -2147483648,
+      -17,
+      0,
+      27,
+      2147483647
+    ],
+    "additionalSources": [
+      "signed-constant",
+      "signed-table"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      8221,
+      49943,
+      58243
+    ],
+    "casesPerSeed": 22,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary text field roles, typed constants, explicit NULL, no rows, native int4 positions, DISTINCT and returned slots. Include int4-to-text assignment from both a literal and a physical read."
+  },
+  "analysis": [
+    "Insert a bare text projection into a resolved text slot.",
+    "Insert mixed native fields with a target order differing from the physical layout.",
+    "Preserve mixed projection including DISTINCT and typed NULL in text.",
+    "Read a text field from an explicitly aliased independent source under a text presence predicate.",
+    "Assign a signed minimum int4 literal to native text.",
+    "Assign DISTINCT signed field reads to text, retaining the source type and eliminating duplicates before assignment."
+  ],
+  "negative": [
+    "Pass a prepared parameter into a text query-write column lacking an admitted assignment marker role.",
+    "Directly give a native text expression to a signed integer target.",
+    "Provide a narrower SELECT than its destination.",
+    "Use an invalid RETURNING occurrence."
+  ],
+  "faults": [
+    "Read the other source text field for the same destination.",
+    "Discard the duplicate-elimination policy of the producing SELECT.",
+    "Discard the producing SELECT's admission predicate.",
+    "Replace a signed literal assigned to text by zero without changing the write position."
+  ],
+  "evidence": {
+    "P01": "Observe the exact source and destination roles, ordinals, native kinds, duplicate policy and filter.",
+    "P02": "Check every input role and native type before publishing the owning INSERT.",
+    "P03": "Retain only the checked query, ordered destination and RETURNING fields.",
+    "P04": "Compose independent query results with the checked positional write in one immutable value.",
+    "P05": "Audit closed readonly definition and detached ordered destination and returning layouts.",
+    "P06": "Compare the emitted native SQL and exact observed result and physical effects.",
+    "Q01": "Refuse wrong write roles and widths at the owner before output.",
+    "Q02": "Require each finite identity, named analysis case and exploratory form.",
+    "Q03": "Independently derive projected rows, duplicate policy and writable position correspondence.",
+    "Q04": "Compare native mutation effects on both releases and expose source, predicate and duplicate faults.",
+    "Q05": "Link the exact measured tree and installed package bytes to independent observations."
+  },
+  "open": [
+    "General computed text expressions, conflict forms, joined INSERT inputs and other native kinds retain separate obligations.",
+    "Cast overrides, additional I/O conversion types, computed int4 into text, INSERT VALUES conversions and UPDATE conversions retain separate obligations."
+  ],
+  "trust": [
+    "Matching independent input and destination declarations",
+    "Native catalog defaults and SQL effect semantics",
+    "Audited immutable value and native observation rules"
+  ],
+  "changeFromV1": {
+    "removedNegative": "A raw int4 literal supplied to a text position is valid in the fixed native assignment context.",
+    "replacementNegative": "A native prepared parameter has no admitted assignment operand role in an INSERT SELECT text target.",
+    "newDomain": "Add all signed literal and signed physical int4 field cases while keeping every prior finite identity, seed, policy, fault and observation."
+  },
+  "sources": [
+    "https://www.postgresql.org/docs/16/typeconv-query.html",
+    "https://www.postgresql.org/docs/17/typeconv-query.html",
+    "https://www.postgresql.org/docs/17/sql-createcast.html"
+  ]
+}

@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
  * correlation name when it has one. The facts follow MYSQL-DELETE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/delete.html.
  *
- * @visibility public
- * @example Reading a multiple-table DELETE
- *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE t.* , u FROM t JOIN u ON t.a = u.a WHERE t.b = 1');
- *     [count($delete->statement->targets), $delete->toString()] // => [2, 'DELETE t, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
+ * @visibility SqlSemantics
  */
 final class MultipleDelete implements Statement
 {

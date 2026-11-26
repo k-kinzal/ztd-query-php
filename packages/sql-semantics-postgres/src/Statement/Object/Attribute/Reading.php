@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\StorageSt
  * Source: https://www.postgresql.org/docs/17/sql-createoperator.html, https://www.postgresql.org/docs/17/sql-createaggregate.html,
  * https://www.postgresql.org/docs/17/sql-createtype.html, `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling what kind of object a function attribute names
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Function->kind() // => \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Function
  */

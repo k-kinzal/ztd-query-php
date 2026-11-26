@@ -16,11 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html,
  * https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html (ER_NON_DEFAULT_VALUE_FOR_GENERATED_COLUMN).
  *
- * @visibility public
- * @example Reading the generated column written by an INSERT
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))');
- *     $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2)', $table->declarations()) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The value specified for generated column 'g' in table 't' is not allowed.
+ * @visibility SqlSemantics
  */
 final class GeneratedColumnWrite implements Diagnostic
 {

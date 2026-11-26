@@ -34,12 +34,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionSpec;
  * is not kept.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Providing a declaration to a context
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $create = $semantics->analyze('CREATE TABLE app.t (id serial PRIMARY KEY, name varchar(20) NOT NULL, note text)', []);
- *     $table = $create->declarations()[0];
- *     [array_map(static fn ($column) => $column->type->name(), $table->columns), $table->columns[2]->nullability, $table->implicit[0]->names[0]->value] // => [['integer', 'character varying(20)', 'text'], \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, 'tableoid']
+ * @visibility SqlSemantics
  */
 final class CreateTable implements SchemaElement, Relation
 {

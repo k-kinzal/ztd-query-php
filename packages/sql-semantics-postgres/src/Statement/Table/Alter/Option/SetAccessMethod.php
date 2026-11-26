@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * setting.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Changing the access method
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t SET ACCESS METHOD heap');
- *     $statement->statement->commands[0]->method->value // => 'heap'
+ * @visibility SqlSemantics
  */
 final class SetAccessMethod implements AlterCommand
 {

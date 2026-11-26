@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * ignored by the server, so they are not kept.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PREDICATES-XMLEXISTS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the document passed
  *     $passing = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlPassing(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     $passing->document instanceof \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral // => true

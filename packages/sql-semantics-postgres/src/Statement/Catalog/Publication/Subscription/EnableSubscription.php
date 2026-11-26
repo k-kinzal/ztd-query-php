@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * Rule: PG-SUBSCRIPTION-006. Mirrors `AlterSubscriptionStmt` of kind ALTER_SUBSCRIPTION_ENABLED.
  * Source: https://www.postgresql.org/docs/17/sql-altersubscription.html. Status: Implemented.
  *
- * @visibility public
- * @example Disabling a subscription
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s DISABLE');
- *     $operation->statement->enable // => false
+ * @visibility SqlSemantics
  */
 final class EnableSubscription implements Statement
 {

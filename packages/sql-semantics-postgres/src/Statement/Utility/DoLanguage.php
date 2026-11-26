@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  * name is a word or a string.
  * Source: https://www.postgresql.org/docs/17/sql-do.html.
  *
- * @visibility public
- * @example Reading the language of an anonymous block
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("DO LANGUAGE plpgsql 'BEGIN END'");
- *     $operation->statement->items[0]->name() // => 'plpgsql'
+ * @visibility SqlSemantics
  */
 final class DoLanguage implements Node
 {

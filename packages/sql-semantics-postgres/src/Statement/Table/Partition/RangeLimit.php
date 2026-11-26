@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * as the infinite bound (`PARTITION_RANGE_DATUM_MINVALUE`/`MAXVALUE`).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Reading an infinite bound
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (10)');
- *     $create->statement->definition->bound->from[0]->maximum() // => false
+ * @visibility SqlSemantics
  */
 final class RangeLimit implements Node
 {

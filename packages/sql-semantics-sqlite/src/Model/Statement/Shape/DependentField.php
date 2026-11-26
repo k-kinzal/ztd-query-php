@@ -14,10 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * The known fields with the name are candidates; an unexpanded star may add
  * further fields with that name, so no candidate is chosen.
  *
- * @visibility public
- * @example Looking a name up in an open shape
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT * FROM t');
- *     $operation->lookupField('a') instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField // => true
+ * @visibility SqlSemantics
  */
 final class DependentField implements FieldLookup
 {

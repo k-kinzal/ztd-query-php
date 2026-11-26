@@ -15,10 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
  * The equals sign between the option and its value is optional and is not kept.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
- * @visibility public
- * @example Reading a table option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT) AUTOEXTEND_SIZE = 4M');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\AutoextendSizeOption // => true
+ * @visibility SqlSemantics
  */
 final class AutoextendSizeOption implements TableOption
 {

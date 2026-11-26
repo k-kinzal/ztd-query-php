@@ -7,12 +7,12 @@ namespace Tests\Unit\Statement\Server\Transaction\Xa;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(XaRollback::class)]
 #[Medium]
@@ -20,12 +20,12 @@ final class XaRollbackTest extends TestCase
 {
     public function testRenderWritesTheIdentifier(): void
     {
-        self::assertSame("XA ROLLBACK 'g'", (new Semantics())->analyze("xa rollback 'g'")->toString());
+        self::assertSame("XA ROLLBACK 'g'", (new Inspection())->inspect("xa rollback 'g'")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("XA ROLLBACK 'g'");
+        $operation = (new Inspection())->inspect("XA ROLLBACK 'g'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);
@@ -34,11 +34,11 @@ final class XaRollbackTest extends TestCase
     public function testDeriveStatementRefusesAFormatAboveTheSignedRangeAfterMySql56(): void
     {
         $statement = new XaRollback(new Xid(new Text('a'), new Text('b'), new Numeral('9223372036854775808')));
-        $accepted = new Operation((new Semantics('mysql-5.6.51'))->context([]), $statement);
+        $accepted = new InspectedStatement((new Inspection('mysql-5.6.51'))->context([]), $statement);
 
         self::assertSame($statement, $accepted->statement);
         $this->expectExceptionMessage('A format identifier is at most 9223372036854775807 from MySQL 5.7 on.');
 
-        new Operation((new Semantics())->context([]), new XaRollback(new Xid(new Text('a'), new Text('b'), new Numeral('9223372036854775808'))));
+        new InspectedStatement((new Inspection())->context([]), new XaRollback(new Xid(new Text('a'), new Text('b'), new Numeral('9223372036854775808'))));
     }
 }

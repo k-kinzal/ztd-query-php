@@ -13,9 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_wrong_paramcount_to_native_fct.
  *
- * @visibility public
- * @example Reading the problem of a call with too many arguments
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT abs(1, 2)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect parameter count in the call to native function 'abs'
+ * @visibility SqlSemantics
  */
 final class WrongArgumentCount implements Diagnostic
 {

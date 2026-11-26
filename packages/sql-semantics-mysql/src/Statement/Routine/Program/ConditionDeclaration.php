@@ -16,11 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html.
  *
- * @visibility public
- * @example Reading a named condition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR SQLSTATE '42S02'; END");
- *     $declaration = $create->statement->body->declarations[0];
- *     [$declaration->name->value, $declaration->value->state->value] // => ['gone', '42S02']
+ * @visibility SqlSemantics
  */
 final class ConditionDeclaration implements Declaration
 {

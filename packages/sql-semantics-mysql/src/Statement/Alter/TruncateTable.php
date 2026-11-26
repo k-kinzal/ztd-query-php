@@ -26,10 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resolving the emptied table
- *     $truncate = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('TRUNCATE shop.t');
- *     [$truncate->toString(), $truncate->statement->table->schema?->value] // => ['TRUNCATE TABLE shop.t', 'shop']
+ * @visibility SqlSemantics
  */
 final class TruncateTable implements Statement
 {

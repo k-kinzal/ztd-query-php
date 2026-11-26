@@ -13,10 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * Source: https://www.postgresql.org/docs/17/sql-prepare-transaction.html, https://www.postgresql.org/docs/17/sql-commit-prepared.html,
  * https://www.postgresql.org/docs/17/sql-rollback-prepared.html.
  *
- * @visibility public
- * @example Reading the step of a COMMIT PREPARED
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COMMIT PREPARED 'x'");
- *     $operation->statement->action // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\PreparedAction::Commit
+ * @visibility SqlSemantics
  */
 enum PreparedAction: string
 {

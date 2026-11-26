@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AmbiguousColumn::class)]
 #[Medium]
@@ -18,9 +18,9 @@ final class AmbiguousColumnTest extends TestCase
 {
     public function testMessageAndCandidatesOfANameTwoInputsShare(): void
     {
-        $semantics = new Semantics();
-        $declarations = [$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE TABLE u (a TEXT)')];
-        $query = $semantics->inspect('SELECT a FROM t, u', $declarations);
+        $semantics = new Inspection();
+        $declarations = [$semantics->diagnose('CREATE TABLE t (a INTEGER)'), $semantics->diagnose('CREATE TABLE u (a TEXT)')];
+        $query = $semantics->diagnose('SELECT a FROM t, u', $declarations);
 
         $resolution = $query->field('a')->resolution;
 
@@ -35,9 +35,9 @@ final class AmbiguousColumnTest extends TestCase
 
     public function testMessageIsNotReachedWithFewerThanTwoCandidates(): void
     {
-        $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $resolution = $semantics->inspect('SELECT a FROM t', [$table])->field('a')->resolution;
+        $semantics = new Inspection();
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $resolution = $semantics->diagnose('SELECT a FROM t', [$table])->field('a')->resolution;
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $this->expectExceptionMessage('An ambiguous column has at least two candidates.');

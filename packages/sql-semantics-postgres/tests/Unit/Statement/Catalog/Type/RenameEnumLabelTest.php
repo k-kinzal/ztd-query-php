@@ -14,11 +14,11 @@ final class RenameEnumLabelTest extends TestCase
 {
     public function testRenderWritesRename(): void
     {
-        self::assertSame('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'')->toString());
+        self::assertSame('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'')->toString());
     }
 
     public function testDeriveStatementAcceptsAShortLabel(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'')->facts->diagnostics);
     }
 }

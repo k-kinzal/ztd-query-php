@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Locking two tables
- *     $lock = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('lock table t read local, u as v write');
- *     [$lock->toString(), $lock->statement->locks[1]->alias?->value] // => ['LOCK TABLES t READ LOCAL, u AS v WRITE', 'v']
+ * @visibility SqlSemantics
  */
 final class LockTables implements Statement
 {

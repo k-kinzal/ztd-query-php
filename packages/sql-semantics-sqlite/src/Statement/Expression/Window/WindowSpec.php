@@ -18,11 +18,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
  *
  * Source: https://sqlite.org/windowfunctions.html#window_chaining.
  *
- * @visibility public
- * @example Reading the parts of a window
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT rank() OVER (w PARTITION BY a ORDER BY b) FROM t WINDOW w AS ()');
- *     $window = $query->statement->columns[0]->expression->over;
- *     [$window->base->value, count($window->partition), count($window->order)] // => ['w', 1, 1]
+ * @visibility SqlSemantics
  */
 final class WindowSpec implements Node
 {

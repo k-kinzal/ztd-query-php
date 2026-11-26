@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
  * attribute is written in the full form and the short form respectively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a keyword attribute
  *     (new \SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::AutoIncrement))->keyword->value // => 'AUTO_INCREMENT'
  */

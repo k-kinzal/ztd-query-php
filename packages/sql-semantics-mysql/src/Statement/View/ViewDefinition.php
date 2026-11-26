@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-view.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-view.html.
  *
- * @visibility public
- * @example Reading a view definition
- *     $view = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE ALGORITHM = MERGE SQL SECURITY INVOKER VIEW v (x) AS SELECT 1 WITH LOCAL CHECK OPTION');
- *     [$view->statement->definition->algorithm, $view->statement->definition->security, $view->statement->definition->check] // => [\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::Merge, \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Invoker, \SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption::Local]
+ * @visibility SqlSemantics
  */
 final class ViewDefinition implements Node
 {

@@ -14,8 +14,8 @@ final class PartitionBoundTest extends TestCase
 {
     public function testBoundsArePartitionBounds(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p DEFAULT', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p DEFAULT', []);
         self::assertSame('CREATE TABLE p1 PARTITION OF p DEFAULT', $statement->toString());
     }
 }

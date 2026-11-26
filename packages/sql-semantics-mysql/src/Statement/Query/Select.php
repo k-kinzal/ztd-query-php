@@ -46,13 +46,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
  * https://dev.mysql.com/doc/refman/5.7/en/select.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a selection
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a, b FROM t WHERE a > 1 GROUP BY a, b HAVING a > 2 ORDER BY a LIMIT 3');
- *     [count($query->statement->items), $query->statement->where !== null, $query->statement->having !== null, count($query->statement->orderBy)] // => [2, true, true, 1]
- * @example Depending on a table the context does not declare
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t');
- *     $query->field('a')->type instanceof \SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent // => true
+ * @visibility SqlSemantics
  * @example Refusing a star after the first item
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\Star()]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

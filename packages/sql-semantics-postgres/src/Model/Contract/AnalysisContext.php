@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Model\Contract;
 
+use SqlSemantics\Platform\PostgreSql\Model\Contract\Index\IndexNamespace;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
@@ -21,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * Routines, data types and session variables are not declared in a version 1
  * context; facts that need them name them as missing inputs.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling an open context from a complete empty one
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     [$semantics->context()->complete, $semantics->context([])->complete] // => [false, true]
@@ -41,6 +42,16 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
     public readonly array $searchPath;
 
     /**
+     * @var list<Name> Explicit application table spaces in the cluster
+     */
+    public readonly array $tablespaces;
+
+    /**
+     * @var list<Name> Explicit application roles in the cluster
+     */
+    public readonly array $roles;
+
+    /**
      * @var Name The schema an unqualified declaration belongs to
      */
     public readonly Name $declarationSchema;
@@ -53,6 +64,9 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
      * @param Comparison $relationNames How relation and schema names are compared
      * @param Comparison $columnNames How column names are compared
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
+     * @param Name|null $currentDatabase The decoded current database when specified
+     * @param list<Name> $tablespaces Explicit application table spaces in the cluster
+     * @param list<Name> $roles Explicit application roles in the cluster
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -62,16 +76,69 @@ final class AnalysisContext implements \SqlSemantics\AnalysisContext
         public readonly Comparison $relationNames = Comparison::Sensitive,
         public readonly Comparison $columnNames = Comparison::Sensitive,
         ?Name $declarationSchema = null,
+        public readonly IndexNamespace $indexNamespace = new IndexNamespace(),
+        public readonly ?Name $currentDatabase = null,
+        array $tablespaces = [],
+        array $roles = [],
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
         foreach (Check::listOf($tables, Table::class, 'Context declarations are tables.') as $table) {
             Check::input($profile->compatibleWith($table->profile), 'A declaration must belong to the language profile of the context.');
+            Check::input($table->name->catalog === null || $table->name->catalog->value === $currentDatabase?->value, 'A declaration must belong to the current database.');
             $unique[spl_object_id($table)] = $table;
         }
         $this->searchPath = $path;
         $this->tables = array_values($unique);
         $this->declarationSchema = $declarationSchema ?? $path[0];
+        $storage = [];
+        foreach (Check::listOf($tablespaces, Name::class, 'Table-space declarations are decoded names.') as $tablespace) {
+            Check::input(!str_starts_with($tablespace->value, 'pg_'), 'An application tablespace declaration needs an unreserved name.');
+            Check::input(!isset($storage[$tablespace->value]), 'A tablespace coordinate can be declared only once.');
+            $storage[$tablespace->value] = $tablespace;
+        }
+        $this->tablespaces = array_values($storage);
+        $principals = [];
+        foreach (Check::listOf($roles, Name::class, 'Role declarations are decoded names.') as $role) {
+            Check::input($role->value !== 'public' && $role->value !== 'none' && !str_starts_with($role->value, 'pg_'), 'An application role declaration needs an unreserved name.');
+            Check::input(!isset($principals[$role->value]), 'A role coordinate can be declared only once.');
+            $principals[$role->value] = $role;
+        }
+        $this->roles = array_values($principals);
+    }
+
+    /**
+     * Looks up an exact decoded tablespace coordinate in the cluster namespace.
+     */
+    public function knowsTablespace(string $name): bool
+    {
+        if ($name === 'pg_default' || $name === 'pg_global') {
+            return true;
+        }
+        foreach ($this->tablespaces as $tablespace) {
+            if ($tablespace->value === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Looks up an exact role name in the declared and stock role catalogs.
+     */
+    public function knowsRole(string $name): bool
+    {
+        if (StockRoles::contains($this->profile->grammar, $name)) {
+            return true;
+        }
+        foreach ($this->roles as $role) {
+            if ($role->value === $name) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

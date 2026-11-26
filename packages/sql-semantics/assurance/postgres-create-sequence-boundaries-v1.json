@@ -1,0 +1,198 @@
+{
+  "revision": "SemanticsIR/postgres-create-sequence-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Exact checked sequence parameters, value declarations, role lowering and native output.",
+  "rules": {
+    "Schema/Sequence/SequenceName::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::sessionInternal($schema->value), 'A sequence name cannot select a numbered temporary schema.');"
+      ]
+    },
+    "Schema/Sequence/SequenceName::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->name->quoted();"
+      ]
+    },
+    "Schema/Sequence/SequencePersistence::temporary": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this === self::Temporary || $this === self::GlobalTemporary;"
+      ]
+    },
+    "Schema/Sequence/SequenceIntegerOrder::compare": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$negative = str_starts_with($left->decimal, '-');",
+        "if ($negative !== str_starts_with($right->decimal, '-')) {",
+        "    return $negative ? -1 : 1;",
+        "}",
+        "$width = strlen($left->decimal) <=> strlen($right->decimal);",
+        "$magnitude = $width === 0 ? strcmp($left->decimal, $right->decimal) : $width;",
+        "return $negative ? -$magnitude : $magnitude;"
+      ]
+    },
+    "Schema/Sequence/SequenceParameters::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($increment->decimal !== '0', 'A sequence increment cannot be zero.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($cache->decimal !== '0' && !str_starts_with($cache->decimal, '-'), 'A sequence cache must be positive.');",
+        "[$first, $last] = match ($storage) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small => ['-32768', '32767'],",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard => ['-2147483648', '2147483647'],",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide => ['-9223372036854775808', '9223372036854775807'],",
+        "};",
+        "$descending = str_starts_with($increment->decimal, '-');",
+        "$lower = $minimum ?? new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($descending ? $first : '1');",
+        "$upper = $maximum ?? new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($descending ? '-1' : $last);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($first), $lower) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($upper, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($last)) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $upper) < 0, 'Sequence limits must increase within the selected integer storage.');",
+        "$catalogStart = $start ?? ($descending ? $upper : $lower);",
+        "$restart = $initial ?? $catalogStart;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $catalogStart) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($catalogStart, $upper) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($lower, $restart) <= 0 && \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceIntegerOrder::compare($restart, $upper) <= 0, 'The sequence start and restart must be within its limits.');",
+        "$this->minimum = $lower;",
+        "$this->maximum = $upper;",
+        "$this->start = $catalogStart;",
+        "$this->initial = $restart;"
+      ]
+    },
+    "Schema/Sequence/CreateSequence::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($name->schema->value === 'pg_temp') === $persistence->temporary(), 'A sequence namespace must agree with its temporary storage.');"
+      ]
+    },
+    "Schema/Sequence/CreateSequence::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Sequence/CreateSequence::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$storage = $this->persistence->value === '' ? '' : $this->persistence->value . ' ';",
+        "$numbers = $this->parameters;",
+        "$restart = $numbers->initial->decimal === $numbers->start->decimal ? '' : ' RESTART WITH ' . $numbers->initial->decimal;",
+        "return 'CREATE ' . $storage . 'SEQUENCE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->name->quoted() . ' AS ' . $numbers->storage->value . ' INCREMENT BY ' . $numbers->increment->decimal . ' MINVALUE ' . $numbers->minimum->decimal . ' MAXVALUE ' . $numbers->maximum->decimal . ' START WITH ' . $numbers->start->decimal . $restart . ' CACHE ' . $numbers->cache->decimal . ($numbers->cycle ? ' CYCLE' : ' NO CYCLE');"
+      ]
+    },
+    "Schema/Sequence/CreateSequenceLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SEQUENCE requires the native PostgreSQL sequence profile.');",
+        "$written = $statement->name->schema;",
+        "$persistence = match ($statement->persistence) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Permanent => $written?->value === 'pg_temp' ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Temporary : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Permanent,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Unlogged => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Unlogged,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Temporary, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Temp, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::LocalTemporary, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::LocalTemp => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::Temporary,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::GlobalTemporary, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::GlobalTemp => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequencePersistence::GlobalTemporary,",
+        "};",
+        "$namespace = $written ?? ($persistence->temporary() ? new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name('pg_temp') : $context->declarationSchema);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($namespace->value === 'pg_temp' || (new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding())->known($context, $namespace), 'CREATE SEQUENCE requires a declared local namespace.');",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceName(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($namespace->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->name->value));",
+        "$parameters = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceOptionsLowering())->lower($context, $statement->options);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\CreateSequence($name, $parameters, $persistence, $statement->ifNotExists, $context->profile->grammar);"
+      ]
+    },
+    "Schema/Sequence/SequenceOptionLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceNumber) {",
+        "    $written = $option->value->text();",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(preg_match('/\\A-?[0-9]+\\z/D', $written) === 1, 'A sequence option requires a signed decimal integer.');",
+        "    $magnitude = ltrim(ltrim($written, '-'), '0');",
+        "    $decimal = $magnitude === '' ? '0' : ($written[0] === '-' ? '-' : '') . $magnitude;",
+        "    return [$option->kind->value, new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral($decimal)];",
+        "}",
+        "if ($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceAs) {",
+        "    $type = $option->type->typeFact($context, false);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Type\\Known, 'A sequence requires a resolved native integer storage type.');",
+        "    return ['AS', match ($type->descriptor) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int2 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int4 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard,",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int8 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide,",
+        "        default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('A sequence requires a resolved native integer storage type.'),",
+        "    }];",
+        "}",
+        "if ($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlag) {",
+        "    return match ($option->kind) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Cycle => ['CYCLE', true],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::NoCycle => ['CYCLE', false],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::NoMinValue => ['MINVALUE', null],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::NoMaxValue => ['MAXVALUE', null],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Restart => ['RESTART', null],",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Logged, \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind::Unlogged => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('Sequence creation declares persistence before SEQUENCE.'),",
+        "    };",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($option instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceReference && $option->owned && count($option->name->parts) === 1 && $option->name->parts[0]->value === 'none', 'Sequence ownership requires a checked column reference.');",
+        "return ['OWNED BY', null];"
+      ]
+    },
+    "Schema/Sequence/SequenceOptionsLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$read = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceOptionLowering();",
+        "$seen = [];",
+        "$numbers = [];",
+        "$type = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide;",
+        "$cycle = false;",
+        "foreach ($options as $option) {",
+        "    [$key, $value] = $read->lower($context, $option);",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($seen[$key]), 'A sequence option may be specified only once.');",
+        "    $seen[$key] = true;",
+        "    match (true) {",
+        "        $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage => $type = $value,",
+        "        $value instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral => $numbers[$key] = $value,",
+        "        is_bool($value) => $cycle = $value,",
+        "        $value === null => null,",
+        "    };",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\SequenceParameters($type, $numbers['INCREMENT'] ?? new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('1'), $numbers['MINVALUE'] ?? null, $numbers['MAXVALUE'] ?? null, $numbers['START'] ?? null, $numbers['RESTART'] ?? null, $numbers['CACHE'] ?? new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral('1'), $cycle);"
+      ]
+    },
+    "Schema/RelationDeclarationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateIndex => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndexLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Schema\\CreateSchema => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchemaLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\CreateSequence => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\CreateSequenceLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTableLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTableAs => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateViewLowering())->lower($operation, $statement),",
+        "    $statement instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateMaterializedView => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateMaterializedViewLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    }
+  }
+}

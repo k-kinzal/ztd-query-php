@@ -1,0 +1,60 @@
+{
+  "revision": "SemanticsIR/postgres-external-source-kinds-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL reads of fully declared external tables, views and materialized views with UTF-8, standard-conforming strings and pg_catalog first.",
+  "extends": ["server-projection-v1.json", "postgres-typed-columns-v2.json", "postgres-int8-fields-v1.json", "postgres-boolean-fields-v1.json", "postgres-from-list-v2.json"],
+  "constructors": {
+    "ExternalRelationKind": {
+      "type": "From/ExternalRelationKind",
+      "role": "Closed classification of the external relation resolved by an input occurrence.",
+      "structure": "A base table, a view or a materialized view.",
+      "conditions": "The declaring catalog and evaluator agree on the kind and heading at the absolute identity.",
+      "meaning": "Read the external table, live view or materialized relation and use the external engine's inheritance semantics.",
+      "sql": "The FROM position and absolute identity name the external relation regardless of kind. ONLY is a separate explicit policy."
+    }
+  },
+  "existingRoles": ["TableSource", "Identifier", "From/ColumnKind", "From/Join", "Select", "ResultColumn", "Ordering/Order", "Mutation/Insert/Destination", "Mutation/Update", "Mutation/Delete"],
+  "structure": "A table source owns the absolute schema and name, external relation kind, ONLY policy and an ordered consumed field layout with exact native kinds. Each projected or predicate field addresses the owning occurrence.",
+  "conditions": "Analysis resolves a complete input declaration with an admitted relation kind. Each field belongs to the selected occurrence and uses its native role. INSERT, UPDATE and DELETE still require an admitted base-table destination. View assignment, foreign and sequence sources have separate unchecked capabilities in the work scope.",
+  "meaning": "Use the external environment's declared relation at the fixed identity. A live view and a persisted snapshot can disagree after a base write, and ONLY changes descendant inclusion for a base table. An aliased or qualified repeat of a resolved field uses the same slot. Preserve outer-join null extension, field order, duplicates and native types.",
+  "sql": "Emit the fully qualified source with the controlled alias and the explicit ONLY policy. Render each field with the owning occurrence alias and its checked name. External relation definitions are fixture or evaluation inputs.",
+  "observations": ["Absolute schema and object name, external kind, policy and ordered slots in the PHP graph", "Exact native column labels, positions and OIDs for integer, bigint, Boolean and text", "Live view rows after a source write, persisted materialized rows, inherited descendants, duplicates, NULL extension and ordered results", "Original SQL resolves the same reference despite aliasing, wildcard, qualification or additional relation occurrences"],
+  "finite": {
+    "kinds": ["table", "view", "materialized-view"],
+    "policies": ["all", "only"],
+    "placements": ["scan", "left-join"],
+    "projections": ["all-fields", "wide-and-text"],
+    "filters": ["absent", "flag"],
+    "order": ["unordered", "ordered"],
+    "identities": 96,
+    "completeness": "Observe all 96 distinct combinations by recovering the relation kind, source occurrence, inheritance policy, typed field layout, filter and result-order policy from the constructed graph. Generate the allowed Cartesian product without filtering."
+  },
+  "analysis": ["View wildcard expands the typed heading", "A view field and qualified alias use the same slot", "ONLY preserves live view data", "ONLY preserves materialized data", "Explicit descendant policy on a base table", "Qualified same-named view in another schema", "An outer join reads the correct materialized occurrence", "Two aliases of differently qualified views select distinct occurrences"],
+  "exploration": {
+    "seeds": [1871, 12007, 43543],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary external identity, relation kind, ONLY, nested source placement, typed slot kinds, field order, projection repetitions, nullable predicate and native result order."
+  },
+  "negative": ["View as INSERT destination", "Materialized view as INSERT destination", "View as UPDATE destination", "Materialized view as UPDATE destination", "View as DELETE destination", "Materialized view as DELETE destination", "Absent analyzed column", "Foreign or sequence analyzed input", "Parsed UPDATE targeting a view"],
+  "faults": ["Collapse a live view kind to a table during analysis", "Use a decoy schema with the same view name", "Read the live view in place of a materialized snapshot", "Drop ONLY on an inherited base source", "Accept a view as an UPDATE destination"],
+  "evidence": {
+    "P01": "Retain a closed relation kind and exact native field roles with absolute identity and occurrence.",
+    "P02": "Enforce source and destination placement at the responsible analysis or public boundary.",
+    "P03": "Keep external identification and consumed field roles as semantic values without the declaration or query definition.",
+    "P04": "Compose rows from the fixed external input with checked projection, filter, outer joins and sort positions.",
+    "P05": "Use immutable closed kind and identifier slots and detached field lists.",
+    "P06": "Render typed source reads preserving native labels, values, order, multiplicity, NULL and inheritance.",
+    "Q01": "Check positive source construction and typed destination and resolution rejection.",
+    "Q02": "Run every finite identity on both profiles as well as the independent analyzed inputs.",
+    "Q03": "Compare the composition of row environments by occurrence and backing relation.",
+    "Q04": "Compare native output to independent typed row predictions, including live and stale snapshots and inherited rows.",
+    "Q05": "Link distributor bytes to the checked constructor, binder, renderer and write boundary."
+  },
+  "open": ["Construction of view and materialized-view DDL as complete IR", "Automatically updatable and trigger-based view writes", "Foreign tables, sequences and catalog-qualified or incomplete external references"],
+  "trust": ["Resolution against truthful external definitions", "Native PostgreSQL catalog and inheritance model", "Independent fixture evaluator, typed row comparator and held-out fault witnesses", "The loaded PHP packages and native version identities"],
+  "sources": ["https://www.postgresql.org/docs/16/sql-select.html", "https://www.postgresql.org/docs/17/sql-select.html", "https://www.postgresql.org/docs/16/sql-createview.html", "https://www.postgresql.org/docs/17/rules-materializedviews.html"]
+}

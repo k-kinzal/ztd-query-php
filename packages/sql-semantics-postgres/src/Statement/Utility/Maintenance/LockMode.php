@@ -11,10 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
  * strongest. The value is the keyword spelling.
  * Source: https://www.postgresql.org/docs/17/explicit-locking.html#LOCKING-TABLES, https://www.postgresql.org/docs/17/sql-lock.html.
  *
- * @visibility public
- * @example Reading the mode of a LOCK
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('LOCK t IN SHARE ROW EXCLUSIVE MODE');
- *     $operation->statement->mode // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode::ShareRowExclusive
+ * @visibility SqlSemantics
  */
 enum LockMode: string
 {

@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/clone.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Cloning into a directory
- *     $clone = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("clone local data directory = '/srv/copy'");
- *     [$clone->toString(), $clone->statement->directory->value] // => ["CLONE LOCAL DATA DIRECTORY '/srv/copy'", '/srv/copy']
+ * @visibility SqlSemantics
  */
 final class CloneLocal implements Statement
 {

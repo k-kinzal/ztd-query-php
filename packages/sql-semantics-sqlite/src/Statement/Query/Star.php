@@ -11,12 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * The result column `*`: every column of every input relation.
  *
- * @visibility public
- * @example Reading the columns a star selects
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $query = $semantics->analyze('SELECT * FROM t', [$table]);
- *     [$query->statement->columns[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Query\Star, count($query->fields())] // => [true, 2]
+ * @visibility SqlSemantics
  */
 final class Star implements Node
 {

@@ -28,9 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-filter.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Setting two filters
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("change replication filter replicate_do_db = (a, b), replicate_wild_ignore_table = ('a.%')")->toString() // => "CHANGE REPLICATION FILTER REPLICATE_DO_DB = (a, b), REPLICATE_WILD_IGNORE_TABLE = ('a.%')"
+ * @visibility SqlSemantics
  */
 final class ChangeReplicationFilter implements Statement
 {

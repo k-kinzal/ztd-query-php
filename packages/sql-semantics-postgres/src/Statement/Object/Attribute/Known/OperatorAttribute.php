@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * other attribute draws a warning and is ignored.
  * Source: https://www.postgresql.org/docs/17/sql-createoperator.html, `DefineOperator` in `src/backend/commands/operatorcmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute::from('procedure')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Function
  */

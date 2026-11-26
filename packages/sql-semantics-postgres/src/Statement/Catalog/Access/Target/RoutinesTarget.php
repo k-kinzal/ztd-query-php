@@ -18,10 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignatur
  * expressions inside their argument types are derived.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
- * @example Reading the function of a grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT EXECUTE ON FUNCTION app.total(int4) TO joe');
- *     $operation->statement->target->signatures[0]->name->last()->value // => 'total'
+ * @visibility SqlSemantics
  */
 final class RoutinesTarget implements PrivilegeTarget
 {

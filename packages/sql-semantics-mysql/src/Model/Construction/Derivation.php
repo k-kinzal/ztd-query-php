@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
 use SqlSemantics\Platform\MySql\Model\Resolution\TableLookup;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Facts;
@@ -211,16 +212,16 @@ final class Derivation
     /**
      * Resolves a relation name: the nearest common table of the environment, then the context.
      */
-    public function table(QualifiedName $name, Environment $environment): TableResolution
+    public function table(QualifiedName $name, Environment $environment, TableNamespace $namespace = TableNamespace::Visible): TableResolution
     {
-        if ($name->schema === null) {
+        if ($namespace === TableNamespace::Visible && $name->schema === null) {
             $common = $environment->commonTable($name->name);
             if ($common !== null) {
                 return new CommonTable($common->definition);
             }
         }
 
-        return (new TableLookup())->find($this->context, $name);
+        return (new TableLookup())->find($this->context, $name, $namespace);
     }
 
     /**

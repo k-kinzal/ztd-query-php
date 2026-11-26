@@ -14,22 +14,22 @@ final class PublicationListTest extends TestCase
 {
     public function testCheckAcceptsACurrentSchemaAnywhere(): void
     {
-        self::assertSame('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA')->toString());
+        self::assertSame('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA')->toString());
     }
 
     public function testDeriveReportsAQualifiedTableAfterASchema(): void
     {
-        self::assertSame('invalid schema name', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, a.b')->facts->diagnostics[0]->message());
+        self::assertSame('invalid schema name', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, a.b')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveReportsAFilterAfterASchema(): void
     {
-        self::assertSame('WHERE clause not allowed for schema', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t WHERE (true)')->facts->diagnostics[0]->message());
+        self::assertSame('WHERE clause not allowed for schema', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t WHERE (true)')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveReportsColumnsAfterASchema(): void
     {
-        self::assertSame('column specification not allowed for schema', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t (a)')->facts->diagnostics[0]->message());
+        self::assertSame('column specification not allowed for schema', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t (a)')->facts->diagnostics[0]->message());
     }
 
     public function testRuleOfAnIntroducedItemIsNull(): void

@@ -24,10 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/join.html ("the precedence
  * of the comma operator is less than that of INNER JOIN"). Status: Implemented.
  *
- * @visibility public
- * @example Reading the members of a comma list
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM t, u JOIN v ON u.a = v.a');
- *     [count($query->statement->from->members), $query->statement->from->members[1] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable] // => [2, true]
+ * @visibility SqlSemantics
  * @example Refusing a list of one member
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([new \SqlSemantics\Platform\MySql\Statement\Relation\Dual()]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

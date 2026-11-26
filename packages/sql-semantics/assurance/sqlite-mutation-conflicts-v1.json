@@ -1,0 +1,70 @@
+{
+  "revision": "SemanticsIR/sqlite-mutation-conflicts-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2, UTF-8 and numbered parameters. For each construction observe both recursive trigger settings and both transaction contexts.",
+  "scope": "The five SQLite statement-level conflict algorithms and inherited schema resolution on checked INSERT and UPDATE operations.",
+  "constructors": {
+    "Mutation/InsertConflict": {
+      "role": "Complete conflict policy of a checked INSERT.",
+      "structure": "An inherited choice or exactly one of ABORT, IGNORE, FAIL, ROLLBACK and REPLACE.",
+      "conditions": "The INSERT owns an absolute target and a checked independent input. The selected policy applies to every attempted input row. This contract leaves UPSERT open.",
+      "meaning": "Inheritance uses each external constraint's own policy. An explicit choice overrides it. FAIL stops at the offending row and retains the successful prefix. ROLLBACK cancels an active transaction including earlier writes. REPLACE removes conflicting rows for uniqueness violations and supplies the column default for an applicable NOT NULL violation.",
+      "externalInterpretation": "Use the same relation identity, constraint definitions, defaults, relevant transaction mode and recursive trigger setting.",
+      "sql": "Omit the policy clause for inheritance and emit the selected INSERT OR clause otherwise. Lower the standalone REPLACE verb to the same InsertConflict::Replace value.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Mutation/UpdateConflict": {
+      "role": "Complete conflict policy of a checked UPDATE.",
+      "structure": "An inherited choice or exactly one of ABORT, IGNORE, FAIL, ROLLBACK and REPLACE.",
+      "conditions": "The UPDATE owns its one target and checked assignments. The selected policy applies to each row admitted by the predicate. The enclosing statement is responsible for reference validity.",
+      "meaning": "Apply the conflict algorithm to the updated row. REPLACE deletes rows that prevent the write. FAIL leaves the earlier updated rows of that statement. ROLLBACK cancels the active transaction, and acts as ABORT in autocommit. Inheritance leaves the constraint policies in effect.",
+      "externalInterpretation": "Use the same relation, row scope, constraints, defaults, transaction context and trigger rules. This contract compares single-row predicate updates to avoid assuming a visitation order.",
+      "sql": "Omit OR for inheritance and use UPDATE OR followed by the exact explicit policy otherwise.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Mutation/Insert", "Mutation/Update", "Mutation/UpdateAssignment", "Mutation/ReturnedColumn"],
+  "observations": [
+    "Record exact errors, directly changed row count, target contents, trigger events in order, and transaction state and prior writes.",
+    "Observe RETURNING field order, labels and typed rows. SQLite leaves RETURNING row order arbitrary. Deletion of blocking rows by REPLACE is visible in table and trigger state.",
+    "The fixture distinguishes rowid conflicts, default-substituting NOT NULL, inherited UNIQUE IGNORE and the absence of a conflict. FAIL and ABORT differ on a multi-row INSERT with a successful prefix. ROLLBACK and ABORT differ after an earlier transactional marker write."
+  ],
+  "finite": {
+    "operations": ["insert", "update"],
+    "policies": ["inherit", "abort", "ignore", "fail", "rollback", "replace"],
+    "scenarios": ["clean", "rowid", "unique", "not-null"],
+    "returning": [false, true],
+    "recursiveTriggers": [false, true],
+    "transaction": [false, true],
+    "identity": "Observe 96 distinct constructor identities from operation, policy, scenario and output shape. Execute every identity under all four native fixture settings for 384 case and environment pairs."
+  },
+  "exploration": {
+    "seeds": [18329, 37463, 51383],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary one through five ordered INSERT input rows, target column order, signed and NULL values, collision locations and returned slots. Generate row-specific UPDATEs with either key, unique or payload assignments. Exercise all statement policies and fixture settings."
+  },
+  "negative": ["INSERT source has the wrong width", "UPDATE assignment references an absent slot", "UPSERT added to REPLACE"],
+  "faults": [
+    "Replace FAIL with ABORT for a multi-row INSERT",
+    "Replace ROLLBACK with ABORT inside a transaction with an earlier write",
+    "Replace REPLACE with IGNORE for an INSERT with a unique conflict",
+    "Replace REPLACE with IGNORE for an UPDATE with a UNIQUE collision"
+  ],
+  "open": [
+    "UPSERT conflict targets and handlers.",
+    "Independent comparisons of candidate order for multi-row UPDATE and additional foreign key, CHECK and trigger interactions."
+  ],
+  "trust": [
+    "A pinned SQLite library and the restricted native authorizer.",
+    "The independent per-row conflict and transaction effects model for the stated fixture.",
+    "Observation of the exact conflict clauses in the distributed statement constructors and SQL emitters."
+  ],
+  "sources": [
+    "https://sqlite.org/lang_conflict.html",
+    "https://sqlite.org/lang_replace.html",
+    "https://sqlite.org/lang_returning.html"
+  ]
+}

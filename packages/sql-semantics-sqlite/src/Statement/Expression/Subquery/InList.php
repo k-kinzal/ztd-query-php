@@ -28,13 +28,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#the_in_and_not_in_operators.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the values of a membership test
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a NOT IN (1, 2) FROM t');
- *     [$query->statement->columns[0]->expression->negated, count($query->statement->columns[0]->expression->items)] // => [true, 2]
- * @example Refusing an operand that the test would not cover when written
- *     $or = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList($or, []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class InList implements Scalar
 {
@@ -61,6 +55,9 @@ final class InList implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->items === []) {
+            return new ScalarFact(new Known(Storage::Integer), Nullability::NotNull);
+        }
         $operand = $derivation->scalar($this->operand, $environment);
         $nullability = $operand->nullability;
         $elements = [];
@@ -70,7 +67,7 @@ final class InList implements Scalar
         }
         (new RowValueUse())->elements($operand, $elements, $derivation);
 
-        return new ScalarFact(new Known(Storage::Integer), $this->items === [] ? Nullability::NotNull : $nullability);
+        return new ScalarFact(new Known(Storage::Integer), $nullability);
     }
 
     /**

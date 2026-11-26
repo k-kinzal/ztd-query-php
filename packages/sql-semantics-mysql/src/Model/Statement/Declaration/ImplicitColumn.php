@@ -15,12 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * it is not part of `*`. When it is another name for a declared column, the
  * reference resolves to that declared column.
  *
- * @visibility public
- * @example Giving a column an implicit name
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (id INT)')->declarations()[0];
- *     $implicit = new \SqlSemantics\Platform\MySql\Model\Statement\Declaration\ImplicitColumn([new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('rowid')], $table->columns[0]);
- *     $implicit->names[0]->value // => 'rowid'
+ * @visibility SqlSemantics
  */
 final class ImplicitColumn
 {

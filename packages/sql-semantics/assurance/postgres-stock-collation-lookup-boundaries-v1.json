@@ -1,0 +1,90 @@
+{
+  "revision": "SemanticsIR/postgres-stock-collation-lookup-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "postgres-stock-collation-lookup-v1.json",
+  "rules": {
+    "Schema/CreateColumnLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input([$column->storage, $column->compression, $column->options] === [null, null, []], 'CREATE TABLE requires an ordinary column definition.');",
+        "$type = $column->type->typeFact($operation->context);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Type\\Known && !$column->type->setOf, 'The column requires a supported builtin storage kind.');",
+        "$kind = match ($type->descriptor) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int2 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int4 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Int8 => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Text => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CharacterStorage::Text,",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin::Bool => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\BooleanStorage::Boolean,",
+        "    default => throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The column requires a supported builtin storage kind.'),",
+        "};",
+        "$nullable = null;",
+        "$default = null;",
+        "$collation = null;",
+        "$stockFirst = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Lookup\\StockLookup::firstCatalog($operation->context->searchPath);",
+        "$literals = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\LiteralDefaultLowering();",
+        "foreach ($column->qualifiers as $qualifier) {",
+        "    if ($qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\DefaultExpression && $qualifier->name === null && $default === null) {",
+        "        $default = $literals->lower($operation, $qualifier, $kind);",
+        "    } elseif (($qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NotNull || $qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NullAllowed) && $qualifier->name === null && $nullable === null) {",
+        "        $nullable = $qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NullAllowed;",
+        "    } elseif ($qualifier instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ColumnCollation && $collation === null) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\DeclaredTextCollation::resolve($qualifier->collation->qualified(), $stockFirst) === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Declaration\\DeclaredTextCollation::StockC, 'The column requires a resolved stock PostgreSQL collation.');",
+        "        $collation = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextCollation::C;",
+        "    } else {",
+        "        throw new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction('The column attribute is outside the native declaration domain.');",
+        "    }",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\TableColumn(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($column->name->value), $kind, $nullable ?? true, $default, $collation);"
+      ]
+    },
+    "Schema/Index/Btree/IndexOperands::key": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$descending = $element->direction === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SortDirection::Descending;",
+        "$nullsFirst = $element->nulls === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\NullsOrder::First || $element->nulls === null && $descending;",
+        "$order = $descending ? $nullsFirst ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::DescendingNullsFirst : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::DescendingNullsLast : ($nullsFirst ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::AscendingNullsFirst : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOrder::AscendingNullsLast);",
+        "$slot = $this->slot($table, $element);",
+        "$collation = $table->columnCollations[$slot] ?? null;",
+        "$unsupported = 'An explicitly collated PostgreSQL B-tree key requires stock pg_catalog.C and its default text operator class.';",
+        "if ($element->collation !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(\\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Lookup\\StockLookup::matches($element->collation->qualified(), 'C', $stockFirst), $unsupported);",
+        "    $collation = \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\TextCollation::C;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element->operatorClass === null || $collation !== null && \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Lookup\\StockLookup::matches($element->operatorClass->qualified(), 'text_ops', $stockFirst), $unsupported);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexKey($slot, $order, $collation);"
+      ]
+    },
+    "Schema/Index/Btree/CreateIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive && $context->columnNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE INDEX requires the native PostgreSQL index profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($statement->name !== null || !$statement->ifNotExists) && ($statement->method === null || $statement->method->value === 'btree') && $statement->options === [] && $statement->tablespace === null, 'CREATE INDEX needs an ordinary B-tree without additional index options.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(($memberNamespace === null) === ($memberOccupants === null), 'A schema index requires its namespace and known occupants together.');",
+        "$target = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexTableLowering())->lower($operation, $statement, $memberNamespace);",
+        "$operands = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexOperands();",
+        "$stockFirst = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Lookup\\StockLookup::firstCatalog($context->searchPath);",
+        "$keys = [];",
+        "$included = [];",
+        "foreach ($statement->elements as $element) {",
+        "    $keys[] = $operands->key($target, $element, $stockFirst);",
+        "}",
+        "foreach ($statement->included as $element) {",
+        "    $included[] = $operands->covering($target, $element);",
+        "}",
+        "[$name, $presence] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\Binding\\IndexNameLowering())->lower($context, $target, $statement->name, $keys, $included, $memberOccupants);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\CreateIndex($target, $name, $keys, $included, $presence, $statement->ifNotExists, $statement->unique, $statement->nullsDistinct === false, $statement->concurrently, $context->profile->grammar, (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\Btree\\IndexPredicateLowering())->lower($operation, $statement));"
+      ]
+    }
+  }
+}

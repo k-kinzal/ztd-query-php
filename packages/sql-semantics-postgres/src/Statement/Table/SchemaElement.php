@@ -16,10 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * different written schema is an error the containing statement reports.
  * Source: https://www.postgresql.org/docs/17/sql-createschema.html.
  *
- * @visibility public
- * @example Reading the schema written on an element
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE s.t (a int)');
- *     $create->statement->createdSchema()?->value // => 's'
+ * @visibility SqlSemantics
  */
 interface SchemaElement extends Statement
 {

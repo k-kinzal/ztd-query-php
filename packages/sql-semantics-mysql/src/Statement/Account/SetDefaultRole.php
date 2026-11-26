@@ -21,9 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  * syntax, without CURRENT_USER.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-default-role.html. Status: Implemented.
  *
- * @visibility public
- * @example Clearing the default roles of two accounts
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('set default role none to a, b')->toString() // => 'SET DEFAULT ROLE NONE TO a, b'
+ * @visibility SqlSemantics
  */
 final class SetDefaultRole implements Statement
 {

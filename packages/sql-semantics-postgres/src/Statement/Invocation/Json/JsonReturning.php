@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * rule `json_output_clause_opt`, 17 `json_returning_clause_opt`).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a returning clause
  *     $returning = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonReturning(new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('text')]))));
  *     $returning->format // => null

@@ -10,10 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Problem;
  * A `%s` in a message stands for the name the problem is about.
  * Source: https://www.postgresql.org/docs/17/sql-select.html.
  *
- * @visibility public
- * @example Reading which rule a query breaks
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule::StarWithoutTables
+ * @visibility SqlSemantics
  */
 enum QueryMisuseRule: string
 {

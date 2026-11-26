@@ -14,8 +14,8 @@ final class ParenthesizedQueryTest extends TestCase
 {
     public function testOutputNameIsThatOfTheQueryInside(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('(SELECT 1 AS a)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect('(SELECT 1 AS a)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery::class, $statement);
         self::assertSame('a', $statement->outputName()?->value);
@@ -23,22 +23,22 @@ final class ParenthesizedQueryTest extends TestCase
 
     public function testDeriveStatementRecordsTheRowsOfTheQueryInside(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('((SELECT 1 AS a))');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect('((SELECT 1 AS a))');
         self::assertSame('a', $query->field(0)->name?->value);
     }
 
     public function testDeriveQueryHasTheOutputOfTheQueryInside(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT 1 UNION (SELECT 2 AS b)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect('SELECT 1 UNION (SELECT 2 AS b)');
         self::assertSame('?column?', $query->field(0)->name?->value);
     }
 
     public function testRenderKeepsTheParentheses(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT 1 UNION (SELECT 2 UNION SELECT 3)');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect('SELECT 1 UNION (SELECT 2 UNION SELECT 3)');
         self::assertSame('SELECT 1 UNION (SELECT 2 UNION SELECT 3)', $query->toString());
     }
 }

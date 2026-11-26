@@ -1,0 +1,134 @@
+{
+  "revision": "SemanticsIR/mysql-multiple-index-removal-evidence-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "mysql-multiple-index-removal-v1.json",
+    "mysql-alter-index-removal-evidence-v1.json",
+    "mysql-index-auto-increment-evidence-v1.json"
+  ],
+  "dialects": [
+    "MySql"
+  ],
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "mode": "The nine pinned native MySQL releases in the ordinary stock InnoDB profile, exact owner comparison and native session namespaces.",
+  "scope": "One ALTER TABLE with two to 64 physical index removals and its native algorithm and lock options. Admit each DROP INDEX, DROP KEY and DROP PRIMARY KEY spelling and the legacy qualifiers of the single removal family. The whole group is one DDL operation on one resolved table.",
+  "constructors": {
+    "DropIndexes": {
+      "type": "Schema/Index/DropIndexes",
+      "role": "Remove an ordered set of distinct native keys from one table atomically.",
+      "structure": "A detached ordered list of two to 64 IndexIdentity operands, a native grammar release, a single physical index policy, and the explicit legacy IGNORE bit.",
+      "conditions": "Every target has the same absolute owner and lifetime. Native system comparison makes every physical name distinct. At most one target supplies clustered identity. The selected mode permits the effective algorithm and lock for the whole group. If targets support a generating field, their complete backing names and field identity agree. At least one such backing name lies outside the set of removed keys.",
+      "meaning": "One native DDL operation removes all selected physical keys, preserving other keys, rows, supported AUTO_INCREMENT generation, commit behavior and the legacy warning where written. A missing or duplicate physical target and the loss of the final supporting key are static refusal conditions.",
+      "sql": "Emit ALTER TABLE with the quoted absolute owner and the DROP INDEX clauses in retained order, followed by the effective comma-separated native policy. Legacy ALTER IGNORE is preserved."
+    }
+  },
+  "additionalPublicRoots": [
+    "Schema/Index/DropIndexes"
+  ],
+  "finite": {
+    "lifetimes": [
+      "persistent",
+      "temporary",
+      "temporary-shadow"
+    ],
+    "sizes": [
+      2,
+      3,
+      8,
+      63,
+      64
+    ],
+    "physicalRoleCases": [
+      "secondary-only",
+      "explicit-primary-and-secondary",
+      "clustered-unique-and-secondary"
+    ],
+    "effectCases": [
+      "distinct-keys",
+      "duplicate-target",
+      "absent-target",
+      "retained-auto-increment-support",
+      "removed-all-auto-increment-support"
+    ],
+    "directBounds": [
+      0,
+      1,
+      2,
+      64,
+      65
+    ],
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "finiteLayouts": 90,
+  "finiteOrder": "Cross every lifetime, width and clustered role class with forward and reverse target order. Enumerate the native algorithm and lock edges separately at width two. Include both remaining and exhausted whole-set AUTO_INCREMENT dependence. The same finite layouts construct directly and through analysis.",
+  "negativeCount": {
+    "mysql-5.6.51": 40,
+    "default": 46
+  },
+  "negative": [
+    "Reject repeated or absent native names before completing the value and inspect native 1091 and full retention.",
+    "Reject mixed namespaces, two clustered targets, native publication widths outside 2 to 64, and mismatched backing fields or sets.",
+    "Reject a policy incompatible with any targeted clustered key or the owning lifetime, and close legacy IGNORE to 5.6.51.",
+    "Reject a group that exhausts all native AUTO_INCREMENT backing indexes."
+  ],
+  "exploration": {
+    "seeds": [
+      1579,
+      4583,
+      12547
+    ],
+    "casesPerSeed": 12,
+    "directCasesPerSeed": 12,
+    "timeoutSecondsPerRelease": 480,
+    "allowedExclusions": []
+  },
+  "observations": [
+    "Exact ordered operands in construction and emission, selected session namespace, native before-and-after key rows, field metadata and retained data.",
+    "Physically emitted SQL runs as one statement. Native 1091 for missing or duplicate targets leaves the index catalog unchanged. Native 1075 for removal of the final backing key leaves the full group in place.",
+    "Check implicit commit and the legacy warning. A successful generating-field case shows a functioning retained key and a subsequent generated identifier."
+  ],
+  "evidence": {
+    "P01": "Measure each selected physical name, order, clustered role, namespace and shared backing field.",
+    "P02": "Compare the independently admitted finite coordinates and typed construction and binding refusals.",
+    "P03": "Retain only resolved physical references, their generating role, grammar profile and native policy.",
+    "P04": "Check the compositional surviving-index constraint on the whole removal set.",
+    "P05": "Check detached list storage and closed immutable children along all construction routes.",
+    "P06": "Compare the effect of the generated single DDL operation to the expected independent native effect and its source form."
+  },
+  "obligations": {
+    "Q01": "Check the complete atomic set and reject conflicting physical obligations.",
+    "Q02": "Require every independently enumerated native and direct accepted coordinate.",
+    "Q03": "Check common owning coordinates and compatible whole-set generating and clustered constraints.",
+    "Q04": "Compare typed native observations and applied operand omissions.",
+    "Q05": "Replay the fixed contract and each measured installed distribution fingerprint."
+  },
+  "faults": [
+    "Accept a partial native catalog effect.",
+    "Omit one selected key from the executed atomic statement."
+  ],
+  "trust": "The registered evidence controls, exact stock MySQL release and immutable complete native owner interpretation.",
+  "trackedBeyondThisSlice": [
+    "Mixed ALTER TABLE action sets, dependency-aware foreign keys and non-B-tree targets remain required separate domains."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/innodb-limits.html"
+  ],
+  "publicationContracts": {
+    "mysql-index-removal-construction-facts-v1.json": "0a0b00b9f59a18adc6776398770fb7d43ab3e742f5a39e7f0a581e5e30772308",
+    "mysql-multiple-index-removal-evidence-v1.json": "1309c74f71d04c1926a6de8fcb3f7b2dbb9710a2ad6af5a7152c34d8510b83ec"
+  },
+  "change": "Retain the complete original finite design, native observations and faults, and verify that generation support is transient at every physical removal boundary."
+}

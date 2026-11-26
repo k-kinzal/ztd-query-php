@@ -14,8 +14,8 @@ final class CreateViewTest extends TestCase
 {
     public function testCreatedSchemaIsTheWrittenSchema(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE VIEW s.v AS SELECT 1', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE VIEW s.v AS SELECT 1', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView::class, $n1);
         self::assertSame('s', $n1->createdSchema()?->value);
@@ -23,8 +23,8 @@ final class CreateViewTest extends TestCase
 
     public function testRecursiveQueryIsTheQuery(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE RECURSIVE VIEW v (n) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE RECURSIVE VIEW v (n) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView::class, $n1);
         $n2 = $n1->recursiveQuery();
@@ -38,8 +38,8 @@ final class CreateViewTest extends TestCase
 
     public function testRecursiveColumnsAreTheColumnNames(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE RECURSIVE VIEW v (n) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE RECURSIVE VIEW v (n) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView::class, $n1);
         self::assertSame('n', $n1->recursiveColumns()[0]->value);
@@ -47,10 +47,10 @@ final class CreateViewTest extends TestCase
 
     public function testDeriveStatementDeclaresTheView(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('CREATE VIEW v (x) AS SELECT a, b FROM t', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('CREATE VIEW v (x) AS SELECT a, b FROM t', $context);
         self::assertSame([
           0 => 'x integer NotNull',
           1 => 'b integer Nullable',
@@ -59,7 +59,7 @@ final class CreateViewTest extends TestCase
 
     public function testDeriveElementDeclaresTheViewInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE VIEW v AS SELECT 1');
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE VIEW v AS SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
         $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         $statement->statement->deriveElement($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'));
@@ -68,14 +68,14 @@ final class CreateViewTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->analyze('CREATE OR REPLACE TEMP RECURSIVE VIEW v (n) WITH (security_barrier) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5 WITH CASCADED CHECK OPTION', []);
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $statement = $semantics->inspect('CREATE OR REPLACE TEMP RECURSIVE VIEW v (n) WITH (security_barrier) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5 WITH CASCADED CHECK OPTION', []);
         self::assertSame('CREATE OR REPLACE TEMP RECURSIVE VIEW v (n) WITH (security_barrier) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5 WITH CASCADED CHECK OPTION', $statement->toString());
     }
 
     public function testRejectsACheckOptionAfterAnOpenIsJsonTest(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t WHERE b IS JSON')->statement;
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SELECT a FROM t WHERE b IS JSON')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $query);
         $this->expectExceptionMessage('A query ending in IS JSON without a uniqueness clause would take WITH CHECK OPTION; group it.');
         new \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('v')), $query, checkOption: \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CheckOption::Local);

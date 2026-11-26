@@ -14,14 +14,14 @@ final class ParameterSourceTest extends TestCase
 {
     public function testDefaultIsReadFromToDefault(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET a TO DEFAULT')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET a TO DEFAULT')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameterFrom::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Default, $statement->source);
     }
 
     public function testCurrentIsReadFromFromCurrent(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET a FROM CURRENT')->statement;
+        $statement = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SET a FROM CURRENT')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameterFrom::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Current, $statement->source);
     }

@@ -1,0 +1,168 @@
+{
+  "revision": "SemanticsIR/postgres-drop-index-boundaries-3",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect the fixed PostgreSQL locking, occurrence copy and namespace choice rules to the installed PHP body.",
+  "rules": {
+    "Schema/Index/DropIndex::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(array_is_list($targets) && $targets !== [], 'DROP INDEX needs an ordered nonempty target list.');",
+        "Check::input($mode === IndexDropMode::Ordinary || count($targets) === 1 && !$cascade, 'DROP INDEX CONCURRENTLY needs one target and RESTRICT.');",
+        "$copy = [];",
+        "$names = [];",
+        "$tables = [];",
+        "$schemas = [];",
+        "foreach ($targets as $target) {",
+        "    Check::input($target instanceof IndexReference || $target instanceof MissingIndex && $ifExists, 'DROP INDEX needs ordinary bound indexes or guarded absence.');",
+        "    $identity = $target->quoted();",
+        "    $owner = $target instanceof IndexReference ? $target->table->value : false;",
+        "    Check::input(!isset($names[$identity]) || $names[$identity] === $owner, 'Repeated index targets must agree on identity and presence.');",
+        "    $names[$identity] = $owner;",
+        "    if ($target instanceof IndexReference) {",
+        "        $tables[$target->schema->quoted() . '.' . $target->table->quoted()] = true;",
+        "    }",
+        "    if ($target->schema !== null) {",
+        "        $exists = $target instanceof IndexReference || !$target->missingSchema;",
+        "        $schema = $target->schema->value;",
+        "        Check::input(!isset($schemas[$schema]) || $schemas[$schema] === $exists, 'Targets must agree on whether their schema exists.');",
+        "        $schemas[$schema] = $exists;",
+        "        if ($target instanceof MissingIndex) {",
+        "            Check::input(!StockIndexNames::contains($release, new Name($schema), new Name($target->index->value)), 'A known stock relation cannot be an absent index.');",
+        "        }",
+        "    }",
+        "    $copy[] = $target;",
+        "}",
+        "Check::input(array_intersect_key($names, $tables) === [], 'An indexed table cannot also be an index selector in the same schema.');",
+        "$this->targets = $copy;"
+      ]
+    },
+    "Schema/Index/DropIndex::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Index/DropIndex::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->targets as $target) {",
+        "    $names[] = $target->quoted();",
+        "}",
+        "return 'DROP INDEX ' . ($this->mode === IndexDropMode::Concurrently ? 'CONCURRENTLY ' : '') . ($this->ifExists ? 'IF EXISTS ' : '') . implode(', ', $names) . ($this->cascade ? ' CASCADE' : ' RESTRICT');"
+      ]
+    },
+    "Schema/Index/IndexReference::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(!IndexSchemas::system($schema->value) && !IndexSchemas::sessionInternal($schema->value), 'An ordinary index must belong to an application schema or pg_temp.');",
+        "Check::input($index->value !== $table->value, 'An index and its indexed table must have distinct relation names.');"
+      ]
+    },
+    "Schema/Index/IndexReference::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->index->quoted();"
+      ]
+    },
+    "Schema/Index/MissingIndex::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($schema === null || $schema->value !== 'pg_toast' && !IndexSchemas::sessionInternal($schema->value), 'An absence cannot describe internal session schemas.');",
+        "Check::input(!$missingSchema || $schema !== null && !IndexSchemas::stock($schema->value), 'A missing schema must name a namespace that can be absent.');"
+      ]
+    },
+    "Schema/Index/MissingIndex::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->schema === null ? '' : $this->schema->quoted() . '.') . $this->index->quoted();"
+      ]
+    },
+    "Schema/Index/DropIndexLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($statement->kind === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind::Index && $context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'DROP INDEX requires the native PostgreSQL index profile.');",
+        "$bindings = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexTargetLowering();",
+        "$targets = [];",
+        "foreach ($statement->objects as $selector) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($selector instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName && count($selector->parts) <= 2, 'DROP INDEX names a local index and optional schema.');",
+        "    $name = $selector->qualified();",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null, 'DROP INDEX needs a valid index name.');",
+        "    $targets[] = $bindings->resolve($context, $name, $statement->ifExists);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\DropIndex($targets, $statement->ifExists, $statement->behavior === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior::Cascade, $statement->concurrently ? \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexDropMode::Concurrently : \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexDropMode::Ordinary, $context->profile->grammar);"
+      ]
+    },
+    "Schema/DropRelationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match ($statement->kind) {",
+        "    ObjectKind::Index => (new PostgresDropIndexLowering())->lower($operation, $statement),",
+        "    ObjectKind::Table => (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropTableLowering())->lower($operation, $statement),",
+        "    ObjectKind::View, ObjectKind::MaterializedView => (new DropViewLowering())->lower($operation, $statement),",
+        "    default => throw new InvalidConstruction('The complete DROP requires a supported persistent relation kind.'),",
+        "};"
+      ]
+    },
+    "Schema/Index/IndexTargetLowering::resolve": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$match = $this->lookup($context, $name);",
+        "if ($match !== null) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($match->kind === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexDeclarationKind::Ordinary, 'The selected index is protected in the ordinary index profile.');",
+        "    return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\IndexReference(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($match->schema->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($match->index->value), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($match->table->value));",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($optional, 'The index selector requires a declared index.');",
+        "$schema = $name->schema;",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Index\\MissingIndex(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($name->name->value), $schema === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema->value), $schema !== null && !(new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding())->known($context, $schema));"
+      ]
+    },
+    "Schema/Index/IndexTargetLowering::lookup": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name->catalog === null, 'The index selector requires a local schema and index.');",
+        "$binding = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\Index\\IndexBinding();",
+        "$schemas = $name->schema === null ? $context->searchPath : [$name->schema];",
+        "foreach ($schemas as $schema) {",
+        "    $match = $binding->find($context, $schema, $name);",
+        "    if ($match !== null) {",
+        "        return $match;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$context->indexNamespace->hasUnknownNames($schema) && ($context->complete || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\Index\\IndexSchemas::system($schema->value)), 'The index selector cannot infer absence in an open index namespace.');",
+        "}",
+        "return null;"
+      ]
+    }
+  },
+  "amends": [
+    "postgres-values-boundaries-v1.json"
+  ],
+  "revises": "postgres-drop-index-boundaries-v2.json"
+}

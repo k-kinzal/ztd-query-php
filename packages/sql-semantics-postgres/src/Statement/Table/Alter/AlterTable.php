@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  * tables; a partition action stands alone.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Resolving the altered table
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE IF EXISTS ONLY t ADD c int CHECK (c > a), ALTER b DROP NOT NULL');
- *     $statement->facts->relation($statement->statement)->table::class // => 'SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Table\\UndeclaredTable'
+ * @visibility SqlSemantics
  */
 final class AlterTable implements Statement, Relation
 {

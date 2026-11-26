@@ -1,0 +1,29 @@
+{
+  "revision": "SemanticsIR/sqlite-drop-table-1",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "All earlier obligations remain. Other DDL families, object kinds and modes remain required outside this domain.",
+  "additionalPublicRoots": ["Schema/DropTable"],
+  "constructors": {
+    "Schema/DropTable": {
+      "role": "Top-level removal of an ordinary SQLite table by an absolute name.",
+      "structure": "Decoded schema and table identifiers and a boolean IF EXISTS policy.",
+      "boundary": "A schema identifier is nonempty and the target is outside the reserved sqlite_ namespace. Analysis requires an exact base table resolution or an explicitly schema-qualified absence with IF EXISTS and a known schema.",
+      "meaning": "Drop the resolved table and its indexes and triggers. The same external schema and environment govern referential actions and failure. IF EXISTS suppresses the missing-object error for that target.",
+      "sql": "Emit DROP TABLE, the optional IF EXISTS policy and the separately quoted absolute target.",
+      "assurance": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "analysis": "Resolve DROP TABLE to an ordinary declared base table. With IF EXISTS, accept a known absence if a schema is written and is known to the context. Views, indexes, triggers, reserved names and unresolved targets leave this domain.",
+  "observations": ["Object identity and absence", "Owned indexes and triggers", "Unchanged neighbors", "Foreign key cascade and restriction under foreign_keys=ON", "No target delete trigger invocation", "Missing-object and constraint errors", "Native parameter count"],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "tables": ["ir_drop", "ir_drop_blocked", "ir_drop_absent"],
+    "guard": [false, true],
+    "completeness": "Observe every schema, table and guard tuple exactly once, deriving the identifier from the returned structure."
+  },
+  "exploration": {"seeds": [667, 2647, 8191], "casesPerSeed": 24, "timeoutSeconds": 240, "allowedExclusions": []},
+  "negative": ["Empty schema", "Reserved table name", "Unresolved DROP without IF EXISTS", "Unqualified absent target", "Wrong object kind"],
+  "faults": ["Omit IF EXISTS", "Select the other schema"],
+  "sources": ["https://sqlite.org/lang_droptable.html"]
+}

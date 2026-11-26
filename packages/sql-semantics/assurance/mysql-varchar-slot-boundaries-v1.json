@@ -1,0 +1,431 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-slot-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Close every read and write over a physical layout with ordered native types. Render VARCHAR projection fields without changing character set, collation or coercibility.",
+  "rules": {
+    "From/OccurrenceScope::hasSlot": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $input instanceof DerivedSource ? isset($input->definition->columns[$slot])",
+        "    : ($input->columnTypes[$slot] ?? null) === ColumnKind::SignedInt;"
+      ]
+    },
+    "From/OccurrenceScope::textColumn": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$input = $inputs[$reference->occurrence] ?? null;",
+        "Check::input(",
+        "    $input instanceof TableSource && ($input->columnTypes[$reference->slot] ?? null) instanceof Varchar,",
+        "    'A VARCHAR slot must belong to a visible physical input occurrence.',",
+        ");"
+      ]
+    },
+    "From/JoinBinding::resolved": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$field = $this->projected($resolution);",
+        "Check::input($field instanceof ColumnReference, 'The bound column must have the signed 32-bit integer type.');",
+        "return $field;"
+      ]
+    },
+    "From/JoinBinding::projected": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');",
+        "foreach ($this->inputs as $occurrence => $binding) {",
+        "    if ($binding->relation() === $resolution->relation) {",
+        "        $field = $binding instanceof SourceBinding ? $binding->projected($resolution) : $binding->resolved($resolution);",
+        "        return $field instanceof TextColumnReference ? new TextColumnReference($field->slot, $occurrence)",
+        "            : new ColumnReference($field->slot, $occurrence);",
+        "    }",
+        "}",
+        "throw new InvalidConstruction('A column must resolve within this join scope.');"
+      ]
+    },
+    "SourceBinding::resolved": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->slotFor($this->declared($resolution));"
+      ]
+    },
+    "SourceBinding::projected": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$column = $this->declared($resolution);",
+        "if (!$column->type instanceof Character) {",
+        "    return $this->slotFor($column);",
+        "}",
+        "return new TextColumnReference($this->allocate($column, (new VarcharLowering())->lower($column)));"
+      ]
+    },
+    "SourceBinding::declared": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(",
+        "    $resolution->relation === $this->source && $resolution->depth === 0,",
+        "    'The column must resolve to the projection source.'",
+        ");",
+        "$column = $resolution->declaration();",
+        "Check::input($column !== null, 'The column must be an explicit member of the projection source.');",
+        "return $column;"
+      ]
+    },
+    "SourceBinding::slotFor": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($column->type instanceof Integral && $column->type->kind === IntegralKind::Int && !$column->type->unsigned(), 'The bound column must have the signed 32-bit integer type.');",
+        "return new ColumnReference($this->allocate($column, ColumnKind::SignedInt));"
+      ]
+    },
+    "SourceBinding::allocate": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');",
+        "$key = spl_object_id($column);",
+        "if (!isset($this->slots[$key])) {",
+        "    $this->slots[$key] = count($this->names);",
+        "    $this->names[] = new Identifier($column->name->value);",
+        "    $this->columnTypes[] = $native;",
+        "}",
+        "return $this->slots[$key];"
+      ]
+    },
+    "SourceBinding::source": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->table === null ? null : new TableSource(",
+        "    new Identifier(($this->table->name->schema ?? $this->operation->context->declarationSchema)->value),",
+        "    new Identifier($this->table->name->name->value),",
+        "    $this->names,",
+        "    $this->columnTypes,",
+        ");"
+      ]
+    },
+    "From/TextColumnReference::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($slot >= 0, 'A text column slot must be nonnegative.');",
+        "Check::input($occurrence >= 0, 'A text column occurrence must be nonnegative.');"
+      ]
+    },
+    "From/Varchar::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($length >= 0 && $length <= 16383, 'A utf8mb4 VARCHAR length must be between 0 and 16383 characters.');"
+      ]
+    },
+    "From/VarcharLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$type = $column->type;",
+        "Check::input(",
+        "    $type instanceof Character && ($type->kind === CharacterKind::VarChar || $type->kind === CharacterKind::CharVarying)",
+        "        && !$column->generated && !$type->national && $type->length !== null && preg_match('/\\A[0-9]+\\z/', $type->length) === 1,",
+        "    'The text slot requires an ordinary native VARCHAR with a character length.',",
+        ");",
+        "$collation = TextCollation::tryFrom(strtolower($column->collation->value ?? ''));",
+        "Check::input($collation !== null, 'The text slot requires an explicit utf8mb4_bin collation.');",
+        "$charset = $type->charset;",
+        "Check::input(",
+        "    $charset === null || (!$charset->binary() && strtolower($charset->charset->value ?? '') === 'utf8mb4'),",
+        "    'The explicit VARCHAR collation requires the matching utf8mb4 character set.',",
+        ");",
+        "return new Varchar((int) $type->length, $collation);"
+      ]
+    },
+    "TableSource::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');",
+        "foreach ([$schema, $table] as $object) {",
+        "    Check::input(strpbrk($object->value, '/\\\\.') === false, 'A database or table name excludes path and dot separators.');",
+        "}",
+        "foreach ([$schema, $table, ...$names] as $object) {",
+        "    Check::input(",
+        "        preg_match('/\\A.{1,64}(?<! )\\z/us', $object->value) === 1,",
+        "        'A schema object name has 1 to 64 characters and no trailing space.',",
+        "    );",
+        "}",
+        "$seen = [];",
+        "foreach ($names as $name) {",
+        "    $key = $name->key();",
+        "    Check::input(!isset($seen[$key]), 'A table source cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$types = $columnTypes === [] ? array_fill(0, count($names), ColumnKind::SignedInt) : $columnTypes;",
+        "Check::input(array_is_list($types) && count($types) === count($names), 'A table source needs one native type per input slot.');",
+        "$owned = [];",
+        "foreach ($types as $type) {",
+        "    Check::input($type instanceof ColumnKind || $type instanceof Varchar, 'A table source needs checked native slot types.');",
+        "    $owned[] = $type;",
+        "}",
+        "$this->columns = $names;",
+        "$this->columnTypes = $owned;"
+      ]
+    },
+    "SelectBounds::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$position = 0;",
+        "foreach ($results as $result) {",
+        "    $label = $result->name->value;",
+        "    if ($label !== ltrim($label, \" \\t\\r\\n\\v\\f\")) {",
+        "        $reference = $result->expression;",
+        "        Check::invariant($reference instanceof ColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');",
+        "        $table = $inputs[$reference->occurrence] ?? null;",
+        "        Check::input(",
+        "            $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,",
+        "            'An intrinsic MySQL result name must equal its physical input field.'",
+        "        );",
+        "    }",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A range slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference => Check::input(",
+        "                $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),",
+        "                'Column slot must belong to the SELECT source.',",
+        "            ),",
+        "            $expression instanceof TextColumnReference => $scope->textColumn($expression, $inputs),",
+        "            $expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,",
+        "        };",
+        "    }",
+        "}"
+      ]
+    },
+    "SelectSql::expression": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',",
+        "    $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',",
+        "    $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => $expression->toString(),",
+        "    $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "SelectSql::column": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$inputs = $source instanceof Join ? $source->inputs() : [$source];",
+        "$input = $inputs[$expression->occurrence] ?? null;",
+        "if ($input instanceof DerivedSource) {",
+        "    Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');",
+        "    $name = $this->localColumn($expression->slot);",
+        "} else {",
+        "    Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "    $name = $input->columns[$expression->slot]->quoted();",
+        "}",
+        "return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position), self::legacy($query));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "return match (true) {",
+        "    $column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,",
+        "    $column instanceof UnsignedCast => ResultKind::UnsignedInteger,",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof ColumnReference => ResultKind::Integer,",
+        "    $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerRange, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,",
+        "};"
+      ]
+    },
+    "Ordering/ProjectionColumns::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expressions = new ExpressionLowering();",
+        "$casts = new IntegralCastLowering();",
+        "$strings = new TextLiteralLowering();",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "$parameterPosition = 0;",
+        "$labels = new ProjectionLabel();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = $labels->lower($statement, $field, $name->value);",
+        "    $expression = $field->expression;",
+        "    if ($expression === null || $expression instanceof ColumnUse) {",
+        "        $resolution = $field->resolution;",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');",
+        "        $results[] = new ResultColumn($binding->projected($resolution), $label);",
+        "        continue;",
+        "    }",
+        "    $parameter = $parameters->lower($expression, $parameterPosition + 1);",
+        "    if ($parameter !== null) {",
+        "        ++$parameterPosition;",
+        "    }",
+        "    $results[] = new ResultColumn(",
+        "        $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),",
+        "        $label,",
+        "    );",
+        "}",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "return $results;"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) === ColumnKind::SignedInt, 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "        $name = $result->name->value;",
+        "        Check::input(",
+        "            $name === ltrim($name, \" \\t\\r\\n\\v\\f\") || $source->columns[$value->slot]->value === $name,",
+        "            'An intrinsic MySQL grouped name must equal its physical input field.'",
+        "        );",
+        "    } else {",
+        "        Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) === ColumnKind::SignedInt, 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$source]);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "Mutation/Insert::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ($target->columnTypes as $type) {",
+        "    Check::input($type === ColumnKind::SignedInt, 'An INSERT target slot requires the signed INT type.');",
+        "}",
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');",
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "}"
+      ]
+    },
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ($target->columnTypes as $type) {",
+        "    Check::input($type === ColumnKind::SignedInt, 'An INSERT target slot requires the signed INT type.');",
+        "}",
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->expression;",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,",
+        "        'Each query INSERT field requires a signed value or NULL.',",
+        "    );",
+        "}"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);",
+        "Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');",
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    Check::input(($target->columnTypes[$slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    Check::input(!$value instanceof ColumnReference || ($target->columnTypes[$value->slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE read slot must belong to the target.');",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$target]);"
+      ]
+    },
+    "ResultColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($expression instanceof ColumnReference || $expression instanceof TextColumnReference || $name->value === ltrim($name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');"
+      ]
+    }
+  }
+}

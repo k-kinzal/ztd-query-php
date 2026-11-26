@@ -35,10 +35,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-PARAMETERS-POSITIONAL,
  * https://www.postgresql.org/docs/17/xfunc-sql.html#XFUNC-SQL-FUNCTION-ARGUMENTS, https://www.postgresql.org/docs/17/sql-prepare.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the missing input of a parameter
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $1');
- *     [$query->statement->targets[0]->expression->number, $query->field(0)->type->missing[0]->describe()] // => ['1', 'the value bound to parameter $1']
+ * @visibility SqlSemantics
  */
 final class PositionalParameter implements Scalar, OutputNaming
 {

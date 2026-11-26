@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/mysql-external-views-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native grammar, lower_case_table_names=0, empty sql_mode, utf8mb4 connection, checked signed INT and explicit utf8mb4_bin VARCHAR columns.",
+  "extends": ["server-projection-v1.json", "mysql-varchar-slots-v2.json", "mysql-varchar-inheritance-v2.json"],
+  "constructors": {
+    "ExternalRelationKind": {
+      "type": "From/ExternalRelationKind",
+      "role": "The closed classification of an external MySQL read relation.",
+      "structure": "Base table or ordinary view.",
+      "conditions": "An external value uses the kind and absolute identity supplied by the declaration environment. Write destinations accept the base-table kind.",
+      "meaning": "Read the referenced base relation or evaluate the referenced external view using the database declaration.",
+      "sql": "Emit the absolute object and its controlled occurrence alias. The object already exists under the declared kind."
+    }
+  },
+  "existingRoles": ["TableSource", "Identifier", "From/ColumnKind", "From/Varchar", "From/Join", "Select", "Mutation/Insert", "Mutation/InsertQuery", "Mutation/Update", "Mutation/Delete"],
+  "structure": "An absolute external identity, closed relation kind and consumed typed slots. A directly re-exposed VARCHAR view field retains its declared collation, character capacity and resulting nullability.",
+  "conditions": "Resolve a complete visible heading before allocating slots. Support the named external table and view identities with native signed INT or checked VARCHAR slots. Check every view write at the owning base-table boundary. Treat remote databases, expressions without a resolved VARCHAR collation and updatable-view effects as open.",
+  "meaning": "A view supplies the rows from its external definition. Joins and projection use exactly that source identity and scope. Preserve statement-level view evaluation, multiplicity and NULL extension, including when the source table is updated before the read. There is no persisted snapshot in an ordinary MySQL view.",
+  "sql": "Emit the absolute database and object names and quote the resolved field names. The external view owns its declared algorithm and query.",
+  "observations": ["Loaded relation kind, exact field slot, absolute database and object coordinates", "Type, values, quoted output labels and count of duplicate rows including NULL", "Same-named decoy in another database, a filtered live MERGE view and a live TEMPTABLE view", "Explicit view output names and direct projected VARCHAR metadata", "Separate construction rejection for writes targeting a view"],
+  "finite": {
+    "source": ["base", "merge-view", "temporary-view"],
+    "placement": ["scan", "left-join"],
+    "projection": ["signed", "text", "both"],
+    "filter": ["absent", "non-null"],
+    "identities": 36,
+    "completeness": "Recover each distinct source, placement, projection and predicate from the constructed value. Consume the 36-cell direct product on each pinned release."
+  },
+  "analysis": ["Aliased view with a declared heading", "Equivalent qualified and unqualified view field references", "Native VARCHAR from a MERGE view", "Native VARCHAR from a TEMPTABLE view", "Same-named view in another database", "Left join with the view on the nullable side", "Direct wildcard over view heading", "Nested view re-exposes the previous VARCHAR declaration"],
+  "exploration": {
+    "seeds": [1901, 12049, 43613],
+    "casesPerSeed": 16,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary base and view sources, absolute identities, nested joins, projected names and types, missing right rows, duplicate slots and nullable predicates."
+  },
+  "negative": ["View as direct INSERT destination", "View as direct INSERT SELECT destination", "View as direct UPDATE destination", "View as direct DELETE destination", "An analyzed UPDATE targeting a view", "A missing view column", "A VARCHAR view output without a resolved declared collation"],
+  "faults": ["Erase the resolved view kind", "Read the neighboring schema's view", "Read the plain source table instead of a filtered view", "Lose the view column collation during declaration", "Allow a view as a mutation target"],
+  "evidence": {
+    "P01": "Explicit relation kind and absolute identity together with corresponding typed field slots.",
+    "P02": "Source and mutation destination placement enforced by their owning values.",
+    "P03": "Immutable external reference values with only consumed field metadata.",
+    "P04": "Relational composition driven by the selected declared source and its slot reads.",
+    "P05": "A closed kind and checked owned headings and native field descriptors.",
+    "P06": "Qualified SQL rendering preserving actual external rows and native field types.",
+    "Q01": "Check admitted and forbidden kind and role placement at construction and lowering.",
+    "Q02": "Exhaust the direct fixture product and native analyzed input statements on each pin.",
+    "Q03": "Compare an independent model of the filter and joined row multiplicities.",
+    "Q04": "Check native rows, result labels, types and retained text collation against independent expectations.",
+    "Q05": "Connect typed kind, catalog metadata, construction and renderer to the actual split PHP."
+  },
+  "open": ["View DDL and updatable-view effects as complete IR", "Arbitrary expression collation, further character types and functions, access-control behavior and other server modes"],
+  "trust": ["Truthful external declarations and the native view algorithm", "Explicitly resolved native field types and collations", "Independent row and metadata oracle and exact distributed source bytes"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/create-view.html", "https://dev.mysql.com/doc/refman/8.4/en/view-algorithms.html"]
+}

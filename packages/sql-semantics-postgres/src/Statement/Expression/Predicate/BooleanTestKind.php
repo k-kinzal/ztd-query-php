@@ -9,10 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate;
  *
  * Source: https://www.postgresql.org/docs/17/functions-comparison.html.
  *
- * @visibility public
- * @example Reading the kind of a truth-value test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NULL IS NOT UNKNOWN');
- *     $query->field(0)->expression->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\BooleanTestKind::IsNotUnknown
+ * @visibility SqlSemantics
  */
 enum BooleanTestKind: string
 {

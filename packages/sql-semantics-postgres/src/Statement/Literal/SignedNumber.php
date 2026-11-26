@@ -21,13 +21,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  * Source: https://www.postgresql.org/docs/17/sql-createsequence.html,
  * `NumericOnly` and `SignedIconst` in `src/backend/parser/gram.y` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a negative option value
  *     $number = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('5'));
  *     [$number->negative, $number->magnitude->digits] // => [true, '5']
- * @example Reading the text a command receives from a negative numeric constant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET application_name = -.5');
- *     [$operation->statement->values[0]->text(), $operation->toString()] // => ['-.5', 'SET application_name TO - .5']
  */
 final class SignedNumber implements OptionArgument
 {

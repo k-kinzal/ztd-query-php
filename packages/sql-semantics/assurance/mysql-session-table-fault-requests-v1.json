@@ -1,0 +1,9 @@
+{
+  "revision": "SemanticsIR/mysql-session-table-fault-requests-1",
+  "approval": "pending-human-review",
+  "extends": "mysql-session-table-sources-v1.json",
+  "previousWitness": "7169a74149cff4560542cfe4ac923ea9a61e60b3",
+  "failure": "The comparison inputs were passed directly to the executable for two DELETE faults. The worker expects a checked direct-construction request. It produced a transport error before any injected fault was executed.",
+  "change": "Generate the complete direct DELETE requests for the healthy controls and both mutants. Verify the same intended observation and failure signal.",
+  "preserves": "All positive cases, finite identities, exploration seeds, specified negatives, six faults and comparison observations."
+}

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a user variable assignment
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET @total := 1 + 2');
- *     [$set->statement->items[0]->variable->name->value, $set->toString()] // => ['total', 'SET @total = 1 + 2']
+ * @visibility SqlSemantics
  */
 final class UserAssignment implements SetItem
 {

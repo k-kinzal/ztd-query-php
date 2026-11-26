@@ -30,10 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
  * https://dev.mysql.com/doc/refman/8.4/en/select-into.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the INTO destination of a union
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t UNION SELECT b FROM u INTO @x');
- *     $query->statement->into->targets[0]->name->value // => 'x'
+ * @visibility SqlSemantics
  * @example Refusing a query statement without clauses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one)) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction

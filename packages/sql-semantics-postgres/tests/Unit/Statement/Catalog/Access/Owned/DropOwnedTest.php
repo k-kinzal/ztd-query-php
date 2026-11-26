@@ -14,12 +14,12 @@ final class DropOwnedTest extends TestCase
 {
     public function testRenderWritesTheRolesAndTheBehavior(): void
     {
-        self::assertSame('DROP OWNED BY joe, CURRENT_USER CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP OWNED BY joe, CURRENT_USER CASCADE')->toString());
+        self::assertSame('DROP OWNED BY joe, CURRENT_USER CASCADE', (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('DROP OWNED BY joe, CURRENT_USER CASCADE')->toString());
     }
 
     public function testDeriveStatementReportsPublic(): void
     {
-        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP OWNED BY joe, PUBLIC')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('DROP OWNED BY joe, PUBLIC')->facts->diagnostics));
     }
 
     public function testRejectsNoRole(): void

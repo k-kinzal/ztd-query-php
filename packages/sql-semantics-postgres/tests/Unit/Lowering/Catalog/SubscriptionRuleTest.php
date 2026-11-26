@@ -14,6 +14,6 @@ final class SubscriptionRuleTest extends TestCase
 {
     public function testStatementLowersEveryForm(): void
     {
-        self::assertSame('ALTER SUBSCRIPTION s ADD PUBLICATION p WITH (refresh = FALSE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s ADD PUBLICATION p WITH (refresh = false)')->toString());
+        self::assertSame('ALTER SUBSCRIPTION s ADD PUBLICATION p WITH (refresh = FALSE)', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER SUBSCRIPTION s ADD PUBLICATION p WITH (refresh = false)')->toString());
     }
 }

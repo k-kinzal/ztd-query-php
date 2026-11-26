@@ -17,10 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  * are kept without resolution.
  * Source: https://www.postgresql.org/docs/17/sql-importforeignschema.html.
  *
- * @visibility public
- * @example Reading the excluded tables
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('IMPORT FOREIGN SCHEMA remote EXCEPT (logs) FROM SERVER s INTO local');
- *     $operation->statement->restriction->tables[0]->name->name->value // => 'logs'
+ * @visibility SqlSemantics
  */
 final class ImportRestriction implements Node
 {

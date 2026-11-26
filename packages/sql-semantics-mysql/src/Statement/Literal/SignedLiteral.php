@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/number-literals.html,
  * https://github.com/mysql/mysql-server/blob/8.4/sql/item.cc. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a negative literal
  *     $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral(true, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('5'));
  *     [$literal->negative, $literal->number->text] // => [true, '5']

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  * relation name. The command resolves the name as a relation.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the relation name
  *     $target = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\RelationTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('orders'))));
  *     $target->relation->name->name->value // => 'orders'

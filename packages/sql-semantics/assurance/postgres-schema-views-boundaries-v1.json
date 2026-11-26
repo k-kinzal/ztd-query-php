@@ -1,0 +1,175 @@
+{
+  "revision": "SemanticsIR/postgres-schema-views-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "revises": "postgres-schema-sequences-boundaries-v1.json",
+  "scope": "Check snapshot construction, local source identity and types, resolved routes, and ordered emission through the namespace view phase.",
+  "rules": {
+    "Schema/Namespace/CreateSchema::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($owner->value !== 'public' && $owner->value !== 'none', 'A named schema owner needs a single role name.');",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!str_starts_with($owner->value, 'pg_') || \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\StockRoles::contains($release, $owner->value), 'The stock schema owner must exist in this release.');",
+        "    $name ??= $owner;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name === null || !str_starts_with($name->value, 'pg_'), 'A declared schema name cannot start with pg_.');",
+        "$checkedSequences = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($sequences, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Sequence\\CreateSequence::class, 'Schema sequences are an ordered list of checked sequence declarations.');",
+        "$checkedTables = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($tables, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable::class, 'Schema tables are an ordered list of checked table declarations.');",
+        "$checkedViews = \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::listOf($views, \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateView::class, 'Schema views are an ordered list of checked view declarations.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaRelationOrder::check($name, $ifNotExists, $release, $checkedSequences, $checkedTables);",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewOrder::check($name, $ifNotExists, $release, $checkedSequences, $checkedTables, $checkedViews);",
+        "$this->name = $name;",
+        "$this->sequences = $checkedSequences;",
+        "$this->tables = $checkedTables;",
+        "$this->views = $checkedViews;"
+      ]
+    },
+    "Schema/Namespace/CreateSchema::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$name = $this->name === null ? '' : $this->name->quoted() . ' ';",
+        "$owner = $this->owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $this->owner->quoted() : $this->owner->value;",
+        "$elements = '';",
+        "foreach ($this->sequences as $sequence) {",
+        "    $elements .= ' ' . $sequence->toString();",
+        "}",
+        "foreach ($this->tables as $table) {",
+        "    $elements .= ' ' . $table->toString();",
+        "}",
+        "foreach ($this->views as $view) {",
+        "    $elements .= ' ' . $view->toString();",
+        "}",
+        "return 'CREATE SCHEMA ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $name . 'AUTHORIZATION ' . $owner . $elements;"
+      ]
+    },
+    "Schema/Namespace/CreateSchemaLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native && $context->relationNames === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE SCHEMA requires the native PostgreSQL namespace profile.');",
+        "$owner = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaOwnerLowering())->lower($context, $statement->authorization);",
+        "$name = $statement->name === null ? null : new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->value);",
+        "$resolved = $name ?? ($owner instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier ? $owner : null);",
+        "$sequences = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaSequenceLowering())->lower($context, $statement, $resolved);",
+        "$views = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\View\\SchemaViewLowering())->lower($operation, $statement, $resolved);",
+        "$tables = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\SchemaTableLowering())->lower($context, $statement, $resolved);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\Namespace\\CreateSchema($name, $owner, $statement->ifNotExists, $context->profile->grammar, $tables, $sequences, $views);"
+      ]
+    },
+    "Schema/Namespace/SchemaTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($schema->elements === []) {",
+        "    return [];",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema tables and sequences require an unguarded, statically named namespace.');",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Identifier\\Name($resolved->value);",
+        "$resolvedTables = [];",
+        "$provided = [];",
+        "$seen = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTableLowering();",
+        "$scope = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\SchemaMemberScope();",
+        "foreach ($schema->elements as $element) {",
+        "    if ($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\CreateSequence || $element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView) {",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable, 'CREATE SCHEMA elements require a checked namespace composition.');",
+        "    $binding = new \\SqlSemantics\\Platform\\PostgreSql\\Model\\Facade\\BoundStatement($scope->bind($context, $name, $provided), $element);",
+        "    $table = $lowering->lower($binding, $element);",
+        "    $resolvedTables[] = $table;",
+        "    $coordinate = $table->target->table->value;",
+        "    if (!isset($seen[$coordinate])) {",
+        "        $seen[$coordinate] = true;",
+        "        array_push($provided, ...$binding->facts->declarations);",
+        "    }",
+        "}",
+        "return $resolvedTables;"
+      ]
+    },
+    "Schema/Namespace/View/SchemaViewOrder::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($views === []) {",
+        "    return;",
+        "}",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($name !== null && !$guard, 'Schema views require an unguarded, statically named namespace.');",
+        "$occupied = [];",
+        "foreach ($sequences as $sequence) {",
+        "    $occupied[$sequence->name->name->value] = true;",
+        "}",
+        "foreach ($tables as $table) {",
+        "    $occupied[$table->target->table->value] ??= $table;",
+        "}",
+        "foreach ($views as $view) {",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($view->name->schema->value === $name->value && $view->query->release === $release, 'A schema view must belong to its namespace and release.');",
+        "    $coordinate = $view->name->view->value;",
+        "    \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!isset($occupied[$coordinate]), 'A schema view requires an unused relation name.');",
+        "    $source = $view->query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Select ? $view->query->source : null;",
+        "    if ($source instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\TableSource && $source->schema->value === $name->value) {",
+        "        $local = $occupied[$source->table->value] ?? null;",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($local instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable, 'A schema view must resolve its local input to a preceding base table.');",
+        "        $fields = [];",
+        "        foreach ($local->columns as $column) {",
+        "            $fields[$column->name->value] = match ($column->storage) {",
+        "                \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Standard => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int4,",
+        "                \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Wide => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Int8,",
+        "                \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CharacterStorage::Text => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Text,",
+        "                \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\BooleanStorage::Boolean => \\SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\ColumnKind::Boolean,",
+        "                \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\IntegerStorage::Small => null,",
+        "            };",
+        "        }",
+        "        foreach ($source->columns as $slot => $column) {",
+        "            \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(isset($fields[$column->value]) && $fields[$column->value] === $source->columnKind($slot), 'A schema view requires each local input field in the checked native kind.');",
+        "        }",
+        "    }",
+        "    $occupied[$coordinate] = true;",
+        "}"
+      ]
+    },
+    "Schema/Namespace/View/SchemaViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$views = [];",
+        "$lowering = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateViewLowering();",
+        "foreach ($schema->elements as $element) {",
+        "    if ($element instanceof \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView) {",
+        "        \\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($resolved !== null && !$schema->ifNotExists, 'Schema views require an unguarded, statically named namespace.');",
+        "        $views[] = $lowering->lower($operation, $element, $resolved);",
+        "    }",
+        "}",
+        "return $views;"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input($context->profile->parameters === \\SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\ParameterStyle::Native, 'CREATE VIEW requires the native language profile.');",
+        "\\SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\Check::input(!$statement->recursive && $statement->persistence === \\SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence::Permanent && $statement->name->catalog === null, 'CREATE VIEW requires a persistent ordinary view in an absolute schema.');",
+        "$schema = $statement->name->schema->value ?? $memberNamespace->value ?? $context->declarationSchema->value;",
+        "$name = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewName(new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Identifier($statement->name->name->value));",
+        "[$barrier, $invoker, $check] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\ViewOptionsLowering())->lower($statement);",
+        "[$body, $columns] = (new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns);",
+        "return new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\View\\CreateView($name, $body, $columns, $statement->replace, $barrier, $invoker, $check);"
+      ]
+    }
+  }
+}

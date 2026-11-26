@@ -18,10 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * option in source order.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-password-management.
  *
- * @visibility public
- * @example Reading a password history option
- *     $option = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE USER u PASSWORD HISTORY 5')->statement->options[0];
- *     [$option->kind, $option->number?->text] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, '5']
+ * @visibility SqlSemantics
  */
 final class AccountOption implements Node
 {

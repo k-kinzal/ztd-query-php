@@ -1,0 +1,70 @@
+{
+  "revision": "SemanticsIR/postgres-text-returning-1",
+  "approval": "pending-human-review",
+  "extends": ["postgres-typed-columns-v2.json", "postgres-text-null-tests-v1.json", "postgres-delete-returning-v1.json", "postgres-update-returning-v2.json", "postgres-insert-returning-v1.json"],
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "Mutation/ReturnedColumn": {
+      "role": "One ordered, named native int4 or text field from an affected target row.",
+      "structure": "One checked native field reference and the observable output name.",
+      "conditions": "The reference names the single target occurrence. The owning mutation checks that its exact ordinal exists and has the promised native kind. Preserve each repeated reference and duplicate output name in order.",
+      "meaning": "Observe the field on the deleted row, the new version after UPDATE, or the inserted row after native defaults. Preserve native type, SQL NULL and exact text value.",
+      "sql": "Use the physical target column at that resolved ordinal and preserve the independent output alias."
+    }
+  },
+  "externalInterpretation": "Use one resolved disposable relation with independently differentiable nullable text fields, a text default, duplicate rows, int4 write positions and no primary key. Match the physical table, declaration, ordered layout and native PostgreSQL settings.",
+  "observations": [
+    "Observe result names, ordering of the columns, native type, exact bytes, SQL NULL and all duplicate rows.",
+    "Observe native affected row count, before and after table snapshot, and restored state after each rolled-back comparison.",
+    "Observe old row values for deletion, new row values for updates and inserts, and default-filled text.",
+    "A presence test may select affected rows by the exact nullable text field it references."
+  ],
+  "finite": {
+    "operation": ["insert", "update", "delete"],
+    "layout": ["text", "mixed", "repeated"],
+    "effect": ["all", "selected"],
+    "identities": 18,
+    "completeness": "Use the observed statement role, field kinds and repeated coordinates, and the exact filter or inserted row count."
+  },
+  "exploration": {
+    "seeds": [5209, 33083, 61169],
+    "casesPerSeed": 20,
+    "timeoutSecondsPerRelease": 285,
+    "allowedExclusions": [],
+    "requiredForms": "Vary operation, nonempty mutation effects, zero affected rows, native typed nullable values, defaults, duplicate headings and slot orders."
+  },
+  "analysis": [
+    "Delete rows with a text presence predicate and return two names for the same affected text field.",
+    "Update an int4 field and return the old physical text field plus the newly assigned integer.",
+    "Insert two int4 rows and return text columns from the native default-filled rows.",
+    "Expand a target wildcard returning both observed native kinds."
+  ],
+  "negative": [
+    "Use a text result reference reading a physical int4 slot.",
+    "Use an int4 result reference reading a physical text slot.",
+    "Use a returned text reference at another occurrence.",
+    "Use a returned text reference outside the target heading."
+  ],
+  "faults": [
+    "Emit a distinct nullable text slot for the same return result name.",
+    "Omit the RETURNING layout.",
+    "Change a correctly named returned text field to the integer field at another ordinal."
+  ],
+  "evidence": {
+    "P01": "Record the actual target identity, operation, source row timing and native returned types.",
+    "P02": "Check occurrence, role and owned ordinal before a mutation value is published.",
+    "P03": "Retain only the checked target, write layout, predicates and returned values.",
+    "P04": "Compose mutation and result semantics through immutable target layout and the returned references.",
+    "P05": "Use final immutable fields and detached ordered layouts.",
+    "P06": "Compare native typed result sets and physical effects before rollback.",
+    "Q01": "Refuse invisible or incorrectly typed returned references at their static boundaries.",
+    "Q02": "Recover every fixed finite identity and execute all supported constructed and analyzed positives.",
+    "Q03": "Compare independent affected rows, exact physical result projection and command effects.",
+    "Q04": "Detect each injected layout or field selection fault and preserve its native witness.",
+    "Q05": "Match the checked runtime, installed distributions, protected verifier and replayable observations."
+  },
+  "open": ["Text write operands, general returning expressions, inherited mutation effects and conflict forms retain separate obligations."],
+  "trust": ["The matching external fixture and default declaration", "Pinned native statement and return metadata observations", "Transactional isolation and independent effect interpretation"]
+}

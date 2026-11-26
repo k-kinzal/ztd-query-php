@@ -1,195 +1,69 @@
 # SQL Semantics for SQLite
 
-[![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-semantics-sqlite.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-semantics-sqlite)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docs](https://img.shields.io/badge/docs-sql--semantics--sqlite-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
+Requires PHP 8.1 or later. See [grammar releases and usage](../sql-semantics/) for the common interface.
 
-SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md): the statement structure classes of the official SQLite grammar, the SQLite rules for resolving names and deriving types, affinities, NULL facts and diagnostics, and the SQLite spelling of rendered SQL. The package provides its own `Semantics` analyzer and installs the common SQL Semantics interfaces. No database connection is needed.
-
-## Requirements
-
-- PHP 8.1+
-- No PHP extension; the `sqlite3` and `pdo_sqlite` extensions are not used
-
-## Support Syntax
-
-The following grammar release is supported. Pass the version tag as the first argument of `Semantics`; omitting it selects the default.
-
-| Version | Version tag | Default |
-|---------|-------------|---------|
-| 3.47.2 | `sqlite-3.47.2` | Yes |
-
-## Installation
-
-```bash
-composer require k-kinzal/sql-semantics-sqlite
-```
-
-## Usage
-
-```php
-use SqlSemantics\Platform\Sqlite\Semantics;
-use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-
-$semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
-$insert = $semantics->analyze("insert or replace into users (id, name) values (1, 'Alice') returning id", [$users]);
-
-$insert->statement instanceof InsertRows; // => true
-$insert->toString(); // => "INSERT OR REPLACE INTO users (id, name) VALUES (1, 'Alice') RETURNING id"
-$insert->field('id')->nullability; // => Nullability::NotNull
-$semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users]); // throws SemanticException with message '2 values for 1 columns.'
-```
-
-INSERT with VALUES, with a query and with DEFAULT VALUES are three classes: `InsertRows`, `InsertSelect` and `InsertDefaults`.
-
-See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
-
-### Types and affinity
-
-A declared column type keeps its text as SQLite reports it, and the affinity SQLite derives from it (`ColumnDomain`). A computed value has the storage class of its result (`Storage`). A `TypeName`, as in a CAST, keeps its words and how they are quoted, because SQLite records quoted type words with their quotes.
-
-```php
-use SqlSemantics\Platform\Sqlite\Semantics;
-use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
-use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-
-$semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a VARCHAR(10), b integer, c)')->declarations()[0];
-
-$table->columns[0]->type->affinity; // => Affinity::Text
-$table->columns[1]->type->name(); // => 'INTEGER'
-$table->columns[2]->type->affinity; // => Affinity::Blob
-(new ColumnDomain('UNSIGNED BIG INT'))->affinity; // => Affinity::Integer
-$semantics->analyze('SELECT 1.5')->field(0)->type->descriptor; // => Storage::Real
-```
-
-### Names
-
-- Relation, schema and column names, and output field names, are compared without regard to ASCII letter case.
-- A name written bare, in brackets or in backticks is a column use. A word in double quotes is a different request: SQLite reads it as an identifier when a column has that name and as a string otherwise, and the model keeps that difference. The bare words `TRUE` and `FALSE` are boolean words unless a column has that name.
-- Rendered SQL writes a name bare when it is made of ASCII letters, digits and underscores, is no keyword and is not `TRUE` or `FALSE`, and in backticks otherwise. Backticks never fall back to a string. The expression of an unaliased result column keeps its written spelling instead; see [Unaliased result columns](#unaliased-result-columns).
-- A table created by CREATE TABLE has the implicit columns SQLite gives it, such as `rowid`, `oid` and `_rowid_` (unless it is declared WITHOUT ROWID). A declaration you construct yourself has only the columns you give it.
-
-```php
-use SqlSemantics\Platform\Sqlite\Semantics;
-use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-
-$semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-
-$semantics->analyze('SELECT NAME FROM USERS', [$users])->field(0)->column() === $users->declarations()[0]->columns[1]; // => true
-$semantics->analyze('SELECT "name" FROM users', [$users])->field(0)->type->descriptor->name(); // => 'TEXT'
-$semantics->analyze('SELECT "nickname" FROM users', [$users])->field(0)->type->descriptor; // => Storage::Text
-$semantics->analyze('SELECT rowid FROM users', [$users])->field(0)->column() === $users->declarations()[0]->columns[0]; // => true
-$semantics->analyze('SELECT a AS [order] FROM `group`')->toString(); // => 'SELECT a AS `order` FROM `group`'
-```
-
-In the example, `id` is an `INTEGER PRIMARY KEY`, so `rowid` is another name for it. `"nickname"` names no column, so it is the string `'nickname'`.
-
-### Search path
-
-SQLite searches an unqualified name in `temp`, then `main`, then the attached schemas in order. A `SearchPath` lists `main` and the attached schemas; it must start with `main`. An unqualified declaration belongs to `main`, and `CREATE TEMP TABLE` declares in `temp`.
-
-```php
-use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
-use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
-use SqlSemantics\Platform\Sqlite\Semantics;
-
-$semantics = new Semantics(null, null, ParameterStyle::Native, new SearchPath('main', 'archive'));
-
-array_map(static fn ($schema) => $schema->value, $semantics->context()->searchPath); // => ['temp', 'main', 'archive']
-$semantics->analyze('CREATE TEMP TABLE scratch (a)')->declarations()[0]->name->schema?->value; // => 'temp'
-```
-
-Because `temp` is searched first, an unqualified name in a partial context (`$semantics->context([...], false)`) resolves conditionally even when it is declared in `main`: an undeclared temporary table could hide it. Qualify the name, as in `main.users`, or use a complete context.
-
-### Parameters
-
-SQLite reads every parameter form natively: `?`, `?NNN`, `:name`, `@name` and `$name`. The parameter style of the profile does not change how SQLite text is read; it is still part of the profile, so declarations analyzed under one style cannot be used under the other. A parameter's type depends on the value bound to it.
-
-```php
-use SqlSemantics\Platform\Sqlite\Semantics;
-
-$query = (new Semantics())->analyze('SELECT ?, ?2, :name, @name, $name');
-
-$query->toString(); // => 'SELECT ?, ?2, :name, @name, $name'
-$query->field(2)->type->missing[0]->describe(); // => 'the value bound to parameter :name'
-```
-
-### Unaliased result columns
-
-SQLite names an unaliased result column after the text of its expression as it was written, from its first token to the start of the next token, without the whitespace at the end, unless the expression is a column reference. A comment written after the expression is therefore part of the name. That text is part of the meaning, so the model keeps it as the layout of the result column, renders the expression in that spelling, and derives the name from it the way SQLite does:
-
-- the rows a statement returns take the name of the column a column reference denotes, and otherwise the text;
-- a subquery in FROM and a common table name their columns before resolution: a single word, possibly qualified, in parentheses or under COLLATE, keeps the word as written, and any other expression takes the text;
-- a view and a table created from a query name their columns after resolution, looking through COLLATE, `likely()`, `unlikely()` and `likelihood()` as well;
-- in these last two cases a name TRUE or FALSE becomes `columnN`, and a repeated name gets a `:1` to `:4` suffix; a fifth repeat gets a random suffix, so its name stays open (`RandomColumnName`);
-- a name that depends on a missing declaration, such as a double-quoted word that is a column of an undeclared table or else a string, is left open, and the output slot names the missing inputs (`OutputSlot::$unnamed`), so looking a name up in such a result is a `DependentField`. Behind a star of an undeclared table, the names of a subquery or common table are open in the same way.
-
-The layout is kept only where it differs from the canonical spelling, and it keeps the trivia after the expression only when that holds a comment. Whether AS introduces an alias is kept as well, because the text of an enclosing expression includes it. A result column built with `new` and without a layout is rendered in the canonical spelling and named after that text, which is the text the database reads.
-
-```php
-use SqlSemantics\Platform\Sqlite\Semantics;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
-
-$semantics = new Semantics();
-
-$semantics->analyze('SELECT 1+1, 2 AS two')->field(0)->name?->value; // => '1+1'
-$semantics->analyze('SELECT 1+1, 2 AS two')->toString(); // => 'SELECT 1+1, 2 AS two'
-$semantics->analyze('SELECT 1+1 /* sum */, 2')->field(0)->name?->value; // => '1+1 /* sum */'
-$semantics->analyze('SELECT 1+1 -- sum')->toString(); // => 'SELECT 1+1 -- sum'
-$semantics->analyze('SELECT "a" FROM t')->fields()?->lookup('a') instanceof DependentField; // => true
-$semantics->analyze('SELECT "1+1" FROM (SELECT 1+1)', [])->field(0)->resolution instanceof ResolvedColumn; // => true
-```
-
-### Views
-
-`CREATE VIEW` declares a view (`RelationKind::View`); every other declaration is a table. Where a name resolves to one declaration, a request SQLite carries out only for the other kind is a `WrongRelationKind` diagnostic: `DROP TABLE`, every `ALTER TABLE` form, `CREATE INDEX`, a `BEFORE` or `AFTER` trigger and an upsert on a view, and `DROP VIEW` and an `INSTEAD OF` trigger on a table. A view has no `rowid`.
-
-```php
-use SqlSemantics\Platform\Sqlite\Semantics;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
-
-$semantics = new Semantics();
-$view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS one');
-
-$view->declarations()[0]->kind; // => RelationKind::View
-$semantics->analyze('DROP TABLE v', [$view]); // throws SemanticException with message 'Relation v is a view: DROP TABLE removes only a table.'
-```
-
-### Generated columns
-
-A column defined with `GENERATED ALWAYS AS (...)` or `AS (...)`, `VIRTUAL` or `STORED`, is declared generated (`Column::$generated`). It reads like any other column, but SQLite computes its value, so writing it is a `GeneratedColumnWrite` diagnostic with the message SQLite gives: naming it in the column list of an `INSERT`, and assigning it in `UPDATE ... SET` or in the `DO UPDATE SET` of an upsert. An `INSERT` without a column list supplies one value per column that is not generated. In a trigger program these writes are reported by `CREATE TRIGGER`, although SQLite rejects them only when the trigger runs.
+    composer require k-kinzal/sql-semantics-sqlite
 
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))');
+$context = $semantics->context(['CREATE TABLE main.accounts (id INTEGER)']);
+$ir = $semantics->analyze('SELECT id, accounts.id FROM main.accounts', $context);
 
-$table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('UPDATE t SET b = 1', [$table]); // throws SemanticException with message 'cannot UPDATE generated column "b"'
-$semantics->analyze('INSERT INTO t VALUES (1)', [$table]); // Returns a query
+echo $ir->toString();
 ```
 
-## Limitations
+The checked complete domain includes projections, joins, predicates, ordering, values, compound queries, selected table changes and transaction control. Table declarations include STRICT, WITHOUT ROWID with a resolved primary key, native INT and ANY types, literal defaults and per-column NOT NULL policies. Table declarations also cover ordered unique keys and explicitly named CHECK constraints over declared columns. Declarations also cover VIRTUAL and STORED generated columns with checked scalar expressions, including forward references to declared columns. The default search order gives temporary tables precedence over main.
 
-- INSERT, UPDATE and DELETE on a view succeed exactly when an `INSTEAD OF` trigger handles them. Contexts do not hold triggers, so such a write is not reported.
-- SQLite checks the `DO UPDATE` of an upsert only where a uniqueness check of the `INSERT` reaches it. Contexts do not hold unique indexes, so a `DO UPDATE` whose reach depends on them, such as one without a conflict target on a table that has a rowid when the row does not supply the rowid, is not checked for writes of generated columns.
-- The names in a `DO UPDATE` clause are resolved even where SQLite never compiles the clause, so such a clause can carry a `MissingColumn` diagnostic for a statement SQLite runs, as `INSERT INTO u (a) VALUES (1) ON CONFLICT (id) DO UPDATE SET zz = 1` on a table without `zz` whose `id` is its `INTEGER PRIMARY KEY`.
-- Whether a relation is a virtual table is not part of a declaration, so what SQLite refuses only for virtual tables, such as indexing one, is not reported.
-- A search path must start with `main`; `temp` is always searched first.
-- The parameter style has no effect on reading, but two profiles that differ only in it are not compatible.
-- Version 1 contexts declare relations only. Application-defined functions, such as the `regexp()` that `REGEXP` calls, are missing inputs.
+For an ordinary ADD COLUMN operation, provide the target table declaration to `context()` and pass that context to `analyze()`. The resulting SQLite `AddColumn` records the resolved schema and table, the appended column position, the table's STRICT mode and the new column. It supports the standard declared types, ordinary untyped columns, literal defaults, builtin collations and NOT NULL conflict policies. SQLite evaluates restrictions that depend on whether the table has rows. For example, adding a NOT NULL column with no default succeeds on an empty SQLite 3.47.2 table and fails on a populated one.
 
-See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.
+For a generated addition, `analyze()` returns SQLite `AddGeneratedColumn`. The generated expression binds to the resolved prior column ordinals, including prior generated columns. SQLite 3.47.2 supports adding a VIRTUAL column to a populated table and adding a STORED column to an empty table.
 
-## License
+Both addition types can carry explicitly named inline CHECK constraints, such as `CONSTRAINT positive CHECK (total > 0)`. A CHECK can read the appended column as well as prior columns. The completed value keeps the constraints in declaration order and exposes the declared names selected by their operands and any generation expression. SQLite validates existing rows during the addition and uses the first failed constraint's name in diagnostics for later writes. An unnamed check can compare a declared column with a nonnegative decimal integer. The IR stores the checked comparison spelling so SQLite can still derive the diagnostic label when that column is renamed. Within one inline column definition an explicit name applies to later unnamed checks.
 
-MIT License. See [LICENSE](LICENSE) for details.
+Both table declarations and ordinary column additions can carry `ColumnDefaultExpression` with a checked expression. SQLite applies the expression when an insert omits the column. An addition to a populated table also follows SQLite's existing-row fallback rules. Arithmetic such as `DEFAULT (1 + 2)` succeeds when adding to an empty table and fails when adding to a populated table.
+
+A column removal returns `DropColumn` with the resolved absolute table, the declared name and ordinal to remove, and whether the removed column is generated. Build the context from the table's CREATE TABLE definition so the analyzer can check keys, surviving CHECK and generated expressions, and the column layout. SQLite evaluates schema-wide effects, such as a separate index or view referring to the affected column, when the IR is executed.
+
+For `CREATE INDEX`, `analyze()` resolves the indexed table through the supplied context and returns `CreateIndex`. The value records the owning schema and table, ordered `IndexTerm` operands, direction, uniqueness and any partial predicate. Its `bindings` map holds the declared name at each slot used by a key or the predicate. It retains native empty membership in a partial predicate, including the numbered parameters that SQLite registers in its discarded operand. Indexed CAST expressions retain the decoded type name when SQLite uses its exact bytes for matching. Binary IFNULL also keeps its native identity. Forced index queries can distinguish these forms from casts with the same affinity or from COALESCE.
+
+For `DROP INDEX`, include the indexed table and its `CREATE INDEX` declaration in `context()`, in that order. The returned `DropIndex` carries the selected absolute index name and owner, or the exact verification scope of a known absence under `IF EXISTS`. A complete context establishes absence. An unqualified lookup checks temp, main and then the configured attached schemas. Table declarations establish the automatic UNIQUE and PRIMARY KEY index names as well. A present constraint index is protected from removal. A guarded absence can still be resolved when the declared key and schema information establishes it.
+
+`REINDEX` rebuilds all indexes, indexes that use one builtin collation, all indexes of a declared relation, or one declared index. Unqualified names match builtin collations first, then relations, then indexes. A qualified name bypasses collation lookup. The returned `Reindex` keeps the selected absolute relation or index and its owner.
+
+`ANALYZE` collects SQLite planner statistics. With no selector it skips the temporary schema. An unqualified name selects a known schema first, then an index, then a relation. `Analyze` retains that selected role and shares the absolute relation and index coordinates with `Reindex`.
+
+Connection-flag PRAGMAs such as `foreign_keys`, `query_only`, and `writable_schema` return `FlagPragma`. The value exposes the selected `FlagName`, the optional resolved schema qualifier, and the requested `FlagChange`. A read has no change. `writable_schema=RESET` also reloads the schema cache. SQLite applies writes during preparation, including the rule that a foreign key setting cannot change inside a transaction.
+
+`table_info`, `table_xinfo`, `index_list`, and `foreign_key_list` return `TableInspection`. Its target identifies the resolved table, view or builtin schema catalog. An explicit missing target requires a complete declaration context and produces the native named empty result. `table_list` returns `TableListing` with its optional schema and name filter. The filter can match several schemas and uses the catalog key such as `sqlite_master` even when SQLite displays the preferred name `sqlite_schema`.
+
+`index_info` and `index_xinfo` return `IndexInspection`. SQLite searches for a named index before looking for a matching WITHOUT ROWID table. The table-name form and the native automatic index name produce the same absolute index coordinate when they select the same primary storage. An empty selection preserves any explicit database qualifier.
+
+`foreign_key_check` returns `ForeignKeyAudit`. With no argument it checks the selected schema and defaults to main. A named relation is resolved in SQLite's native search order. The database reports violations using the declared foreign-key ordinal and a rowid, or NULL for a WITHOUT ROWID child.
+
+`integrity_check` and `quick_check` return `IntegrityAudit`. An integer argument sets the report limit. A named argument carries a resolved table, view or catalog. An unqualified audit retains SQLite’s access to all attached databases, even when the named target belongs to one database. An explicit database name limits the access to that database.
+
+The database header pragmas `application_id`, `user_version`, `schema_version`, `freelist_count` and `data_version` return `HeaderPragma`. The value records the selected database, the exact field, and the normalized signed operand for a write. A missing database qualifier selects main.
+
+A row trigger with an ordered INSERT VALUES, UPDATE or DELETE body returns `CreateTrigger`. In mutation actions, local target fields and activation row fields use separate roles. Supported filters keep exact NULL tests and the operand order of an equality between a local field and a row image. Each VALUES insertion keeps its entire ordered tuple list within the same native statement. A source-free SELECT RAISE action keeps its native interruption policy and any checked message and NULL guard. Supply the watched relation and body table declarations in the context. Each `OLD` or `NEW` use identifies the row image and declared column position. The trigger keeps its placement, timing, event and optional NULL condition. An absent `UPDATE OF` name remains in the definition so SQLite can recognize it if a later column uses that name.
+
+For `DROP TRIGGER`,list the watched relation before each installed trigger in `context()`. Unqualified names select temporary triggers before main and then attached databases. The returned `DropTrigger` identifies the chosen trigger and watched relation. When a declared complete catalog establishes absence, `IF EXISTS` carries the verified scope of the native no-op.
+
+The pager pragmas `page_size`, `page_count` and `max_page_count` return `PagePragma`. The value records the resolved pager and the typed setting, when present. A page-size request can set the pending size for a later `VACUUM`. An upper page-count request takes effect when SQLite steps the statement.
+
+The reclamation pragmas return `AutoVacuum` or `IncrementalVacuum`. An automatic mode request can affect a later file `VACUUM`. An incremental request keeps its effective positive limit and can return one zero-column row per reclaimed page.
+
+The cache pragmas return `CacheSize`, `DefaultCacheSize` or `CacheSpill`. A persistent size request changes the live capacity during preparation and writes the cache cookie when SQLite steps the statement. A spill threshold can also change the connection-wide switch. Both effects remain explicit in the value.
+
+`VACUUM` and `VACUUM INTO` return `Vacuum` with a resolved database and, where applicable, a source-free filename expression. SQLite skips rebuilding the temporary database and evaluating its filename. The IR retains any numbered slots and marker names that SQLite registers in that expression.
+
+`ATTACH` and `DETACH` return typed connection commands. A constant detachment name resolves against the analysis context. Numbered selector parameters keep their binding slots. The IR keeps the filename and key operands in order and carries no connection state.
+
+Connection inventory reads return `InventoryPragma` with an `InventoryKind` for databases, collations, compile options, functions, modules or active pragmas. The result reads the current connection registry. An explicit schema qualifier remains part of the operation, including native activation of the temporary database.
+
+A single INNER, CROSS, LEFT, RIGHT, or FULL join between two declared base tables can use USING or NATURAL. The IR resolves the comparison operands in left-to-right order and keeps both inputs addressable by qualified names. An unqualified merged name selects the right slot for RIGHT and the left slot for INNER, CROSS, and LEFT. FULL combines the left and right slots, keeping the first non-NULL value. SQLite also resolves USING and NATURAL in longer INNER, CROSS, and LEFT chains. Each equality refers to its actual earlier input, and each step retains its own right occurrence. The rendered SELECT uses explicit ON and projection clauses.
+
+INSERT and UPDATE keep their explicit conflict strategy or inherit the target schema's policy. REPLACE is an INSERT with an explicit REPLACE strategy. Execution uses the target's constraint and trigger definitions. INSERT with VALUES or SELECT can record a targetless ON CONFLICT DO NOTHING action.
+
+Concrete types are under `SqlSemantics\Platform\Sqlite\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

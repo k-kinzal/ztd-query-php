@@ -19,10 +19,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-engines.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW STORAGE ENGINES');
- *     [$show->field(1)->name?->value, $show->toString()] // => ['Support', 'SHOW ENGINES']
+ * @visibility SqlSemantics
  */
 final class ShowEngineCatalog implements Statement
 {

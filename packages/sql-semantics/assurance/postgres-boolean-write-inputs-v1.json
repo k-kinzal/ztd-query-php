@@ -1,0 +1,48 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-write-inputs-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "UTF-8, standard_conforming_strings on, pg_catalog first and the stock Boolean input and assignment behavior.",
+  "extends": ["postgres-create-boolean-v2.json", "postgres-boolean-writes-v1.json"],
+  "constructors": {},
+  "existingRoles": ["BooleanLiteral", "Expression/BuiltinCast", "Mutation/InsertCell", "Mutation/InsertQuery", "Mutation/UpdateAssignment", "Mutation/Insert/WriteSlot", "Select", "Schema/TableColumn"],
+  "structure": "The bound input is one exact native Boolean value. A deliberately typed cast can retain its Boolean destination and its already resolved literal argument. No literal spelling is required for a complete write.",
+  "conditions": "Accept a complete unambiguous known Boolean token after removing surrounding ASCII whitespace and folding ASCII case. A VALUES or UPDATE Boolean assignment and a nondistinct simple INSERT SELECT apply the Boolean input conversion to an unknown literal. DISTINCT must resolve its source before assignment. Its unknown literal becomes text and is rejected for a Boolean target. An explicit builtin Boolean cast provides the typed result before DISTINCT.",
+  "meaning": "Decode the same true or false as the builtin Boolean input function before storing or comparing it. A sequence containing a malformed input cannot publish a complete statement. Explicit TEXT is already typed and keeps its separate native assignment rule.",
+  "sql": "Use TRUE or FALSE for a normalized value and preserve the explicit native cast role where it is recorded in a SELECT result.",
+  "observations": ["Native input value in the full target footprint and each RETURNING position", "Exact ordered result metadata and duplicate and NULL effects", "Rollback and source stability", "Exact SQLSTATE of malformed input or a typed assignment mismatch"],
+  "finite": {
+    "contexts": ["values", "update", "select", "distinct-cast"],
+    "tokens": ["t", "tr", "tru", "true", "y", "ye", "yes", "on", "1", "f", "fa", "fal", "fals", "false", "n", "no", "of", "off", "0"],
+    "spelling": ["plain", "ascii-padded"],
+    "identities": 152,
+    "completeness": "Decode and identify the independent raw input bytes and observed owning structure. Compare each exact context and spelling once. Verify the produced Boolean independently of the decoder shipped in the PHP candidate."
+  },
+  "analysis": ["A Boolean literal with mixed case", "A Boolean input with ASCII control whitespace", "A signed and Boolean VALUES list", "A grouped Boolean unknown literal", "An explicitly cast Boolean literal under DISTINCT", "The same input decoded by a schema default"],
+  "exploration": {
+    "seeds": [9389, 25097, 63913],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Mix both Boolean destinations, typed and unknown inputs, case and ASCII whitespace, isolated and mixed write lists, DISTINCT casts, old-row fields and repeated return positions."
+  },
+  "negative": ["Ambiguous o", "Invalid suffix", "Empty input", "Non-ASCII nonbreaking space", "DISTINCT resolves an unknown literal to text", "Explicit TEXT cannot write to Boolean", "A malformed later VALUES cell", "A non-builtin cast target"],
+  "faults": ["Drop an accepted prefix", "Read one token as the opposite truth value", "Omit ASCII case folding", "Ignore the DISTINCT boundary before assignment", "Render the opposite Boolean value"],
+  "evidence": {
+    "P01": "Resolve each admissible literal through its exact owning type context.",
+    "P02": "Check invalid input and reject unresolved or incompatible native conversions before publication.",
+    "P03": "Retain the exact decoded value and explicit native operation without source spelling.",
+    "P04": "Reuse one reviewed Boolean input rule for declarations, casts and writes.",
+    "P05": "Store the closed Boolean and typed operand roles in readonly structures.",
+    "P06": "Render the resolved Boolean without changing any position, duplicate policy or observable assignment effect.",
+    "Q01": "Reject malformed inputs and incompatible assignment contexts on the owning analyzer route.",
+    "Q02": "Observe the whole registered input and context grid on both releases.",
+    "Q03": "Record the use of the decoded value by each owning write and schema declaration.",
+    "Q04": "Compare stored values and effects with an independent input model and the real servers.",
+    "Q05": "Pin the controlling PHP rule, publication boundaries and actual installed planner and output."
+  },
+  "open": ["Other native assignment expressions with side effects or runtime errors", "Non-stock operator or cast profiles and independent expression roles"],
+  "trust": ["Pinned fixture and stock Boolean parser", "Independently fixed token table and input contexts", "Read-only verifier and observed native type and effects", "Shipped PHP method shape and exact source linkage"],
+  "sources": ["https://www.postgresql.org/docs/17/datatype-boolean.html", "https://www.postgresql.org/docs/17/typeconv-query.html", "https://www.postgresql.org/docs/17/sql-select.html"]
+}

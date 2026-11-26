@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * that is not `bytea` is reported (PG-JSON-CHECKS-001).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a value without a format
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()))->format // => null
  */

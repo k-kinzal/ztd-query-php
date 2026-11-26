@@ -1,0 +1,215 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-write-inputs-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check the exact shared Boolean input table and where unknown literals receive their native target role.",
+  "rules": {
+    "Expression/BooleanInput::untyped": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($operand instanceof Constant && $operand->value instanceof StringConstant) {",
+        "    return $this->fromText($operand->value->value);",
+        "}",
+        "",
+        "return null;"
+      ]
+    },
+    "Expression/BooleanInput::fromText": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$token = strtr(trim($value, \" \\t\\n\\r\\f\\v\"), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');",
+        "",
+        "return new BooleanLiteral(match ($token) {",
+        "    't', 'tr', 'tru', 'true', 'y', 'ye', 'yes', 'on', '1' => true,",
+        "    'f', 'fa', 'fal', 'fals', 'false', 'n', 'no', 'of', 'off', '0' => false,",
+        "    default => throw new InvalidConstruction($diagnostic),",
+        "});"
+      ]
+    },
+    "Schema/BooleanDefaultLowering::fromText": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return (new BooleanInput())->fromText($value, 'The Boolean default contains an invalid input token.');"
+      ]
+    },
+    "Expression/BuiltinCastLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$type = $binding->typeOf($cast);",
+        "Check::input(!$cast->type->setOf && $type instanceof Known, 'The cast must resolve to a scalar pg_catalog target.');",
+        "$operand = $cast->operand;",
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($type->descriptor === Builtin::Text && $operand instanceof Constant && $operand->value instanceof StringConstant) {",
+        "    return new TextLiteral($operand->value->value);",
+        "}",
+        "$target = match ($type->descriptor) {",
+        "    Builtin::Int4 => CastDestination::Integer,",
+        "    Builtin::Int8 => CastDestination::WideInteger,",
+        "    Builtin::Bool => CastDestination::Boolean,",
+        "    Builtin::Text => CastDestination::Text,",
+        "    default => throw new InvalidConstruction('The cast target must be pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or pg_catalog.text.'),",
+        "};",
+        "$boolean = $target === CastDestination::Boolean ? (new BooleanInput())->untyped($operand) : null;",
+        "if ($boolean !== null) {",
+        "    return new BuiltinCast($target, $boolean);",
+        "}",
+        "if ($operand instanceof ParsedNull) {",
+        "    return new BuiltinCast($target, new NullLiteral());",
+        "}",
+        "$input = $binding->typeOf($operand);",
+        "Check::input($input instanceof Known && in_array($input->descriptor, [Builtin::Int4, Builtin::Int8, Builtin::Bool, Builtin::Text], true), 'The cast input must resolve to pg_catalog.int4, pg_catalog.int8, pg_catalog.bool, pg_catalog.text or NULL.');",
+        "$value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst);",
+        "Check::input($value instanceof BooleanLiteral || $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral || $value instanceof TextLiteral || $value instanceof BuiltinCast, 'The cast input has no checked scalar role.');",
+        "",
+        "return new BuiltinCast($target, $value);"
+      ]
+    },
+    "ExpressionLowering::result": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$bareText = $simpleOutput || $destination === ColumnKind::Text;",
+        "if ($destination === ColumnKind::Boolean) {",
+        "    $bareText = $distinct;",
+        "    if (!$distinct) {",
+        "        $boolean = (new BooleanInput())->untyped($operand);",
+        "        if ($boolean !== null) {",
+        "            return $boolean;",
+        "        }",
+        "    }",
+        "}",
+        "",
+        "return $this->lower($operand, $binding, $catalogFirst, $bareText);"
+      ]
+    },
+    "SelectLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');",
+        "$statement = $operand ?? $operation->statement;",
+        "Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');",
+        "Check::input(",
+        "    $statement->groupBy === [] && $statement->having === null",
+        "        && $statement->windows === [] && ($statement->distinct->on ?? []) === [] && $statement->into === null",
+        "        && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),",
+        "    'Complete PostgreSQL IR currently supports projections with positional result selection.',",
+        ");",
+        "Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');",
+        "$expressions = new ExpressionLowering();",
+        "$searchPath = $operation->context->searchPath;",
+        "$operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;",
+        "$catalogFirst = $operators === 'pg_catalog';",
+        "$binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = new Identifier($name->value);",
+        "    $expression = $field->expression;",
+        "    $resolution = $field->resolution;",
+        "    if ($expression === null || $expression instanceof ParsedColumn) {",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');",
+        "        $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);",
+        "        $results[] = new ResultColumn($value, $label);",
+        "        continue;",
+        "    }",
+        "    $parameter = $parameters->lower($expression, $operation->context, $inputTypes);",
+        "    $kind = $assignment?->columnKind(count($results));",
+        "    $value = $parameter ?? $expressions->result($expression, $binding, $catalogFirst, $kind, $statement->distinct !== null, $operand === null);",
+        "    $results[] = new ResultColumn($value, $label);",
+        "}",
+        "",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "",
+        "$result = new ResultLowering();",
+        "$order = $result->orders($statement->options->order ?? []);",
+        "",
+        "return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));"
+      ]
+    },
+    "Mutation/InsertLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The INSERT requires the native language profile.');",
+        "Check::input(",
+        "    $statement->with === null && $statement->overriding === null && $statement->conflict === null,",
+        "    'A complete INSERT requires the ordinary VALUES operation.'",
+        ");",
+        "[$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);",
+        "$searchPath = $operation->context->searchPath;",
+        "$catalogFirst = ($searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value) === 'pg_catalog';",
+        "$expression = new ExpressionLowering();",
+        "$empty = new SourceBinding($operation, null);",
+        "$rows = [];",
+        "foreach ($statement->rows->rows() as $row) {",
+        "    Check::input(count($row->values) === count($target->written), 'Every inserted row must match the target width.');",
+        "    $values = [];",
+        "    foreach ($row->values as $index => $value) {",
+        "        $item = $expression->result($value, $empty, $catalogFirst, $target->written[$index]->kind);",
+        "        Check::input(",
+        "            $item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof BooleanLiteral || $item instanceof NullLiteral,",
+        "            'A supplied INSERT value requires an explicit native literal or NULL.',",
+        "        );",
+        "        $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);",
+        "    }",
+        "    $rows[] = new InsertRow($values);",
+        "}",
+        "",
+        "return new Insert($target, $rows, $profile->grammar, $returning);"
+      ]
+    },
+    "Mutation/UpdateLowering::value": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if (!$target instanceof ColumnReference && $operand instanceof ParsedColumn) {",
+        "    return $binding->field($operand);",
+        "}",
+        "$kind = match (true) {",
+        "    $target instanceof ColumnReference => ColumnKind::Int4,",
+        "    $target instanceof TextColumnReference => ColumnKind::Text,",
+        "    $target instanceof BooleanColumnReference => ColumnKind::Boolean,",
+        "};",
+        "$value = (new ExpressionLowering())->result($operand, $binding, $catalogFirst, $kind);",
+        "Check::input(",
+        "    $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral",
+        "        || $value instanceof TextLiteral || $value instanceof BooleanLiteral,",
+        "    'An UPDATE assignee requires a checked native literal, NULL or a row reference.',",
+        ");",
+        "",
+        "return $value;"
+      ]
+    }
+  }
+}

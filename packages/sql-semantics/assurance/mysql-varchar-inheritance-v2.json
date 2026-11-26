@@ -1,0 +1,31 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-inheritance-2",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["mysql-varchar-slots-v2.json", "mysql-varchar-comparison-v1.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "amends": "mysql-varchar-inheritance-v1.json",
+  "amendmentReason": "The native metadata exposed legacy option order. Preserve the reverse DDL in every fixture. On 5.6.51 and 5.7.44 its effective utf8mb4_general_ci is observed, and construction of a stock binary IR is rejected.",
+  "scope": "Resolve a native VARCHAR whose stock utf8mb4_bin collation is fixed by a single declared table default or an explicit compatible column override.",
+  "constructors": {},
+  "existingRoles": ["From/Varchar", "From/TextCollation", "From/TextColumnReference", "TableSource", "ResultColumn", "Select", "Predicate/Text/TextComparison"],
+  "structure": "The completed value contains the resolved character capacity, nullability and effective builtin collation at its exact physical slot. The table and column options belong to temporary semantic binding.",
+  "conditions": "A column-level collation overrides table defaults. A column with its own explicit character-set or binary role requires its own resolved collation. A named table collation can determine the character set when the table charset is omitted. A table with its own charset option must specify a matching named charset. MySQL 5.6.51 and 5.7.44 reset the collation if a matching charset follows it. Later pinned releases merge these compatible options in either order. Duplicate, unresolved and incompatible collation or charset options must not be interpreted as utf8mb4_bin.",
+  "meaning": "Both explicit and inherited stock binary collation resolve to the same completed native type and semantics. Keep physical reference identity, exact projected bytes, NULL, duplicates and padding behavior.",
+  "sql": "Emit the same physical reference and native result operation regardless of the route by which the collation was resolved.",
+  "observations": ["Exact physical column collation, width and nullability", "The same type at the same observed resolved position for direct and analyzed values", "Case-sensitive padded equality, exact typed rows, column names and duplicate handling"],
+  "finite": {"origin": ["collation-only", "charset-then-collation", "collation-then-charset", "column-override"], "projection": ["field", "equality", "null-safe"], "filter": ["all", "present", "empty"], "identities": 36, "legacyIdentities": 27, "legacyRejectedOrigin": "collation-then-charset", "completeness": "Recover physical source origin, projected expression role and filter from each directly constructed value, then observe paired SQL analysis for each admitted origin. For the legacy reverse DDL, the observer measures the physical field collation and native case equality and requires analysis to reject a binary slot."},
+  "exploration": {"seeds": [4603, 13337, 36109], "casesPerSeed": 16, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Vary origin, projection operands, qualifiers, literal values, ordered result headings and supported text filters."},
+  "analysis": ["Named table collation determines the column charset", "Explicit matching table charset and collation", "Reversed table options", "Column override of a different table collation"],
+  "negative": ["No resolved database or table collation", "Explicit column charset preempts the table collation", "Explicit nonbinary column override preempts the table collation", "Conflicting table charset and collation", "Conflicting duplicate table collations"],
+  "negativeByRelease": {"mysql-5.6.51": ["Later CHARSET resets the earlier stock binary table COLLATE"], "mysql-5.7.44": ["Later CHARSET resets the earlier stock binary table COLLATE"]},
+  "faults": ["Render a native result from the alternate physical field", "Erase NULL-safe equality", "Apply a case-insensitive comparison to the inherited binary field"],
+  "evidence": {
+    "P01": "Resolve exact native field identity, type attributes and collation from the supplied declarations.", "P02": "Close ordinary table reference, cast and collation consistency before publication.", "P03": "Retain only the native collation enum and typed position.", "P04": "Compose the same effective type irrespective of the binding route.", "P05": "Recheck the native value graph and detached slot lists.", "P06": "Compare compiled SQL and original SQL with the independent native column profile and PAD SPACE model.",
+    "Q01": "Reject unknown or conflicting binding and static slot roles.", "Q02": "Consume every fixed origin, position and filter combination with a compatible physical type plus seeded cases. Measure both rejected reverse DDL interpretations and their nonbinary native behavior.", "Q03": "Check metadata and operator composition at the owning source.", "Q04": "Compare exact stored and projected values with actual physical definitions.", "Q05": "Tie raw evidence and declared selection logic to the staged PHP."
+  },
+  "open": ["Database and server default collation resolution", "Other built-in collation roles and coercion rules", "Binary shorthand, ALTER TABLE, and dynamically established declarations"],
+  "trust": ["Native MySQL table and column character-set precedence", "Independent physical column metadata with the fixed fixture interpretation", "Source-rule pinning and the typed value-graph verifier"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/charset-table.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-column.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html", "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_yacc.yy#L6199-L6230", "https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_yacc.yy#L6175-L6207"]
+}

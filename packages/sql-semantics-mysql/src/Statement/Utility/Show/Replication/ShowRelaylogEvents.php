@@ -25,10 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-relaylog-events.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'");
- *     [$show->statement->channel?->value, $show->toString()] // => ['c', "SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'"]
+ * @visibility SqlSemantics
  */
 final class ShowRelaylogEvents implements Statement
 {

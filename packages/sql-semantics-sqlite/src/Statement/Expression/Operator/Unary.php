@@ -25,13 +25,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Typing\Operators;
  * Source: https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the operand of a negation
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT -a FROM t');
- *     $query->statement->columns[0]->expression->operand->name->value // => 'a'
- * @example Refusing an operand that the prefix operator would not cover when written
- *     $sum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Minus, $sum) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class Unary implements Scalar
 {

@@ -13,10 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select-into.html.
  *
- * @visibility public
- * @example Reading the file name
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t INTO DUMPFILE '/tmp/a.bin'");
- *     $query->statement->into->file->value // => '/tmp/a.bin'
+ * @visibility SqlSemantics
  */
 final class IntoDumpfile implements IntoDestination
 {

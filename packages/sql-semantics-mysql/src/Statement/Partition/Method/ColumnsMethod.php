@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnNames;
  * have is a diagnostic.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-columns.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a list partitioning by columns
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::List, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('region')]);
  *     [$method->kind->value, $method->columns[0]->value] // => ['LIST', 'region']

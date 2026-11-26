@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/mysql-insert-destination-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": [
+    "server-insert-v1.json",
+    "server-insert-query-v3.json"
+  ],
+  "rationale": "Literal and query INSERT must admit the same resolved signed INT and VARCHAR destination roles as analysis. A signed integral read slot with a different physical width does not establish the checked write conversion semantics.",
+  "rules": {
+    "Mutation/Insert::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target->kind->isTable(), 'An INSERT target must be a base table.');",
+        "$width = count($target->columns);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');",
+        "foreach ($target->columnTypes as $type) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind || $type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar, 'An INSERT destination requires a writable signed INT or native VARCHAR slot.');",
+        "}",
+        "$this->rows = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($rows, \\SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "    foreach ($row->values as $position => $cell) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($cell->value === null || $cell->value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral === $target->columnTypes[$position] instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar, 'An INSERT value must match its native destination type.');",
+        "    }",
+        "}"
+      ]
+    },
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($target->kind->isTable(), 'An INSERT target must be a base table.');",
+        "$width = count($target->columns);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$query->source instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Join && $query->orderBy === [] && $query->limit === null, 'The INSERT query must be independent, unbounded and unordered.');",
+        "foreach ($query->columns as $position => $column) {",
+        "    $value = $column->expression;",
+        "    $type = $target->columnTypes[$position];",
+        "    if ($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\Varchar) {",
+        "        \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedText || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, 'A query INSERT VARCHAR field requires a native text value or NULL.');",
+        "        continue;",
+        "    }",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($type instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\ColumnKind, 'An INSERT destination requires a writable signed INT or native VARCHAR slot.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Arithmetic || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral || $value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral, 'Each query INSERT field requires a signed value or NULL.');",
+        "}"
+      ]
+    }
+  }
+}

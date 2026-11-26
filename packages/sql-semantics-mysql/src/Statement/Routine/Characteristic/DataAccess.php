@@ -12,10 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @visibility public
- * @example Reading the data access of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER PROCEDURE p READS SQL DATA');
- *     $alter->statement->characteristics[0]->level // => \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel::ReadsSqlData
+ * @visibility SqlSemantics
  */
 final class DataAccess implements Characteristic
 {

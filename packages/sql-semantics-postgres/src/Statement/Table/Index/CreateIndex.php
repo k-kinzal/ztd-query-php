@@ -32,10 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  * An index declares nothing a query can read.
  * Source: https://www.postgresql.org/docs/17/sql-createindex.html.
  *
- * @visibility public
- * @example Reading an index
- *     $index = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0');
- *     [$index->statement->unique, $index->statement->table->only, $index->toString()] // => [true, true, 'CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0']
+ * @visibility SqlSemantics
  */
 final class CreateIndex implements SchemaElement, Relation
 {

@@ -29,14 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE TABLE shop.t');
- *     [$show->shape()?->missing[0]->describe(), $show->toString()] // => ['whether shop.t is a base table or a view', 'SHOW CREATE TABLE shop.t']
- * @example Reading the columns for a declared view
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a');
- *     $semantics->analyze('SHOW CREATE TABLE v', [$view])->field(1)->name?->value // => 'Create View'
+ * @visibility SqlSemantics
  */
 final class ShowCreateTable implements Statement
 {

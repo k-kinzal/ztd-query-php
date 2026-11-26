@@ -26,9 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-group-replication.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Starting with credentials
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("start group_replication user = 'u', password = 'p'")->toString() // => "START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'"
+ * @visibility SqlSemantics
  */
 final class StartGroupReplication implements Statement
 {

@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
  * declaration: it requests a change and does not change a context.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-view.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the new query of a view
- *     $view = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER VIEW v AS SELECT 1 AS a');
- *     [$view->statement->definition->name->name->value, $view->declarations()] // => ['v', []]
+ * @visibility SqlSemantics
  */
 final class AlterView implements Statement
 {

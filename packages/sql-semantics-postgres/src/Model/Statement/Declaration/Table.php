@@ -16,11 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * The object is the identity of the declaration. Two equal-looking tables are
  * two declarations, and a context that holds both keeps the conflict.
  *
- * @visibility public
- * @example Reading the declaration a CREATE TABLE provides
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE users (id INTEGER, name TEXT)')->declarations()[0];
- *     [$table->name->name->value, count($table->columns)] // => ['users', 2]
+ * @visibility SqlSemantics
  */
 final class Table
 {

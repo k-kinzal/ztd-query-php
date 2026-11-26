@@ -1,0 +1,79 @@
+{
+  "revision": "SemanticsIR/postgres-text-null-tests-1",
+  "extends": ["postgres-typed-columns-v1.json", "server-truth-v2.json"],
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "Predicate/NullTest": {
+      "role": "A scalar presence test with an explicit required polarity.",
+      "structure": "A validated operand of a permitted closed scalar role, including a resolved text field, and one immutable negation flag.",
+      "conditions": "Each consuming owner validates the referenced slot and its native type in the visible input occurrences, and applies its expression height and expansion limits. A PostgreSQL row-valued null test has separate semantics.",
+      "meaning": "Return true exactly when the tested scalar is NULL for IS NULL, or non-NULL for IS NOT NULL. An outer-extended row supplies SQL NULL in that occurrence.",
+      "sql": "Parenthesize the scalar and its presence operation. For a field, emit the checked occurrence alias and exact physical name."
+    },
+    "ResultColumn": {
+      "role": "An ordered Boolean output when a scalar presence test is selected.",
+      "structure": "The resolved scalar presence test and the observable result column label.",
+      "conditions": "The owning SELECT checks the presence test's entire operand tree against its source, including its native operand kind.",
+      "meaning": "Observe the native Boolean type, exact truth value, output name and result position.",
+      "sql": "Emit the parenthesized scalar presence test with the observable result alias."
+    }
+  },
+  "externalInterpretation": "Use the same absolute tables and resolved native column types, including empty, nonempty and NULL text fields and missing outer join matches.",
+  "observations": [
+    "A text scalar differs observably from a distinct text field in the same row and from a text field in another occurrence.",
+    "Empty and nonempty strings both satisfy IS NOT NULL. A SQL NULL or a missing outer side satisfies IS NULL.",
+    "Preserve the Boolean result type, label, physical reference identity and duplicate output rows.",
+    "Preserve WHERE versus ON semantics when a presence test controls a left or right outer join."
+  ],
+  "finite": {
+    "source": ["ordinary", "left-join", "right-join"],
+    "placement": ["projection", "where", "on"],
+    "polarity": ["null", "not-null"],
+    "field": ["label", "note"],
+    "identities": 32,
+    "constraints": "An ordinary source has no ON placement. A joined source tests its joined occurrence at position 1 for projection and WHERE, and its occurrence at position 1 inside an ON conjunction with int4 key equality.",
+    "completeness": "Recover placement, polarity, source kind and physical name from the measured references and predicate structure. Assert unique identities and compare with the contract's independently derived admissible product."
+  },
+  "exploration": {
+    "seeds": [1997, 40973, 71947],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 280,
+    "allowedExclusions": [],
+    "requiredForms": "Vary occurrence, owned position, placement, absent and empty text, labels and multi-level NOT, AND and OR composition. Preserve independently observed program traces and balances."
+  },
+  "analysis": [
+    "Project both polarities from an ordinary source, with native Boolean metadata.",
+    "Read an unqualified text field through an ordinary WHERE presence test.",
+    "Read an outer-extended occurrence through a WHERE presence test.",
+    "Apply a text presence condition in the ON of a LEFT join without discarding its unmatched rows."
+  ],
+  "negative": [
+    "A projected text test addresses an int4 slot.",
+    "A WHERE text test addresses a missing occurrence.",
+    "A text test in ON refers outside the visible joined operands.",
+    "A text presence test directly consumes a text slot at an unrelated occurrence even though the ordinal exists there on the intended input."
+  ],
+  "faults": [
+    "Invert the presence operation while retaining the operand.",
+    "Replace the tested field with another native text field in the same occurrence.",
+    "Replace the tested occurrence with the opposite side of an outer join."
+  ],
+  "evidence": {
+    "P01": "Observe the operand's actual native role, physical name, occurrence and polarity.",
+    "P02": "Validate bounds and exact native roles at the consuming expression boundary.",
+    "P03": "Retain only the checked operand and polarity, without text or context storage.",
+    "P04": "Compose checked scalar presence and Boolean operations over the exact child values.",
+    "P05": "Use immutable operands and polarity and audited immutable owning structures.",
+    "P06": "Evaluate the rendered SQL on both pinned releases and compare row membership, metadata and multiset.",
+    "Q01": "Reject each invalid typed reference at its owning boundary and audit the binding and emission shapes.",
+    "Q02": "Require every admissible finite coordinate, exploration attempt and equivalent analysis case.",
+    "Q03": "Observe independent NULL and Boolean rules, including outer extension and placement.",
+    "Q04": "Compare exact results against actual PostgreSQL and detect each injected semantic difference.",
+    "Q05": "Bind checked programs and replayable observations to the exact distributed package bytes."
+  },
+  "open": ["Native mutation effects with text presence predicates require their own observation domain. Other text operators and other unrepresented scalar roles retain their obligations."],
+  "trust": ["Resolved native declaration", "Pinned PostgreSQL SQL NULL and Boolean representation", "Checked construction and independent relational controller"]
+}

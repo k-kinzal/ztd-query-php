@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
  * names is ER_NO_SUCH_TABLE (1146), since these statements find base tables
  * only. Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of a refusal
  *     \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView->value // => 'is not VIEW'
  */

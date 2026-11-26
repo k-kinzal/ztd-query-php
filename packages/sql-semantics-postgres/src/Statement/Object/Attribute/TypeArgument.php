@@ -26,11 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * which names a type with exactly that one name.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, `defGetTypeName` in `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading the state type of an aggregate in a complete context
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4)', []);
- *     $state = $operation->statement->definition[1]->value;
- *     $state->typeFact($operation->context)->descriptor->name() // => 'integer'
+ * @visibility SqlSemantics
  */
 final class TypeArgument implements AttributeArgument
 {

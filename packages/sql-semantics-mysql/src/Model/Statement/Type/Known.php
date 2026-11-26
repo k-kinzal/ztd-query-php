@@ -9,10 +9,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A type the rules of the language profile determine exactly.
  *
- * @visibility public
- * @example Reading a known type
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT 'a'");
- *     $operation->field(0)->type instanceof \SqlSemantics\Platform\MySql\Model\Statement\Type\Known // => true
+ * @visibility SqlSemantics
  */
 final class Known implements TypeFact
 {

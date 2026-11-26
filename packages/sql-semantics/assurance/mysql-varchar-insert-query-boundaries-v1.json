@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-insert-query-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-insert-query-boundaries-v4.json",
+    "sha256": "67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373"
+  },
+  "scope": "Enforce each native write kind against the expression at the same position.",
+  "rules": {
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $position => $column) {",
+        "    $value = $column->expression;",
+        "    if ($target->columnTypes[$position] instanceof Varchar) {",
+        "        Check::input(",
+        "            $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof CollatedText || $value instanceof NullLiteral,",
+        "            'A query INSERT VARCHAR field requires a native text value or NULL.',",
+        "        );",
+        "        continue;",
+        "    }",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,",
+        "        'Each query INSERT field requires a signed value or NULL.',",
+        "    );",
+        "}"
+      ]
+    }
+  }
+}

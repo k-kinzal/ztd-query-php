@@ -22,10 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-tablespace.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Deactivating an undo tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter undo tablespace u set inactive");
- *     [$statement->toString(), $statement->statement->active] // => ["ALTER UNDO TABLESPACE u SET INACTIVE", false]
+ * @visibility SqlSemantics
  */
 final class AlterUndoTablespace implements Statement
 {

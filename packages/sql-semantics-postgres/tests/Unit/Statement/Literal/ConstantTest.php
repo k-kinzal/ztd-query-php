@@ -38,7 +38,7 @@ final class ConstantTest extends TestCase
 
     public function testBuiltinReadsTheTextOfANumericConstantThroughTheFacade(): void
     {
-        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 0x1FFFFFFFFF, 1_000_000_000_000, 0001.50, 1e2');
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SELECT 0x1FFFFFFFFF, 1_000_000_000_000, 0001.50, 1e2');
         self::assertEquals([new Known(Builtin::Int8), new Known(Builtin::Int8), new Known(Builtin::Numeric), new Known(Builtin::Numeric)], [$query->field(0)->type, $query->field(1)->type, $query->field(2)->type, $query->field(3)->type]);
         self::assertSame('SELECT 0x1FFFFFFFFF, 1_000_000_000_000, 0001.50, 1e2', $query->toString());
     }

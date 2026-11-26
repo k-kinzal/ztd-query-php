@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-descriptions.html#function_ntile.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Depending on the program state
  *     (new \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('n')))->name->value // => 'n'
  */

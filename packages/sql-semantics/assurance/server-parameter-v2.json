@@ -1,0 +1,156 @@
+{
+  "revision": "SemanticsIR/server-parameter-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql",
+    "PostgreSql"
+  ],
+  "profiles": "The pinned native releases and projection profiles. MySQL uses native unnamed question marks and the signed integer cast. PostgreSQL uses native numbered positions and the pg_catalog.int4 input role.",
+  "scope": "An explicitly cast parameter in a result position. The value is supplied when executing a prepared statement. Native MySQL positions are local to the projection and assigned in output order. PostgreSQL positions are absolute and can repeat or be out of lexical order.",
+  "open": [
+    "Parameters without a fixed target role, other cast types, parameters inside other scalar expressions, predicates, mutation operands and row bounds"
+  ],
+  "constructors": {
+    "Parameter": {
+      "type": "Binding/Parameter",
+      "role": "One bound integer projection operand with a checked native position",
+      "fields": [
+        "position"
+      ],
+      "invariants": [
+        "An integer position from 1 through 1024",
+        "The containing projection closes MySQL lexical order or PostgreSQL numbered slot coverage"
+      ],
+      "meaning": "Use the supplied parameter value in the fixed native cast. A NULL input produces SQL NULL. Selection, repetition and names of projected values are observable.",
+      "sql": "Emit CAST(? AS SIGNED) for MySQL or CAST($n AS pg_catalog.int4) for PostgreSQL. Preserve occurrence order and the numbered references.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "ParameterProjection": {
+      "type": "Select",
+      "role": "The existing checked result and relation scope with projected parameter positions",
+      "invariants": [
+        "MySQL uses exactly the ascending positions 1 through the number of occurrences",
+        "PostgreSQL references each used index from 1 through the greatest referenced index"
+      ],
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Recognize the explicit builtin cast of a native marker, resolve its output name in the original projection, and call the same constructor and scope checks as direct construction.",
+  "observations": [
+    "Ordinal output names and native integer types",
+    "Checked bind-slot correspondence with intentionally different values",
+    "Repeated positions on PostgreSQL",
+    "NULL and signed integer bounds"
+  ],
+  "finite": {
+    "bindings": [
+      -2147483648,
+      0,
+      9,
+      2147483647,
+      null
+    ],
+    "widths": [
+      1,
+      2
+    ],
+    "layouts": {
+      "mysql": [
+        [
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "postgres": [
+        [
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          1,
+          2
+        ]
+      ]
+    },
+    "completeness": "Observe all one- and two-position binding products. PostgreSQL additionally enumerates the unpermuted, reversed and repeated legal layouts."
+  },
+  "exploration": {
+    "seeds": [
+      1901,
+      2861,
+      9967
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 175,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Zero position",
+    "Position beyond the profile",
+    "Missing first position",
+    "Nonconforming marker cast"
+  ],
+  "additionalMySqlNegatives": [
+    "Positions reversed",
+    "Position repeated"
+  ],
+  "faults": [
+    "Replace one projected parameter value by zero while still consuming its marker",
+    "Swap visibly different parameter bindings or their output positions",
+    "Use the wrong cast target"
+  ],
+  "trust": [
+    "Pinned native parser and bind protocols",
+    "Closed integer cast roles",
+    "Independent vector lookup and typed output comparisons"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/prepare.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html",
+    "https://www.postgresql.org/docs/17/sql-prepare.html",
+    "https://www.postgresql.org/docs/17/sql-expressions.html"
+  ],
+  "extends": "server-parameter-v1.json",
+  "invalidCastBoundary": {
+    "mysql": {
+      "sql": "SELECT CAST(? AS UNSIGNED) AS a0",
+      "exception": "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction",
+      "message": "A projection cast must have the scalar MySQL SIGNED target."
+    },
+    "postgres": {
+      "sql": "SELECT CAST($1 AS bigint) AS a0",
+      "exception": "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction",
+      "message": "The cast target must be pg_catalog.int4 or pg_catalog.bool."
+    }
+  },
+  "observationRevision": "Keep both unsupported casts, the same typed rejection boundary, and the finite and exploration budgets. Require the current specific target diagnostics from the checked scalar lowering. Arbitrary failures cannot satisfy these cases."
+}

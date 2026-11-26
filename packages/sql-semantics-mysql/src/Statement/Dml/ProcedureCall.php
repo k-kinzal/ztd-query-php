@@ -23,10 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  * and `CALL p()` are the same call. Terminates: one pass over the
  * arguments. Source: https://dev.mysql.com/doc/refman/8.4/en/call.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a procedure call
- *     $call = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CALL shop.refresh(1, @x)');
- *     [$call->statement->procedure->name->value, count($call->statement->arguments), $call->toString()] // => ['refresh', 2, 'CALL shop.refresh(1, @x)']
+ * @visibility SqlSemantics
  */
 final class ProcedureCall implements Statement
 {

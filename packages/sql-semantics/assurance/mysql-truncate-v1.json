@@ -1,0 +1,130 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL persistent base-table identities under utf8mb4, lower_case_table_names=0 and an empty sql_mode. The bounded observations use InnoDB, foreign_key_checks=1 and unit auto-increment increment and offset.",
+  "extends": [
+    "server-drop-table-v2.json",
+    "mysql-ordered-table-rename-v2.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Truncate/TruncateTable"
+  ],
+  "constructors": {
+    "TruncateTable": {
+      "type": "Schema/Truncate/TruncateTable",
+      "role": "A native DDL truncation of an ordinary persistent base table.",
+      "structure": "One checked absolute TableName and the native grammar release.",
+      "conditions": "Construction requires the checked table identity role. Analysis must resolve one persistent base-table declaration and reject unbound, session-temporary and wrong-kind targets. The external interpretation resolves the absolute identity at evaluation without a session-temporary overlay.",
+      "meaning": "Truncate the resolved physical table through the native operation. For the bounded InnoDB fixture, a distinct referencing table prevents truncation even if empty. A self-reference does not. Success empties the named table without firing row deletion triggers, resets allocation, preserves the logical table definition and commits the enclosing transaction.",
+      "sql": "Emit native TRUNCATE TABLE followed by the exactly cased and fully backtick-quoted schema and table names."
+    }
+  },
+  "existingRoles": [
+    "Schema/TableName",
+    "Identifier"
+  ],
+  "structure": "The resolved operand is a schema and table identity under a fixed grammar and naming profile. The operation kind implies native truncation and its DDL semantics.",
+  "conditions": "The binding role is persistent and ordinary. Evaluation-time disappearance and referential failures may be represented by an external state in the bounded comparison. A complete analyzer result requires a known binding.",
+  "meaning": "Use native row clearing, allocation reset and implicit commit, subject to the target and dependency graph of the external catalog.",
+  "sql": "Write one TRUNCATE TABLE with exact identifier quoting and qualification.",
+  "observations": [
+    "Before and after row bags, column metadata, index and foreign-key declarations, engine, and next generated identifier",
+    "Same-named schema decoy, case-distinct target and escaped identifier remain distinguishable",
+    "Zero affected count on successful execution, exact SQLSTATE and native error for a referenced or absent target",
+    "No DELETE callback, implicit commit even on the two specified failures, retained marker, and attempted rollback",
+    "Confirm the next identifier by actual insertion after the post-rollback snapshot"
+  ],
+  "finite": {
+    "fixture": [
+      "plain",
+      "foreign-key-filled",
+      "foreign-key-empty",
+      "self-reference"
+    ],
+    "target": [
+      "primary",
+      "secondary",
+      "decoy",
+      "mixed-case",
+      "escaped",
+      "absent"
+    ],
+    "identities": 24,
+    "completeness": "Recover the actual absolute table from loaded PHP, compare the native starting catalog to the independently defined fixture, and require one receipt for every fixed fixture and target pair."
+  },
+  "analysis": [
+    "Unqualified table without the TABLE keyword",
+    "Explicit qualified primary table",
+    "Qualified same-named table in the decoy database",
+    "Case-distinct resolved table",
+    "Qualified identifier containing an escaped backtick",
+    "Ordinary table with a self-reference in the observer fixture"
+  ],
+  "negative": [
+    "Path separator in a direct persistent table identifier",
+    "Trailing space in a direct persistent schema identifier",
+    "Missing required analyzed table in a complete catalog",
+    "Unresolved table in an incomplete catalog",
+    "Resolved view used in the table role",
+    "Resolved session-temporary table used in the persistent role"
+  ],
+  "exploration": {
+    "seeds": [
+      613,
+      2837,
+      6143
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary native catalog topology, resolved name, same-name decoy, case, escaped identifier and fixture row values. The statement has no optional child or operand list."
+  },
+  "faults": [
+    "Erase the target schema using an operand in another database",
+    "Redirect to the same-named table in the decoy database",
+    "Always emit a fixed valid truncation",
+    "Fold the case of a resolved table name",
+    "Allow a known session-temporary declaration in the persistent role",
+    "Allow a path separator in a direct table identity"
+  ],
+  "evidence": {
+    "P01": "Fix the absolute table and native truncation operation with exact case and grammar release.",
+    "P02": "Check the closed operand and reject unbound, transient and wrong-kind targets before publication.",
+    "P03": "Retain only the checked identity and release.",
+    "P04": "Compose the change to the resolved target with the externally interpreted dependency graph.",
+    "P05": "Use readonly named fields, the checked final identity and a closed release enumeration.",
+    "P06": "Emit one fully qualified native statement, preserving row, metadata, trigger and transaction effects.",
+    "Q01": "Check exact PHP construction and binding shape with independent invalid inputs.",
+    "Q02": "Require every fixed finite identity together with authored and seeded positive inputs.",
+    "Q03": "Predict independent row, referential, allocation, trigger and transactional transitions.",
+    "Q04": "Compare predicted state, result and effects to native execution of the rendered SQL.",
+    "Q05": "Connect the observed role to both installed Composer layouts, exact source and protected replay."
+  },
+  "open": [
+    "Session-temporary truncation and other storage engines require their own binding and effect evidence.",
+    "Partition and tablespace layouts, handler closure, locking, privileges, replication and production concurrency require additional observations."
+  ],
+  "trust": [
+    "Truthful external interpretation of persistent base-table names and declared engine and foreign-key state",
+    "Native MySQL grammar, exact release and fixture state",
+    "Exact loaded PHP and independent native observer"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-extrema-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Keep COUNT, MIN and MAX distinct from signed-only SUM over the existing checked grouped input.",
+  "rules": {
+    "Aggregation/Aggregate::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(",
+        "    $argument !== null || ($operator === AggregateOperator::Count && !$distinct),",
+        "    'Only a nondistinct COUNT can omit the aggregate argument.'",
+        ");",
+        "Check::input($argument === null || $argument->occurrence === 0, 'The aggregate argument must read its single input occurrence.');",
+        "Check::input(!$argument instanceof TextColumnReference || $operator !== AggregateOperator::Sum, 'SUM requires a signed INT argument.');"
+      ]
+    }
+  }
+}

@@ -16,9 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * no operand. Facts: none.
  * Source: https://www.postgresql.org/docs/17/sql-checkpoint.html. Status: Implemented.
  *
- * @visibility public
- * @example Writing a checkpoint request
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('checkpoint')->toString() // => 'CHECKPOINT'
+ * @visibility SqlSemantics
  */
 final class Checkpoint implements Statement
 {

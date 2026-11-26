@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * IDENTITY is the default and is kept when written.
  * Source: https://www.postgresql.org/docs/17/sql-truncate.html.
  *
- * @visibility public
- * @example Emptying tables
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('TRUNCATE TABLE ONLY a, b RESTART IDENTITY CASCADE');
- *     [count($statement->statement->tables), $statement->toString()] // => [2, 'TRUNCATE ONLY a, b RESTART IDENTITY CASCADE']
+ * @visibility SqlSemantics
  */
 final class TruncateTable implements Statement
 {

@@ -21,10 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-binary-logs.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW BINARY LOGS');
- *     [$show->field(1)->name?->value, $show->toString()] // => ['File_size', 'SHOW BINARY LOGS']
+ * @visibility SqlSemantics
  */
 final class ShowBinaryLogs implements Statement
 {

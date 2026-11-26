@@ -1,0 +1,43 @@
+{
+  "revision": "SemanticsIR/sqlite-folded-membership-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 in UTF-8 and the checked numbered binding profile.",
+  "scope": "The binding footprint that survives SQLite folding a constant empty membership expression.",
+  "constructors": {
+    "Predicate/FoldedMembership": {
+      "role": "The decided value of a scalar IN or NOT IN with a syntactically empty list.",
+      "structure": "One Boolean result and an owned ordered list of numbered Parameter values registered by the discarded operand.",
+      "conditions": "Limit the footprint to 8192 entries. Preserve first registration and the highest slot. The enclosing statement validates the expanded node and payload envelope and combines the footprint with all other operand bindings in statement order.",
+      "meaning": "Return integer zero for an empty IN or integer one for an empty NOT IN. The discarded operand has no runtime value, column references or effects. Its surviving binding registrations and numbered labels remain observable.",
+      "externalInterpretation": "The value is constant for every supplied runtime value. The binding footprint uses the same native SQLite slot numbers and lexical labels.",
+      "sql": "Emit the constant directly if its footprint is empty. Otherwise emit an empty native membership test whose discarded scalar holds the ordered numbered bind markers. Observe registration even when SQLite removes the whole operand before binding column names.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Predicate/MembershipTest", "Parameter", "Select", "Rows/ValuesQuery"],
+  "observations": [
+    "Known result values and native INTEGER storage, exact numbered count and first lexical label per slot, including leading zeros, gaps, repeated slots and placement among live operands.",
+    "An undeclared name or unbound expression in the discarded operand is accepted when native SQLite folds it. The same missing name in an active scalar or a nonempty membership test requires analysis failure.",
+    "Two scalar markers that look like parameter text inside a quoted string or identifier do not register parameters."
+  ],
+  "finite": {
+    "roots": ["select", "values"],
+    "values": [false, true],
+    "lengths": [0, 1, 2],
+    "labels": ["02", "2", "7"],
+    "identity": "Cross both roots and constant outcomes with every ordered binding list of length zero, one or two. Exhaust all 52 constructed identities."
+  },
+  "exploration": {
+    "seeds": [9109, 20807, 36913],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 150,
+    "allowedExclusions": [],
+    "structure": "Generate overlapping numbered bindings in mixed scalar projections and VALUES rows. Vary order, repeated aliases, holes, nested tests, and quoted text resembling parameter labels. Compare the written forms and the emitted forms in the analyzed cases."
+  },
+  "negative": ["Non-list binding footprint", "Invalid numbered slot", "Missing active reference", "Unsupported named parameter"],
+  "faults": ["Discard the binding footprint", "Reorder two lexical bindings for the same slot", "Change the decided Boolean outcome", "Remove the highest numbered slot"],
+  "open": ["Anonymous and named binding profiles, and binding footprints in otherwise unsupported outer statement structures."],
+  "trust": ["Pinned SQLite C observer", "Independent numbered registration and constant result rules", "Ordered parser token observation in the lowering phase"],
+  "sources": ["https://sqlite.org/lang_expr.html#the_in_and_not_in_operators", "https://sqlite.org/c3ref/bind_parameter_count.html", "https://sqlite.org/c3ref/bind_parameter_name.html"]
+}

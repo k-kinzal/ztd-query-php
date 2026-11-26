@@ -14,10 +14,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * the keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/logical-operators.html.
  *
- * @visibility public
- * @example Reading the operator of a disjunction
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a || b');
- *     $query->statement->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::Or
+ * @visibility SqlSemantics
  */
 enum LogicalOperator: string
 {

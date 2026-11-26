@@ -1,0 +1,43 @@
+{
+  "revision": "SemanticsIR/sqlite-index-operand-bindings-1",
+  "approval": "pending-human-review",
+  "profile": "SQLite 3.47.2 with UTF-8, native file format 4, built-in collations and the same absolute external table",
+  "references": {
+    "sqlite-create-index-v5.json": "5de8d76708ad174043a3ee7d09855244f6ba45830226ad20e506244e207cdde0",
+    "sqlite-index-expression-spelling-v1.json": "704f6ef9139e3edc1d8844301211f474bba4c175e9f59ec31dc89b51c2c38e51"
+  },
+  "constructors": {
+    "Schema/Index/CreateIndex": "Install an ordinary or unique index with ordered closed key expressions, an optional partial predicate and a guarded-existence policy."
+  },
+  "rules": [
+    "Validate the complete declared heading, ordered key terms, predicate, identifier distinctness, slot ownership, registration rules and resource bounds before publication.",
+    "Store the absolute table and index names, keys, predicate and policies. Retain the exact declared name at a slot if and only if a key or predicate selects it. Retain each used slot once in numeric order. A constant declaration can have no retained column names.",
+    "The canonical renderer uses the retained table slot names. It preserves native key direction, direction-dependent planner properties, reference identity, effective collation, lexical marker registration and exact expression spelling wherever the planner observes it.",
+    "Keep original and emitted SQL native comparison, transaction effects, future writes, typed value observations, uniqueness, and forced partial and expression index behavior under the previously fixed schedules."
+  ],
+  "validation": {
+    "proofPremises": "Use matching external relation identities, column slots, collation and native SQLite profile. No extra execution exclusions.",
+    "thresholds": "Keep all 256 CREATE INDEX finite coordinates, the amended index spelling lane, all seed budgets, all positive and negative construction routes and all prior faults.",
+    "healthy": "Compare published slot-name pairs to an independent traversal of the trusted input tree. Derive heading width from actual native catalog observations. Coverage must include an empty map, sparse maps, and multiple selected slots.",
+    "faults": [
+      "Retain an unused heading name or alter an exact checked slot copy.",
+      "Render one selected slot with a different existing field name and detect it through independent native metadata and later index behavior.",
+      "Drop the expression scope check or retain a caller array alias."
+    ]
+  },
+  "nativeCalibration": {
+    "coordinateOrder": [
+      "all six permutations of two used field names and one unused name",
+      "two unused identifier spellings",
+      "constant, ordinary named key, or computed key with a partial predicate",
+      "main and temp"
+    ],
+    "coordinates": 72,
+    "nativeWrongOperandControls": 48,
+    "recipeSha256": "52fe5eef29dabd9a6316b90b2c9fbf2f223bceaeae3720aea1de87055e21fd56",
+    "observationsSha256": "7e39393c9c631a3a03e7fc57a5a40868c3afb112f331fd42fe8f4d20dea0baa5"
+  },
+  "obligations": [
+    "P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"
+  ]
+}

@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
 use SqlSemantics\Platform\PostgreSql\Model\Resolution\TableLookup;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Facts;
@@ -224,10 +225,22 @@ final class Derivation
     }
 
     /**
-     * Records a relation declaration the statement provides to a context.
+     * Records a relation declaration or the latest definition of a preceding view.
      */
-    public function declare(Table $table): void
+    public function declare(Table $table, bool $replacesView = false): void
     {
+        if ($replacesView && $table->kind === RelationKind::View) {
+            foreach ($this->declarations as $position => $previous) {
+                if ($previous->kind === RelationKind::View
+                    && $previous->name->name->value === $table->name->name->value
+                    && $previous->name->schema?->value === $table->name->schema?->value
+                    && $previous->name->catalog?->value === $table->name->catalog?->value) {
+                    $this->declarations[$position] = $table;
+
+                    return;
+                }
+            }
+        }
         $this->declarations[] = $table;
     }
 

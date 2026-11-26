@@ -14,15 +14,15 @@ final class CopyRuleTest extends TestCase
 {
     public function testCopyLowersAQuery(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('COPY (DELETE FROM t RETURNING *) TO STDOUT');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('COPY (DELETE FROM t RETURNING *) TO STDOUT');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyQuery::class, $query->statement);
     }
 
     public function testDirectionLowersFrom(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze('COPY t FROM STDIN');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect('COPY t FROM STDIN');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection::From, $statement->direction);
@@ -30,8 +30,8 @@ final class CopyRuleTest extends TestCase
 
     public function testFlagLowersBinaryAndProgram(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze("COPY BINARY t TO PROGRAM 'gzip'");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect("COPY BINARY t TO PROGRAM 'gzip'");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
         self::assertSame([true, true], [$statement->binary, $statement->program]);
@@ -39,8 +39,8 @@ final class CopyRuleTest extends TestCase
 
     public function testFileLowersAFileName(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze("COPY t TO '/tmp/t.csv'");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect("COPY t TO '/tmp/t.csv'");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
         self::assertSame('/tmp/t.csv', $statement->file instanceof \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant ? $statement->file->value : null);
@@ -48,8 +48,8 @@ final class CopyRuleTest extends TestCase
 
     public function testDelimitersLowersTheString(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
-        $query = $semantics->analyze("COPY t FROM STDIN DELIMITERS '|'");
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
+        $query = $semantics->inspect("COPY t FROM STDIN DELIMITERS '|'");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
         self::assertSame('|', $statement->delimiters?->value);

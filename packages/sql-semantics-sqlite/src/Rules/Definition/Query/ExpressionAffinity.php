@@ -128,6 +128,9 @@ final class ExpressionAffinity
      */
     public function resolved(ResolvedColumn $resolution, Facts $facts): DerivedAffinity
     {
+        if ($resolution->merge !== null) {
+            return new DerivedAffinity();
+        }
         if ($resolution->slot->column !== null) {
             return $this->declared($resolution->slot->column);
         }

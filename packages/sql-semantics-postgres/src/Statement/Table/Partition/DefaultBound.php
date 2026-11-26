@@ -15,9 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * Mirrors `PartitionBoundSpec` with `is_default`.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
- * @example Writing a default partition
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('create table p0 partition of p default')->toString() // => 'CREATE TABLE p0 PARTITION OF p DEFAULT'
+ * @visibility SqlSemantics
  */
 final class DefaultBound implements PartitionBound
 {

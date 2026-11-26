@@ -1,0 +1,117 @@
+{
+  "revision": "SemanticsIR/sqlite-table-metadata-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2, stock schemas and metadata pragmas, UTF-8, fixed native temp/main/attached precedence, only stock VFS and registered module namespace.",
+  "scope": "table_info, table_xinfo, index_list and foreign_key_list for ordinary declared relations, a proved absent selector, the native schema catalogs or no argument. table_list enumerates native catalog metadata with zero or one fixed schema and an optional exact native name filter.",
+  "additionalPublicRoots": ["Maintenance/Metadata/TableInspection", "Maintenance/Metadata/TableListing"],
+  "constructors": {
+    "Maintenance/Metadata/TableInspection": {
+      "role": "Read one table's SQLite column, index or foreign-key metadata.",
+      "structure": "A TableInspectionKind, a resolved explicit schema or the implicit lookup, and an existing RelationTarget, a CatalogTable, a MissingMetadataTable or the no-argument case.",
+      "conditions": "The named table's coordinate and kind are resolved when it exists. Direct construction checks that a selected relation agrees with any explicit schema, that an implicit system catalog is reachable, and that a missing selector cannot denote a known native catalog or an undisclosed builtin relation. An incomplete namespace cannot establish absence.",
+      "meaning": "Return the fixed column heading for the operation and exact ordered catalog entries of the selected target, including defaults, key ordinals, generated and hidden members as applicable. Absence and no-argument selections return the named empty result. Native explicit temp access and any native catalog lookup that initializes temp are observable.",
+      "externalInterpretation": "Use the same declared relation, schema comparison and precedence, and native runtime metadata, including definitions and current session databases. An implicit lookup has the same selected coordinate under that external interpretation.",
+      "sql": "Emit the selected builtin operation, an independently quoted explicit schema when requested, and a checked quoted native table selector when supplied.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Metadata/TableInspectionKind": {
+      "role": "Select the exact SQLite table metadata operation.",
+      "structure": "The closed cases table_info, table_xinfo, index_list and foreign_key_list.",
+      "conditions": "SQLite compares builtin pragma names using ASCII-insensitive equality.",
+      "meaning": "Select ordinary columns, extended columns, native index list or declaration-order foreign-key facts with the corresponding fixed names and typed rows.",
+      "externalInterpretation": "Use the stock SQLite column/storage, index and foreign-key rules.",
+      "sql": "Emit the selected native pragma name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Metadata/CatalogTable": {
+      "role": "The builtin catalog table for one exact SQLite schema.",
+      "structure": "The schema Identifier for an existing attached database or temp.",
+      "conditions": "Direct and analyzed use must bind the operand to the specified schema. Without a schema qualifier the legacy catalog argument can reach the main or temp catalog.",
+      "meaning": "Select the five catalog-table columns or its empty index/foreign-key metadata. Native temporary catalog lookup can have operation-specific temp activation.",
+      "externalInterpretation": "The database slot and its runtime catalog are supplied by the same SQLite session.",
+      "sql": "Use sqlite_temp_master for the temp catalog and sqlite_master for all others.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Metadata/MissingMetadataTable": {
+      "role": "A table-name operand in a checked metadata query whose native lookup is known to find no table.",
+      "structure": "An Identifier interpreted as a decoded lookup name.",
+      "conditions": "The owner checks the mode and namespace, including the builtin catalogs and virtual-module candidates. An absent explicit target belongs to the same requested database scope. Absence is determined from a closed declaration context during analysis.",
+      "meaning": "Produces the operation's native result names with no rows while preserving the supplied lookup and access scope.",
+      "externalInterpretation": "The same namespace continues to establish absence, including the chosen native builtins.",
+      "sql": "Emit the checked lookup name at the metadata argument position.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Maintenance/Metadata/TableListing": {
+      "role": "Read native catalog relation metadata with optional schema and exact-name filtering.",
+      "structure": "Optional resolved schema Identifier and optional decoded name filter Identifier.",
+      "conditions": "The explicit schema must be resolved. The name is a filter on native catalog rows, with no requirement for a matching table. Empty text is a real filter distinct from no filter.",
+      "meaning": "Return native schema, relation name, kind, column count including generated or hidden columns, WITHOUT ROWID and STRICT facts. The filter matches the native catalog key before SQLite presents the preferred system table name. Retain duplicate matches in different schemata.",
+      "externalInterpretation": "Use the same schema contents, attached order and module implementation. Row order is not guaranteed by table_list; compare typed row multiplicity.",
+      "sql": "Emit PRAGMA, the explicitly requested schema and table_list with the checked optional name filter.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "rules": [
+    "SQLite passes decoded value text to each pragma. Grammar PLUS is discarded and MINUS is prepended. A quoted sign remains in the requested name. Numeric tokens represent native names without evaluating an SQL expression.",
+    "Normal table inspection uses the first table or view found in temp, main, and attachment order. An explicit qualifier selects only its schema. Incomplete competing declarations or unknown qualifiers prevent publication.",
+    "The builtin aliases sqlite_schema and sqlite_master resolve to the persistent catalog of the explicit schema or to main when implicit. In temp the same aliases can name the temp catalog. sqlite_temp_schema and sqlite_temp_master select temp when implicit or explicitly scoped to temp.",
+    "Table inspection without a target or with a proved missing target has its native headers and no rows. Do not certify missing dynamic system tables or eponymous virtual tables whose semantics have not been established.",
+    "A native visible-field index compresses over hidden and generated fields for table_info. table_xinfo uses physical column order and distinct flags for ordinary, hidden, virtual-generated and stored-generated columns. Default absence and SQL NULL default spelling produce different typed cells.",
+    "Index list entries retain native ordinal, exact index identity, uniqueness, origin and partial flag. The foreign-key list records the native reverse declaration sequence with member positions and preserves implicit referenced columns as NULL.",
+    "A table_list filter compares all selected schemas rather than binding one winning table. sqlite_master and sqlite_temp_master are the native internal keys of builtin catalog rows even though their displayed labels differ."
+  ],
+  "observations": [
+    "Compare exact fields, SQLite storage and typed values, attribute positions, operation identity, readOnly, parameter shape, row multiplicity and ordered positions where SQLite defines them.",
+    "Distinguish temporary shadows from persistent names, compare attachment and schema activation before and after, cover semantically quoted names, generated fields and computed/default NULL spelling.",
+    "Compare builtin schema outputs including alternate selectors and the native distinction between preferred and legacy names for table_list. Ensure unrelated rows and attached databases stay present.",
+    "Use independently authored expected schema rows and metadata from deterministic declarations. The candidate parser and renderer do not determine the expected values."
+  ],
+  "finite": {
+    "operations": ["table_info", "table_xinfo", "index_list", "foreign_key_list", "table_list"],
+    "selectors": ["none", "shadow-name", "view", "without-rowid", "foreign-key-table", "missing", "ordinary-catalog", "temp-catalog", "quoted-name"],
+    "scopes": ["implicit", "main", "temp", "attached"],
+    "temporary": ["unopened", "populated"],
+    "identity": "All 360 operation/name/scope/temp-state coordinates with distinct selector spelling and fixture state documented by native requests. Inspect both construction routes."
+  },
+  "exploration": {
+    "seeds": [43391, 11027, 58111],
+    "casesPerSeed": 54,
+    "timeoutSeconds": 480,
+    "allowedExclusions": [],
+    "domain": "Vary quote-bearing schema and table names, ordinary and disabled metadata selection, implicit and explicit scopes, generated column order, typed field values and membership in each schema. Independently cover numeric name arguments, native legacy aliases, and same-named entries from several schemas."
+  },
+  "negative": [
+    "Explicit scope contradicts a directly selected relation",
+    "An implicit selector claims a system catalog in an attached database",
+    "A purported missing target is a known builtin",
+    "A missing target cannot be proved from an incomplete namespace",
+    "An unknown schema qualifier",
+    "Conflicting declarations under one selected name",
+    "Opaque virtual relation or eponymous virtual-table metadata"
+  ],
+  "faults": [
+    "Allow a contradictory direct table coordinate",
+    "Skip temp precedence",
+    "Turn table_list filtering into binding to one table",
+    "Replace extended columns with ordinary columns",
+    "Drop the metadata scope",
+    "Emit the preferred instead of native table_list catalog filter",
+    "Treat an open namespace as a known missing table"
+  ],
+  "open": [
+    "Module-defined virtual layouts, their shadow tables, exposure of dynamic internal schema tables and SQLite's index_info, index_xinfo and foreign_key_check operations require additional concrete roles or evidence.",
+    "The proof uses the checked Identifier profile for native name values. Wider native names and alternative SQLite build/extension profiles remain tracked separately."
+  ],
+  "trust": [
+    "Pinned native PRAGMA declaration table, SQLite catalog search rules and observer.",
+    "Declared external schemas and independent fixture model for columns, keys, views, catalog aliases and generated fields.",
+    "Isolated invocation, source boundary audit and the staged Composer distribution."
+  ],
+  "calibration": {
+    "engineSource": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "driver": "3e84bdc70ce3cb107838f9804aa3b4ae96b995f9cab4ee757097f28ebab9f692",
+    "cases": "9c4c2c3ec4aa49d66aecc2946cd792e0bb7f14d0a3d9d779ef515a8ebbe8dcf5",
+    "routines": ["sqlite3FindTable", "sqlite3LocateTable", "PragTyp_TABLE_INFO", "PragTyp_TABLE_LIST", "PragTyp_INDEX_LIST", "PragTyp_FOREIGN_KEY_LIST"]
+  }
+}

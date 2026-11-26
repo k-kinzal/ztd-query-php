@@ -7,9 +7,7 @@ namespace Tests\Unit\Statement\Query\Set;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
@@ -22,6 +20,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(OrderedSetOperation::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class OrderedSetOperationTest extends TestCase
 {
     public function testDeriveQueryOrdersTheResultAndKeepsTheClausesOfTheLastSelect(): void
     {
-        $operation = (new Semantics('mysql-5.6.51'))->analyze('SELECT (SELECT 1 AS x UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x LIMIT 3)', []);
+        $operation = (new Inspection('mysql-5.6.51'))->inspect('SELECT (SELECT 1 AS x UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x LIMIT 3)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -53,15 +53,15 @@ final class OrderedSetOperationTest extends TestCase
 
         $this->expectExceptionMessage('A set operation ordered after the clauses of its last SELECT needs MySQL 5.6.');
 
-        new Operation((new Semantics('mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($union))]));
+        new InspectedStatement((new Inspection('mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($union))]));
     }
 
     public function testRenderWritesTheOrderingAfterTheLockingClauseOfTheLastSelect(): void
     {
-        $semantics = new Semantics('mysql-5.6.51');
+        $semantics = new Inspection('mysql-5.6.51');
 
-        self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1) AS v', $semantics->analyze('select (select 1 union select a from t for update order by 1) as v')->toString());
-        self::assertInstanceOf(QueryExpression::class, $semantics->analyze('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement);
+        self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1) AS v', $semantics->inspect('select (select 1 union select a from t for update order by 1) as v')->toString());
+        self::assertInstanceOf(QueryExpression::class, $semantics->inspect('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement);
     }
 
     public function testRejectsALastSelectWithoutClausesOfItsOwn(): void

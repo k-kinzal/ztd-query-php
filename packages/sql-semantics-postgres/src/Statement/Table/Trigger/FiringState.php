@@ -10,9 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
  * Mirrors the `tgenabled`/`evtenabled` codes: ENABLE fires in origin and local mode, ENABLE REPLICA in replica mode, ENABLE ALWAYS in every mode, DISABLE never.
  * Source: https://www.postgresql.org/docs/17/sql-altereventtrigger.html.
  *
- * @visibility public
- * @example Reading the firing state of an event trigger
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EVENT TRIGGER e ENABLE ALWAYS')->statement->state // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\FiringState::EnableAlways
+ * @visibility SqlSemantics
  */
 enum FiringState: string
 {

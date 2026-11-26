@@ -1,0 +1,61 @@
+{
+  "revision": "SemanticsIR/postgres-schema-views-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "releases": ["16.6", "17.2"],
+  "scope": "Add ordinary persistent view members to the checked CREATE SCHEMA sequence and table phases. The standalone view operand domain supplies constant SELECT, standalone VALUES and one persistent base-table input. View-on-view, repeated OR REPLACE of a prior view, dynamic containing schema, and later member phases remain open.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-createschema.html",
+    "https://www.postgresql.org/docs/17/sql-createview.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/backend/parser/parse_utilcmd.c",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/parser/parse_utilcmd.c"
+  ],
+  "constructors": {
+    "CreateSchema": {
+      "type": "Schema/Namespace/CreateSchema",
+      "role": "Declare a namespace with its owner and an ordered ordinary-view phase after its sequences and tables.",
+      "structure": "The existing resolved schema and owner, release, existence policy, sequence and table lists, plus a detached ordered list of checked CreateView values.",
+      "conditions": "A view has the parent release and its absolute containing namespace. The guard requires an empty member sequence. All member targets share the distinct relation-name space. A view reading a base table in the new namespace uses the first actual selected table and its exact consumed field identities and types. Earlier sequences occupy their native names before table construction.",
+      "meaning": "Issue the native schema DDL with the selected owner. Run sequences, then tables, then views, preserving corresponding relative order. Local view reads target the earlier base table if that table provides the selected fields. The recorded external targets retain their exact meaning in the same catalog.",
+      "sql": "Emit the checked phases in order inside the same CREATE SCHEMA statement. Use qualified target and source coordinates and emit the native view heading, query and options from each child."
+    }
+  },
+  "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "finite": {
+    "owners": ["effective", "named"],
+    "layouts": ["values", "local", "external", "guarded-local"],
+    "writtenOrders": ["view-first", "table-first"],
+    "transactional": [false, true],
+    "bound": "32 exact coordinates per native release and each construction route. Both routes also run the seeded structures and typed negative obligations."
+  },
+  "exploration": {
+    "seeds": [11239, 24971, 67111],
+    "casesPerSeed": 14,
+    "directCasesPerSeed": 14,
+    "timeoutSecondsPerRelease": 220,
+    "allowedExclusions": [],
+    "structure": "Vary independent view members, native column kinds, relation and column quoting, absolute or relative written references, source decoys, ordered headings, view options, earlier guarded table collisions and transaction state."
+  },
+  "observations": [
+    "Exact owner, target relation kinds and schema identity, generator and base table declarations in the preceding phases, and view rewrite dependencies on relation OIDs and physical column attributes.",
+    "View heading order and PostgreSQL type identity, preserved duplicate and NULL result rows, native view options and the response to changing rows in the containing or an external schema.",
+    "An existing decoy relation with differing source rows, earlier guarded table occupancy and preserved shape, no partial namespace or child after a controlled rejection, and rollback."
+  ],
+  "requiredFormerRefusals": [
+    "CREATE SCHEMA ir_ns_sequence_subject CREATE VIEW feed AS SELECT 1"
+  ],
+  "negative": [
+    "Cross-namespace view target, temporary ordinary view, duplicated ordinary view target and malformed namespace guard.",
+    "Unavailable or wrongly typed local input, incompatible release, and missing or foreign view element in the direct composition."
+  ],
+  "faults": [
+    "Remove the view phase.",
+    "Redirect a local view input to a same-named external table.",
+    "Drop the view heading or a preserved view option."
+  ],
+  "trust": [
+    "PostgreSQL processes the declared phases under the specified role. The same fixed external target identities and runtime permissions apply.",
+    "The independent fixture observes native phase and column dependencies, and checks views against both input rows and catalog coordinates."
+  ]
+}

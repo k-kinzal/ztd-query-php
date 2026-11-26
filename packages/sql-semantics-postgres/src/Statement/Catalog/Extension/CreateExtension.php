@@ -23,10 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule
  * twice is a diagnostic, and so is FROM, which the server no longer supports.
  * Source: https://www.postgresql.org/docs/17/sql-createextension.html. Status: Implemented.
  *
- * @visibility public
- * @example Installing an extension into a schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA ext CASCADE');
- *     [$operation->statement->ifNotExists, $operation->toString()] // => [true, 'CREATE EXTENSION IF NOT EXISTS hstore SCHEMA ext CASCADE']
+ * @visibility SqlSemantics
  */
 final class CreateExtension implements Statement
 {

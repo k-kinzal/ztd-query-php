@@ -14,8 +14,8 @@ final class TableFunctionTest extends TestCase
 {
     public function testRenderWritesTheDefinitions(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT * FROM ROWS FROM (f() AS (a integer, b text), g())');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
+        $query = $semantics->inspect('SELECT * FROM ROWS FROM (f() AS (a integer, b text), g())');
         self::assertSame('SELECT * FROM ROWS FROM (f() AS (a INTEGER, b text), g())', $query->toString());
     }
 }

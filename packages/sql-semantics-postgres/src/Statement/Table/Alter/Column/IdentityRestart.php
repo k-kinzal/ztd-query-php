@@ -15,10 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  * The optional WITH changes nothing and is not kept.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Restarting an identity
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a RESTART');
- *     $statement->statement->commands[0]->options[0]->value // => null
+ * @visibility SqlSemantics
  */
 final class IdentityRestart implements Node
 {

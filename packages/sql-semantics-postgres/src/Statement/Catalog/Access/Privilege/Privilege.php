@@ -21,10 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * name is the role name, and a keyword spelling names the role of that word.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
- * @example Reading a column privilege
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT UPDATE (price) ON items TO joe');
- *     [$operation->statement->privileges[0]->privilege(), $operation->statement->privileges[0]->columns[0]->value] // => ['update', 'price']
+ * @visibility SqlSemantics
  * @example Rejecting ALL without a column list as a privilege of its own
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::All) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

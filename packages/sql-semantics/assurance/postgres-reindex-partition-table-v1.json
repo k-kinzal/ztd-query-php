@@ -1,0 +1,82 @@
+{
+  "revision": "SemanticsIR/postgres-reindex-partition-table-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "Stock PostgreSQL 16.6 and 17.2, UTF-8, standard-conforming strings and native parameters. Persistent application partition trees and their attached physical tables bind from supplied local declarations.",
+  "scope": "REINDEX TABLE with resolved ownership in a partition hierarchy. A branch selects the physical leaves below it. A physical attached leaf selects its own indexes. Both select eligible TOAST indexes.",
+  "additionalPublicRoots": ["Schema/Index/Partition/ReindexPartitionTable"],
+  "constructors": {
+    "Schema/Index/Partition/ReindexPartitionTable": {
+      "role": "A rebuild of the attached heap's index set or the selected branch's descendant index sets.",
+      "structure": "One absolute persistent TableName, the checked branch-or-leaf role, concurrency mode and fixed native grammar release.",
+      "conditions": "The decoded owner belongs to the persistent application profile. The analyzer fixes branch and leaf identity from resolved declarations and refuses missing or incompatible owners. Ordered Boolean options resolve the final concurrency request.",
+      "meaning": "A branch rebuild traverses only the leaves below the resolved branch and can cross schemas along declared partition edges. A leaf rebuild affects only that leaf. Native partitioned roots require a top-level command in both modes. For a leaf only the concurrent request is prohibited in a transaction.",
+      "sql": "Emit REINDEX TABLE followed by optional CONCURRENTLY and the exact quoted schema and table. The actual same external owner kind determines physical traversal.",
+      "externalInterpretation": "The same declared physical or partitioned relation at that absolute local name, with the same native hierarchy and auxiliary index membership.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Schema/Index/Partition/PartitionRebuildKind": {
+      "role": "Select either a physical attached leaf or a declared partitioned branch.",
+      "structure": "Exactly Branch and Leaf.",
+      "conditions": "A branch declares a partitioning strategy. A leaf declares partition membership and has no own subpartition strategy. Bind this distinction before publication.",
+      "meaning": "Defines the strength of the transaction precondition and the set of native heaps that can contribute an index.",
+      "sql": "Both roles use the native TABLE selector for the already resolved name.",
+      "externalInterpretation": "Same native catalog kind and hierarchy under the supplied relation declarations.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Schema/TableName", "Schema/Index/IndexRebuildMode"],
+  "rules": [
+    "A branch with no physical leaves is a valid empty rebuild outside a transaction.",
+    "Both rebuild modes of a branch fail with SQLSTATE 25001 inside a transaction. Successful standard rebuilding of an attached leaf can be rolled back.",
+    "Every selected physical index keeps its logical attachment and row interpretation. Native standard rebuilding retains each OID and changes its storage. Concurrent rebuilding can replace both.",
+    "The heap and partition identities, parent links, row values and independent siblings are preserved. Off-schema leaves are included when selected by the same hierarchy."
+  ],
+  "observations": [
+    "Absolute target and branch-or-leaf role, grammar profile, requested mode and actual SQL.",
+    "Native status, command, notices and transaction phase. Preserve row values and typed headings, heap membership and child and parent attachment coordinates.",
+    "Read before, during and settled physical OID and storage transitions for user, TOAST and unrelated indexes."
+  ],
+  "finite": {
+    "targets": ["root-empty", "root-two-leaves", "root-nested", "leaf-local", "leaf-remote", "branch-remote"],
+    "concurrently": [false, true],
+    "active": [false, true],
+    "spellings": ["qualified", "local"],
+    "identity": "All 48 finite coordinates per release, exercised through both direct and analyzed routes. Local spelling is used under an explicit owner-aware schema path with competing unrelated data."
+  },
+  "exploration": {
+    "seeds": [1039, 9949, 129221],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 390,
+    "allowedExclusions": [],
+    "domain": "Vary selected branch and depth, physical or partitioned target, attached owners in two schemas, quoted names, concurrency options, transaction attempts and distinct data."
+  },
+  "negative": [
+    "A missing partition relation",
+    "A foreign database selector",
+    "A direct system namespace",
+    "A direct temporary partition identity",
+    "An unsupported rebuild option"
+  ],
+  "faults": [
+    "Publish a branch through the leaf role",
+    "Rebuild just a single leaf instead of its declared ancestor",
+    "Rebuild only the attached key hierarchy and omit auxiliary indexes",
+    "Discard the concurrent request"
+  ],
+  "sources": ["https://www.postgresql.org/docs/16/sql-reindex.html", "https://www.postgresql.org/docs/17/sql-reindex.html"],
+  "trust": [
+    "Closed target role and exact publication code, consistent supplied partition declaration and catalog identity, independent stock physical state observations and ledger replay."
+  ],
+  "open": [
+    "Named partition INDEX publication, numbered temporary trees, externally attached existing relations and validity and exclusion-specific effects remain distinct obligations."
+  ],
+  "calibration": {
+    "driver": "c4f056332006954585b0ca29263ab733baa3b18e3a39ff43c71d772e42268bb4",
+    "queryPack": "803292b1cf659e5846eea20bdb23ecfcf264fccc246294663b8aa279629d126b",
+    "referenceComparison": "33412fc1081af4563ba00b71d64566b1dcf66757d1f44a6ae52ab91bc18068eb",
+    "normalized": "e8dbff2970a604551b107958ae45774b1206192b5cb26c68e478557e274ce6eb",
+    "16.6": {"stdout": "9dc69ced0e3f1dee6a7b5fcfcb569ba10dc580bde237234ec8afbe6c3bff0bdf", "stderr": "e92db285804529ead94eae41b095f93446d5eb13d8ff5352893fecc4a98da5ae"},
+    "17.2": {"stdout": "7f430c63fba5b03b6e07c612486439ed527a43e4d8a10069259b14f5df137317", "stderr": "37a2e584e98d9804fdd40efe25dcca48a718d10ccb698c490302a213521b7367"}
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "revision": "SemanticsIR/postgres-declaration-binding-sources-1",
+  "approval": "pending-human-review",
+  "related": "postgres-text-declarations-v2.json",
+  "artifacts": {
+    "src/Model/Facade/Catalog.php": {
+      "sha256": "4dd2300e7e42d35c193c09e921fb7359ba7f8344b47c2c77d8e850a68f4bd6c7",
+      "role": "Propagate complete versus open declarations while preserving their order."
+    },
+    "src/Platform.php": {
+      "sha256": "f3cd60f0c7d328f90b4548beec1449bc4c7e769a6fe6065e28248bdbfe3d16c6",
+      "role": "Resolve the implicit temporary and catalog namespaces and preserve the ordered search path."
+    },
+    "src/Rules/Table/Definition/ColumnTyping.php": {
+      "sha256": "815c39d2de3ae7fb83a7c88b16f42e508a4dbefc87067e16d871dff0365a3ed6",
+      "role": "Keep the type resolved by each declaration at its original position."
+    },
+    "src/Statement/Type/Designation/NamedDesignation.php": {
+      "sha256": "af507dac7740b51e4aa8598682a07b53074bd7f4309194320773ee1a6537483a",
+      "role": "Resolve a name before a native physical column is published."
+    }
+  }
+}

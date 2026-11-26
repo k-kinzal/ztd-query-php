@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  * https://dev.mysql.com/doc/refman/8.4/en/local-variable-scope.html.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Counting the parameters of an empty list
  *     count((new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]))->parameters) // => 0
  */

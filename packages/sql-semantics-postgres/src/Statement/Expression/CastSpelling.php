@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression;
  * operator precedence.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-TYPE-CASTS.
  *
- * @visibility public
- * @example Reading the spelling of a cast
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1::text');
- *     $query->field(0)->expression->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\CastSpelling::Operator
+ * @visibility SqlSemantics
  */
 enum CastSpelling
 {

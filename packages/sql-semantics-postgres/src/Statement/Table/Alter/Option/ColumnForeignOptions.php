@@ -20,10 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  * Mirrors `AT_AlterColumnGenericOptions`.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
- * @example Changing column options
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER FOREIGN TABLE f ALTER a OPTIONS (ADD x 'y')");
- *     $statement->toString() // => "ALTER FOREIGN TABLE f ALTER a OPTIONS (ADD x 'y')"
+ * @visibility SqlSemantics
  */
 final class ColumnForeignOptions implements AlterCommand
 {

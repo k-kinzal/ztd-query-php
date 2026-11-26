@@ -25,10 +25,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
  * Source: https://sqlite.org/lang_select.html#the_from_clause,
  * https://sqlite.org/lang_indexedby.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a named input
- *     $input = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM main.t AS x')->singleNamedInput();
- *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['main', 't', 'x']
+ * @visibility SqlSemantics
  */
 final class TableInput implements NamedRelation
 {

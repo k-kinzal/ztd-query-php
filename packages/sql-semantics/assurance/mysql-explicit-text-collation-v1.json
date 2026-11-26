@@ -1,0 +1,36 @@
+{
+  "revision": "SemanticsIR/mysql-explicit-text-collation-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["mysql-text-literal-v1.json", "mysql-varchar-comparison-v1.json", "mysql-varchar-inheritance-v1.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "scope": "Resolve explicit utf8mb4_bin COLLATE over a native VARCHAR field or plain UTF-8 literal. Compose those text values and ordered comparisons in checked native SELECT projections and predicates.",
+  "constructors": {
+    "Expression/CollatedText": {
+      "role": "One explicit native collation application to typed text.",
+      "structure": "A native VARCHAR reference or immutable text literal and the builtin collation enum.",
+      "conditions": "The operand is already native utf8mb4. The owning root validates any physical read slot. Other character sets, computed operands and unregistered collations require separate roles.",
+      "meaning": "Keep the exact operand bytes and SQL NULL behavior. Native utf8mb4_bin applies with coercibility zero, above plain literals or physical field defaults.",
+      "sql": "Emit the exact operand with a parenthesized native COLLATE utf8mb4_bin operator."
+    }
+  },
+  "existingRoles": ["Predicate/Text/TextComparison", "Predicate/Text/TextOperator", "From/Varchar", "From/TextColumnReference", "From/TextCollation", "Literal/TextLiteral", "ResultColumn", "Select"],
+  "structure": "Each text comparison has two ordered native operands and the uniquely selected stock collation. A declared VARCHAR field or an explicit collated value supplies the fixed collation.",
+  "conditions": "At least one of the comparison operands supplies a fixed collation role. A reference within a collated operand belongs to the exact physical source. An incompatible operand or collation is rejected before publication.",
+  "meaning": "Explicitly collated values retain type, data, collation and coercibility. The stock PAD SPACE rule applies to equal, unequal, ordered and NULL-safe comparisons when selected. Result labels and positions remain exact.",
+  "sql": "Render the native COLLATE operator in the corresponding value position. Retain comparison order, parentheses, operators and typed leaves.",
+  "observations": ["Exact result bytes, NULL, multiplicity and typed output metadata", "Native collation and coercibility per explicitly collated result position, including projections filtered to no results", "Exact selection, operand order, comparison truth and preservation of duplicate result labels"],
+  "finite": {"operand": ["literal", "field"], "placement": ["result", "compare-left", "compare-right"], "filter": ["all", "empty"], "literalValue": ["a", "a "], "identities": 24, "completeness": "Recover the operand type, explicit collation, position, literal witness and filter from constructed roles."},
+  "exploration": {"seeds": [4679, 14821, 37799], "casesPerSeed": 16, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Vary operand positions, qualifier forms, Unicode, padded equality, NULL-safe comparison, source presence and repeated output names."},
+  "analysis": ["Explicit literal collation in a projection without a source", "Explicit field metadata and exact qualified reference", "Explicit literal resolves comparison without a field", "Explicit field on the ordered right operand", "Comparison in a WHERE scope with exact NULL semantics"],
+  "negative": ["A collated reference points at a signed field", "A collated reference reads an absent occurrence", "A parsed COLLATE uses a different collation", "A numeric expression is explicitly collated", "A literal comparison lacks a fixed collation role"],
+  "faults": ["Remove explicit collation", "Select different lookup collation while leaving bytes unchanged", "Replace the resolved VARCHAR reference", "Swap collated comparison operands"],
+  "evidence": {
+    "P01": "Retain the exact builtin application and operand type.", "P02": "Check the typed operand and its owning source.", "P03": "Keep only the explicit operation and immutable text or resolved slot.", "P04": "Compose under the native capability and comparison rules.", "P05": "Reconcile the new role with the checked readonly value graph.", "P06": "Verify independent physical collation metadata, typed results and comparator outputs.",
+    "Q01": "Check the local domain and rejected source roles.", "Q02": "Exhaust the fixed domain and inspect the seeded constructs.", "Q03": "Verify selection by coercibility and the placement of every reference.", "Q04": "Measure actual scalar metadata and values independently on the chosen releases.", "Q05": "Pin the PHP target and proof, independent evaluator and observer revision."
+  },
+  "open": ["Other character sets, collation enums, mixed collation coercion and computation", "Repeated COLLATE or arbitrary scalar expressions and broader statement positions"],
+  "trust": ["The fixed native VARCHAR and UTF-8 literal profiles", "Native explicit COLLATE and coercibility", "Independent PAD SPACE and qualified fixture interpretation"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/charset-collate.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-collation-coercibility.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html"]
+}

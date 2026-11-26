@@ -26,9 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * (PG-PRECEDENCE-001).
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PREDICATES. Status: Implemented.
  *
- * @visibility public
- * @example Testing an XML constant
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '<a/>' IS DOCUMENT")->field(0)->type->descriptor->name() // => 'boolean'
+ * @visibility SqlSemantics
  */
 final class DocumentTest implements Scalar
 {

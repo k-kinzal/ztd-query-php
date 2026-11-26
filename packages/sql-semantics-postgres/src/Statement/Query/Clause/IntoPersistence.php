@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Clause;
  * absence of any of these words.
  * Source: https://www.postgresql.org/docs/17/sql-selectinto.html, https://www.postgresql.org/docs/17/sql-createtable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the persistence of a temporary target
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\IntoPersistence::LocalTemp->temporary() // => true
  */

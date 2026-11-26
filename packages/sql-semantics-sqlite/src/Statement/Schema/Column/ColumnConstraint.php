@@ -16,10 +16,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  * and a generated column expression.
  * Source: https://sqlite.org/syntax/column-constraint.html.
  *
- * @visibility public
- * @example Reading the constraints of a column in written order
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a INTEGER NOT NULL DEFAULT 0)');
- *     count($create->statement->columns[0]->constraints) // => 2
+ * @visibility SqlSemantics
  */
 interface ColumnConstraint extends Node
 {

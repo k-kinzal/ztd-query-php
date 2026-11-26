@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\WrongArgumentCount;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(WrongArgumentCount::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class WrongArgumentCountTest extends TestCase
 
     public function testMessageIsReportedForACallWithTooManyArguments(): void
     {
-        $query = (new Semantics())->inspect('SELECT abs(1, 2)');
+        $query = (new Inspection())->diagnose('SELECT abs(1, 2)');
 
         self::assertInstanceOf(WrongArgumentCount::class, $query->facts->diagnostics[0]);
         self::assertSame(2, $query->facts->diagnostics[0]->arguments);

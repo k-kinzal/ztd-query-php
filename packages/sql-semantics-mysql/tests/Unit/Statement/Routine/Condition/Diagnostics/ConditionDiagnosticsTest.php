@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionDiagnostics;
@@ -20,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagn
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ConditionDiagnostics::class)]
 #[Medium]
@@ -38,7 +38,7 @@ final class ConditionDiagnosticsTest extends TestCase
 
     public function testRenderWritesTheAnalyzedInformation(): void
     {
-        $get = (new Semantics('mysql-8.0.44'))->analyze('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT, @c = CURSOR_NAME');
+        $get = (new Inspection('mysql-8.0.44'))->inspect('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT, @c = CURSOR_NAME');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         self::assertInstanceOf(ConditionDiagnostics::class, $statement->information);

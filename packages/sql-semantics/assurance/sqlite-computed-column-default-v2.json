@@ -1,0 +1,246 @@
+{
+  "revision": "SemanticsIR/sqlite-computed-column-default-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 under the fixed UTF-8, schema resolution, numbering and ordinary table assumptions used by the table declaration and column addition contracts.",
+  "scope": "A closed computed column DEFAULT in CREATE TABLE and ALTER TABLE ADD COLUMN. The same expression has separate meaning for new row insertion and old-row fallback in the native table alteration.",
+  "constructors": {
+    "Schema/ComputedDefaultValue": {
+      "role": "A deterministic column default described by an existing checked scalar without live inputs.",
+      "structure": "One closed arithmetic, cast, unary, COALESCE, folded membership, concatenation or CASE scalar. Its expression may compose checked scalar children. Literal-only defaults use their existing storage roles.",
+      "conditions": "The complete default has an empty relation scope, and accepts no live parameter. It may contain only numbered parameter registrations already proven to occur in discarded operands. The owning TableColumn has no generated expression when it carries a default. The ordinary table layout and target contracts remain in force.",
+      "meaning": "At each insertion omitting the member, evaluate the checked expression and apply the declared column affinity, constraint and conflict policy. In ALTER TABLE, apply SQLite's old-row default extraction rules. A nonempty table may reject a schema expression the insertion executor would evaluate. Preserve native scan results and error phase for both paths.",
+      "externalInterpretation": "The same absolute target, column layout and session modes apply. Empty versus populated, existing row values and transaction state are external inputs. The value contains a closed operation and operands, with no connection, context, parser or source SQL.",
+      "sql": "Emit one wrapped DEFAULT expression using the closed scalar renderer. Retain nesting, cast role, operator and marker registration spellings. Preserve the observable distinction between DEFAULT NULL and a computed NULL.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "additionalPublicRoots": [],
+  "existingRoles": [
+    "Schema/TableColumn",
+    "Schema/CreateTable",
+    "Schema/Alter/AddColumn"
+  ],
+  "rules": [
+    "The language's ability to define a default expression and the older-record fallback mechanism are separate. Arithmetic and COALESCE have deterministic insertion results and cannot be used to fill existing rows by the native ALTER path. Supported literal, unary sign and cast forms can be extracted when their operand can be extracted.",
+    "DEFAULT NULL and DEFAULT (CAST(NULL AS INTEGER)) can differ on populated ordinary tables with a new NOT NULL declaration. Compare the old row, the new insertion refusal and the typed literal result. For STRICT tables, preserve the native integrity-check outcome.",
+    "A discarded IN-list operand can register numbered markers even in a DEFAULT expression. Expression evaluation stays independent of any supplied value. Preserve first spelling and slot number in the originating DDL.",
+    "Apply ordinary declaration and append requirements before publishing. A default with a live column name, subquery or parameter does not enter the complete scalar role.",
+    "An earlier negative example for arithmetic defaults becomes a mandatory positive construction and native comparison in both statement families. New negative examples retain typed refusal for unrepresented dynamic and nonconstant forms."
+  ],
+  "observations": [
+    "Compare the absolute target and unchanged unrelated schema, the ordered declared heading, DEFAULT presence, native statement and insert outcomes, storage class, existing rows and inserted rows under the same declaration, and rollback.",
+    "Use both authored SQL and direct construction. Include an arithmetic expression in CREATE TABLE and the same shape in an empty and a populated ALTER target. Preserve the original observed errors on populated tables.",
+    "Observe native parameters for folded scalar expressions, ordinary NULL-able and NOT NULL behavior, strict affinity, and lossless UTF-8 byte payloads for existing constants.",
+    "Independent expected output distinguishes old-row fallback support from ordinary insertion evaluation. It includes accepted form, step refusal, strict type or NULL rejection and scoped prepare refusal."
+  ],
+  "finite": {
+    "statements": [
+      "create",
+      "alter-empty",
+      "alter-populated"
+    ],
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "strict": [
+      false,
+      true
+    ],
+    "types": [
+      "INTEGER",
+      "TEXT"
+    ],
+    "expressions": [
+      [
+        "arithmetic",
+        "+",
+        [
+          "integer",
+          "2"
+        ],
+        [
+          "integer",
+          "3"
+        ]
+      ],
+      [
+        "arithmetic",
+        "+",
+        [
+          "null"
+        ],
+        [
+          "integer",
+          "3"
+        ]
+      ],
+      [
+        "arithmetic",
+        "/",
+        [
+          "integer",
+          "12"
+        ],
+        [
+          "integer",
+          "0"
+        ]
+      ],
+      [
+        "arithmetic",
+        ">>",
+        [
+          "integer",
+          "4"
+        ],
+        [
+          "integer",
+          "1"
+        ]
+      ],
+      [
+        "unary",
+        "-",
+        [
+          "unary",
+          "-",
+          [
+            "integer",
+            "5"
+          ]
+        ]
+      ],
+      [
+        "unary",
+        "-",
+        [
+          "null"
+        ]
+      ],
+      [
+        "unary",
+        "~",
+        [
+          "integer",
+          "0"
+        ]
+      ],
+      [
+        "cast",
+        "INTEGER",
+        [
+          "text",
+          "002"
+        ]
+      ],
+      [
+        "cast",
+        "INTEGER",
+        [
+          "null"
+        ]
+      ],
+      [
+        "cast",
+        "REAL",
+        [
+          "integer",
+          "16"
+        ]
+      ],
+      [
+        "coalesce",
+        [
+          [
+            "null"
+          ],
+          [
+            "integer",
+            "7"
+          ]
+        ]
+      ],
+      [
+        "folded-membership",
+        true,
+        [
+          "09",
+          "001",
+          "009"
+        ]
+      ]
+    ],
+    "nullPolicies": [
+      null,
+      "FAIL"
+    ],
+    "identity": "Each of the 576 Cartesian identities is checked once, using constructed operand shape and native metadata and observations before execution."
+  },
+  "exploration": {
+    "seeds": [
+      44071,
+      55051,
+      62219
+    ],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 275,
+    "allowedExclusions": [],
+    "domain": "Vary nested deterministic arithmetic and cast shapes, literal boundaries, repeated marker numbers, decoded identifiers, policy and statement placement. Include manually authored parser cases covering retained original results and failures."
+  },
+  "negative": [
+    "Column reference in a nested scalar",
+    "Live parameter",
+    "Generated column with a computed default",
+    "Closed default in the wrong role"
+  ],
+  "analysisNegative": [
+    "Live parameter",
+    "Column use",
+    "Subquery",
+    "A dynamic default outside the registered scalar roles"
+  ],
+  "faults": [
+    "Accept an unbound column reference",
+    "Omit the default expression",
+    "Change a typed cast target",
+    "Alter association of nested arithmetic",
+    "Discard registered parameter spellings"
+  ],
+  "open": [
+    "Native date, time and other dynamic function defaults remain open. Additional expression and datatype combinations outside this stated finite and seeded domain remain to be verified."
+  ],
+  "trust": [
+    "Pinned SQLite DDL, value extraction and insert evaluation",
+    "Independent typed scalar, fallback, catalog and state-transition observations",
+    "Checked closed PHP scalar dependencies, staged Composer release source and replay"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_altertable.html#alter_table_add_column",
+    "https://sqlite.org/lang_createtable.html#the_default_clause",
+    "https://sqlite.org/src/file/src/alter.c?ci=version-3.47.2"
+  ],
+  "calibration": {
+    "sourceId": "2024-12-07 20:39:59 2aabe05e2e8cae4847a802ee2daddc1d7413d8fc560254d93ee3e72c14685b6c",
+    "nativeCasesDigest": "7f9025983f5b3732e4f6970a8e57f743ea33166bd69e112c9dc6264cd182f617",
+    "driverDigest": "c76c9ef982776bb35781acb53e1e4ed6957fdcf69934c22c6ff494e48b836c4c",
+    "nullableAndMarkersDigest": "fbbf5d1f090f2f2fa52808fc8f4658c838989c73bfaacd0e60a27422de0cb19b"
+  },
+  "extends": "sqlite-computed-column-default-v1.json",
+  "revisionReason": "Use the package naming rule for the concrete value role. The semantic scope, acceptance rules, finite inputs, budgets and observations are unchanged."
+}
