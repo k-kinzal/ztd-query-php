@@ -63,7 +63,7 @@ function observeMysqlProjectionModes(SqlSemantics\Platform\MySql\Semantics $ordi
     $ansi = new SqlSemantics\Platform\MySql\Semantics(mode: new SqlSemantics\Platform\MySql\Mode(ansiQuotes: true));
     $declarations = ['CREATE TABLE app.lexical_rows (id INT, decoy INT)'];
     $catalog = $ansi->context($declarations);
-    $input = 'SELECT "id" AS first_value, "r"."id" AS second_value FROM "app"."lexical_rows" AS "r"';
+    $input = 'SELECT "id" AS "first_value", "r"."id" AS "second_value" FROM "app"."lexical_rows" AS "r"';
     $analyzed = $ansi->analyze($input, $catalog);
     [$batch] = $ansi->analyzeAll($input, $catalog);
     $id = new SqlSemantics\Platform\MySql\Ir\Identifier('id');
@@ -81,7 +81,7 @@ function observeMysqlProjectionModes(SqlSemantics\Platform\MySql\Semantics $ordi
         release: $ansi->profile()->grammar,
         mode: SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::AnsiQuotes,
     );
-    $text = $ordinary->analyze('SELECT "id" AS first_value');
+    $text = $ordinary->analyze('SELECT "id" AS `first_value`');
 
     return [$analyzed == $direct, $batch == $direct, $analyzed->profileId(), $analyzed->toString(),
         array_map(static fn ($column): array => [$column->expression->occurrence, $column->expression->slot], $analyzed->columns),
