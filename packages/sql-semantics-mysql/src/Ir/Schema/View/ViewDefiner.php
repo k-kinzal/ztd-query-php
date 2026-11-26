@@ -40,9 +40,12 @@ final class ViewDefiner
         $user = trim($user, ' ');
         $host = trim($host, ' ');
         Check::input(preg_match('/\A[\x{1}-\x{FFFF}]{0,32}\z/uD', $user) === 1, 'A view definer user requires at most 32 BMP characters without NUL.');
-        Check::input(preg_match('/\A[\x{1}-\x{FFFF}]{0,255}\z/uD', $host) === 1, 'A view definer host requires at most 255 BMP characters without NUL.');
+        Check::input(preg_match('/\A[\x{1}-\x{FFFF}]*\z/uD', $host) === 1, 'A view definer host requires BMP characters without NUL.');
+        Check::input(!str_contains($host, '@'), 'A view definer host cannot contain @.');
+        $host = (new NativeLocalNames())->key($host);
+        Check::input(strlen($host) <= 255, 'A view definer host permits at most 255 bytes.');
         $this->user = $user;
-        $this->host = (new NativeLocalNames())->key($host);
+        $this->host = $host;
     }
 
     /**
@@ -56,8 +59,8 @@ final class ViewDefiner
         );
         Check::input(
             ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744)
-                || preg_match('/\A.{0,60}\z/usD', $this->host) === 1,
-            'A MySQL 5.6 or 5.7 view definer host permits at most 60 characters.'
+                || strlen($this->host) <= 60,
+            'A MySQL 5.6 or 5.7 view definer host permits at most 60 bytes.'
         );
     }
 

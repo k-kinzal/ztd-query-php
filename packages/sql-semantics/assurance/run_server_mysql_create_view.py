@@ -18,8 +18,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-view"
 OBSERVER = "mysql_create_view_observer.php"
-CONTRACT_NAME = "mysql-create-view-v10.json"
-CONTRACT = "51afb7335924506a5c9172fd6c2c8ec4b752c70f1385c71e739055dd8f585912"
+CONTRACT_NAME = "mysql-create-view-v11.json"
+CONTRACT = "9842635bd016e1e05465863da3546078b73333b14882bcd31080d0ae9037d513"
 BASE_CONTRACT = "7465a47332cd41088ffc7ed5bc997353a35a553e8aade2c51e8392b09e904d1c"
 COMPLETE_SEEDS = True
 AXES = ("algorithm", "security", "policy", "body", "fixture")
@@ -332,11 +332,17 @@ def rejection_sql(item, _):
 
 def observe_rejection(spec, item, native, sql):
     if "definerNegative" in item:
-        require(native["status"] == "view-definition" and native["result"] == ["db-error", "HY000", 1470],
+        coordinate = item["definerNegative"]
+        role = coordinate[-1] if isinstance(coordinate, list) else coordinate
+        state, code = spec["definerLimits"]["nativeRejectionCases"]["nativeErrors"].get(role, ("HY000", 1470))
+        require(native["status"] == "view-definition" and native["result"] == ["db-error", state, code],
                 "mysql-create-view-definer-native-rejection", {"sql": sql, "native": native})
         same(native["initial"]["views"], native["after"]["views"])
-        same([["Error", 1470]], [[level, code] for level, code, _ in native["diagnostics"]])
-        return ("definer", item["definerNegative"])
+        same([["Error", code]], [[level, number] for level, number, _ in native["diagnostics"]])
+        same(True, native["active"])
+        same([0, 7], native["after"]["marker"])
+        same(native["initial"], native["afterRollback"])
+        return ("definer", *(tuple(coordinate) if isinstance(coordinate, list) else (coordinate,)))
 
     if "constantCheck" in item:
         route, requested = item["constantCheck"]
@@ -368,6 +374,8 @@ def observe_rejection(spec, item, native, sql):
 
 def rejected_finite_ids(spec, tag):
     cases = [*(tuple(item) for item in spec["nativeNegative"]), ("definer", "user"), ("definer", "host")]
+    limits = spec["definerLimits"]["nativeRejectionCases"]
+    cases.extend(("definer", route, role) for route in limits["routes"] for role in (*limits["all"], *limits.get(tag, [])))
     for route, analysis in (("analysis", True), ("direct", False)):
         cases.extend(("constant-check", route, case_[0], case_[-1]) for case_ in rejected_catalog_cases(spec, tag, analysis))
     return cases
@@ -377,14 +385,20 @@ def definer_negatives(tag):
     base = case(tag, scan())
     user, host = definers.limits(tag)
     bad_user = "A view definer user requires at most 32 BMP characters without NUL."
-    bad_host = "A view definer host requires at most 255 BMP characters without NUL."
+    bad_host = "A MySQL 5.6 or 5.7 view definer host permits at most 60 bytes." if host == 60 else "A view definer host permits at most 255 bytes."
     yield definers.with_principal(base, ["a\0b", "%"]), None, {"exception": INVALID, "message": bad_user}
     for coordinate, principal, detail in (
         ("user", ["u" * (user + 1), "%"], "A MySQL 5.6 view definer user permits at most 16 characters." if user == 16 else bad_user),
-        ("host", ["actor", "h" * (host + 1)], "A MySQL 5.6 or 5.7 view definer host permits at most 60 characters." if host == 60 else bad_host),
+        ("host", ["actor", "h" * (host + 1)], bad_host),
     ):
         item = definers.with_principal({**base, "definerNegative": coordinate}, principal)
         yield item, item, {"exception": INVALID, "message": detail}
+    for route in ("direct", "analysis"):
+        for role, hostname, code in definers.host_failures(tag):
+            item = definers.with_principal({**base, "definerNegative": [route, role]}, ["actor", hostname])
+            incoming = item if route == "direct" else request(tag, rejection_sql(item, None))
+            detail = "A view definer host cannot contain @." if code == 1105 else bad_host
+            yield incoming, item, {"exception": INVALID, "message": detail}
 
 
 def seeded(tag, seed, count):

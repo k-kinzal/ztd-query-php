@@ -44,7 +44,7 @@ def identity(tag, role):
         principal = ["棚" * user_limit, "localhost"]
         return principal, principal
     if role == "host-multibyte":
-        principal = ["actor", "ab" + "棚" * 38]
+        principal = ["actor", "棚" * 20 if host_limit == 60 else legacy_overflow_host()]
         return principal, principal
     return ACCOUNTS[role]
 
@@ -74,11 +74,24 @@ def coordinates(specification, analysis):
 def known(specification, tag):
     user, host = limits(tag)
     same(user, specification["definerLimits"]["userCharacters"].get(tag, 32))
-    same(host, specification["definerLimits"]["hostCharacters"].get(tag, 255))
+    same(host, specification["definerLimits"]["hostBytes"].get(tag, 255))
+
+
+def legacy_overflow_host():
+    return "ab" + "棚" * 38
+
+
+def host_failures(tag):
+    _, host_limit = limits(tag)
+    yield "host-multibyte-overflow", "a" + "棚" * (host_limit // 3), 1470
+    yield "host-at", "one@two", 1105
+    if host_limit == 60:
+        yield "legacy-v10-host-multibyte-original", legacy_overflow_host(), 1470
 
 
 def diagnostic_component(component, limit):
-    return component.encode("utf-8")[:limit].decode("utf-8", errors="ignore")
+    prefix = component.encode("utf-8")[:limit].decode("utf-8", errors="surrogateescape")
+    return "".join("?" if "\udc80" <= character <= "\udcff" else character for character in prefix)
 
 
 def text(value):

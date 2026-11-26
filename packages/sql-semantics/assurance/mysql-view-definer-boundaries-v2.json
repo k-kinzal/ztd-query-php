@@ -1,0 +1,40 @@
+{
+  "revision": "SemanticsIR/mysql-view-definer-boundaries-2",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-create-view-v11.json",
+  "rules": {
+    "Schema/View/ViewDefiner::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$user = trim($user, ' ');",
+        "$host = trim($host, ' ');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[\\x{1}-\\x{FFFF}]{0,32}\\z/uD', $user) === 1, 'A view definer user requires at most 32 BMP characters without NUL.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A[\\x{1}-\\x{FFFF}]*\\z/uD', $host) === 1, 'A view definer host requires BMP characters without NUL.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!str_contains($host, '@'), 'A view definer host cannot contain @.');",
+        "$host = (new \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\NativeLocalNames())->key($host);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(strlen($host) <= 255, 'A view definer host permits at most 255 bytes.');",
+        "$this->user = $user;",
+        "$this->host = $host;"
+      ]
+    },
+    "Schema/View/ViewDefiner::checkRelease": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || preg_match('/\\A.{0,16}\\z/usD', $this->user) === 1, 'A MySQL 5.6 view definer user permits at most 16 characters.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744 || strlen($this->host) <= 60, 'A MySQL 5.6 or 5.7 view definer host permits at most 60 bytes.');"
+      ]
+    }
+  },
+  "versionedFrom": {
+    "path": "mysql-view-definer-boundaries-v1.json",
+    "sha256": "ef72398e862da0dcf43b0dd7c2b4cb0c6b5995454fc409caa235c91a8c6cb913"
+  }
+}
