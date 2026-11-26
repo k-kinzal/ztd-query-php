@@ -1,0 +1,105 @@
+{
+  "revision": "SemanticsIR/mysql-named-projected-markers/1",
+  "approval": "pending-human-review",
+  "requiredBaseline": "contract-v1.json",
+  "extends": [
+    "server-parameter-v7.json",
+    "mysql-unsigned-parameter-v1.json",
+    "mysql-ansi-projection-v3.json",
+    "mysql-ansi-with-v2.json"
+  ],
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native MySQL prepared execution on the pinned release, utf8mb4, lower_case_table_names=0, and the empty lexical profile or any combination of ANSI_QUOTES and NO_BACKSLASH_ESCAPES. The Named input profile admits both named and anonymous markers and elaborates them to native positions.",
+  "counterexample": {
+    "candidate": "e72f4e425474631db8e834a6477bd8c53acadccc",
+    "acceptedInputProfile": "Named",
+    "sql": "SELECT CAST(:quantity AS UNSIGNED) AS quantity",
+    "actual": "The projection requires the native language profile."
+  },
+  "constructors": {
+    "ParameterName": {
+      "type": "Binding/ParameterName",
+      "role": "The case-sensitive external key of a named projected marker.",
+      "structure": "A nonempty ASCII sequence of letters, digits and underscores. The stored string has no leading colon.",
+      "conditions": "Validate every byte before publication. Numeric and case-distinct names are distinct strings. The name is immutable.",
+      "meaning": "Every occurrence with this exact key reads the same external named binding independently of its target conversion or native position.",
+      "sql": "This fragment identifies a binding. An owning parameter emits a native positional marker."
+    },
+    "Parameter": {
+      "type": "Binding/Parameter",
+      "role": "One occurrence of a checked integral parameter in an ordered projection.",
+      "structure": "A checked one-based position local to its SELECT, a resolved SIGNED or UNSIGNED conversion and an optional named identity.",
+      "conditions": "Retain the integral specification and contiguous local positions. Either assign a checked named key or use the anonymous decision. Factory and analyzed values use the same type. Written names match the complete marker token.",
+      "meaning": "Read the external named value by exact key, or the next anonymous input in statement order, then apply the stored conversion. NULL remains NULL. A repeated named value can occur more than once in the native binding vector.",
+      "sql": "Emit CAST(? AS SIGNED) or CAST(? AS UNSIGNED). Associate the ordered structural occurrence with the same native placeholder position."
+    }
+  },
+  "existingRoles": ["Select", "Rows/Compound", "Rows/LocalProjection", "Rows/With/WithProjection", "Rows/With/WithRead"],
+  "admission": "Under Named input, admit an explicit signed or unsigned cast whose sole operand, after grouping is removed, is a native or named parameter. Under Native input retain the native token constraint. Direct complete values may refer to named or anonymous bindings. Bare untyped parameters, unsupported cast types and misplaced occurrences remain separate open obligations. Ordinary CTE positive cases start with MySQL 8.0.",
+  "order": [
+    "Occurrences of a SELECT follow its ordered result fields.",
+    "A local projection emits the markers in its defining query in that query's order.",
+    "A compound emits the left arm and then the right arm.",
+    "An ordinary WITH emits the definitions in declaration order and then the final body. A local read adds no marker and does not replay its definition's parameter occurrences."
+  ],
+  "bindingInputs": "Use a list of anonymous values and a separate mapping from exact name strings to values. Traversal consumes one anonymous value at each anonymous occurrence. A named occurrence reads its own key without consuming an anonymous value. The native protocol then receives one bound position per occurrence, including repeated named occurrences. No application-driver named-placeholder behavior is required.",
+  "resultNames": "Use written aliases as decoded name values. For unaliased casts whose labels derive from SQL text, use the text of the native elaboration where actual named marker tokens become question marks. Retain the spelling of punctuation, ordinary comments and other tokens under the existing result-name rule. A quoted string, alias or comment that contains colon-name text keeps its bytes.",
+  "observations": [
+    "Exact named key, nullable binding values, native ordinal and resolved signedness.",
+    "Output column names, positions and native types across explicit and implicit labels.",
+    "Case-distinct names, repeated names, anonymous positions, stable ordered traversal, signed and unsigned native values and compound conversion rules."
+  ],
+  "finite": {
+    "names": ["arg", "Arg", "0", "_"],
+    "target": ["SIGNED", "UNSIGNED"],
+    "pattern": ["one", "reused-name", "named-with-anonymous"],
+    "mode": ["empty", "ANSI_QUOTES", "NO_BACKSLASH_ESCAPES", "ANSI_QUOTES,NO_BACKSLASH_ESCAPES"],
+    "identitiesPerProfile": 96,
+    "order": ["mode", "names", "target", "pattern"],
+    "recovery": "Recover every coordinate from the actual PHP graph and measured checked occurrence order. Confirm that reference and wire input vectors consume every required named or anonymous binding."
+  },
+  "analysis": [
+    "Named cast with an explicit label",
+    "Implicit heading with a grouping variation and an ordinary comment containing the same spelling as the marker",
+    "Named marker adjacent to a literal containing colon-name bytes",
+    "Case-distinct and repeated names with a separate anonymous value",
+    "Set arm binding order and mixed signedness",
+    "Local definition occurrence counted once",
+    "Ordered nested WITH definitions and an unused defined marker on modern releases"
+  ],
+  "negative": [
+    "Malformed direct name",
+    "Wrong local position",
+    "Named token under the Native input profile",
+    "Bare named value without the required conversion",
+    "Named parameter under an unsupported conversion",
+    "Named value in a closed non-parameter scalar role"
+  ],
+  "exploration": {
+    "seeds": [24019, 91673],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 900,
+    "dimensions": ["typed target", "ordered occurrence count", "named reuse", "anonymous placement", "case-distinct keys", "local and set composition", "ordinary WITH prefix on modern profiles", "NULL and signed 64-bit input boundaries"]
+  },
+  "budgets": {"attemptSeconds": 15, "releaseSeconds": 900},
+  "faults": [
+    "Erase a bound name",
+    "Fold a case-sensitive name",
+    "Swap named native positions",
+    "Consume anonymous positions on a named occurrence",
+    "Replay a WITH definition's markers on a read",
+    "Rewrite a colon-name inside an inferred heading comment"
+  ],
+  "requirements": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "obligations": {
+    "Q01": "Check names, local ordinals and conversion types at the published value boundary.",
+    "Q02": "Exhaust the fixed domain using independent direct construction and add valid authored layout and scoped forms.",
+    "Q03": "Recover native occurrence order from the closed graph and compare the actual resolved binding relation.",
+    "Q04": "Interpret the named inputs independently, bind the resulting vector to emitted native SQL, and compare exact typed fields and rows with independently prepared native reference SQL.",
+    "Q05": "Audit the name and occurrence storage, traversal, marker lowering and renderer dispatch. Observe installed direct/analyze/analyzeAll values and native SQL in both isolated Composer layouts."
+  },
+  "trust": ["Pinned MySQL server and native positional prepare protocol", "Independently defined Named source elaboration and reference binding input", "PHP immutable checked values and the reviewed source boundary checker"],
+  "exclusions": [],
+  "remainingBaseline": "Other parameter positions, conversion/type families, lexical modes, and broader statement roles remain required."
+}
